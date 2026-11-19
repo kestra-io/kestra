@@ -231,7 +231,7 @@ describe("KsEditor / isPebbleEnabled", () => {
 })
 
 describe("KsEditor / useEditorDecorations", () => {
-    test("decorates statement blocks and print blocks with highlight-pebble", () => {
+    test("decorates statement blocks and print blocks with highlight-pebble, one decoration per token role", () => {
         const text = "message: condition {% if inputs. %}, expression  {{ inputs.cond }}"
         const decorations: monacoEditor.IModelDeltaDecoration[] = []
         const editorDouble = {
@@ -255,20 +255,11 @@ describe("KsEditor / useEditorDecorations", () => {
         dec.attach(codeEditor)
         dec.highlightPebble()
 
-        expect(decorations).toHaveLength(2)
-        expect(decorations[0].options.inlineClassName).toBe("highlight-pebble")
-        expect(decorations[0].range).toEqual({
-            startLineNumber: 1,
-            startColumn: 20,
-            endLineNumber: 1,
-            endColumn: 36,
-        })
-        expect(decorations[1].options.inlineClassName).toBe("highlight-pebble")
-        expect(decorations[1].range).toEqual({
-            startLineNumber: 1,
-            startColumn: 50,
-            endLineNumber: 1,
-            endColumn: 67,
-        })
+        expect(decorations.map(({options, range}) => [options.inlineClassName, range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn])).toEqual([
+            ["highlight-pebble-pebble", 1, 20, 1, 23],
+            ["highlight-pebble-keyword", 1, 23, 1, 25],
+            ["highlight-pebble-pebble", 1, 25, 1, 36],
+            ["highlight-pebble-pebble", 1, 50, 1, 67],
+        ])
     })
 })

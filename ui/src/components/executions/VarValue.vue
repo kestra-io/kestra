@@ -37,18 +37,33 @@
             {{ $t('file unavailable') }}
         </KsButton>
     </KsTooltip>
-    <KsButtonGroup v-else-if="uriHref">
+    <!-- Show the text too: a link alone hides the value and offers no way to copy it. -->
+    <span v-else-if="uriHref" class="uri-value">
+        <span>{{ displayText }}</span>
         <KsButton
             type="primary"
             tag="a"
             size="small"
             :href="uriHref"
             target="_blank"
+            rel="noopener noreferrer"
             :icon="OpenInNew"
         >
             {{ $t('open') }}
         </KsButton>
-    </KsButtonGroup>
+    </span>
+    <span v-else-if="mailtoHref" class="uri-value">
+        <span>{{ displayText }}</span>
+        <KsButton
+            tag="a"
+            size="small"
+            :href="mailtoHref"
+            :icon="EmailOutline"
+            data-test="var-value-mailto"
+        >
+            {{ $t('email') }}
+        </KsButton>
+    </span>
 
     <span v-else-if="value === null">
         <em>null</em>
@@ -97,12 +112,15 @@
 <script setup lang="ts">
     import {handledIf} from "../../utils/kestraHttp"
     import {computed, ref, watch, onMounted} from "vue"
+    import {useI18n} from "vue-i18n"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import EmailOutline from "vue-material-design-icons/EmailOutline.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsAlert, KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {useToast} from "../../utils/toast"
     import {executionFileUrl} from "../../utils/executionUtils"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
@@ -115,17 +133,20 @@
     const props = withDefaults(defineProps<{
         value?: string | object | boolean | number | null;
         execution?: Execution;
+        /** Offer an Open button only for http(s) values; any `scheme:` string parses as a URL otherwise. */
         restrictUri?: boolean;
         /** Output key this value came from, used to name the download of a truncated value. */
         name?: string;
     }>(), {
         // No default for `value`: defaulting to "" made an omitted prop look like an empty string.
         execution: () => ({id: ""}),
-        restrictUri: false,
+        restrictUri: true,
         name: "output",
     })
 
     const editorBindings = useEditorBindings()
+    const {t} = useI18n()
+    const toast = useToast()
 
     const humanSize = ref<string>("")
     const fileStatus = ref<"loading" | "available" | "missing">("loading")
@@ -152,6 +173,10 @@
     // Narrow for the template: `value` stays optional, so v-if type guards do not satisfy vue-tsc alone.
     const uriHref = computed(() =>
         isURI(props.value) && !Utils.isFile(props.value) ? props.value : undefined,
+    )
+
+    const mailtoHref = computed(() =>
+        typeof props.value === "string" && /^mailto:/i.test(props.value) ? props.value : undefined,
     )
 
     const isComplexValue = (value: unknown): boolean => {
@@ -229,7 +254,10 @@
 
     const editorHeight = computed(() => Math.min(20, Math.max(5, displayText.value.split("\n").length)))
 
-    const copyFullValue = () => copyToClipboard(fullText.value)
+    const copyFullValue = async () => {
+        await copyToClipboard(fullText.value)
+        toast.success(t("copied"))
+    }
 
     const downloadFullValue = () => Utils.downloadText(
         fullText.value,
@@ -280,6 +308,13 @@
 </script>
 
 <style scoped>
+.uri-value {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    word-break: break-all;
+}
+
 .complex-value-editor {
     margin-top: 0.5rem;
     border: 1px solid var(--ks-border-default);

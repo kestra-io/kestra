@@ -173,8 +173,7 @@ public class TriggerSchedulingLoop implements Runnable {
                     int processedEvents = processTriggerEvents();
 
                     // Sampled after the initialization and the event drain, either of which can take seconds:
-                    // this instant is the eligibility cut-off, the schedule date of the executions created from
-                    // it, and the left bound of scheduler.evaluation.loop.duration.
+                    // this instant is the eligibility cut-off and the schedule date of the executions created from it.
                     Instant now = clock.instant();
 
                     // Check whether triggers should be scheduled

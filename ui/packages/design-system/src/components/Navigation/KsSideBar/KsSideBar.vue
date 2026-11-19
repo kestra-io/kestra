@@ -13,11 +13,13 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import KsScrollbar from "../../Basic/KsScrollbar.vue"
 
     withDefaults(defineProps<{
         ariaLabel?: string
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         ariaLabel: "Sidebar",
     })
 

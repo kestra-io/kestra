@@ -1,5 +1,5 @@
 <template>
-    <ElSelect ref="elSelectRef" :modelValue="(model as SelectPropsPublic['modelValue'])" v-bind="({...filteredProps(), ...$attrs} as SelectPropsPublic)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit, 'kel-select--single-line-tags': singleLineTags}" @update:modelValue="(value: T) => (model = value)" @change="emit('change', $event)">
+    <ElSelect ref="elSelectRef" :modelValue="(modelValue as SelectPropsPublic['modelValue'])" v-bind="({...filteredProps(), ...$attrs} as SelectPropsPublic)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit, 'kel-select--single-line-tags': singleLineTags}" @update:modelValue="(value: ClearedValue<T, C>) => emit('update:modelValue', value)" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -35,8 +35,9 @@
     </ElSelect>
 </template>
 
-<script setup lang="ts" generic="T">
-    import {type Component, computed, h, markRaw, provide, ref, toRef} from "vue"
+<script setup lang="ts" generic="T, C extends boolean | undefined = undefined">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {type Component, computed, h, markRaw, provide, ref, toRef, type HTMLAttributes} from "vue"
     import {ElSelect, type SelectPropsPublic} from "element-plus"
     import Loading from "vue-material-design-icons/Loading.vue"
     import KsIcon from "../../Basic/KsIcon.vue"
@@ -45,14 +46,16 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<T>()
+    // Clearing a single select emits undefined (Element Plus valueOnClear), a multiple one emits [].
+    type ClearedValue<V, Clearable> = true extends Clearable ? (V extends readonly unknown[] ? V : V | undefined) : V
 
-    const props = withDefaults(defineProps<{
+    type KsSelectProps = {
+        modelValue?: T
         placeholder?: string
         disabled?: boolean
         size?: "small" | "default" | "large"
         filterable?: boolean
-        clearable?: boolean
+        clearable?: C
         allowCreate?: boolean
         remote?: boolean
         remoteMethod?: (query: string) => void
@@ -72,7 +75,9 @@
         colorMap?: KsSelectColorMap
         selectAll?: boolean
         singleLineTags?: boolean
-    }>(), {
+    }
+
+    const props = withDefaults(defineProps<KsSelectProps & /* @vue-ignore */ Omit<NativeAttributes<SelectPropsPublic & HTMLAttributes>, keyof KsSelectProps>>(), {
         placeholder: undefined,
         size: undefined,
         clearable: undefined,
@@ -84,11 +89,18 @@
         suffixIcon: undefined,
         loading: undefined,
         colorMap: undefined,
+        showArrow: false,
     })
 
     const emit = defineEmits<{
-        change: [value: T]
+        "update:modelValue": [value: ClearedValue<T, C>]
+        change: [value: ClearedValue<T, C>]
     }>()
+
+    const model = computed({
+        get: () => props.modelValue,
+        set: (value) => emit("update:modelValue", value as ClearedValue<T, C>),
+    })
 
     type SelectOptionState = {visible: boolean; value: unknown}
 
@@ -131,9 +143,9 @@
         tag?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading", "colorMap", "selectAll", "singleLineTags"])
+    const filteredProps = useFilteredProps(props, ["modelValue", "fit", "suffixIcon", "loading", "colorMap", "selectAll", "singleLineTags"])
 
-    provide(KsSelectColorMapKey, toRef(props, "colorMap"))
+    provide(KsSelectColorMapKey, toRef(() => props.colorMap))
 
     const LoadingSpinner = markRaw({
         render: () => h(KsIcon, {class: "is-loading"}, () => h(Loading)),

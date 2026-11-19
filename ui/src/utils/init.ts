@@ -15,6 +15,7 @@ import createEventsRouter from "./eventsRouter"
 import "./global"
 import {documentationGuard, updateDocId} from "./documentationGuard"
 import {entityNotFoundGuard} from "./routeEntityGuard"
+import {restoreUrlGuard} from "../composables/useRestoreUrl"
 
 
 import RouterMd from "../components/utils/RouterMd.vue"
@@ -50,6 +51,8 @@ export default async (
     if(guards.beforeEach){
         router.beforeEach(guards.beforeEach.bind(null, router))
     }
+
+    router.beforeEach(restoreUrlGuard)
 
     if(guards.beforeResolve){
         router.beforeResolve(guards.beforeResolve.bind(null, router))

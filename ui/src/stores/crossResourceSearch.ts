@@ -226,7 +226,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         try {
             namespaces = params.namespace
                 ? [params.namespace]
-                : (await NamespacesAPI.autocompleteNamespaces({existingOnly: true}) as unknown as string[] ?? [])
+                : (await NamespacesAPI.autocompleteNamespaces({existingOnly: true}) ?? [])
         } catch (e: unknown) {
             if (!isCurrent(gen)) return
             files.value = {status: "failed", namespaces: [], errorMessage: searchErrorMessage(e)}

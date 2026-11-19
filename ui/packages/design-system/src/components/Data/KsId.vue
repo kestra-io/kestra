@@ -14,6 +14,7 @@
 
 <script setup lang="ts">
     import {computed, useId, getCurrentInstance} from "vue"
+    import type {Placement} from "element-plus"
     import KsTooltip from "../Feedback/KsTooltip.vue"
 
     const props = withDefaults(defineProps<{
@@ -21,7 +22,7 @@
         shrink?: boolean
         size?: number
         /** Tooltip placement. Defaults to "top". */
-        placement?: string
+        placement?: Placement
     }>(), {
         value: undefined,
         shrink: true,
@@ -53,7 +54,7 @@
         }
 
         return props.value.toString().substring(0, size.value) +
-            (props.value.length > size.value && size.value !== 8 ? "…" : "")
+            (props.value.length > size.value ? "…" : "")
     })
 </script>
 

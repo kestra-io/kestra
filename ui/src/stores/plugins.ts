@@ -5,9 +5,9 @@ import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
 import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
-import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
+import {isEntryAPluginElementPredicate, latestVersionEntries, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
-import {useClient, type PluginArtifact, type PluginInstallJob} from "@kestra-io/kestra-sdk"
+import {useClient, type PluginArtifact, type PluginControllerApiTriggerPlugin, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {handledIf} from "../utils/kestraHttp"
 
@@ -32,23 +32,26 @@ export interface PluginComponent {
 }
 
 export type {Plugin} from "../utils/pluginUtils"
-export interface TriggerPluginDto {
-    type: string;
-    name: string;
-    // The owning plugin's (or subgroup's) declared, correctly-cased title (for example "MongoDB" or
-    // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
-    // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
-    pluginTitle: string;
-    // The owning plugin artifact's manifest title (for example "NATS" for every NATS subgroup) -
-    // the disambiguation fallback for when pluginTitle itself resolves to a bare package segment;
-    // optional because older backends do not send it.
-    pluginGroupTitle?: string;
-    description: string | null;
-    group: "core" | "realtime" | "app";
-    ee: boolean;
-    icon: string;
-    deprecated: boolean | null;
+/** What the endpoint sends: the generated type, which misses that `description` and `deprecated` are `null` when unset. */
+type ApiTriggerPlugin = Omit<PluginControllerApiTriggerPlugin, "description" | "deprecated"> & {
+    description?: string | null;
+    deprecated?: boolean | null;
 }
+
+/**
+ * A trigger of the catalog. The generated type leaves every field optional, but the backend always sends the
+ * identifying ones, and `listTriggers` only returns entries that have them.
+ * `pluginTitle` is the owning plugin's (or subgroup's) declared, correctly-cased title (for example "MongoDB"
+ * or "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed from the
+ * class package, and `pluginGroupTitle` is the manifest title (for example "NATS" for every NATS subgroup), the
+ * disambiguation fallback for when `pluginTitle` itself resolves to a bare package segment.
+ */
+export type TriggerPluginDto = ApiTriggerPlugin & Required<Pick<ApiTriggerPlugin, "type" | "name" | "pluginTitle" | "group">>
+
+function isTriggerPluginDto(trigger: ApiTriggerPlugin): trigger is TriggerPluginDto {
+    return Boolean(trigger.type && trigger.name && trigger.pluginTitle && trigger.group)
+}
+
 interface LoadOptions {
     cls: string;
     version?: string;
@@ -233,6 +236,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     const plugin = ref<PluginComponent>()
     const versions = ref<Record<string, string[]>>({})
     const plugins = ref<Plugin[]>()
+    const latestPlugins = computed<Plugin[]>(() => latestVersionEntries(plugins.value ?? []))
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
@@ -334,12 +338,13 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     async function listTriggers() {
-        const response = await PluginsAPI.listTriggerPlugins() as unknown as {results: TriggerPluginDto[]; total: number}
+        const response = await PluginsAPI.listTriggerPlugins()
         // The triggers grid keys its cards by type, and duplicate keys corrupt Vue's keyed diff on
         // every filter change (https://github.com/kestra-io/kestra/issues/18419), so drop duplicates
         // even if the API misbehaves.
         const seen = new Set<string>()
-        return (response?.results ?? []).filter(trigger => {
+        const triggers: ApiTriggerPlugin[] = response?.results ?? []
+        return triggers.filter(isTriggerPluginDto).filter(trigger => {
             if (seen.has(trigger.type)) return false
             seen.add(trigger.type)
             return true
@@ -516,24 +521,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (!cls || !plugins.value) return null
         // A declared class, then a declared alias, then the package-prefix guess: an alias such as
         // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it.
-        const declaring = plugins.value.filter(p => Object.entries(p)
+        return findDeclaringPlugin(latestPlugins.value, cls)
+            ?? findDeclaringPlugin(plugins.value, cls)
+            ?? latestPlugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))
+            ?? null
+    }
+
+    function findDeclaringPlugin(candidates: Plugin[], cls: string): Plugin | undefined {
+        const declaring = candidates.filter(p => Object.entries(p)
             .some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)))
         if (declaring.length) return declaring.find(p => p.subGroup) ?? declaring[0]
-        const aliasing = plugins.value.filter(p => p.aliases?.includes(cls))
-        if (aliasing.length) return aliasing.find(p => !p.subGroup) ?? aliasing[0]
-        return plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + ".")) ?? null
+        const aliasing = candidates.filter(p => p.aliases?.includes(cls))
+        return aliasing.find(p => !p.subGroup) ?? aliasing[0]
     }
 
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {
         if (!name || !plugins.value) return null
         if (subGroup) {
-            return plugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
+            return latestPlugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
         }
-        return plugins.value.find(p => p.name === name && !p.subGroup) ?? null
+        return latestPlugins.value.find(p => p.name === name && !p.subGroup) ?? null
     }
 
     function sidebarPluginsFor(context: {cls?: string | null; owner?: Plugin | null}): Plugin[] {
-        const all = plugins.value ?? []
+        const all = latestPlugins.value
         let ownerGroup: string | undefined
         if (context.owner) {
             ownerGroup = context.owner.group
@@ -611,6 +622,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         findPluginByCls,
         findPluginByName,
         sidebarPluginsFor,
+        latestPlugins,
         list,
         listTriggers,
         listWithSubgroup,

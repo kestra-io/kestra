@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect} from "storybook/test"
 import KsAlert from "./KsAlert.vue"
+import KsButton from "../Basic/KsButton/KsButton.vue"
 
 const meta: Meta<typeof KsAlert> = {
     title: "Components/Feedback/KsAlert",
@@ -205,4 +206,31 @@ export const Closable: Story = {
             </div>
         `,
     }),
+}
+
+/** An action on the right of the title, such as the button that acts on what the alert reports. */
+export const WithAction: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsAlert, KsButton},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
+                <ks-alert type="info" title="This execution is waiting for a review. Approve or deny it to continue." :closable="false">
+                    <template #action><ks-button size="small">Review</ks-button></template>
+                </ks-alert>
+                <ks-alert type="warning" title="Two flows use this secret." :closable="true">
+                    <template #action><ks-button size="small">Show them</ks-button></template>
+                </ks-alert>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        for (const alert of canvasElement.querySelectorAll(".kel-alert")) {
+            const title = alert.querySelector(".ks-alert-title-text")!.getBoundingClientRect()
+            const action = alert.querySelector(".ks-alert-action")!.getBoundingClientRect()
+            const content = alert.querySelector(".kel-alert__content")!.getBoundingClientRect()
+            await expect(action.left).toBeGreaterThan(title.right)
+            await expect(Math.round(content.right - action.right)).toBeLessThanOrEqual(1)
+        }
+    },
 }

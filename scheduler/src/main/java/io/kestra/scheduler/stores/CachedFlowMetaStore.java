@@ -20,7 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.vnodes.VNodes;
 
 import jakarta.inject.Inject;
 
@@ -63,7 +63,9 @@ public class CachedFlowMetaStore implements FlowMetaStore {
         // If cache missed
         if (cached == null) {
             Optional<FlowWithSource> state = delegate.find(flowId);
-            state.ifPresent(
+            // Caching an older revision would make it the one every lookup without a revision returns.
+            Optional<FlowWithSource> latest = flowId.getRevision() == null ? state : delegate.find(FlowId.of(flowId.getTenantId(), flowId.getNamespace(), flowId.getId(), null));
+            latest.ifPresent(
                 s -> partitionedCache
                     .computeIfAbsent(vNode, k -> newCache())
                     .put(cacheKey, s)

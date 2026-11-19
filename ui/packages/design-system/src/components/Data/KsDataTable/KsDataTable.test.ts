@@ -545,6 +545,35 @@ describe("KsDataTable", () => {
         expect(lastLoad(loads).sort).toBe("id:desc")
     })
 
+    test("keeps the sort when the active direction is clicked again on a column that cannot be unsorted", async () => {
+        const loads: Load[] = []
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table :data="data" :total="3" :loadData="loadData" :defaultSort="{prop: 'id', order: 'ascending'}">
+                    <ks-table-column prop="id" label="ID" sortable="custom" :sortOrders="['ascending', 'descending']" />
+                </ks-data-table>
+            `,
+            setup: () => ({data: SAMPLE_DATA, loadData: async (p: Load) => { loads.push(p) }}),
+        })
+        await flushPromises()
+        await tick()
+        const loadsOnMount = loads.length
+
+        await wrapper.get("th .sort-caret.ascending").trigger("click")
+        await tick()
+
+        expect(wrapper.get("th").attributes("aria-sort")).toBe("ascending")
+        expect(wrapper.findComponent(KsDataTable).emitted("sort-change")).toBeUndefined()
+        expect(loads).toHaveLength(loadsOnMount)
+
+        await wrapper.get("th .sort-caret.descending").trigger("click")
+        await tick()
+
+        expect(wrapper.get("th").attributes("aria-sort")).toBe("descending")
+        expect(lastLoad(loads).sort).toBe("id:desc")
+    })
+
     test("applies sortKeyMapper to the column prop before calling loadData", async () => {
         const {loads, wrapper} = mountWithSortSpy({
             sortKeyMapper: (key: string) => key.replace(/^auditLog\./, ""),
@@ -689,5 +718,19 @@ describe("KsDataTable", () => {
         expect(wrapper.find(".ks-data-table-content--cards").exists()).toBe(false)
         expect(cell.classes()).toContain("custom")
         expect(cell.classes().some((name) => name.startsWith("ks-mobile-"))).toBe(false)
+    })
+
+    test("applies a row-class-name passed in kebab case", async () => {
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table :data="data" :total="3" row-class-name="kebab-row">
+                    <ks-table-column prop="id" label="ID" />
+                </ks-data-table>
+            `,
+            data: () => ({data: SAMPLE_DATA}),
+        })
+        await flushPromises()
+        expect(wrapper.findAll("tr.kebab-row")).toHaveLength(3)
     })
 })

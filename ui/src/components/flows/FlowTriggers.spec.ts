@@ -59,18 +59,22 @@ vi.mock("../../utils/toast", () => ({
 }))
 
 // trigger-b already ran once (hence the current execution), trigger-a never did
-// (hence no state row and no current execution).
-vi.mock("../../utils/triggers", () => ({
-    searchTriggersForFlow: vi.fn().mockResolvedValue({
+// (hence no state row and no current execution). A test may add fields to trigger-b's state.
+const triggerBState = vi.hoisted(() => ({extra: {} as Record<string, unknown>}))
+
+vi.mock("../../utils/triggers", async (importOriginal) => ({
+    ...await importOriginal<typeof import("../../utils/triggers")>(),
+    searchTriggersForFlow: vi.fn().mockImplementation(() => Promise.resolve({
         results: [
             {
                 triggerId: "trigger-b",
                 namespace: "company.team",
                 flowId: "my-flow",
                 executionId: "execution-for-b",
+                ...triggerBState.extra,
             },
         ],
-    }),
+    })),
 }))
 
 vi.mock("../../stores/productTour", () => ({
@@ -106,12 +110,37 @@ beforeEach(() => {
     sessionStorage.clear()
     searchLogs.mockReset().mockResolvedValue({results: [], total: 0})
     permissions.isAllowed = (resource: string, action: string) => resource === "EXECUTION" && action === "VIEW"
+    triggerBState.extra = {}
 })
 afterEach(() => {
     while (mounted.length) mounted.pop()?.unmount()
     localStorage.clear()
     sessionStorage.clear()
     vi.useRealTimers()
+})
+
+// kestra-ee#10290: a trigger blocked by governance says so in place of its next evaluation date.
+describe("FlowTriggers - governance block", () => {
+    const blockedTooltip = (wrapper: VueWrapper, dataTest = "trigger-blocked") =>
+        wrapper.findAllComponents({name: "KsTooltip"}).find(tooltip => tooltip.find(`[data-test="${dataTest}"]`).exists())
+
+    it("shows the block with a message on the tag and next to the id", async () => {
+        triggerBState.extra = {blockedBy: {reason: "POLICY", ids: ["deny-log"], message: "Log plugin is not allowed by policy"}}
+
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(blockedTooltip(wrapper)?.props("content")).toBeTruthy()
+        expect(blockedTooltip(wrapper, "trigger-blocked-icon")?.props("content")).toBeTruthy()
+    })
+
+    it("shows no block for a trigger governance accepts", async () => {
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(wrapper.find("[data-test=\"trigger-blocked\"]").exists()).toBe(false)
+        expect(wrapper.find("[data-test=\"trigger-blocked-icon\"]").exists()).toBe(false)
+    })
 })
 
 // Issue #12784: each trigger row links to the flow executions tab pre-filtered

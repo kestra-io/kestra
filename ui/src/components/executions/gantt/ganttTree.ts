@@ -323,7 +323,7 @@ export function createGanttTree(options: {
         // Avoids executionsStore.loadExecution, which would overwrite the shared root execution.
         const request = ExecutionsAPI.execution({executionId}).then(
             (data) => {
-                entry.execution = data as unknown as Execution
+                entry.execution = data
                 return entry.execution
             },
             (error: unknown) => {

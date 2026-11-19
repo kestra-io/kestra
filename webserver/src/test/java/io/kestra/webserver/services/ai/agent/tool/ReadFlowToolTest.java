@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Integration check that {@code read-flow} returns a flow's source from the repository and rejects a
+ * Integration check that {@code read_flow} returns a flow's source from the repository and rejects a
  * missing flow, exercising the tool → repository wiring with the real beans.
  */
 @KestraTest(environments = "memory")

@@ -718,6 +718,29 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldReturnUnprocessableEntityWhenOverridingWithNamespaceContainingReplacementCharacters() throws IOException {
+        // Given
+        File flowFile = File.createTempFile("flow", ".yaml");
+        Files.writeString(flowFile.toPath(), generateFlowAsString("flow1", "io.kestra.randomnamespace", "a"));
+        MultipartBody body = MultipartBody.builder()
+            .addPart("flows", flowFile.getName(), MediaType.APPLICATION_YAML_TYPE, flowFile)
+            .build();
+
+        // When
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/flows/io.kestra.$1?override=true", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+                Argument.listOf(FlowWithSource.class)
+            )
+        );
+
+        // Then
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
     void bulk() {
         // initial création
         String flows = String.join(
@@ -1178,7 +1201,7 @@ class FlowControllerTest {
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
         );
 
-        assertThat(namespaces.size()).isEqualTo(20);
+        assertThat(namespaces.size()).isEqualTo(21);
     }
 
     @Test

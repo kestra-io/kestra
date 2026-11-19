@@ -105,7 +105,8 @@ describe("SourceSearchResults", () => {
         await flushPromises()
 
         const code = wrapper.find("[data-test='source-search-match'] code")
-        expect(code.html()).toContain("<mark>keyword</mark>")
+        expect(code.find("mark").text()).toBe("keyword")
+        expect(code.text()).toBe("text keyword end")
     })
 
     test("escapes html in snippet before converting mark tags", async () => {

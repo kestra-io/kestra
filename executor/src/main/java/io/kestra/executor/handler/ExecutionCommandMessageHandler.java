@@ -101,8 +101,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         if (evaluationType != EvaluationType.PASS) {
             var execution = executionStateStore.findByIdWithoutAcl(message.executionId());
             if (execution != null && evaluationType.isKillSwitched(execution)) {
-                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
-                return Optional.empty();
+                return killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
             }
         }
 
@@ -130,6 +129,9 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                         reschedule(execution, rescheduleCommand);
                     case ForceRun ignored ->
                         executionService.forceRun(execution, executorContext.getFlow());
+                    case RestartWorkingDirectory restartWorkingDirectoryCommand ->
+                        executionService.restartWorkingDirectory(execution, flow, restartWorkingDirectoryCommand.workingDirectoryTaskRunId(), restartWorkingDirectoryCommand.lostTaskRunId())
+                            .orElse(null);
                     case ChangeTaskRunState changeTaskRunStateCommand ->
                         executionService.changeTaskRunState(execution, flow, changeTaskRunStateCommand.taskRunId(), changeTaskRunStateCommand.state());
                     case UpdateLabels updateLabels ->
@@ -141,7 +143,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     case Resume resumeCommand when resumeCommand.decision() != null ->
                         executionService.decide(execution, flow, resumeCommand.taskRunId(), resumeCommand.decision(), resumeCommand.resumeInputs(), resumeCommand.resumed(), true);
                     case Resume resumeCommand when resumeCommand.taskRunId() != null ->
-                        executionService.cancelApproval(execution, flow, resumeCommand.taskRunId(), resumeCommand.resumed());
+                        executionService.cancelApproval(execution, flow, resumeCommand.taskRunId(), resumeCommand.resumed(), resumeCommand.bulk());
                     case Resume resumeCommand ->
                         executionService.resume(execution, flow, State.Type.RUNNING, resumeCommand.resumeInputs(), resumeCommand.resumed());
                     case ExecutionCommand.Invalid ignored -> {

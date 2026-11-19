@@ -5,7 +5,7 @@
             :is="type"
             v-bind="componentProps"
             :disabled
-            class="mt-1 mb-2 wrapper"
+            class="wrapper task-field-spacing"
         />
         <FieldValidationErrors :errors="fieldErrors" />
     </template>
@@ -58,6 +58,7 @@
     </div>
     <KsFormItem
         v-else-if="fieldKey"
+        stacked
         :required="isRequired"
         for=""
         :data-test="`field-${fieldKey}`"
@@ -132,7 +133,7 @@
             :is="type"
             v-bind="componentProps"
             :disabled
-            class="mt-1 mb-2 wrapper"
+            class="wrapper task-field-spacing"
         />
         <KsMarkdown
             v-if="inlineHelp && inlineHelpText && !isBoolean && !isNumber"
@@ -299,6 +300,11 @@
 </script>
 
 <style scoped>
+.task-field-spacing {
+    margin-top: var(--ks-spacing-1);
+    margin-bottom: var(--ks-spacing-2);
+}
+
 .kel-form-item {
     width: 100%;
 

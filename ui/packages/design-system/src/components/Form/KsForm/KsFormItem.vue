@@ -1,6 +1,6 @@
 <template>
     <ElFormItem
-        :class="{'is-inline-row': inline}"
+        :class="{'is-inline-row': inline, 'is-stacked': stacked}"
         v-bind="({...filteredProps(), ...$attrs} as FormItemProps)"
     >
         <template v-if="$slots.default" #default>
@@ -16,35 +16,26 @@
 </template>
 
 <script setup lang="ts">
-    import {ElFormItem, type FormItemProps, type FormItemRule} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {HTMLAttributes} from "vue"
+    import {ElFormItem, type FormItemProps} from "element-plus"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+
+    export interface KsFormItemProps extends FormItemProps {
+        /** Lay the item out as a single row: label on the left, control pushed to the right. */
+        inline?: boolean
+        /** Put each child of the content on its own full-width line instead of wrapping them in a row. */
+        stacked?: boolean
+    }
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
-        label?: string
-        /** Id of the control the label points at. Pass an empty string when the label slot is a header strip rather than a caption: the label renders as a plain div, so clicking it no longer focuses the control. */
-        for?: string
-        prop?: string | string[]
-        rules?: FormItemRule[]
-        required?: boolean
-        labelWidth?: string | number
-        error?: string
-        showMessage?: boolean
-        /** Lay the item out as a single row: label on the left, control pushed to the right. */
-        inline?: boolean
-    }>(), {
-        label: undefined,
-        for: undefined,
-        prop: undefined,
-        rules: undefined,
-        labelWidth: undefined,
-        error: undefined,
-        showMessage: undefined,
+    const props = withDefaults(defineProps<KsFormItemProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsFormItemProps>>(), {
         inline: false,
+        stacked: false,
     })
 
-    const filteredProps = useFilteredProps(props, ["inline"])
+    const filteredProps = usePassedProps(props, ["inline", "stacked"])
 
     defineSlots<{
         default?(): unknown
@@ -92,6 +83,10 @@
             & .kel-form-item__content {
                 flex: 0 0 auto;
             }
+        }
+
+        &.is-stacked .kel-form-item__content {
+            display: block;
         }
     }
 </style>

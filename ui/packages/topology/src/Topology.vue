@@ -1,5 +1,5 @@
 <template>
-    <div class="topology-shell">
+    <div ref="shell" class="topology-shell ks-topology">
         <FlowSummaryChip
             v-if="flowId && !isReadOnly && isAllowedEdit"
             class="topology-flow-bar"
@@ -113,8 +113,6 @@
                     v-bind="triggerProps"
                     :icons="icons"
                     :loadIcon="loadIcon"
-                    :isReadOnly="isReadOnly"
-                    :isAllowedEdit="isAllowedEdit"
                     @delete="emit(EVENTS.DELETE, $event)"
                     @edit="emit(EVENTS.EDIT, $event)"
                     @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
@@ -151,12 +149,9 @@
             <template #edge-edge="EdgeProps">
                 <EdgeNode
                     v-bind="EdgeProps"
-                    :yamlSource="source"
                     @add-task="emit(EVENTS.ADD_TASK, $event)"
                     @drag-over-edge="dropEdgeId = $event"
                     @drop-task="onDropTask"
-                    :isReadOnly="isReadOnly"
-                    :isAllowedEdit="isAllowedEdit"
                 />
             </template>
 
@@ -176,7 +171,7 @@
                     </ControlButton>
                 </KsTooltip>
                 <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
-                    <ControlButton @click.stop="fitView()">
+                    <ControlButton @click.stop="fitGraph()">
                         <Fullscreen />
                     </ControlButton>
                 </KsTooltip>
@@ -214,7 +209,7 @@
 
     <div
         v-if="dragGhost"
-        class="drag-ghost"
+        class="drag-ghost ks-topology"
         :style="{transform: `translate(${dragGhost.x}px, ${dragGhost.y}px)`}"
         aria-hidden="true"
     >
@@ -253,14 +248,17 @@
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
     import {cssVar as cssVariable, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
-    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD} from "./utils/constants"
+    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD, pillZoomCompensation} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY} from "./injectionKeys"
+    import {useViewportRefit} from "./composables/useViewportRefit"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY} from "./injectionKeys"
     import type {LoopLaneData} from "./utils/loopOutcome"
     import BasicNode from "./nodes/BasicNode.vue"
+    import {provideGlobalConfig} from "element-plus"
+    import {registerTopologyMessages} from "./i18n"
 
     const props = withDefaults(defineProps<{
         id: string;
@@ -327,13 +325,18 @@
         defaultViewport: undefined,
     })
 
+    // The Ks* components render Element Plus markup in the `kel` namespace their styles target.
+    // The Kestra UI sets it app-wide; a page without the design-system plugin gets it here.
+    provideGlobalConfig({namespace: "kel"})
+    registerTopologyMessages()
+
     const isRunning = computed(() => {
         const current = props.execution?.state?.current
         return current !== undefined && State.isRunning(current) === true
     })
 
     const vueFlowStore = useVueFlow(props.id)
-    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
+    const {getNodes, getEdges, getElements, onNodesInitialized, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
     const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -356,6 +359,7 @@
     provide(EXECUTION_INJECTION_KEY, computed(() => props.execution))
     provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions))
     provide(LOD_INJECTION_KEY, lod)
+    provide(PILL_ZOOM_COMPENSATION_INJECTION_KEY, computed(() => pillZoomCompensation(vueFlowStore.viewport.value.zoom)))
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
     provide(LOOP_LANES_INJECTION_KEY, computed(() => props.loopLanes ?? {}))
@@ -465,18 +469,21 @@
         generateGraph()
     })
 
+    const shell = ref<HTMLDivElement>()
+    const {fitGraph} = useViewportRefit(shell, vueFlowStore)
+
     const refitOnNodesInitialized = ref(false)
     onNodesInitialized(() => {
         if (!initialFitDone.value) {
             initialFitDone.value = true
             // A caller passing its own starting zoom (Storybook, tests) means fitView() would
             // immediately discard it.
-            if (!props.defaultViewport) fitView()
+            if (!props.defaultViewport) fitGraph()
             return
         }
         if (refitOnNodesInitialized.value) {
             refitOnNodesInitialized.value = false
-            fitView()
+            fitGraph()
         }
     })
 
@@ -635,7 +642,7 @@
 
     const collapsibleLaneUids = computed(() =>
         outermostLaneUids(
-            props.flowGraph.clusters
+            (props.flowGraph.clusters ?? [])
                 .filter((entry) => VueFlowUtils.isTrueFlowableCluster(entry.cluster))
                 .map((entry) => entry.cluster.uid.replace(CLUSTER_PREFIX, "")),
         ),

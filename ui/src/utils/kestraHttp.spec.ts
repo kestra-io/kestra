@@ -310,12 +310,22 @@ describe("setupKestraHttp server reachability", () => {
 
     it("flags the server unreachable when a gateway answers 503 in its place", () => {
         const {onError} = interceptors()
-        const gatewayResponse = {status: 503, statusText: "Service Unavailable", url: "http://x/api", headers: {forEach: () => {}}}
+        const gatewayResponse = {status: 503, statusText: "Service Unavailable", url: "http://x/api", headers: new Headers({"content-type": "text/html"})}
 
         onError(Object.assign(new Error("503"), {status: 503}), gatewayResponse, kestraApiRequest(), {})
         vi.advanceTimersByTime(UNREACHABLE_DELAY)
 
         expect(useServerReachability().unreachable.value).toBe(true)
+    })
+
+    it("does not flag the server unreachable when Kestra itself answers a 502 with a JSON body", () => {
+        const {onError} = interceptors()
+        const kestraResponse = {status: 502, statusText: "Bad Gateway", url: "http://x/api", headers: new Headers({"content-type": "application/json"})}
+
+        onError(Object.assign(new Error("502"), {status: 502}), kestraResponse, kestraApiRequest(), {})
+        vi.advanceTimersByTime(UNREACHABLE_DELAY)
+
+        expect(useServerReachability().unreachable.value).toBe(false)
     })
 
     it("ignores a request the caller aborted", () => {

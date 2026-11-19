@@ -241,7 +241,7 @@
     const forceExpandKey = ref(0)
     const highlighter = await getShiki()
 
-    const codeTheme = computed(() => `github-${props.darkMode ? "dark" : "light"}`)
+    const codeTheme = computed(() => `kestra-${props.darkMode ? "dark" : "light"}`)
 
     const examples = computed(() => props.schema.properties?.$examples)
 

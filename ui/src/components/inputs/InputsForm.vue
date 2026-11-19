@@ -56,14 +56,11 @@
                     :navbar="false"
                     v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
                     :data-testid="`input-form-${input.id}`"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                     @confirm="onSubmit"
                 />
                 <KsSelect
-                    :fullHeight="false"
-                    :input="true"
-                    :navbar="false"
                     v-if="input.type === 'SELECT' && !input.isRadio"
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
@@ -87,25 +84,22 @@
                 <KsRadioGroup
                     v-if="input.type === 'SELECT' && input.isRadio"
                     :data-testid="`input-form-${input.id}`"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | number | boolean | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                 >
                     <KsRadio v-for="item in (input.values ?? []).map(toOption)" :key="item.value" :label="item.label" :value="item.value" />
                     <KsInput
                         v-if="input.allowCustomValue"
-                        v-model="inputsValues[input.id]"
-                        @update:model-value="onChange(input)"
+                        :modelValue="inputsValues[input.id] as string | number | undefined"
+                        @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                         :placeholder="$t('custom value')"
                     />
                 </KsRadioGroup>
                 <KsSelect
-                    :fullHeight="false"
-                    :input="true"
-                    :navbar="false"
                     v-if="input.type === 'MULTISELECT'"
                     :data-testid="`input-form-${input.id}`"
                     v-model="multiSelectInputs[input.id]"
-                    @update:model-value="onMultiSelectChange(input, $event)"
+                    @update:model-value="onMultiSelectChange(input, $event ?? [])"
                     multiple
                     filterable
                     clearable
@@ -128,15 +122,15 @@
                     type="password"
                     v-if="input.type === 'SECRET'"
                     :data-testid="`input-form-${input.id}`"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | number | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                     showPassword
                 />
                 <span v-if="input.type === 'INT'">
                     <KsInputNumber
                         :data-testid="`input-form-${input.id}`"
-                        v-model="inputsValues[input.id]"
-                        @update:model-value="onChange(input)"
+                        :modelValue="inputsValues[input.id] as number | undefined"
+                        @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                         :min="numberMin(input)"
                         :max="numberMax(input)"
                         :step="1"
@@ -146,8 +140,8 @@
                 <span v-if="input.type === 'FLOAT'">
                     <KsInputNumber
                         :data-testid="`input-form-${input.id}`"
-                        v-model="inputsValues[input.id]"
-                        @update:model-value="onChange(input)"
+                        :modelValue="inputsValues[input.id] as number | undefined"
+                        @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                         :min="numberMin(input)"
                         :max="numberMax(input)"
                         :step="0.001"
@@ -157,8 +151,8 @@
                 <KsSwitch
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'BOOL'"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChangeBool(input)"
+                    :modelValue="inputsValues[input.id] as string | number | boolean | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChangeBool(input); }"
                     class="boolean-inputs"
                 />
                 <KsDatePicker
@@ -182,8 +176,8 @@
                 <KsTimePicker
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'TIME'"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | Date | null | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                     type="time"
                 />
                 <div class="kel-input kel-input-file" v-if="input.type === 'FILE'">
@@ -197,7 +191,12 @@
                             @change="onFileChange(input, $event)"
                             autocomplete="off"
                         >
-                        <span class="file-placeholder" v-html="getFilePlaceholder(inputsValues[input.id])" />
+                        <span class="file-placeholder">
+                            <i18n-t v-if="namespaceFileName(inputsValues[input.id])" keypath="defaultsToNamespaceFile" tag="span" scope="global">
+                                <template #name><code>{{ namespaceFileName(inputsValues[input.id]) }}</code></template>
+                            </i18n-t>
+                            <template v-else>{{ chosenFileName(inputsValues[input.id]) ?? $t("no_file_choosen") }}</template>
+                        </span>
                     </div>
                 </div>
                 <div
@@ -282,13 +281,14 @@
                 />
                 <KsEditor
                     v-bind="editorBindings"
-                    :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
+                    :options="{fullHeight: false, showScroll: ((inputsValues[input.id] as string)?.length ?? 0) > 530}"
                     :inline="true"
                     :navbar="false"
                     v-if="(input.type === 'JSON' || input.type === 'ION') && !customInputs[input.id]"
                     :data-testid="`input-form-${input.id}`"
                     lang="json"
-                    v-model="inputsValues[input.id]"
+                    :modelValue="inputsValues[input.id] as string | undefined"
+                    @update:model-value="(val) => inputsValues[input.id] = val"
                 />
                 <KsEditor
                     v-bind="editorBindings"
@@ -298,13 +298,13 @@
                     v-if="input.type === 'YAML'"
                     :data-testid="`input-form-${input.id}`"
                     lang="yaml"
-                    :modelValue="inputsValues[input.id]"
+                    :modelValue="inputsValues[input.id] as string | undefined"
                     @change="onYamlChange(input, $event)"
                 />
                 <KsDurationPicker
                     v-if="input.type === 'DURATION'"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | null | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                 />
             </KsFormItem>
         </template>
@@ -329,7 +329,7 @@
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
         </div>
 
-        <div v-if="isWizard" class="wizard-nav">
+        <div v-if="isWizard && !(isOnRecap && hideRecapNavigation)" class="wizard-nav">
             <KsButton v-if="currentStep > 0" :icon="ChevronLeft" @click="goBack" data-testid="wizard-back">
                 {{ $t('back') }}
             </KsButton>
@@ -364,10 +364,10 @@
 </template>
 
 <script setup lang="ts">
-    import {KsMessage, KsEditor, State, debounce, escapeHtml, dateUtils, dayjs} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor, State, debounce, dateUtils, dayjs} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
-    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
+    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, type Ref, getCurrentInstance, nextTick} from "vue"
     import {type Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -409,6 +409,7 @@
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
         mode?: "flat" | "wizard";
+        hideRecapNavigation?: boolean;
         formGroups?: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>;
         // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
         // so an expression or a default can read a label the caller already knows.
@@ -420,6 +421,7 @@
         execution: undefined,
         selectedTrigger: undefined,
         mode: "flat",
+        hideRecapNavigation: false,
         formGroups: undefined,
         renderLabels: undefined,
     })
@@ -438,10 +440,10 @@
     const instance = getCurrentInstance()
     const editorBindings = useEditorBindings()
 
-    const inputsValues = reactive<Record<string, any>>({...modelValue.value})
-    const previousInputsValues = ref<Record<string, any>>({})
-    const inputsMetaData = ref<InputMetaData[]>([])
-    const multiSelectInputs = reactive<Record<string, any>>({})
+    const inputsValues = reactive<Record<string, unknown>>({...modelValue.value})
+    const previousInputsValues = ref<Record<string, unknown>>({})
+    const inputsMetaData: Ref<InputMetaData[]> = ref([])
+    const multiSelectInputs = reactive<Record<string, unknown[]>>({})
     const inputsValidated = ref<Set<string>>(new Set())
     const editingArrayId = ref<string | null>(null)
     const editableItems = reactive<Record<string, string[]>>({})
@@ -984,14 +986,14 @@
         updateArrayValue(input)
     }
 
-    function getFilePlaceholder(value: unknown): string {
-        if (typeof value === "string" && value.startsWith("nsfile://")) {
-            return t("defaultsToNamespaceFile", {name: escapeHtml(value.substring(10))})
-        }
-        if (value && typeof value === "object" && "name" in value && typeof (value as {name: unknown}).name === "string") {
-            return escapeHtml((value as {name: string}).name)
-        }
-        return t("no_file_choosen")
+    function namespaceFileName(value: unknown): string | undefined {
+        return typeof value === "string" && value.startsWith("nsfile://") ? value.substring(10) : undefined
+    }
+
+    function chosenFileName(value: unknown): string | undefined {
+        return value && typeof value === "object" && "name" in value && typeof (value as {name: unknown}).name === "string"
+            ? (value as {name: string}).name
+            : undefined
     }
 
     function inputRefExpression(id: string): string {
@@ -1110,6 +1112,7 @@
     })
 
     defineExpose({
+        goBack,
         validateInputs,
         inputsValues,
         multiSelectInputs,
@@ -1301,6 +1304,8 @@
         flex-wrap: wrap;
         align-items: center;
         padding: 5px;
+        min-height: 32px;
+        box-sizing: border-box;
         gap: 4px;
 
         & :deep(.kel-tag) {

@@ -38,7 +38,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 
     Your editor underlines it: `kestra-tokens/no-undeclared-css-token` (eslint, `@eslint/css`) covers `.css` and plain `<style>` blocks, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and `ks/no-undeclared-custom-property` (stylelint) covers the design system's remaining SCSS. All three propose a replacement, and `npm run lint` runs them all. See [scripts/tokens/README.md](scripts/tokens/README.md).
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
-13. **Bootstrap is gone; don't use its utility classes.** The `d-flex`, `mb-3` and similar classes still in the templates are kept alive by `packages/design-system/src/assets/styles/_utilities.css` until their migration issues land, and that file only shrinks: replace a utility with scoped CSS on `--ks-*` tokens and delete its rule once the last use is gone. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on a utility the file does not define and on any `--kbs-*` variable.
+13. **Bootstrap is gone; don't use its utility classes.** Write layout and spacing as scoped CSS with `--ks-*` tokens. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on any Bootstrap utility class and on any `--kbs-*` variable.
 
 ## Best practices for keeping the design system healthy
 
@@ -67,6 +67,9 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Don't write one rule per variant. When the tokens follow the variant's name (`--ks-status-<status>`), bind them with `v-bind()` and add a test that every name has its token, since the token lint cannot see a built name (`KsExecutionStatus`, `KsAlert`). When they don't, keep a typed table of `var(--ks-*)` strings in the component's `<script>`, where `kestra-tokens/no-undeclared-ks-token` still checks them, and bind that (`KsTag`, `KsButton`).
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
+- Type a wrapper's props by extending the Element Plus interface (`interface KsInputProps extends Omit<InputProps, "modelValue">`) instead of copying them, and forward them with `usePassedProps`: Vue casts an omitted boolean to `false`, which would override defaults such as `validateEvent` or `teleported`. A default the wrapper sets in `withDefaults` was not passed, so bind it explicitly (`KsTag`'s `:effect`). Omit the `on*` keys some interfaces declare (`PopoverProps`): declared as props, they stop reaching the parent as listeners. In a `generic` wrapper, write the props as a local `type` alias, since an interface there cannot be exported and breaks declaration emit.
+- When Element Plus has no props interface, only a `*PropsPublic` type or a runtime object (`ExtractPublicPropTypes<typeof dropdownProps>`), put it in the `@vue-ignore` part below with the HTML attributes, so callers are checked and the props still reach Element Plus through `$attrs`.
+- Type the HTML attributes a wrapper forwards through `$attrs` with a `@vue-ignore` intersection, `defineProps<KsButtonProps & /* @vue-ignore */ Omit<NativeAttributes<ButtonHTMLAttributes>, keyof KsButtonProps>>()`: vue-tsc still checks every attribute a caller passes, while the compiler leaves them out of the runtime props so they stay in `$attrs`. `NativeAttributes` drops Vue's `on*` listener types, which would otherwise retype the wrapper's own events (`@change` receiving an `Event`). The type cannot see whether the template forwards them, so `htmlAttributes.test.ts` mounts each such wrapper and checks the attributes reach the DOM; add new wrappers to it.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.
 - Add the new component or prop to the relevant table in this file, plus a Storybook story and a unit test, in the same PR.
 - Document tokens in code comments next to where they're declared in `ks-theme-*.css`. The `scripts/generate-palette.mjs` file is auto-generated — don't hand-edit it.
@@ -111,7 +114,7 @@ Reject (or ask to fix) anything that:
 Every async surface must render all four states. "Happy path only" is a bug.
 
 - **Loading:** `KsSkeleton` for content placeholders; `vKsLoading` directive for sections that already have layout; `KsLoading` component for full-page or container-level spinners.
-- **Empty:** `KsEmpty` with an action where possible — never a blank screen.
+- **Empty:** `KsNoData` with an action next to it where possible — never a blank screen. A page-level empty state with its own illustration uses `KsEmptyState`.
 - **Error:** `KsAlert type="error"` with retry affordance, or `KsMessage` for transient errors.
 - **Success / data:** the actual content.
 
@@ -240,7 +243,7 @@ Rules:
 
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
-- Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- Put the icon component in `KsIcon`'s default slot (`<KsIcon><InformationOutline /></KsIcon>`); `KsIcon` has no `name` prop. Size and color come from props or the surrounding token context — don't override with inline `style`.
 - **One icon per action, in OSS and EE alike.** Before picking an icon for an action (delete, edit, save, run, import…), follow the pattern already used for that action in the codebase: the icon most places use for it, not a variant of it.
 - **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
@@ -265,21 +268,9 @@ Where the type comes from, in this order:
 
 For a value whose shape really is not known yet, `unknown` with a narrowing check is the honest escape hatch. `any` is not.
 
-**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. An `any` that truly cannot be avoided is a conversation with a maintainer, not a number you change on your own.
+**A package with no types?** Give it a small `.d.ts` shim next to `src/material-icons.d.ts`.
 
-**MANDATORY — never raise the baseline to make the check pass.** A bigger number hides the new `any` from every later run, which is the one thing the baseline exists to prevent, and it will be treated as a bug in review. Specifically, and this applies to coding agents as much as to people:
-
-- Do not hand-edit `scripts/explicit-any/baseline.json`. The only writes to it come from the check itself.
-- Do not run `--accept-new-any`. A maintainer who has already agreed to a raise records it with `npm run check:ts-any -- --write --accept-new-any`; it is never a way to get a green check.
-- A red `check:ts-any` is fixed by typing the value, not by making the check agree with the code.
-- When you cannot type it, stop. Leave the check red, say in the PR which value defeated you and why, and let a maintainer decide. An unfinished PR is fine; a silently raised baseline is not.
-
-**The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
-
-- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above.
-- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change. A rename is followed whether it is staged or already committed on your branch, so the count travels with the file either way.
-
-Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
+**MANDATORY - no explicit `any`.** Type the value, or use `unknown` and narrow it. `npm run check:ts-any` counts every explicit `any`, oxlint for the `<script>` block and the Vue compiler for template expressions, and fails on a single one. The same check runs on every PR, as `Npm - check ts-any`. When you cannot type a value, stop, leave the check red and say in the PR which value defeated you and why, so a maintainer can decide.
 
 ### Testing UI
 
@@ -304,7 +295,7 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
 
-`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
+`npm run check:ts-any` fails on any explicit `any`, so type the value or use `unknown` and narrow it.
 
 Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, skipping `*.spec.ts`, `*.test.ts` and `*.stories.ts`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
 
@@ -378,8 +369,8 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
-| `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
+| `KsIcon` / `KsIconButton` | Material Design icon display (the icon component goes in the default slot); icon-only button (always with `aria-label`), which takes `KsButton`'s `type` |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |
@@ -391,9 +382,9 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
+| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint. An `#action` slot puts a button on the right of the title (the approval banner's Review) |
 | `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
-| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
+| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close; `resizable` adds a drag handle, `size` sets the initial width (default 65%) and leaving full screen restores the width held before |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
 | `KsLoading` (`vKsLoading`) | Loading spinner directive |
@@ -405,7 +396,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters") |
+| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters"); `highlight` pulses the focus ring once, to point at the field a page has just opened on (the prefilled id of a child namespace) |
 | `KsInputNumber` | Numeric input with increment / decrement |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
 | `KsAutocomplete` | Autocomplete input with suggestions |
@@ -419,7 +410,7 @@ If your `<style>` block needs to exist:
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
 | `KsUpload` | File upload |
-| `KsForm` / `KsFormItem` | Form container with validation |
+| `KsForm` / `KsFormItem` | Form container with validation; `inline` on a `KsFormItem` puts the label and the control on one row, `stacked` puts each child of the content on its own full-width line (the no-code fields) |
 
 ### Data Display
 
@@ -427,7 +418,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
-| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. A filter key with `valueType: "number"` takes a number input; adding `Comparators.BETWEEN` to its comparators offers a min/max pair, sent as `GREATER_THAN_OR_EQUAL_TO` + `LESS_THAN_OR_EQUAL_TO` since the API has no between. A value option's `count` shows as a compact neutral badge next to it in the value lists. A filter key with `valueType: "radio"` takes `allLabel` / `allDescription` to name and describe its default option; selecting it omits the filter from the query. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
+| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. A filter key with `valueType: "number"` takes a number input; adding `Comparators.BETWEEN` to its comparators offers a min/max pair, sent as `GREATER_THAN_OR_EQUAL_TO` + `LESS_THAN_OR_EQUAL_TO` since the API has no between. A value option's `count` shows as a compact neutral badge next to it in the value lists. A root-level `filters[field][OP]` URL key whose field has no filter key in the configuration belongs to the page: the bar leaves it in place when it rewrites the query (the apps catalog's tag pills). `startDate` and `endDate` are the exception: the time range filter writes them, so the bar always clears them. A filter key with `valueType: "radio"` takes `allLabel` / `allDescription` to name and describe its default option; selecting it omits the filter from the query. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
 | `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it; `type="neutral"` is a grey pill for counts next to content (the KsFilter value counts) |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
@@ -435,7 +426,9 @@ If your `<style>` block needs to exist:
 | `KsAvatar` | Avatar with fallback |
 | `KsProgress` | Progress bar |
 | `KsPagination` | Pagination controls |
-| `KsEmpty` | Empty state placeholder |
+| `KsNoData` | Default empty state: an icon, a title and a description (`icon`, `title`, `description`, or the default slot for the description) |
+| `KsEmptyState` | Page-level empty state: an illustration (`image`), a title, a description, an `#action` slot and a `learnMore` link |
+| `KsEmpty` | Deprecated since 2.0 and rejected by eslint in `ui/` and `ui-ee/`: use `KsNoData` or `KsEmptyState` |
 | `KsSkeleton` | Skeleton loader |
 | `KsId` | Copyable ID display |
 | `KsDateAgo` | Relative time display ("2 hours ago") |
@@ -445,15 +438,16 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
+| `KsChangeReview` | A change to review before it is applied (a Terraform plan, an Ansible check run): a bar of each kind of change, a filter chip per named segment (`v-model:filter`) and a tab per slot (`v-model:tab`) |
 | `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
-| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
+| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces); `compact` scales headings down to the UI type scale for markdown inside a panel |
 
 ### Charts
 
 | Component | Purpose |
 |-----------|---------|
-| `KsEchart` | ECharts base wrapper (lazy-load) |
+| `KsEchart` | ECharts base wrapper (lazy-load); `seriesLabel` sets the text of a series or pie slice in the external tooltip |
 | `KsLine` / `KsBar` / `KsPie` | Line, bar, and pie charts (lazy-load) |
 | `KsGraph` | Graph / network visualization (lazy-load) |
 
@@ -484,9 +478,10 @@ If your `<style>` block needs to exist:
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
+- `sortFromQuery(route.query.sort, fallback)`: the `defaultSort` of a URL-driven `KsDataTable`, so its sort arrow matches the rows after a refresh
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
 - `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
-- `designSystemAsyncComponentsReady()` — the lazy imports of `KsMarkdown`, the charts and `KsEditor` still in flight, awaited by the unit setup after each test so a spec that mounts one is not torn down mid-import
+- `designSystemAsyncComponentsReady()` — the lazy imports of `KsMarkdown`, the charts and `KsEditor` still in flight, and the render of what they loaded, awaited by the unit setup after each test so a spec that mounts one is not torn down mid-import
 
 ## Composables
 
@@ -510,6 +505,7 @@ Token families currently exposed:
 - `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
 - `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
 - `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-chart-categorical-1` … `-10`: palette for chart categories with no status meaning; dashboard charts hand them out with `chartCategoryColors()`
 - `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
 - `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 

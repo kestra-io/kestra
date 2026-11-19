@@ -1,6 +1,6 @@
 <template>
     <div class="dag-depends-on" data-test="dag-depends-on">
-        <SourceBranch class="dag-depends-on-icon" aria-hidden="true" />
+        <SourceBranch class="dag-depends-on-icon" />
         <span class="dag-depends-on-label">{{ $t("block_editor.depends_on_label") }}</span>
         <KsSelect
             :modelValue="dependsOn ?? []"

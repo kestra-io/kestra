@@ -65,9 +65,9 @@ const memberNames = (raw: string): string[] =>
     splitTopLevelMembers(raw).map((m) => m.split(/[?:]/)[0].trim())
 
 type SlotImport = {
-    /** Local default-import name in src/index.ts, e.g. "topologyDetails". */
+    /** Local default-import name in src/index.ts, e.g. "executionArtifact". */
     localName: string
-    /** Module specifier as written, e.g. "./topology-details". */
+    /** Module specifier as written, e.g. "./execution-artifact". */
     moduleSpec: string
     /** Resolved source file for the slot module. */
     sourceFile: SourceFile

@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
@@ -18,7 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class ReadExecutionLogsTool implements AiPlatformTool {
+public class ReadExecutionLogsTool implements McpPlatformTool {
     private static final int MAX_LOGS = 500;
 
     private final LogDataStoreInterface logRepository;
@@ -38,8 +39,13 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
+    }
+
     @Tool(
-        name = "read-execution-logs",
+        name = "read_execution_logs",
         value = "Read the logs of a Kestra execution. `executionId` scopes to one execution; the optional per-field filters narrow the results (e.g. by task or level). Use this to diagnose why an execution failed or to summarize a run. "
             + "Returns an object { executionId, logs } where `logs` is an array of { timestamp, level, taskId, message } (empty when nothing matches); `taskId` is null for execution-level logs."
     )

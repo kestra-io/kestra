@@ -143,6 +143,7 @@
                 <KsTabPane :label="$t('logs')" name="logs">
                     <div class="tab-body">
                         <TaskRunLogs
+                            v-model:level="inspectLogLevel"
                             :executionId="selectedTask.execution?.id"
                             :taskRunIds="(selectedTask.taskRuns ?? []).map(taskRun => taskRun.id)"
                             @follow="emit('follow', $event)"
@@ -254,6 +255,8 @@
     import {useVueFlow} from "@vue-flow/core"
 
     import TaskRunLogs from "../executions/TaskRunLogs.vue"
+    import {defaultTaskRunLogLevel} from "../executions/taskRunLogLevel"
+    import type {LevelKey} from "../../utils/logs"
     import Vars from "../executions/Vars.vue"
     import MetricsTable from "../executions/MetricsTable.vue"
     import Restart from "../executions/overview/components/actions/Restart.vue"
@@ -613,6 +616,7 @@
     const inspectTab = ref<"logs" | "outputs" | "metrics">("logs")
     const isReplayPickerOpen = ref(false)
     const selectedTask = ref<DrawerTaskInspection | null>(null)
+    const inspectLogLevel = ref<LevelKey>(defaultTaskRunLogLevel())
     const taskRunOutputsById = ref<Record<string, Record<string, unknown>>>({})
     const loadingOutputsTaskRunIds = ref<Set<string>>(new Set())
     const replayExecution = ref<Execution>()

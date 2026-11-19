@@ -1,4 +1,4 @@
-import {afterAll, describe, it, expect, vi} from "vitest"
+import {afterAll, afterEach, describe, it, expect, vi} from "vitest"
 import {createPinia} from "pinia"
 import {computed, ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
@@ -147,6 +147,11 @@ function mountTaskEdit() {
 
 afterAll(() => taskComponentsReady())
 
+afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+})
+
 describe("TaskEdit jump into a collapsed drillable array item", () => {
     it("drills into the item and focuses its unset required field", async () => {
         // jsdom has no layout, so the real scrollIntoView would throw before scrollThenFocus
@@ -154,6 +159,9 @@ describe("TaskEdit jump into a collapsed drillable array item", () => {
         // jump has drilled in, so it cannot be stubbed individually ahead of time.
         const scrollIntoView = vi.fn()
         Element.prototype.scrollIntoView = scrollIntoView
+        // Own the frame clock and read the focus() call, so a spec sharing this worker cannot stub rAF or move focus away.
+        vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 0))
+        const focus = vi.spyOn(HTMLElement.prototype, "focus")
 
         const wrapper = mountTaskEdit()
         await flushPromises()
@@ -179,8 +187,9 @@ describe("TaskEdit jump into a collapsed drillable array item", () => {
         expect(target.exists()).toBe(true)
         expect(scrollIntoView).toHaveBeenCalled()
 
+        const textarea = target.element.querySelector("textarea")
         await vi.waitFor(() => {
-            expect(document.activeElement).toBe(target.element.querySelector("textarea"))
+            expect(focus.mock.contexts).toContain(textarea)
         }, {timeout: 2000, interval: 20})
     })
 })

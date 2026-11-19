@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.FlowBlockedException;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,6 +62,30 @@ class TriggerStateTest {
 
         assertThat(blocker.reason()).isEqualTo(Blocker.Reason.POLICY_CHECK_FAILED);
         assertThat(blocker.message()).doesNotContain("connection reset");
+    }
+
+    @Test
+    void shouldStayDisabledWhenExecutionTerminatesInAStateNotInStopAfter() {
+        TriggerState disabled = TriggerState.of(TRIGGER_ID, TriggerType.SCHEDULE, List.of(State.Type.FAILED), 0)
+            .disabled(clockAt(NOW), true);
+
+        assertThat(disabled.updateOnExecutionTerminated(clockAt(NOW), State.Type.SUCCESS).isDisabled()).isTrue();
+    }
+
+    @Test
+    void shouldStayDisabledWhenExecutionIsCreatedInAStateNotInStopAfter() {
+        TriggerState disabled = TriggerState.of(TRIGGER_ID, TriggerType.POLLING, List.of(State.Type.FAILED), 0)
+            .disabled(clockAt(NOW), true);
+
+        assertThat(disabled.updateOnExecutionCreated(clockAt(NOW), State.Type.CREATED).isDisabled()).isTrue();
+    }
+
+    @Test
+    void shouldDisableWhenExecutionTerminatesInAStopAfterState() {
+        TriggerState enabled = TriggerState.of(TRIGGER_ID, TriggerType.SCHEDULE, List.of(State.Type.FAILED), 0);
+
+        assertThat(enabled.updateOnExecutionTerminated(clockAt(NOW), State.Type.FAILED).isDisabled()).isTrue();
+        assertThat(enabled.updateOnExecutionTerminated(clockAt(NOW), State.Type.SUCCESS).isDisabled()).isFalse();
     }
 
     private static Clock clockAt(Instant instant) {

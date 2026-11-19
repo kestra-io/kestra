@@ -647,6 +647,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "not started"
+      },
+      "diff": {
+        "added": "added",
+        "removed": "removed",
+        "changed": "changed",
+        "renamed": "renamed",
+        "moved": "moved"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Graph",
+      "yaml": "YAML",
+      "unchanged": "{count} unchanged",
+      "graph_error": "The graph could not be drawn. Open the YAML tab to see the change.",
+      "status": {
+        "added": "Added",
+        "removed": "Removed",
+        "changed": "Changed",
+        "renamed": "Renamed",
+        "moved": "Moved"
       }
     },
     "show task logs": "Show task logs",
@@ -2485,6 +2505,13 @@
         "placeholder": "Tell me what to build…",
         "send": "Send",
         "stop": "Stop",
+        "usage": {
+          "remaining": "{percent}% left",
+          "help": "Share of this provider's AI usage limit left in the current window.",
+          "warning": "You are close to this provider's AI usage limit. Turns are refused once it is reached.",
+          "exceeded": "This provider's AI usage limit has been reached. It resets when the current period ends.",
+          "exceededUntil": "This provider's AI usage limit has been reached. It resets on {when}."
+        },
         "mode": {
           "ask": "Ask",
           "edit": "Edit",
@@ -2544,6 +2571,7 @@
           "generic": "Something went wrong. Please try again."
         },
         "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "emptyHelperNoFlow": "I can create or edit flows, generate tests, scaffold related files, or explain how Kestra works.",
         "suggestions": {
           "errorHandling": "Add error handling",
           "unitTest": "Generate a unit test",
@@ -2609,7 +2637,8 @@
           "applied": "Applied",
           "previewBanner": "Reviewing an AI-suggested change. The editor is read-only until you apply or dismiss it.",
           "applyTitle": "Apply flow",
-          "applyConfirm": "Save {namespace}.{id} as a draft revision for review? It will be created, or a new draft revision added if it already exists. Drafts aren't picked up by triggers or subflows until published.",
+          "applyDraftTitle": "Applying saves a draft revision.",
+          "applyDraftHint": "Nothing goes live yet. Triggers and subflows ignore drafts until you publish.",
           "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
           "applyError": "Couldn't apply the flow. Please try again.",
           "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",

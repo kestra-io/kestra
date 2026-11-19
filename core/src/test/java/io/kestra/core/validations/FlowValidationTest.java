@@ -188,6 +188,28 @@ class FlowValidationTest {
     }
 
     @Test
+    void shouldMatchInputIdLiterallyWhenCheckingDashedReferences() {
+        String flowTemplate = """
+            id: regex-id
+            namespace: io.kestra.tests
+            inputs:
+              - id: "a.b-c"
+                type: STRING
+                defaults: value
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ inputs.%s }}"
+            """;
+
+        Optional<ConstraintViolationException> unrelatedReference = modelValidator.isValid(YamlParser.parse(flowTemplate.formatted("aXb-c"), Flow.class));
+        Optional<ConstraintViolationException> literalReference = modelValidator.isValid(YamlParser.parse(flowTemplate.formatted("a.b-c"), Flow.class));
+
+        assertThat(unrelatedReference).isEmpty();
+        assertThat(literalReference).hasValueSatisfying(e -> assertThat(e.getMessage()).contains("Invalid input reference"));
+    }
+
+    @Test
     void validFlowShouldSucceed() {
         Flow flow = this.parse("flows/valids/minimal.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
@@ -317,6 +339,37 @@ class FlowValidationTest {
         // Then
         assertThat(validate).isPresent();
         assertThat(validate.get().getMessage()).contains("Missing inputs for Schedule Trigger 'every_minute', missing inputs: 'user2'");
+    }
+
+    @Test
+    void scheduledFlowNotSupplyingConditionalInput_valid() {
+        Flow flow = YamlParser.parse("""
+            id: dependson_schedule
+            namespace: company.team
+            inputs:
+              - id: initial_var
+                type: BOOL
+                defaults: false
+              - id: conditional_var
+                type: ARRAY
+                itemType: STRING
+                dependsOn:
+                  inputs:
+                    - initial_var
+                  condition: "{{ inputs.initial_var == true }}"
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ inputs.initial_var }}"
+            triggers:
+              - id: every_hour
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 * * * *"
+                inputs:
+                  initial_var: false
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
     }
 
     @Test

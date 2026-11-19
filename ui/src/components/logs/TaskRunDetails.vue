@@ -281,7 +281,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, onMounted, onBeforeUnmount, nextTick, useTemplateRef, type ComponentPublicInstance} from "vue"
+    import {computed, ref, watch, onMounted, onBeforeUnmount, nextTick, useTemplateRef, type ComponentPublicInstance, type CSSProperties} from "vue"
     import {logsFontSize} from "../../composables/useLogDisplay"
     import {useI18n} from "vue-i18n"
     import {RouterLink} from "vue-router"
@@ -293,7 +293,7 @@
     import {State, levelToRequestParams, type LevelFilterValue, type Scheduled, groupBy, throttle, dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes, storageKeys} from "../../utils/constants"
-    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "../../utils/virtualScroller"
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import type {Log} from "../../stores/logs"
@@ -339,10 +339,10 @@
         return "isGroup" in item
     }
 
-    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem" | "scrollToBottom">
+    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem">
 
     function isLogsScroller(el: unknown): el is LogsScroller {
-        return typeof el === "object" && el !== null && "scrollToItem" in el && "scrollToBottom" in el
+        return typeof el === "object" && el !== null && "scrollToItem" in el
     }
 
     type SubflowLogs = {expandAll: () => void; scrollToLog: (logId: string) => void}
@@ -406,7 +406,7 @@
         "scroller-update": []
     }>()
 
-    const FULLSCREEN_CARD_BODY_STYLE = {
+    const FULLSCREEN_CARD_BODY_STYLE: CSSProperties = {
         display: "flex",
         flexDirection: "column",
         flex: "1",
@@ -1082,9 +1082,12 @@
                 selectedAttemptNumberByTaskRunId.value[taskRun.id] ?? 0,
             ),
         )
-        shownAttemptsUid.value.forEach((uid) =>
-            logsScrollerRefs.value[uid]?.scrollToBottom(),
-        )
+        shownAttemptsUid.value.forEach((uid) => {
+            const items = displayItemsByAttemptUid.value[uid] ?? []
+            if (items.length > 0) {
+                logsScrollerRefs.value[uid]?.scrollToItem(items.length - 1)
+            }
+        })
 
         expandSubflows()
     }
@@ -1125,17 +1128,17 @@
                     taskRun.state.current === State.FAILED ||
                     taskRun.state.current === State.RUNNING
                 ) {
-                    const attemptNumber = taskRun.attempts
-                        ? taskRun.attempts.length - 1
-                        : (props.forcedAttemptNumber ?? 0)
-                    if (
-                        shownAttemptsUid.value.includes(
-                            `${taskRun.id}-${attemptNumber}`,
-                        )
-                    ) {
-                        logsScrollerRefs.value[
-                            `${taskRun.id}-${attemptNumber}`
-                        ]?.scrollToBottom()
+                    const attemptNumber =
+                        selectedAttemptNumberByTaskRunId.value[taskRun.id] ??
+                        (taskRun.attempts
+                            ? taskRun.attempts.length - 1
+                            : (props.forcedAttemptNumber ?? 0))
+                    const uid = attemptUid(taskRun.id, attemptNumber)
+                    if (shownAttemptsUid.value.includes(uid)) {
+                        const items = displayItemsByAttemptUid.value[uid] ?? []
+                        if (items.length > 0) {
+                            logsScrollerRefs.value[uid]?.scrollToItem(items.length - 1)
+                        }
                     }
                 }
             })

@@ -172,6 +172,53 @@ export type AiControllerFlowGenerationPrompt = FlowGenerationPrompt & {
 };
 
 /**
+ * Where a provider stands against its ceiling --- one type for both what the API answers and what the orchestrator enforces, so the figure shown and the figure enforced cannot drift apart.
+ */
+export type AiUsageStatus = {
+    /**
+     * the provider these figures are for, resolved from the default when the caller named none
+     */
+    providerId?: string | null;
+    /**
+     * whether this provider has limits switched on; when false every other field is empty
+     */
+    enabled?: boolean;
+    /**
+     * the lower bound the totals were summed from
+     */
+    windowStart?: string | null;
+    /**
+     * when the current period ends and spend starts again, absent while nothing is exhausted
+     */
+    availableAt?: string | null;
+    global?: AiUsageStatusAxis | null;
+    user?: AiUsageStatusAxis | null;
+    /**
+     * the remaining percentage below which a client should warn
+     */
+    warningThresholdPercent?: number;
+    exceeded?: boolean;
+    /**
+     * True once either axis is inside its warning threshold, so a client has one flag rather than two sums to compare.
+     */
+    warning?: boolean;
+    remainingPercent?: number;
+};
+
+/**
+ * One ceiling and what has been spent against it.
+ */
+export type AiUsageStatusAxis = {
+    weight?: number;
+    /**
+     * the ceiling, or zero when this axis has none configured --- reported for information and never exceeded
+     */
+    maxWeight?: number;
+    remainingPercent?: number;
+    exceeded?: boolean;
+};
+
+/**
  * Response body returned by batch mutating endpoints that accept the request and schedule processing asynchronously. The caller uses `operationId` to correlate logs and progress indicators; `totalItems` is the count of domain events submitted.
  */
 export type ApiAsyncOperationResponse = {
@@ -1793,7 +1840,7 @@ export type Output = {
     value: {
         [key: string]: unknown;
     } | string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
@@ -1810,11 +1857,13 @@ export type OutputControllerTaskOutputInformation = {
 export type OutputForExecution = {
     id: string;
     description?: string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
 };
+
+export type OutputType = 'STRING' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'YAML' | 'ASSET' | 'UNKNOWN';
 
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
@@ -2669,7 +2718,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME' | 'UNSCHEDULED';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE' | 'ASSET';
 
 export type ValidateConstraintViolation = {
     errors?: Array<ValidationError>;
@@ -4512,6 +4561,46 @@ export type ConfirmResponses = {
 
 export type ConfirmResponse = ConfirmResponses[keyof ConfirmResponses];
 
+export type UsageData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query?: {
+        /**
+         * the provider to report on, defaulting to the active one
+         */
+        providerId?: string | null;
+    };
+    url: '/api/v1/{tenant}/ai/usage';
+};
+
+export type UsageErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UsageError = UsageErrors[keyof UsageErrors];
+
+export type UsageResponses = {
+    /**
+     * usage 200 response
+     */
+    200: AiUsageStatus;
+};
+
+export type UsageResponse = UsageResponses[keyof UsageResponses];
+
 export type CreateBasicAuthData = {
     body: BasicAuthCredentials;
     path: {
@@ -4560,10 +4649,6 @@ export type SearchBlueprintsData = {
     };
     query?: {
         /**
-         * The sort of current page
-         */
-        sort?: string | null;
-        /**
          * The current page
          */
         page?: number;
@@ -4571,6 +4656,10 @@ export type SearchBlueprintsData = {
          * The current page size
          */
         size?: number;
+        /**
+         * The sort of current page
+         */
+        sort?: Array<string> | null;
         /**
          * A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected.
          */
@@ -4986,13 +5075,13 @@ export type SearchDashboardsData = {
          */
         size?: number;
         /**
-         * The filter query
-         */
-        q?: string | null;
-        /**
          * The sort of current page
          */
         sort?: Array<string> | null;
+        /**
+         * The filter query
+         */
+        q?: string | null;
     };
     url: '/api/v1/{tenant}/dashboards';
 };

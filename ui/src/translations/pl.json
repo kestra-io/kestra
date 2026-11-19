@@ -647,6 +647,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "nie rozpoczęto"
+      },
+      "diff": {
+        "added": "dodano",
+        "removed": "usunięto",
+        "changed": "zmieniono",
+        "renamed": "zmieniono nazwę",
+        "moved": "przeniesiono"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Graf",
+      "yaml": "YAML",
+      "unchanged": "{count} bez zmian",
+      "graph_error": "Nie udało się narysować grafu. Otwórz kartę YAML, aby zobaczyć zmianę.",
+      "status": {
+        "added": "Dodano",
+        "removed": "Usunięto",
+        "changed": "Zmieniono",
+        "renamed": "Zmieniono nazwę",
+        "moved": "Przeniesiono"
       }
     },
     "show task logs": "Pokaż logi Taska",
@@ -2485,6 +2505,13 @@
         "placeholder": "Powiedz mi, co zbudować…",
         "send": "Wyślij",
         "stop": "Zatrzymaj",
+        "usage": {
+          "remaining": "Pozostało {percent}%",
+          "help": "Pozostała część limitu użycia AI tego dostawcy w bieżącym oknie.",
+          "warning": "Zbliżasz się do limitu użycia AI tego dostawcy. Tury są odrzucane po jego osiągnięciu.",
+          "exceeded": "Limit użycia AI tego dostawcy został osiągnięty. Zostanie zresetowany po zakończeniu bieżącego okresu.",
+          "exceededUntil": "Limit użycia AI tego dostawcy został osiągnięty. Zostanie zresetowany {when}."
+        },
         "mode": {
           "ask": "Pytaj",
           "edit": "Edytuj",
@@ -2544,6 +2571,7 @@
           "generic": "Coś poszło nie tak. Spróbuj ponownie."
         },
         "emptyHelper": "Mogę edytować ten Flow, generować testy, tworzyć szkielety powiązanych plików lub wyjaśnić, jak to działa.",
+        "emptyHelperNoFlow": "Mogę tworzyć lub edytować Flowy, generować testy, tworzyć powiązane pliki lub wyjaśniać, jak działa Kestra.",
         "suggestions": {
           "errorHandling": "Dodaj obsługę błędów",
           "unitTest": "Wygeneruj test jednostkowy",
@@ -2609,7 +2637,8 @@
           "applied": "Zastosowano",
           "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI. Edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
           "applyTitle": "Zastosuj Flow",
-          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza. Wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
+          "applyDraftTitle": "Zastosowanie zapisuje wersję roboczą.",
+          "applyDraftHint": "Nic jeszcze nie działa na produkcji. Triggery i subflow ignorują wersje robocze, dopóki ich nie opublikujesz.",
           "applyConfirmDashboard": "Zastosować Dashboard {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
           "applyError": "Nie udało się zastosować Flow. Spróbuj ponownie.",
           "applyErrorDashboard": "Nie udało się zastosować Dashboardu. Spróbuj ponownie.",

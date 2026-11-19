@@ -9,7 +9,13 @@
         @dragstart="onDragStart"
         @dragend="emit(EVENTS.TASK_DRAG_END)"
     >
-        <div v-if="lod === 'pill'" class="node-pill" :style="pillStyle" data-test="topology-task-pill">
+        <div
+            v-if="lod === 'pill'"
+            class="node-pill"
+            :class="diffStatus ? `node-pill--diff-${diffStatus}` : ''"
+            :style="pillStyle"
+            data-test="topology-task-pill"
+        >
             <span class="node-pill-icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
                 <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
                     <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
@@ -30,7 +36,11 @@
             <div
                 class="node-core"
                 :style="cardStyle"
-                :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
+                :class="[
+                    classes,
+                    diffClasses,
+                    {'node-core--focused': focused, 'node-core--with-footer': $slots.footer},
+                ]"
             >
                 <div class="main-content">
                     <DragVertical v-if="movable" class="node-grip" />
@@ -65,6 +75,7 @@
                     <slot name="footer" />
                 </div>
             </div>
+            <DiffBadge v-if="diffStatus" class="node-diff-badge" :status="diffStatus" />
             <div v-if="hasStatusRow" class="node-status-row" :style="{height: `${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`}" data-test="node-status-row">
                 <slot name="status-row" />
             </div>
@@ -86,10 +97,15 @@
         type PluginIconMap,
     } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
+    import DiffBadge from "./DiffBadge.vue"
     import {EVENTS, NODE_SIZES, PILL_COMPENSATION} from "../utils/constants"
     import type {LodLevel} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
-    import {EXECUTION_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY} from "../injectionKeys"
+    import {
+        DIFF_INJECTION_KEY,
+        EXECUTION_INJECTION_KEY,
+        PILL_ZOOM_COMPENSATION_INJECTION_KEY,
+    } from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
     interface NodeEntity {
@@ -158,6 +174,7 @@
         const target = event.target as HTMLElement | null
         // The card is one big target, so anything that already has its own action keeps it.
         if (target?.closest("button, a, input, [role='button'], .vue-flow__handle")) return
+        if (diff?.value && diffStatus.value && props.id) diff.value.select(props.id)
         emit(EVENTS.CARD_CLICK, event)
     }
 
@@ -198,6 +215,14 @@
     }
 
     const execution = inject(EXECUTION_INJECTION_KEY, undefined)
+    const diff = inject(DIFF_INJECTION_KEY, undefined)
+    const diffStatus = computed(() => (props.id ? diff?.value?.statusByUid.get(props.id) : undefined))
+    const diffClasses = computed(() => diffStatus.value
+        ? [
+            `node-core--diff-${diffStatus.value}`,
+            {"node-core--diff-selected": diff?.value?.selectedUid === props.id},
+        ]
+        : [])
     const isExecution = computed(() => Boolean(execution?.value))
 
     const statusStyle = computed(() => getStatusStyle(props.state))
@@ -365,6 +390,60 @@
     /* The card the user picked up: it stays in the layout as the hole the task came out of. */
     .node-wrapper--dragging .node-core {
         opacity: 0.35;
+    }
+
+    .node-diff-badge {
+        position: absolute;
+        top: calc(var(--ks-spacing-2) * -1);
+        right: var(--ks-spacing-2);
+        z-index: 1;
+    }
+
+    .node-pill.node-pill--diff-unchanged,
+    .node-core.node-core--diff-unchanged {
+        opacity: 0.6;
+    }
+
+    .node-pill.node-pill--diff-added,
+    .node-core.node-core--diff-added {
+        border-color: var(--ks-border-success);
+        background-color: var(--ks-bg-success);
+    }
+
+    .node-pill.node-pill--diff-changed,
+    .node-core.node-core--diff-changed {
+        border-color: var(--ks-border-warning);
+        background-color: var(--ks-bg-warning);
+    }
+
+    .node-pill.node-pill--diff-renamed,
+    .node-pill.node-pill--diff-moved,
+    .node-core.node-core--diff-renamed {
+        border-color: var(--ks-border-info);
+        background-color: var(--ks-bg-info);
+    }
+
+    .node-pill.node-pill--diff-removed {
+        border: 1px dashed var(--ks-border-error);
+    }
+
+    .node-core.node-core--diff-removed {
+        border: 1px dashed var(--ks-border-error);
+        box-shadow: none;
+        opacity: 0.75;
+
+        .task-title {
+            text-decoration: line-through;
+        }
+    }
+
+    .node-core.node-core--diff-moved {
+        border: 1px dashed var(--ks-border-info);
+    }
+
+    .node-core.node-core--diff-selected {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: 2px;
     }
 
     .node-core {

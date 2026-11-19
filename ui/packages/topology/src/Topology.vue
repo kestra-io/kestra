@@ -254,7 +254,8 @@
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
     import {useViewportRefit} from "./composables/useViewportRefit"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY, DIFF_INJECTION_KEY} from "./injectionKeys"
+    import type {TaskDiffStatus} from "./utils/flowDiff"
     import type {LoopLaneData} from "./utils/loopOutcome"
     import BasicNode from "./nodes/BasicNode.vue"
     import {provideGlobalConfig} from "element-plus"
@@ -294,6 +295,8 @@
         focusedTaskId?: string;
         loopLanes?: Record<string, LoopLaneData>;
         artifactCounts?: Record<string, number>;
+        diffStatuses?: Map<string, TaskDiffStatus>;
+        selectedNodeUid?: string;
         // For Storybook / tests only, to start the canvas pre-zoomed at a given level of detail.
         defaultViewport?: Partial<ViewportTransform>;
     }>(), {
@@ -322,6 +325,8 @@
         focusedTaskId: undefined,
         loopLanes: undefined,
         artifactCounts: undefined,
+        diffStatuses: undefined,
+        selectedNodeUid: undefined,
         defaultViewport: undefined,
     })
 
@@ -364,6 +369,13 @@
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
     provide(LOOP_LANES_INJECTION_KEY, computed(() => props.loopLanes ?? {}))
     provide(ARTIFACT_COUNTS_INJECTION_KEY, computed(() => props.artifactCounts ?? {}))
+    provide(DIFF_INJECTION_KEY, computed(() => props.diffStatuses
+        ? {
+            statusByUid: props.diffStatuses,
+            selectedUid: props.selectedNodeUid,
+            select: (uid: string) => emit("select-node", uid),
+        }
+        : undefined))
 
     const initialFitDone = ref(false)
 
@@ -446,6 +458,7 @@
             EVENTS.MOVE_TASK,
             EVENTS.LOOP_STEP,
             EVENTS.LOOP_SCOPE_FAILED,
+            "select-node",
         ],
     )
 

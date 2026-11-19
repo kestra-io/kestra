@@ -539,6 +539,7 @@
                 const tokens = highlighter.codeToTokensWithThemes(value, {
                     lang: !lang || unavailable.has(lang) ? "text" : lang,
                     themes: {light: "kestra-light", dark: "kestra-dark"},
+                    tokenizeMaxLineLength: 1000,
                 })
                 result.set(key, ["yaml", "yml"].includes(lang) ? paintPebble(value, tokens, paintPebbleVariants) : tokens)
             } catch {

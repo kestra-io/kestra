@@ -365,8 +365,7 @@
     import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
-    import type {ExecutionControllerLastExecutionResponse, QueryFilter} from "@kestra-io/kestra-sdk"
-    import type {Flow} from "../../stores/flow"
+    import type {ExecutionControllerLastExecutionResponse, Flow, QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
     import {defaultTimeRange} from "../executions/timeRangeWiden"
 
@@ -536,7 +535,7 @@
             })
     }
 
-    const onRowClick = (item: Flow, column: {type?: string} | undefined, event: Event) => {
+    const onRowClick = (item: Flow, column: {type?: string} | null | undefined, event: Event) => {
         if (!isPlainRowActivation(column, event)) return
 
         router.push({

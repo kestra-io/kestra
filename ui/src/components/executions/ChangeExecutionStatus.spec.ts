@@ -1,18 +1,24 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
 import {h} from "vue"
+import {flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import ChangeExecutionStatus from "./ChangeExecutionStatus.vue"
-import type {Execution} from "../../stores/executions"
+import {useExecutionsStore, type Execution} from "../../stores/executions"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 const isAllowedMock = vi.fn().mockReturnValue(true)
+
+const {toastSuccess, toastError} = vi.hoisted(() => ({
+    toastSuccess: vi.fn(),
+    toastError: vi.fn(),
+}))
 
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {isAllowed: (...args: unknown[]) => isAllowedMock(...args)}}),
 }))
 
 vi.mock("../../utils/toast", () => ({
-    useToast: () => ({success: vi.fn(), error: vi.fn()}),
+    useToast: () => ({success: toastSuccess, error: toastError}),
 }))
 
 const messages = {
@@ -92,6 +98,14 @@ function mountChangeExecutionStatus(state: string) {
     })
 }
 
+async function openAndConfirm(wrapper: ReturnType<typeof mountChangeExecutionStatus>) {
+    await wrapper.get("[data-test=\"trigger\"]").trigger("click")
+    const confirm = wrapper.findAll("button").find((button) => button.text() === "Yes")
+    expect(confirm).toBeDefined()
+    await confirm!.trigger("click")
+    await flushPromises()
+}
+
 const RUNNING_FAMILY_STATES = ["SUBMITTED", "CREATED", "RUNNING", "KILLING", "PAUSED", "BREAKPOINT"]
 const FALSE_AFFORDANCE_STATES = ["KILLED", "RESTARTED", "QUEUED", "RETRYING"]
 const CHANGEABLE_STATES = ["FAILED", "WARNING", "SUCCESS", "CANCELLED", "RETRIED", "SKIPPED"]
@@ -100,6 +114,8 @@ describe("ChangeExecutionStatus", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         isAllowedMock.mockReturnValue(true)
+        toastSuccess.mockClear()
+        toastError.mockClear()
     })
 
     test.each(RUNNING_FAMILY_STATES)(
@@ -160,5 +176,46 @@ describe("ChangeExecutionStatus", () => {
 
         await trigger.trigger("click")
         expect(wrapper.find("[data-test=\"body\"]").exists()).toBe(false)
+    })
+
+    test("shouldReportChangeStateFailureWhenRequestRejects", async () => {
+        const wrapper = mountChangeExecutionStatus("FAILED")
+        const store = useExecutionsStore()
+        vi.spyOn(store, "changeExecutionStatus").mockRejectedValue(new Error("boom"))
+        const followExecution = vi.spyOn(store, "followExecution").mockImplementation(() => undefined)
+
+        await openAndConfirm(wrapper)
+
+        expect(toastError).toHaveBeenCalledOnce()
+        expect(toastSuccess).not.toHaveBeenCalled()
+        expect(followExecution).toHaveBeenCalled()
+    })
+
+    test("shouldLeaveErrorReportingToGlobalToastWhenFailureIsAlreadyReported", async () => {
+        const wrapper = mountChangeExecutionStatus("FAILED")
+        const store = useExecutionsStore()
+        vi.spyOn(store, "changeExecutionStatus").mockRejectedValue(Object.assign(new Error("conflict"), {
+            status: 409,
+            response: {data: {title: "Conflict"}},
+        }))
+        vi.spyOn(store, "followExecution").mockImplementation(() => undefined)
+
+        await openAndConfirm(wrapper)
+
+        expect(toastError).not.toHaveBeenCalled()
+        expect(toastSuccess).not.toHaveBeenCalled()
+    })
+
+    test("shouldToastSuccessWhenChangeStateSucceeds", async () => {
+        const wrapper = mountChangeExecutionStatus("FAILED")
+        const store = useExecutionsStore()
+        vi.spyOn(store, "changeExecutionStatus").mockResolvedValue(buildExecution("SUCCESS"))
+        vi.spyOn(store, "waitForStateChange").mockResolvedValue(buildExecution("SUCCESS"))
+        vi.spyOn(store, "followExecution").mockImplementation(() => undefined)
+
+        await openAndConfirm(wrapper)
+
+        expect(toastSuccess).toHaveBeenCalledOnce()
+        expect(toastError).not.toHaveBeenCalled()
     })
 })

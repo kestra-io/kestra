@@ -647,6 +647,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "未開始"
+      },
+      "diff": {
+        "added": "追加",
+        "removed": "削除",
+        "changed": "変更",
+        "renamed": "名前変更",
+        "moved": "移動"
+      }
+    },
+    "flow_change_review": {
+      "graph": "グラフ",
+      "yaml": "YAML",
+      "unchanged": "{count} 件は変更なし",
+      "graph_error": "グラフを描画できませんでした。変更を確認するには YAML タブを開いてください。",
+      "status": {
+        "added": "追加",
+        "removed": "削除",
+        "changed": "変更",
+        "renamed": "名前変更",
+        "moved": "移動"
       }
     },
     "show task logs": "Task Logsを表示",
@@ -2616,7 +2636,8 @@
           "applied": "適用済み",
           "previewBanner": "AI による変更案を確認中です。適用または却下するまでエディターは読み取り専用になります。",
           "applyTitle": "flow を適用",
-          "applyConfirm": "{namespace}.{id} をレビュー用のドラフトリビジョンとして保存しますか？作成されるか、既に存在する場合は新しいドラフトリビジョンが追加されます。ドラフトは公開されるまで trigger や subflow から参照されません。",
+          "applyDraftTitle": "適用するとドラフトリビジョンが保存されます。",
+          "applyDraftHint": "まだ何も本番には反映されません。公開するまで、trigger と subflow はドラフトを無視します。",
           "applyConfirmDashboard": "ダッシュボード {id} を適用しますか？作成されます。既に存在する場合は上書きされます。",
           "applyError": "flowの適用に失敗しました。もう一度お試しください。",
           "applyErrorDashboard": "ダッシュボードを適用できませんでした。もう一度お試しください。",

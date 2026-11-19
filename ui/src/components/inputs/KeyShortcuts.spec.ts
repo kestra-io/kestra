@@ -3,7 +3,7 @@ import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KeyShortcuts from "./KeyShortcuts.vue"
 import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
-import {KsDialog, KsIcon, KsTag} from "@kestra-io/design-system"
+import {KsDialog, KsIcon, KsTag, KsTooltip} from "@kestra-io/design-system"
 import en from "../../translations/en.json"
 
 const i18n = createI18n({legacy: false, locale: "en", messages: {en}})
@@ -51,7 +51,7 @@ describe("KeyShortcuts", () => {
 
         const wrapper = mount(KeyShortcuts, {
             attachTo: document.body,
-            global: {plugins: [i18n], components: {KsDialog, KsIcon, KsTag}},
+            global: {plugins: [i18n], components: {KsDialog, KsIcon, KsTag, KsTooltip}},
         })
         await wrapper.vm.$nextTick()
 

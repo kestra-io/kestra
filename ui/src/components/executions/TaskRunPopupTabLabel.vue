@@ -1,6 +1,6 @@
 <template>
     <span class="tab-label">
-        <KsIcon v-if="icon" size="xs"><component :is="icon" /></KsIcon>
+        <KsIcon v-if="icon" size="sm"><component :is="icon" /></KsIcon>
         <span>{{ label }}</span>
         <span v-if="status === 'loading'" class="tab-label-skeleton" data-test="tab-count-loading">
             <KsSkeleton animated :rows="1" />

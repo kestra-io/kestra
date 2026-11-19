@@ -31,6 +31,6 @@
        `.diff-view` compiles to `.diff-view[data-v-...]`, also (0,2,0): a tie, decided by source order
        rather than lost outright. `.ks-editor.diff-view[data-v-...]` is (0,3,0) and wins cleanly. */
     .ks-editor.diff-view {
-        height: 20rem;
+        height: var(--diff-view-height, 20rem);
     }
 </style>

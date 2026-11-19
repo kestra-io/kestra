@@ -75,6 +75,13 @@
         "loop-state-bar": {
             "item": "{count} {state}",
             "not-started": "not started"
+        },
+        "diff": {
+            "added": "added",
+            "removed": "removed",
+            "changed": "changed",
+            "renamed": "renamed",
+            "moved": "moved"
         }
     },
     "state_history": {

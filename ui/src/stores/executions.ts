@@ -340,7 +340,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         }).then(response => response.data)
     }
 
-    /** Multipart with file inputs, so it stays on the raw client. Never set Content-Type: the browser adds the boundary. */
     const isResumeAllowed = (id: string) => {
         return axios.get<{allowed: boolean}>(`${apiUrl()}/executions/${id}/actions/resume/allowed`)
             .then(response => response.data.allowed)
@@ -350,6 +349,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             })
     }
 
+    /** Multipart with file inputs, so it stays on the raw client. Never set Content-Type: the browser adds the boundary. */
     const validateResume = (options: { id: string; formData?: FormData }) => {
         return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.id}/actions/resume/validate`, Utils.toFormData(options.formData ?? {}), {
             timeout: 60 * 60 * 1000,

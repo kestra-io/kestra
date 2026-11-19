@@ -13,7 +13,7 @@ describe("normalizeStatus", () => {
         "should keep the known status %s",
         (status) => {
             expect(normalizeStatus(status)).toBe(status)
-        }
+        },
     )
 
     it("should fall back to unknown for an unrecognised or missing status", () => {
@@ -38,7 +38,7 @@ describe("statusIconOf", () => {
 
     it("should use four distinct icons for the four known statuses", () => {
         const icons = ["fresh", "stale", "failed", "unknown"].map((status) =>
-            statusIconOf(status)
+            statusIconOf(status),
         )
 
         expect(new Set(icons).size).toBe(4)

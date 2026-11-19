@@ -36,7 +36,10 @@
             {{ $t("concurrency_limit.warning") }}
         </KsAlert>
         <br>
-        <KsInputNumber v-model="newRunningCount" :min="0" />
+        <KsInputNumber v-model="newRunningCount" data-test="running-count"/>
+        <div v-if="!isRunningCountValid" class="running-count-error" role="alert" data-test="running-count-error">
+            {{ $t("concurrency_limit.invalid_running_count", {max: MAX_RUNNING_COUNT.toLocaleString()}) }}
+        </div>
         <template #footer>
             <KsButton @click="editRunning = false">
                 {{ $t("cancel") }}
@@ -113,9 +116,13 @@
         }
     }
 
+    const MAX_RUNNING_COUNT = 2_147_483_647
     const editRunning = ref(false)
     const newRunningCount = ref<number>()
-    const isRunningCountValid = computed(() => typeof newRunningCount.value === "number")
+    const isRunningCountValid = computed(() => {
+        const value = newRunningCount.value
+        return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= MAX_RUNNING_COUNT
+    })
     const editingRow = ref<ConcurrencyLimit|null>(null)
 
     const isEditDirty = computed(() => editingRow.value != null && newRunningCount.value !== editingRow.value.running)
@@ -163,6 +170,12 @@
 </script>
 
 <style scoped>
+    .running-count-error {
+        margin-top: .5rem;
+        color: var(--ks-content-alert);
+        font-size: var(--ks-font-size-sm);
+    }
+
     .edit-running {
         border: solid 1px transparent;
         background: none;

@@ -89,6 +89,12 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-killed-after-execution.yml" }, tenantId = "flow-concurrency-killed-after-execution")
+    void flowConcurrencyKilledWithAfterExecution() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyKilledWithAfterExecution("flow-concurrency-killed-after-execution");
+    }
+
+    @Test
     @FlakyTest(description = "Only flaky in CI")
     @LoadFlows(value = { "flows/valids/flow-concurrency-queue-killed.yml" }, tenantId = "flow-concurrency-queue-killed")
     void flowConcurrencyQueueKilled() throws Exception {

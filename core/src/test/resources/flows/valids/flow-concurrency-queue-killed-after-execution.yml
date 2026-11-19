@@ -1,0 +1,16 @@
+id: flow-concurrency-queue-killed-after-execution
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT1M
+
+afterExecution:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: done

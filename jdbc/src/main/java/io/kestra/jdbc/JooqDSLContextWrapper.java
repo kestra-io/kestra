@@ -82,17 +82,43 @@ public class JooqDSLContextWrapper {
         .retryerIf(DEADLOCK_PREDICATE);
 
     public void transaction(TransactionalRunnable transactional) {
+        if (isTransactionBound()) {
+            runTransaction(transactional);
+            return;
+        }
+
         DEADLOCK_RETRYER.<Void> run(
             () ->
             {
-                try {
-                    dslContext.transaction(transactional);
-                } catch (RuntimeException e) {
-                    throw connectionFailure(e);
-                }
+                runTransaction(transactional);
                 return null;
             }
         );
+    }
+
+    /**
+     * A transaction joined to the one already bound to the thread is never retried here: after a deadlock the
+     * database has aborted the whole transaction, so a retry can only fail again. The failure propagates to the
+     * code that owns the transaction, which retries it from the start.
+     */
+    private boolean isTransactionBound() {
+        return connectionOperations != null && connectionOperations.findConnectionStatus().isPresent();
+    }
+
+    private void runTransaction(TransactionalRunnable transactional) {
+        try {
+            dslContext.transaction(transactional);
+        } catch (RuntimeException e) {
+            throw connectionFailure(e);
+        }
+    }
+
+    private <T> T runTransactionResult(TransactionalCallable<T> transactional) {
+        try {
+            return dslContext.transactionResult(transactional);
+        } catch (RuntimeException e) {
+            throw connectionFailure(e);
+        }
     }
 
     /**
@@ -103,7 +129,7 @@ public class JooqDSLContextWrapper {
      * so a failure still marks the surrounding transaction as rollback-only.
      */
     public void joinTransactionIfPresent(TransactionalRunnable transactional) {
-        if (connectionOperations != null && connectionOperations.findConnectionStatus().isPresent()) {
+        if (isTransactionBound()) {
             transaction(transactional);
             return;
         }
@@ -142,16 +168,11 @@ public class JooqDSLContextWrapper {
     }
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {
-        return DEADLOCK_RETRYER.run(
-            () ->
-            {
-                try {
-                    return dslContext.transactionResult(transactional);
-                } catch (RuntimeException e) {
-                    throw connectionFailure(e);
-                }
-            }
-        );
+        if (isTransactionBound()) {
+            return runTransactionResult(transactional);
+        }
+
+        return DEADLOCK_RETRYER.run(() -> runTransactionResult(transactional));
     }
 
     /**
@@ -203,6 +224,13 @@ public class JooqDSLContextWrapper {
                 return null;
             }
         );
+    }
+
+    /**
+     * @return whether the failure is a deadlock, a serialization failure or a lock wait timeout, as retried by the wrapper
+     */
+    public static boolean isDeadlock(Throwable e) {
+        return DEADLOCK_PREDICATE.test(e);
     }
 
     /**

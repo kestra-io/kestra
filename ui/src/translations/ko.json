@@ -647,6 +647,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "시작되지 않음"
+      },
+      "diff": {
+        "added": "추가됨",
+        "removed": "제거됨",
+        "changed": "변경됨",
+        "renamed": "이름 변경됨",
+        "moved": "이동됨"
+      }
+    },
+    "flow_change_review": {
+      "graph": "그래프",
+      "yaml": "YAML",
+      "unchanged": "{count}개 변경 없음",
+      "graph_error": "그래프를 그릴 수 없습니다. 변경 내용을 보려면 YAML 탭을 여세요.",
+      "status": {
+        "added": "추가됨",
+        "removed": "제거됨",
+        "changed": "변경됨",
+        "renamed": "이름 변경됨",
+        "moved": "이동됨"
       }
     },
     "show task logs": "Task Logs 보기",
@@ -2616,7 +2636,8 @@
           "applied": "적용됨",
           "previewBanner": "AI가 제안한 변경 사항을 검토 중입니다. 적용하거나 무시할 때까지 에디터는 읽기 전용입니다.",
           "applyTitle": "flow 적용",
-          "applyConfirm": "{namespace}.{id}를 검토를 위한 드래프트 리비전으로 저장하시겠습니까? 생성되거나, 이미 존재하는 경우 새 드래프트 리비전이 추가됩니다. 드래프트는 게시되기 전까지 trigger나 subflow에서 사용되지 않습니다.",
+          "applyDraftTitle": "적용하면 드래프트 리비전이 저장됩니다.",
+          "applyDraftHint": "아직 아무것도 운영에 반영되지 않습니다. 게시하기 전까지 trigger와 subflow는 드래프트를 무시합니다.",
           "applyConfirmDashboard": "대시보드 {id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
           "applyError": "flow를 적용할 수 없습니다. 다시 시도해주세요.",
           "applyErrorDashboard": "대시보드를 적용할 수 없었습니다. 다시 시도해 주세요.",

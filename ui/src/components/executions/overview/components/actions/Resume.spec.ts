@@ -1,8 +1,9 @@
 import {afterEach, describe, expect, it, vi} from "vitest"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
 import {defineComponent, nextTick} from "vue"
 import {flushPromises, type VueWrapper} from "@vue/test-utils"
 import {i18nMount} from "../../../../../../tests/unit/i18nMount"
+import {routedPinia} from "../../../../../../tests/unit/memoryRouter"
 import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
 
 vi.mock("override/stores/auth", () => ({
@@ -28,7 +29,7 @@ afterEach(() => mounted.splice(0).forEach((wrapper) => wrapper.unmount()))
 
 describe("Resume", () => {
     it("resumes with the inputs of a FORM under their dotted id, next to the other inputs", async () => {
-        setActivePinia(createPinia())
+        setActivePinia(routedPinia())
         const executionsStore = useExecutionsStore()
         executionsStore.flow = {
             id: "flow1",

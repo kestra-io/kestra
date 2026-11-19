@@ -647,6 +647,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "non avviato"
+      },
+      "diff": {
+        "added": "aggiunto",
+        "removed": "rimosso",
+        "changed": "modificato",
+        "renamed": "rinominato",
+        "moved": "spostato"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "unchanged": "{count} invariati",
+      "graph_error": "Impossibile disegnare il grafo. Apri la scheda YAML per vedere la modifica.",
+      "status": {
+        "added": "Aggiunto",
+        "removed": "Rimosso",
+        "changed": "Modificato",
+        "renamed": "Rinominato",
+        "moved": "Spostato"
       }
     },
     "show task logs": "Mostra task logs",
@@ -2616,7 +2636,8 @@
           "applied": "Applicato",
           "previewBanner": "Stai esaminando una modifica suggerita dall'IA: l'editor è di sola lettura finché non la applichi o la ignori.",
           "applyTitle": "Applica flow",
-          "applyConfirm": "Salvare il flow {namespace}.{id} come revisione bozza per la revisione? Verrà creato, oppure verrà aggiunta una nuova revisione bozza se esiste già. Le bozze non vengono considerate da trigger o subflow finché non vengono pubblicate.",
+          "applyDraftTitle": "L'applicazione salva una revisione bozza.",
+          "applyDraftHint": "Nulla va ancora in produzione. Trigger e subflow ignorano le bozze finché non pubblichi.",
           "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
           "applyError": "Impossibile applicare il flow. Riprova.",
           "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",

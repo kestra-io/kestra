@@ -31,6 +31,22 @@ class RegisteredPluginTest {
     }
 
     @Test
+    void shouldNotFlagMultiColorIconAsMonochromeWhenCurrentColorIsOverriddenByStyles() {
+        Optional<RegisteredPlugin.IconAndMonochrome> icon = core().iconAndMonochrome("test.icons.IllustratorExport");
+
+        assertThat(icon).isPresent();
+        assertThat(icon.get().monochrome()).isFalse();
+    }
+
+    @Test
+    void shouldFlagIconPaintedWithCurrentColorInStylesAsMonochrome() {
+        Optional<RegisteredPlugin.IconAndMonochrome> icon = core().iconAndMonochrome("test.icons.StyledCurrentColor");
+
+        assertThat(icon).isPresent();
+        assertThat(icon.get().monochrome()).isTrue();
+    }
+
+    @Test
     void shouldReturnEmptyWhenIconDoesNotExist() {
         Optional<RegisteredPlugin.IconAndMonochrome> icon = core().iconAndMonochrome("io.kestra.plugin.unknown.Task");
 

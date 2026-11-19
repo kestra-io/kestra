@@ -13,10 +13,10 @@
 | genuine (our code): camelCase data attribute renders without its dash | 0 |
 | genuine (our code): global directive missing from GlobalDirectives | 0 |
 | expected v4: unknown custom element / component | 9 |
-| expected v4: v-model write-back of defineModel<T>() (T | undefined) | 92 |
-| expected v4: unknown prop or fallthrough attr (checkUnknownProps always on) | 23 |
+| expected v4: v-model write-back of defineModel<T>() (T | undefined) | 93 |
+| expected v4: unknown prop or fallthrough attr (checkUnknownProps always on) | 16 |
 | unclassified | 1 |
-| **total** | **402** |
+| **total** | **396** |
 
 Unclassified:
 

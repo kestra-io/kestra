@@ -288,6 +288,7 @@ describe("useTaskRunPopupData", () => {
     })
 
     it("the logs count requests the task run's attempt once and falls back to the page length without a total", async () => {
+        logTaskRunId.value = "log-tr1"
         searchLogs.mockResolvedValue({results: [{}, {}, {}]})
         const data = useTaskRunPopupData(createSource())
         await flushPromises()
@@ -297,7 +298,7 @@ describe("useTaskRunPopupData", () => {
             filters: [
                 {field: "executionId", operation: "EQUALS", value: "e1"},
                 {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "INFO"},
-                {field: "taskRunId", operation: "EQUALS", value: "tr1"},
+                {field: "taskRunId", operation: "EQUALS", value: "log-tr1"},
                 {field: "attemptNumber", operation: "EQUALS", value: "0"},
             ],
             page: 1,

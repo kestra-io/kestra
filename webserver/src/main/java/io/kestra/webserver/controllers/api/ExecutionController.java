@@ -1907,6 +1907,19 @@ public class ExecutionController {
         });
     }
 
+    public record ApiResumeAllowed(@Schema(description = "Whether the current user may resume the paused execution") boolean allowed) {
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/actions/resume/allowed")
+    @Operation(tags = { "Executions" }, summary = "Tell whether the current user may resume a paused execution")
+    @ApiResponse(responseCode = "200", description = "On success")
+    @ApiResponse(responseCode = "404", description = "if the execution does not exist")
+    public ApiResumeAllowed isResumeAllowed(@Parameter(description = "The execution id") @PathVariable String executionId) {
+        executionService.getExecution(tenantService.resolveTenant(), executionId, true);
+        return new ApiResumeAllowed(true);
+    }
+
     protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution, Flow flow) {
         try {
             if (executionService.isPausedOnApproval(execution, flow)) {

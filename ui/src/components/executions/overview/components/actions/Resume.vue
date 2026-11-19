@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import Play from "vue-material-design-icons/Play.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
@@ -64,13 +64,28 @@
     const form = ref<FormInstance | null>(null)
     const submitAttempted = ref(false)
 
-    const enabled = computed(() => {
-        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
-            return false
-        }
+    const permitted = computed(() =>
+        authStore.user?.isAllowed(resource.EXECUTION, action.RESUME, props.execution.namespace) === true
+        && State.isPaused(props.execution.state.current),
+    )
+    const allowed = ref(false)
 
-        return State.isPaused(props.execution.state.current)
-    })
+    watch(
+        [permitted, () => props.execution.id, () => props.execution.state.current],
+        async ([isPermitted, id]) => {
+            allowed.value = false
+            if (!isPermitted) {
+                return
+            }
+            const isAllowed = await executionsStore.isResumeAllowed(id)
+            if (id === props.execution.id && permitted.value) {
+                allowed.value = isAllowed
+            }
+        },
+        {immediate: true},
+    )
+
+    const enabled = computed(() => permitted.value && allowed.value)
 
     const inputsList = computed<InputMetaData[]>(() => {
         const findTaskRunByState = ExecutionUtils.findTaskRunsByState(props.execution, State.PAUSED)

@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect} from "storybook/test"
+import {expect, waitFor} from "storybook/test"
 import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
@@ -36,6 +36,7 @@ const meta: Meta<typeof Resume> = {
                 const executionsStore = useExecutionsStore()
                 executionsStore.loadFlowForExecution = async () => flow
                 executionsStore.resume = async () => execution as Execution
+                executionsStore.isResumeAllowed = async () => true
             },
             components: {story},
             plugins: [i18n, KestraDesignSystem, pinia],
@@ -64,7 +65,7 @@ export const PrimaryAction: Story = {
         template: "<Resume :execution=\"execution\" type=\"primary\" />",
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector("button.kel-button--primary")).toBeTruthy()
+        await waitFor(() => expect(canvasElement.querySelector("button.kel-button--primary")).toBeTruthy())
     },
 }
 
@@ -78,7 +79,7 @@ export const DropdownItem: Story = {
         template: "<Resume :execution=\"execution\" />",
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector("button.kel-button")).toBeTruthy()
+        await waitFor(() => expect(canvasElement.querySelector("button.kel-button")).toBeTruthy())
         await expect(canvasElement.querySelector("button.kel-button--primary")).toBeFalsy()
     },
 }

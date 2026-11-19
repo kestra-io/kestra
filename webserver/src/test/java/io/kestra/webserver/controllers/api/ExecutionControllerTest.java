@@ -1185,6 +1185,28 @@ class ExecutionControllerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
+    @Test
+    void shouldAllowResumeWhenTheExecutionExists() {
+        Execution execution = runningExecution();
+
+        Map<?, ?> response = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/actions/resume/allowed"),
+            Map.class
+        );
+
+        assertThat(response.get("allowed")).isEqualTo(true);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenCheckingResumeOfAnUnknownExecution() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + IdUtils.create() + "/actions/resume/allowed"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
     /**
      * A running execution holding, in order: a running parent task run, a running child of that parent,
      * a terminated child of that parent, and a running task run of another branch.

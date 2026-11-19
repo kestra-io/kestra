@@ -15,8 +15,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.events.TriggerEvent;
-import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 class TriggerSchedulerMonitorTest {
 
     private static final int TEST_VNODE = 0;
-    private static final Duration RECOVERY_DELAY = Duration.ofMinutes(5);
+    private static final Duration LOCK_TIMEOUT = Duration.ofMinutes(5);
 
     private TriggerEventQueue triggerEventQueue;
     private MetricRegistry metricRegistry;
@@ -74,24 +74,21 @@ class TriggerSchedulerMonitorTest {
         triggerEventQueue = mock(TriggerEventQueue.class);
         when(metricRegistry.counter(anyString(), anyString(), any(String[].class))).thenReturn(mock(Counter.class));
 
-        monitor = monitorWithRecoveryDelay(null);
-    }
-
-    private TriggerSchedulerMonitor monitorWithRecoveryDelay(Duration recoveryDelay) {
-        return new TriggerSchedulerMonitor(
-            metricRegistry, executionRepository, triggerStateStore, schedulerProvider, triggerEventQueue, Optional.ofNullable(recoveryDelay)
+        monitor = new TriggerSchedulerMonitor(
+            metricRegistry, executionRepository, triggerStateStore, schedulerProvider, triggerEventQueue,
+            new SchedulerConfiguration(16, Duration.ofSeconds(5), 100, LOCK_TIMEOUT)
         );
     }
 
     @Test
-    void shouldResendTerminationWhenLockingExecutionTerminatedBeforeTheRecoveryDelay() {
+    void shouldResendTerminationWhenLockingExecutionTerminatedLongerAgoThanTheLockTimeout() {
         // Given a trigger still locked by an execution that ended an hour ago
         triggerStateStore.save(lockedTriggerOf("schedule-trigger", TriggerType.SCHEDULE, "exec-1"));
         Instant endDate = Instant.now().minus(Duration.ofHours(1));
         when(executionRepository.findByIdWithoutAcl("tenant", "exec-1")).thenReturn(Optional.of(execution("exec-1", State.Type.SUCCESS, endDate)));
 
         // When
-        monitorWithRecoveryDelay(RECOVERY_DELAY).run();
+        monitor.run();
 
         // Then the lost termination is sent again, fenced by the locking execution id
         ArgumentCaptor<TriggerEvent> event = ArgumentCaptor.forClass(TriggerEvent.class);
@@ -103,47 +100,56 @@ class TriggerSchedulerMonitorTest {
     }
 
     @Test
-    void shouldReleaseLockWhenLockingExecutionNoLongerExists() {
-        // Given a trigger locked for longer than the recovery delay by an execution that cannot be found
-        triggerStateStore.save(lockedTriggerOf("schedule-trigger", TriggerType.SCHEDULE, "exec-1", Instant.now().minus(Duration.ofHours(1))));
+    void shouldKeepLockWhenLockingExecutionCannotBeFound() {
+        // Given a trigger locked for a day by an execution the executor may not have created yet
+        triggerStateStore.save(lockedTriggerOf("schedule-trigger", TriggerType.SCHEDULE, "exec-1", Instant.now().minus(Duration.ofDays(1))));
         when(executionRepository.findByIdWithoutAcl("tenant", "exec-1")).thenReturn(Optional.empty());
 
         // When
-        monitorWithRecoveryDelay(RECOVERY_DELAY).run();
-
-        // Then
-        ArgumentCaptor<TriggerEvent> event = ArgumentCaptor.forClass(TriggerEvent.class);
-        verify(triggerEventQueue).send(event.capture());
-        assertThat(event.getValue()).isInstanceOfSatisfying(
-            TriggerExecutionDeleted.class, deleted -> assertThat(deleted.executionId()).isEqualTo("exec-1")
-        );
-    }
-
-    @Test
-    void shouldKeepLockWhenRecoveryIsNotConfigured() {
-        // Given one trigger locked by a long-terminated execution and one by a missing execution
-        triggerStateStore.save(lockedTriggerOf("terminated-trigger", TriggerType.SCHEDULE, "exec-1"));
-        triggerStateStore.save(lockedTriggerOf("missing-trigger", TriggerType.SCHEDULE, "exec-2", Instant.now().minus(Duration.ofDays(1))));
-        when(executionRepository.findByIdWithoutAcl("tenant", "exec-1"))
-            .thenReturn(Optional.of(execution("exec-1", State.Type.SUCCESS, Instant.now().minus(Duration.ofDays(1)))));
-        when(executionRepository.findByIdWithoutAcl("tenant", "exec-2")).thenReturn(Optional.empty());
-
-        // When the monitor runs without a recovery delay
         monitor.run();
 
-        // Then nothing is released
+        // Then the lock is kept, as releasing it could start a second execution for the same trigger
         verify(triggerEventQueue, never()).send(any());
     }
 
     @Test
-    void shouldKeepLockWhenLockingExecutionTerminatedWithinTheRecoveryDelay() {
+    void shouldReleaseLockOnlyOnceWhenTheReleaseIsNotAppliedYet() {
+        // Given a trigger still showing its terminated execution after the first release, the event queue lagging
+        triggerStateStore.save(lockedTriggerOf("schedule-trigger", TriggerType.SCHEDULE, "exec-1"));
+        when(executionRepository.findByIdWithoutAcl("tenant", "exec-1"))
+            .thenReturn(Optional.of(execution("exec-1", State.Type.SUCCESS, Instant.now().minus(Duration.ofHours(1)))));
+
+        // When the monitor runs on two ticks
+        monitor.run();
+        monitor.run();
+
+        // Then the release is sent once, as a second copy could unlock a newer worker-dispatch lock
+        verify(triggerEventQueue, times(1)).send(any());
+    }
+
+    @Test
+    void shouldKeepWorkerDispatchLock() {
+        // Given a trigger locked at worker dispatch, so with no execution id, whose last execution ended long ago
+        triggerStateStore.save(lockedTriggerOf("polling-trigger", TriggerType.POLLING, null, Instant.now().minus(Duration.ofHours(1))));
+        when(executionRepository.findAllByTrigger(any()))
+            .thenReturn(Flux.just(execution("exec-1", State.Type.SUCCESS, Instant.now().minus(Duration.ofHours(1)))));
+
+        // When
+        monitor.run();
+
+        // Then the lock is left to TriggerWorkerLost
+        verify(triggerEventQueue, never()).send(any());
+    }
+
+    @Test
+    void shouldKeepLockWhenLockingExecutionTerminatedWithinTheLockTimeout() {
         // Given an execution that just ended: the Executor's own termination may still be in flight
         triggerStateStore.save(lockedTriggerOf("schedule-trigger", TriggerType.SCHEDULE, "exec-1"));
         when(executionRepository.findByIdWithoutAcl("tenant", "exec-1"))
             .thenReturn(Optional.of(execution("exec-1", State.Type.KILLED, Instant.now().minusSeconds(5))));
 
         // When
-        monitorWithRecoveryDelay(RECOVERY_DELAY).run();
+        monitor.run();
 
         // Then
         verify(triggerEventQueue, never()).send(any());

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.kestra.core.models.Label;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
@@ -33,7 +34,7 @@ public abstract class AbstractFlow implements FlowInterface {
     String id;
 
     @NotNull
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
+    @Pattern(regexp = NamespaceInterface.ID_PATTERN)
     @Size(min = 1, max = 150)
     String namespace;
 

@@ -48,6 +48,15 @@ class InternalKVStoreTest {
     private KvMetadataRepositoryInterface kvMetadataRepository;
 
     @Test
+    void shouldRejectWritesButNotReadsGivenNamespaceWithAnEmptySegment() throws IOException {
+        InternalKVStore kv = new InternalKVStore(MAIN_TENANT, "team.", storageInterface, kvMetadataRepository);
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, "value")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> kv.putRaw(TEST_KV_KEY, null, "value".getBytes()));
+        assertThat(kv.list()).isEmpty();
+    }
+
+    @Test
     void list() throws IOException, InterruptedException {
         Instant now = Instant.now();
         InternalKVStore kv = kv();

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
@@ -59,7 +60,7 @@ public class Template implements SoftDeletable<Template>, TenantInterface, HasUI
     private String id;
 
     @NotNull
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
+    @Pattern(regexp = NamespaceInterface.ID_PATTERN)
     private String namespace;
 
     String description;

@@ -44,7 +44,8 @@ class McpPlatformToolTest {
             "execute_flow", "kill_execution", "pause_execution", "change_execution_state", "update_execution_labels",
             "delete_execution", "read_execution_outputs",
             "replay_execution", "resume_execution", "force_run_execution", "change_task_run_state", "backfill_flow",
-            "list_namespaces", "list_namespace_dependencies"
+            "list_namespaces", "list_namespace_dependencies",
+            "list_namespace_files", "read_namespace_file", "write_namespace_file", "create_namespace_directory", "move_namespace_file", "delete_namespace_file"
         );
         assertThat(exposed).allSatisfy(entry ->
         {

@@ -63,7 +63,9 @@ public class CachedFlowMetaStore implements FlowMetaStore {
         // If cache missed
         if (cached == null) {
             Optional<FlowWithSource> state = delegate.find(flowId);
-            state.ifPresent(
+            // Caching an older revision would make it the one every lookup without a revision returns.
+            Optional<FlowWithSource> latest = flowId.getRevision() == null ? state : delegate.find(FlowId.of(flowId.getTenantId(), flowId.getNamespace(), flowId.getId(), null));
+            latest.ifPresent(
                 s -> partitionedCache
                     .computeIfAbsent(vNode, k -> newCache())
                     .put(cacheKey, s)

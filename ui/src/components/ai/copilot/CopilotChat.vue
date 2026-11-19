@@ -452,7 +452,7 @@
     const disabledReason = computed(() => noProviderConfigured.value ? t("ai.copilot.unavailable.sendTooltip") : undefined)
 
     /** Where the no-provider notice sends the user: the Copilot docs, on the configuration section. */
-    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configuration"
+    const docsUrl = "https://kestra.io/docs/develop-with-ai/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configure-an-llm-provider"
 
     const restored = restoreThread()
 

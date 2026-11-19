@@ -7077,6 +7077,18 @@ paths:
         required: true
         schema:
           type: string
+      - name: ttl
+        in: header
+        description: "The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)"
+        schema:
+          type: string
+          nullable: true
+      - name: description
+        in: header
+        description: The description of the key
+        schema:
+          type: string
+          nullable: true
       - name: tenant
         in: path
         required: true

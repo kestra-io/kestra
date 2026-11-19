@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
 
@@ -28,7 +29,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     protected String tenantId;
 
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
+    @Pattern(regexp = NamespaceInterface.ID_PATTERN)
     @Size(min = 1, max = 150)
     protected String namespace;
 

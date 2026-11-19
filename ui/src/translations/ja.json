@@ -293,12 +293,14 @@
     "jump to": "移動",
     "jump to...": "ジャンプ先...",
     "global_search": {
-        "open_flow": "flowを開く",
-        "flow_executions": "flowの実行",
-        "move": "移動",
-        "menu": "メニュー",
-        "sources": "メニュー + flows + namespaces",
-        "search_failed": "flows または namespaces を読み込めませんでした"
+      "open_flow": "flowを開く",
+      "flow_executions": "flowの実行",
+      "move": "移動",
+      "menu": "メニュー",
+      "sources": "メニュー + flows + namespaces",
+      "sources_flows": "メニュー + Flow",
+      "sources_namespaces": "メニュー + namespace",
+      "search_failed": "flows または namespaces を読み込めませんでした"
     },
     "contextBar": {
       "ai": "エーアイ",

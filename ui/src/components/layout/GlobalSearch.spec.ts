@@ -54,6 +54,9 @@ const mountSearch = () => {
             global_search: {
                 search_failed: "Couldn't load flows or namespaces",
                 open_flow: "Open flow",
+                flow_executions: "Flow executions",
+                menu: "Menu",
+                sources: "Menu + flows + namespaces",
             },
         },
     })
@@ -118,7 +121,7 @@ describe("GlobalSearch", () => {
         }
     })
 
-    test("keys each flow and namespace row by its identity", async () => {
+    test("renders same-id flows from different namespaces as separate rows", async () => {
         searchFlowsMock.mockResolvedValue({
             results: [
                 flowHit("daily", "analytics"),
@@ -145,6 +148,34 @@ describe("GlobalSearch", () => {
         }
     })
 
+    test("drops a response that lands after a newer query", async () => {
+        let resolveOld: (value: FlowPage) => void = () => {}
+        searchFlowsMock
+            .mockImplementationOnce(() => new Promise(resolve => {
+                resolveOld = resolve
+            }))
+            .mockResolvedValueOnce({results: [flowHit("new-flow", "analytics")], total: 1})
+        const {wrapper} = mountSearch()
+        try {
+            const input = await openAndQuery("old")
+            await vi.advanceTimersByTimeAsync(200)
+
+            input.value = "new"
+            input.dispatchEvent(new Event("input", {bubbles: true}))
+            await vi.advanceTimersByTimeAsync(200)
+            await flushPromises()
+            expect(document.body.textContent).toContain("new-flow")
+
+            resolveOld({results: [flowHit("old-flow", "analytics")], total: 1})
+            await flushPromises()
+
+            expect(document.body.textContent).toContain("new-flow")
+            expect(document.body.textContent).not.toContain("old-flow")
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
     test("keeps flow hits when namespace search is forbidden or fails", async () => {
         searchFlowsMock.mockResolvedValue({
             results: [flowHit("daily", "analytics")],
@@ -161,6 +192,22 @@ describe("GlobalSearch", () => {
             expect(searchNamespacesMock).not.toHaveBeenCalled()
             expect(document.body.textContent).toContain("daily")
             expect(document.body.textContent).not.toContain("Couldn't load flows or namespaces")
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
+    test("advertises only the menu when the user can list neither flows nor namespaces", async () => {
+        const {wrapper} = mountSearch()
+        const auth = useAuthStore()
+        auth.user!.hasAnyActionOnAnyNamespace = () => false
+        try {
+            await openAndQuery("daily")
+
+            const footer = document.querySelector(".search-footer")?.textContent ?? ""
+            expect(footer).toContain("Menu")
+            expect(footer).not.toContain("flows")
+            expect(footer).not.toContain("Flow executions")
         } finally {
             wrapper.unmount()
         }

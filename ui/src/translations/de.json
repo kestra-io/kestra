@@ -293,12 +293,14 @@
     "jump to": "Gehe zu",
     "jump to...": "Springe zu…",
     "global_search": {
-        "open_flow": "Flow öffnen",
-        "flow_executions": "Flow-Executions",
-        "move": "Verschieben",
-        "menu": "Menü",
-        "sources": "Menü + flows + namespaces",
-        "search_failed": "flows oder namespaces konnten nicht geladen werden"
+      "open_flow": "Flow öffnen",
+      "flow_executions": "Flow-Executions",
+      "move": "Verschieben",
+      "menu": "Menü",
+      "sources": "Menü + flows + namespaces",
+      "sources_flows": "Menü + Flows",
+      "sources_namespaces": "Menü + Namespaces",
+      "search_failed": "flows oder namespaces konnten nicht geladen werden"
     },
     "contextBar": {
       "ai": "AI",

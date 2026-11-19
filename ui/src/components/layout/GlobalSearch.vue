@@ -115,9 +115,11 @@
                             <span class="search-footer-keys">
                                 <kbd>↑</kbd><kbd>↓</kbd> {{ $t("global_search.move") }}
                                 <kbd>↵</kbd> {{ $t("open") }}
-                                <kbd>→</kbd> {{ $t("global_search.flow_executions") }}
+                                <template v-if="canListFlows">
+                                    <kbd>→</kbd> {{ $t("global_search.flow_executions") }}
+                                </template>
                             </span>
-                            <span>{{ $t("global_search.sources") }}</span>
+                            <span>{{ $t(sourcesKey) }}</span>
                         </div>
                     </div>
                 </div>
@@ -149,6 +151,7 @@
         namespaceFilter,
         paletteEntities,
         PALETTE_ENTITY_LIMIT,
+        paletteEntityKey,
         type PaletteDestination,
         type PaletteEntity,
     } from "./globalSearchEntities"
@@ -288,6 +291,16 @@
 
     const showEntityHints = computed(() => query.value.trim().length > 0 && scopeStack.value.length === 0)
 
+    const canListFlows = computed(() => !!authStore.user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.LIST))
+    const canListNamespaces = computed(() => !!authStore.user?.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST))
+
+    const sourcesKey = computed(() => {
+        if (canListFlows.value && canListNamespaces.value) return "global_search.sources"
+        if (canListFlows.value) return "global_search.sources_flows"
+        if (canListNamespaces.value) return "global_search.sources_namespaces"
+        return "global_search.menu"
+    })
+
     const results = computed(() => {
         const menu = showEntityHints.value
             ? menuResults.value.map(item => ({...item, destination: "menu" as const}))
@@ -335,17 +348,17 @@
         const tenant = route.params.tenant
         const tenantId = Array.isArray(tenant) ? tenant[0] : tenant
         const user = authStore.user
-        const canListFlows = !!user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.LIST)
-        const canListNamespaces = !!user?.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)
+        const flowsAllowed = canListFlows.value
+        const namespacesAllowed = canListNamespaces.value
         const [flowsOutcome, namespacesOutcome] = await Promise.allSettled([
-            canListFlows
+            flowsAllowed
                 ? FlowsAPI.searchFlows({
                     page: 1,
                     size: PALETTE_ENTITY_LIMIT,
                     filters: [flowOrNamespaceFilter(q)],
                 })
                 : Promise.resolve(undefined),
-            canListNamespaces
+            namespacesAllowed
                 ? NamespaceAPI.searchNamespaces({
                     page: 1,
                     size: PALETTE_ENTITY_LIMIT,
@@ -356,21 +369,24 @@
         if (!isOpen.value || ticket !== searchTicket) {
             return
         }
-        const flows = flowsOutcome.status === "fulfilled" ? flowsOutcome.value : undefined
-        const namespaces = namespacesOutcome.status === "fulfilled" ? namespacesOutcome.value : undefined
-        entitiesError.value = (canListFlows && flowsOutcome.status === "rejected")
-            || (canListNamespaces && namespacesOutcome.status === "rejected")
-        entityTotals.value = {
-            flow: flows?.total ?? 0,
-            namespace: namespaces?.total ?? 0,
+        try {
+            const flows = flowsOutcome.status === "fulfilled" ? flowsOutcome.value : undefined
+            const namespaces = namespacesOutcome.status === "fulfilled" ? namespacesOutcome.value : undefined
+            entitiesError.value = (flowsAllowed && flowsOutcome.status === "rejected")
+                || (namespacesAllowed && namespacesOutcome.status === "rejected")
+            entityTotals.value = {
+                flow: flows?.total ?? 0,
+                namespace: namespaces?.total ?? 0,
+            }
+            entities.value = paletteEntities(
+                flows?.results ?? [],
+                namespaces?.results ?? [],
+                tenantId || undefined,
+                namespace => isFlowTabAllowed("executions", {user, namespace}),
+            )
+        } finally {
+            entitiesLoading.value = false
         }
-        entities.value = paletteEntities(
-            flows?.results ?? [],
-            namespaces?.results ?? [],
-            tenantId || undefined,
-            namespace => isFlowTabAllowed("executions", {user, namespace}),
-        )
-        entitiesLoading.value = false
     }, 200)
 
     const isEditorTarget = (target: EventTarget | null) => {
@@ -417,11 +433,8 @@
     }
 
     const itemKey = (item: SearchItem, index: number): string => {
-        if (item.destination === "flow") {
-            return `flow:${item.namespace ?? ""}:${item.title}`
-        }
-        if (item.destination === "namespace") {
-            return `namespace:${item.title}`
+        if (item.destination === "flow" || item.destination === "namespace") {
+            return paletteEntityKey({destination: item.destination, title: item.title, namespace: item.namespace})
         }
 
         const href = item.href
@@ -552,9 +565,7 @@
             resetEntities()
             return
         }
-        const user = authStore.user
-        if (!user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.LIST)
-            && !user?.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
+        if (!canListFlows.value && !canListNamespaces.value) {
             resetEntities()
             return
         }

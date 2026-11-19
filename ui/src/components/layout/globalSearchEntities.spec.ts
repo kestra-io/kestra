@@ -1,5 +1,5 @@
 import {describe, expect, test} from "vitest"
-import {highlightMatch, paletteEntities} from "./globalSearchEntities"
+import {highlightMatch, paletteEntities, paletteEntityKey} from "./globalSearchEntities"
 
 describe("paletteEntities", () => {
     const flows = [
@@ -26,6 +26,13 @@ describe("paletteEntities", () => {
         expect(entities[0].executionsHref).toBeUndefined()
         expect(entities[1].executionsHref).toMatchObject({name: "flows/update/executions"})
         expect(entities[0].href.params).not.toHaveProperty("tenant")
+    })
+
+    test("gives same-id flows and a namespace of that name distinct keys", () => {
+        const entities = paletteEntities(flows, [{id: "daily"}, {id: "analytics"}], undefined, () => true)
+        const keys = entities.map(paletteEntityKey)
+
+        expect(new Set(keys).size).toBe(entities.length)
     })
 
     test("caps each group", () => {

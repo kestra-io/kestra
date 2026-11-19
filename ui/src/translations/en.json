@@ -298,6 +298,8 @@
         "move": "Move",
         "menu": "Menu",
         "sources": "Menu + flows + namespaces",
+        "sources_flows": "Menu + flows",
+        "sources_namespaces": "Menu + namespaces",
         "search_failed": "Couldn't load flows or namespaces"
     },
     "contextBar": {

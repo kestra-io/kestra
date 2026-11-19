@@ -34,7 +34,12 @@ export const namespaceFilter = (query: string): QueryFilter => ({
     value: query,
 })
 
-export const highlightMatch = (text: string, query: string): HighlightPart[] => {
+export const paletteEntityKey = (entity: Pick<PaletteEntity, "destination" | "title" | "namespace">): string =>
+    entity.destination === "flow"
+        ? `flow:${entity.namespace ?? ""}:${entity.title}`
+        : `namespace:${entity.title}`
+
+export const highlightMatch =(text: string, query: string): HighlightPart[] => {
     const needle = query.trim().toLowerCase()
     if (!needle) {
         return [{text, match: false}]

@@ -613,17 +613,17 @@ export const _435C395a = <ThrowOnError extends boolean = true>(parameters: {
 export const _04Fc707F8 = <ThrowOnError extends boolean = true>(parameters: {
     kind: BlueprintControllerKind;
     tenant: string;
-    sort?: string | null;
     page?: number;
     size?: number;
+    sort?: Array<string> | null;
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>): RequestResult<SearchBlueprintsResponses, SearchBlueprintsErrors, ThrowOnError> => {
     const params = buildClientParams([parameters], [{ args: [
                 { in: 'path', key: 'kind' },
                 { in: 'path', key: 'tenant' },
-                { in: 'query', key: 'sort' },
                 { in: 'query', key: 'page' },
                 { in: 'query', key: 'size' },
+                { in: 'query', key: 'sort' },
                 { in: 'query', key: 'filters' }
             ] }]);
     return (options?.client ?? client).get<SearchBlueprintsResponses, SearchBlueprintsErrors, ThrowOnError>({
@@ -814,15 +814,15 @@ export const _0F4647D9 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
     page?: number;
     size?: number;
-    q?: string | null;
     sort?: Array<string> | null;
+    q?: string | null;
 }, options?: Options<never, ThrowOnError>): RequestResult<SearchDashboardsResponses, SearchDashboardsErrors, ThrowOnError> => {
     const params = buildClientParams([parameters], [{ args: [
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'page' },
                 { in: 'query', key: 'size' },
-                { in: 'query', key: 'q' },
-                { in: 'query', key: 'sort' }
+                { in: 'query', key: 'sort' },
+                { in: 'query', key: 'q' }
             ] }]);
     return (options?.client ?? client).get<SearchDashboardsResponses, SearchDashboardsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/dashboards',

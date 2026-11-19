@@ -256,39 +256,31 @@
         </div>
 
         <div v-else-if="showEmptyResultsState" class="source-search__states">
-            <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
-                <template #description>
-                    <KsText tag="h3" size="large">
-                        {{ $t('source_search.no_results_title', {query}) }}
-                    </KsText>
-                    <KsText tag="p">
-                        {{ $t('source_search.no_results_description') }}
-                    </KsText>
-                    <KsText v-if="hiddenTypeHint" tag="p">
-                        {{ hiddenTypeHint }}
-                    </KsText>
-
-                    <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p" scope="global">
-                        <template #suggestion>
-                            <KsButton link size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>
-                        </template>
-                    </i18n-t>
+            <KsNoData class="source-search__empty" :title="$t('source_search.no_results_title', {query})">
+                {{ $t('source_search.no_results_description') }}
+                <template v-if="hiddenTypeHint">
+                    <br>{{ hiddenTypeHint }}
                 </template>
-                <div class="source-search__examples">
-                    <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
-                        {{ $t('source_search.select_all_types') }}
-                    </KsButton>
-                    <KsButton v-if="caseSensitive" @click="caseSensitive = false">
-                        {{ $t('source_search.turn_off', {option: $t('source_search.match_case')}) }}
-                    </KsButton>
-                    <KsButton v-if="wholeWord" @click="wholeWord = false">
-                        {{ $t('source_search.turn_off', {option: $t('source_search.match_whole_word')}) }}
-                    </KsButton>
-                    <KsButton v-if="regexEnabled" @click="regexEnabled = false">
-                        {{ $t('source_search.turn_off', {option: $t('source_search.use_regex')}) }}
-                    </KsButton>
-                </div>
-            </KsEmpty>
+            </KsNoData>
+            <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p" scope="global">
+                <template #suggestion>
+                    <KsButton link size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>
+                </template>
+            </i18n-t>
+            <div class="source-search__examples">
+                <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
+                    {{ $t('source_search.select_all_types') }}
+                </KsButton>
+                <KsButton v-if="caseSensitive" @click="caseSensitive = false">
+                    {{ $t('source_search.turn_off', {option: $t('source_search.match_case')}) }}
+                </KsButton>
+                <KsButton v-if="wholeWord" @click="wholeWord = false">
+                    {{ $t('source_search.turn_off', {option: $t('source_search.match_whole_word')}) }}
+                </KsButton>
+                <KsButton v-if="regexEnabled" @click="regexEnabled = false">
+                    {{ $t('source_search.turn_off', {option: $t('source_search.use_regex')}) }}
+                </KsButton>
+            </div>
         </div>
 
         <KsSplitter v-else class="source-search__splitter">
@@ -355,7 +347,6 @@
     import ArrowExpandVertical from "vue-material-design-icons/ArrowExpandVertical.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import Magnify from "vue-material-design-icons/Magnify.vue"
-    import {images} from "../layout/empty/images"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
@@ -992,11 +983,6 @@
     gap: var(--ks-spacing-3);
     padding: var(--ks-spacing-8) var(--ks-spacing-5);
     text-align: center;
-
-    h3 {
-        margin: 0 0 var(--ks-spacing-2);
-        font-size: var(--ks-font-size-lg);
-    }
 
     p {
         margin: 0;

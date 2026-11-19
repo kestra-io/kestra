@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.slf4j.event.Level;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
@@ -33,6 +34,7 @@ import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TypeConverter;
+import io.kestra.jdbc.JsonBytesBinding;
 import io.kestra.jdbc.services.JdbcFilterService;
 
 import io.micronaut.context.BeanProvider;
@@ -46,6 +48,14 @@ public abstract class AbstractJdbcRepository {
     public static final Field<String> TENANT_ID_FIELD = field("tenant_id", String.class);
     public static final Field<String> KEY_FIELD = field("key", String.class);
     public static final Field<Object> VALUE_FIELD = field("value", Object.class);
+    /**
+     * The value column read as UTF-8 bytes, for hot reads whose record goes through the repository's {@code map},
+     * on a repository without a custom deserializer.
+     */
+    public static final Field<byte[]> VALUE_BYTES_FIELD = DSL.field(
+        DSL.quotedName("value"),
+        SQLDataType.OTHER.asConvertedDataType(new JsonBytesBinding())
+    );
 
     protected static final int FETCH_SIZE = 100;
 

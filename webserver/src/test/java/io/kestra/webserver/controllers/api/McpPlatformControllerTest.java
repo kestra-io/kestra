@@ -116,7 +116,7 @@ class McpPlatformControllerTest {
 
         String body = callTool(sessionId, "read_flow", Map.of("tenant", "another-tenant", "namespace", "io.kestra.test", "flowId", "any"));
 
-        assertThat(body).contains("\"isError\":true", "You cannot act on tenant 'another-tenant' through this server.");
+        assertThat(body).contains("\"isError\":true", "/tenant: does not have a value in the enumeration");
     }
 
     @Test

@@ -143,6 +143,22 @@ class CachedFlowMetaStoreTest {
     }
 
     @Test
+    void shouldCacheLatestRevisionWhenOlderRevisionIsRequestedOnCacheMiss() {
+        // GIVEN
+        FlowWithSource flowV4 = Fixtures.defaultFlow().toBuilder().revision(4).build();
+        ((InMemoryFlowMetaStore) delegate).add(flowV4);
+        ((InMemoryFlowMetaStore) delegate).add(flowV4.toBuilder().revision(5).build());
+
+        // WHEN
+        Optional<FlowWithSource> requested = cachedStore.find(FlowId.of(flowV4.getTenantId(), flowV4.getNamespace(), flowV4.getId(), 4));
+
+        // THEN
+        assertThat(requested.orElseThrow().getRevision()).isEqualTo(4);
+        Optional<FlowWithSource> latest = cachedStore.find(FlowId.of(flowV4.getTenantId(), flowV4.getNamespace(), flowV4.getId(), null));
+        assertThat(latest.orElseThrow().getRevision()).isEqualTo(5);
+    }
+
+    @Test
     void shouldReturnEmptyWhenFlowNotFound() {
         // GIVEN
         FlowId flowId = FlowId.of("tenant", "namespace", "nonexistent", null);

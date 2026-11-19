@@ -13,7 +13,6 @@ import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.notification.model.AsyncOperationType;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -26,6 +25,7 @@ import io.kestra.core.server.CoreAsyncOperationType;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.notification.NotificationService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.trigger.Schedule;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -58,7 +58,7 @@ class TriggerStateServiceTest {
         asyncOperationWaiter = mock(AsyncOperationWaiter.class);
         notificationService = mock(NotificationService.class);
 
-        AbstractTrigger trigger = mock(AbstractTrigger.class);
+        Schedule trigger = mock(Schedule.class);
         when(trigger.getId()).thenReturn(TRIGGER_ID);
         Flow flow = mock(Flow.class);
         when(flow.getTriggers()).thenReturn(List.of(trigger));

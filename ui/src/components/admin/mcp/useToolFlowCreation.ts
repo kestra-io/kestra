@@ -43,7 +43,7 @@ export function useToolFlowCreation() {
 
     const isOSS = computed(() => miscStore.configs?.edition === "OSS")
     const canCreateFlow = computed(() =>
-        isOSS.value || authStore.user?.hasAnyAction?.(resource.FLOW, action.CREATE),
+        isOSS.value || Boolean(authStore.user?.hasAnyAction?.(resource.FLOW, action.CREATE)),
     )
 
     function createToolFlow() {

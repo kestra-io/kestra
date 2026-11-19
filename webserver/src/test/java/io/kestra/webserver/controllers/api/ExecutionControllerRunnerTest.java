@@ -44,6 +44,7 @@ import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -55,6 +56,8 @@ import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
@@ -79,9 +82,10 @@ import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
@@ -94,8 +98,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.exceptions.ResponseClosedException;
 import io.micronaut.http.client.multipart.MultipartBody;
@@ -155,6 +157,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     ExecutionRepositoryInterface executionRepositoryInterface;
+
+    @Inject
+    SearchableDataRepositoryInterface searchableDataRepository;
 
     @Inject
     @Client("/")
@@ -1132,6 +1137,46 @@ class ExecutionControllerRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    @Test
+    void shouldIndexReplayedInputsUnderTheNewExecutionWhenReplayingWithInputs() throws Exception {
+        // Given
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            inputs:
+              - id: s_string
+                type: STRING
+                searchable: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ inputs.s_string }}"
+            """.formatted(flowId, TESTS_FLOW_NS);
+        flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+        Execution original = runnerUtils.runOne(
+            MAIN_TENANT, TESTS_FLOW_NS, flowId, null,
+            (flow, execution) -> flowIO.readExecutionInputs(flow, execution, Map.of("s_string", "Cust-12"))
+        );
+
+        // When
+        Execution replay = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/main/executions/" + original.getId() + "/actions/replay-with-inputs",
+                    MultipartBody.builder().addPart("s_string", "Replayed-1").build()
+                )
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        // Then
+        assertThat(searchableDataRepository.findById(MAIN_TENANT, original.getId(), "s_string"))
+            .contains(new SearchableData(MAIN_TENANT, original.getId(), "s_string", "Cust-12"));
+        assertThat(searchableDataRepository.findById(MAIN_TENANT, replay.getId(), "s_string"))
+            .contains(new SearchableData(MAIN_TENANT, replay.getId(), "s_string", "Replayed-1"));
     }
 
     @Test
@@ -3078,6 +3123,94 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void deleteExecutionByIdsAsync(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution result1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution result2 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution result3 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/%s/executions/by-ids?async=true".formatted(tenantId), List.of(result1.getId(), result2.getId(), result3.getId())),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(3);
+
+        List.of(result1, result2, result3).forEach(execution -> awaitExecutionDeleted(tenantId, execution.getId()));
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void shouldKeepTheActorOnDeleteEventsWhenDeletingAsync(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        ExecutionCrudEventListener.reset();
+
+        client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/%s/executions/by-ids?async=true".formatted(tenantId), List.of(execution.getId())),
+            ApiAsyncOperationResponse.class
+        );
+
+        // the purge runs on a background thread: the audit log still needs the caller
+        CrudEvent<Execution> deletion = awaitEvent(CrudEventType.DELETE, execution.getId(), _ -> true);
+        assertThat(deletion.getActor()).isEqualTo(ACTOR);
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void deleteExecutionByQueryAsync(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution result1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution result2 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution result3 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/%s/executions/by-query?async=true&filters[namespace][PREFIX]=".formatted(tenantId) + result1.getNamespace()),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(3);
+
+        List.of(result1, result2, result3).forEach(execution -> awaitExecutionDeleted(tenantId, execution.getId()));
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml", "flows/valids/pause-test.yaml" })
+    void shouldDeleteNothingWhenByIdsIncludesANonTerminatedExecution(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution terminated = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution nonTerminated = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.DELETE("/api/v1/%s/executions/by-ids".formatted(tenantId), List.of(terminated.getId(), nonTerminated.getId()))
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+
+        // validation is atomic: the non-terminated execution must not cause the terminated one to be deleted either
+        client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + terminated.getId()), Execution.class);
+        client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + nonTerminated.getId()), Execution.class);
+    }
+
+    private void awaitExecutionDeleted(String tenantId, String executionId) {
+        await().atMost(Duration.ofSeconds(10)).until(() ->
+        {
+            try {
+                client.toBlocking().exchange(HttpRequest.GET("/api/v1/%s/executions/".formatted(tenantId) + executionId));
+                return false;
+            } catch (HttpClientResponseException e) {
+                return e.getStatus().getCode() == HttpStatus.NOT_FOUND.getCode();
+            }
+        });
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void shouldReturnUpdatedExecutionWhenSetLabelsOnTerminatedExecutionSucceeds(String tenantId) throws QueueException, TimeoutException {
         // update labels on a terminated execution
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -4778,10 +4911,15 @@ class ExecutionControllerRunnerTest {
     private static CrudEvent<Execution> awaitEvent(CrudEventType type, String executionId, Predicate<Execution> matching) {
         return await().atMost(Duration.ofSeconds(10)).until(
             () -> ExecutionCrudEventListener.events().stream()
-                .filter(event -> type.equals(event.getType()) && executionId.equals(event.getModel().getId()) && matching.test(event.getModel()))
+                .filter(event -> type.equals(event.getType()) && executionId.equals(subject(event).getId()) && matching.test(subject(event)))
                 .findFirst(),
             Optional::isPresent
         ).orElseThrow();
+    }
+
+    // a DELETE event carries the deleted execution as its previous model
+    private static Execution subject(CrudEvent<Execution> event) {
+        return event.getModel() != null ? event.getModel() : event.getPreviousModel();
     }
 
     /**
@@ -4795,7 +4933,7 @@ class ExecutionControllerRunnerTest {
         @Override
         public void onApplicationEvent(CrudEvent<Execution> event) {
             // generics are erased, so events for other models reach this listener too
-            if (event.getModel() instanceof Execution) {
+            if (event.getModel() instanceof Execution || event.getPreviousModel() instanceof Execution) {
                 EVENTS.add(event);
             }
         }

@@ -574,6 +574,21 @@ public class LoopCaseTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    public void loopOutputsEmpty(Execution execution) throws InternalException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+
+        TaskRun loopTaskRun = execution.getTaskRunList().getFirst();
+        Map<String, Object> loopTaskOutputs = taskOutputService.getOutputs(loopTaskRun);
+        assertThat(loopTaskOutputs)
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 0)
+            .containsEntry(Loop.OUTPUTS_OUTPUT, List.of());
+
+        TaskRun endTaskRun = execution.getTaskRunList().getLast();
+        Map<String, Object> endTaskOutputs = taskOutputService.getOutputs(endTaskRun);
+        assertThat(endTaskOutputs).containsEntry("value", "[]");
+    }
+
     public void loopWithNull(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

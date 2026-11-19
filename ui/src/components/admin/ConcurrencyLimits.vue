@@ -171,8 +171,8 @@
 
 <style scoped>
     .running-count-error {
-        margin-top: .5rem;
-        color: var(--ks-content-alert);
+        margin-top: var(--ks-spacing-2);
+        color: var(--ks-text-error);
         font-size: var(--ks-font-size-sm);
     }
 

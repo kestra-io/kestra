@@ -647,6 +647,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "no iniciado"
+      },
+      "diff": {
+        "added": "añadido",
+        "removed": "eliminado",
+        "changed": "modificado",
+        "renamed": "renombrado",
+        "moved": "movido"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "unchanged": "{count} sin cambios",
+      "graph_error": "No se pudo dibujar el grafo. Abre la pestaña YAML para ver el cambio.",
+      "status": {
+        "added": "Añadido",
+        "removed": "Eliminado",
+        "changed": "Modificado",
+        "renamed": "Renombrado",
+        "moved": "Movido"
       }
     },
     "show task logs": "Mostrar task logs",
@@ -2551,6 +2571,7 @@
           "generic": "Algo salió mal. Por favor, inténtelo de nuevo."
         },
         "emptyHelper": "Puedo editar este flow, generar pruebas, generar archivos relacionados o explicar cómo funciona.",
+        "emptyHelperNoFlow": "Puedo crear o editar flows, generar pruebas, generar archivos relacionados o explicar cómo funciona Kestra.",
         "suggestions": {
           "errorHandling": "Añadir manejo de errores",
           "unitTest": "Generar una prueba unitaria",
@@ -2616,7 +2637,8 @@
           "applied": "Aplicado",
           "previewBanner": "Revisando un cambio sugerido por la IA: el editor es de solo lectura hasta que lo apliques o lo descartes.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "¿Guardar el flow {namespace}.{id} como una revisión en borrador para revisión? Se creará, o se añadirá una nueva revisión en borrador si ya existe. Los borradores no serán recogidos por triggers ni subflows hasta que se publiquen.",
+          "applyDraftTitle": "Al aplicar se guarda una revisión en borrador.",
+          "applyDraftHint": "Todavía no se activa nada. Los triggers y subflows ignoran los borradores hasta que publiques.",
           "applyConfirmDashboard": "Aplicar el panel de control {id}? Se creará, o se sobrescribirá si ya existe.",
           "applyError": "No se pudo aplicar el flow. Por favor, inténtalo de nuevo.",
           "applyErrorDashboard": "No se pudo aplicar el dashboard. Por favor, inténtelo de nuevo.",

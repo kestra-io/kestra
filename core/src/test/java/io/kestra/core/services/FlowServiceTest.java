@@ -1627,7 +1627,7 @@ class FlowServiceTest {
 
         List<TriggerEvent> events = publishAfterDraft(flowId, scheduleSource(flowId, false, "0 0 * * *"), flowSource(flowId, true, "", ""), flowSource(flowId, false, "", ""));
 
-        assertThat(events).singleElement().isInstanceOf(TriggerDeleted.class);
+        assertThat(events).singleElement().isInstanceOfSatisfying(TriggerDeleted.class, deleted -> assertThat(deleted.revision()).isEqualTo(3));
     }
 
     @Test
@@ -1660,7 +1660,7 @@ class FlowServiceTest {
 
         var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
         verify(triggerEventQueue).send(captor.capture());
-        assertThat(captor.getValue()).isInstanceOf(TriggerDeleted.class);
+        assertThat(captor.getValue()).isInstanceOfSatisfying(TriggerDeleted.class, deleted -> assertThat(deleted.revision()).isGreaterThan(draft.getRevision()));
         assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
     }
 

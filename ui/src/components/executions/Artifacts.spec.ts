@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
-import {defineComponent, reactive, ref} from "vue"
+import {defineComponent, markRaw, reactive, ref} from "vue"
 
 const {executionsStore, routerState, loadTaskRunOutputsMock} = vi.hoisted(() => ({
     executionsStore: {execution: null as unknown, progressEvents: [] as unknown[]},
@@ -34,11 +34,11 @@ const deferred = <T,>() => {
     return {promise, resolve}
 }
 
-const RemoteStub = defineComponent({
+const RemoteStub = markRaw(defineComponent({
     name: "RemoteComponentStub",
     props: ["fetchOutputs", "fetchMetrics", "fetchEndpoint"],
     template: "<div data-test=\"remote-component\" />",
-})
+}))
 
 describe("Artifacts", () => {
     beforeEach(() => {

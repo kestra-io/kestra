@@ -13,7 +13,7 @@ import {
     SMOOTH_STEP_RADIUS,
 } from "./constants"
 
-const TRIGGERS_NODE_UID = "root.Triggers"
+export const TRIGGERS_NODE_UID = "root.Triggers"
 // Never a real backend uid — a flow-level `errors:` section has no cluster of its own (unlike
 // `Triggers`, which the backend already synthesizes), so the frontend synthesizes this one to
 // give it a labelled lane instead of a floating dashed line (kestra-io/kestra#19666).
@@ -61,6 +61,7 @@ export interface MinimalNode {
         flowId?: string;
         disabled?: boolean;
     };
+    triggerDeclaration?: {id?: string};
 }
 
 export interface Cluster {

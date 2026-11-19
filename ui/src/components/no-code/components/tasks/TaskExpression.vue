@@ -28,7 +28,7 @@
 
     const props = defineProps({
         modelValue: {
-            type: [String, Object] as PropType<unknown>,
+            type: [String, Number, Boolean, Object] as PropType<unknown>,
         },
         root: {
             type: String,

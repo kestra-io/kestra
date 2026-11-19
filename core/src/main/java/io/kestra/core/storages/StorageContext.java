@@ -81,6 +81,26 @@ public class StorageContext {
     }
 
     /**
+     * Guards the writes to the paths made of the namespace alone, where a namespace with an empty segment such as
+     * {@code team.} would share its objects with {@code team}. Reads stay possible so that existing data can be
+     * exported or moved, and paths that hold an execution id are unique and need no guard.
+     *
+     * @throws IllegalArgumentException if the namespace has an empty segment.
+     */
+    public static void requireNoEmptySegment(String namespace) {
+        if (hasEmptySegment(namespace)) {
+            throw new IllegalArgumentException(
+                "The namespace '%s' cannot be written to: it must not start or end with a dot or contain consecutive dots.".formatted(namespace)
+            );
+        }
+    }
+
+    public static boolean hasEmptySegment(String namespace) {
+        Objects.requireNonNull(namespace, "namespace");
+        return namespace.startsWith(".") || namespace.endsWith(".") || namespace.contains("..");
+    }
+
+    /**
      * Factory method for constructing a new {@link StorageContext} scoped to a given {@link TaskRun}.
      */
     public static StorageContext forTask(TaskRun taskRun) {

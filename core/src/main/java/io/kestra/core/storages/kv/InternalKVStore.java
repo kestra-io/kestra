@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 
 import jakarta.annotation.Nullable;
@@ -70,6 +71,7 @@ public class InternalKVStore implements KVStore {
      */
     @Override
     public void put(String key, KVValueAndMetadata value, boolean overwrite) throws IOException {
+        StorageContext.requireNoEmptySegment(namespace);
         KVStore.validateKey(key);
 
         Object actualValue = value.value();
@@ -87,6 +89,7 @@ public class InternalKVStore implements KVStore {
      * @param rawValue The raw ION-serialized value bytes.
      */
     public void putRaw(String key, @Nullable KVMetadata metadata, byte[] rawValue) throws IOException {
+        StorageContext.requireNoEmptySegment(namespace);
         KVStore.validateKey(key);
 
         this.backend.put(this.tenant, this.namespace, key, metadata, new ByteArrayInputStream(rawValue), true);
@@ -125,6 +128,7 @@ public class InternalKVStore implements KVStore {
      */
     @Override
     public boolean delete(String key) throws IOException {
+        StorageContext.requireNoEmptySegment(namespace);
         KVStore.validateKey(key);
 
         return this.backend.delete(this.tenant, this.namespace, key);

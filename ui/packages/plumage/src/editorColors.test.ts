@@ -26,6 +26,7 @@ function buildSentinelTheme(highContrast: boolean): {theme: CodeTheme; sentinels
             key: field("syntax.key"),
             value: field("syntax.value"),
             pebble: field("syntax.pebble"),
+            pebbleVariable: field("syntax.pebbleVariable"),
             constant: field("syntax.constant"),
             number: field("syntax.number"),
             string: field("syntax.string"),

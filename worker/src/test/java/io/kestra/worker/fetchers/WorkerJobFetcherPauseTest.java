@@ -1,5 +1,6 @@
 package io.kestra.worker.fetchers;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.WorkerJobStreamConfig;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
@@ -52,7 +54,8 @@ class WorkerJobFetcherPauseTest {
             mock(ExecutionKilledManager.class),
             null,
             List.of(),
-            new GrpcConfiguration(false, 10485760)
+            new GrpcConfiguration(false, 10485760),
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65))
         );
         fetcher.init(new WorkerContext("worker-1", "group-1", 4));
         return fetcher;

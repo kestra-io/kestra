@@ -528,6 +528,21 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
+    /**
+     * Whether the given task run must not run again: this execution was explicitly stopped (killing, killed or
+     * cancelled), or the task run already ended in it. A FAILED or SUCCESS execution does not count, since it can
+     * itself be the consequence of losing the worker that held the task run.
+     */
+    public boolean hasTaskRunEnded(String taskRunId) {
+        State.Type current = this.getState().getCurrent();
+        if (State.Type.KILLING == current || State.Type.KILLED == current || State.Type.CANCELLED == current) {
+            return true;
+        }
+        return findTaskRunByTaskRunIdIfPresent(taskRunId)
+            .map(taskRun -> taskRun.getState().isTerminated())
+            .orElse(false);
+    }
+
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values)
         throws InternalException {
         Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun> emptyList()

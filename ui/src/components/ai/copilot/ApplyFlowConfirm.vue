@@ -1,60 +1,51 @@
 <template>
-    <div class="copilot-draft-review" data-test="copilot-draft-review">
-        <div class="review-flow">
-            <KsIcon class="review-flow-icon">
+    <div class="apply-confirm" data-test="copilot-apply-confirm">
+        <div class="apply-confirm-flow">
+            <KsIcon class="apply-confirm-icon">
                 <AiMenuIcon :size="20" />
             </KsIcon>
-            <div class="review-flow-text">
-                <div class="review-flow-line">
-                    <KsText class="review-flow-id">
-                        {{ namespace }}<span class="review-flow-separator">/</span>{{ flowId }}
+            <div class="apply-confirm-text">
+                <div class="apply-confirm-line">
+                    <KsText class="apply-confirm-id">
+                        {{ namespace }}<span class="apply-confirm-separator">/</span>{{ id }}
                     </KsText>
                     <KsTag size="small" type="info">{{ $t("draft") }}</KsTag>
                 </div>
-                <KsText
-                    size="small"
-                    type="secondary"
-                    class="review-flow-hint"
-                    data-test="copilot-draft-review-hint"
-                >
+                <KsText size="small" type="secondary" class="apply-confirm-hint">
                     <strong>{{ $t("ai.copilot.draft.applyDraftTitle") }}</strong>
                     {{ $t("ai.copilot.draft.applyDraftHint") }}
                 </KsText>
             </div>
         </div>
-
-        <FlowChangeReview
-            :before="before"
-            :after="after"
-            rejectable
-            @update:effective="emit('update:effective', $event)"
-        />
+        <FlowChangeSummary :diff="diffFlowSources(before || undefined, after)" />
+        <div class="apply-confirm-diff">
+            <DiffView :oldValue="before" :newValue="after" />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import FlowChangeReview from "../../flows/changeReview/FlowChangeReview.vue"
+    import {diffFlowSources} from "@kestra-io/topology"
+    import FlowChangeSummary from "../../flows/changeReview/FlowChangeSummary.vue"
     import AiMenuIcon from "../AiMenuIcon.vue"
+    import DiffView from "./DiffView.vue"
 
     defineProps<{
         namespace: string
-        flowId: string
-        before?: string
+        id: string
+        before: string
         after: string
     }>()
-
-    const emit = defineEmits<{"update:effective": [source: string | undefined]}>()
 </script>
 
 <style scoped>
-    .copilot-draft-review {
-        --flow-change-review-height: 60vh;
+    .apply-confirm {
         display: flex;
         flex-direction: column;
-        gap: var(--ks-spacing-4);
+        gap: var(--ks-spacing-3);
     }
 
-    .review-flow {
+    .apply-confirm-flow {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-3);
@@ -64,7 +55,7 @@
         background: var(--ks-bg-surface);
     }
 
-    .review-flow-icon {
+    .apply-confirm-icon {
         display: inline-flex;
         flex-shrink: 0;
         align-items: center;
@@ -76,31 +67,31 @@
         color: var(--ks-text-info);
     }
 
-    .review-flow-text {
+    .apply-confirm-text {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-1);
         min-width: 0;
     }
 
-    .review-flow-line {
+    .apply-confirm-line {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-2);
     }
 
-    .review-flow-id {
+    .apply-confirm-id {
         font-family: var(--ks-font-family-mono);
         font-weight: var(--ks-font-weight-semibold);
         overflow-wrap: anywhere;
     }
 
-    .review-flow-separator {
+    .apply-confirm-separator {
         margin: 0 var(--ks-spacing-1);
         color: var(--ks-text-secondary);
     }
 
-    .review-flow-hint {
+    .apply-confirm-hint {
         align-self: flex-start;
         text-align: start;
 
@@ -108,5 +99,12 @@
             font-weight: var(--ks-font-weight-semibold);
             color: var(--ks-text-primary);
         }
+    }
+
+    .apply-confirm-diff {
+        --diff-view-height: min(45vh, 26rem);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        overflow: hidden;
     }
 </style>

@@ -13,7 +13,7 @@ vi.mock("../../flows/changeReview/FlowChangeReview.vue", () => ({
     __esModule: true,
     default: {
         name: "FlowChangeReview",
-        props: {before: String, after: String, compact: Boolean},
+        props: {before: String, after: String},
         template: "<div />",
     },
 }))
@@ -86,7 +86,6 @@ describe("CopilotArtefactDraft", () => {
         expect(w.find("[data-test='copilot-draft-yaml']").exists()).toBe(false)
         const review = w.findComponent({name: "FlowChangeReview"})
         expect(review.props()).toMatchObject({before: "id: before", after: "id: after"})
-        expect(review.props("compact")).toBe(true)
     })
 
     it("shows an error badge and the constraints when the draft is invalid", () => {

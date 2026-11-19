@@ -12,10 +12,9 @@ const segments: KsChangeReviewSegment[] = [
     {value: 18, label: "18 resources unchanged", tone: "neutral"},
 ]
 
-function mountReview(tab = "resources", props = {}) {
+function mountReview(tab = "resources") {
     return mount(KsChangeReview, {
         props: {
-            ...props,
             heading: "3 changes",
             meta: ["21 resources in the plan", "Terraform 1.9.8"],
             segments,
@@ -39,13 +38,6 @@ function chips(wrapper: ReturnType<typeof mountReview>) {
 }
 
 describe("KsChangeReview", () => {
-    test("drops the bar and keeps the filters when the bar is hidden", () => {
-        const wrapper = mountReview("resources", {hideBar: true})
-
-        expect(wrapper.find("[data-test='change-review-bar']").exists()).toBe(false)
-        expect(chips(wrapper)).toHaveLength(3)
-    })
-
     test("leaves the empty segments out of the bar, and offers a filter only for the named ones", () => {
         const wrapper = mountReview()
 

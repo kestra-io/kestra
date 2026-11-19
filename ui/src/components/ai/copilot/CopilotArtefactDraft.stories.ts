@@ -45,7 +45,7 @@ export const Graph: Story = {
         })
         await userEvent.click(graphTab)
         await waitFor(() => {
-            expect(canvasElement.querySelector("[data-test='flow-change-review-compact']")).not.toBeNull()
+            expect(canvasElement.querySelector("[data-test='flow-change-review']")).not.toBeNull()
             const badges = canvasElement.querySelectorAll("[data-test='topology-diff-badge']")
             expect(badges.length).toBeGreaterThan(0)
         }, {timeout: 10000})

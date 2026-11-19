@@ -12,7 +12,7 @@ export {EVENTS, GRAPH_BACKGROUND, MIN_ZOOM, NODE_SIZES, ZOOM_LOD} from "./utils/
 export type {CustomActionConfig, ShowDetailsConfig, LodLevel} from "./utils/constants"
 export {State} from "@kestra-io/design-system"
 export type {FlowGraph} from "./utils/vueFlowUtils"
-export {diffFlowSources, mergeFlowGraphs, revertChanges} from "./utils/flowDiff"
+export {diffFlowSources, mergeFlowGraphs} from "./utils/flowDiff"
 export type {FlowDiff, TaskDiff, TaskDiffStatus} from "./utils/flowDiff"
 export {
     LOOP_TYPE_SUFFIX,

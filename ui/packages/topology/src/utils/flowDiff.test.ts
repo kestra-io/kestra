@@ -1,5 +1,5 @@
 import {describe, expect, test} from "vitest"
-import {diffFlowSources, mergeFlowGraphs, revertChanges} from "./flowDiff"
+import {diffFlowSources, mergeFlowGraphs} from "./flowDiff"
 import type {FlowGraph} from "./vueFlowUtils"
 
 const ORDERS_BEFORE = `id: orders_sync
@@ -335,105 +335,5 @@ describe("mergeFlowGraphs", () => {
 
         expect(graph.nodes.map((n) => n.uid)).toEqual(["root.gate.a", "root.gate.load"])
         expect(graph.edges).toHaveLength(1)
-    })
-})
-
-describe("revertChanges", () => {
-    const statuses = (before: string, after: string) => statusOf(diffFlowSources(before, after))
-
-    test("drops a rejected added task and keeps the others", () => {
-        const after = revertChanges(ORDERS_BEFORE, ORDERS_AFTER, ["dedupe"])
-
-        expect(statuses(ORDERS_BEFORE, after)).toMatchObject({
-            notify_teams: "added",
-            load: "changed",
-            notify_slack: "removed",
-        })
-        expect(statuses(ORDERS_BEFORE, after)).not.toHaveProperty("dedupe")
-        expect(after).not.toContain("dedupe")
-    })
-
-    test("brings a rejected removal back where it was, and restores rejected property changes", () => {
-        const after = revertChanges(ORDERS_BEFORE, ORDERS_AFTER, ["notify_slack", "load"])
-        const diff = diffFlowSources(ORDERS_BEFORE, after)
-
-        expect(statuses(ORDERS_BEFORE, after)).toMatchObject({
-            notify_slack: "unchanged",
-            load: "unchanged",
-            dedupe: "added",
-            notify_teams: "added",
-        })
-        const ids = diff.tasks.map((task) => task.id)
-        expect(ids.indexOf("notify_slack")).toBe(ids.indexOf("load") + 1)
-    })
-
-    test("undoes a rename and a move", () => {
-        const before = [
-            "id: f",
-            "namespace: n",
-            "tasks:",
-            "  - {id: a, type: t}",
-            "  - id: gate",
-            "    type: If",
-            "    condition: x",
-            "    then:",
-            "      - {id: b, type: t}",
-            "",
-        ].join("\n")
-        const after = [
-            "id: f",
-            "namespace: n",
-            "tasks:",
-            "  - id: gate",
-            "    type: If",
-            "    condition: x",
-            "    then:",
-            "      - {id: c, type: t}",
-            "      - {id: a, type: t}",
-            "",
-        ].join("\n")
-
-        expect(statuses(before, after)).toMatchObject({a: "moved", c: "renamed"})
-        const reverted = revertChanges(before, after, ["a", "c"])
-        expect(Object.values(statuses(before, reverted))).toEqual(["unchanged", "unchanged", "unchanged"])
-    })
-
-    test("keeps the comments and blank lines of the proposal", () => {
-        const before = "id: f\nnamespace: n\ntasks:\n  - {id: a, type: t}\n"
-        const kept = [
-            "id: f",
-            "namespace: n",
-            "",
-            "tasks:",
-            "  # fetch the orders",
-            "  - id: a",
-            "    type: t",
-            "",
-        ]
-        const after = [...kept, "  - id: b", "    type: t", ""].join("\n")
-
-        expect(revertChanges(before, after, ["b"])).toBe(kept.join("\n"))
-    })
-
-    test("brings a removed flowable back once when one of its tasks is rejected too", () => {
-        const before = [
-            "id: f",
-            "namespace: n",
-            "tasks:",
-            "  - id: gate",
-            "    type: If",
-            "    condition: x",
-            "    then:",
-            "      - {id: a, type: t}",
-            "",
-        ].join("\n")
-        const after = "id: f\nnamespace: n\ntasks: []\n"
-
-        expect(revertChanges(before, after, ["a", "gate"]).match(/id: a/g)).toHaveLength(1)
-    })
-
-    test("returns the proposal untouched when nothing is rejected", () => {
-        const untouched = revertChanges(ORDERS_BEFORE, ORDERS_AFTER, [])
-        expect(statuses(ORDERS_BEFORE, untouched)).toEqual(statuses(ORDERS_BEFORE, ORDERS_AFTER))
     })
 })

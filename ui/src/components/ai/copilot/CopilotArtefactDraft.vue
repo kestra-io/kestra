@@ -27,17 +27,6 @@
                 <KsTabPane name="yaml" :label="$t('flow_change_review.yaml')" />
                 <KsTabPane name="graph" :label="$t('flow_change_review.graph')" />
             </KsTabs>
-            <KsButton
-                v-if="view === 'graph' && !dismissed && !applied"
-                text
-                size="small"
-                :icon="ArrowExpand"
-                :disabled="applying"
-                data-test="copilot-draft-review"
-                @click="onApply"
-            >
-                {{ $t("flow_change_review.review_changes") }}
-            </KsButton>
         </div>
         <div
             v-if="view === 'graph'"
@@ -47,7 +36,6 @@
         >
             <FlowChangeReview
                 v-if="base !== undefined"
-                compact
                 :before="base || undefined"
                 :after="draft.yaml"
             />
@@ -99,7 +87,6 @@
 
 <script setup lang="ts">
     import {computed, defineAsyncComponent, ref, watch} from "vue"
-    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import {useApplyDraft} from "./useApplyDraft"
     import type {ArtefactDraftEvent} from "./types"
@@ -197,9 +184,6 @@
     }
 
     .copilot-draft-view {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         padding: var(--ks-spacing-2) var(--ks-spacing-3) 0;
     }
 

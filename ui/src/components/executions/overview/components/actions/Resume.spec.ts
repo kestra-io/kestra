@@ -64,6 +64,36 @@ describe("Resume", () => {
         expect(wrapper.find("button").exists()).toBe(false)
     })
 
+    it("ignores a late answer for an execution that is no longer the shown one", async () => {
+        isAllowed.mockReturnValue(true)
+        setActivePinia(routedPinia())
+        const executionsStore = useExecutionsStore()
+        let allowFirst: (allowed: boolean) => void = () => {}
+        executionsStore.isResumeAllowed = vi.fn((id: string) =>
+            id === "exec1" ? new Promise<boolean>(resolve => allowFirst = resolve) : Promise.resolve(false),
+        )
+        const wrapper = i18nMount(Resume, {props: {execution: pausedExecution}})
+        mounted.push(wrapper)
+        await flushPromises()
+
+        await wrapper.setProps({execution: {...pausedExecution, id: "exec2"} as Execution})
+        await flushPromises()
+        allowFirst(true)
+        await flushPromises()
+
+        expect(executionsStore.isResumeAllowed).toHaveBeenCalledWith("exec2")
+        expect(wrapper.find("button").exists()).toBe(false)
+    })
+
+    it("does not ask the server when the user cannot resume executions of the namespace", async () => {
+        isAllowed.mockImplementation((_resource: string, action: string) => action !== "RESUME")
+        const {wrapper, executionsStore} = mountResume(true)
+        await flushPromises()
+
+        expect(executionsStore.isResumeAllowed).not.toHaveBeenCalled()
+        expect(wrapper.find("button").exists()).toBe(false)
+    })
+
     it("resumes with the inputs of a FORM under their dotted id, next to the other inputs", async () => {
         isAllowed.mockReturnValue(true)
         setActivePinia(routedPinia())

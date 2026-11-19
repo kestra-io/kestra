@@ -51,6 +51,8 @@ public final class TriggerState implements TriggerId {
     private final String executionId;
     private final long dispatchEpoch;
     private final Blocker blockedBy;
+    // the flow revision the trigger definition was last applied from, null for a state written before it existed.
+    private final Integer flowRevision;
 
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -79,7 +81,7 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public static TriggerState of(FlowId flowId, AbstractTrigger trigger, Integer vnode) {
-        return of(TriggerId.of(flowId, trigger), trigger, vnode);
+        return of(TriggerId.of(flowId, trigger), trigger, vnode).update(null).flowRevision(flowId.getRevision()).build();
     }
 
     /**
@@ -121,6 +123,7 @@ public final class TriggerState implements TriggerId {
             null,
             null,
             0L,
+            null,
             null
         );
     }
@@ -131,12 +134,25 @@ public final class TriggerState implements TriggerId {
      * @param clock the scheduler clock.
      * @return a new {@link TriggerState}
      */
-    public TriggerState update(Clock clock, AbstractTrigger trigger) {
+    public TriggerState update(Clock clock, AbstractTrigger trigger, int flowRevision) {
         return update(clock)
             .stopAfter(trigger.getStopAfter())
             .sourceDisabled(trigger.isDisabled())
             .type(TriggerType.from(trigger))
+            .flowRevision(flowRevision)
             .build();
+    }
+
+    public TriggerState flowRevision(final Clock clock, final int flowRevision) {
+        return update(clock).flowRevision(flowRevision).build();
+    }
+
+    /**
+     * Checks whether the trigger definition of this state was applied from a flow revision newer than the given one,
+     * so that an event computed from that revision is stale. A state with no known revision is never newer.
+     */
+    public boolean isAppliedFromRevisionNewerThan(final int revision) {
+        return flowRevision != null && flowRevision > revision;
     }
 
     /**
@@ -287,7 +303,7 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public TriggerState updateOnExecutionCreated(final Clock clock, final State.Type stateType) {
-        boolean disabled = getStopAfter() != null ? getStopAfter().contains(stateType) : isDisabled();
+        boolean disabled = isDisabled() || (getStopAfter() != null && getStopAfter().contains(stateType));
         return update(clock)
             .disabled(disabled)
             .lastTriggeredDate(clock.instant())
@@ -306,7 +322,7 @@ public final class TriggerState implements TriggerId {
      */
     public TriggerState updateOnExecutionTerminated(final Clock clock, final State.Type state) {
         // switch disabled automatically if the executionEndState is one of the stopAfter states
-        boolean disabled = getStopAfter() != null ? getStopAfter().contains(state) : isDisabled();
+        boolean disabled = isDisabled() || (getStopAfter() != null && getStopAfter().contains(state));
 
         return update(clock)
             .disabled(disabled)
@@ -428,7 +444,8 @@ public final class TriggerState implements TriggerId {
             .lastTriggeredDate(lastTriggeredDate)
             .executionId(executionId)
             .dispatchEpoch(dispatchEpoch)
-            .blockedBy(blockedBy);
+            .blockedBy(blockedBy)
+            .flowRevision(flowRevision);
     }
 
     // Lombok hack to properly generate Javadoc

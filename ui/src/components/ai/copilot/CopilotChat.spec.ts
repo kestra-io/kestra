@@ -804,7 +804,8 @@ describe("CopilotChat", () => {
     it("opens the configuration docs in a new tab from the notice", () => {
         miscStore.configs = {isAiApiKeyConfigured: false}
         const docs = mountChat().find("[data-test=\"copilot-unavailable-docs\"]")
-        expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
+        expect(docs.attributes("href")).toContain("kestra.io/docs/develop-with-ai/ai-copilot")
+        expect(docs.attributes("href")).toMatch(/#configure-an-llm-provider$/)
         expect(docs.attributes("target")).toBe("_blank")
     })
 

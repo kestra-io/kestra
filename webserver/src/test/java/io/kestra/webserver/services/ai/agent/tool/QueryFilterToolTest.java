@@ -44,6 +44,13 @@ class QueryFilterToolTest {
         }
     }
 
+    static final class SampleInvitationsTool {
+        @Tool(name = "list_invitations", value = "List invitations, optionally filtered.")
+        public String list(@QueryFilterFormat(QueryFilter.Resource.INVITATION) List<QueryFilter> filters) {
+            return "ok:" + filters.size();
+        }
+    }
+
     private static Method readMethod() {
         return toolMethodOf(SampleLogsTool.class);
     }
@@ -78,10 +85,27 @@ class QueryFilterToolTest {
     }
 
     @Test
+    void shouldDropFilterDefinitionsWhenFilterParamIsExpanded() {
+        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(readMethod());
+
+        assertThat(spec.parameters().definitions()).isNullOrEmpty();
+    }
+
+    @Test
     void shouldNotExposeTimeRangeField() {
         // When / Then — TIME_RANGE is filtered out; ordinary fields are exposed
-        assertThat(AiToolSpecifications.isExposedFilterField(QueryFilter.Field.TIME_RANGE)).isFalse();
-        assertThat(AiToolSpecifications.isExposedFilterField(QueryFilter.Field.START_DATE)).isTrue();
+        assertThat(AiToolSpecifications.isExposedFilterField(QueryFilter.Resource.LOG, QueryFilter.Field.TIME_RANGE)).isFalse();
+        assertThat(AiToolSpecifications.isExposedFilterField(QueryFilter.Resource.LOG, QueryFilter.Field.START_DATE)).isTrue();
+    }
+
+    @Test
+    void shouldLeaveOutSortOnlyFieldWhenResourceDeclaresNoOperatorForIt() {
+        // Given — INVITATION lists EXPIRED_AT among its fields for sorting, with no filter operator
+        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(toolMethodOf(SampleInvitationsTool.class));
+
+        // Then — the schema is built and only the filterable fields appear
+        JsonObjectSchema params = (JsonObjectSchema) spec.parameters();
+        assertThat(params.properties()).containsKeys("EMAIL", "STATUS").doesNotContainKey("EXPIRED_AT");
     }
 
     @Test

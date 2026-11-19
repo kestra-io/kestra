@@ -36,7 +36,8 @@
 </template>
 
 <script setup lang="ts" generic="T, C extends boolean | undefined = undefined">
-    import {type Component, computed, h, markRaw, provide, ref, toRef} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {type Component, computed, h, markRaw, provide, ref, toRef, type HTMLAttributes} from "vue"
     import {ElSelect, type SelectPropsPublic} from "element-plus"
     import Loading from "vue-material-design-icons/Loading.vue"
     import KsIcon from "../../Basic/KsIcon.vue"
@@ -48,7 +49,7 @@
     // Clearing a single select emits undefined (Element Plus valueOnClear), a multiple one emits [].
     type ClearedValue<V, Clearable> = true extends Clearable ? (V extends readonly unknown[] ? V : V | undefined) : V
 
-    const props = withDefaults(defineProps<{
+    type KsSelectProps = {
         modelValue?: T
         placeholder?: string
         disabled?: boolean
@@ -74,7 +75,9 @@
         colorMap?: KsSelectColorMap
         selectAll?: boolean
         singleLineTags?: boolean
-    }>(), {
+    }
+
+    const props = withDefaults(defineProps<KsSelectProps & /* @vue-ignore */ Omit<NativeAttributes<SelectPropsPublic & HTMLAttributes>, keyof KsSelectProps>>(), {
         placeholder: undefined,
         size: undefined,
         clearable: undefined,

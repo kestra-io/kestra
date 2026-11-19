@@ -16,6 +16,15 @@ describe("KsIconButton", () => {
         expect(wrapper.find(".ks-icon-button").exists()).toBe(true)
     })
 
+    test("passes its type to the button", () => {
+        const wrapper = mount(KsIconButton, {
+            props: {type: "primary", ariaLabel: "Star"},
+            slots: {default: StarIcon},
+            global: globalConfig,
+        })
+        expect(wrapper.find("button").classes()).toContain("kel-button--primary")
+    })
+
     test("renders slot content", () => {
         const wrapper = mount(KsIconButton, {
             slots: {default: "<span data-testid=\"icon\">★</span>"},

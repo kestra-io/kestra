@@ -10,10 +10,12 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.TriggerAssetsDeclaration;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.check.Check;
@@ -91,7 +93,7 @@ public abstract class AbstractFeatureUsageReportTest {
                     ).build()
                 )
             )
-            .outputs(List.of(Output.builder().id("out").type(Type.STRING).value("value").build()))
+            .outputs(List.of(Output.builder().id("out").type(OutputType.STRING).value("value").build()))
             .variables(Map.of("var", "value"))
             .workerSelector(new FlowWorkerSelector(List.of("tag"), null))
             .concurrency(Concurrency.builder().limit(2).behavior(Concurrency.Behavior.CANCEL).build())
@@ -156,7 +158,7 @@ public abstract class AbstractFeatureUsageReportTest {
                         .logToFile(true)
                         .failOnTriggerError(true)
                         .allowConcurrent(true)
-                        .assets(new AssetsDeclaration(null, null, null, null))
+                        .assets(new TriggerAssetsDeclaration(null, null, null))
                         .build()
                 )
             )

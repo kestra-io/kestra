@@ -39,7 +39,7 @@ ui_staged_files=$(git --no-pager diff --cached --name-only | grep -E '(^|/)(ui|u
 
 if [ -n "$ui_staged_files" ]; then
   echo "Staged UI files: $ui_staged_files"
-  for dir in ui ui-ee; do
+  for dir in ui-ee; do
     if [ -d "$dir" ] && echo "$ui_staged_files" | grep -qE "^$dir/.*\.(ts|tsx|vue)$"; then
       echo "Updating the explicit any baseline in $dir..."
       (cd "$dir" && npm run check:ts-any -- --write) || exit 1

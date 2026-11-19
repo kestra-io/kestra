@@ -1,5 +1,6 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {ElTag} from "element-plus"
 import KestraDesignSystem from "../../../index"
 import KsTag from "./KsTag.vue"
 
@@ -48,5 +49,10 @@ describe("KsTag", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-tag.is-closable").exists()).toBe(true)
+    })
+
+    test("passes the plain effect to Element Plus when the parent sets none", () => {
+        const wrapper = mount(KsTag, {global: globalConfig})
+        expect(wrapper.findComponent(ElTag).props("effect")).toBe("plain")
     })
 })

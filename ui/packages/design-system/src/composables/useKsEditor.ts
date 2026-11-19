@@ -111,6 +111,8 @@ export function useKsEditor(
     let moveCursorCmdDisposable: monaco.IDisposable | undefined
     let diffViewModel: monaco.editor.IDiffEditorViewModel | undefined
     let placeholderWidget: PlaceholderContentWidget | undefined
+    /** What the parent was last sent, until the prop catches up a tick later. */
+    let emittedValue: string | undefined
     const disposeCompletions = ref<() => void>()
 
 
@@ -475,7 +477,9 @@ export function useKsEditor(
         const modEditor = getModifiedEditor()
         modEditor?.onDidChangeModelContent(() => {
             const value = modEditor.getValue()
-            if (props.modelValue !== value) emit("update:modelValue", value)
+            if ((emittedValue ?? props.modelValue) === value) return
+            emittedValue = value
+            emit("update:modelValue", value)
         })
 
         observeAndResizeSuggestWidget()
@@ -660,6 +664,7 @@ export function useKsEditor(
     })
 
     watch(() => props.modelValue, (newValue) => {
+        emittedValue = undefined
         if (localEditor.value) {
             const modEditor = getModifiedEditor()
             if (newValue !== modEditor?.getValue()) modEditor?.setValue(newValue)

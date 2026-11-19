@@ -17,27 +17,21 @@
 </template>
 
 <script setup lang="ts" generic="T">
+    import type {HTMLAttributes} from "vue"
     import {ElAutocomplete, type AutocompleteProps} from "element-plus"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
+
+    type KsAutocompleteProps = Omit<AutocompleteProps, "modelValue" | "fetchSuggestions"> & {
+        fetchSuggestions?: (query: string, callback: (results: T[]) => void) => void
+    }
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<string>()
 
-    const props = withDefaults(defineProps<{
-        placeholder?: string
-        disabled?: boolean
-        clearable?: boolean
-        fetchSuggestions?: (query: string, callback: (results: T[]) => void) => void
-        triggerOnFocus?: boolean
-        valueKey?: string
-    }>(), {
-        placeholder: undefined,
-        fetchSuggestions: undefined,
-        triggerOnFocus: undefined,
-        valueKey: undefined,
-    })
+    const props = defineProps<KsAutocompleteProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsAutocompleteProps>>()
 
     const emit = defineEmits<{
         select: [item: T]
@@ -49,7 +43,7 @@
         suffix?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 </script>
 
 <style lang="scss">

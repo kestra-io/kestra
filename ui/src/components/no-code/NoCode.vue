@@ -191,7 +191,7 @@
     })
 
     provide(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {
-        flowStore.save?.()
+        flowStore.save?.(flowStore.flow?.draft ?? false)
     })
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {

@@ -2712,7 +2712,8 @@
           "consumed_by": "Consumed by",
           "upstream_of": "Upstream of",
           "part_of": "Part of",
-          "related": "Related"
+          "related": "Related",
+          "depends_on": "Depends on"
         },
         "summary": {
           "fresh": "All {n} assets fresh",

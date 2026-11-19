@@ -8,6 +8,7 @@ describe("edgeKindToken", () => {
         ["UPSTREAM_OF", "--ks-dependencies-edge-upstream-of"],
         ["PART_OF", "--ks-dependencies-edge-part-of"],
         ["RELATED", "--ks-dependencies-edge-related"],
+        ["DEPENDS_ON", "--ks-dependencies-edge-depends-on"],
     ])("should return the token for %s", (kind, token) => {
         expect(edgeKindToken(kind)).toBe(token)
     })
@@ -27,6 +28,7 @@ describe("RELATION_KINDS", () => {
             "UPSTREAM_OF",
             "PART_OF",
             "RELATED",
+            "DEPENDS_ON",
         ])
     })
 })
@@ -36,7 +38,7 @@ describe("isLineageEdge", () => {
         expect(isLineageEdge(kind)).toBe(true)
     })
 
-    it.each(["PART_OF", "RELATED"])("should skip %s during the DAG rank walk", (kind) => {
+    it.each(["PART_OF", "RELATED", "DEPENDS_ON"])("should skip %s during the DAG rank walk", (kind) => {
         expect(isLineageEdge(kind)).toBe(false)
     })
 

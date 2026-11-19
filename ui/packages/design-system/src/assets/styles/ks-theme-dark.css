@@ -104,6 +104,7 @@ html.dark {
     --ks-dependencies-edge-upstream-of: var(--ks-orange-300);
     --ks-dependencies-edge-part-of: var(--ks-yellow-300);
     --ks-dependencies-edge-related: var(--ks-gray-cool-100);
+    --ks-dependencies-edge-depends-on: var(--ks-primary-400);
     --ks-dependencies-node-background-assets: var(--ks-blue-300);
     --ks-dependencies-node-background-default: var(--ks-gray-cool-500);
     --ks-dependencies-node-background-faded: var(--ks-gray-cool-700);

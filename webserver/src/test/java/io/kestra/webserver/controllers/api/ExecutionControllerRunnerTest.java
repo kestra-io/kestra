@@ -56,6 +56,8 @@ import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
@@ -155,6 +157,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     ExecutionRepositoryInterface executionRepositoryInterface;
+
+    @Inject
+    SearchableDataRepositoryInterface searchableDataRepository;
 
     @Inject
     @Client("/")
@@ -1132,6 +1137,46 @@ class ExecutionControllerRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    @Test
+    void shouldIndexReplayedInputsUnderTheNewExecutionWhenReplayingWithInputs() throws Exception {
+        // Given
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            inputs:
+              - id: s_string
+                type: STRING
+                searchable: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ inputs.s_string }}"
+            """.formatted(flowId, TESTS_FLOW_NS);
+        flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+        Execution original = runnerUtils.runOne(
+            MAIN_TENANT, TESTS_FLOW_NS, flowId, null,
+            (flow, execution) -> flowIO.readExecutionInputs(flow, execution, Map.of("s_string", "Cust-12"))
+        );
+
+        // When
+        Execution replay = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/main/executions/" + original.getId() + "/actions/replay-with-inputs",
+                    MultipartBody.builder().addPart("s_string", "Replayed-1").build()
+                )
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        // Then
+        assertThat(searchableDataRepository.findById(MAIN_TENANT, original.getId(), "s_string"))
+            .contains(new SearchableData(MAIN_TENANT, original.getId(), "s_string", "Cust-12"));
+        assertThat(searchableDataRepository.findById(MAIN_TENANT, replay.getId(), "s_string"))
+            .contains(new SearchableData(MAIN_TENANT, replay.getId(), "s_string", "Replayed-1"));
     }
 
     @Test

@@ -1,0 +1,13 @@
+id: switch-with-only-disabled-tasks
+namespace: io.kestra.tests
+
+tasks:
+  - id: switch
+    type: io.kestra.plugin.core.flow.Switch
+    value: FIRST
+    cases:
+      FIRST:
+        - id: log1
+          disabled: true
+          type: io.kestra.plugin.core.log.Log
+          message: Log 1

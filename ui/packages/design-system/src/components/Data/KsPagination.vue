@@ -11,8 +11,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {ElConfigProvider, ElPagination, type PaginationProps} from "element-plus"
+    import {computed, type HTMLAttributes} from "vue"
+    import {ElConfigProvider, ElPagination, type PaginationProps, type PaginationPropsPublic} from "element-plus"
     import de from "element-plus/es/locale/lang/de"
     import en from "element-plus/es/locale/lang/en"
     import es from "element-plus/es/locale/lang/es"
@@ -28,6 +28,7 @@
     import zhCn from "element-plus/es/locale/lang/zh-cn"
     import {designSystemLocale} from "../../i18n"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
     // Element Plus locale pack for each app language; anything else falls back to English.
     const elementLocales: Record<string, typeof en> = {
@@ -52,7 +53,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    export interface KsPaginationProps {
         total?: number
         currentPage?: number
         pageSize?: number
@@ -61,7 +62,9 @@
         size?: "small" | "default" | "large"
         background?: boolean
         disabled?: boolean
-    }>()
+    }
+
+    const props = defineProps<KsPaginationProps & /* @vue-ignore */ Omit<NativeAttributes<PaginationPropsPublic & HTMLAttributes>, keyof KsPaginationProps>>()
 
     const filteredProps = useFilteredProps(props)
 

@@ -22,7 +22,18 @@
                     inverted
                     :showTooltip="false"
                 />
-                <p class="title">{{ title }}</p>
+                <p class="title">
+                    <KsLink
+                        v-if="isAbsoluteNotificationUrl(notification.url)"
+                        :href="notification.url"
+                        data-test="url"
+                    >
+                        {{ title }}
+                    </KsLink>
+                    <template v-else>
+                        {{ title }}
+                    </template>
+                </p>
                 <span
                     v-if="notification.referenceId"
                     class="reference"
@@ -77,7 +88,7 @@
     import type {Notification} from "../../stores/notifications"
     import {NOTIFICATION_ICONS} from "../../utils/notificationIcons"
     import {progressColor, progressPercentage} from "../../utils/notificationProgress"
-    import {isNotificationLinkable} from "../../utils/notificationRoute"
+    import {isAbsoluteNotificationUrl, isNotificationLinkable} from "../../utils/notificationRoute"
 
     const props = defineProps<{notification: Notification}>()
     defineEmits<{click: []; "mark-read": []; "mark-unread": []}>()

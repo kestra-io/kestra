@@ -10,6 +10,9 @@ export interface EditorMarker {
     severity: "error" | "warning" | "info";
 }
 
+// The containers the backend's FlowValidator walks, through Flow.allTasks() and each flowable's allChildTasks().
+const TASK_LIST_KEYS = new Set(["tasks", "errors", "finally", "afterExecution", "then", "else", "defaults", "onWait", "onApprove", "onDeny"])
+
 export function findDuplicateTaskIds(yamlSource: string): EditorMarker[] {
     const markers: EditorMarker[] = []
 
@@ -17,58 +20,66 @@ export function findDuplicateTaskIds(yamlSource: string): EditorMarker[] {
         const doc = parseDocument(yamlSource, {keepSourceTokens: true})
         const seenIds = new Map<string, {line: number; col: number}>()
 
+        const processTask = (task: YAMLMap) => {
+            const idPair = task.items.find(
+                (pair) => (pair.key as Scalar)?.value === "id",
+            )
+
+            if (idPair && idPair.value) {
+                const idNode = idPair.value as Scalar
+                const idValue = String(idNode.value)
+
+                if (idValue && idNode.range) {
+                    const pos = getLineCol(yamlSource, idNode.range[0])
+
+                    if (seenIds.has(idValue)) {
+                        const endPos = getLineCol(yamlSource, idNode.range[1])
+                        markers.push({
+                            taskId: idValue,
+                            message: `Duplicate task id: "${idValue}"`,
+                            startLineNumber: pos.line,
+                            startColumn: pos.col,
+                            endLineNumber: endPos.line,
+                            endColumn: endPos.col,
+                            severity: "error",
+                        })
+                    } else {
+                        seenIds.set(idValue, pos)
+                    }
+                }
+            }
+
+            processChildren(task)
+        }
+
         const processTasks = (tasks: unknown) => {
             if (!isSeq(tasks)) return
 
-            for (const task of tasks.items) {
-                if (!isMap(task)) continue
+            for (const item of tasks.items) {
+                if (!isMap(item)) continue
 
-                const idPair = (task as YAMLMap).items.find(
-                    (pair) => (pair.key as Scalar)?.value === "id",
-                )
+                const dagTask = item.get("task")
+                processTask(!item.has("id") && isMap(dagTask) ? dagTask : item)
+            }
+        }
 
-                if (idPair && idPair.value) {
-                    const idNode = idPair.value as Scalar
-                    const idValue = String(idNode.value)
-
-                    if (idValue && idNode.range) {
-                        const pos = getLineCol(yamlSource, idNode.range[0])
-
-                        if (seenIds.has(idValue)) {
-                            const endPos = getLineCol(yamlSource, idNode.range[1])
-                            markers.push({
-                                taskId: idValue,
-                                message: `Duplicate task id: "${idValue}"`,
-                                startLineNumber: pos.line,
-                                startColumn: pos.col,
-                                endLineNumber: endPos.line,
-                                endColumn: endPos.col,
-                                severity: "error",
-                            })
-                        } else {
-                            seenIds.set(idValue, pos)
-                        }
+        const processChildren = (node: YAMLMap) => {
+            for (const pair of node.items) {
+                const key = (pair.key as Scalar)?.value
+                if (typeof key === "string" && TASK_LIST_KEYS.has(key)) {
+                    processTasks(pair.value)
+                } else if (key === "cases" && isMap(pair.value)) {
+                    for (const casePair of pair.value.items) {
+                        processTasks(casePair.value)
                     }
-                }
-
-                const taskMap = task as YAMLMap
-                for (const pair of taskMap.items) {
-                    const key = (pair.key as Scalar)?.value
-                    if (key === "tasks" || key === "errors" || key === "finally") {
-                        processTasks(pair.value)
-                    }
+                } else if (key === "onPause" && isMap(pair.value)) {
+                    processTask(pair.value)
                 }
             }
         }
 
-        const contents = doc.contents
-        if (isMap(contents)) {
-            for (const pair of contents.items) {
-                const key = (pair.key as Scalar)?.value
-                if (key === "tasks" || key === "errors" || key === "finally") {
-                    processTasks(pair.value)
-                }
-            }
+        if (isMap(doc.contents)) {
+            processChildren(doc.contents)
         }
     } catch {
         // syntax errors handled elsewhere

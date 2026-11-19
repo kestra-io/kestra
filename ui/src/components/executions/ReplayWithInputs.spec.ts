@@ -47,4 +47,22 @@ describe("ReplayWithInputs", () => {
         const formData: FormData = replayExecutionWithInputs.mock.calls[0][0].formData
         expect(Object.fromEntries(formData.entries())).toEqual({"env.region": "us-east-2", "env.day": "2026-01-15", top: "custom"})
     })
+
+    it("still posts a multipart body when every input kept its default", async () => {
+        setActivePinia(createPinia())
+        const executionsStore = useExecutionsStore()
+        executionsStore.flow = {
+            id: "flow1",
+            namespace: "tests",
+            inputs: [{id: "name", type: "STRING", defaults: "world"}],
+        } as unknown as typeof executionsStore.flow
+        const replayExecutionWithInputs = vi.fn().mockResolvedValue({id: "replayed", namespace: "tests", flowId: "flow1"} as Execution)
+        executionsStore.replayExecutionWithInputs = replayExecutionWithInputs
+
+        const wrapper = mount(ReplayWithInputs, {props: {execution: {id: "exec1"}}})
+        const replaySubmit = wrapper.findComponent(FlowRun).props("replaySubmit") as (options: ReplaySubmitOptions) => Promise<void>
+        await replaySubmit({inputs: {}, breakpoints: []} as unknown as ReplaySubmitOptions)
+
+        expect(replayExecutionWithInputs.mock.calls[0][0].formData).toBeInstanceOf(FormData)
+    })
 })

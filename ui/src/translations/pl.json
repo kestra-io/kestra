@@ -1244,6 +1244,10 @@
     "trigger blocked policy check failed": "Nie można było sprawdzić polityk zarządzania.",
     "trigger blocked unknown": "Zablokowano z nieznanego powodu.",
     "trigger disabled": "Trigger jest wyłączony w źródle Flow",
+    "trigger not toggleable": "Ten Trigger nie jest oceniany przez Scheduler, wyłącz go w źródle Flow",
+    "bulk not toggleable warning": "{count} wybrany Trigger zostanie pominięty: Scheduler ich nie ocenia, więc można je wyłączyć tylko w źródle Flow. | {count} wybrane Triggery zostaną pominięte: Scheduler ich nie ocenia, więc można je wyłączyć tylko w źródle Flow. | {count} wybranych Triggerów zostanie pominiętych: Scheduler ich nie ocenia, więc można je wyłączyć tylko w źródle Flow.",
+    "bulk none applied": "Żadne triggery nie zostały zmienione: żaden z wybranych nie mógł zostać przetworzony.",
+    "bulk partially applied": "Przetworzono {count} z {requested} Triggerów, pozostałe pominięto.",
     "trigger enable dialog": {
       "title": "Włącz Trigger",
       "bulk title": "Włącz {count} Triggerów",
@@ -2481,6 +2485,13 @@
         "placeholder": "Powiedz mi, co zbudować…",
         "send": "Wyślij",
         "stop": "Zatrzymaj",
+        "usage": {
+          "remaining": "Pozostało {percent}%",
+          "help": "Pozostała część limitu użycia AI tego dostawcy w bieżącym oknie.",
+          "warning": "Zbliżasz się do limitu użycia AI tego dostawcy. Tury są odrzucane po jego osiągnięciu.",
+          "exceeded": "Limit użycia AI tego dostawcy został osiągnięty. Zostanie zresetowany po zakończeniu bieżącego okresu.",
+          "exceededUntil": "Limit użycia AI tego dostawcy został osiągnięty. Zostanie zresetowany {when}."
+        },
         "mode": {
           "ask": "Pytaj",
           "edit": "Edytuj",
@@ -2523,7 +2534,7 @@
           "planTitle": "Proponowany plan",
           "actionTitle": "Proponowana akcja",
           "approve": "Zatwierdź",
-          "approveExecute": "Zatwierdź i wykonaj",
+          "approvePlan": "Zatwierdź plan",
           "reject": "Odrzuć",
           "pending": "Oczekuje na zatwierdzenie",
           "revise": "Odpowiedz, aby poprawić"
@@ -2557,6 +2568,12 @@
           "docs": "Wyświetl dokumentację",
           "sendTooltip": "Wysyłanie jest wyłączone, ponieważ nie skonfigurowano żadnego dostawcy AI.",
           "notSent": "Twoje zapytanie nie zostało wysłane"
+        },
+        "mcpTip": {
+          "title": "Używaj Kestra z Claude Code, Cursor i innych klientów MCP",
+          "description": "Oprócz Copilota, Kestra udostępnia serwer MCP. Podłącz do niego zewnętrznego klienta MCP, aby zarządzać swoimi Flowami i egzekucjami za pomocą narzędzi, których już używasz.",
+          "docs": "Wyświetl dokumentację",
+          "dismiss": "Nie pokazuj ponownie"
         },
         "thinkingWords": [
           "Orchestrowanie",
@@ -2613,6 +2630,10 @@
           },
           "valid": "Prawidłowy",
           "invalid": "Wymaga zmian"
+        },
+        "tray": {
+          "title": "Oczekujące zmiany",
+          "applyFirst": "Najpierw zastosuj {flow}"
         }
       }
     },
@@ -2891,7 +2912,8 @@
       "open_in_secrets": "Otwórz w sekretach",
       "options_aria": "Opcje wyszukiwania",
       "path_only_hint": "Przeszukuje tylko ścieżkę pliku, nie jego zawartość. Nie można zamienić.",
-      "preview_empty": "Wybierz wynik, aby zobaczyć podgląd. Kliknij Flow na liście wyników, aby zobaczyć jego kod źródłowy.",
+      "preview_empty_title": "Wybierz wynik, aby zobaczyć podgląd.",
+      "preview_empty_description": "Kliknij Flow na liście wyników, aby zobaczyć jego kod źródłowy.",
       "preview_error": "Nie udało się wczytać kodu źródłowego Flow",
       "previous_match": "Poprzednie dopasowanie",
       "rbac_banner": "{count} Flowów jest wykluczonych z zamiany. Masz dostęp do odczytu, ale nie do edycji w {namespace}. Poproś administratora namespace'u o uprawnienie {permission}, aby je uwzględnić.",

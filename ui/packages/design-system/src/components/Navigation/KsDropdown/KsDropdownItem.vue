@@ -10,19 +10,22 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import {ElDropdownItem, dropdownItemProps} from "element-plus"
-    import type {Component, ExtractPublicPropTypes} from "vue"
+    import type {Component, ExtractPublicPropTypes, HTMLAttributes} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    export interface KsDropdownItemProps {
         command?: string | number | object
         disabled?: boolean
         divided?: boolean
         icon?: string | Component
         danger?: boolean
-    }>()
+    }
+
+    const props = defineProps<KsDropdownItemProps & /* @vue-ignore */ Omit<NativeAttributes<ExtractPublicPropTypes<typeof dropdownItemProps> & HTMLAttributes>, keyof KsDropdownItemProps>>()
 
     const filteredProps = useFilteredProps(props, ["danger"])
 

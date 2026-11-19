@@ -161,8 +161,14 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         );
         final ServiceInstance instance = localServiceState.instance();
 
-        serviceLivenessUpdater.update(instance);
-        this.serviceRegistry.register(localServiceState.with(instance));
+        // Same lock as the heartbeat write-back, so an in-flight heartbeat cannot overwrite this registration.
+        stateLock.lock();
+        try {
+            serviceLivenessUpdater.update(instance);
+            this.serviceRegistry.register(localServiceState.with(instance));
+        } finally {
+            stateLock.unlock();
+        }
         if (log.isDebugEnabled()) {
             log.debug(
                 "[Service id={}, type='{}', hostname='{}'] Connected.",
@@ -336,6 +342,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
                 // Register the OnStateTransitionFailureCallback
                 final ServiceInstance instance = remoteInstance;
+                final LocalServiceState registered = localServiceState;
                 returnCallback = () ->
                 {
                     Optional<ServiceInstance> result = onStateChangeError.execute(now, service, instance, isLivenessEnabled());
@@ -343,8 +350,10 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                         // Optionally recover from state-transition failure
                         final ServiceInstance recovered = result.get();
                         serviceLivenessUpdater.update(recovered);
-                        this.serviceRegistry.register(localServiceState(service).with(recovered));
-                        this.lastSucceedStateUpdated = now;
+                        if (isStillRegistered(service, registered)) {
+                            this.serviceRegistry.register(registered.with(recovered));
+                            this.lastSucceedStateUpdated = now;
+                        }
                     }
                 };
             }
@@ -352,8 +361,10 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             if (isStateTransitionSucceed) {
                 this.lastSucceedStateUpdated = now;
             }
-            // Update the local instance
-            this.serviceRegistry.register(localServiceState.with(remoteInstance));
+            // Skip when another service of the same type was registered meanwhile, or its slot would be overwritten.
+            if (isStillRegistered(service, localServiceState)) {
+                this.serviceRegistry.register(localServiceState.with(remoteInstance));
+            }
 
             // Notify listeners on successful state update (SUCCEEDED or recovered ABORTED).
             // Not invoked on FAILED so downstream sinks (e.g., discovery registry) stop
@@ -418,6 +429,11 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             // Mark the service has not updatable to prevent any unnecessary state transition issues.
             localServiceState(service).isStateUpdatable().set(false);
         }
+    }
+
+    private boolean isStillRegistered(final Service service, final LocalServiceState expected) {
+        LocalServiceState current = serviceRegistry.get(service.getType());
+        return current != null && current.service() == expected.service();
     }
 
     private LocalServiceState localServiceState(final Service service) {

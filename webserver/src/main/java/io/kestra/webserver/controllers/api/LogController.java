@@ -20,6 +20,7 @@ import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
+import io.kestra.webserver.models.api.Pagination;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
@@ -42,6 +43,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.Valid;
 import reactor.core.publisher.Flux;
 
 @Controller("/api/v1/{tenant}/logs")
@@ -67,13 +69,7 @@ public class LogController {
     @Get(uri = "/search")
     @Operation(tags = { "Logs" }, summary = "Search for logs")
     public CursorOrOffsetPagedResults<LogEntry> searchLogs(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(
-            description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc")
-            }
-        ) @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "An opaque cursor token (from a previous response's nextCursor) for cursor-paginated log stores")
         @Nullable @QueryValue String cursor,
         @Parameter(
@@ -81,11 +77,11 @@ public class LogController {
             in = ParameterIn.QUERY
         ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters)
         throws HttpStatusException {
-        Pageable offsetPageable = PageableUtils.from(page, size, sort);
+        Pageable offsetPageable = paging.toPageable();
         // A cursor param targets a cursor-paginated store (e.g. an external log store): resume after the
         // opaque token (the store interprets it). Otherwise use offset pagination (the default for JDBC/Elasticsearch).
         Pageable pageable = cursor != null
-            ? Pageable.afterCursor(Pageable.Cursor.of(cursor), page, size, offsetPageable.getSort())
+            ? Pageable.afterCursor(Pageable.Cursor.of(cursor), paging.page(), paging.size(), offsetPageable.getSort())
             : offsetPageable;
 
         return CursorOrOffsetPagedResults.of(

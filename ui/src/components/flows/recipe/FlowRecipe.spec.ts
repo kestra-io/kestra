@@ -138,7 +138,7 @@ const globalConfig = {
             KsCollapseItem: {template: "<div><slot /></div>"},
             KsButton: {template: "<button :disabled='disabled' @click=\"$emit('click')\"><slot /></button>", props: ["disabled"], emits: ["click"]},
             KsSkeleton: {template: "<div />"},
-            KsEmpty: {template: "<div />"},
+            KsNoData: {template: "<div />"},
             KsSegmented: {template: "<div />"},
             KsEditor: {template: "<div />"},
             KsCard: {template: "<div><slot /></div>"},

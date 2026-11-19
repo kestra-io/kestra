@@ -34,6 +34,7 @@ vi.mock("../../stores/flow", async () => {
         previewSource: undefined,
         errorNavigation: null as {count: number; revealNext: () => void} | null,
         onEdit: vi.fn(),
+        saveAll: vi.fn(),
     })
     return {useFlowStore: () => store}
 })
@@ -65,7 +66,7 @@ vi.mock("@kestra-io/topology", () => ({
     flowYamlUtils: {getTypeAtPosition: vi.fn(), getVersionAtPosition: vi.fn()},
 }))
 vi.mock("@kestra-io/design-system", () => ({
-    KsEditor: defineComponent({name: "KsEditor", template: "<div data-test=\"ks-editor\" />"}),
+    KsEditor: defineComponent({name: "KsEditor", methods: {getEditor: () => ({})}, template: "<div data-test=\"ks-editor\" />"}),
 }))
 vi.mock("./PlaygroundRunTaskButton.vue", () => ({
     default: defineComponent({name: "PlaygroundRunTaskButton", template: "<div />"}),
@@ -305,5 +306,17 @@ describe("FlowFileEditorTab", () => {
         shown.value = true
         await flushPromises()
         expect(useFlowStore().errorNavigation?.count).toBe(2)
+    })
+
+    it("should save the flow without choosing its draft state, so a draft stays a draft", async () => {
+        const flowStore = useFlowStore() as unknown as {saveAll: ReturnType<typeof vi.fn>}
+        flowStore.saveAll.mockReset()
+        const wrapper = mountWithTabContext(FlowFileEditorTab, flowTabProps)
+        await flushPromises()
+
+        wrapper.findComponent({name: "KsEditor"}).vm.$emit("save")
+        await flushPromises()
+
+        expect(flowStore.saveAll).toHaveBeenCalledExactlyOnceWith(undefined)
     })
 })

@@ -36,6 +36,13 @@ class OpenapiTest {
     }
 
     @Test
+    void shouldTypeTheOutputsOfAFlowForExecutionWithTheOutputTypes() throws IOException {
+        JsonNode schemas = spec().path("components").path("schemas");
+
+        assertThat(outputItems(schemas, "FlowForExecution")).isNotEmpty().allSatisfy(items -> assertThat(typeRefs(schemas, items)).containsExactly("#/components/schemas/OutputType"));
+    }
+
+    @Test
     void shouldDocumentTtlAndDescriptionHeadersWhenSettingKeyValue() throws IOException {
         JsonNode parameters = spec().path("paths").path("/api/v1/{tenant}/namespaces/{namespace}/kv/{key}").path("put").path("parameters");
 
@@ -58,6 +65,12 @@ class OpenapiTest {
         List<JsonNode> items = new ArrayList<>();
         collect(schemas, schemas.path(schemaName), node -> node.path("properties").path("outputs").path("items"), items);
         return items;
+    }
+
+    private static List<String> typeRefs(JsonNode schemas, JsonNode schema) {
+        List<JsonNode> nodes = new ArrayList<>();
+        collect(schemas, schema, node -> node.path("properties").path("type").path("$ref"), nodes);
+        return nodes.stream().map(JsonNode::asText).toList();
     }
 
     private static List<String> required(JsonNode schemas, JsonNode schema) {

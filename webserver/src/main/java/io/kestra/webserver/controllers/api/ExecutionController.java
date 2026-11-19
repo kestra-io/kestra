@@ -114,6 +114,8 @@ import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
+import io.kestra.webserver.models.api.Pagination;
+import io.kestra.webserver.models.api.UnsortedPagination;
 
 import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Value;
@@ -141,7 +143,6 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.extensions.Extension;
 import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -339,14 +340,7 @@ public class ExecutionController {
     @Get(uri = "/search")
     @Operation(tags = { "Executions" }, summary = "Search for executions")
     public PagedResults<ApiLightExecution> searchExecutions(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(
-            description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by start date in ascending order", value = "state.startDate:asc"),
-                @ExampleObject(name = "Sort by namespace in descending order", value = "namespace:desc"),
-            }
-        ) @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -356,7 +350,7 @@ public class ExecutionController {
     ) {
         var tenantId = tenantService.resolveTenant();
         var executions = executionRepository.find(
-            PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
+            paging.toPageable(executionRepository.sortMapping()),
             tenantId,
             searchableDataFilterService.resolve(tenantId, QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true)),
             dateFilter
@@ -569,7 +563,7 @@ public class ExecutionController {
     }
 
     private void deleteWithApprovals(Execution execution, boolean deleteLogs, boolean deleteMetrics, boolean deleteStorage) throws IOException {
-        try {
+        try (PropagatedContext.Scope _ = Actor.propagate(actorResolver.resolve())) {
             executionService.cancelOpenApprovals(execution, flowRepository.findByExecutionWithoutAcl(execution));
         } catch (RuntimeException e) {
             log.warn("Unable to close the approval requests of the execution '{}' before deleting it", execution.getId(), e);
@@ -627,9 +621,8 @@ public class ExecutionController {
     public PagedResults<ApiLightExecution> searchExecutionsByFlowId(
         @Parameter(description = "The flow namespace") @QueryValue String namespace,
         @Parameter(description = "The flow id") @QueryValue String flowId,
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
-        var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size));
+        @Valid @RequestBean UnsortedPagination paging) {
+        var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, paging.toPageable());
         var apiExecution = executions.stream()
             .map(execution -> ApiLightExecution.of(execution))
             .toList();
@@ -1512,7 +1505,7 @@ public class ExecutionController {
 
         executionReplayService.validateReplay(execution, taskRunId, revision);
 
-        return blockingReplay(execution, taskRunId, revision, breakpoints);
+        return blockingReplay(execution, IdUtils.create(), taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1550,8 +1543,10 @@ public class ExecutionController {
 
             Flow flow = executionReplayService.validateReplay(current, taskRunId, revision);
 
-            return flowInputOutput.readExecutionInputs(flow, current, inputs)
-                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+            String newExecutionId = IdUtils.create();
+
+            return flowInputOutput.readExecutionInputs(flow, current.toBuilder().id(newExecutionId).build(), inputs)
+                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), newExecutionId, taskRunId, revision, breakpoints)));
         });
     }
 
@@ -1574,14 +1569,13 @@ public class ExecutionController {
         return HttpResponse.ok();
     }
 
-    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+    private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
             }
         }
 
-        var newExecutionId = IdUtils.create();
         Actor actor = actorResolver.resolve();
 
         this.replayCounter.increment();
@@ -3135,7 +3129,7 @@ public class ExecutionController {
      * Looks the execution up without blocking a thread, retrying for up to 10 seconds as it may not be indexed yet.
      * Emits a 404 {@link HttpStatusException} when it never shows up.
      */
-    private Mono<Execution> awaitExecution(String tenant, String executionId) {
+    protected Mono<Execution> awaitExecution(String tenant, String executionId) {
         return Mono.defer(() -> Mono.justOrEmpty(executionRepository.findById(tenant, executionId)))
             .subscribeOn(Schedulers.boundedElastic())
             .switchIfEmpty(Mono.error(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find execution " + executionId)))

@@ -33,7 +33,7 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskOutputsInformation: vi.fn().mockResolvedValue([]),
 }))
 const scrollerMocks = vi.hoisted(() => ({
-    scrollCalls: [] as string[],
+    scrollToItemCalls: [] as {taskRunId?: string; index: number}[],
     scrollToItem: vi.fn(),
 }))
 
@@ -45,15 +45,15 @@ vi.mock("vue-virtual-scroller", async () => {
             inheritAttrs: true,
             props: ["items"],
             setup(props, {attrs, slots, expose}) {
-                const scrollToBottom = vi.fn(() => {
+                const scrollToItem = vi.fn((index: number) => {
                     const taskRunId = attrs["data-scroll-key"]
                     if (typeof taskRunId === "string") {
-                        scrollerMocks.scrollCalls.push(taskRunId)
+                        scrollerMocks.scrollToItemCalls.push({taskRunId, index})
                     }
+                    scrollerMocks.scrollToItem(index)
                 })
                 expose({
-                    scrollToBottom,
-                    scrollToItem: scrollerMocks.scrollToItem,
+                    scrollToItem,
                 })
 
                 return () => h("div", attrs, [
@@ -129,7 +129,7 @@ describe("TaskRunDetails log loading across executions", () => {
     beforeEach(() => {
         vi.useFakeTimers()
         openedStreams = []
-        scrollerMocks.scrollCalls = []
+        scrollerMocks.scrollToItemCalls = []
         scrollerMocks.scrollToItem.mockClear()
         store.executions = reactive({
             execution: undefined,
@@ -337,7 +337,7 @@ describe("TaskRunDetails log loading across executions", () => {
         await nextTick()
         await flushPromises()
 
-        expect(scrollerMocks.scrollCalls).toContain("tr-failed")
+        expect(scrollerMocks.scrollToItemCalls).toContainEqual({taskRunId: "tr-failed", index: 1})
 
         wrapper.unmount()
     })

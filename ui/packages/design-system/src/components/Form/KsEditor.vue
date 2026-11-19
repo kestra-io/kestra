@@ -56,7 +56,6 @@
                     <textarea
                         data-testid="monaco-editor-hidden-synced-textarea"
                         style="height: 0; width: 0; opacity: 0;"
-                        type="text"
                         v-model="textAreaValue"
                     />
                 </div>
@@ -83,7 +82,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {ref, type HTMLAttributes} from "vue"
     import KsDatePicker from "./KsDatePicker.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
@@ -93,7 +93,7 @@
 
     defineOptions({name: "KsEditor"})
 
-    const props = withDefaults(defineProps<KsEditorProps>(), {
+    const props = withDefaults(defineProps<KsEditorProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsEditorProps>>(), {
         modelValue: "",
         original: undefined,
         lang: undefined,

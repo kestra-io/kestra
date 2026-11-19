@@ -8,9 +8,9 @@ import {useI18n} from "vue-i18n"
 
 import {decodeSearchParams} from "@kestra-io/design-system"
 
-import {Chart, type ChartMetadata, type ChartResults} from "../types.ts"
+import {Chart, type ChartResults} from "../types.ts"
 import {chartLoadQueue} from "./chartLoadQueue"
-import {ChartFiltersOverrides, QueryFilter, QueryFilterField} from "@kestra-io/kestra-sdk"
+import {ChartFiltersOverrides, type ChartMetadata, QueryFilter, QueryFilterField} from "@kestra-io/kestra-sdk"
 
 
 
@@ -19,7 +19,7 @@ export const IGNORED_FILTERS_INJECTION_KEY = Symbol("dashboard-ignored-filters")
 
 /** What a chart reports to the dashboard layout, to show on its card: what the data source tells about its rows, or why it has none. */
 export interface ChartNotice {
-    metadata?: ChartMetadata;
+    metadata?: ChartMetadata | null;
     warning?: string;
 }
 

@@ -214,6 +214,14 @@ public class DefaultRunContext extends RunContext {
         return (String) inputs.get(secretInput);
     }
 
+    boolean hasSecrets() {
+        return logger.hasSecrets();
+    }
+
+    String maskSecrets(final String data) {
+        return logger.maskSecrets(data);
+    }
+
     void setPluginConfiguration(final Map<String, Object> pluginConfiguration) {
         this.pluginConfiguration = pluginConfiguration;
     }
@@ -273,6 +281,14 @@ public class DefaultRunContext extends RunContext {
     @Override
     public Object renderTyped(String inline) throws IllegalVariableEvaluationException {
         return variableRenderer.renderTyped(inline, this.variables);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object renderTyped(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return variableRenderer.renderTyped(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
     }
 
     @Override
@@ -493,7 +509,7 @@ public class DefaultRunContext extends RunContext {
 
     private Map<String, Object> decryptVariables(Map<String, Object> variables) {
         if (secretKey.isPresent()) {
-            final Secret secret = new Secret(secretKey, logger);
+            final Secret secret = new Secret(secretKey, logger, logger::usedSecret);
             return secret.decrypt(variables);
         }
         return variables;

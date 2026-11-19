@@ -10,6 +10,7 @@ import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.runners.WorkingDirFactory;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
@@ -48,6 +49,9 @@ public class WorkerJobProcessorFactory {
     private WorkerConfig workerConfig;
 
     @Inject
+    private WorkingDirFactory workingDirFactory;
+
+    @Inject
     private TracerFactory tracerFactory;
     private Tracer tracer;
 
@@ -70,7 +74,8 @@ public class WorkerJobProcessorFactory {
                 runContextLoggerFactory,
                 workerQueueRegistry.getOrCreate(context, WorkerTaskResult.class),
                 workerQueueRegistry.getOrCreate(context, MetricEntry.class),
-                executionKilledManager
+                executionKilledManager,
+                workingDirFactory
             );
         } else if (job instanceof WorkerTrigger) {
             return (WorkerJobProcessor<T>) new WorkerTriggerProcessor(

@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Output;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.plugin.core.log.Log;
 
@@ -24,19 +24,19 @@ class OutputValidationTest {
     @Inject
     private ModelValidator modelValidator;
 
-    private static Output output(Type type, Boolean searchable) {
+    private static Output output(OutputType type, Boolean searchable) {
         return Output.builder().id("output").type(type).value("{{ outputs.log }}").searchable(searchable).build();
     }
 
     @ParameterizedTest
-    @EnumSource(value = Type.class, names = {"STRING", "EMAIL", "SELECT", "INT", "BOOL", "FLOAT", "URI", "DATETIME", "DATE", "TIME", "DURATION", "ARRAY"})
-    void shouldAcceptASearchableOutputOfASupportedType(Type type) {
+    @EnumSource(value = OutputType.class, names = {"STRING", "INT", "BOOL", "FLOAT", "URI", "DATETIME", "DATE", "TIME", "DURATION", "ARRAY"})
+    void shouldAcceptASearchableOutputOfASupportedType(OutputType type) {
         assertThat(modelValidator.isValid(output(type, true))).isEmpty();
     }
 
     @ParameterizedTest
-    @EnumSource(value = Type.class, names = {"JSON", "FILE", "SECRET", "MULTISELECT", "YAML", "ION", "FORM", "TABLE", "REUSABLE_INPUTS"})
-    void shouldRejectASearchableOutputOfAnUnsupportedType(Type type) {
+    @EnumSource(value = OutputType.class, names = {"JSON", "FILE", "SECRET", "YAML", "ION", "ASSET"})
+    void shouldRejectASearchableOutputOfAnUnsupportedType(OutputType type) {
         Optional<ConstraintViolationException> violation = modelValidator.isValid(output(type, true));
 
         assertThat(violation).isPresent();
@@ -44,8 +44,8 @@ class OutputValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Type.class, names = {"JSON", "FILE", "SECRET"})
-    void shouldAcceptAnyTypeWhenTheOutputIsNotSearchable(Type type) {
+    @EnumSource(value = OutputType.class, names = {"JSON", "FILE", "SECRET"})
+    void shouldAcceptAnyTypeWhenTheOutputIsNotSearchable(OutputType type) {
         assertThat(modelValidator.isValid(output(type, false))).isEmpty();
         assertThat(modelValidator.isValid(output(type, null))).isEmpty();
     }
@@ -56,7 +56,7 @@ class OutputValidationTest {
             .id("flow")
             .namespace("io.kestra.tests")
             .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
-            .outputs(List.of(output(Type.JSON, true)))
+            .outputs(List.of(output(OutputType.JSON, true)))
             .build();
 
         Optional<ConstraintViolationException> violation = modelValidator.isValid(flow);

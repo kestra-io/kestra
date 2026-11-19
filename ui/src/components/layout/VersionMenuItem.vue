@@ -3,7 +3,7 @@
         <KsPopover width="max-content" trigger="hover" placement="right" :showArrow="false" :offset="24">
             <template #reference>
                 <span class="version-item">
-                    <KsIcon size="base">
+                    <KsIcon size="sm">
                         <InformationOutline />
                     </KsIcon>
                     {{ $t("version") }}

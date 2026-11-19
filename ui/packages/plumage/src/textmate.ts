@@ -48,6 +48,7 @@ export const TEXTMATE_SCOPES: [string[], SyntaxRole, FontStyle?][] = [
     [["constant.language.boolean.yaml", "constant.language.null.yaml", "constant.language.json"], "constant"],
 
     [["meta.embedded.expression.pebble", "meta.embedded.statement.pebble", "punctuation.section.tag.twig"], "pebble"],
+    [["variable.other.pebble"], "pebbleVariable"],
 ]
 
 const FONT_STYLES: [string[], FontStyle][] = [

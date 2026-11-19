@@ -39,13 +39,18 @@ ui_staged_files=$(git --no-pager diff --cached --name-only | grep -E '(^|/)(ui|u
 
 if [ -n "$ui_staged_files" ]; then
   echo "Staged UI files: $ui_staged_files"
-  for dir in ui ui-ee; do
+  for dir in ui-ee; do
     if [ -d "$dir" ] && echo "$ui_staged_files" | grep -qE "^$dir/.*\.(ts|tsx|vue)$"; then
       echo "Updating the explicit any baseline in $dir..."
       (cd "$dir" && npm run check:ts-any -- --write) || exit 1
       git add "$dir/scripts/explicit-any/baseline.json"
     fi
   done
+  if [ -d "ui" ] && echo "$ui_staged_files" | grep -qE "^ui/(package\.json|(src|packages/(design-system|topology)/src)/.*\.(ts|tsx|js|mjs|jsx|vue|css|scss))$"; then
+    echo "Checking the dependencies / devDependencies split in ui..."
+    (cd ui && npm run check:dep-split -- --write) || exit 1
+    git add ui/package.json ui/package-lock.json
+  fi
   if [ -d "ui" ]; then
       echo "Running lint-staged in ui directory..."
       cd ui && npx lint-staged

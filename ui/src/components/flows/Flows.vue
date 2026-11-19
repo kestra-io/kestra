@@ -28,7 +28,7 @@
             :total="flowStore.total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'id', order: 'ascending'}"
+            :defaultSort="defaultSort"
             @page-changed="onPageChanged"
             @ready="ready = true"
             @row-click="onRowClick"
@@ -362,11 +362,10 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
+    import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
-    import type {ExecutionControllerLastExecutionResponse, QueryFilter} from "@kestra-io/kestra-sdk"
-    import type {Flow} from "../../stores/flow"
+    import type {ExecutionControllerLastExecutionResponse, Flow, QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
     import {defaultTimeRange} from "../executions/timeRangeWiden"
 
@@ -536,7 +535,7 @@
             })
     }
 
-    const onRowClick = (item: Flow, column: {type?: string} | undefined, event: Event) => {
+    const onRowClick = (item: Flow, column: {type?: string} | null | undefined, event: Event) => {
         if (!isPlainRowActivation(column, event)) return
 
         router.push({
@@ -551,6 +550,7 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "id", order: "ascending"})
     const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
 
     const onPageChanged = ({page, size}: {page: number; size: number}) => {

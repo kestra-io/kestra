@@ -292,6 +292,16 @@
     "last execution status": "上次执行状态",
     "jump to": "跳转到",
     "jump to...": "跳转到...",
+    "global_search": {
+      "open_flow": "打开 flow",
+      "flow_executions": "flow 执行",
+      "move": "移动",
+      "menu": "菜单",
+      "sources": "菜单 + flows + namespaces",
+      "sources_flows": "菜单 + flows",
+      "sources_namespaces": "菜单 + namespace",
+      "search_failed": "无法加载 flows 或 namespaces"
+    },
     "contextBar": {
       "ai": "人工智能",
       "news": "新闻",
@@ -307,6 +317,7 @@
       "ongoing": "进行中",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "正在删除 {count} 个执行",
           "EXECUTION_KILL": "正在终止 {count} 个执行",
           "EXECUTION_PAUSE": "正在暂停 {count} 个执行",
           "EXECUTION_RESUME": "正在恢复 {count} 个执行",
@@ -323,6 +334,25 @@
           "BACKFILL_PAUSE": "正在暂停 {count} 个 backfill",
           "BACKFILL_RESUME": "正在恢复 {count} 个 backfill",
           "BACKFILL_DELETE": "正在删除 {count} 个 backfill"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "已请求删除 {count} 个执行",
+          "EXECUTION_KILL": "已请求终止 {count} 个执行 | 已请求终止 {count} 个执行",
+          "EXECUTION_PAUSE": "已请求暂停 {count} 个执行",
+          "EXECUTION_RESUME": "已请求恢复 {count} 个执行",
+          "EXECUTION_RESTART": "已请求重启 {count} 个执行",
+          "EXECUTION_REPLAY": "已请求重放 {count} 个执行",
+          "EXECUTION_FORCE_RUN": "已请求强制运行 {count} 个执行",
+          "EXECUTION_UNQUEUE": "已请求取消排队 {count} 个执行 | 已请求取消排队 {count} 个执行",
+          "EXECUTION_CHANGE_STATUS": "已请求更改 {count} 个执行的状态",
+          "EXECUTION_SET_LABELS": "已请求更新 {count} 个执行的 label",
+          "TRIGGER_UNLOCK": "已请求解锁 {count} 个 trigger | 已请求解锁 {count} 个 trigger",
+          "TRIGGER_DELETE": "已请求删除 {count} 个 trigger | 已请求删除 {count} 个 trigger",
+          "TRIGGER_DISABLE": "已请求禁用 {count} 个 trigger | 已请求禁用 {count} 个 trigger",
+          "TRIGGER_ENABLE": "已请求启用 {count} 个 trigger | 已请求启用 {count} 个 trigger",
+          "BACKFILL_PAUSE": "已请求暂停 {count} 个 backfill | 已请求暂停 {count} 个 backfill",
+          "BACKFILL_RESUME": "已请求恢复 {count} 个 backfill | 已请求恢复 {count} 个 backfill",
+          "BACKFILL_DELETE": "已请求删除 {count} 个 backfill | 已请求删除 {count} 个 backfill"
         },
         "processed": "已处理 {count} 个",
         "rejected": "已拒绝 {count} 个",
@@ -344,6 +374,7 @@
     "home": "首页",
     "create": "创建",
     "create_flow": "创建Flow",
+    "create_child_namespace": "创建子 namespace",
     "from": "从",
     "to": "到",
     "steps": "步骤",
@@ -451,7 +482,7 @@
       "whole_action": "改为重放整个 execution",
       "whole_title": "版本 {revision} 可以作为整个执行进行重放。",
       "whole_description": "没有重用早期结果，因此每个 Task 都会在版本 {revision} 上再次运行。原始 Execution 将被保留并链接。",
-      "confirm_from_task": "从 Task 重放",
+      "confirm_from_task": "从 {taskId} Replay",
       "confirm_whole": "重放整个 Execution"
     },
     "change execution state done": "执行状态已更新",
@@ -488,17 +519,21 @@
         "decision": "决策",
         "by": "由",
         "on": "已决定",
+        "cancelled by": "已取消，取消者：",
+        "cancelled on": "已取消于",
         "decisions": {
           "approved": "已批准",
           "denied": "拒绝",
-          "expired": "已过期"
+          "expired": "已过期",
+          "cancelled": "已取消",
+          "killed": "已终止"
         }
       },
       "cancel request": "取消请求",
       "cancel confirm": "您确定要取消执行 {id} 的审批请求吗？没有决策分支会运行。",
       "cancel done": "审批请求已取消",
       "banner": {
-        "pausing": "此执行正在准备审批请求，并将暂停以供审查。",
+        "pausing": "此 Execution 正在暂停。所有 onWait Task 完成后即可审核批准请求。",
         "paused": "此 Execution 正在等待审核。批准或拒绝以继续。"
       }
     },
@@ -540,6 +575,12 @@
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "refresh": "刷新",
     "filter by status": "按{status}状态筛选执行",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "此 task 已重试",
       "artifacts": "无 artifact | {count} 个 artifact | {count} 个 artifacts",
@@ -616,6 +657,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "未开始"
+      },
+      "diff": {
+        "added": "新增",
+        "removed": "移除",
+        "changed": "修改",
+        "renamed": "重命名",
+        "moved": "移动"
+      }
+    },
+    "flow_change_review": {
+      "graph": "图形",
+      "yaml": "YAML",
+      "unchanged": "{count} 个未更改",
+      "graph_error": "无法绘制图形。请打开 YAML 选项卡查看更改。",
+      "status": {
+        "added": "新增",
+        "removed": "移除",
+        "changed": "修改",
+        "renamed": "重命名",
+        "moved": "移动"
       }
     },
     "show task logs": "显示任务日志",
@@ -1213,6 +1274,10 @@
     "trigger blocked policy check failed": "无法检查治理策略。",
     "trigger blocked unknown": "因未知原因被阻止。",
     "trigger disabled": "在Flow源中触发器已禁用",
+    "trigger not toggleable": "该触发器不由Scheduler评估，请在Flow源中禁用它",
+    "bulk not toggleable warning": "{count} 个选定的 trigger 将被跳过：Scheduler 不会评估它们，因此只能在 Flow 源代码中禁用它们。",
+    "bulk none applied": "没有触发器受到影响：所选触发器均无法处理。",
+    "bulk partially applied": "已处理 {count} 个 Trigger，其余 {requested} 个已跳过。",
     "trigger enable dialog": {
       "title": "启用 trigger",
       "bulk title": "启用 {count} triggers",
@@ -1911,7 +1976,8 @@
       "duplicate": "此键已存在",
       "delete multiple": {
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
-        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
+        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>",
+        "deleted": "已从 namespace <code>{namespace}</code> 中删除 <code>{count}</code> 个 KV"
       },
       "inherited": "继承的KV对",
       "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"
@@ -2369,6 +2435,9 @@
         "csv": "导出为 CSV"
       },
       "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
+      "dataFrom": "更新于 {date}",
+      "dataUnavailable": "数据不可用",
+      "dataTruncated": "输出文件已截断为前 {rows} 行。有关更多详细信息，请参阅文档。",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",
@@ -2446,6 +2515,13 @@
         "placeholder": "告诉我构建什么…",
         "send": "发送",
         "stop": "停止",
+        "usage": {
+          "remaining": "剩余 {percent}%",
+          "help": "此提供商在当前窗口中剩余的 AI 使用限额。",
+          "warning": "您已接近此提供商的 AI 使用限制。达到限制后，将拒绝轮次。",
+          "exceeded": "此提供商的 AI 使用限制已达上限。它将在当前周期结束时重置。",
+          "exceededUntil": "此提供商的 AI 使用限制已达到。它将在 {when} 重置。"
+        },
         "mode": {
           "ask": "询问",
           "edit": "编辑",
@@ -2488,7 +2564,7 @@
           "planTitle": "建议计划",
           "actionTitle": "建议操作",
           "approve": "批准",
-          "approveExecute": "批准并执行",
+          "approvePlan": "批准计划",
           "reject": "拒绝",
           "pending": "待批准",
           "revise": "回复以修改"
@@ -2505,6 +2581,7 @@
           "generic": "出错了。请重试。"
         },
         "emptyHelper": "我可以编辑这个 flow，生成测试，搭建相关文件，或者解释它是如何工作的。",
+        "emptyHelperNoFlow": "我可以创建或编辑 flow、生成测试、搭建相关文件，或解释 Kestra 的工作原理。",
         "suggestions": {
           "errorHandling": "添加错误处理",
           "unitTest": "生成单元测试",
@@ -2519,7 +2596,15 @@
         "unavailable": {
           "title": "AI Copilot 不可用",
           "detail": "此实例未配置 AI 提供商。请在 Kestra 配置文件中配置一个以启用 AI Copilot。",
-          "docs": "查看文档"
+          "docs": "查看文档",
+          "sendTooltip": "发送已禁用，因为未配置 AI provider。",
+          "notSent": "您的提示未发送"
+        },
+        "mcpTip": {
+          "title": "从 Claude Code、Cursor 和其他 MCP 客户端使用 Kestra",
+          "description": "除了 Copilot，Kestra 还提供 MCP 服务器。连接外部 MCP 客户端以通过您已使用的工具管理您的 flow 和 execution。",
+          "docs": "查看文档",
+          "dismiss": "不再显示"
         },
         "thinkingWords": [
           "编排",
@@ -2562,7 +2647,8 @@
           "applied": "已应用",
           "previewBanner": "正在查看 AI 建议的更改。在您应用或忽略之前，编辑器为只读状态。",
           "applyTitle": "应用 flow",
-          "applyConfirm": "将 flow {namespace}.{id} 保存为待审核的草稿修订版？如果尚不存在将被创建，如果已存在则会添加一个新的草稿修订版。草稿在发布之前不会被 trigger 或 subflow 处理。",
+          "applyDraftTitle": "应用后将保存为草稿修订版。",
+          "applyDraftHint": "目前不会有任何内容生效。在发布之前，trigger 和 subflow 会忽略草稿。",
           "applyConfirmDashboard": "应用仪表盘 {id}？它将被创建，如果已存在则会覆盖。",
           "applyError": "无法应用该 flow。请重试。",
           "applyErrorDashboard": "未能应用仪表盘。请重试。",
@@ -2576,6 +2662,10 @@
           },
           "valid": "有效",
           "invalid": "需要修改"
+        },
+        "tray": {
+          "title": "待处理的更改",
+          "applyFirst": "先应用 {flow}"
         }
       }
     },
@@ -2854,7 +2944,8 @@
       "open_in_secrets": "在 secrets 中打开",
       "options_aria": "搜索选项",
       "path_only_hint": "仅搜索文件路径，不搜索内容。无法替换。",
-      "preview_empty": "选择一个结果进行预览。点击结果列表中的 flow 查看其源码。",
+      "preview_empty_title": "选择一个结果进行预览。",
+      "preview_empty_description": "点击结果列表中的 flow 查看其源码。",
       "preview_error": "加载 flow 源码失败",
       "previous_match": "上一个匹配项",
       "rbac_banner": "{count} 个 flow 被排除在替换之外。您对 {namespace} 具有读取权限，但没有编辑权限。请向 namespace 管理员请求 {permission} 权限以包含它们。",

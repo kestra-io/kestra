@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.tenant.TenantService;
 import io.kestra.mcp.McpServerHandlerTransport;
-import io.kestra.mcp.McpToolAccessControl;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -16,16 +15,11 @@ import reactor.core.publisher.Mono;
 public class McpToolController {
     private final McpServerHandlerTransport handlerRegistry;
     private final TenantService tenantService;
-    private final McpToolAccessControl accessControl;
 
     @Inject
-    public McpToolController(
-        McpServerHandlerTransport handlerRegistry,
-        TenantService tenantService,
-        McpToolAccessControl accessControl) {
+    public McpToolController(McpServerHandlerTransport handlerRegistry, TenantService tenantService) {
         this.handlerRegistry = handlerRegistry;
         this.tenantService = tenantService;
-        this.accessControl = accessControl;
     }
 
     @Get("/{id}")
@@ -55,6 +49,6 @@ public class McpToolController {
         @NotNull String tenant,
         @PathVariable String id,
         HttpRequest<String> request) {
-        return handlerRegistry.handle(tenantService.resolveTenant(), id, accessControl.callerId(request).orElse(null), request);
+        return handlerRegistry.handle(tenantService.resolveTenant(), id, request);
     }
 }

@@ -31,7 +31,7 @@
                     @click.stop="collapse()"
                 >
                     <KsTooltip :content="$t('collapse')">
-                        <UnfoldLessHorizontal class="button-icon" :alt="$t('collapse')" />
+                        <UnfoldLessHorizontal class="button-icon" :title="$t('collapse')" />
                     </KsTooltip>
                 </span>
             </template>
@@ -66,7 +66,7 @@
                     @click="collapse()"
                 >
                     <KsTooltip :content="$t('collapse')">
-                        <UnfoldLessHorizontal class="button-icon" :alt="$t('collapse')" />
+                        <UnfoldLessHorizontal class="button-icon" :title="$t('collapse')" />
                     </KsTooltip>
                 </span>
             </div>
@@ -74,7 +74,7 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, inject} from "vue"
     import {
         KsTooltip,
         type PluginIconData,
@@ -85,6 +85,7 @@
     import {EVENTS, CLUSTER_TAG_STATUS, NODE_SIZES} from "../utils/constants"
     import * as Utils from "../utils/utils"
     import LaneHeader, {type LaneTaskNode} from "./LaneHeader.vue"
+    import {DIFF_INJECTION_KEY} from "../injectionKeys"
 
     defineOptions({inheritAttrs: false})
 
@@ -134,7 +135,12 @@
 
     const collapse = () => emit(EVENTS.COLLAPSE, props.id)
 
-    const classes = computed(() => ({"unused-path": props.data.unused}))
+    const diff = inject(DIFF_INJECTION_KEY, undefined)
+    const diffStatus = computed(() => diff?.value?.statusByUid.get(props.data.taskNode?.uid ?? ""))
+    const classes = computed(() => [
+        {"unused-path": props.data.unused},
+        diffStatus.value ? `cluster-diff-${diffStatus.value}` : "",
+    ])
 
     const clusterName = computed(() => {
         const taskNode = props.data.taskNode
@@ -146,6 +152,36 @@
     })
 </script>
 <style scoped>
+    /* The lane's own border belongs to the vue-flow node around this component, so the diff
+       outline is drawn over it. */
+    [class*="cluster-diff-"]:not(.cluster-diff-unchanged)::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid;
+        border-radius: var(--ks-radius-base);
+        pointer-events: none;
+    }
+
+    .cluster-diff-added::before {
+        border-style: dashed;
+        border-color: var(--ks-border-success);
+    }
+
+    .cluster-diff-removed::before {
+        border-style: dashed;
+        border-color: var(--ks-border-error);
+    }
+
+    .cluster-diff-changed::before {
+        border-color: var(--ks-border-warning);
+    }
+
+    .cluster-diff-renamed::before,
+    .cluster-diff-moved::before {
+        border-color: var(--ks-border-info);
+    }
+
     .circle-button {
         pointer-events: auto !important;
     }

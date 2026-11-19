@@ -18,6 +18,7 @@ import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
 import {debounce} from "../utils/lang"
 import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
 import {codeThemeOf, configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
+import {PEBBLE_ROLES} from "@kestra-io/plumage"
 import {useTaskIcon} from "./taskIcon"
 import {createPebbleEntryTracker, cursorPebbleBlockKey, isCursorInPebbleBlock, isPebbleEnabled} from "../utils/pebbleBlock"
 import PlaceholderContentWidget from "./PlaceholderContentWidget"
@@ -110,6 +111,8 @@ export function useKsEditor(
     let moveCursorCmdDisposable: monaco.IDisposable | undefined
     let diffViewModel: monaco.editor.IDiffEditorViewModel | undefined
     let placeholderWidget: PlaceholderContentWidget | undefined
+    /** What the parent was last sent, until the prop catches up a tick later. */
+    let emittedValue: string | undefined
     const disposeCompletions = ref<() => void>()
 
 
@@ -186,7 +189,7 @@ export function useKsEditor(
     ])
 
     const containerStyle = computed(() => ({
-        "--code-pebble": codeTheme.value.syntax.pebble,
+        ...Object.fromEntries(PEBBLE_ROLES.map(role => [`--code-${role}`, codeTheme.value.syntax[role]])),
         ...(props.inline ? {} : {"--code-background": codeTheme.value.editor.background}),
     }))
 
@@ -474,7 +477,9 @@ export function useKsEditor(
         const modEditor = getModifiedEditor()
         modEditor?.onDidChangeModelContent(() => {
             const value = modEditor.getValue()
-            if (props.modelValue !== value) emit("update:modelValue", value)
+            if ((emittedValue ?? props.modelValue) === value) return
+            emittedValue = value
+            emit("update:modelValue", value)
         })
 
         observeAndResizeSuggestWidget()
@@ -659,6 +664,7 @@ export function useKsEditor(
     })
 
     watch(() => props.modelValue, (newValue) => {
+        emittedValue = undefined
         if (localEditor.value) {
             const modEditor = getModifiedEditor()
             if (newValue !== modEditor?.getValue()) modEditor?.setValue(newValue)

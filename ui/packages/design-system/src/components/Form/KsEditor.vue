@@ -56,7 +56,6 @@
                     <textarea
                         data-testid="monaco-editor-hidden-synced-textarea"
                         style="height: 0; width: 0; opacity: 0;"
-                        type="text"
                         v-model="textAreaValue"
                     />
                 </div>
@@ -83,7 +82,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {ref, type HTMLAttributes} from "vue"
     import KsDatePicker from "./KsDatePicker.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
@@ -93,7 +93,7 @@
 
     defineOptions({name: "KsEditor"})
 
-    const props = withDefaults(defineProps<KsEditorProps>(), {
+    const props = withDefaults(defineProps<KsEditorProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsEditorProps>>(), {
         modelValue: "",
         original: undefined,
         lang: undefined,
@@ -349,8 +349,40 @@
         }
     }
 
-    .highlight-pebble {
+    .highlight-pebble-pebble {
         color: var(--code-pebble) !important;
+    }
+
+    .highlight-pebble-pebbleVariable {
+        color: var(--code-pebbleVariable) !important;
+    }
+
+    .highlight-pebble-keyword {
+        color: var(--code-keyword) !important;
+    }
+
+    .highlight-pebble-constant {
+        color: var(--code-constant) !important;
+    }
+
+    .highlight-pebble-string {
+        color: var(--code-string) !important;
+    }
+
+    .highlight-pebble-number {
+        color: var(--code-number) !important;
+    }
+
+    .highlight-pebble-function {
+        color: var(--code-function) !important;
+    }
+
+    .highlight-pebble-operator {
+        color: var(--code-operator) !important;
+    }
+
+    .highlight-pebble-punctuation {
+        color: var(--code-punctuation) !important;
     }
 
     .disable-text {

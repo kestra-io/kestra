@@ -2388,7 +2388,7 @@ tasks:
                 const result = addBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks", wrapAsDagTask(newTask))
 
                 // Then
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks).toHaveLength(3)
                 expect(parsed.tasks[0].tasks[2].task.id).toBe("c")
                 expect(parsed.tasks[0].tasks[2].dependsOn).toBeUndefined()
@@ -2400,7 +2400,7 @@ tasks:
         describe("extractBlockWithPath / updateBlockAtPath through .task", () => {
             it("reads the inner task's YAML via the .task suffix", () => {
                 const extracted = flowYamlUtils.extractBlockWithPath({source: FLOW_WITH_DAG, path: "tasks[0].tasks[0].task"})
-                const parsed = flowYamlUtils.parse<any>(extracted!)
+                const parsed = parseBlock(extracted!)
                 expect(parsed.id).toBe("a")
                 expect(parsed.type).toBe("io.kestra.plugin.core.log.Log")
             })
@@ -2410,7 +2410,7 @@ tasks:
 
                 const result = updateBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks[1].task", updatedYaml)
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks[1].task.message).toBe("Updated")
                 expect(parsed.tasks[0].tasks[1].dependsOn).toEqual(["a"])
                 expect(parsed.tasks[0].tasks[0].task.id).toBe("a")
@@ -2425,7 +2425,7 @@ tasks:
                     newContent: flowYamlUtils.stringify(["b"]),
                 })
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks[0].dependsOn).toEqual(["b"])
                 expect(parsed.tasks[0].tasks[0].task.id).toBe("a")
             })
@@ -2437,7 +2437,7 @@ tasks:
                     newContent: "",
                 })
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks[1].dependsOn).toBeUndefined()
                 expect(parsed.tasks[0].tasks[1].task.id).toBe("b")
             })
@@ -2447,7 +2447,7 @@ tasks:
             it("removes the whole {task, dependsOn} entry, not just the inner task", () => {
                 const result = deleteBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks[0]")
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks).toHaveLength(1)
                 expect(parsed.tasks[0].tasks[0].task.id).toBe("b")
             })
@@ -2457,7 +2457,7 @@ tasks:
             it("duplicates the wrapper, renaming only the inner task's id", () => {
                 const result = duplicateBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks[0]")
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks).toHaveLength(3)
                 const copy = parsed.tasks[0].tasks[1]
                 expect(String(copy.task.id)).toMatch(/^a_copy/)
@@ -2469,7 +2469,7 @@ tasks:
             it("preserves the duplicate's own dependsOn value", () => {
                 const result = duplicateBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks[1]")
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 const copy = parsed.tasks[0].tasks[2]
                 expect(String(copy.task.id)).toMatch(/^b_copy/)
                 expect(copy.dependsOn).toEqual(["a"])

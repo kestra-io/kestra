@@ -3,7 +3,6 @@
         <KsPassword
             v-model="modelValue"
             :placeholder="root ?? ''"
-            pebble
         />
     </div>
 </template>

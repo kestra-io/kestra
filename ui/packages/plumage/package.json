@@ -55,11 +55,11 @@
         }
     },
     "devDependencies": {
-        "@types/node": "^26.6.5",
+        "@types/node": "^26.6.6",
         "expressive-code": "0.44.2",
         "monaco-editor": "^0.57.0",
         "shiki": "^4.5.0",
-        "tsdown": "^0.23.4",
+        "tsdown": "^0.23.7",
         "typescript": "^6",
         "vitest": "^5.0.5"
     }

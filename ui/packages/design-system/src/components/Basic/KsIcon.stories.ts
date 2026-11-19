@@ -1,4 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect} from "storybook/test"
+import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
 import KsIcon from "./KsIcon.vue"
 
 const meta: Meta<typeof KsIcon> = {
@@ -70,31 +72,35 @@ export const Colors: Story = {
     parameters: {controls: {disable: true}},
 }
 
-/** Sizes — full token scale (xs / sm / base / lg / xl) */
+/** Sizes — full token scale (xs / sm / base / lg / xl), plus an unsized icon keeping the 1rem default */
 export const Sizes: Story = {
     render: () => ({
-        components: {KsIcon},
+        components: {KsIcon, InformationOutline},
+        setup() {
+            return {sizes: ["xs", "sm", "base", "lg", "xl"] as const}
+        },
         template: `
             <div style="padding:24px;display:flex;gap:16px;align-items:center">
-                <ks-icon size="xs" color="var(--ks-text-primary)">
-                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
+                <ks-icon v-for="size in sizes" :key="size" :size="size" :data-test="size" color="var(--ks-text-primary)">
+                    <information-outline />
                 </ks-icon>
-                <ks-icon size="sm" color="var(--ks-text-primary)">
-                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
-                </ks-icon>
-                <ks-icon size="base" color="var(--ks-text-primary)">
-                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
-                </ks-icon>
-                <ks-icon size="lg" color="var(--ks-text-primary)">
-                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
-                </ks-icon>
-                <ks-icon size="xl" color="var(--ks-text-primary)">
-                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
-                </ks-icon>
+                <span style="font-size:12px">
+                    <ks-icon data-test="unsized"><information-outline /></ks-icon>
+                </span>
             </div>
         `,
     }),
     parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const glyphWidth = (testId: string) =>
+            canvasElement.querySelector(`[data-test="${testId}"] svg`)!.getBoundingClientRect().width
+
+        for (const size of ["xs", "sm", "base", "lg", "xl"]) {
+            const icon = canvasElement.querySelector(`[data-test="${size}"]`)!
+            await expect(glyphWidth(size)).toBe(parseFloat(getComputedStyle(icon).fontSize))
+        }
+        await expect(glyphWidth("unsized")).toBe(16)
+    },
 }
 
 /** Tooltip */

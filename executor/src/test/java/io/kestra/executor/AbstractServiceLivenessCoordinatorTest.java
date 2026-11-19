@@ -21,10 +21,13 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.RestartWorkingDirectory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
@@ -41,6 +44,7 @@ import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.NoTransactionContext;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerInstance;
+import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskData;
@@ -105,6 +109,9 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
     @Inject
     private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
+
+    @Inject
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     private VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue;
@@ -405,6 +412,64 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         // still-running worker is left for that worker to finish.
         assertThat(resubmitted.stream().filter(orphaned.uid()::equals)).hasSize(1);
         assertThat(resubmitted).doesNotContain(stillOwned.uid());
+    }
+
+    @Test
+    void shouldReportTheLostWorkerOfAWorkingDirectoryTaskInsteadOfResubmittingIt() throws Exception {
+        // Given a task running in the folder of a WorkingDirectory, left by an inactive worker
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        WorkerTaskRunning child = workerTaskRunning(inactive.uid());
+        child.setWorkingDirectoryId(IdUtils.create());
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, child);
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+        List<ExecutionCommand> reported = Collections.synchronizedList(new ArrayList<>());
+        executionCommandQueue.addListener(reported::add);
+
+        // When
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return !reported.isEmpty();
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        // Then the executor is told the worker was lost, so it runs the whole WorkingDirectory again
+        assertThat(reported.getFirst()).isInstanceOfSatisfying(RestartWorkingDirectory.class, command ->
+        {
+            assertThat(command.workingDirectoryTaskRunId()).isEqualTo(child.getWorkingDirectoryId());
+            assertThat(command.lostTaskRunId()).isEqualTo(child.getTaskRun().getId());
+        });
+        assertThat(resubmitted).doesNotContain(child.uid());
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(child.uid(), inactive.uid())).isFalse();
+    }
+
+    @Test
+    void shouldKeepTheExecutionKindWhenTheTaskIsResubmitted() throws Exception {
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        WorkerTaskRunning orphaned = workerTaskRunning(inactive.uid());
+        orphaned.setExecutionKind(ExecutionKind.TEST);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+
+        List<WorkerJob> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job()));
+
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return resubmitted.stream().anyMatch(job -> orphaned.uid().equals(job.uid()));
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        assertThat(resubmitted).filteredOn(job -> orphaned.uid().equals(job.uid()))
+            .singleElement().isInstanceOfSatisfying(WorkerTask.class, job -> assertThat(job.getExecutionKind()).isEqualTo(ExecutionKind.TEST));
     }
 
     @Test

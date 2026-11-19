@@ -200,7 +200,7 @@
     import {useEventListener} from "@vueuse/core"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {useFirstFailure} from "../../composables/useFirstFailure"
-    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import FilterVariant from "vue-material-design-icons/FilterVariant.vue"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"

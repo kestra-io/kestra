@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,6 +22,9 @@ import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.InternalCallServerInterceptor;
 import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.controller.grpc.auth.BasicAuthServerInterceptor;
+import io.kestra.controller.grpc.services.StickyJobVNodeSubscriber;
+import io.kestra.controller.grpc.services.WorkerJobDispatcher;
+import io.kestra.controller.grpc.services.WorkerStreamContext;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
@@ -28,6 +32,7 @@ import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
+import io.kestra.core.worker.StickyWorkerRouting;
 
 import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
@@ -83,6 +88,11 @@ public class DefaultController extends AbstractService implements Controller {
     @Nullable
     private final BasicAuthServerInterceptor basicAuthServerInterceptor;
 
+    private final WorkerJobDispatcher workerJobDispatcher;
+
+    @Nullable
+    private final StickyJobVNodeSubscriber stickyJobVNodeSubscriber;
+
     @Inject
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
@@ -90,13 +100,17 @@ public class DefaultController extends AbstractService implements Controller {
         ControllerConfiguration controllerConfiguration,
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-        @Nullable BasicAuthServerInterceptor basicAuthServerInterceptor) {
+        @Nullable BasicAuthServerInterceptor basicAuthServerInterceptor,
+        WorkerJobDispatcher workerJobDispatcher,
+        @Nullable StickyJobVNodeSubscriber stickyJobVNodeSubscriber) {
         super(ServiceType.CONTROLLER, eventPublisher);
         this.grpcConfiguration = grpcConfiguration;
         this.workerControllerServices = workerControllerServices;
         this.controllerConfiguration = controllerConfiguration;
         this.metricRegistry = metricRegistry;
         this.basicAuthServerInterceptor = basicAuthServerInterceptor;
+        this.workerJobDispatcher = workerJobDispatcher;
+        this.stickyJobVNodeSubscriber = stickyJobVNodeSubscriber;
         this.healthStatusManager = new HealthStatusManager();
         setState(ServiceState.CREATED);
     }
@@ -122,6 +136,15 @@ public class DefaultController extends AbstractService implements Controller {
             .collect(Collectors.toSet());
     }
 
+    @Override
+    public Map<String, Object> getProps() {
+        List<String> workerIds = workerJobDispatcher.activeStreams().stream()
+            .map(WorkerStreamContext::getWorkerId)
+            .toList();
+        Set<Integer> vNodes = stickyJobVNodeSubscriber == null ? Set.of() : stickyJobVNodeSubscriber.assignedVNodes();
+        return Map.of(StickyWorkerRouting.WORKERS_PROP, workerIds, StickyWorkerRouting.VNODES_PROP, vNodes);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -144,6 +167,9 @@ public class DefaultController extends AbstractService implements Controller {
             healthStatusManager.setStatus("", ServingStatus.SERVING);
         } catch (IOException e) {
             throw new UncheckedIOException("Error while building gRPC server", e);
+        }
+        if (stickyJobVNodeSubscriber != null) {
+            stickyJobVNodeSubscriber.start(getId());
         }
     }
 

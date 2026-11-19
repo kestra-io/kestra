@@ -103,7 +103,7 @@ export type AbstractTrigger = {
      * Specifies whether a trigger is allowed to start a new execution even if a previous run is still in progress.
      */
     allowConcurrent?: boolean;
-    assets?: AssetsDeclaration;
+    assets?: TriggerAssetsDeclaration;
 };
 
 export type AbstractTriggerForExecution = {
@@ -169,6 +169,53 @@ export type AiControllerAiProviderResponse = {
 
 export type AiControllerFlowGenerationPrompt = FlowGenerationPrompt & {
     providerId?: string;
+};
+
+/**
+ * Where a provider stands against its ceiling --- one type for both what the API answers and what the orchestrator enforces, so the figure shown and the figure enforced cannot drift apart.
+ */
+export type AiUsageStatus = {
+    /**
+     * the provider these figures are for, resolved from the default when the caller named none
+     */
+    providerId?: string | null;
+    /**
+     * whether this provider has limits switched on; when false every other field is empty
+     */
+    enabled?: boolean;
+    /**
+     * the lower bound the totals were summed from
+     */
+    windowStart?: string | null;
+    /**
+     * when the current period ends and spend starts again, absent while nothing is exhausted
+     */
+    availableAt?: string | null;
+    global?: AiUsageStatusAxis | null;
+    user?: AiUsageStatusAxis | null;
+    /**
+     * the remaining percentage below which a client should warn
+     */
+    warningThresholdPercent?: number;
+    exceeded?: boolean;
+    /**
+     * True once either axis is inside its warning threshold, so a client has one flag rather than two sums to compare.
+     */
+    warning?: boolean;
+    remainingPercent?: number;
+};
+
+/**
+ * One ceiling and what has been spent against it.
+ */
+export type AiUsageStatusAxis = {
+    weight?: number;
+    /**
+     * the ceiling, or zero when this axis has none configured --- reported for information and never exceeded
+     */
+    maxWeight?: number;
+    remainingPercent?: number;
+    exceeded?: boolean;
 };
 
 /**
@@ -365,7 +412,6 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -525,12 +571,7 @@ export type AssetsDeclaration = {
     assetFailureBehavior?: PropertyAssetFailureBehavior;
 };
 
-export type AssetsInOut = {
-    inputs?: Array<AssetIdentifier>;
-    outputs?: Array<Asset>;
-};
-
-export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER' | 'PLUGIN';
 
 /**
  * A backfill configuration.
@@ -643,6 +684,14 @@ export type ChartFiltersOverrides = {
         [key: string]: string;
     };
     filters?: Array<QueryFilter>;
+};
+
+export type ChartMetadata = {
+    executionId: string;
+    date: string;
+    state: string;
+    rowsRead?: number;
+    truncated?: boolean;
 };
 
 export type ChartChartOption = {
@@ -765,6 +814,7 @@ export type DashboardControllerChartData = {
      * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
      */
     ignoredFilters?: Array<QueryFilterField>;
+    metadata?: ChartMetadata | null;
 };
 
 export type DashboardControllerDashboardResponse = {
@@ -1758,6 +1808,7 @@ export type Notification = {
     resourceType?: AsyncOperationTypeResourceType | null;
     title: string;
     referenceId?: string | null;
+    url?: string | null;
     succeededItems?: number | null;
     failedItems?: number | null;
     totalItems?: number | null;
@@ -1789,7 +1840,7 @@ export type Output = {
     value: {
         [key: string]: unknown;
     } | string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
@@ -1806,11 +1857,13 @@ export type OutputControllerTaskOutputInformation = {
 export type OutputForExecution = {
     id: string;
     description?: string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
 };
+
+export type OutputType = 'STRING' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'YAML' | 'ASSET' | 'UNKNOWN';
 
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
@@ -2268,7 +2321,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'searchableData' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'policyScope' | 'enforcement' | 'labels' | 'tags' | 'metadata' | 'searchableData' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'severity' | 'assignee' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2521,6 +2574,9 @@ export type TaskFixture = {
             [key: string]: unknown;
         };
     };
+    /**
+     * @deprecated
+     */
     assets?: Array<Asset>;
     description?: PropertyString;
 };
@@ -2552,10 +2608,6 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
-    /**
-     * @deprecated
-     */
-    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2564,7 +2616,6 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2596,6 +2647,21 @@ export type TenantInterface = {
 export type TimeWindow = {
     default?: string;
     max?: string;
+};
+
+export type TriggerAssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
+    enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
+    inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
+    outputs?: PropertyListAsset;
 };
 
 export type TriggerControllerApiCreateBackfillRequest = {
@@ -2650,9 +2716,9 @@ export type TriggerControllerSetDisabledRequest = {
  */
 export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
-export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
+export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME' | 'UNSCHEDULED';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE' | 'ASSET';
 
 export type ValidateConstraintViolation = {
     errors?: Array<ValidationError>;
@@ -2802,7 +2868,6 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2892,10 +2957,6 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
-    /**
-     * @deprecated
-     */
-    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2904,7 +2965,6 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -4501,6 +4561,46 @@ export type ConfirmResponses = {
 
 export type ConfirmResponse = ConfirmResponses[keyof ConfirmResponses];
 
+export type UsageData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query?: {
+        /**
+         * the provider to report on, defaulting to the active one
+         */
+        providerId?: string | null;
+    };
+    url: '/api/v1/{tenant}/ai/usage';
+};
+
+export type UsageErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UsageError = UsageErrors[keyof UsageErrors];
+
+export type UsageResponses = {
+    /**
+     * usage 200 response
+     */
+    200: AiUsageStatus;
+};
+
+export type UsageResponse = UsageResponses[keyof UsageResponses];
+
 export type CreateBasicAuthData = {
     body: BasicAuthCredentials;
     path: {
@@ -4549,10 +4649,6 @@ export type SearchBlueprintsData = {
     };
     query?: {
         /**
-         * The sort of current page
-         */
-        sort?: string | null;
-        /**
          * The current page
          */
         page?: number;
@@ -4560,6 +4656,10 @@ export type SearchBlueprintsData = {
          * The current page size
          */
         size?: number;
+        /**
+         * The sort of current page
+         */
+        sort?: Array<string> | null;
         /**
          * A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected.
          */
@@ -4975,13 +5075,13 @@ export type SearchDashboardsData = {
          */
         size?: number;
         /**
-         * The filter query
-         */
-        q?: string | null;
-        /**
          * The sort of current page
          */
         sort?: Array<string> | null;
+        /**
+         * The filter query
+         */
+        q?: string | null;
     };
     url: '/api/v1/{tenant}/dashboards';
 };
@@ -5291,6 +5391,10 @@ export type DeleteExecutionsByIdsData = {
          * Whether to delete execution files in the internal storage
          */
         deleteStorage?: boolean;
+        /**
+         * Whether to delete in the background, tracked by a notification
+         */
+        async?: boolean;
     };
     url: '/api/v1/{tenant}/executions/by-ids';
 };
@@ -5321,6 +5425,10 @@ export type DeleteExecutionsByIdsResponses = {
      * On success
      */
     200: BulkResponse;
+    /**
+     * Accepted, when async is true
+     */
+    202: ApiAsyncOperationResponse;
 };
 
 export type DeleteExecutionsByIdsResponse = DeleteExecutionsByIdsResponses[keyof DeleteExecutionsByIdsResponses];
@@ -5351,6 +5459,10 @@ export type DeleteExecutionsByQueryData = {
          * Whether to delete execution files in the internal storage
          */
         deleteStorage?: boolean;
+        /**
+         * Whether to delete in the background, tracked by a notification
+         */
+        async?: boolean;
     };
     url: '/api/v1/{tenant}/executions/by-query';
 };
@@ -5381,6 +5493,10 @@ export type DeleteExecutionsByQueryResponses = {
      * On success
      */
     200: BulkResponse;
+    /**
+     * Accepted, when async is true
+     */
+    202: ApiAsyncOperationResponse;
 };
 
 export type DeleteExecutionsByQueryResponse = DeleteExecutionsByQueryResponses[keyof DeleteExecutionsByQueryResponses];

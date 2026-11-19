@@ -14,6 +14,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.webserver.services.ActorResolver;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
@@ -44,6 +45,8 @@ public class McpServerHandlerTransport {
     private final McpServerCache mcpServerCache;
     private final McpSessionService mcpSessionService;
     private final McpSessionFactory sessionFactory;
+    private final McpToolAccessControl accessControl;
+    private final ActorResolver actorResolver;
 
     @Inject
     public McpServerHandlerTransport(
@@ -51,25 +54,27 @@ public class McpServerHandlerTransport {
         List<McpToolSource> toolSources,
         McpServerCache mcpServerCache,
         McpSessionService mcpSessionService,
-        McpSessionFactory sessionFactory) {
+        McpSessionFactory sessionFactory,
+        McpToolAccessControl accessControl,
+        ActorResolver actorResolver) {
         this.mcpErrorResponseMapper = mcpErrorResponseMapper;
         this.toolSources = toolSources.stream().collect(Collectors.toMap(McpToolSource::kind, Function.identity()));
         this.mcpServerCache = mcpServerCache;
         this.mcpSessionService = mcpSessionService;
         this.sessionFactory = sessionFactory;
+        this.accessControl = accessControl;
+        this.actorResolver = actorResolver;
     }
 
     /**
      * Serves an MCP request to a server, responding 404 when the server does not exist or no tool source can
-     * serve it, and 503 when it is disabled.
+     * serve it, and 503 when it is disabled. Must be called on the request thread, where the caller is resolved.
      *
      * @param tenantId the tenant the server belongs to, or {@code null} for a server that belongs to none
-     * @param callerId the caller, or {@code null} when anonymous
      */
     public Mono<? extends HttpResponse<?>> handle(
         @Nullable String tenantId,
         String serverId,
-        @Nullable String callerId,
         HttpRequest<String> request) {
         Optional<McpServerCache.ResolvedServer> server = mcpServerCache.resolve(tenantId, serverId);
         if (server.isEmpty()) {
@@ -84,9 +89,17 @@ public class McpServerHandlerTransport {
         }
 
         KestraMcpTransportContext context = sessionFactory.build(
-            tenantId, serverId, request.getHeaders().get(HttpHeaders.MCP_SESSION_ID), callerId
+            tenantId, serverId, request.getHeaders().get(HttpHeaders.MCP_SESSION_ID), caller(request)
         );
         return getServerHandler(context).handleRequest(request, context);
+    }
+
+    private McpCaller caller(HttpRequest<?> request) {
+        return new McpCaller(
+            accessControl.callerId(request).orElse(null),
+            accessControl.callerName(request).orElse(null),
+            actorResolver.resolve()
+        );
     }
 
     /**

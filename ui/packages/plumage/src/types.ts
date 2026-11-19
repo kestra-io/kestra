@@ -9,8 +9,10 @@ export interface SyntaxColors {
     key: string
     /** Plain and quoted scalars in data languages (YAML, JSON). Code strings use `string`. */
     value: string
-    /** Pebble `{{ }}` and `{% %}` blocks. */
+    /** Pebble `{{ }}` and `{% %}` delimiters, and whatever inside a block has no other role. */
     pebble: string
+    /** Variables and paths inside a Pebble block, such as `outputs.task.uri`. */
+    pebbleVariable: string
     /** `true`, `false`, `null` and language constants. */
     constant: string
     number: string

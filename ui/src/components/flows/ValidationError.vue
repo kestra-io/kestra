@@ -113,6 +113,7 @@
 
 <script setup lang="ts">
     import {nextTick, ref} from "vue"
+    import type {KsTooltipProps} from "@kestra-io/design-system"
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
     import Alert from "vue-material-design-icons/Alert.vue"
 
@@ -126,7 +127,7 @@
         infos?: string[] | undefined;
         link?: boolean;
         size?: "default" | "small";
-        tooltipPlacement?: string;
+        tooltipPlacement?: KsTooltipProps["placement"];
         iconOnly?: boolean;
         activatable?: boolean;
     }>()

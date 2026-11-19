@@ -12,12 +12,12 @@ Give it a flow's YAML and the graph Kestra's API computes for it. It lays out th
 ## Install
 
 ```bash
-npm install @kestra-io/topology @kestra-io/design-system @vue-flow/core @vue-flow/controls @vue-flow/background vue-i18n
+npm install @kestra-io/topology @kestra-io/design-system element-plus @vue-flow/core @vue-flow/controls @vue-flow/background vue-i18n
 ```
 
-`vue`, `@vue-flow/core`, `@vue-flow/controls`, `@vue-flow/background`, `@kestra-io/design-system` and `vue-i18n` are peer dependencies, so the app owns their versions. The design system brings peers of its own, listed in [its README](https://github.com/kestra-io/kestra/tree/develop/ui/packages/design-system#readme).
+`vue`, `@vue-flow/core`, `@vue-flow/controls`, `@vue-flow/background`, `@kestra-io/design-system`, `element-plus` and `vue-i18n` are peer dependencies, so the app owns their versions. The design system brings peers of its own, listed in [its README](https://github.com/kestra-io/kestra/tree/develop/ui/packages/design-system#readme).
 
-npm lists `vue-i18n` as optional, but the nodes call `useI18n()`, so the app has to install it.
+npm lists `vue-i18n` as optional, but the nodes call `useI18n()`, so the app has to install it (`app.use(createI18n({legacy: false, locale: "en"}))` is enough).
 
 ## Usage
 
@@ -31,7 +31,7 @@ npm lists `vue-i18n` as optional, but the nodes call `useI18n()`, so the app has
 <script setup lang="ts">
     import {onMounted, ref} from "vue"
     import {Topology, type FlowGraph} from "@kestra-io/topology"
-    import "@kestra-io/design-system/styleBase"
+    import "@kestra-io/topology/standalone.css"
     import "@kestra-io/topology/style.css"
 
     const source = `id: hello-world
@@ -73,7 +73,12 @@ The tenant is `main` on an open-source instance. Both take a `subflows` query pa
 
 ### Styles
 
-`@kestra-io/topology/style.css` holds the graph's own styles and the Vue Flow base styles. The colors come from the design system's `--ks-*` tokens, so `@kestra-io/design-system/styleBase` has to be loaded once in the app, before it.
+`@kestra-io/topology/style.css` holds the graph's own styles and the Vue Flow base styles. Its colors, sizes and spacing come from the design system's `--ks-*` tokens.
+
+- In an app that loads `@kestra-io/design-system/styleBase` and installs the design-system plugin, as the Kestra UI does, `style.css` is all it needs.
+- Anywhere else, load `@kestra-io/topology/standalone.css` before it. It carries the design system's tokens, light and dark (`html.dark`), declared on the graph and on its tooltips and menus rather than on `:root`, so the graph looks as it does in Kestra whatever `--ks-*` variables the page defines, and the page's own styles are left alone. It also carries the Element Plus base styles its tooltips and menus need, in the `kel` namespace the graph provides to its own components. It holds only what the graph reads: tokens nothing in the graph or its design-system components refers to, and Element Plus rules for components it never renders, are left out. It does not set a font: the graph uses the page's.
+
+`standalone.css` is generated from the design system by `npm run generate:standalone`; a unit test fails when it falls out of date.
 
 ### Task icons
 
@@ -89,7 +94,7 @@ The component receives the task class as `cls`, plus the `icons` map and `loadIc
 
 ### Translations
 
-The labels are keys of the Kestra UI's messages (`topology-graph.*`, `state_history.*`, `edit`, `delete` and a few more), read through the app's `vue-i18n` instance. An app without those keys shows the keys themselves. The English values are in [`ui/src/translations/en.json`](https://github.com/kestra-io/kestra/blob/develop/ui/src/translations/en.json).
+The labels are keys of the Kestra UI's messages (`topology-graph.*`, `state_history.*`, `edit`, `delete` and a few more), read through the app's `vue-i18n` instance. The package ships their English values and adds the ones the app does not define to its `en` messages, so an app without Kestra's translations shows English labels. The English values are kept equal to [`ui/src/translations/en.json`](https://github.com/kestra-io/kestra/blob/develop/ui/src/translations/en.json) by a unit test.
 
 ### Controlling the canvas
 

@@ -210,7 +210,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
                 URI sourceFileURI = URI.create(stringSourceFileURI);
                 if (runContext.storage().isFileExist(sourceFileURI)) {
                     storageNamespace.putFile(
-                        Path.of(destination + targetFilePath),
+                        Path.of(destination, targetFilePath),
                         runContext.storage().getFile(sourceFileURI),
                         runContext.render(conflict).as(Namespace.Conflicts.class).orElseThrow()
                     );

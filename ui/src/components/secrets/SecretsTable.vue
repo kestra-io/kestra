@@ -7,7 +7,7 @@
             :total="total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'key', order: 'ascending'}"
+            :defaultSort="defaultSort"
             :selectable="false"
             @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
@@ -83,7 +83,7 @@
                         <template #content>
                             <span>{{ $t("secret.isReadOnly") }}</span>
                         </template>
-                        <KsIcon class="d-flex justify-content-center">
+                        <KsIcon class="lock-icon">
                             <Lock />
                         </KsIcon>
                     </KsTooltip>
@@ -157,8 +157,6 @@
                     <NamespaceSelect
                         v-model="secret.namespace"
                         :readOnly="secret.update"
-                        :includeSystemNamespace="true"
-                        all
                     />
                 </KsFormItem>
                 <KsFormItem :label="$t('secret.key')" prop="key" required inline class="field-item">
@@ -249,7 +247,8 @@
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations/secretsFilter"
-    import {useTableColumns} from "@kestra-io/design-system"
+    import {latestRequest} from "../../utils/latestRequest"
+    import {sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     const secretsFilter = useSecretsFilter()
 
@@ -471,7 +470,10 @@
     const namespaceFilter = (namespace: string) =>
         [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
 
+    const startLoad = latestRequest()
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        const isLatest = startLoad()
         const activeFilters = routeQueryToQueryFilters(route.query)
         const secretsResponse = await SecretsAPI.listSecrets(loadQuery({
             size,
@@ -483,6 +485,7 @@
             ],
         }))
 
+        if (!isLatest()) return
         emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false)
 
         let allSecrets = secretsResponse.results ?? []
@@ -506,6 +509,7 @@
             }
         }
 
+        if (!isLatest()) return
         hasData.value = (allSecrets.length ?? 0) !== 0
         areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false
         secrets.value = allSecrets
@@ -514,6 +518,7 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "key", order: "ascending"})
     const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
 
     const onPageChanged = ({page, size}: {page: number; size: number}) => {
@@ -717,5 +722,10 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
+    }
+
+    .lock-icon {
+        display: flex;
+        justify-content: center;
     }
 </style>

@@ -1,11 +1,14 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemTypes;
@@ -29,6 +32,9 @@ class ConcurrencyLimitControllerTest {
     @Inject
     @Client("/")
     private ReactorHttpClient client;
+
+    @Inject
+    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     @Test
     void shouldReturnBadRequestWhenUpdatingWithInvalidConcurrencyLimit() {
@@ -125,6 +131,46 @@ class ConcurrencyLimitControllerTest {
                 GET("/api/v1/main/concurrency-limit/evil.namespace/evil-flow")
             )
         );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void shouldResetNamespaceAndTenantCountersFromBody() {
+        ConcurrencyLimit namespaceRow = concurrencyLimitRepository.update(ConcurrencyLimit.builder().tenantId("main").namespace("io.kestra.reset").flowId("").running(3).build());
+        ConcurrencyLimit tenantRow = concurrencyLimitRepository.update(ConcurrencyLimit.builder().tenantId("main").namespace("").flowId("").running(5).build());
+        try {
+            assertResetsNamespaceAndTenantCounters();
+        } finally {
+            concurrencyLimitRepository.delete(namespaceRow);
+            concurrencyLimitRepository.delete(tenantRow);
+        }
+    }
+
+    private void assertResetsNamespaceAndTenantCounters() {
+        ConcurrencyLimit namespaceCounter = client.toBlocking().retrieve(
+            PUT("/api/v1/main/concurrency-limit", Map.of("namespace", "io.kestra.reset", "flowId", "", "running", 0)),
+            ConcurrencyLimit.class
+        );
+        ConcurrencyLimit tenantCounter = client.toBlocking().retrieve(
+            PUT("/api/v1/main/concurrency-limit", Map.of("running", 1)),
+            ConcurrencyLimit.class
+        );
+
+        assertThat(namespaceCounter.getRunning()).isZero();
+        assertThat(concurrencyLimitRepository.findById("main", "io.kestra.reset", "").orElseThrow().getRunning()).isZero();
+        assertThat(tenantCounter.getRunning()).isEqualTo(1);
+        assertThat(concurrencyLimitRepository.findById("main", "", "").orElseThrow().getRunning()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenResettingUnknownCounter() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                PUT("/api/v1/main/concurrency-limit", Map.of("namespace", "unknown.namespace", "flowId", "", "running", 0))
+            )
+        );
+
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 

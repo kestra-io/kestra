@@ -275,6 +275,7 @@
                     v-if="customInputs[input.id]"
                     :input="input"
                     :errors="valueErrors(input.id)"
+                    :submitAttempted="submitAttempted"
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
@@ -403,7 +404,7 @@
     const modelValue = defineModel<Record<string, unknown>>()
 
     const props = withDefaults(defineProps<{
-        executeClicked?: boolean;
+        submitAttempted?: boolean;
         initialInputs?: InputMetaData[];
         flow?: Flow;
         execution?: Execution;
@@ -415,7 +416,7 @@
         // so an expression or a default can read a label the caller already knows.
         renderLabels?: string[];
     }>(), {
-        executeClicked: false,
+        submitAttempted: false,
         initialInputs: () => [],
         flow: undefined,
         execution: undefined,

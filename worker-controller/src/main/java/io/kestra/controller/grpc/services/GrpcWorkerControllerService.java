@@ -283,7 +283,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
      */
     private void onSyncReceived(WorkerStreamContext<WorkerJobResponse> context, JobSync sync) {
         try {
-            workerJobReconciler.reconcile(context.getWorkerId(), context.getStreamGeneration(), sync.getHeldJobIdsList());
+            workerJobReconciler.reconcile(context.getWorkerId(), context.getWorkerGroupId(), context.getStreamGeneration(), sync.getHeldJobIdsList());
         } catch (RuntimeException e) {
             log.error("Failed to reconcile the jobs held by worker [{}]: {}", context.getWorkerId(), e.getMessage(), e);
         }

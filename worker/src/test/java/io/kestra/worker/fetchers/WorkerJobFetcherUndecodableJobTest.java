@@ -18,6 +18,8 @@ import io.kestra.controller.grpc.WorkerJobPayload;
 import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.metrics.MetricConfig;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.plugins.DefaultPluginRegistry;
@@ -32,6 +34,7 @@ import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -93,7 +96,8 @@ class WorkerJobFetcherUndecodableJobTest {
             null,
             List.of(),
             new GrpcConfiguration(false, 10485760),
-            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65))
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65)),
+            new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig())
         );
         fetcher.init(context);
     }

@@ -13,6 +13,8 @@ import org.mockito.ArgumentCaptor;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
+import io.kestra.core.metrics.MetricConfig;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
@@ -33,6 +35,9 @@ import io.kestra.core.runners.WorkerTriggerRunning;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,6 +60,7 @@ class WorkerJobReconcilerTest {
     private TriggerEventQueue triggerEventQueue;
     private ExecutionRepositoryInterface executionRepository;
     private KillSwitchService killSwitchService;
+    private SimpleMeterRegistry meterRegistry;
     private WorkerJobReconciler reconciler;
 
     @BeforeEach
@@ -67,7 +73,8 @@ class WorkerJobReconcilerTest {
         when(executionRepository.findByIdWithoutAcl("main", "exec-1")).thenReturn(Optional.of(execution(State.Type.RUNNING)));
         killSwitchService = mock(KillSwitchService.class);
         when(killSwitchService.evaluate(any(TaskRun.class))).thenReturn(EvaluationType.PASS);
-        reconciler = new WorkerJobReconciler(store, workerJobEventQueue, triggerEventQueue, executionRepository, killSwitchService);
+        meterRegistry = new SimpleMeterRegistry();
+        reconciler = new WorkerJobReconciler(store, workerJobEventQueue, triggerEventQueue, executionRepository, killSwitchService, new MetricRegistry(meterRegistry, new MetricConfig()));
     }
 
     @Test
@@ -77,13 +84,14 @@ class WorkerJobReconcilerTest {
         givenRunningEntries(running);
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, List.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, List.of());
 
         // Then
         ArgumentCaptor<WorkerJobEvent> event = ArgumentCaptor.forClass(WorkerJobEvent.class);
         verify(workerJobEventQueue).emit(eq("queue-1"), event.capture());
         assertThat(event.getValue().job().uid()).isEqualTo("task-run-1");
         verify(store).deleteByKeyAndWorker(any(), eq("task-run-1"), eq(WORKER_ID));
+        assertThat(resubmitted()).isEqualTo(1.0);
     }
 
     @Test
@@ -92,11 +100,12 @@ class WorkerJobReconcilerTest {
         givenRunningEntries(taskRunning("task-run-1", 1L));
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, List.of("task-run-1"));
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, List.of("task-run-1"));
 
         // Then
         verifyNoInteractions(workerJobEventQueue);
         verify(store, never()).deleteByKeyAndWorker(any(), anyString(), anyString());
+        assertThat(resubmitted()).isZero();
     }
 
     @Test
@@ -105,7 +114,7 @@ class WorkerJobReconcilerTest {
         givenRunningEntries(taskRunning("task-run-1", 2L));
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, List.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, List.of());
 
         // Then
         verifyNoInteractions(workerJobEventQueue);
@@ -119,10 +128,11 @@ class WorkerJobReconcilerTest {
         doThrow(new QueueException("unavailable")).when(workerJobEventQueue).emit(anyString(), any(WorkerJobEvent.class));
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, List.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, List.of());
 
         // Then
         verify(store, never()).deleteByKeyAndWorker(any(), anyString(), anyString());
+        assertThat(resubmitted()).isZero();
     }
 
     @Test
@@ -132,7 +142,7 @@ class WorkerJobReconcilerTest {
         givenRunningEntries(running);
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, Set.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, Set.of());
 
         // Then
         ArgumentCaptor<TriggerEvent> event = ArgumentCaptor.forClass(TriggerEvent.class);
@@ -154,7 +164,7 @@ class WorkerJobReconcilerTest {
         when(executionRepository.findByIdWithoutAcl("main", "exec-1")).thenReturn(Optional.of(execution(State.Type.KILLED)));
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, List.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, List.of());
 
         // Then
         verifyNoInteractions(workerJobEventQueue);
@@ -168,7 +178,7 @@ class WorkerJobReconcilerTest {
         when(executionRepository.findByIdWithoutAcl("main", "exec-1")).thenReturn(Optional.empty());
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, List.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, List.of());
 
         // Then
         verifyNoInteractions(workerJobEventQueue);
@@ -182,7 +192,7 @@ class WorkerJobReconcilerTest {
         when(killSwitchService.evaluate(any(TaskRun.class))).thenReturn(EvaluationType.KILL);
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, List.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, List.of());
 
         // Then
         verifyNoInteractions(workerJobEventQueue);
@@ -196,7 +206,7 @@ class WorkerJobReconcilerTest {
         when(executionRepository.findByIdWithoutAcl("main", "exec-1")).thenThrow(new IllegalStateException("database unavailable"));
 
         // When
-        reconciler.reconcile(WORKER_ID, 2L, List.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 2L, List.of());
 
         // Then
         verify(workerJobEventQueue).emit(eq("queue-1"), any(WorkerJobEvent.class));
@@ -205,10 +215,18 @@ class WorkerJobReconcilerTest {
     @Test
     void shouldNotReconcileWhenStreamHasNoGeneration() {
         // When
-        reconciler.reconcile(WORKER_ID, 0L, List.of());
+        reconciler.reconcile(WORKER_ID, "group-1", 0L, List.of());
 
         // Then
         verifyNoInteractions(store);
+    }
+
+    private double resubmitted() {
+        Counter counter = meterRegistry.find(MetricRegistry.METRIC_CONTROLLER_JOB_RESUBMITTED_TOTAL)
+            .tag(MetricRegistry.TAG_WORKER_GROUP, "group-1")
+            .tag(MetricRegistry.TAG_WORKER_QUEUE, "queue-1")
+            .counter();
+        return counter == null ? 0.0 : counter.count();
     }
 
     @SuppressWarnings("unchecked")

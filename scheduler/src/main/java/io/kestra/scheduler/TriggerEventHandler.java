@@ -1,6 +1,7 @@
 package io.kestra.scheduler;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -67,6 +68,8 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 public class TriggerEventHandler {
+
+    static final Duration REALTIME_FAILED_START_RETRY_DELAY = Duration.ofMinutes(1);
 
     private static final Logger LOG = LoggerFactory.getLogger(TriggerEventHandler.class);
 
@@ -366,11 +369,14 @@ public class TriggerEventHandler {
         if (event.dispatchEpoch() < state.getDispatchEpoch()) {
             return;
         }
-        triggerStateStore.save(
-            state
-                .locked(clock, false)
-                .updateOnExecutionTerminated(clock, event.executionState())
-        );
+        TriggerState unlocked = state
+            .locked(clock, false)
+            .updateOnExecutionTerminated(clock, event.executionState());
+        // Only a failed start carries an execution: delay its retry so a permanent error doesn't create a FAILED execution on every tick.
+        if (event.executionId() != null) {
+            unlocked = unlocked.updateForNextEvaluationDate(clock, clock.instant().plus(REALTIME_FAILED_START_RETRY_DELAY));
+        }
+        triggerStateStore.save(unlocked);
     }
 
     /**

@@ -14,6 +14,7 @@ export const kestraMidnight: CodeTheme = {
         key: p["primary-200"],
         value: p["primary-100"],
         pebble: p["green-200"],
+        pebbleVariable: p["green-200"],
         constant: p["green-400"],
         number: p["orange-200"],
         string: p["yellow-200"],

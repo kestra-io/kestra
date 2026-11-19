@@ -353,6 +353,10 @@
         color: var(--code-pebble) !important;
     }
 
+    .highlight-pebble-pebbleVariable {
+        color: var(--code-pebbleVariable) !important;
+    }
+
     .highlight-pebble-keyword {
         color: var(--code-keyword) !important;
     }

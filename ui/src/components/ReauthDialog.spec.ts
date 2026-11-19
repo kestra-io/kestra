@@ -144,6 +144,10 @@ describe("ReauthDialog", () => {
 
         expect(getSubmitButton()?.attributes("disabled")).toBeDefined()
 
+        // Pressing enter in the password field must not fire a second request while one is in flight
+        await wrapper.find("input[name=\"password\"]").trigger("keyup.enter")
+        expect(submitReauth).toHaveBeenCalledTimes(1)
+
         resolveSubmit()
         await flushPromises()
     })
@@ -214,6 +218,25 @@ describe("ReauthDialog", () => {
         expect(findButton(wrapper, "setup.login")).toBeUndefined()
     })
 
+    test("a successful confirm after the login tab resolves the reauth as true", async () => {
+        visible.value = true
+        loginUrl.value = "https://kestra.io/login"
+        confirmReauth.mockResolvedValueOnce(undefined)
+
+        const wrapper = mountDialog()
+        await nextTick()
+
+        await findButton(wrapper, "use another sign-in method")?.trigger("click")
+        await nextTick()
+
+        await wrapper.find("[data-test=\"reauth-continue\"]").trigger("click")
+        await flushPromises()
+
+        expect(confirmReauth).toHaveBeenCalledTimes(1)
+        expect(resolveReauth).toHaveBeenCalledWith(true)
+        expect(wrapper.findComponent(KsAlert).exists()).toBe(false)
+    })
+
     test("a failed confirm renders the not-confirmed alert and leaves the dialog open", async () => {
         visible.value = true
         loginUrl.value = "https://kestra.io/login"
@@ -247,10 +270,17 @@ describe("ReauthDialog", () => {
         await findButton(wrapper, "setup.login")?.trigger("click")
         await flushPromises()
 
-        // Opened tab and failed alert are active
+        // Opened tab, failed alert and not-confirmed alert are all active
+        confirmReauth.mockRejectedValueOnce(new Error("Confirmation failed"))
         await findButton(wrapper, "use another sign-in method")?.trigger("click")
         await nextTick()
+        await wrapper.find("[data-test=\"reauth-continue\"]").trigger("click")
+        await flushPromises()
         expect(wrapper.find("[data-test=\"reauth-tab-hint\"]").exists()).toBe(true)
+        expect(wrapper.findAllComponents(KsAlert).map((alert) => alert.props("title"))).toEqual([
+            "setup.validation.incorrect_creds",
+            "sign in not confirmed",
+        ])
 
         // Close dialog
         visible.value = false

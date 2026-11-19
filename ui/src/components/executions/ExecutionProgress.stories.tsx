@@ -78,6 +78,7 @@ type Story = StoryObj<typeof meta>;
 // shows the no-baseline text with an empty bar, whatever the story's args.
 const expectState = (label: RegExp, [minPercent, maxPercent]: [number, number]) => async ({canvasElement}: {canvasElement: HTMLElement}) => {
     const canvas = within(canvasElement);
+    await waitFor(() => expect(canvas.getByText(/^Execution progress$/)).toBeInTheDocument());
     await waitFor(() => expect(canvas.getByText(label)).toBeInTheDocument());
     const value = Number(canvas.getByRole("progressbar").getAttribute("aria-valuenow"));
     // A range, not an exact value: the ticker keeps advancing the bar while the assertion runs.

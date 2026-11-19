@@ -26,7 +26,7 @@ describe("ExecutionSummaryCard height", () => {
         const reported: number[] = []
         const wrapper = i18nMount(ExecutionSummaryCard, {
             props: {execution, "onUpdate:height": (height: number) => reported.push(height)},
-            global: {stubs: {Banner: true}},
+            global: {stubs: {Banner: true, ExecutionProgress: true}},
         })
         await wrapper.vm.$nextTick()
         expect(reported.at(-1)).toBe(198)
@@ -46,10 +46,58 @@ describe("ExecutionSummaryCard height", () => {
         isMobile.value = mobile
         const wrapper = i18nMount(ExecutionSummaryCard, {
             props: {execution},
-            global: {stubs: {Banner: {template: "<div data-test='banner-stub' />"}, MobileSummary: {template: "<div data-test='mobile-summary-stub' />"}}},
+            global: {
+                stubs: {
+                    Banner: {template: "<div data-test='banner-stub' />"},
+                    MobileSummary: {template: "<div data-test='mobile-summary-stub' />"},
+                    ExecutionProgress: true,
+                },
+            },
         })
 
         expect(wrapper.find(`[data-test='${rendered}']`).exists()).toBe(true)
         expect(wrapper.find(`[data-test='${absent}']`).exists()).toBe(false)
+    })
+
+    it("shouldRenderExecutionProgressInsideTheCardOnDesktop", () => {
+        isMobile.value = false
+        const runningExecution = {id: "exec-1", state: {current: "RUNNING", histories: []}} as unknown as Execution
+        const wrapper = i18nMount(ExecutionSummaryCard, {
+            props: {execution: runningExecution},
+            global: {
+                stubs: {
+                    Banner: true,
+                    ExecutionProgress: {
+                        props: ["execution"],
+                        template: "<div data-test='execution-progress-stub' :data-state='execution.state.current' />",
+                    },
+                },
+            },
+        })
+
+        const progress = wrapper.find("[data-test='execution-progress-stub']")
+        expect(progress.exists()).toBe(true)
+        expect(progress.attributes("data-state")).toBe("RUNNING")
+    })
+
+    it("shouldPassSlotContentToMobileSummary", () => {
+        isMobile.value = true
+        const wrapper = i18nMount(ExecutionSummaryCard, {
+            props: {execution},
+            slots: {
+                default: "<div data-test='alert-slot'>Alert</div>",
+            },
+            global: {
+                stubs: {
+                    Banner: true,
+                    ExecutionProgress: true,
+                    MobileSummary: {
+                        template: "<div data-test='mobile-summary-stub'><slot /></div>",
+                    },
+                },
+            },
+        })
+
+        expect(wrapper.find("[data-test='alert-slot']").exists()).toBe(true)
     })
 })

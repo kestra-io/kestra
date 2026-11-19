@@ -1,5 +1,6 @@
 package io.kestra.worker.fetchers;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.worker.MetadataChangePayload;
 import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.worker.WorkerMetadataChangeHandler;
+import io.kestra.worker.WorkerJobStreamConfig;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
 
@@ -32,7 +34,8 @@ class WorkerJobFetcherMetadataChangeTest {
             mock(ExecutionKilledManager.class),
             (BroadcastQueueInterface<ClusterEvent>) mock(BroadcastQueueInterface.class),
             handlers,
-            new GrpcConfiguration(false, 10485760)
+            new GrpcConfiguration(false, 10485760),
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65))
         );
     }
 
@@ -99,7 +102,8 @@ class WorkerJobFetcherMetadataChangeTest {
             killed,
             null,
             List.of(handler),
-            new GrpcConfiguration(false, 10485760)
+            new GrpcConfiguration(false, 10485760),
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65))
         );
 
         io.kestra.core.models.executions.ExecutionKilled k = io.kestra.core.models.executions.ExecutionKilledExecution.builder()

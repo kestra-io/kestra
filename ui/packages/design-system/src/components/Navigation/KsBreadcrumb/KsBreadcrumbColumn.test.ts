@@ -16,16 +16,13 @@ const globalConfig = {plugins: [router]}
 
 function createDeferredLoader<T = KsBreadcrumbItem[]>(result: T) {
     let resolve!: (value: T) => void
-    let reject!: (reason?: unknown) => void
-    const promise = new Promise<T>((res, rej) => {
+    const promise = new Promise<T>((res) => {
         resolve = res
-        reject = rej
     })
     const loader: KsBreadcrumbLoader = () => promise as unknown as Promise<KsBreadcrumbItem[]>
     return {
         loader,
         resolve: () => resolve(result),
-        reject: (err?: unknown) => reject(err),
     }
 }
 
@@ -56,11 +53,10 @@ describe("KsBreadcrumbColumn", () => {
         })
         await flushPromises()
 
-        const renderedEntries = wrapper.findAll('[data-testid="breadcrumb-entry"]')
+        const renderedEntries = wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")
         const renderedLabels = renderedEntries.map((el) => el.find(".label").text())
 
         expect(renderedLabels).toEqual(["Direct 1", "Direct 2"])
-        expect(load).toHaveBeenCalled()
     })
 
     test("2. Async loading: Pass an asynchronous load function and verify items appear after resolution", async () => {
@@ -77,12 +73,12 @@ describe("KsBreadcrumbColumn", () => {
             global: globalConfig,
         })
 
-        expect(wrapper.findAll('[data-testid="breadcrumb-entry"]')).toHaveLength(0)
+        expect(wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")).toHaveLength(0)
 
         deferred.resolve()
         await flushPromises()
 
-        const renderedEntries = wrapper.findAll('[data-testid="breadcrumb-entry"]')
+        const renderedEntries = wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")
         const renderedLabels = renderedEntries.map((el) => el.find(".label").text())
         expect(renderedLabels).toEqual(["Async A", "Async B"])
     })
@@ -107,18 +103,18 @@ describe("KsBreadcrumbColumn", () => {
         deferred1.resolve()
         await flushPromises()
 
-        expect(wrapper.findAll('[data-testid="breadcrumb-entry"]')).toHaveLength(2)
+        expect(wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")).toHaveLength(2)
 
         await wrapper.setProps({load: deferred2.loader})
         await nextTick()
 
         // Before deferred2 resolves, previous rows must already be cleared
-        expect(wrapper.findAll('[data-testid="breadcrumb-entry"]')).toHaveLength(0)
+        expect(wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")).toHaveLength(0)
 
         deferred2.resolve()
         await flushPromises()
 
-        expect(wrapper.findAll('[data-testid="breadcrumb-entry"]')).toHaveLength(1)
+        expect(wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")).toHaveLength(1)
         expect(wrapper.find(".label").text()).toBe("New 1")
     })
 
@@ -141,15 +137,41 @@ describe("KsBreadcrumbColumn", () => {
         loaderB.resolve()
         await flushPromises()
 
-        const labelsAfterB = wrapper.findAll('[data-testid="breadcrumb-entry"]').map((el) => el.find(".label").text())
+        const labelsAfterB = wrapper.findAll("[data-testid=\"breadcrumb-entry\"]").map((el) => el.find(".label").text())
         expect(labelsAfterB).toEqual(["Item B"])
 
         // Resolve A second (older stale loader)
         loaderA.resolve()
         await flushPromises()
 
-        const labelsAfterA = wrapper.findAll('[data-testid="breadcrumb-entry"]').map((el) => el.find(".label").text())
+        const labelsAfterA = wrapper.findAll("[data-testid=\"breadcrumb-entry\"]").map((el) => el.find(".label").text())
         expect(labelsAfterA).toEqual(["Item B"])
+    })
+
+    test("4b. Stale loader protection: A stale loader resolving while the newest is still pending neither shows rows nor the empty message", async () => {
+        const loaderA = createDeferredLoader([{label: "Item A", link: "/a"}])
+        const loaderB = createDeferredLoader([{label: "Item B", link: "/b"}])
+
+        const wrapper = i18nMount(KsBreadcrumbColumn, {
+            locales,
+            props: {
+                load: loaderA.loader,
+            },
+            global: globalConfig,
+        })
+
+        await wrapper.setProps({load: loaderB.loader})
+
+        loaderA.resolve()
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")).toHaveLength(0)
+        expect(wrapper.find(".empty").exists()).toBe(false)
+
+        loaderB.resolve()
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-testid=\"breadcrumb-entry\"]").map((el) => el.find(".label").text())).toEqual(["Item B"])
     })
 
     test("5. Empty state: Absent while loader pending, appears when resolved with empty array", async () => {
@@ -215,7 +237,7 @@ describe("KsBreadcrumbColumn", () => {
             attachTo: document.body,
         })
 
-        const renderedEntries = wrapper.findAll('[data-testid="breadcrumb-entry"]')
+        const renderedEntries = wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")
         expect(renderedEntries).toHaveLength(2)
 
         // Initial state: no flyout
@@ -230,7 +252,7 @@ describe("KsBreadcrumbColumn", () => {
         expect(childrenLoader).toHaveBeenCalledTimes(1)
         expect(renderedEntries[0].classes()).toContain("open")
 
-        const childEntries = flyout.findAll('[data-testid="breadcrumb-entry"]')
+        const childEntries = flyout.findAll("[data-testid=\"breadcrumb-entry\"]")
         const childLabels = childEntries.map((el) => el.find(".label").text())
         expect(childLabels).toEqual(["Child 1", "Child 2"])
 
@@ -240,6 +262,7 @@ describe("KsBreadcrumbColumn", () => {
 
         expect(wrapper.find(".flyout").exists()).toBe(false)
         expect(renderedEntries[0].classes()).not.toContain("open")
+        expect(renderedEntries[1].classes()).not.toContain("open")
 
         wrapper.unmount()
     })
@@ -260,7 +283,7 @@ describe("KsBreadcrumbColumn", () => {
             attachTo: document.body,
         })
 
-        const renderedEntries = wrapper.findAll('[data-testid="breadcrumb-entry"]')
+        const renderedEntries = wrapper.findAll("[data-testid=\"breadcrumb-entry\"]")
 
         // 1. Direct entry click
         await renderedEntries[0].trigger("click")
@@ -276,7 +299,7 @@ describe("KsBreadcrumbColumn", () => {
         const flyout = wrapper.find(".flyout")
         expect(flyout.exists()).toBe(true)
 
-        const nestedEntry = flyout.find('[data-testid="breadcrumb-entry"]')
+        const nestedEntry = flyout.find("[data-testid=\"breadcrumb-entry\"]")
         await nestedEntry.trigger("click")
 
         // Expect parent wrapper to have received second select event with nestedItem

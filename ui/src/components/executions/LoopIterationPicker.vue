@@ -121,6 +121,7 @@
     import Check from "vue-material-design-icons/Check.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {ambiguousValues, iterationLabel, iterationNumber} from "../../utils/loopScope"
+    import {latestRequest} from "../../utils/latestRequest"
     import {
         ITERATIONS_PAGE_SIZE,
         LoopIterationError,
@@ -159,7 +160,8 @@
     const otherItems = ref<LoopIteration[]>([])
     const matchItems = ref<LoopIteration[]>([])
     const total = ref(0)
-    let latestSearch = 0
+    const startSearch = latestRequest()
+    let isCurrentSearch = () => true
 
     const disabledReason = computed(() => !props.lane.parentScoped)
 
@@ -205,7 +207,8 @@
     async function load() {
         const parentId = props.hostExecutionId
         if (!parentId) return
-        const search = ++latestSearch
+        const isLatest = startSearch()
+        isCurrentSearch = isLatest
         loading.value = true
         failure.value = undefined
         reset()
@@ -219,34 +222,34 @@
 
             if (numberQuery.value !== undefined) {
                 const response = await searchLoopIterations({...base, page: Math.ceil(numberQuery.value / ITERATIONS_PAGE_SIZE)})
-                if (search !== latestSearch) return
+                if (!isLatest()) return
                 matchItems.value = response.results.filter((iteration) => iteration.number === numberQuery.value)
                 return
             }
 
             if (failedCount.value > 0 && page.value === 1) {
                 const failed = await searchLoopIterations({...base, state: "FAILED"})
-                if (search !== latestSearch) return
+                if (!isLatest()) return
                 failedItems.value = failed.results
                 failedTotal.value = failed.total
             }
             const others = await searchLoopIterations({...base, excludeState: failedCount.value > 0 ? "FAILED" : undefined, page: page.value})
-            if (search !== latestSearch) return
+            if (!isLatest()) return
             otherItems.value = others.results
             total.value = others.total
         } catch (error) {
-            if (search !== latestSearch) return
+            if (!isLatest()) return
             reset()
             failure.value = error instanceof LoopIterationError ? error.failure : failureOf(error)
         } finally {
-            if (search === latestSearch) loading.value = false
+            if (isLatest()) loading.value = false
         }
     }
 
     async function loadMoreFailed() {
         const parentId = props.hostExecutionId
         if (!parentId) return
-        const search = latestSearch
+        const isLatest = isCurrentSearch
         try {
             const next = await searchLoopIterations({
                 parentId,
@@ -254,10 +257,10 @@
                 state: "FAILED",
                 page: Math.floor(failedItems.value.length / ITERATIONS_PAGE_SIZE) + 1,
             })
-            if (search !== latestSearch) return
+            if (!isLatest()) return
             failedItems.value = [...failedItems.value, ...next.results]
         } catch (error) {
-            if (search !== latestSearch) return
+            if (!isLatest()) return
             failure.value = error instanceof LoopIterationError ? error.failure : failureOf(error)
         }
     }

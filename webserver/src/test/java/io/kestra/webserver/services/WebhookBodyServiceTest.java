@@ -8,6 +8,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.server.multipart.MultipartBody;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +50,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -256,6 +260,28 @@ class WebhookBodyServiceTest {
             FLOW.getNamespace(),
             URI.create("///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook")
         );
+    }
+
+    @Test
+    void shouldKeepStoredPartsWhenCancelledOnceTheBodyIsEmitted() throws Exception {
+        // Given
+        StorageInterface storage = storage();
+        WebhookBodyService service = new WebhookBodyService(storage);
+        MultipartBody body = body(fileUpload("photo", "result.jpg", MediaType.IMAGE_JPEG, new byte[] { 1 }));
+        CountDownLatch emitted = new CountDownLatch(1);
+
+        // When - cancelled within onNext, as the flatMap the controller's answer goes through does
+        service.collect(body, FLOW, EXECUTION_ID, MediaType.MULTIPART_FORM_DATA).subscribe(new BaseSubscriber<>() {
+            @Override
+            protected void hookOnNext(MultipartFormDataRequestBody value) {
+                cancel();
+                emitted.countDown();
+            }
+        });
+
+        // Then
+        assertThat(emitted.await(5, TimeUnit.SECONDS)).isTrue();
+        verify(storage, after(500).never()).deleteByPrefix(any(), any(), any());
     }
 
     @Test

@@ -1,7 +1,5 @@
 <template>
     <FlowRun
-        flow
-        execution
         autoPrefill
         buttonText="replay"
         :buttonIcon="PlayBoxMultiple"

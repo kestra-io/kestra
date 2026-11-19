@@ -316,8 +316,6 @@
         previousProvider = now
     })
 
-    // "this flow" only makes sense when a flow is open (editor, flow create page, flow detail); on the
-    // standalone page and other routes there is no flow, so the placeholder stays flow-agnostic.
     const emptyPlaceholder = computed(() => t(routeInFocus.value?.kind === "FLOW" ? "ai.copilot.emptyHelper" : "ai.copilot.emptyHelperNoFlow"))
 
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).

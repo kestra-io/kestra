@@ -29,7 +29,11 @@
                 <KsTooltip
                     :content="canManageFiles ? $t('namespace files.create.file') : $t('namespace files.read_only')"
                 >
-                    <KsButton :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
+                    <KsButton
+                        :aria-label="$t('namespace files.create.file')"
+                        :disabled="!canManageFiles"
+                        @click="toggleDialog(true, 'file')"
+                    >
                         <FilePlus />
                     </KsButton>
                 </KsTooltip>
@@ -37,6 +41,7 @@
                     :content="canManageFiles ? $t('namespace files.create.folder') : $t('namespace files.read_only')"
                 >
                     <KsButton
+                        :aria-label="$t('namespace files.create.folder')"
                         :disabled="!canManageFiles"
                         @click="toggleDialog(true, 'folder')"
                     >
@@ -85,7 +90,7 @@
                 <KsTooltip
                     :content="$t('namespace files.export')"
                 >
-                    <KsButton @click="exportFiles()">
+                    <KsButton :aria-label="$t('namespace files.export')" @click="exportFiles()">
                         <FolderDownloadOutline />
                     </KsButton>
                 </KsTooltip>

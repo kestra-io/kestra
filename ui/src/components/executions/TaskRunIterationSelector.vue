@@ -15,7 +15,7 @@
                 @click.stop="emit('select', entry.run.id)"
             >
                 <span :class="['row', {active: entry.run.id === selectedId}]">
-                    <KsIcon size="xs" class="check">
+                    <KsIcon size="sm" class="check">
                         <Check />
                     </KsIcon>
                     <span class="name" :title="entry.label">{{ entry.label }}</span>

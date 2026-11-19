@@ -12,7 +12,7 @@
                 onlyIcon
                 class="logo"
             />
-            <KsIcon v-else size="base">
+            <KsIcon v-else size="sm">
                 <component :is="data.isFlow ? Sitemap : PackageVariantClosed" />
             </KsIcon>
         </div>
@@ -22,7 +22,7 @@
 
             <div v-if="!data.isFlow" class="meta">
                 <KsIcon
-                    size="xs"
+                    size="sm"
                     class="state"
                     :color="statusColorOf(status)"
                     :tooltip="statusLabel"

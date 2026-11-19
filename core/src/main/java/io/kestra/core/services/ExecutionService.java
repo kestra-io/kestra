@@ -18,6 +18,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.ExecutionResumedEvent;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -32,6 +33,7 @@ import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
@@ -909,7 +911,7 @@ public class ExecutionService {
         Execution decidedExecution = this.markAs(execution, flowWithSource, taskRunId, State.Type.RUNNING, inputs, _resumed, decision);
         TaskRun decidedTaskRun = decidedExecution.findTaskRunByTaskRunId(taskRunId);
 
-        this.eventPublisher.publishEvent(CrudEvent.of(execution, decidedExecution));
+        this.eventPublisher.publishEvent(new ExecutionResumedEvent(execution, decidedExecution, decidedTaskRun, decision, State.Type.RUNNING, inputs, approval.resumeInputs()));
         approvalRequestHandler.decided(decidedExecution, decidedTaskRun, approval, decision, _resumed);
         if (notifyLoopParent) {
             this.notifyLoopParent(decidedExecution, decidedExecution.getState().getCurrent());
@@ -929,7 +931,7 @@ public class ExecutionService {
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
         Execution cancelled = this.markAs(execution, flowWithSource, taskRunId, State.Type.CANCELLED, null, resumed != null ? resumed : PausableTask.Resumed.now(State.Type.CANCELLED));
         TaskRun cancelledTaskRun = cancelled.findTaskRunByTaskRunId(taskRunId);
-        this.eventPublisher.publishEvent(CrudEvent.of(execution, cancelled));
+        this.eventPublisher.publishEvent(new ExecutionResumedEvent(execution, cancelled, cancelledTaskRun, null, State.Type.CANCELLED, null, null));
         approvalRequestHandler.closed(cancelled, cancelledTaskRun, approval, ApprovalRequestHandler.Resolution.CANCELLED, resumed, bulk);
         this.notifyLoopParent(cancelled, State.Type.RESTARTED);
         this.notifyLoopParent(cancelled, cancelled.getState().getCurrent());
@@ -1321,6 +1323,7 @@ public class ExecutionService {
         var pausedTaskRun = newState == State.Type.KILLING ? execution.findFirstByState(State.Type.PAUSED) : this.findPausedTaskRunToResume(execution, flow);
 
         Execution unpausedExecution;
+        List<Input<?>> inputDefinitions = null;
         if (pausedTaskRun.isPresent()) {
             final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
             Task task = flowWithSource.findTaskByTaskId(pausedTaskRun.get().getTaskId());
@@ -1337,6 +1340,7 @@ public class ExecutionService {
                     throw new IllegalArgumentException(APPROVAL_RESUME_REFUSED.formatted(execution.getId()));
                 }
                 unpausedExecution = this.markAs(execution, flow, pausedTaskRun.get().getId(), newState, inputs, resumed);
+                inputDefinitions = task instanceof PausableTask pausableTask ? pausableTask.resumeInputs() : null;
             }
         } else {
             // we are in a manual execution pause, not triggered by the Pause task, so we just switch the execution to the new state.
@@ -1346,7 +1350,7 @@ public class ExecutionService {
             unpausedExecution = execution.withState(newState);
         }
 
-        this.eventPublisher.publishEvent(CrudEvent.of(execution, unpausedExecution));
+        this.eventPublisher.publishEvent(new ExecutionResumedEvent(execution, unpausedExecution, pausedTaskRun.orElse(null), null, newState, inputs, inputDefinitions));
         this.notifyLoopParent(unpausedExecution, unpausedExecution.getState().getCurrent());
         return unpausedExecution;
     }

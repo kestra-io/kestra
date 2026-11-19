@@ -23,7 +23,7 @@
                     {{ feed.title }}
                 </h5>
             </div>
-            <OpenInNew class="openInNewIcon" aria-hidden="true" />
+            <OpenInNew class="openInNewIcon" />
         </a>
     </ContextInfoContent>
 </template>

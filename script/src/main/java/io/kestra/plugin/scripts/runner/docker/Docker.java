@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.InternalServerErrorException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
@@ -48,6 +49,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -171,6 +173,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     private static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
+    // Matches the wording of Docker Engine; other engines may word it differently and then surface their original exception.
+    private static final String MISSING_BIND_SOURCE_MESSAGE = "bind source path does not exist";
     private static final List<String> DOCKER_SOCKET_ERROR_MESSAGES = List.of(
         "docker.sock",
         "no such file or directory",
@@ -492,7 +496,18 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
                     // create container
                     CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars, validatedTmpfs);
-                    CreateContainerResponse exec = container.exec();
+                    String mountSource = FileHandlingStrategy.MOUNT.equals(strategy) && taskCommands.getWorkingDirectory() != null
+                        ? windowsToUnixPath(taskCommands.getWorkingDirectory().toString())
+                        : null;
+                    CreateContainerResponse exec;
+                    try {
+                        exec = container.exec();
+                    } catch (DockerException e) {
+                        if (isMissingBindSource(e, mountSource)) {
+                            throw new IllegalStateException(missingMountSourceMessage(mountSource), e);
+                        }
+                        throw e;
+                    }
                     containerId = exec.getId();
                     containerIdRef.set(containerId);
 
@@ -800,6 +815,42 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return false;
     }
 
+    // A structured bind mount, unlike a legacy bind, makes the daemon reject a missing source instead of silently creating an empty directory.
+    static Mount workingDirectoryMount(final String path) {
+        return new Mount()
+            .withType(MountType.BIND)
+            .withSource(path)
+            .withTarget(path)
+            .withReadOnly(false);
+    }
+
+    static boolean isMissingBindSource(final Throwable throwable, @Nullable final String source) {
+        if (source == null) {
+            return false;
+        }
+
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        Throwable current = throwable;
+
+        while (current != null && visited.add(current)) {
+            String message = current.getMessage();
+            if (message != null && message.contains(MISSING_BIND_SOURCE_MESSAGE) && message.contains(source)) {
+                return true;
+            }
+
+            current = current.getCause();
+        }
+
+        return false;
+    }
+
+    private static String missingMountSourceMessage(final String source) {
+        return ("Unable to create the Docker container because the MOUNT working directory '%s' does not exist on the Docker daemon host. "
+            + "The MOUNT file handling strategy requires the Docker daemon to access the worker task temporary directory at the same absolute path. "
+            + "When Kestra runs in a container, bind-mount 'kestra.tasks.tmp-dir.path' from the Docker host at that same path, for example '/tmp/kestra-wd:/tmp/kestra-wd'. "
+            + "If the Docker daemon cannot access the worker filesystem, use the VOLUME file handling strategy instead.").formatted(source);
+    }
+
     private static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
         return "Docker execution failed because Docker socket is not accessible.\n\n" +
             "Fix:\n" +
@@ -968,27 +1019,16 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             }
         }
 
-        List<Bind> binds = new ArrayList<>();
         if (FileHandlingStrategy.MOUNT.equals(runContext.render(this.fileHandlingStrategy).as(FileHandlingStrategy.class).orElse(null)) && workingDirectory != null) {
-            String bindPath = windowsToUnixPath(workingDirectory.toString());
-            binds.add(
-                new Bind(
-                    bindPath,
-                    new Volume(bindPath),
-                    AccessMode.rw
-                )
-            );
+            hostConfig.withMounts(List.of(workingDirectoryMount(windowsToUnixPath(workingDirectory.toString()))));
         }
         if (volumesEnabled && this.getVolumes() != null) {
-            binds.addAll(
+            hostConfig.withBinds(
                 runContext.render(this.getVolumes())
                     .stream()
                     .map(Bind::parse)
                     .toList()
             );
-        }
-        if (!binds.isEmpty()) {
-            hostConfig.withBinds(binds);
         }
         if (!validatedTmpfs.isEmpty()) {
             hostConfig.withTmpFs(validatedTmpfs);

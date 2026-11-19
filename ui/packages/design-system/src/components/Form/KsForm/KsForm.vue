@@ -7,20 +7,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {ref, type HTMLAttributes} from "vue"
     import {ElForm, type FormInstance, type FormProps, type FormValidateCallback} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        model?: object
-        rules?: object
-        disabled?: boolean
-        size?: "large" | "default" | "small"
-        labelPosition?: "left" | "right" | "top"
-        labelWidth?: string | number
-    }>()
+    const props = defineProps<FormProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof FormProps>>()
 
     const emit = defineEmits<{
         submit: [evt: Event]
@@ -32,7 +26,7 @@
 
     const formRef = ref<InstanceType<typeof ElForm>>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 
     defineExpose({
         validate: (callback: FormValidateCallback) => formRef.value?.validate(callback),

@@ -19,7 +19,7 @@
                     >
                         <ContentCopy
                             class="copy"
-                            :aria-label="$t('copy_to_clipboard')"
+                            :title="$t('copy_to_clipboard')"
                             @click="copyUrl"
                         />
                     </KsTooltip>

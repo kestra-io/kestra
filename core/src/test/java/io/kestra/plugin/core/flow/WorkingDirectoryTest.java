@@ -66,13 +66,17 @@ import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -218,6 +222,39 @@ public class WorkingDirectoryTest {
         verify(runContext.storage(), never()).putCacheFile(any(), any(), any());
     }
 
+    @Test
+    void shouldNotFailTheCloseTaskWhenItsFolderCannotBeDeleted(@TempDir Path tempDir) throws Exception {
+        WorkingDirectory workingDirectory = spy(fourSubtasksWorkingDirectory());
+        doThrow(new IOException("folder locked")).when(workingDirectory).cleanup(any());
+
+        assertThatCode(() -> closeTask(workingDirectory).run(closeRunContext(tempDir))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldReportTheOutputFilesErrorWhenTheFolderCannotBeDeletedEither(@TempDir Path tempDir) throws Exception {
+        WorkingDirectory workingDirectory = spy(fourSubtasksWorkingDirectory());
+        doThrow(new IllegalStateException("output files not saved")).when(workingDirectory).postExecuteTasks(any());
+        doThrow(new IOException("folder locked")).when(workingDirectory).cleanup(any());
+
+        assertThatThrownBy(() -> closeTask(workingDirectory).run(closeRunContext(tempDir))).hasMessage("output files not saved");
+    }
+
+    private static WorkingDirectory.Close closeTask(WorkingDirectory workingDirectory) {
+        return WorkingDirectory.Close.builder()
+            .id("worker_close")
+            .type(WorkingDirectory.Close.class.getName())
+            .workingDirectory(workingDirectory)
+            .build();
+    }
+
+    private static RunContext closeRunContext(Path tempDir) {
+        LocalWorkingDir workingDir = new LocalWorkingDir(tempDir, "working-directory-test");
+        workingDir.path();
+        RunContext runContext = mock(RunContext.class, RETURNS_DEEP_STUBS);
+        when(runContext.workingDir()).thenReturn(workingDir);
+        return runContext;
+    }
+
     private static WorkingDirectory cachedWorkingDirectory() {
         return WorkingDirectory.builder()
             .id("worker")
@@ -263,6 +300,12 @@ public class WorkingDirectoryTest {
     @LoadFlows({ "flows/valids/working-directory-invalid-runif.yaml" })
     void invalidRunIf() throws Exception {
         suite.invalidRunIf(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/working-directory-postexecute-failure.yaml" })
+    void shouldFailWorkingDirectoryWhenItsOutputFilesCannotBeSaved() throws Exception {
+        suite.outputFilesFailure(runnerUtils);
     }
 
     @Test
@@ -540,6 +583,16 @@ public class WorkingDirectoryTest {
             );
 
             assertThat(execution.getTaskRunList()).hasSize(5);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        }
+
+        public void outputFilesFailure(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-postexecute-failure");
+
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory_close").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("after")).isEmpty();
+            assertThat(execution.findTaskRunsByTaskId("onError")).isNotEmpty();
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         }
 

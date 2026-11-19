@@ -1,5 +1,6 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {ElProgress} from "element-plus"
 import KestraDesignSystem from "../../index"
 import KsProgress from "./KsProgress.vue"
 
@@ -44,5 +45,10 @@ describe("KsProgress", () => {
             global: globalConfig,
         })
         expect(wrapper.attributes("radius")).toBeUndefined()
+    })
+
+    test("passes the square line cap to Element Plus when the parent sets none", () => {
+        const wrapper = mount(KsProgress, {props: {percentage: 50}, global: globalConfig})
+        expect(wrapper.findComponent(ElProgress).props("strokeLinecap")).toBe("square")
     })
 })

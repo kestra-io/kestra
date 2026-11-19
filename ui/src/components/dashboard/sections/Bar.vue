@@ -92,6 +92,7 @@
 
     const aggregator = Object.entries(data?.columns ?? {}).filter(([_, v]) => v.agg)
     const isDurationAgg = () => aggregator[0][1].field === "DURATION"
+    const isCountAgg = () => aggregator[0]?.[1]?.agg === "COUNT"
 
     const {onLegendToggle, legendSelected} = useLegendToggle()
 
@@ -182,6 +183,7 @@
             xAxis: {
                 type: "value",
                 show: showAxes,
+                ...(isCountAgg() ? {minInterval: 1} : {}),
                 axisLine: {show: true, lineStyle: {color: cssVar("--ks-border-default")}},
                 axisLabel: {
                     ...axisLabelStyle,

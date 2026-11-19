@@ -7,7 +7,6 @@
             <div class="task-editor-pane">
                 <TaskEditor
                     :modelValue="modelValue"
-                    :section="section"
                     :hideRunButton="hideRunButton"
                     @update:model-value="(v) => emit('input', v ?? '')"
                 />

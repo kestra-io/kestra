@@ -19,15 +19,10 @@
         </KsAlert>
 
         <div v-else-if="loading" class="trigger-list">
-            <KsSkeleton v-for="i in 4" :key="i" height="3rem" />
+            <KsSkeleton v-for="i in 4" :key="i" />
         </div>
 
-        <KsEmpty
-            v-else-if="filteredTriggers.length === 0"
-            :image="images.triggers"
-            :imageSize="120"
-            :description="$t('recipe.other.no_results')"
-        />
+        <KsNoData v-else-if="filteredTriggers.length === 0" :description="$t('recipe.other.no_results')" />
 
         <div v-else class="trigger-list" role="radiogroup" :aria-label="$t('recipe.other.search_label')" data-test="recipe-trigger-list">
             <SelectableTile
@@ -60,7 +55,6 @@
     import type {PluginIconMap} from "../../../../utils/pluginUtils"
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
     import Check from "vue-material-design-icons/Check.vue"
-    import {images} from "../../../layout/empty/images"
 
     defineProps<{
         recipe: RecipeState

@@ -14,6 +14,7 @@ export const kestraDarkClassic: CodeTheme = {
         key: "#3DC9B0",
         value: "#CE9178",
         pebble: "#FFCA16",
+        pebbleVariable: "#FFCA16",
         constant: "#569CD6",
         number: "#B5CEA8",
         string: "#CE9178",

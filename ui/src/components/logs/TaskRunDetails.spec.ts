@@ -65,6 +65,7 @@ vi.mock("vue-virtual-scroller", async () => {
             },
         }),
         DynamicScrollerItem: defineComponent({
+            inheritAttrs: false,
             setup(_, {slots}) {
                 return () => slots.default?.()
             },

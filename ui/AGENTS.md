@@ -257,6 +257,8 @@ Rules:
 
 ### Types
 
+**Import `DynamicScroller` from `src/utils/virtualScroller.ts`**, not from `vue-virtual-scroller`. Its 3.0.5 types (the latest) leave out what it forwards to `RecycleScroller` (`buffer`, `prerender`, `emitUpdate`, `updateInterval`, HTML attributes), and the re-export adds them.
+
 **Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`, in the `<script>` block and in template expressions alike.
 
 Where the type comes from, in this order:

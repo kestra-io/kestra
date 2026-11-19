@@ -658,6 +658,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "não iniciado"
+      },
+      "diff": {
+        "added": "adicionado",
+        "removed": "removido",
+        "changed": "alterado",
+        "renamed": "renomeado",
+        "moved": "movido"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "unchanged": "{count} sem alterações",
+      "graph_error": "Não foi possível desenhar o grafo. Abra o separador YAML para ver a alteração.",
+      "status": {
+        "added": "Adicionado",
+        "removed": "Removido",
+        "changed": "Alterado",
+        "renamed": "Renomeado",
+        "moved": "Movido"
       }
     },
     "show task logs": "Mostrar task logs",
@@ -2562,6 +2582,7 @@
           "generic": "Algo deu errado. Por favor, tente novamente."
         },
         "emptyHelper": "Posso editar este flow, gerar testes, criar arquivos relacionados ou explicar como funciona.",
+        "emptyHelperNoFlow": "Posso criar ou editar flows, gerar testes, criar arquivos relacionados ou explicar como o Kestra funciona.",
         "suggestions": {
           "errorHandling": "Adicionar tratamento de erros",
           "unitTest": "Gerar um teste unitário",
@@ -2627,7 +2648,8 @@
           "applied": "Aplicado",
           "previewBanner": "A rever uma alteração sugerida pela IA. O editor é apenas de leitura até aplicares ou descartares a alteração.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Guardar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Será criado, ou será adicionada uma nova revisão de rascunho se já existir. Os rascunhos não são acionados por triggers nem subflows até serem publicados.",
+          "applyDraftTitle": "Aplicar guarda uma revisão de rascunho.",
+          "applyDraftHint": "Ainda nada fica ativo. Os triggers e subflows ignoram os rascunhos até publicar.",
           "applyConfirmDashboard": "Aplicar o painel {id}? Será criado, ou sobrescrito se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyErrorDashboard": "Não foi possível aplicar o dashboard. Por favor, tente novamente.",

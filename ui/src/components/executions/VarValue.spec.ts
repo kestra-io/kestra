@@ -93,6 +93,7 @@ describe("VarValue", () => {
         "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
         "arn:aws:s3:::my-bucket",
         "mailto:someone@example.com",
+        "javascript:alert(document.cookie)",
     ])("should show %s as text without an Open link", (value) => {
         const wrapper = mountVarValue(value)
 

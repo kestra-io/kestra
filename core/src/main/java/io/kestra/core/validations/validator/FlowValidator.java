@@ -99,7 +99,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
         for (String ancestor : expandedPaths) {
             for (String descendant : expandedPaths) {
-                if (!ancestor.equals(descendant) && descendant.startsWith(ancestor + ".")) {
+                if (ancestor != null && !ancestor.equals(descendant) && descendant.startsWith(ancestor + ".")) {
                     violations.add(String.format("Input path '%s' conflicts with '%s'; one cannot be nested under the other.", ancestor, descendant));
                 }
             }

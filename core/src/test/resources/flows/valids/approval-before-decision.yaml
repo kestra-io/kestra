@@ -1,0 +1,18 @@
+id: approval-before-decision
+namespace: io.kestra.tests
+
+inputs:
+  - id: auto
+    type: BOOL
+    defaults: false
+  - id: fail
+    type: BOOL
+    defaults: false
+
+tasks:
+  - id: approval
+    type: io.kestra.core.tasks.test.ApprovalAfterTask
+    onApprove:
+      - id: approved
+        type: io.kestra.plugin.core.log.Log
+        message: "Approved"

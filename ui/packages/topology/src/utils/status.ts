@@ -122,7 +122,8 @@ export interface AggregateTaskRun {
     state: {current: string};
 }
 
-/** The worst state among `childTaskIds`' own task runs, or `undefined` when none of them ran yet. */
+/** The worst state among `childTaskIds`' own task runs, or `undefined` when none of them ran yet.
+ *  A skipped child was skipped on purpose, so it only counts when every child was skipped. */
 export function computeAggregateState(
     childTaskIds: string[],
     taskRunList: AggregateTaskRun[],
@@ -130,5 +131,6 @@ export function computeAggregateState(
     const states = childTaskIds.flatMap((taskId) =>
         taskRunList.filter((run) => run.taskId === taskId).map((run) => run.state.current),
     )
-    return pickWorstState(states)
+    const ran = states.filter((state) => state !== "SKIPPED")
+    return pickWorstState(ran.length ? ran : states)
 }

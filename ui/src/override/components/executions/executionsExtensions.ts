@@ -25,3 +25,6 @@ export const bulkActionComponents: Component[] = []
 // itself on its own feature flag / permissions. Rendered just before Delete, so the
 // destructive action stays last.
 export const overflowActionComponents: Component[] = []
+
+// Replaced by EE; the component receives the `execution` prop.
+export const reviewActionComponent: Component | undefined = undefined

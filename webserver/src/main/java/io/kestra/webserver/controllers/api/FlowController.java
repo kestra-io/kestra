@@ -312,12 +312,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @RequestBody(description = "A list of flows source code") @Body @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete) throws ConstraintViolationException {
-        List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
-
-        List<GenericFlow> genericFlows = sources
-            .stream()
-            .map(source -> parseFlowSource(source.trim()))
-            .toList();
+        List<GenericFlow> genericFlows = parseMultiFlowSource(flows);
 
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false);
     }
@@ -548,10 +543,7 @@ public class FlowController {
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete,
         @Parameter(description = "The namespace where to update flows") @QueryValue @Nullable String namespace,
         @Parameter(description = "If namespace child should are allowed to be updated") @QueryValue(defaultValue = "false") Boolean allowNamespaceChild) throws ConstraintViolationException {
-        List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
-        List<GenericFlow> genericFlows = sources.stream()
-            .map(source -> GenericFlow.fromYaml(tenantService.resolveTenant(), source))
-            .toList();
+        List<GenericFlow> genericFlows = parseMultiFlowSource(flows);
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, allowNamespaceChild);
     }
 
@@ -699,7 +691,8 @@ public class FlowController {
         } else {
             // Fallback to YAML body
             String content = (body == null ? "" : body).trim();
-            List<FlowSource> flowSources = Arrays.stream(content.split("\\n+---\\n*?"))
+            List<FlowSource> flowSources = YamlParser.splitDocuments(content)
+                .stream()
                 .map(flow -> new FlowSource(null, flow))
                 .toList();
 
@@ -993,6 +986,13 @@ public class FlowController {
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");
+    }
+
+    protected List<GenericFlow> parseMultiFlowSource(@Nullable String flows) {
+        return YamlParser.splitDocuments(flows)
+            .stream()
+            .map(this::parseFlowSource)
+            .toList();
     }
 
     protected GenericFlow parseFlowSource(final String source) {

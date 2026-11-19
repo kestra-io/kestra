@@ -41,6 +41,17 @@ class InternalNamespaceTest {
     private NamespaceFileMetadataStateStore namespaceFileMetadataStateStore;
 
     @Test
+    void shouldRejectWritesButNotReadsGivenNamespaceWithAnEmptySegment() throws IOException {
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, "team.", storageInterface, namespaceFileMetadataStateStore);
+
+        assertThatThrownBy(() -> namespace.putFile(Path.of("/a.txt"), new ByteArrayInputStream("1".getBytes()))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> namespace.createDirectory(Path.of("/dir"))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> namespace.delete(Path.of("/a.txt"))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> namespace.move(Path.of("/a.txt"), Path.of("/b.txt"))).isInstanceOf(IllegalArgumentException.class);
+        assertThat(namespace.all()).isEmpty();
+    }
+
+    @Test
     void shouldGetAllNamespaceFiles() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();

@@ -211,7 +211,9 @@ public class InternalStorage implements Storage {
                         objectId,
                         ttl.toMillis()
                     );
-                    deleteCacheFile(cacheId, objectId);
+                    if (!StorageContext.hasEmptySegment(context.getNamespace())) {
+                        deleteCacheFile(cacheId, objectId);
+                    }
                     return Optional.empty();
                 }
             }
@@ -230,6 +232,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putCacheFile(File file, String cacheId, @Nullable String objectId) throws IOException {
+        StorageContext.requireNoEmptySegment(context.getNamespace());
         URI uri = context.getCacheURI(cacheId, objectId);
         return this.putFileAndDelete(file, uri);
     }
@@ -239,6 +242,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public Optional<Boolean> deleteCacheFile(String cacheId, @Nullable String objectId) throws IOException {
+        StorageContext.requireNoEmptySegment(context.getNamespace());
         URI uri = context.getCacheURI(cacheId, objectId);
         return isFileExist(uri) ? Optional.of(this.storage.delete(context.getTenantId(), context.getNamespace(), uri)) : Optional.empty();
     }

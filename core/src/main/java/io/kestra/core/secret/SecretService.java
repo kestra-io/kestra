@@ -1,7 +1,6 @@
 package io.kestra.core.secret;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +14,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +23,19 @@ import lombok.extern.slf4j.Slf4j;
 public class SecretService<META> {
     private static final String SECRET_PREFIX = "SECRET_";
 
+    private final SecretEncoding encoding;
+
     private Map<String, String> decodedSecrets;
+
+    @Inject
+    public SecretService(final SecretConfiguration configuration) {
+        this.encoding = configuration.encoding();
+    }
+
+    /** Kept so that secret backends subclassing this service are not forced to declare a constructor. */
+    protected SecretService() {
+        this.encoding = SecretEncoding.BASE64;
+    }
 
     @PostConstruct
     private void postConstruct() {
@@ -35,10 +47,9 @@ public class SecretService<META> {
             .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX)).<Map.Entry<String, String>> mapMulti((entry, consumer) ->
             {
                 try {
-                    String value = entry.getValue().replaceAll("\\R", "");
-                    consumer.accept(Map.entry(entry.getKey(), new String(Base64.getDecoder().decode(value))));
+                    consumer.accept(Map.entry(entry.getKey(), encoding.decode(entry.getValue())));
                 } catch (Exception e) {
-                    log.error("Could not decode secret '{}', make sure it is Base64-encoded: {}", entry.getKey(), e.getMessage());
+                    log.error("Could not decode secret '{}', make sure its value matches 'kestra.secret.encoding: {}': {}", entry.getKey(), encoding, e.getMessage());
                 }
             })
             .collect(

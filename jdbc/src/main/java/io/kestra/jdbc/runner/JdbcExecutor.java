@@ -1208,6 +1208,10 @@ public class JdbcExecutor implements ExecutorInterface {
             }
 
             Execution killing = executionService.kill(currentExecution, flow, afterKillState);
+            // kill() returns the same object when the execution is already terminal, a new terminal cycle would release its concurrency slot a second time
+            if (killing == currentExecution) {
+                return null;
+            }
             Executor current = new Executor(currentExecution, null)
                 .withExecution(killing, "joinKillingExecution");
             return Pair.of(current, pair.getRight());
@@ -1315,12 +1319,16 @@ public class JdbcExecutor implements ExecutorInterface {
                     slaMonitorStorage.purge(executor.getExecution().getId());
                 }
 
+                // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
+                boolean queuedWithoutRunning = execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
+                    && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
+                // an execution ended while still queued (SLA, cancel...) must leave the queued store, or a later release would pop it back to RUNNING
+                if (queuedWithoutRunning) {
+                    executionQueuedStorage.remove(execution);
+                }
+
                 // check if there exist a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null) {
-                    // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
-                    boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
-                        && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
-                        && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
                     // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
                     // when the gate ran in this very pass we know its decision, otherwise we have to guess it from the state history
                     boolean concurrencyShortCircuitState = executor.getExecutionRunning() != null
@@ -1330,7 +1338,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
                     // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
-                    if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
+                    if (!queuedWithoutRunning && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                             var finalFlow = executor.getFlow();
 

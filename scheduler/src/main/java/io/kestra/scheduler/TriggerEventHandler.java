@@ -495,7 +495,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerUpdated(Clock clock, TriggerUpdated event) {
-        findTriggerState(event).ifPresent(state ->
+        findTriggerState(event).filter(state -> !isStale(state, event, event.revision())).ifPresent(state ->
         {
             Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
             if (data.getRight() != null) {
@@ -504,7 +504,7 @@ public class TriggerEventHandler {
                 maySendExecutionKilled(state);
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight())
+                    .update(clock, data.getRight(), event.revision())
                     .updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
                 triggerStateStore.save(state);
             }
@@ -530,11 +530,13 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerDeleted(TriggerDeleted event) {
-        triggerStateStore.findByIdWithoutAcl(event.id()).ifPresent(state ->
-        {
-            triggerStateStore.delete(event.id());
-            maySendExecutionKilled(state);
-        });
+        triggerStateStore.findByIdWithoutAcl(event.id())
+            .filter(state -> event.revision() == null || !isStale(state, event, event.revision()))
+            .ifPresent(state ->
+            {
+                triggerStateStore.delete(event.id());
+                maySendExecutionKilled(state);
+            });
     }
 
     /**
@@ -577,12 +579,19 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerCreated(Clock clock, TriggerCreated event, Integer vNode) {
-        Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
-        if (data.getRight() != null) {
+        Optional<TriggerState> existing = triggerStateStore.findByIdWithoutAcl(event.id());
+        if (existing.isPresent() && isStale(existing.get(), event, event.revision())) {
+            return;
+        }
+
+        // Built from the latest revision, so a late event can neither recreate a removed trigger nor apply an outdated definition.
+        Pair<Flow, AbstractTrigger> data = findTriggerIn(event, findLatestFlow(event, event.revision()));
+        if (data.getRight() != null && !data.getLeft().isDeleted()) {
             Flow flow = data.getLeft();
             AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
                 .of(event.id(), trigger, vNode)
+                .flowRevision(clock, flow.getRevision())
                 .lastEventId(clock, event.eventId());
             state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             triggerStateStore.save(state);
@@ -609,8 +618,34 @@ public class TriggerEventHandler {
         return trigger != null && trigger.isDisabled();
     }
 
+    private boolean isStale(TriggerState state, TriggerEvent event, int revision) {
+        if (!state.isAppliedFromRevisionNewerThan(revision)) {
+            return false;
+        }
+
+        FlowWithSource latest = findFlow(event, null);
+        // A revision above the latest one was not applied from this flow (e.g. a restored backup), so it cannot order events.
+        if (latest != null && state.getFlowRevision() > latest.getRevision()) {
+            return false;
+        }
+
+        Logs.logTrigger(
+            event.id(), Level.WARN, "Skipping event {} from flow revision {}. Cause: The trigger state was applied from flow revision {}.", event.type(), revision, state.getFlowRevision()
+        );
+        return true;
+    }
+
+    private FlowWithSource findLatestFlow(TriggerEvent event, int minRevision) {
+        FlowWithSource latest = findFlow(event, null);
+        // The flow cache only moves to a newer revision when that revision is asked for.
+        return latest != null && latest.getRevision() < minRevision ? findFlow(event, minRevision) : latest;
+    }
+
     private Pair<Flow, AbstractTrigger> findTrigger(TriggerEvent event, Integer revision) {
-        FlowWithSource flow = findFlow(event, revision);
+        return findTriggerIn(event, findFlow(event, revision));
+    }
+
+    private Pair<Flow, AbstractTrigger> findTriggerIn(TriggerEvent event, FlowWithSource flow) {
         if (flow == null) {
             return Pair.of(null, null);
         }

@@ -18,12 +18,12 @@ ext {
 dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.20"
-    def bouncycastleVersion = "1.86"
+    def bouncycastleVersion = "1.87"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "2.24.0"
     def jsonschemaVersion = "4.38.0"
     def kafkaVersion = "4.4.0"
-    def opensearchVersion = "3.10.0"
+    def opensearchVersion = "3.11.0"
     def opensearchRestVersion = "3.9.0"
     def flyingSaucerVersion = "10.7.0"
     def jacksonVersion = "2.23.0"
@@ -39,7 +39,7 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
-    api platform("io.micronaut.platform:micronaut-platform:5.2.5")
+    api platform("io.micronaut.platform:micronaut-platform:5.2.6")
     // security tower (Trivy): micronaut-tracing 8.3.0 imports opentelemetry-bom 1.64.0, opentelemetry-api < 1.67.0 has
     // CVE-2026-118259 (SEC-0387). Both BOMs so api, context, sdk and the -alpha incubator stay aligned; drop once Micronaut ships >= 1.67.0.
     api platform("io.opentelemetry:opentelemetry-bom:1.68.0")
@@ -47,8 +47,8 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.93.0')
     api platform("io.grpc:grpc-bom:$grpcVersion")
-    api platform("com.azure:azure-sdk-bom:1.3.9")
-    api platform('software.amazon.awssdk:bom:2.57.13')
+    api platform("com.azure:azure-sdk-bom:1.3.10")
+    api platform('software.amazon.awssdk:bom:2.59.0')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
     api platform("io.qameta.allure:allure-bom:2.35.5")
@@ -108,7 +108,7 @@ dependencies {
         api "net.thisptr:jackson-jq:1.6.5"
         api "com.google.guava:guava:33.8.0-jre"
         api "commons-io:commons-io:2.22.0"
-        api "org.apache.commons:commons-lang3:3.21.0"
+        api "org.apache.commons:commons-lang3:3.22.0"
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'
         api "org.apache.maven.resolver:maven-resolver-impl:$mavenResolverVersion"
@@ -170,7 +170,7 @@ dependencies {
         api "org.exparity:hamcrest-date:2.0.8"
         api "org.wiremock:wiremock-jetty12:3.13.2"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
-        api "com.microsoft.playwright:playwright:1.64.0"
+        api "com.microsoft.playwright:playwright:1.65.0"
         api "org.awaitility:awaitility:4.3.0"
         api "com.tngtech.archunit:archunit-junit5:1.5.1"
 

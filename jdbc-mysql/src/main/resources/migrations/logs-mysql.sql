@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS ${table} (
         'TRACE'
     ) GENERATED ALWAYS AS (value ->> '$.level') STORED NOT NULL,
     `timestamp` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.timestamp' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL,
-    `tenant_id` VARCHAR(250) GENERATED ALWAYS AS (value ->> '$.tenantId') STORED,
+    `tenant_id` VARCHAR(250) GENERATED ALWAYS AS (value ->> '$.tenantId') STORED NOT NULL,
     `execution_kind` VARCHAR(32) GENERATED ALWAYS AS (value ->> '$.executionKind') STORED,
     INDEX ix_execution_id__task_id (execution_id, task_id),
     INDEX ix_execution_id__taskrun_id (execution_id, taskrun_id),

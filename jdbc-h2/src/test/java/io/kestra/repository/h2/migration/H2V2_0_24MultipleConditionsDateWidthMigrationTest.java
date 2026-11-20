@@ -124,7 +124,7 @@ class H2V2_0_24MultipleConditionsDateWidthMigrationTest {
 
     private void insert(String key, String start, String end) {
         String valueJson = """
-            {"namespace":"io.kestra.tests","flowId":"migration","conditionId":"%s",\
+            {"tenantId":"test-tenant","namespace":"io.kestra.tests","flowId":"migration","conditionId":"%s",\
             "start":"%s","end":"%s"}""".formatted(key, start, end);
 
         dslContextWrapper.transaction(

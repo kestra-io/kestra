@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS ${table} (
         FULLTEXT_INDEX(COALESCE(CAST(value ->> 'message' AS varchar), '')) ||
         FULLTEXT_INDEX(COALESCE(CAST(value ->> 'thread' AS varchar), ''))
     ) STORED,
-    tenant_id VARCHAR(250) GENERATED ALWAYS AS (value ->> 'tenantId') STORED,
+    tenant_id VARCHAR(250) NOT NULL GENERATED ALWAYS AS (value ->> 'tenantId') STORED,
     execution_kind VARCHAR(32) GENERATED ALWAYS AS (value ->> 'executionKind') STORED
 );
 

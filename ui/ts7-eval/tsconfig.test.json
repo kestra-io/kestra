@@ -1,0 +1,7 @@
+{
+  "extends": ["../tsconfig.test.json", "./tsconfig.mapper.json"],
+  "compilerOptions": {
+    "tsBuildInfoFile": "./.tmp/test.tsbuildinfo"
+  },
+  "references": [{"path": "./tsconfig.ts7.json"}]
+}

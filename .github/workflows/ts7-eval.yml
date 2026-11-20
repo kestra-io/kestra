@@ -1,0 +1,66 @@
+name: Experimental - TS 7.1 typecheck
+
+# Evaluation only: vue-tsc in pull-request.yml stays the source of truth, and this job is never a required check.
+on:
+  pull_request:
+    paths:
+      - "ui/**"
+      - ".github/workflows/ts7-eval.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ts7-eval:
+    name: TS 7.1 + content-mapper (tsgo, tsrs)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: ui/.nvmrc
+          cache: npm
+          cache-dependency-path: |
+            ui/package-lock.json
+            ui/ts7-eval/package-lock.json
+
+      - run: npm ci
+      - run: node scripts/ensure-sdk.mjs
+      - run: npm ci
+        working-directory: ui/ts7-eval
+
+      # Diagnostics are the expected output here, so a non-zero exit is recorded instead of failing the step.
+      - name: Typecheck with tsgo and tsrs
+        working-directory: ui/ts7-eval
+        run: |
+          for run in tsgo:typecheck:ts7 tsrs:typecheck:tsrs; do
+            name="${run%%:*}"; script="${run#*:}"
+            rm -rf .tmp
+            start=$(date +%s)
+            /usr/bin/time -v -o "$name.time" npm run --silent "$script" > "$name.out" 2>&1 || true
+            node scripts/normalize.mjs . .. < "$name.out" > "results/$name.diagnostics.txt"
+            echo "| $name | $(( $(date +%s) - start )) s | $(awk '/Maximum resident/ {printf "%.2f GB", $6/1048576}' "$name.time") | $(wc -l < "results/$name.diagnostics.txt") |" >> rows.md
+          done
+          {
+            echo "| Checker | Wall time | Largest process RSS | Diagnostics (folded) |"
+            echo "|---|---|---|---|"
+            cat rows.md
+            echo
+            node scripts/triage.mjs tsgo
+          } >> "$GITHUB_STEP_SUMMARY"
+          if diff -q results/tsgo.diagnostics.txt results/tsrs.diagnostics.txt; then
+            echo "tsrs and tsgo report identical diagnostics." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "tsrs and tsgo diverge; rerun tsrs with --checkerAssignment go --noLazyMembers before filing." >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -1,0 +1,98 @@
+[
+  {
+    "name": "vue-tsc",
+    "runs": 5,
+    "meanS": 88.14852575194,
+    "stddevS": 4.762621638,
+    "minS": 85.15042430774,
+    "maxS": 96.61102333074,
+    "treeRssMb": 2585.953125,
+    "maxProcRssMb": 2582.25390625,
+    "diagnostics": 0,
+    "diagnosticsFolded": 0
+  },
+  {
+    "name": "tsgo",
+    "runs": 5,
+    "meanS": 21.34625378078,
+    "stddevS": 0.38628132128154985,
+    "minS": 20.92941620398,
+    "maxS": 21.86128195498,
+    "treeRssMb": 2943.2734375,
+    "maxProcRssMb": 2302.97265625,
+    "diagnostics": 487,
+    "diagnosticsFolded": 393
+  },
+  {
+    "name": "tsrs",
+    "runs": 5,
+    "meanS": 12.40185526888,
+    "stddevS": 0.34149812394854023,
+    "minS": 11.98920003828,
+    "maxS": 12.82526820628,
+    "treeRssMb": 1376.80859375,
+    "maxProcRssMb": 750.4453125,
+    "diagnostics": 487,
+    "diagnosticsFolded": 393
+  },
+  {
+    "name": "tsrs-fast",
+    "runs": 5,
+    "meanS": 12.18806473944,
+    "stddevS": 0.5717814117983805,
+    "minS": 11.25422344984,
+    "maxS": 12.67844833084,
+    "treeRssMb": 1278.515625,
+    "maxProcRssMb": 645.7578125,
+    "diagnostics": 487,
+    "diagnosticsFolded": 393
+  },
+  {
+    "name": "tsgo-flat",
+    "runs": 5,
+    "meanS": 14.3131728449,
+    "stddevS": 0.15976556025594763,
+    "minS": 14.1326050803,
+    "maxS": 14.511755575299999,
+    "treeRssMb": 2654.05078125,
+    "maxProcRssMb": 2110.1953125,
+    "diagnostics": 393,
+    "diagnosticsFolded": 386
+  },
+  {
+    "name": "tsrs-flat-4g",
+    "runs": 5,
+    "meanS": 8.899739369219999,
+    "stddevS": 0.2568987393814281,
+    "minS": 8.549588757419999,
+    "maxS": 9.26667685242,
+    "treeRssMb": 1251.328125,
+    "maxProcRssMb": 725.796875,
+    "diagnostics": 393,
+    "diagnosticsFolded": 386
+  },
+  {
+    "name": "tsrs-flat-384m",
+    "runs": 5,
+    "meanS": 8.759696619500001,
+    "stddevS": 0.37705146060697753,
+    "minS": 8.3482148813,
+    "maxS": 9.3690169653,
+    "treeRssMb": 1257.9609375,
+    "maxProcRssMb": 726.90234375,
+    "diagnostics": 393,
+    "diagnosticsFolded": 386
+  },
+  {
+    "name": "tsrs-flat-go",
+    "runs": 5,
+    "meanS": 8.88623313316,
+    "stddevS": 0.30054608809575767,
+    "minS": 8.53551666636,
+    "maxS": 9.36082944136,
+    "treeRssMb": 1389.8671875,
+    "maxProcRssMb": 854.91015625,
+    "diagnostics": 393,
+    "diagnosticsFolded": 386
+  }
+]

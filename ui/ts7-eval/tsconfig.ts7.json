@@ -1,0 +1,8 @@
+{
+  "extends": ["../tsconfig.app.json", "./tsconfig.mapper.json"],
+  "compilerOptions": {
+    "outDir": "./.tmp/app",
+    "tsBuildInfoFile": "./.tmp/app.tsbuildinfo"
+  },
+  "references": [{"path": "./tsconfig.ds.json"}]
+}

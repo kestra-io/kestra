@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "./.tmp/types",
+    "tsBuildInfoFile": "./.tmp/tsconfig.tsbuildinfo"
+  },
+  "contentMappers": [
+    {
+      "package": "@vue/content-mapper",
+      "extensions": [".vue"],
+      "options": {"languageFeatures": false, "dataAttributes": ["data-*"]}
+    }
+  ]
+}

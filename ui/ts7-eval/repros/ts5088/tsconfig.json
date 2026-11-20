@@ -1,0 +1,4 @@
+{
+  "compilerOptions": {"strict": true, "declaration": true, "emitDeclarationOnly": true, "outDir": "../../.tmp/ts5088", "module": "esnext", "moduleResolution": "bundler", "target": "es2022", "lib": ["es2022", "dom"], "skipLibCheck": true, "types": []},
+  "files": ["index.ts"]
+}

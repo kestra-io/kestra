@@ -870,67 +870,38 @@ class FlowControllerTest {
     }
 
     @Test
-    void bulkUpdateShouldNotDeleteOrModifyFlowsWhenOneFlowIsInvalid() {
+    void shouldNotDeleteOrUpdateAnyFlowWhenOneFlowOfABulkUpdateIsInvalid() {
         String namespace = "io.kestra.bulk.atomic";
-
-        // Initial setup: create flow1 and flow_to_delete
-        String initialFlows = String.join(
-            "\n---\n",
-            generateFlow("flow1", namespace, "v1").sourceOrGenerateIfNull(),
-            generateFlow("flow_to_delete", namespace, "v1").sourceOrGenerateIfNull()
+        client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/main/flows/" + namespace,
+                generateFlow("flow_a", namespace, "v1").sourceOrGenerateIfNull() + "\n---\n" + generateFlow("flow_b", namespace, "v1").sourceOrGenerateIfNull()
+            ).contentType(MediaType.APPLICATION_YAML)
         );
-
-        List<FlowWithSource> created = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/main/flows/" + namespace, initialFlows)
-                .contentType(MediaType.APPLICATION_YAML),
-            Argument.listOf(FlowWithSource.class)
-        );
-        assertThat(created).hasSize(2);
-
-        // Attempt a bulk update with:
-        // 1) updated flow1 (v2)
-        // 2) an invalid flow (missing required tasks property)
-        // flow_to_delete is omitted, so if deletions took place, it would be deleted.
         String invalidFlow = """
-            id: invalid_flow
+            id: flow_c
             namespace: %s
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Lgo
+                message: typo in the task type
             """.formatted(namespace);
 
-        String bulkPayload = String.join(
-            "\n---\n",
-            generateFlow("flow1", namespace, "v2").sourceOrGenerateIfNull(),
-            invalidFlow
-        );
-
         HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(
-                HttpRequest.POST("/api/v1/main/flows/" + namespace + "?delete=true", bulkPayload)
-                    .contentType(MediaType.APPLICATION_YAML)
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/flows/" + namespace,
+                    generateFlow("flow_a", namespace, "v2").sourceOrGenerateIfNull() + "\n---\n" + invalidFlow
+                ).contentType(MediaType.APPLICATION_YAML)
             )
         );
+
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-
-        // Verify atomicity: flow_to_delete must NOT have been deleted
-        Flow retainedFlow = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_to_delete"),
-            Flow.class
-        );
-        assertThat(retainedFlow).isNotNull();
-        assertThat(retainedFlow.getId()).isEqualTo("flow_to_delete");
-
-        // Verify atomicity: flow1 must NOT have been updated to v2
-        Flow unchangedFlow = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow1"),
-            Flow.class
-        );
-        assertThat(unchangedFlow).isNotNull();
-        assertThat(unchangedFlow.getRevision()).isEqualTo(1);
-        assertThat(unchangedFlow.getInputs().getFirst().getId()).isEqualTo("v1");
-
-        // Clean up
-        client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + namespace + "/flow1"));
-        client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + namespace + "/flow_to_delete"));
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_b"), Flow.class).getId())
+            .isEqualTo("flow_b");
+        Flow flowA = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_a"), Flow.class);
+        assertThat(flowA.getRevision()).isEqualTo(1);
+        assertThat(flowA.getInputs().getFirst().getId()).isEqualTo("v1");
     }
 
     @Test

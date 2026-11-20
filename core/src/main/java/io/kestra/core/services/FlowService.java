@@ -196,17 +196,23 @@ public class FlowService {
     }
 
     /**
-     * Validates the given flow.
-     *
-     * @param flow The flow.
+     * Validates the given flow the way {@link #create(GenericFlow)} and {@link #update(GenericFlow, FlowInterface)} do,
+     * without writing it. A draft is only checked for a non-blank source. Missing plugins may be installed as a side effect.
      */
     public void validateFlow(GenericFlow flow) throws FlowProcessingException {
-        Objects.requireNonNull(flow, "Cannot validate null flow");
+        Objects.requireNonNull(flow, "Cannot create null flow");
         if (flow.getSource() == null || flow.getSource().isBlank()) {
-            throw new IllegalArgumentException("Cannot validate flow with null or blank source");
+            throw new IllegalArgumentException("Cannot create flow with null or blank source");
         }
 
+        // Strict parsing (unknown / duplicate properties) and constraint validation are both skipped
+        // for drafts: they are allowed to be saved invalid and will fail at execution time instead.
+        // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
+        // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
+            // Best-effort: installed before validation so a save through any server-side path does
+            // not fail on a not-yet-installed plugin type; a failed install just leaves the
+            // pre-existing "Invalid type" validation error in place.
             pluginAutoInstallService.installMissingPlugins(flow.getSource());
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
             modelValidator.validate(flowParsingService.parseForValidation(parsed));

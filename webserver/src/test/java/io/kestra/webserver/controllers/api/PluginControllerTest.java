@@ -416,13 +416,14 @@ class PluginControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldHoistTaskSubtypeListsOnlyForTheEditorSchema() {
-        Map<String, Object> plain = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow"), Argument.mapOf(String.class, Object.class));
-        Map<String, Object> editor = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow?includeCatalog=true"), Argument.mapOf(String.class, Object.class));
+    void shouldHoistTaskSubtypeListsWithOrWithoutTheCatalog() {
+        Map<String, Object> local = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow"), Argument.mapOf(String.class, Object.class));
+        Map<String, Object> merged = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow?includeCatalog=true"), Argument.mapOf(String.class, Object.class));
 
-        // The no-code editor reads the plain schema and expects the subtypes inline.
-        assertThat(flowTasksItems(plain)).containsOnlyKeys("anyOf");
-        assertThat(flowTasksItems(editor)).isEqualTo(Map.of("$ref", "#/definitions/io.kestra.core.models.tasks.Task"));
+        // One schema shape for every consumer: the no-code editors inline the shared-* definitions back in the browser.
+        assertThat(flowTasksItems(local)).containsOnlyKeys("$ref");
+        assertThat((String) flowTasksItems(local).get("$ref")).startsWith("#/definitions/shared-subtypes");
+        assertThat(flowTasksItems(merged)).isEqualTo(flowTasksItems(local));
     }
 
     @SuppressWarnings("unchecked")

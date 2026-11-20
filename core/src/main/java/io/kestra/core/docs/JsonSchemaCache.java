@@ -26,7 +26,6 @@ public class JsonSchemaCache {
     private final PluginRegistry pluginRegistry;
 
     private final ConcurrentMap<CacheKey, Map<String, Object>> schemaCache = new ConcurrentHashMap<>();
-    private final ConcurrentMap<CacheKey, CompactSchema> compactSchemaCache = new ConcurrentHashMap<>();
     private final ConcurrentMap<SchemaType, Map<String, Object>> propertiesCache = new ConcurrentHashMap<>();
 
     private final Map<SchemaType, Class<?>> classesBySchemaType = new EnumMap<>(SchemaType.class);
@@ -51,6 +50,10 @@ public class JsonSchemaCache {
         registerClassForType(SchemaType.DASHBOARD, Dashboard.class);
     }
 
+    /**
+     * Returns the schema of a type, compacted by {@link JsonSchemaCompactor}: its consumers have to resolve {@code $ref}.
+     * The same instance is returned until the plugin registry changes.
+     */
     public Map<String, Object> getSchemaForType(final SchemaType type,
         final boolean arrayOf) {
         invalidateIfPluginRegistryChanged();
@@ -59,20 +62,8 @@ public class JsonSchemaCache {
 
             Class<?> cls = Optional.ofNullable(classesBySchemaType.get(type))
                 .orElseThrow(() -> new IllegalArgumentException("Cannot found schema for type '" + type + "'"));
-            return jsonSchemaGenerator.schemas(cls, arrayOf);
+            return JsonSchemaCompactor.compact(jsonSchemaGenerator.schemas(cls, arrayOf));
         });
-    }
-
-    /**
-     * Returns the schema of {@link #getSchemaForType} compacted by {@link JsonSchemaCompactor}, for consumers that resolve {@code $ref} themselves.
-     * The same instance is returned until the plugin registry changes.
-     */
-    public Map<String, Object> getCompactSchemaForType(final SchemaType type, final boolean arrayOf) {
-        Map<String, Object> schema = getSchemaForType(type, arrayOf);
-        return compactSchemaCache.compute(
-            new CacheKey(type, arrayOf),
-            (key, cached) -> cached != null && cached.source() == schema ? cached : new CompactSchema(schema, JsonSchemaCompactor.compact(schema))
-        ).schema();
     }
 
     public Map<String, Object> getPropertiesForType(final SchemaType type) {
@@ -109,9 +100,5 @@ public class JsonSchemaCache {
     }
 
     private record CacheKey(SchemaType type, boolean arrayOf) {
-    }
-
-    // Keyed on the identity of its source, so a schema regenerated after a registry change is never served a stale compaction.
-    private record CompactSchema(Map<String, Object> source, Map<String, Object> schema) {
     }
 }

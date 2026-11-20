@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.kestra.core.serializers.JacksonMapper;
 
 /**
- * Shrinks a generated Draft-7 schema by replacing repeated subtrees with a {@code $ref} to one shared definition.
- * The result validates identically, but only suits consumers that resolve {@code $ref}, such as the YAML language service.
+ * Shrinks a generated Draft-7 schema by replacing repeated subtrees with a {@code $ref} to one {@code shared-*} definition.
+ * The result validates identically for a consumer that resolves {@code $ref}; the UI undoes it with {@code inflateCompactSchema} for the no-code editors.
  */
 public final class JsonSchemaCompactor {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
@@ -31,18 +31,16 @@ public final class JsonSchemaCompactor {
     private static final String DEFINITIONS_REF = "#/definitions/";
     private static final String SHARED_KEY_PREFIX = "shared-property-";
     private static final String SHARED_SUBTYPES_KEY = "shared-subtypes";
-    // Read by the no-code editor from the plain schema only; a $ref-resolving JSON Schema consumer ignores them.
-    private static final Set<String> UI_HINTS = Set.of("$dynamic", "$group");
     // Below this serialized size, the $ref and its definition key cost about as much as the copy they replace.
     private static final int MIN_SHARED_LENGTH = 128;
 
     private JsonSchemaCompactor() {
     }
 
-    /** Returns a compacted copy of {@code schema}: editor-irrelevant content dropped, subtype lists hoisted, then repeated property schemas shared. */
+    /** Returns a compacted copy of {@code schema}: examples dropped, subtype lists hoisted, then repeated property schemas shared. */
     public static Map<String, Object> compact(Map<String, Object> schema) {
         ObjectNode root = MAPPER.convertValue(schema, ObjectNode.class);
-        stripEditorIrrelevantContent(root);
+        dropExamples(root);
         hoistSubtypeLists(root);
         sharePropertySchemas(root);
         return MAPPER.convertValue(root, MAP_TYPE);
@@ -97,12 +95,12 @@ public final class JsonSchemaCompactor {
             return;
         }
 
-        Map<JsonNode, String> refBySubtypes = new HashMap<>();
+        Map<JsonNode, String> holderBySubtypes = new HashMap<>();
         Set<JsonNode> hoisted = Collections.newSetFromMap(new IdentityHashMap<>());
         definitions.properties().forEach(entry ->
         {
             if (SubtypeSite.of(entry.getValue()) instanceof SubtypeSite site && site.annotation() == null
-                && refBySubtypes.putIfAbsent(site.subtypes(), DEFINITIONS_REF + entry.getKey()) == null) {
+                && holderBySubtypes.putIfAbsent(site.subtypes(), DEFINITIONS_REF + entry.getKey()) == null) {
                 hoisted.add(entry.getValue());
             }
         });
@@ -111,10 +109,16 @@ public final class JsonSchemaCompactor {
         countSubtypeLists(schema, hoisted, occurrences);
         Set<String> usedKeys = new HashSet<>();
         definitions.fieldNames().forEachRemaining(usedKeys::add);
+        Map<JsonNode, String> refBySubtypes = new HashMap<>();
         Map<String, ObjectNode> added = new LinkedHashMap<>();
         occurrences.forEach((subtypes, count) ->
         {
-            if (count >= 2 && !refBySubtypes.containsKey(subtypes) && subtypes.toString().length() >= MIN_SHARED_LENGTH) {
+            // A site never references a holding definition directly: other properties do, and a shared-* key is what marks a hoisted list.
+            if (holderBySubtypes.get(subtypes) instanceof String holder) {
+                String key = uniqueKey(SHARED_SUBTYPES_KEY, usedKeys);
+                added.put(key, MAPPER.createObjectNode().put("$ref", holder));
+                refBySubtypes.put(subtypes, DEFINITIONS_REF + key);
+            } else if (count >= 2 && subtypes.toString().length() >= MIN_SHARED_LENGTH) {
                 String key = uniqueKey(SHARED_SUBTYPES_KEY, usedKeys);
                 added.put(key, MAPPER.createObjectNode().set("anyOf", subtypes));
                 refBySubtypes.put(subtypes, DEFINITIONS_REF + key);
@@ -201,11 +205,10 @@ public final class JsonSchemaCompactor {
         return heading < 0 ? markdown : markdown.substring(0, heading).stripTrailing();
     }
 
-    private static void stripEditorIrrelevantContent(JsonNode schema) {
+    private static void dropExamples(JsonNode schema) {
         if (!(schema instanceof ObjectNode object)) {
             return;
         }
-        object.remove(UI_HINTS);
         if (object.get("markdownDescription") instanceof TextNode description) {
             String trimmed = withoutExamples(description.asText());
             if (trimmed.isEmpty()) {
@@ -215,9 +218,9 @@ public final class JsonSchemaCompactor {
             }
         }
         if (object.get("properties") instanceof ObjectNode properties) {
-            properties.forEach(JsonSchemaCompactor::stripEditorIrrelevantContent);
+            properties.forEach(JsonSchemaCompactor::dropExamples);
         }
-        forEachSubschema(object, JsonSchemaCompactor::stripEditorIrrelevantContent);
+        forEachSubschema(object, JsonSchemaCompactor::dropExamples);
     }
 
     private static void walkProperties(JsonNode schema, BiPredicate<String, ObjectNode> shouldDescend) {

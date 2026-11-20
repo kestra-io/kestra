@@ -124,29 +124,15 @@ public class PluginController {
         @Parameter(description = "Whether to merge the pre-baked plugin schema bundle for un-installed types") @Nullable
         @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
         @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
-        if (Boolean.TRUE.equals(includeCatalog)) {
-            // Same ETag revalidation as the plain schema (#12102): the browser re-downloads the big
-            // merged JSON only when the installed plugin set or the bundle actually changed, and
-            // gets a cheap 304 otherwise — a newly-installed plugin shows up on the next request.
-            final boolean mergeCatalog = isCatalogMergeAllowed();
-            final String catalogEtag = schemaETag(mergeCatalog ? "schema-catalog-" + pluginSchemaBundleService.fingerprint() : "schema-compact", type, arrayOf);
-            if (catalogEtag.equals(ifNoneMatch)) {
-                return notModified(catalogEtag);
-            }
-            // This variant is only read by the YAML editor, which resolves $ref itself; the plain one keeps subtype lists inline for the no-code editor.
-            Map<String, Object> compact = jsonSchemaCache.getCompactSchemaForType(type, arrayOf);
-            return HttpResponse.ok(mergeCatalog ? pluginSchemaBundleService.mergeWithBundle(type, compact) : compact)
-                .header(HttpHeaders.ETAG, catalogEtag)
-                .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
-        }
-
-        // Non-merged schema: revalidate on every use via ETag so the editor never validates against a
-        // stale schema after a plugin is added/removed (#12102).
-        final String etag = schemaETag("schema", type, arrayOf);
+        // Revalidated on every use via ETag, so the editor never validates against a stale schema after a plugin
+        // is added or removed (#12102); the merged tag also changes with the bundle.
+        final boolean mergeCatalog = Boolean.TRUE.equals(includeCatalog) && isCatalogMergeAllowed();
+        final String etag = schemaETag(mergeCatalog ? "schema-catalog-" + pluginSchemaBundleService.fingerprint() : "schema", type, arrayOf);
         if (etag.equals(ifNoneMatch)) {
             return notModified(etag);
         }
-        return HttpResponse.ok(jsonSchemaCache.getSchemaForType(type, arrayOf))
+        Map<String, Object> schema = jsonSchemaCache.getSchemaForType(type, arrayOf);
+        return HttpResponse.ok(mergeCatalog ? pluginSchemaBundleService.mergeWithBundle(type, schema) : schema)
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
@@ -252,7 +238,7 @@ public class PluginController {
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
 
-    /** Whether {@code includeCatalog} may merge the plugin schema bundle; an edition without auto-install turns it off and still gets the compact schema. */
+    /** Whether {@code includeCatalog} may merge the plugin schema bundle; an edition without auto-install turns it off. */
     protected boolean isCatalogMergeAllowed() {
         return true;
     }

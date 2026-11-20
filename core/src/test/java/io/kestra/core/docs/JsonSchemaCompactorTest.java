@@ -88,15 +88,15 @@ class JsonSchemaCompactorTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldDropUiHintsFromSchemasButNotFromPropertyNamesOrLiterals() throws Exception {
-        // Given: `$group` is a hint on `level`, a property name on the definition, and data inside a default
+    void shouldAliasTheDefinitionHoldingASubtypeListAndLeaveDirectReferencesToItAlone() throws Exception {
+        // Given: `a.Task` holds the list `tasks` repeats, and `cases` references that definition itself
         Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
             {
               "definitions": {
-                "a.Task": {"properties": {
-                  "level": {"type": "string", "$dynamic": true, "$group": "main", "default": {"$group": "kept"}},
-                  "$group": {"type": "string"},
-                  "nested": {"type": "array", "items": {"anyOf": [{"type": "string", "$dynamic": false}]}}
+                "a.Task": {"anyOf": [{"$ref": "#/definitions/a.First"}, {"$ref": "#/definitions/a.Second"}]},
+                "a.Flow": {"properties": {
+                  "tasks": {"type": "array", "items": {"anyOf": [{"$ref": "#/definitions/a.First"}, {"$ref": "#/definitions/a.Second"}]}},
+                  "cases": {"type": "array", "items": {"$ref": "#/definitions/a.Task"}}
                 }}
               }
             }
@@ -105,11 +105,22 @@ class JsonSchemaCompactorTest {
         // When
         Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
 
-        // Then
-        Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) compact.get("definitions")).get("a.Task").get("properties");
-        assertThat(properties.get("level")).isEqualTo(Map.of("type", "string", "default", Map.of("$group", "kept")));
-        assertThat(properties.get("$group")).isEqualTo(Map.of("type", "string"));
-        assertThat(properties.get("nested").get("items")).isEqualTo(Map.of("anyOf", List.of(Map.of("type", "string"))));
+        // Then: only a shared-* key marks a list the compactor moved, which is what the UI inlines back for the no-code editors
+        Map<String, Object> definitions = (Map<String, Object>) compact.get("definitions");
+        Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) ((Map<String, Object>) definitions.get("a.Flow")).get("properties");
+        assertThat(definitions.get("shared-subtypes")).isEqualTo(Map.of("$ref", "#/definitions/a.Task"));
+        assertThat((Map<String, Object>) definitions.get("a.Task")).containsOnlyKeys("anyOf");
+        assertThat(properties.get("tasks").get("items")).isEqualTo(Map.of("$ref", "#/definitions/shared-subtypes"));
+        assertThat(properties.get("cases").get("items")).isEqualTo(Map.of("$ref", "#/definitions/a.Task"));
+    }
+
+    @Test
+    void shouldKeepTheHintsTheNoCodeEditorsRead() throws Exception {
+        Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
+            {"definitions": {"a.Task": {"properties": {"level": {"type": "string", "$dynamic": true, "$group": "main"}}}}}
+            """, Map.class);
+
+        assertThat(JsonSchemaCompactor.compact(schema)).isEqualTo(schema);
     }
 
     @Test

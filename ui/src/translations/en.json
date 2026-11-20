@@ -3244,6 +3244,8 @@
     "chart mode": {
       "counts": "Counts",
       "timeline": "Timeline"
-    }
+    },
+    "search_in_flow_source": "Search \"{query}\" in flow source",
+    "flows_matched_query": "{count} flow with \"{query}\" in the id or namespace. | {count} flows with \"{query}\" in the id or namespace."
   }
 }

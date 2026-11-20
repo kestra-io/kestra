@@ -157,14 +157,14 @@ public class GraphUtils {
             .map(AbstractGraph::getUid)
             .collect(Collectors.toSet());
 
-        // For each selected task, also find the containing cluster's root.
-        // Error handlers are connected to the cluster root (not the task node),
-        // so we must also traverse from root to capture them.
+        // Error handlers hang off the cluster root, so walk from it too, except when the selected task is
+        // itself an error handler: its root also starts the main branch, which must then be kept.
         Set<String> startingUids = new HashSet<>();
         for (AbstractGraph task : selectedTaskRuns) {
             startingUids.add(task.getUid());
             edges.stream()
                 .filter(edge -> edge.getTarget().equals(task.getUid()))
+                .filter(edge -> edge.getRelation() == null || edge.getRelation().getRelationType() != RelationType.ERROR)
                 .map(FlowGraph.Edge::getSource)
                 .filter(allClusterRootUids::contains)
                 .forEach(startingUids::add);

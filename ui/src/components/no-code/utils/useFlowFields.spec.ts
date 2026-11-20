@@ -3,38 +3,27 @@ import {computed, defineComponent, ref, type ComputedRef} from "vue"
 import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 
-vi.mock("../../../stores/flow", async () => {
-    const pinia = await import("pinia")
-    const vue = await import("vue")
-    return {
-        useFlowStore: pinia.defineStore("flow", () => {
-            const isCreating = vue.ref(false)
-            return {isCreating}
-        }),
-    }
-})
-
-vi.mock("../../../stores/plugins", async () => {
-    const pinia = await import("pinia")
-    const vue = await import("vue")
-    const vitest = await import("vitest")
-    return {
-        usePluginsStore: pinia.defineStore("plugins", () => {
-            const lazyLoadSchemaType = vitest.vi.fn()
-            const flowRootSchema = vue.ref<{required?: string[]}>({required: ["id", "namespace"]})
-            const flowRootProperties = vue.ref<Record<string, Record<string, unknown>>>({})
-            return {
-                lazyLoadSchemaType,
-                flowRootSchema,
-                flowRootProperties,
-            }
-        }),
-    }
-})
+vi.mock("vue-router", () => ({
+    useRoute: () => ({query: {}}),
+}))
+vi.mock("override/stores/auth", () => ({
+    useAuthStore: () => ({user: undefined}),
+}))
 
 import {useFlowStore} from "../../../stores/flow"
-import {usePluginsStore} from "../../../stores/plugins"
+import {usePluginsStore, type JsonSchemaDef} from "../../../stores/plugins"
 import {SECTIONS_IDS, useFlowFields} from "./useFlowFields"
+
+// Seeds the real plugins store with a small fake flow root schema. Once `schemaType.flow` is set,
+// `lazyLoadSchemaType` (called on mount) returns it as is, so no request is sent.
+function setRootSchema(properties: Record<string, JsonSchemaDef>, required: string[] = ["id", "namespace"]) {
+    usePluginsStore().schemaType = {
+        flow: {
+            $ref: "#/definitions/Flow",
+            definitions: {Flow: {properties, required}},
+        },
+    }
+}
 
 function setup(flowSource: ComputedRef<string>) {
     let result!: ReturnType<typeof useFlowFields>
@@ -50,6 +39,7 @@ function setup(flowSource: ComputedRef<string>) {
 describe("useFlowFields", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
+        setRootSchema({})
     })
 
     it("parsedFlow parses the source, and returns an empty object for malformed YAML rather than throwing", () => {
@@ -77,15 +67,14 @@ describe("useFlowFields", () => {
     })
 
     it("fieldsFromSchemaRest excludes the main keys", () => {
-        const pluginsStore = usePluginsStore()
-        pluginsStore.flowRootProperties = {
+        setRootSchema({
             id: {type: "string"},
             namespace: {type: "string"},
             description: {type: "string"},
             inputs: {type: "array"},
             tasks: {type: "array"},
             labels: {type: "object"},
-        }
+        })
 
         const source = ref("id: test-flow\nnamespace: test.ns")
         const {result} = setup(computed(() => source.value))
@@ -98,15 +87,14 @@ describe("useFlowFields", () => {
     })
 
     it("the known section ids come back in SECTIONS_IDS order", () => {
-        const pluginsStore = usePluginsStore()
-        pluginsStore.flowRootProperties = {
+        setRootSchema({
             outputs: {type: "array"},
             errors: {type: "array"},
             tasks: {type: "array"},
             afterExecution: {type: "array"},
             finally: {type: "array"},
             triggers: {type: "array"},
-        }
+        })
 
         const source = ref("id: test-flow\nnamespace: test.ns")
         const {result} = setup(computed(() => source.value))
@@ -114,12 +102,30 @@ describe("useFlowFields", () => {
         expect(sectionKeys).toEqual(SECTIONS_IDS)
     })
 
+    it("the known section ids come before every other field", () => {
+        setRootSchema({
+            labels: {type: "object"},
+            outputs: {type: "array"},
+            disabled: {type: "boolean"},
+            tasks: {type: "array"},
+            concurrency: {type: "object"},
+            triggers: {type: "array"},
+        })
+
+        const source = ref("id: test-flow\nnamespace: test.ns")
+        const {result} = setup(computed(() => source.value))
+        const keys = result.fieldsFromSchemaRest.value.map((field) => field.fieldKey)
+
+        expect(keys.slice(0, 3)).toEqual(["tasks", "triggers", "outputs"])
+        expect(keys.slice(3)).toHaveLength(3)
+        expect(keys.slice(3)).toEqual(expect.arrayContaining(["labels", "disabled", "concurrency"]))
+    })
+
     it("a deprecated property is excluded, unless the parsed flow sets it", () => {
-        const pluginsStore = usePluginsStore()
-        pluginsStore.flowRootProperties = {
+        setRootSchema({
             tasks: {type: "array"},
             oldDeprecated: {type: "string", $deprecated: true},
-        }
+        })
 
         const unsetSource = ref("id: test-flow\nnamespace: test.ns")
         const {result: unsetResult} = setup(computed(() => unsetSource.value))
@@ -162,12 +168,13 @@ describe("useFlowFields", () => {
     })
 
     it("each field carries its schema from the root properties, falling back to an empty object", () => {
-        const pluginsStore = usePluginsStore()
+        const idSchema = {type: "string", pattern: "^[a-zA-Z0-9][a-zA-Z0-9_-]*"}
         const taskSchema = {type: "array", description: "Tasks in the flow"}
-        pluginsStore.flowRootProperties = {
+        setRootSchema({
+            id: idSchema,
             tasks: taskSchema,
             labels: {type: "object"},
-        }
+        })
 
         const source = ref("id: test-flow\nnamespace: test.ns")
         const {result} = setup(computed(() => source.value))
@@ -176,7 +183,8 @@ describe("useFlowFields", () => {
         const idField = topFields.find((field) => field.fieldKey === "id")
         const descField = topFields.find((field) => field.fieldKey === "description")
 
-        expect(idField?.schema).toEqual({})
+        expect(idField?.schema).toEqual(idSchema)
+        expect(idField?.required).toEqual(["id", "namespace"])
         expect(descField?.schema).toEqual({})
 
         const restFields = result.fieldsFromSchemaRest.value

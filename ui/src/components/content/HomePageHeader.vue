@@ -15,6 +15,10 @@
 
 <style scoped>
 .home-page-header {
+  --ks-markdown-paragraph-size: var(--ks-font-size-sm);
+  --ks-markdown-paragraph-line-height: var(--ks-font-size-xl);
+  --ks-markdown-paragraph-spacing: .5rem;
+
   h2 {
     padding-top: 0;
     font-size: var(--ks-font-size-xl);
@@ -22,12 +26,6 @@
     margin-top: 2rem;
     margin-bottom: .75rem;
     border: none;
-  }
-
-  & :deep(p) {
-    font-size: var(--ks-font-size-sm);
-    line-height: var(--ks-font-size-xl);
-    margin: .5rem 0;
   }
 }
 </style>

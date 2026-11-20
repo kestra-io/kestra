@@ -103,8 +103,8 @@ class FlowInputOutputTest {
     String secretKey;
 
     @MockBean(SecretService.class)
-    SecretService<?> testSecretService() {
-        return new SecretService<>() {
+    SecretService testSecretService() {
+        return new SecretService() {
             @Override
             public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException {
                 return TEST_SECRET_VALUE;

@@ -292,6 +292,16 @@
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to": "यहाँ जाएँ",
     "jump to...": "कूदें...",
+    "global_search": {
+      "open_flow": "flow खोलें",
+      "flow_executions": "flow निष्पादन",
+      "move": "ले जाएँ",
+      "menu": "मेनू",
+      "sources": "मेनू + flows + namespaces",
+      "sources_flows": "मेनू + Flows",
+      "sources_namespaces": "मेनू + namespace",
+      "search_failed": "flows या namespaces लोड नहीं हो सके"
+    },
     "contextBar": {
       "ai": "एआई",
       "news": "समाचार",
@@ -647,6 +657,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "शुरू नहीं हुआ"
+      },
+      "diff": {
+        "added": "जोड़ा गया",
+        "removed": "हटाया गया",
+        "changed": "बदला गया",
+        "renamed": "नाम बदला गया",
+        "moved": "स्थानांतरित"
+      }
+    },
+    "flow_change_review": {
+      "graph": "ग्राफ़",
+      "yaml": "YAML",
+      "unchanged": "{count} अपरिवर्तित",
+      "graph_error": "ग्राफ़ नहीं बनाया जा सका। बदलाव देखने के लिए YAML टैब खोलें।",
+      "status": {
+        "added": "जोड़ा गया",
+        "removed": "हटाया गया",
+        "changed": "बदला गया",
+        "renamed": "नाम बदला गया",
+        "moved": "स्थानांतरित"
       }
     },
     "show task logs": "Task Logs दिखाएं",
@@ -1550,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
-            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> दबाएं।",
+            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए {ctrl}+{shift}+{key} दबाएं।",
             "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।",
             "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
@@ -1760,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "यह एक flow है",
-            "body": "flow YAML में दो tasks के साथ लिखा गया है:<ol><li><code>fetch_orders</code> ऑर्डरों को डाउनलोड करने के लिए</li><li><code>summarize</code> Python में राजस्व की गणना करने के लिए</li></ol>Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
+            "body": "flow YAML में दो tasks के साथ लिखा गया है:",
+            "tasks": {
+              "fetch_orders": "{task} ऑर्डरों को डाउनलोड करने के लिए",
+              "summarize": "{task} Python में राजस्व की गणना करने के लिए"
+            },
+            "after_tasks": "Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
             "next": "सहेजें और निष्पादित करें"
           },
           "first_execution": {
@@ -2551,6 +2586,7 @@
           "generic": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
         },
         "emptyHelper": "मैं इस flow को संपादित कर सकता हूँ, टेस्ट जनरेट कर सकता हूँ, संबंधित फ़ाइलें स्केफ़ोल्ड कर सकता हूँ, या यह कैसे काम करता है, समझा सकता हूँ।",
+        "emptyHelperNoFlow": "मैं Flow बना या संपादित कर सकता हूँ, टेस्ट जनरेट कर सकता हूँ, संबंधित फ़ाइलें बना सकता हूँ, या बता सकता हूँ कि Kestra कैसे काम करता है।",
         "suggestions": {
           "errorHandling": "त्रुटि प्रबंधन जोड़ें",
           "unitTest": "इकाई परीक्षण उत्पन्न करें",
@@ -2616,7 +2652,8 @@
           "applied": "लागू किया गया",
           "previewBanner": "AI द्वारा सुझाए गए बदलाव की समीक्षा हो रही है। जब तक आप इसे लागू या खारिज नहीं करते, संपादक केवल पढ़ने के लिए है।",
           "applyTitle": "flow लागू करें",
-          "applyConfirm": "{namespace}.{id} को समीक्षा के लिए ड्राफ्ट रिविज़न के रूप में सहेजें? यह बनाया जाएगा, या यदि पहले से मौजूद है तो एक नया ड्राफ्ट रिविज़न जोड़ा जाएगा। प्रकाशित होने तक ड्राफ्ट को trigger या subflow द्वारा नहीं लिया जाता।",
+          "applyDraftTitle": "लागू करने पर एक ड्राफ्ट रिविज़न सहेजा जाता है।",
+          "applyDraftHint": "अभी कुछ भी लाइव नहीं होता। जब तक आप प्रकाशित नहीं करते, trigger और subflow ड्राफ्ट को अनदेखा करते हैं।",
           "applyConfirmDashboard": "डैशबोर्ड {id} लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
           "applyError": "flow लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
           "applyErrorDashboard": "डैशबोर्ड लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",

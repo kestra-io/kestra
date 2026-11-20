@@ -29,6 +29,20 @@
 </style>
 
 <style>
+    .kel-splitter-panel {
+        background-color: var(--ks-splitter-panel-bg, transparent);
+        display: var(--ks-splitter-panel-display, block);
+        grid-template-rows: var(--ks-splitter-panel-rows, none);
+    }
+
+    .kel-splitter__horizontal > .kel-splitter-bar {
+        width: var(--ks-splitter-bar-size, 0) !important;
+    }
+
+    .kel-splitter__vertical > .kel-splitter-bar {
+        height: var(--ks-splitter-bar-size, 0) !important;
+    }
+
     /* Element Plus inlines the dragger size; px, not rem, to stay matched to Monaco's verticalScrollbarSize (useKsEditor.ts). */
 
     .kel-splitter-bar__dragger-horizontal {

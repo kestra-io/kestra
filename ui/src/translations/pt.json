@@ -292,6 +292,16 @@
     "last execution status": "Último status de execução",
     "jump to": "Ir para",
     "jump to...": "Ir para...",
+    "global_search": {
+      "open_flow": "Abrir flow",
+      "flow_executions": "Execuções do flow",
+      "move": "Mover",
+      "menu": "Menu",
+      "sources": "Menu + flows + namespaces",
+      "sources_flows": "Menu + flows",
+      "sources_namespaces": "Menu + namespaces",
+      "search_failed": "Não foi possível carregar flows ou namespaces"
+    },
     "contextBar": {
       "ai": "IA",
       "news": "Notícias",
@@ -647,6 +657,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "não iniciado"
+      },
+      "diff": {
+        "added": "adicionado",
+        "removed": "removido",
+        "changed": "alterado",
+        "renamed": "renomeado",
+        "moved": "movido"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "unchanged": "{count} sem alterações",
+      "graph_error": "Não foi possível desenhar o grafo. Abra o separador YAML para ver a alteração.",
+      "status": {
+        "added": "Adicionado",
+        "removed": "Removido",
+        "changed": "Alterado",
+        "renamed": "Renomeado",
+        "moved": "Movido"
       }
     },
     "show task logs": "Mostrar task logs",
@@ -1550,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "Escolha o tema de interface preferido.",
-            "color_mode_shortcut": "Dica: prima <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> para alternar temas a partir de qualquer lugar.",
+            "color_mode_shortcut": "Dica: prima {ctrl}+{shift}+{key} para alternar temas a partir de qualquer lugar.",
             "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais.",
             "editor_font_family": "Fonte monoespaçada usada no editor YAML.",
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
@@ -1760,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "Isto é um flow",
-            "body": "O flow é escrito em YAML com duas tasks:<ol><li><code>fetch_orders</code> para baixar os pedidos</li><li><code>summarize</code> para calcular a receita em Python</li></ol>As tasks são executadas sequencialmente, na ordem em que são definidas.",
+            "body": "O flow é escrito em YAML com duas tasks:",
+            "tasks": {
+              "fetch_orders": "{task} para baixar os pedidos",
+              "summarize": "{task} para calcular a receita em Python"
+            },
+            "after_tasks": "As tasks são executadas sequencialmente, na ordem em que são definidas.",
             "next": "Salvar e executar"
           },
           "first_execution": {
@@ -2551,6 +2586,7 @@
           "generic": "Algo deu errado. Por favor, tente novamente."
         },
         "emptyHelper": "Posso editar este flow, gerar testes, criar arquivos relacionados ou explicar como funciona.",
+        "emptyHelperNoFlow": "Posso criar ou editar flows, gerar testes, criar arquivos relacionados ou explicar como o Kestra funciona.",
         "suggestions": {
           "errorHandling": "Adicionar tratamento de erros",
           "unitTest": "Gerar um teste unitário",
@@ -2616,7 +2652,8 @@
           "applied": "Aplicado",
           "previewBanner": "A rever uma alteração sugerida pela IA. O editor é apenas de leitura até aplicares ou descartares a alteração.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Guardar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Será criado, ou será adicionada uma nova revisão de rascunho se já existir. Os rascunhos não são acionados por triggers nem subflows até serem publicados.",
+          "applyDraftTitle": "Aplicar guarda uma revisão de rascunho.",
+          "applyDraftHint": "Ainda nada fica ativo. Os triggers e subflows ignoram os rascunhos até publicar.",
           "applyConfirmDashboard": "Aplicar o painel {id}? Será criado, ou sobrescrito se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyErrorDashboard": "Não foi possível aplicar o dashboard. Por favor, tente novamente.",

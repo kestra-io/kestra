@@ -47,6 +47,8 @@ export const ksStubs = {
     KsCodeStatus: {name: "KsCodeStatus", props: ["status", "label", "iconOnly"], template: "<span class=\"ks-code-status\" :data-status=\"status\"><slot>{{ label }}</slot></span>"},
     KsScrollbar: {name: "KsScrollbar", template: "<div><slot /></div>"},
     KsMarkdown: {name: "KsMarkdown", props: ["content"], template: "<div class=\"ks-markdown\">{{ content }}</div>"},
+    KsTabs: {name: "KsTabs", props: ["modelValue", "type"], emits: ["update:modelValue"], template: "<div><slot /></div>"},
+    KsTabPane: {name: "KsTabPane", props: ["name", "label"], template: "<span>{{ label }}</span>"},
     KsCollapse: {name: "KsCollapse", props: ["modelValue"], template: "<div><slot /></div>"},
     KsCollapseItem: {name: "KsCollapseItem", props: ["name", "title"], template: "<div><span class=\"collapse-title\"><slot name=\"title\">{{ title }}</slot></span><slot /></div>"},
     // DiffView renders a real Monaco KsEditor in diff mode — too heavy for jsdom, and the copilot
@@ -61,4 +63,5 @@ export const mountGlobal = {
         return [i18n, memoryRouter()]
     },
     stubs: ksStubs,
+    directives: {ksLoading: {}},
 }

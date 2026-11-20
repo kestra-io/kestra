@@ -1,5 +1,5 @@
 <template>
-    <KsCard>
+    <KsCard :bodyStyle="{height: '100%', display: 'flex', padding: '0'}">
         <div class="vueflow">
             <LowCodeEditor
                 ref="editor"
@@ -252,12 +252,6 @@
         height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
-
-        & :deep(.kel-card__body) {
-            height: 100%;
-            display: flex;
-            padding: 0;
-        }
     }
 
     .vueflow {

@@ -47,7 +47,7 @@
         background-color: var(--ks-bg-surface);
 
         & .kel-card__header {
-            padding: 0.5rem 1rem;
+            padding: var(--ks-card-header-padding, var(--ks-spacing-2) var(--ks-spacing-4));
             font-weight: bold;
         }
     }

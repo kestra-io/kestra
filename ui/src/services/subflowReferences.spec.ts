@@ -37,7 +37,10 @@ describe("resolveSubflowLinks", () => {
         expect(resolveSubflowLinks(source)).toEqual([])
     })
 
-    it("skips references whose flowId or namespace is a templated expression", () => {
+    it.each([
+        "{{ inputs.target }}",
+        "{% if inputs.prod %}deploy{% else %}deploy_dev{% endif %}",
+    ])("skips references whose flowId is the templated expression %s", (flowId) => {
         const source = [
             "id: parent",
             "namespace: company.team",
@@ -46,7 +49,7 @@ describe("resolveSubflowLinks", () => {
             "  - id: dynamic_subflow",
             "    type: io.kestra.plugin.core.flow.Subflow",
             "    namespace: company.team",
-            "    flowId: \"{{ inputs.target }}\"",
+            `    flowId: "${flowId}"`,
         ].join("\n")
 
         expect(resolveSubflowLinks(source)).toEqual([])

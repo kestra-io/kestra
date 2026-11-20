@@ -1,5 +1,6 @@
 package io.kestra.core.utils;
 
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -117,6 +118,23 @@ class VersionTest {
     @Test
     void shouldReturnTrueForEqualsGivenDifferentCase() {
         Assertions.assertEquals(Version.of("1.0.0-rc.1"), Version.of("1.0.0-RC.1"));
+    }
+
+    @Test
+    void shouldFindVersionInHashSetGivenDifferentQualifierCase() {
+        Version upper = Version.of("1.0.0-RC1");
+        Version lower = Version.of("1.0.0-rc1");
+
+        Assertions.assertEquals(upper.hashCode(), lower.hashCode());
+        Assertions.assertTrue(new HashSet<>(List.of(upper)).contains(lower));
+    }
+
+    @Test
+    void shouldCompareMissingMinorOrPatchAsZeroGivenPartialVersions() {
+        Assertions.assertTrue(Version.of("1").isBefore(Version.of("1.2")));
+        Assertions.assertTrue(Version.of("1.2").isBefore(Version.of("1.2.3")));
+        Assertions.assertEquals(0, Version.of("1.2").compareTo(Version.of("1.2.0")));
+        Assertions.assertEquals(Version.of("1.0.1"), Version.getLatest(Version.of("1.0"), Version.of("1.0.1")));
     }
 
     @Test

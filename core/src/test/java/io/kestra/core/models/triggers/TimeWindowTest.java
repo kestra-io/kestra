@@ -144,4 +144,122 @@ class TimeWindowTest {
         assertThat(boundaries.getLeft().toLocalTime()).isEqualTo(LocalTime.MIDNIGHT);
         assertThat(boundaries.getLeft().getZone()).isEqualTo(newYork);
     }
+
+    private static final ZoneId UTC = ZoneId.of("UTC");
+
+    private static ZonedDateTime utc(int day, int hour, int minute) {
+        return ZonedDateTime.of(2025, 6, day, hour, minute, 0, 0, UTC);
+    }
+
+    private static TimeWindow durationWindow(Duration every, Duration offset) {
+        return TimeWindow.builder()
+            .type(TimeWindow.Type.DURATION_WINDOW)
+            .window(every)
+            .windowAdvance(offset)
+            .timezone(UTC.getId())
+            .build();
+    }
+
+    @Test
+    void shouldStartDailyWindowYesterdayWhenNowIsBeforeOffset() {
+        // Given
+        TimeWindow timeWindow = durationWindow(Duration.ofDays(1), Duration.ofHours(9));
+
+        // When
+        Pair<ZonedDateTime, ZonedDateTime> boundaries = timeWindow.boundaries(utc(15, 7, 0));
+
+        // Then
+        assertThat(boundaries.getLeft()).isEqualTo(utc(14, 9, 0));
+        assertThat(boundaries.getRight()).isEqualTo(utc(15, 9, 0).minus(Duration.ofMillis(1)));
+    }
+
+    @Test
+    void shouldStartDailyWindowTodayWhenNowIsAfterOffset() {
+        // Given
+        TimeWindow timeWindow = durationWindow(Duration.ofDays(1), Duration.ofHours(9));
+
+        // When
+        Pair<ZonedDateTime, ZonedDateTime> boundaries = timeWindow.boundaries(utc(15, 10, 0));
+
+        // Then
+        assertThat(boundaries.getLeft()).isEqualTo(utc(15, 9, 0));
+        assertThat(boundaries.getRight()).isEqualTo(utc(16, 9, 0).minus(Duration.ofMillis(1)));
+    }
+
+    @Test
+    void shouldStartDailyWindowAtMidnightWhenNoOffset() {
+        // Given
+        TimeWindow timeWindow = durationWindow(Duration.ofDays(1), null);
+
+        // When
+        Pair<ZonedDateTime, ZonedDateTime> boundaries = timeWindow.boundaries(utc(15, 7, 0));
+
+        // Then
+        assertThat(boundaries.getLeft()).isEqualTo(utc(15, 0, 0));
+        assertThat(boundaries.getRight()).isEqualTo(utc(16, 0, 0).minus(Duration.ofMillis(1)));
+    }
+
+    @Test
+    void shouldKeepWindowStartingExactlyOnOffset() {
+        // Given
+        TimeWindow timeWindow = durationWindow(Duration.ofDays(1), Duration.ofHours(9));
+
+        // When
+        Pair<ZonedDateTime, ZonedDateTime> boundaries = timeWindow.boundaries(utc(15, 9, 0));
+
+        // Then
+        assertThat(boundaries.getLeft()).isEqualTo(utc(15, 9, 0));
+    }
+
+    @Test
+    void shouldAlignSixHoursWindowOnStartOfDay() {
+        // Given
+        TimeWindow timeWindow = durationWindow(Duration.ofHours(6), null);
+
+        // When
+        Pair<ZonedDateTime, ZonedDateTime> boundaries = timeWindow.boundaries(utc(15, 7, 0));
+
+        // Then
+        assertThat(boundaries.getLeft()).isEqualTo(utc(15, 6, 0));
+        assertThat(boundaries.getRight()).isEqualTo(utc(15, 12, 0).minus(Duration.ofMillis(1)));
+    }
+
+    @Test
+    void shouldAlignSixHoursWindowOnMidnightJustAfterMidnight() {
+        // Given
+        TimeWindow timeWindow = durationWindow(Duration.ofHours(6), null);
+
+        // When
+        Pair<ZonedDateTime, ZonedDateTime> boundaries = timeWindow.boundaries(utc(15, 0, 30));
+
+        // Then
+        assertThat(boundaries.getLeft()).isEqualTo(utc(15, 0, 0));
+        assertThat(boundaries.getRight()).isEqualTo(utc(15, 6, 0).minus(Duration.ofMillis(1)));
+    }
+
+    @Test
+    void shouldKeepSixHoursWindowStartingExactlyOnBoundary() {
+        // Given
+        TimeWindow timeWindow = durationWindow(Duration.ofHours(6), null);
+
+        // When
+        Pair<ZonedDateTime, ZonedDateTime> boundaries = timeWindow.boundaries(utc(15, 12, 0));
+
+        // Then
+        assertThat(boundaries.getLeft()).isEqualTo(utc(15, 12, 0));
+    }
+
+    @Test
+    void shouldStepBackSixHoursWindowWhenShiftedStartIsInTheFuture() {
+        // Given: windows start at 03:00, 09:00, 15:00 and 21:00
+        TimeWindow timeWindow = durationWindow(Duration.ofHours(6), Duration.ofHours(3));
+
+        // When
+        Pair<ZonedDateTime, ZonedDateTime> afterMidnight = timeWindow.boundaries(utc(15, 1, 0));
+        Pair<ZonedDateTime, ZonedDateTime> beforeNine = timeWindow.boundaries(utc(15, 8, 0));
+
+        // Then
+        assertThat(afterMidnight.getLeft()).isEqualTo(utc(14, 21, 0));
+        assertThat(beforeNine.getLeft()).isEqualTo(utc(15, 3, 0));
+    }
 }

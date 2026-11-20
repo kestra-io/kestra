@@ -558,7 +558,7 @@ public class FlowController {
             }
         }
 
-        deleted.forEach(throwConsumer(flowService::delete));
+        deleted.forEach(flowService::delete);
 
         // update or create flows
         List<? extends FlowInterface> updatedOrCreated = flows.stream()

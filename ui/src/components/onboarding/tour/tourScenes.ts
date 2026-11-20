@@ -12,14 +12,50 @@ import {
     tourFlowSource,
 } from "./tourFlows"
 import type {Execution} from "../../../stores/executions"
+import type {OnboardingTourEvent} from "../../../composables/useOnboardingAnalytics"
+import {TOUR_DOCKER_DOCS, tourDocsUrl} from "./tourDocs"
+
+export interface TourErrorRecovery {
+    labelKey: string;
+    event?: OnboardingTourEvent;
+    run(context: {store: TourStore}): Promise<void> | void;
+}
+
+export interface TourErrorHelp {
+    labelKey: string;
+    href: string;
+}
 
 export class TourSceneError extends Error {
     constructor(
         readonly key: string,
         readonly params: Record<string, unknown> = {},
+        readonly options: {
+            recovery?: TourErrorRecovery;
+            help?: TourErrorHelp;
+            event?: OnboardingTourEvent;
+        } = {},
     ) {
         super(key)
         this.name = "TourSceneError"
+    }
+}
+
+export class TourDockerUnavailableError extends TourSceneError {
+    constructor() {
+        super("onboarding.tour.errors.docker_unavailable", {}, {
+            event: "tour_docker_unavailable",
+            recovery: {
+                labelKey: "onboarding.tour.actions.run_without_docker",
+                event: "tour_docker_fallback",
+                run: ({store}) => store.setTourState({taskRunner: "process"}),
+            },
+            help: {
+                labelKey: "onboarding.tour.actions.enable_docker",
+                href: tourDocsUrl(TOUR_DOCKER_DOCS),
+            },
+        })
+        this.name = "TourDockerUnavailableError"
     }
 }
 
@@ -30,10 +66,17 @@ const expectState = (execution: Execution | undefined, expected: string, key: st
     }
 }
 
+type TourStore = ReturnType<typeof useProductTourStore>
+
 // Generic over the actions, so a tour variant can bring its own set.
-export interface TourSceneContext<A = TourActions> {
+export interface TourSceneBase<A = TourActions> {
     actions: A;
-    store: ReturnType<typeof useProductTourStore>;
+    store: TourStore;
+}
+
+export interface TourSceneContext<A = TourActions> extends TourSceneBase<A> {
+    signal: AbortSignal;
+    onStillRunning(): void;
 }
 
 export interface TourScene<A = TourActions> {
@@ -49,7 +92,8 @@ export interface TourScene<A = TourActions> {
     offersExit?: boolean;
     enter?(context: TourSceneContext<A>): Promise<void> | void;
     action?(context: TourSceneContext<A>): Promise<void> | void;
-    completedByUser?(context: TourSceneContext<A> & {route: TourRoute}): boolean;
+    completedByUser?(context: TourSceneBase<A> & {route: TourRoute}): boolean;
+    verify?(context: TourSceneContext<A> & {route: TourRoute}): Promise<void>;
     poll?(context: TourSceneContext<A>): Promise<boolean>;
 }
 
@@ -98,17 +142,56 @@ const isTourFlow = (route: TourRoute) =>
 const isFlowEditor = (route: TourRoute) =>
     String(route.name ?? "").startsWith(FLOW_PARENT_ROUTE) && isTourFlow(route)
 
-const adoptExecution = (
-    {store, route}: TourSceneContext & {route: TourRoute},
-    extra: Record<string, string> = {},
+const isNewTourExecution = ({store, route}: TourSceneBase & {route: TourRoute}) =>
+    isTourExecution(route)
+    && Boolean(route.params.id)
+    && route.params.id !== store.state.tour.rejectedExecutionId
+
+const routeExecutionId = (route: TourRoute) => route.params.id as string
+
+const settleExecution = async (
+    store: TourStore,
+    executionId: string | undefined,
+    check: () => Promise<void> | void,
 ) => {
-    const executionId = route.params.id as string | undefined
-    if (!executionId) {
-        return false
+    try {
+        await check()
+    } catch (e) {
+        if (e instanceof TourSceneError) {
+            store.setTourState({rejectedExecutionId: executionId ?? null})
+        }
+        throw e
     }
-    store.setTourState({lastExecutionId: executionId, ...extra})
-    return true
+    store.setTourState({rejectedExecutionId: null})
 }
+
+export const checkFirstExecution = async (
+    {actions, store, signal}: TourSceneContext,
+    execution: Execution | undefined,
+) => {
+    const state = execution?.state?.current
+    if (state === "SUCCESS") {
+        return
+    }
+    if (
+        state === "FAILED"
+        && store.state.tour.taskRunner === "docker"
+        && execution?.id
+        && await actions.dockerUnavailable(execution.id, signal)
+    ) {
+        throw new TourDockerUnavailableError()
+    }
+    throw new TourSceneError("onboarding.tour.errors.first_execution", {state: state ?? "unknown"})
+}
+
+const acceptFirstExecution = (context: TourSceneContext, execution: Execution | undefined) =>
+    settleExecution(context.store, execution?.id, () => checkFirstExecution(context, execution))
+
+const acceptExpectedFailure = (context: TourSceneContext, execution: Execution | undefined) =>
+    settleExecution(context.store, execution?.id, () => {
+        expectState(execution, "FAILED", "onboarding.tour.errors.expected_failure")
+        context.store.setTourState({failedExecutionId: execution?.id ?? null})
+    })
 
 // Ranked: the first selector is what the card is about, the rest keep something lit until it renders.
 const EDITOR = "#flowFileEditorTab"
@@ -136,18 +219,24 @@ export const TOUR_SCENES: TourScene[] = [
         step: 1,
         targetSelector: EDITOR,
         placement: "left",
-        enter: async ({actions}) => {
+        enter: async ({actions, store}) => {
             if (await actions.tourFlowExists()) {
-                await actions.openEditorWith(tourFlowSource.generated())
+                await actions.openEditorWith(tourFlowSource.generated(store.state.tour.taskRunner))
             }
         },
-        action: async ({actions}) => {
-            await actions.applySource(tourFlowSource.generated())
-            const execution = await actions.executeFlow()
-            expectState(execution, "SUCCESS", "onboarding.tour.errors.first_execution")
+        action: async (context) => {
+            const {actions, store} = context
+            await actions.applySource(tourFlowSource.generated(store.state.tour.taskRunner))
+            const execution = await actions.executeFlow(TOUR_FLOW_ID, context)
+            await acceptFirstExecution(context, execution)
         },
-        completedByUser: (context) =>
-            isTourExecution(context.route) && adoptExecution(context),
+        completedByUser: isNewTourExecution,
+        verify: async (context) => {
+            const executionId = routeExecutionId(context.route)
+            const execution = await context.actions.waitForExecution(executionId, context)
+            await acceptFirstExecution(context, execution)
+            context.store.setTourState({lastExecutionId: executionId})
+        },
     },
 
     {
@@ -171,9 +260,9 @@ export const TOUR_SCENES: TourScene[] = [
         step: 2,
         targetSelector: EDITOR,
         callout: true,
-        enter: async ({actions}) => {
+        enter: async ({actions, store}) => {
             actions.showDocsPanel()
-            await actions.openEditorWith(tourFlowSource.withBrokenNotify())
+            await actions.openEditorWith(tourFlowSource.withBrokenNotify(store.state.tour.taskRunner))
         },
     },
     {
@@ -183,14 +272,17 @@ export const TOUR_SCENES: TourScene[] = [
         callout: true,
         placement: "left",
         enter: ({actions}) => actions.showTaskDocs(TOUR_NOTIFY_TASK_TYPE),
-        action: async ({actions, store}) => {
-            const execution = await actions.executeFlow()
-            expectState(execution, "FAILED", "onboarding.tour.errors.expected_failure")
-            store.setTourState({failedExecutionId: store.state.tour.lastExecutionId})
+        action: async (context) => {
+            const execution = await context.actions.executeFlow(TOUR_FLOW_ID, context)
+            await acceptExpectedFailure(context, execution)
         },
-        completedByUser: (context) =>
-            isTourExecution(context.route)
-            && adoptExecution(context, {failedExecutionId: context.route.params.id as string}),
+        completedByUser: isNewTourExecution,
+        verify: async (context) => {
+            const executionId = routeExecutionId(context.route)
+            const execution = await context.actions.waitForExecution(executionId, context)
+            await acceptExpectedFailure(context, execution)
+            context.store.setTourState({lastExecutionId: executionId})
+        },
     },
     {
         id: "failed_execution",
@@ -214,12 +306,12 @@ export const TOUR_SCENES: TourScene[] = [
         step: 2,
         targetSelector: REVISION_DIFF,
         placement: "left",
-        enter: async ({actions}) => {
-            await actions.saveSource(tourFlowSource.withFixedNotify())
+        enter: async ({actions, store}) => {
+            await actions.saveSource(tourFlowSource.withFixedNotify(store.state.tour.taskRunner))
             await actions.openRevisionDiff(TOUR_FIXED_EXPRESSION)
         },
-        action: async ({actions}) => {
-            const execution = await actions.replayFromFailedTask()
+        action: async ({actions, ...context}) => {
+            const execution = await actions.replayFromFailedTask(context)
             expectState(execution, "SUCCESS", "onboarding.tour.errors.replay")
         },
     },
@@ -242,9 +334,11 @@ export const TOUR_SCENES: TourScene[] = [
         id: "webhook_trigger",
         step: 3,
         targetSelector: EDITOR,
-        enter: async ({actions}) => {
+        enter: async ({actions, store}) => {
             actions.showDocsPanel()
-            await actions.openEditorWith(tourFlowSource.withWebhook(actions.ensureWebhookKey()))
+            await actions.openEditorWith(
+                tourFlowSource.withWebhook(actions.ensureWebhookKey(), store.state.tour.taskRunner),
+            )
             await actions.showTaskDocs(TOUR_WEBHOOK_TRIGGER_TYPE)
         },
         action: ({actions}) => actions.openTriggersTab(),
@@ -271,13 +365,13 @@ export const TOUR_SCENES: TourScene[] = [
             store.setTourState({eventExecutionId: executionId, lastExecutionId: executionId})
             return true
         },
-        action: async ({actions}) => {
+        action: async ({actions, ...context}) => {
             const result = await actions.sendTestEvent(TOUR_TEST_EVENT_PAYLOAD)
             if (!result.ok) {
                 throw new TourSceneError("onboarding.tour.errors.test_event", {status: result.status})
             }
             if (result.executionId) {
-                await actions.waitForExecution(result.executionId)
+                await actions.waitForExecution(result.executionId, context)
             }
         },
         completedByUser: ({store}) => Boolean(store.state.tour.eventExecutionId),
@@ -324,11 +418,11 @@ export const TOUR_SCENES: TourScene[] = [
         targetSelector: EDITOR,
         callout: true,
         enter: ({actions}) => actions.createReportFlow(),
-        action: async ({actions}) => {
+        action: async ({actions, ...context}) => {
             const sentAt = new Date().toISOString()
             const result = await actions.sendTestEvent(TOUR_TEST_EVENT_PAYLOAD)
             if (result.executionId) {
-                await actions.waitForExecution(result.executionId)
+                await actions.waitForExecution(result.executionId, context)
             }
             await actions.waitForReportExecution(sentAt)
             await actions.openExecutionsList()

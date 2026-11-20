@@ -105,4 +105,10 @@ class DockerErrorHandlingTest {
 
         assertThat(Docker.isMissingBindSource(exception, null)).isFalse();
     }
+
+    @Test
+    void shouldStartSocketErrorMessageWithTheSentenceTheProductTourMatches() {
+        assertThat(Docker.dockerSocketNotAccessibleMessage("unix:///var/run/docker.sock"))
+            .startsWith("Docker execution failed because Docker socket is not accessible.");
+    }
 }

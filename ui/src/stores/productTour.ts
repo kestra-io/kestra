@@ -1,7 +1,7 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import {TOUR_FLOW_ID, TOUR_NAMESPACE, TOUR_REPORT_FLOW_ID} from "../components/onboarding/tour/tourFlows"
+import {TOUR_FLOW_ID, TOUR_NAMESPACE, TOUR_REPORT_FLOW_ID, type TourTaskRunner} from "../components/onboarding/tour/tourFlows"
 
 export type ProductTourStatus = "not_started" | "in_progress" | "completed" | "skipped";
 export type ProductTourMode = "guided" | null;
@@ -22,6 +22,8 @@ export interface TourProgress {
     failedExecutionId: string | null;
     restartedExecutionId: string | null;
     eventExecutionId: string | null;
+    rejectedExecutionId: string | null;
+    taskRunner: TourTaskRunner;
 }
 
 interface ProductTourState {
@@ -55,6 +57,8 @@ const defaultTourState = (): TourProgress => ({
     failedExecutionId: null,
     restartedExecutionId: null,
     eventExecutionId: null,
+    rejectedExecutionId: null,
+    taskRunner: "docker",
 })
 
 const defaultState = (): ProductTourState => ({

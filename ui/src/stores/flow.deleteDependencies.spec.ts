@@ -73,14 +73,15 @@ describe("flow deletion dependency links", () => {
 
     it("escapes dependency text and encodes route parameters", async () => {
         vi.mocked(flowDependencies).mockResolvedValue({nodes: [
-            {uid: "parent", namespace: "other.team", id: "parent<&\"#?"},
+            {uid: "parent", namespace: "other.<i>ns</i>", id: "parent<b>x</b>&amp;\"#?"},
         ]})
 
         const wrapper = await renderConfirmation()
         const link = wrapper.get("a")
-        expect(link.text()).toBe("other.team.parent<&\"#?")
-        expect(link.attributes("href")).toBe("/ui/flows/edit/other.team/parent%3C&%22%23%3F/overview")
+        expect(link.text()).toBe("other.<i>ns</i>.parent<b>x</b>&amp;\"#?")
+        expect(link.findAll("i, b")).toHaveLength(0)
         expect(link.findAll("code")).toHaveLength(1)
+        expect(link.attributes("href")).toBe("/ui/flows/edit/other.%3Ci%3Ens%3C%2Fi%3E/parent%3Cb%3Ex%3C%2Fb%3E&amp;%22%23%3F/overview")
     })
 
     it("keeps the ordinary confirmation when there are no other flows", async () => {

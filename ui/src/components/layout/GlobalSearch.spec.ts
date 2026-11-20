@@ -51,6 +51,8 @@ const mountSearch = () => {
             executions: "Executions",
             flows: "Flows",
             namespaces: "Namespaces",
+            search_in_flow_source: "Search \"{query}\" in flow source",
+            "source search": "Source search",
             global_search: {
                 search_failed: "Couldn't load flows or namespaces",
                 open_flow: "Open flow",
@@ -140,7 +142,7 @@ describe("GlobalSearch", () => {
             await flushPromises()
 
             const leaves = [...document.querySelectorAll(".result-leaf")].map(node => node.textContent)
-            expect(leaves).toEqual(["daily", "daily", "analytics", "billing"])
+            expect(leaves).toEqual(["daily", "daily", "analytics", "billing", "Search \"daily\" in flow source"])
             const namespaces = [...document.querySelectorAll(".result-namespace")].map(node => node.textContent)
             expect(namespaces).toEqual(["analytics", "billing"])
         } finally {
@@ -319,6 +321,22 @@ describe("GlobalSearch", () => {
 
             expect(document.querySelector("a.result-link .result-action")).toBeNull()
             expect(document.querySelector(".result-row > .result-action, .result-row .result-action")).not.toBeNull()
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
+    test("appends source search entry for any non-empty query", async () => {
+        searchFlowsMock.mockResolvedValue({results: [], total: 0})
+        searchNamespacesMock.mockResolvedValue({results: [], total: 0})
+        const {wrapper} = mountSearch()
+        try {
+            await openAndQuery("nonexistent-term")
+            await vi.advanceTimersByTimeAsync(200)
+            await flushPromises()
+
+            const leaves = [...document.querySelectorAll(".result-leaf")].map(node => node.textContent)
+            expect(leaves).toContain("Search \"nonexistent-term\" in flow source")
         } finally {
             wrapper.unmount()
         }

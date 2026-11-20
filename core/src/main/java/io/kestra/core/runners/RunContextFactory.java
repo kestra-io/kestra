@@ -143,7 +143,8 @@ public class RunContextFactory {
     }
 
     public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
-        return this.of(flow, task, execution, taskRun, decryptVariables, this.variableRenderer);
+        VariableRenderer variableRenderer = decryptVariables ? this.variableRenderer : secureVariableRendererFactory.createOrGet();
+        return this.of(flow, task, execution, taskRun, decryptVariables, variableRenderer);
     }
 
     public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables, VariableRenderer variableRenderer) {

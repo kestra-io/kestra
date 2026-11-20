@@ -609,6 +609,40 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldNotDeleteOrUpdateAnyFlowWhenOneFlowOfABulkUpdateIsInvalid() {
+        String namespace = "io.kestra.bulk.atomic";
+        String flowTemplate = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.%s
+                message: %s
+            """;
+        client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/main/flows/" + namespace,
+                flowTemplate.formatted("flow_a", namespace, "Log", "v1") + "---\n" + flowTemplate.formatted("flow_b", namespace, "Log", "v1")
+            ).contentType(MediaType.APPLICATION_YAML)
+        );
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/flows/" + namespace,
+                    flowTemplate.formatted("flow_a", namespace, "Log", "v2") + "---\n" + flowTemplate.formatted("flow_c", namespace, "Lgo", "typo")
+                ).contentType(MediaType.APPLICATION_YAML)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_b"), Flow.class).getId())
+            .isEqualTo("flow_b");
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_a"), Flow.class).getRevision())
+            .isEqualTo(1);
+    }
+
+    @Test
     void createFlowFromJsonFlow() {
         Flow flow = generateFlow(TEST_NAMESPACE, "a");
 

@@ -70,7 +70,7 @@
     }>()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .ks-sidebar-section {
     padding: 0 var(--ks-spacing-4);
 }

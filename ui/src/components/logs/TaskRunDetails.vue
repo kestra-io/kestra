@@ -342,7 +342,9 @@
         return "isGroup" in item
     }
 
-    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem">
+    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem"> & {
+        $el?: HTMLElement
+    }
 
     function isLogsScroller(el: unknown): el is LogsScroller {
         return typeof el === "object" && el !== null && "scrollToItem" in el
@@ -1089,7 +1091,7 @@
         shownAttemptsUid.value.forEach((uid) => {
             const items = displayItemsByAttemptUid.value[uid] ?? []
             if (items.length > 0) {
-                logsScrollerRefs.value[uid]?.scrollToItem(items.length - 1)
+                scrollScrollerToEnd(uid, items.length - 1)
             }
         })
 
@@ -1121,6 +1123,37 @@
         return `${taskRunId}-${attemptNumber}`
     }
 
+    function scrollScrollerToEnd(uid: string, targetIndex: number, attempt = 0) {
+        if (disposed) return
+        const scroller = logsScrollerRefs.value[uid]
+        if (!scroller) {
+            if (attempt < 5) {
+                requestAnimationFrame(() => scrollScrollerToEnd(uid, targetIndex, attempt + 1))
+            }
+            return
+        }
+
+        scroller.scrollToItem(targetIndex, {align: "end"})
+
+        const el = scroller.$el
+        if (el && el.scrollHeight > el.clientHeight && el.scrollTop === 0) {
+            el.scrollTop = el.scrollHeight
+        }
+
+        if (attempt < 5) {
+            requestAnimationFrame(() => {
+                const currentEl = scroller.$el
+                const isAtBottom =
+                    currentEl &&
+                    currentEl.scrollHeight > currentEl.clientHeight &&
+                    currentEl.scrollTop >= currentEl.scrollHeight - currentEl.clientHeight - 5
+                if (!isAtBottom) {
+                    scrollScrollerToEnd(uid, targetIndex, attempt + 1)
+                }
+            })
+        }
+    }
+
     function scrollToBottomFailedTask() {
         const currentState = followedExecution.value?.state.current
         if (
@@ -1141,7 +1174,7 @@
                     if (shownAttemptsUid.value.includes(uid)) {
                         const items = displayItemsByAttemptUid.value[uid] ?? []
                         if (items.length > 0) {
-                            logsScrollerRefs.value[uid]?.scrollToItem(items.length - 1)
+                            scrollScrollerToEnd(uid, items.length - 1)
                         }
                     }
                 }

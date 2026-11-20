@@ -23,6 +23,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.webserver.services.playground.PlaygroundService;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -37,11 +38,13 @@ public class ExecutionReplayService {
 
     private final FlowRepositoryInterface flowRepository;
     private final FlowService flowService;
+    private final PlaygroundService playgroundService;
 
     @Inject
-    public ExecutionReplayService(final FlowRepositoryInterface flowRepository, final FlowService flowService) {
+    public ExecutionReplayService(final FlowRepositoryInterface flowRepository, final FlowService flowService, final PlaygroundService playgroundService) {
         this.flowRepository = flowRepository;
         this.flowService = flowService;
+        this.playgroundService = playgroundService;
     }
 
     /**
@@ -49,7 +52,7 @@ public class ExecutionReplayService {
      *
      * @return the flow revision the replay will run
      * @throws ConflictException if the execution is not replayable, or the revision is incompatible with a replay from the task run
-     * @throws NoSuchElementException if the revision does not exist
+     * @throws NoSuchElementException if the revision does not exist, or the execution is another user's Playground run
      * @throws IllegalArgumentException if the revision is a draft and the execution is not a playground one
      */
     public Flow validateReplay(final Execution execution, @Nullable final String taskRunId, @Nullable final Integer revision) throws InternalException {
@@ -83,6 +86,11 @@ public class ExecutionReplayService {
     }
 
     private void controlReplayable(Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws InternalException {
+        // a replay inherits its source's owner label, so a colleague's Playground run would land in their session
+        if (ExecutionKind.PLAYGROUND == execution.getKind() && !playgroundService.isCallersRun(execution)) {
+            throw new NoSuchElementException("Unable to find the Playground run '%s'.".formatted(execution.getId()));
+        }
+
         State state = execution.getState();
         // the Playground replays its own execution that is suspended on a breakpoint to reuse the tasks already run
         boolean isSuspendedPlayground = ExecutionKind.PLAYGROUND == execution.getKind() && (state.isBreakpoint() || state.isPaused());

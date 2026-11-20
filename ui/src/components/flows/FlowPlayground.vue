@@ -32,6 +32,17 @@
                 />
             </div>
         </div>
+        <KsAlert
+            v-if="playgroundStore.sessionLoadFailed"
+            type="error"
+            :title="$t('playground.session_error')"
+            :closable="false"
+            data-test="playground-session-error"
+        >
+            <KsButton size="small" @click="playgroundStore.loadSession()">
+                {{ $t("retry") }}
+            </KsButton>
+        </KsAlert>
         <div class="content">
             <div class="current-run">
                 <div class="current-run-header">
@@ -111,6 +122,7 @@
     import ExecutionVariableExplorer from "../executions/outputs/ExecutionVariableExplorer.vue"
     import ExecutionMetric from "../executions/ExecutionMetric.vue"
     import PlaygroundLog from "./playground/PlaygroundLog.vue"
+    import PlaygroundContext from "./playground/PlaygroundContext.vue"
     import {usePlaygroundStore} from "../../stores/playground"
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.png"
     import {useExecutionsStore} from "../../stores/executions"
@@ -145,6 +157,11 @@
             component: markRaw(ExecutionMetric),
             props: {fitHeight: false},
         },
+        {
+            name: "context",
+            title: t("playground.context.title"),
+            component: markRaw(PlaygroundContext),
+        },
     ]))
 
     const playgroundStore = usePlaygroundStore()
@@ -154,11 +171,12 @@
         if (newValue && newValue !== oldValue) {
             executionsStore.followExecution(playgroundStore.latestExecution, t)
         }
-    })
+    }, {immediate: true})
 
     const activeTab = ref(tabs.value[0])
 
-    onMounted(() => {
+    onMounted(async () => {
+        await playgroundStore.loadSession()
         playgroundStore.runFromQuery()
     })
 

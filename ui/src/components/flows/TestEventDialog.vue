@@ -97,7 +97,7 @@
     const headers = ref("")
     const sending = ref(false)
     const result = ref<TestEventResult | null>(null)
-    const isDirty = computed(() => result.value === null && payload.value !== SAMPLE_TEST_EVENT_PAYLOAD)
+    const isDirty = computed(() => result.value === null && (payload.value !== SAMPLE_TEST_EVENT_PAYLOAD || headers.value !== ""))
 
     const open = computed({
         get: () => props.modelValue,

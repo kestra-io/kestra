@@ -684,7 +684,7 @@ public class TriggerEventHandler {
 
     /**
      * Applies runtime governance, so trigger states are computed from the configuration the evaluation loop
-     * uses. A blocked or unparseable flow falls back to its stored definition: the evaluation loop owns that
+     * uses. A blocked or unparsable flow falls back to its stored definition: the evaluation loop owns that
      * reaction.
      */
     private FlowWithSource governed(FlowWithSource flow) {

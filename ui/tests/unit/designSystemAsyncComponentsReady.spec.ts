@@ -3,7 +3,7 @@ import {createApp, h, nextTick, type App} from "vue"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem, {KsMarkdown} from "@kestra-io/design-system"
 
-describe("designSystemAsyncComponentsReady", () => {
+describe("designSystemAsyncComponentsReady", {shuffle: false}, () => {
     const root = document.createElement("div")
     let app: App
 

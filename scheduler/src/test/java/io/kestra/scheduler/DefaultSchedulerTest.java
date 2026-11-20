@@ -357,7 +357,8 @@ class DefaultSchedulerTest {
             runContextFactory,
             conditionService,
             Mockito.mock(BroadcastQueueInterface.class),
-            Mockito.mock(AsyncOperationService.class)
+            Mockito.mock(AsyncOperationService.class),
+            Fixtures.passThroughFlowParsingService()
         );
     }
 

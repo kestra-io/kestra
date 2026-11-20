@@ -1,12 +1,16 @@
 package io.kestra.core.services;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -15,6 +19,7 @@ import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
+import io.kestra.plugin.core.dashboard.data.Executions;
 
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -46,6 +51,47 @@ public class ChartDataService {
     ) throws IOException {
         return this.<F>queryBuilder(dataChart.getData().repositoryClass())
             .fetchData(tenantId, dataChart.getData(), startDate, endDate, pageable);
+    }
+
+    /**
+     * Counts the executions a chart on {@link Executions} data covers, grouped by state, with a single query.
+     * The chart's own {@code where} and the dashboard filters apply, so the counts match the rows the chart shows
+     * for each state.
+     *
+     * @return the number of executions per state name, without an entry for a state that has none
+     * @throws IllegalArgumentException if the chart is not on {@link Executions} data
+     */
+    public Map<String, Long> generateStateCounts(
+        String tenantId,
+        DataChart<?, ?> dataChart,
+        List<QueryFilter> filters,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        Duration queryTimeout
+    ) throws IOException {
+        if (!(dataChart.getData() instanceof Executions<?> executions)) {
+            throw new IllegalArgumentException("Only a chart on Executions data can be counted by state.");
+        }
+
+        Executions<ColumnDescriptor<Executions.Fields>> countData = Executions.<ColumnDescriptor<Executions.Fields>> builder()
+            .type(executions.getType())
+            .columns(Map.of(
+                "state", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.STATE).build(),
+                "total", ColumnDescriptor.<Executions.Fields> builder().agg(AggregationType.COUNT).build()
+            ))
+            .where(executions.getWhere())
+            .build();
+        countData.updateWhereWithGlobalFilters(filters, startDate, endDate);
+        countData.setQueryTimeout(queryTimeout);
+
+        return this.<Executions.Fields>queryBuilder(countData.repositoryClass())
+            .fetchData(tenantId, countData, startDate, endDate, null)
+            .stream()
+            .collect(Collectors.toMap(
+                row -> String.valueOf(row.get("state")),
+                row -> ((Number) row.get("total")).longValue(),
+                Long::sum
+            ));
     }
 
     public <F extends Enum<F>> List<Map<String, Object>> generateKPI(

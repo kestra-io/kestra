@@ -1,6 +1,10 @@
 package io.kestra.scheduler;
 
+import java.time.Duration;
 import java.util.Collections;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.utils.Await;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,10 +50,20 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
     protected FlowListeners flowListenersService;
 
     private static Flow createFlow(Boolean failed) {
+        return createFlow(failed, false);
+    }
+
+    private static Flow createFlow(Boolean failed, Boolean throwOnEvaluate) {
+        return createFlow(failed, throwOnEvaluate, null);
+    }
+
+    private static Flow createFlow(Boolean failed, Boolean throwOnEvaluate, List<State.Type> stopAfter) {
         RealtimeUnitTest schedule = RealtimeUnitTest.builder()
             .id("stream")
             .type(RealtimeUnitTest.class.getName())
             .failed(failed)
+            .throwOnEvaluate(throwOnEvaluate)
+            .stopAfter(stopAfter)
             .executionsToCreate(10)
             .build();
 
@@ -115,6 +129,51 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
     }
 
     @Test
+    void failedOnEvaluate() throws Exception {
+        Flow flow = createFlow(false, true);
+        CountDownLatch queueCount = new CountDownLatch(2);
+
+        this.run(
+            flow,
+            queueCount,
+            executionList ->
+            {
+                List<Execution> executionCount = executionList.stream()
+                    .filter(e -> e.getNamespace().equals(flow.getNamespace()) && e.getFlowId().equals(flow.getId()))
+                    .toList();
+
+                assertThat(executionCount.size(), greaterThan(1));
+            }
+        );
+    }
+
+    @Test
+    void failedOnEvaluateStopAfter() throws Exception {
+        Flow flow = createFlow(false, true, List.of(State.Type.FAILED));
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        this.run(
+            flow,
+            queueCount,
+            executionList ->
+            {
+                List<Execution> executionCount = executionList.stream()
+                    .filter(e -> e.getNamespace().equals(flow.getNamespace()) && e.getFlowId().equals(flow.getId()))
+                    .toList();
+
+                assertThat(executionCount.size(), is(1));
+                Trigger trigger = Trigger.of(flow, flow.getTriggers().get(0));
+                try {
+                    Await.until(() -> this.triggerState.get().findLast(trigger).map(TriggerContext::getDisabled).orElse(false), Duration.ofMillis(100), Duration.ofSeconds(5));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                assertThat(this.triggerState.get().findLast(trigger).map(TriggerContext::getDisabled).orElse(false), is(true));
+            }
+        );
+    }
+
+    @Test
     void failed() throws Exception {
         Flow flow = createFlow(true);
         CountDownLatch queueCount = new CountDownLatch(20);
@@ -150,7 +209,14 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
         @Builder.Default
         private Boolean failed = false;
 
+        @Builder.Default
+        private Boolean throwOnEvaluate = false;
+
         public Publisher<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
+            if (Boolean.TRUE.equals(this.throwOnEvaluate)) {
+                throw new RuntimeException("Evaluate failed before returning Publisher");
+            }
+
             startedEvaluate.compute(this.failed, (val, integer) -> integer == null ? 1 : integer + 1);
 
             return Flux.create(fluxSink ->

@@ -21,7 +21,7 @@ function scalarString(node: unknown): string | undefined {
 }
 
 function isTemplated(value: string): boolean {
-    return value.includes("{{")
+    return /\{\{|\{%/.test(value)
 }
 
 function valueRange(node: unknown): [number, number] | undefined {

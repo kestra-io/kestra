@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -39,6 +40,7 @@ import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
@@ -75,6 +77,17 @@ class FlowServiceTest {
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
     @Inject
     private FlowMetaStoreInterface flowMetaStore;
+
+    @Test
+    void shouldUseSingleThreadExecutorForTopologyUpdates() {
+        ExecutorsUtils executorsUtils = mock(ExecutorsUtils.class);
+        ExecutorService executorService = mock(ExecutorService.class);
+        when(executorsUtils.singleThreadExecutor("flow-service")).thenReturn(executorService);
+
+        new FlowService(executorsUtils);
+
+        verify(executorsUtils).singleThreadExecutor("flow-service");
+    }
 
     private static FlowWithSource create(String flowId, String taskId, Integer revision) {
         return create(null, TEST_NAMESPACE, flowId, taskId, revision);

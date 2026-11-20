@@ -23,6 +23,7 @@
             fitHeight
             :data="filteredTools"
             :total="filteredTools.length"
+            :pageSizeOptions="[filteredTools.length || 1]"
             :loading="loading"
             :rowKey="rowKey"
             :noDataText="$t('mcp.tools.no_tools')"

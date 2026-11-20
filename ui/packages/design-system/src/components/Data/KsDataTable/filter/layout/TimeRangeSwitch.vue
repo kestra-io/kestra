@@ -66,7 +66,6 @@
     display: flex;
     padding: 4px;
     position: relative;
-    transition: all 0.3s ease;
     user-select: none;
     justify-content: space-around;
     box-shadow: 0 0 16px var(--ks-shadow-elevated);
@@ -78,7 +77,6 @@
     font-weight: 500;
     padding: 6px 16px;
     position: relative;
-    transition: color 0.3s ease;
     white-space: nowrap;
     z-index: 2;
 }
@@ -91,8 +89,12 @@
     left: 4px;
     position: absolute;
     top: 4px;
-    transition: transform 0.3s ease;
+    transition: transform var(--ks-duration-base) var(--ks-ease-standard);
     width: calc(50% - 4px);
     z-index: 1;
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
 }
 </style>

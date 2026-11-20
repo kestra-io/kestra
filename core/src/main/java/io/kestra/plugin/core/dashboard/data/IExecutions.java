@@ -23,10 +23,16 @@ import io.kestra.core.models.dashboards.filters.Or;
 
 public interface IExecutions extends IData<IExecutions.Fields> {
     Set<Fields> DURATION_FIELDS = Set.of(Fields.DURATION);
+    Set<QueryFilter.Field> GLOBAL_FILTER_FIELDS = Set.of(QueryFilter.Field.NAMESPACE, QueryFilter.Field.LABELS, QueryFilter.Field.FLOW_ID, QueryFilter.Field.KIND, QueryFilter.Field.STATE, QueryFilter.Field.SCOPE);
 
     @Override
     default Set<Fields> durationFields() {
         return DURATION_FIELDS;
+    }
+
+    @Override
+    default Set<QueryFilter.Field> globalFilterFields() {
+        return GLOBAL_FILTER_FIELDS;
     }
 
     default List<AbstractFilter<Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<Fields>> where) {

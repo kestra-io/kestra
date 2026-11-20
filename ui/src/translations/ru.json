@@ -1580,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
-            "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места.",
+            "color_mode_shortcut": "Совет: нажмите {ctrl}+{shift}+{key}, чтобы переключать темы из любого места.",
             "logs_font_size": "Размер шрифта, используемый в Log Viewer и терминалах.",
             "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",
@@ -1790,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "Это flow",
-            "body": "flow написан на YAML с двумя tasks:<ol><li><code>fetch_orders</code> для загрузки заказов</li><li><code>summarize</code> для расчета выручки на Python</li></ol>Tasks выполняются последовательно, в том порядке, в котором они определены.",
+            "body": "flow написан на YAML с двумя tasks:",
+            "tasks": {
+              "fetch_orders": "{task} для загрузки заказов",
+              "summarize": "{task} для расчета выручки на Python"
+            },
+            "after_tasks": "Tasks выполняются последовательно, в том порядке, в котором они определены.",
             "next": "Сохранить и выполнить"
           },
           "first_execution": {

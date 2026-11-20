@@ -371,7 +371,7 @@ div.line {
         margin-top: 2px;
     }
 
-    & :deep(.clipboard) {
+    & .log-copy {
         position: static;
         flex: none;
         opacity: 0;
@@ -379,7 +379,7 @@ div.line {
         transition: opacity 0.15s ease-in-out;
     }
 
-    &:hover :deep(.clipboard) {
+    &:hover .log-copy {
         opacity: 1;
         pointer-events: auto;
     }

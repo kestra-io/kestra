@@ -1580,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "Wähle dein bevorzugtes Theme für die Oberfläche.",
-            "color_mode_shortcut": "Tipp: Drücke <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um von überall zwischen den Themes zu wechseln.",
+            "color_mode_shortcut": "Tipp: Drücke {ctrl}+{shift}+{key}, um von überall zwischen den Themes zu wechseln.",
             "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird.",
             "editor_font_family": "Monospace-Schriftart, die im YAML-Editor verwendet wird.",
             "editor_font_size": "Schriftgröße, die in den YAML- und No-Code-Editoren verwendet wird.",
@@ -1790,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "Das ist ein Flow",
-            "body": "Der Flow ist in YAML mit zwei Tasks geschrieben:<ol><li><code>fetch_orders</code> zum Herunterladen der Bestellungen</li><li><code>summarize</code> zur Berechnung des Umsatzes in Python</li></ol>Tasks werden nacheinander ausgeführt, in der Reihenfolge, in der sie definiert sind.",
+            "body": "Der Flow ist in YAML mit zwei Tasks geschrieben:",
+            "tasks": {
+              "fetch_orders": "{task} zum Herunterladen der Bestellungen",
+              "summarize": "{task} zur Berechnung des Umsatzes in Python"
+            },
+            "after_tasks": "Tasks werden nacheinander ausgeführt, in der Reihenfolge, in der sie definiert sind.",
             "next": "Speichern und ausführen"
           },
           "first_execution": {

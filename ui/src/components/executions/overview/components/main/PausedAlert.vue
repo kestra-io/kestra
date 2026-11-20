@@ -1,8 +1,8 @@
 <template>
     <div class="paused-wrapper">
-        <KsAlert id="paused" type="warning" :closable="false">
+        <KsAlert id="paused" type="warning" :closable="false" fill>
             <template #title>
-                <span>{{ $t("execution_paused") }}</span>
+                <span class="title">{{ $t("execution_paused") }}</span>
             </template>
 
             <div class="description">
@@ -35,25 +35,13 @@
     #paused {
         overflow: hidden;
 
-        & :deep(.kel-alert__content) {
-            min-width: 0;
-            width: 100%;
-            gap: 0;
-
-            .kel-alert__title > div,
-            .kel-alert__title > span {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: var(--kel-alert-title-font-size);
-                line-height: 1.5;
-                color: var(--ks-text-warning);
-            }
-
-            .kel-alert__description {
-                min-width: 0;
-                overflow: hidden;
-            }
+        & .title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: var(--kel-alert-title-font-size);
+            line-height: 1.5;
+            color: var(--ks-text-warning);
         }
     }
 </style>

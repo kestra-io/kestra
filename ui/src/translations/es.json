@@ -1580,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "Elige tu tema de interfaz preferido.",
-            "color_mode_shortcut": "Consejo: pulsa <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>L</kbd> para cambiar de tema desde cualquier lugar.",
+            "color_mode_shortcut": "Consejo: pulsa {ctrl}+{shift}+{key} para cambiar de tema desde cualquier lugar.",
             "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales.",
             "editor_font_family": "Fuente monoespaciada utilizada en el editor YAML.",
             "editor_font_size": "Tamaño de fuente utilizado en los editores YAML y sin código.",
@@ -1790,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "Esto es un flow",
-            "body": "El flow está escrito en YAML con dos tasks:<ol><li><code>fetch_orders</code> para descargar los pedidos</li><li><code>summarize</code> para calcular los ingresos en Python</li></ol>Los tasks se ejecutan secuencialmente, en el orden en que se definen.",
+            "body": "El flow está escrito en YAML con dos tasks:",
+            "tasks": {
+              "fetch_orders": "{task} para descargar los pedidos",
+              "summarize": "{task} para calcular los ingresos en Python"
+            },
+            "after_tasks": "Los tasks se ejecutan secuencialmente, en el orden en que se definen.",
             "next": "Guardar y ejecutar"
           },
           "first_execution": {

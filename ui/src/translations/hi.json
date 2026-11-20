@@ -1580,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
-            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> दबाएं।",
+            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए {ctrl}+{shift}+{key} दबाएं।",
             "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।",
             "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
@@ -1790,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "यह एक flow है",
-            "body": "flow YAML में दो tasks के साथ लिखा गया है:<ol><li><code>fetch_orders</code> ऑर्डरों को डाउनलोड करने के लिए</li><li><code>summarize</code> Python में राजस्व की गणना करने के लिए</li></ol>Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
+            "body": "flow YAML में दो tasks के साथ लिखा गया है:",
+            "tasks": {
+              "fetch_orders": "{task} ऑर्डरों को डाउनलोड करने के लिए",
+              "summarize": "{task} Python में राजस्व की गणना करने के लिए"
+            },
+            "after_tasks": "Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
             "next": "सहेजें और निष्पादित करें"
           },
           "first_execution": {

@@ -1580,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "Wybierz preferowany motyw interfejsu.",
-            "color_mode_shortcut": "Wskazówka: naciśnij <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, aby zmieniać motywy z dowolnego miejsca.",
+            "color_mode_shortcut": "Wskazówka: naciśnij {ctrl}+{shift}+{key}, aby zmieniać motywy z dowolnego miejsca.",
             "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach.",
             "editor_font_family": "Czcionka monospace używana w edytorze YAML.",
             "editor_font_size": "Rozmiar czcionki używany w edytorach YAML i no-code.",
@@ -1790,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "To jest Flow",
-            "body": "Flow jest napisany w YAML i ma dwa Taski:<ol><li><code>fetch_orders</code> pobiera zamówienia</li><li><code>summarize</code> oblicza przychód w Pythonie</li></ol>Taski są wykonywane sekwencyjnie, w kolejności, w jakiej zostały zdefiniowane.",
+            "body": "Flow jest napisany w YAML i ma dwa Taski:",
+            "tasks": {
+              "fetch_orders": "{task} pobiera zamówienia",
+              "summarize": "{task} oblicza przychód w Pythonie"
+            },
+            "after_tasks": "Taski są wykonywane sekwencyjnie, w kolejności, w jakiej zostały zdefiniowane.",
             "next": "Zapisz i wykonaj"
           },
           "first_execution": {

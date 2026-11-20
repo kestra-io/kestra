@@ -95,7 +95,8 @@
             align-items: center;
             gap: 4px;
             line-height: 1;
-            font-weight: var(--ks-font-weight-semibold);
+            font-size: var(--ks-tag-font-size, inherit);
+            font-weight: var(--ks-tag-font-weight, var(--ks-font-weight-semibold));
         }
 
         /* The close ✕: a muted glyph at rest that firms to full strength on hover. Element Plus's
@@ -103,7 +104,7 @@
            as a solid white dot (kestra-ee#9590); no fill here, so the ✕ stays readable in every theme. */
 
         & .kel-tag__close {
-            color: var(--ks-icon-muted);
+            color: var(--ks-tag-close-color, var(--ks-icon-muted));
 
             &:hover {
                 color: var(--ks-icon-default) !important;
@@ -130,6 +131,10 @@
             & .material-design-icon__svg {
                 width: 1em;
                 height: 1em;
+            }
+
+            & .material-design-icon {
+                font-size: var(--ks-tag-font-size, inherit);
             }
 
             & .material-design-icon__svg {

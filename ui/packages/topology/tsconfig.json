@@ -18,5 +18,9 @@
         "allowImportingTsExtensions": true
     },
     "include": ["src", "tsdown.config.ts"],
-    "exclude": ["src/**/*.test.ts"]
+    "exclude": ["src/**/*.test.ts"],
+    "vueCompilerOptions": {
+        "checkUnknownProps": true,
+        "dataAttributes": ["data-*"]
+    }
 }

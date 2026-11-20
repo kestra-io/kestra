@@ -1580,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
-            "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
+            "color_mode_shortcut": "ヒント: {ctrl}+{shift}+{key} を押すとどこからでもテーマを切り替えられます。",
             "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。",
             "editor_font_family": "YAMLエディタで使用される等幅フォント。",
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
@@ -1790,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "これは flow です",
-            "body": "このflowはYAMLで記述されており、2つのtasksがあります。<ol><li><code>fetch_orders</code>: 注文をダウンロードする</li><li><code>summarize</code>: Pythonで収益を計算する</li></ol>Tasksは、定義された順序で順次実行されます。",
+            "body": "このflowはYAMLで記述されており、2つのtasksがあります。",
+            "tasks": {
+              "fetch_orders": "{task}: 注文をダウンロードする",
+              "summarize": "{task}: Pythonで収益を計算する"
+            },
+            "after_tasks": "Tasksは、定義された順序で順次実行されます。",
             "next": "保存して実行"
           },
           "first_execution": {

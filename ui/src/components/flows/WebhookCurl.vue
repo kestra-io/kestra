@@ -105,15 +105,10 @@
     .payload {
         margin-bottom: 1rem;
 
-        & :deep(.kel-form-item__label) {
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-secondary);
-        }
-
-        & :deep(.editor-container) {
-            height: 50px;
-            max-height: 120px;
-        }
+        --ks-form-item-label-font-size: var(--ks-font-size-sm);
+        --ks-form-item-label-color: var(--ks-text-secondary);
+        --ks-editor-height: 3.125rem;
+        --ks-editor-max-height: 7.5rem;
     }
 
     .code {

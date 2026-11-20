@@ -46,6 +46,10 @@ html.dark {
     }
 }
 
+.vue-flow .vue-flow__panel.bottom {
+    bottom: var(--ks-topology-panel-bottom, 0);
+}
+
 .vue-flow__controls {
     display: flex;
     flex-direction: column;

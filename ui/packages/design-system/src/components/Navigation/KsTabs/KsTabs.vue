@@ -7,6 +7,7 @@
             'kel-tabs--box': props.type === 'box',
             'kel-tabs--segmented': props.type === 'segmented',
             'kel-tabs--pane-scroll': paneScroll,
+            'kel-tabs--hide-disabled-arrows': hideDisabledArrows,
         }"
     >
         <template v-if="$slots.default" #default>
@@ -28,6 +29,8 @@
     export interface KsTabsProps {
         type?: "" | "card" | "border-card" | "box" | "segmented"
         paneScroll?: boolean
+        /** Hides a scroll arrow once it is disabled, at either end of the tab list. */
+        hideDisabledArrows?: boolean
     }
 
     const props = defineProps<KsTabsProps & /* @vue-ignore */ Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue">>()
@@ -40,7 +43,7 @@
         (props.type === "box" || props.type === "segmented" ? "" : props.type),
     )
 
-    const filteredProps = useFilteredProps(props, ["type", "paneScroll"])
+    const filteredProps = useFilteredProps(props, ["type", "paneScroll", "hideDisabledArrows"])
 </script>
 
 <style lang="scss">
@@ -113,7 +116,7 @@
             }
 
             & .kel-tabs__header {
-                margin-bottom: 0;
+                margin: var(--ks-tabs-header-margin, 0);
             }
 
             & .kel-tabs__nav {
@@ -152,6 +155,19 @@
         &.kel-tabs--box {
             position: sticky;
             z-index: var(--ks-z-dropdown);
+
+            /* Covers a disabled tab so the link in its label cannot be followed. */
+            & .kel-tabs__item.is-disabled::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                z-index: var(--ks-z-dropdown);
+            }
+
+            &.kel-tabs--hide-disabled-arrows .kel-tabs__nav-prev.is-disabled,
+            &.kel-tabs--hide-disabled-arrows .kel-tabs__nav-next.is-disabled {
+                display: none;
+            }
 
             & .kel-tabs__nav-scroll {
                 display: flex;

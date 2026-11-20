@@ -1,0 +1,147 @@
+name: Backend - Tests
+
+on:
+  workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        description: 'Deprecated, unused. Kept so callers still passing it do not fail.'
+        required: false
+      SONAR_TOKEN:
+        description: 'Deprecated, unused. Kept so callers still passing it do not fail.'
+        required: false
+      GITHUB_AUTH_TOKEN:
+        description: "The GitHub Token."
+        required: true
+      GOOGLE_SERVICE_ACCOUNT:
+        description: 'Google Service Account'
+        required: true
+      DEVELOCITY_ACCESS_KEY:
+        required: false
+      OTLP_ENDPOINT:
+        description: 'OTLP endpoint for OpenTelemetry export'
+        required: false
+      OTLP_HEADERS:
+        description: 'OTLP headers for OpenTelemetry export'
+        required: false
+    inputs:
+      java-version:
+        description: "Java version"
+        type: string
+        default: '21'
+        required: false
+
+permissions:
+  contents: write
+  checks: write
+  actions: read
+  pull-requests: write
+
+env:
+  OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+
+jobs:
+  test:
+    name: Backend - Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+    steps:
+      # Run first, before checkout, so setup time is captured by the trace/host metrics.
+      - name: Setup - OpenTelemetry
+        uses: kestra-io/actions/actions/otel-instrument@main
+        if: ${{ env.OTLP_ENDPOINT != '' }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          otlp-endpoint: ${{ secrets.OTLP_ENDPOINT }}
+          otlp-headers: "${{ secrets.OTLP_HEADERS }}"
+          host-metrics-enabled: 'true'
+          gradle-tracing-enabled: 'true'
+          service-name: "Github Actions - ${{ github.repository }} - ${{ github.workflow }}"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout - Current ref
+        with:
+          fetch-depth: 0
+
+      # Services - start async. Was previously two steps (a detached `up -d` here, then a second
+      # `up -d --wait` below once other setup finished) to fake overlap; `background:` + `wait:`
+      # expresses that directly and surfaces a compose failure at the wait, with its own log,
+      # instead of silently deferring it.
+      - name: Setup - Start docker compose
+        id: compose
+        background: true
+        shell: bash
+        run: |
+          # docker compose exports its own traces whenever an OTEL endpoint is set; keep them out
+          unset OTEL_EXPORTER_OTLP_ENDPOINT OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+          docker compose -f docker-compose-ci.yml up -d --wait --wait-timeout 120
+
+      # Setup build
+      - uses: kestra-io/actions/composite/setup-build@main
+        name: Setup - Build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+          java-version: ${{ inputs.java-version }}
+
+      # Gradle: javadoc and check run as two separate steps, mirroring kestra-ee-backend-tests.yml.
+      # javadoc runs first, before the docker-compose wait below, so it overlaps with container
+      # startup instead of blocking behind it. testClasses is compiled here too, both so `check`
+      # right after reuses already-compiled classes (compileJava/compileTestJava UP-TO-DATE, no
+      # double compilation) and so the test-scheduling plugin has classes to schedule from:
+      # https://github.com/kestra-io/gradle-plugin/#test-scheduling
+      - name: Gradle - javadoc
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+        shell: bash
+        run: |
+          ./gradlew javadoc testClasses --parallel --console=plain
+
+      # Services - wait to be ready
+      - name: Setup - Wait docker compose
+        wait: [compose]
+
+      # Gradle check
+      - name: Gradle - check
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+        shell: bash
+        run: |
+          ./gradlew cleanTest check --no-build-cache --parallel --max-workers=3 --console=plain
+
+      - name: comment PR with test report
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+        run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors --ci $(pwd)
+
+      - name: generate test report in logs and fail if any failed tests
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+        run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors --fail-on-error $(pwd)
+
+      # Report Java
+      # this will add a failed check if there is tests errors
+      - name: Report - Java
+        uses: kestra-io/actions/composite/report-java@main
+        if: ${{ !cancelled() }}
+        with:
+          secrets: ${{ toJSON(secrets) }}
+
+      # Coverage
+      - name: Coverage - Report
+        if: ${{ !cancelled() && env.OTLP_ENDPOINT != '' }}
+        continue-on-error: true
+        uses: kestra-io/actions/composite/report-coverage@main
+        with:
+          github-token: ${{ secrets.GITHUB_AUTH_TOKEN }}
+          coverage-files: '**/build/reports/jacoco/**/*.xml'
+          component: backend
+          elastic-endpoint: ${{ secrets.OTLP_ENDPOINT }}
+          elastic-headers: "${{ secrets.OTLP_HEADERS }}"
+          metadata: |
+            service.name=kestra
+            component=backend

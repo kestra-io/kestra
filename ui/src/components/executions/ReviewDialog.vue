@@ -20,6 +20,7 @@
                 v-if="inputsList.length > 0"
                 :initialInputs="inputsList"
                 v-model="inputs"
+                :submitAttempted="submitAttempted"
                 @validation="validateInputs"
                 @ready="baseline = snapshot()"
             />
@@ -72,6 +73,7 @@
     const inputs = ref<Record<string, unknown>>({})
     const comment = ref("")
     const submitting = ref(false)
+    const submitAttempted = ref(false)
 
     const inputsList = computed(() => props.task.inputs ?? [])
 
@@ -122,6 +124,7 @@
     }
 
     function submit(decision: ReviewDecision) {
+        submitAttempted.value = true
         const trimmedComment = comment.value.trim()
         if (isCommentRequired(commentRequired.value, decision) && trimmedComment === "") {
             toast.error(t("approval.comment required"))

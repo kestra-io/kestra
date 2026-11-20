@@ -1,14 +1,26 @@
 package io.kestra.core.models.validations;
 
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.models.tasks.Task;
-import io.kestra.plugin.core.log.Log;
+import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.services.FlowParsingService;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@MicronautTest
 class ViolationPathsTest {
+
+    @Inject
+    Validator validator;
+
     @Test
     void shouldBuildAJsonPointerFromAnIndexedPath() {
         // Given a violation on an element of a collection
@@ -28,13 +40,23 @@ class ViolationPathsTest {
     }
 
     @Test
-    void shouldNameTheTaskByIdInTheFriendlyPath() {
-        // Given a violation whose leaf bean is a task
-        Task task = Log.builder().id("my-task").type(Log.class.getName()).build();
-        var violation = ManualConstraintViolation.of("must not be null", task, Task.class, "tasks[0].type", null);
+    void shouldNameTheTaskByIdInTheFriendlyPath() throws FlowProcessingException {
+        // Building the FlowWithSource for root bean
+        String source = """
+            id: nested_flow_test
+            namespace: company.team
+            tasks:
+              - id: nested
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: my-task
+                    type: io.kestra.plugin.core.log.Log
+            """;
+        var o = new FlowParsingService();
+        FlowWithSource flowWithSource = o.parse("main", source, true);
 
-        // Then the friendly path names the task rather than its index, keeping the collection name
-        assertThat(ViolationPaths.toFriendlyPath(violation)).isEqualTo("tasks[my-task].type");
+        Set<ConstraintViolation<FlowWithSource>> violations = validator.validate(flowWithSource);
+        assertThat(ViolationPaths.toFriendlyPath((ConstraintViolation<?>) violations.toArray()[0])).isEqualTo("tasks[nested].tasks[my-task].message");
     }
 
     @Test

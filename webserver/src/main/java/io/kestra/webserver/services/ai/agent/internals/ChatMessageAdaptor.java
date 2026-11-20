@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
@@ -29,6 +31,8 @@ import io.micronaut.core.annotation.Nullable;
  */
 public final class ChatMessageAdaptor {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
+    private static final String NOT_AN_OBJECT = "the arguments must be a JSON object";
 
     /**
      * AiMessage attribute key under which LangChain4j stores a turn's reasoning signature — Gemini and
@@ -163,10 +167,44 @@ public final class ChatMessageAdaptor {
             return Map.of();
         }
         try {
-            return MAPPER.readValue(json, Map.class);
+            Map<String, Object> parsed = MAPPER.readValue(json, Map.class);
+            return parsed == null ? Map.of() : parsed;
         } catch (Exception e) {
-            return Map.of("_raw", json);
+            return Map.of();
         }
+    }
+
+    public static boolean hasMalformedArguments(@Nullable final String json) {
+        return malformedArgumentsReason(json) != null;
+    }
+
+    /** Why the arguments are not a valid JSON object, or {@code null} when they are. */
+    @Nullable
+    public static String malformedArgumentsReason(@Nullable final String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return MAPPER.readValue(json, Map.class) == null ? NOT_AN_OBJECT : null;
+        } catch (JsonParseException e) {
+            JsonLocation location = e.getLocation();
+            return location == null
+                ? e.getOriginalMessage()
+                : "%s (line %d, column %d)".formatted(e.getOriginalMessage(), location.getLineNr(), location.getColumnNr());
+        } catch (Exception e) {
+            return NOT_AN_OBJECT;
+        }
+    }
+
+    /** Providers reject a request that replays a tool call with malformed arguments, so those are replaced by {@code {}}. */
+    public static AiMessage withValidToolArguments(final AiMessage ai) {
+        if (!ai.hasToolExecutionRequests() || ai.toolExecutionRequests().stream().noneMatch(req -> hasMalformedArguments(req.arguments()))) {
+            return ai;
+        }
+        List<ToolExecutionRequest> requests = ai.toolExecutionRequests().stream()
+            .map(req -> hasMalformedArguments(req.arguments()) ? req.toBuilder().arguments("{}").build() : req)
+            .toList();
+        return ai.toBuilder().toolExecutionRequests(requests).build();
     }
 
     public static ToolExecutionRequest toRequest(final AgentToolCall toolCall) {

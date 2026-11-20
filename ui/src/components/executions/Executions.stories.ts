@@ -8,7 +8,7 @@ import fixtureS from "../../../tests/storybook/components/executions/Executions-
 import {setMockClient, type AxiosLikeClient, type PagedResultsApiLightExecution} from "@kestra-io/kestra-sdk"
 import {mockResponse, mockStoryApiRoutes} from "../../../.storybook/apiMock"
 import {useFlowStore} from "../../stores/flow"
-import {expect, within} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 
 function getDecorators(data: PagedResultsApiLightExecution, initialRoute = "/executions/123/645") {
     return [
@@ -102,6 +102,37 @@ export const SmallData: Story = {
     },
 }
 
+export const BulkActionEligibility: Story = {
+    decorators: getDecorators(fixtureS as unknown as PagedResultsApiLightExecution),
+    args: {
+        hidden: [],
+        statuses: [],
+        isReadOnly: false,
+        embed: true,
+        topbar: false,
+        filter: false,
+    },
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        const runningRow = canvas.getByText("Running", {exact: true}).closest<HTMLTableRowElement>("tr")
+        const failedRow = canvas.getByText("Failed", {exact: true}).closest<HTMLTableRowElement>("tr")
+
+        if (!runningRow || !failedRow) {
+            throw new Error("Expected execution rows were not rendered")
+        }
+
+        const runningCheckbox = within(runningRow).getByRole("checkbox")
+        await userEvent.click(runningCheckbox)
+        await userEvent.click(within(failedRow).getByRole("checkbox"))
+
+        const restart = await canvas.findByRole("button", {name: "Restart"})
+        await expect(restart).toBeDisabled()
+
+        await userEvent.click(runningCheckbox)
+        await waitFor(() => expect(restart).toBeEnabled())
+    },
+}
+
 export const BiggerData: Story = {
     decorators: getDecorators(fixture as unknown as PagedResultsApiLightExecution),
     args: {
@@ -128,3 +159,4 @@ export const FlowExecutionsTab: Story = {
         expect((await canvas.findAllByText("company.team")).length).toBeGreaterThan(0)
     },
 }
+

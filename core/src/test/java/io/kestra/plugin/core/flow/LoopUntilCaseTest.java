@@ -109,6 +109,23 @@ public class LoopUntilCaseTest {
         assertThat(execution.getTaskRunList().getLast().attemptNumber()).isEqualTo(1);
     }
 
+    public void waitforDisabledChild(String tenantId) throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
+        Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "waitfor-disabled-child");
+
+        // the disabled task is skipped: the condition is checked after each iteration and maxIterations applies
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat((Integer) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("iterationCount")).isEqualTo(3);
+        assertThat(execution.findTaskRunsByTaskId("disabled")).isEmpty();
+    }
+
+    public void waitforAllDisabled(String tenantId) throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "waitfor-all-disabled");
+
+        // with nothing to run, the loop ends like a Sequential instead of iterating on empty iterations
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+    }
+
     public void waitForChildTaskWarning(String tenantId) throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
         Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "waitfor-child-task-warning");
 

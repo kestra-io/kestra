@@ -571,6 +571,59 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldReturnErrorResultAndReplayValidArgumentsWhenToolCallArgumentsAreNotValidJson() {
+        // Given — Ask mode; the model emits a tool call whose arguments are not valid JSON (unquoted value)
+        AgentThread thread = newThread(AgentMode.ASK);
+        String malformed = "{\"executionId\": \"abc\", \"TASK_ID\": my_task}";
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(malformed).build())));
+        scriptedModel.enqueue(AiMessage.from("I could not read the logs."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("why did it fail").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then — the call is not executed: it is a recoverable error result and the loop continues to an answer
+        assertThat(sink.error).isNull();
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE
+        );
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error()).contains("Unrecognized token 'my_task'").contains("line 1, column").contains(malformed);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(AiMessage.class::isInstance)
+            .flatExtracting(m -> ((AiMessage) m).toolExecutionRequests())
+            .extracting(ToolExecutionRequest::arguments)
+            .containsExactly("{}");
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(ToolExecutionResultMessage.class::isInstance)
+            .extracting(m -> ((ToolExecutionResultMessage) m).text())
+            .singleElement()
+            .asString()
+            .contains("Unrecognized token 'my_task'")
+            .contains(malformed);
+        assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
+    }
+
+    @Test
+    void shouldNotAskForConfirmationWhenConfirmToolArgumentsAreNotValidJson() {
+        // Given — Edit mode; the model proposes a write whose arguments are not valid JSON
+        AgentThread thread = newThread(AgentMode.EDIT);
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("update-artefact").arguments("{\"namespace\": company}").build())));
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("do it").mode(AgentMode.EDIT).tenant(TENANT).build(), sink);
+
+        // Then — nothing is held for confirmation; the model gets an error result instead
+        assertThat(sink.error).isNull();
+        assertThat(sink.names()).doesNotContain(AgentEvents.PROPOSED_ACTION);
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
     void shouldExecuteEveryToolWhenModelRequestsThemInParallel() {
         // Given — Ask mode; the model returns two read tool calls in one response (parallel tool calls)
         AgentThread thread = newThread(AgentMode.ASK);

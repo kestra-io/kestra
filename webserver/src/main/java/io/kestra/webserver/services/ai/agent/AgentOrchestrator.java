@@ -46,6 +46,7 @@ import io.micronaut.core.annotation.Nullable;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.output.FinishReason;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.PartialResponse;
@@ -71,6 +72,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AgentOrchestrator {
     private static final long MODEL_CANCEL_POLL_MS = 50;
+
+    private static final int MAX_MALFORMED_ARGUMENTS_CHARS = 2000;
 
     private final AiServiceManager aiServiceManager;
     private final ToolCatalog catalog;
@@ -344,7 +347,7 @@ public class AgentOrchestrator {
                 return;
             }
 
-            ctx.messages().add(ai);
+            ctx.messages().add(ChatMessageAdaptor.withValidToolArguments(ai));
             ToolExecutionRequest heldAction = null;
             ToolEntry heldEntry = null;
             Map<String, Object> heldArgs = null;
@@ -365,6 +368,11 @@ public class AgentOrchestrator {
                 ToolEntry entry = catalog.byName(req.name()).orElseThrow();
                 threadManager.appendToolCall(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ai.text(),
                     ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family(), ChatMessageAdaptor.thinkingOf(ai)));
+
+                if (ChatMessageAdaptor.hasMalformedArguments(req.arguments())) {
+                    failTool(ctx, req, entry.kind(), entry.family(), malformedArgumentsMessage(req, response.finishReason()), sink);
+                    continue;
+                }
 
                 if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
                     if (heldAction == null) {
@@ -443,6 +451,16 @@ public class AgentOrchestrator {
             .build());
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
         emitToolResult(sink, req.name(), "error", message, null);
+    }
+
+    private static String malformedArgumentsMessage(final ToolExecutionRequest req, @Nullable final FinishReason finishReason) {
+        if (finishReason == FinishReason.LENGTH) {
+            return "The tool call was not executed because the output token limit was reached before its arguments were complete. Reissue the call with shorter arguments.";
+        }
+        String raw = req.arguments();
+        String received = raw.length() <= MAX_MALFORMED_ARGUMENTS_CHARS ? raw : raw.substring(0, MAX_MALFORMED_ARGUMENTS_CHARS) + "…";
+        return "Invalid tool arguments, so the call was not executed: " + ChatMessageAdaptor.malformedArgumentsReason(raw)
+            + ". Received: " + received + " Reissue the call with valid JSON arguments.";
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {

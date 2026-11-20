@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports -- this is the typed re-export the rule points to
 import {DynamicScroller as UntypedDynamicScroller} from "vue-virtual-scroller"
 import type {RecycleScroller} from "vue-virtual-scroller"
 import type {HTMLAttributes} from "vue"

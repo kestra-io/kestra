@@ -37,7 +37,6 @@
                     ref="tableRef"
                     v-bind="$attrs"
                     :tableLayout="tableLayout"
-                    fixed
                     :data
                     :rowKey
                     :expandRowKeys="composedExpandRowKeys"
@@ -156,7 +155,7 @@
         mobileColumns?: KsDataTableMobileColumns
     }
 
-    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<T> & HTMLAttributes>, keyof KsDataTableProps | "emptyText">>(), {
+    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<T> & {flushExpand?: boolean} & HTMLAttributes>, keyof KsDataTableProps | "emptyText">>(), {
         data: () => [],
         total: 0,
         currentPage: 1,

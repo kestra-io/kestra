@@ -1,6 +1,24 @@
 <template>
     <div class="curl-wrapper">
-        <pre><code>{{ curlCommand }}</code></pre>
+        <div class="code">
+            <KsEditor
+                v-bind="editorBindings"
+                :modelValue="curlCommand"
+                lang="shell"
+                inline
+                :navbar="false"
+                readOnly
+                :options="{
+                    fullHeight: false,
+                    customHeight: 24,
+                    editor: {
+                        padding: {top: 6, bottom: 6},
+                        guides: {indentation: false},
+                        wrappingIndent: 'indent',
+                    },
+                }"
+            />
+        </div>
 
         <CopyToClipboard :text="curlCommand" />
 
@@ -14,7 +32,8 @@
     import {computed, ref} from "vue"
     import {baseUrl, basePath, apiUrl} from "override/utils/route"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import {dayjs} from "@kestra-io/design-system"
+    import {dayjs, KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {Flow} from "../../stores/flow"
     import {Label} from "../../stores/executions"
     import {flattenInputs} from "../../utils/inputs"
@@ -28,11 +47,15 @@
         inputs?: Record<string, unknown>;
         executionLabels?: Label[];
         verbose?: boolean;
+        replay?: {executionId: string; taskRunId?: string; revision?: number};
     }>(),{
+        replay: undefined,
         inputs: () => ({}),
         executionLabels: () => [],
         verbose: true,
     })
+
+    const editorBindings = useEditorBindings()
 
     const exampleFileName = ref("kestra.json")
 
@@ -41,7 +64,7 @@
     )
 
     function addHeader(command: string[], name: string, value: string) {
-        command.push("-H", `'${name}: ${value}'`)
+        command.push(`-H '${name}: ${value}'`)
     }
 
     const leafInputs = computed(() => flattenInputs(props.flow.inputs))
@@ -81,11 +104,10 @@
 
             if (inputValue === undefined) return
 
-            command.push("-F")
             if (input.type === "FILE") {
-                command.push(`'${input.id}=@${inputValue};filename=${inputValue}'`)
+                command.push(`-F '${input.id}=@${inputValue};filename=${inputValue}'`)
             } else {
-                command.push(`'${input.id}=${inputValue}'`)
+                command.push(`-F '${input.id}=${inputValue}'`)
             }
         })
     }
@@ -95,11 +117,21 @@
     }
 
     const url = computed(() => {
+        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
+
+        if (props.replay) {
+            const replayParams = [
+                props.replay.taskRunId ? `taskRunId=${encodeURIComponent(props.replay.taskRunId)}` : undefined,
+                props.replay.revision === undefined ? undefined : `revision=${props.replay.revision}`,
+            ].filter(Boolean)
+            const replayUrl = `${origin}/executions/${props.replay.executionId}/actions/replay-with-inputs`
+            return replayParams.length > 0 ? `${replayUrl}?${replayParams.join("&")}` : replayUrl
+        }
+
         const queryParams = (props.executionLabels || [])
             .filter((label) => label.key && label.value)
             .map((label) => generateExecutionLabel(label.key, label.value))
 
-        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
         let ret = `${origin}/executions/${props.flow.namespace}/${props.flow.id}`
 
         if (queryParams.length > 0) {
@@ -110,26 +142,23 @@
     })
 
     const prefix = computed(() => {
-        return ["curl", "-O", `'${exampleFileInputUrl.value}'`]
+        return `curl -O '${exampleFileInputUrl.value}'`
     })
 
     function toShell(command: string[]) {
-        return command.join(" ")
+        return command.join(" \\\n  ")
     }
 
     const curlCommand = computed(() => {
-        const mainCommand = ["curl"]
+        const mainCommand = [props.verbose ? "curl -v -X POST" : "curl -X POST"]
 
-        if (props.verbose) mainCommand.push("-v")
-
-        mainCommand.push("-X", "POST")
         addHeader(mainCommand, "Content-Type", "multipart/form-data")
         addInputs(mainCommand)
         mainCommand.push(`'${url.value}'`)
         const hasFileInput = leafInputs.value.some((input) => input.type === "FILE")
 
         if (hasFileInput) {
-            return `${toShell(prefix.value)} && \\\n${toShell(mainCommand)}`
+            return `${prefix.value} && \\\n${toShell(mainCommand)}`
         }
         return `${toShell(mainCommand)}`
     })
@@ -140,19 +169,11 @@
         position: relative;
     }
 
-    .curl-alert {
-        margin-top: var(--ks-spacing-4);
-    }
-
-    pre {
-        border-radius: var(--kel-border-radius-base);
+    .code {
         padding-right: var(--ks-spacing-8);
     }
 
-    /* Allow line-wraps */
-    code {
-        display: block;
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
+    .curl-alert {
+        margin-top: var(--ks-spacing-4);
     }
 </style>

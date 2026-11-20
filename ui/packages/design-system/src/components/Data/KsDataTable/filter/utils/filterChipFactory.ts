@@ -10,6 +10,14 @@ import {
 import {type DecodedParam, keyOfComparator} from "./helpers"
 import {TIME_RANGE_KEY} from "./constants"
 import {normalizeRelativeDate} from "./relativeDates"
+import {dateFilter} from "../../../../../utils/date"
+
+/** Single absolute date in the Settings timezone (date only). */
+export const formatFilterDate = (date: Date): string => dateFilter(date, "ll")
+
+/** Absolute range in the Settings timezone, matching Timeline readout ("lll"). */
+export const formatFilterDateRange = (startDate: Date, endDate: Date): string =>
+    `${dateFilter(startDate, "lll")} - ${dateFilter(endDate, "lll")}`
 
 export const buildNewFilter = (key: FilterKeyConfig): AppliedFilter | null => {
     const comparator = key.comparators?.[0]
@@ -67,7 +75,7 @@ export const createTimeRangeFilter = (
         config,
         comparator,
         {startDate, endDate},
-        `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
+        formatFilterDateRange(startDate, endDate),
         keyOfComparator(comparator),
         meta,
     )
@@ -85,7 +93,7 @@ export const createCustomRangeFilter = (
         config,
         comparator,
         {startDate, endDate},
-        `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
+        formatFilterDateRange(startDate, endDate),
         keyOfComparator(comparator),
         meta,
     )
@@ -142,7 +150,7 @@ export const processFieldValue = (
 
     return {
         value,
-        valueLabel: value instanceof Date ? value.toLocaleDateString() : String(value),
+        valueLabel: value instanceof Date ? formatFilterDate(value) : String(value),
     }
 }
 
@@ -157,9 +165,9 @@ export const resolveDefaultVisibleValue = (key: FilterKeyConfig): AppliedFilter[
 export const defaultVisibleValueLabel = (value: AppliedFilter["value"]): string => {
     if (Array.isArray(value)) return value.join(", ")
     if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
-        return `${value.startDate.toLocaleDateString()} - ${value.endDate.toLocaleDateString()}`
+        return formatFilterDateRange(value.startDate, value.endDate)
     }
-    if (value instanceof Date) return value.toLocaleDateString()
+    if (value instanceof Date) return formatFilterDate(value)
     return value?.toString?.() ?? ""
 }
 

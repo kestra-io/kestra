@@ -1,0 +1,54 @@
+// ui/src/QueryRunQueryTopologyDetails.stories.ts
+import type { Meta, StoryObj } from "@storybook/vue3";
+import QueryRunQueryTopologyDetails from "./components/QueryRunQueryTopologyDetails.vue";
+
+const meta: Meta<typeof QueryRunQueryTopologyDetails> = {
+  title: "Plugin Artifacts / topology-details / QueryRunQueryTopologyDetails",
+  component: QueryRunQueryTopologyDetails,
+  tags: ["autodocs"],
+};
+
+export default meta;
+type Story = StoryObj<typeof QueryRunQueryTopologyDetails>;
+
+const baseTask = {
+  id: "run-query",
+  type: "io.kestra.plugin.example.query.RunQuery",
+  sql: "SELECT id, name FROM users WHERE active = true LIMIT 1000",
+  projectId: "my-project",
+};
+
+export const PreExecution: Story = {
+  name: "Pre-execution",
+  args: {
+    taskType: "io.kestra.plugin.example.query.RunQuery",
+    task: baseTask,
+    namespace: "company.team",
+    flowId: "my-flow",
+  },
+};
+
+export const PostExecution: Story = {
+  name: "Post-execution",
+  args: {
+    taskType: "io.kestra.plugin.example.query.RunQuery",
+    task: baseTask,
+    namespace: "company.team",
+    flowId: "my-flow",
+    execution: {
+      id: "exec-abc123",
+      state: { current: "SUCCESS" },
+      taskRunList: [{ id: "tr-001", taskId: "run-query", executionId: "exec-abc123" }],
+    },
+    // Plain prop fixtures — no transport to stub, since fetchOutputs/fetchMetrics are
+    // just functions the host would otherwise inject.
+    fetchOutputs: async () => ({ jobId: "my-project:US.bqjob_r1234", size: 42500 }),
+    fetchMetrics: async () => ({
+      results: [
+        { name: "duration", value: 1230, taskId: "run-query" },
+        { name: "total.bytes.billed", value: 10737418240, taskId: "run-query" },
+      ],
+      total: 2,
+    }),
+  },
+};

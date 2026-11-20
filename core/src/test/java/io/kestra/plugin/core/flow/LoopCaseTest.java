@@ -148,6 +148,14 @@ public class LoopCaseTest {
         assertThat(subExecutions.getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    public void loopRunIfFalse(Execution execution) {
+        // Then — the Loop is skipped like any other task whose runIf is false: no iteration runs
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("loop").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null)).isEmpty();
+    }
+
     public void loopTransmitFailedFalse(Execution execution) throws InternalException {
         // Then — all iterations run but failures are not propagated, loop ends with SUCCESS
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -564,6 +572,21 @@ public class LoopCaseTest {
     public void loopEmpty(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void loopOutputsEmpty(Execution execution) throws InternalException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+
+        TaskRun loopTaskRun = execution.getTaskRunList().getFirst();
+        Map<String, Object> loopTaskOutputs = taskOutputService.getOutputs(loopTaskRun);
+        assertThat(loopTaskOutputs)
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 0)
+            .containsEntry(Loop.OUTPUTS_OUTPUT, List.of());
+
+        TaskRun endTaskRun = execution.getTaskRunList().getLast();
+        Map<String, Object> endTaskOutputs = taskOutputService.getOutputs(endTaskRun);
+        assertThat(endTaskOutputs).containsEntry("value", "[]");
     }
 
     public void loopWithNull(Execution execution) {

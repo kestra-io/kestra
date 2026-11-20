@@ -47,6 +47,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.secret.SecretNotFoundException;
 import io.kestra.core.secret.SecretService;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
@@ -102,8 +103,8 @@ class FlowInputOutputTest {
     String secretKey;
 
     @MockBean(SecretService.class)
-    SecretService<?> testSecretService() {
-        return new SecretService<>() {
+    SecretService testSecretService() {
+        return new SecretService() {
             @Override
             public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException {
                 return TEST_SECRET_VALUE;
@@ -389,6 +390,124 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertEquals("******", results.getFirst().value());
+    }
+
+    @Test
+    void shouldComputeOnRealSecretValueAndMaskOnlyTheOutputWhenValidatingInputs() {
+        // Given
+        StringInput length = StringInput.builder()
+            .id("length")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') | length }}"))
+            .required(false)
+            .build();
+        StringInput prefixed = StringInput.builder()
+            .id("prefixed")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("prefix-{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(length, prefixed), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results.get(0).value()).isEqualTo(String.valueOf(TEST_SECRET_VALUE.length()));
+        assertThat(results.get(1).value()).isEqualTo("prefix-******");
+    }
+
+    @Test
+    void shouldComputeOnRealSecretValueOfDependencyWhenValidatingInputs() {
+        // Given
+        StringInput dependency = StringInput.builder()
+            .id("dependency")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+        StringInput dependent = StringInput.builder()
+            .id("dependent")
+            .type(Type.STRING)
+            .dependsOn(new DependsOn(List.of("dependency"), null))
+            .defaults(Property.ofExpression("{{ inputs.dependency | length }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(dependency, dependent), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results.get(0).value()).isEqualTo("******");
+        assertThat(results.get(1).value()).isEqualTo(String.valueOf(TEST_SECRET_VALUE.length()));
+    }
+
+    @Test
+    void shouldMaskSecretInputsReferencedByAnotherInputWhenValidatingInputs() {
+        // Given
+        SecretInput password = SecretInput.builder()
+            .id("password")
+            .type(Type.SECRET)
+            .required(false)
+            .build();
+        StringInput dependent = StringInput.builder()
+            .id("dependent")
+            .type(Type.STRING)
+            .dependsOn(new DependsOn(List.of("password"), null))
+            .description("Password: {{ inputs.password }}")
+            .defaults(Property.ofExpression("value-{{ inputs.password }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.resolveResumeInputs(List.of(password, dependent), null, DEFAULT_TEST_EXECUTION, Map.of("password", "hunter2-plain"));
+
+        // Then
+        InputAndValue result = results.get(1);
+        assertThat(String.valueOf(result.value())).doesNotContain("hunter2-plain");
+        assertThat(result.input().getDescription()).doesNotContain("hunter2-plain");
+        assertThat(String.valueOf(results.get(0).value())).doesNotContain("hunter2-plain");
+    }
+
+    @Test
+    void shouldMaskSecretsInErrorMessagesWhenValidatingInputs() {
+        // Given
+        IntInput input = IntInput.builder()
+            .id("input")
+            .type(Type.INT)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results.getFirst().exceptions()).isNotEmpty();
+        assertThat(results.getFirst().exceptions()).noneMatch(e -> e.getMessage().contains(TEST_SECRET_VALUE));
+    }
+
+    @Test
+    void shouldNotMaskSecretsWhenReadingExecutionInputs() {
+        // Given
+        StringInput secret = StringInput.builder()
+            .id("secret")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+        StringInput length = StringInput.builder()
+            .id("length")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') | length }}"))
+            .required(false)
+            .build();
+
+        // When
+        Map<String, Object> inputs = flowInputOutput.readExecutionInputs(List.of(secret, length), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(inputs).containsEntry("secret", TEST_SECRET_VALUE);
+        assertThat(inputs).containsEntry("length", String.valueOf(TEST_SECRET_VALUE.length()));
     }
 
     @ParameterizedTest
@@ -881,7 +1000,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("duck").type(Type.URI).build()
+                    Output.builder().id("duck").type(OutputType.URI).build()
                 )
             )
             .build();
@@ -905,7 +1024,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("duck").type(Type.URI).build()
+                    Output.builder().id("duck").type(OutputType.URI).build()
                 )
             )
             .build();
@@ -917,11 +1036,31 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldKeepTheValueOfAnOutputWhenItsTypeIsNoLongerKnown() {
+        Flow flow = YamlParser.parse("""
+            id: test-flow
+            namespace: io.kestra.test
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: choices
+                type: MULTISELECT
+                value: "{{ outputs.hello }}"
+            """, Flow.class);
+
+        Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("choices", List.of("a", "b")));
+
+        assertThat(result.get("choices")).isEqualTo(List.of("a", "b"));
+    }
+
+    @Test
     void shouldFailWhenRequiredOutputIsNull() {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .outputs(List.of(Output.builder().id("duck").type(Type.STRING).build()))
+            .outputs(List.of(Output.builder().id("duck").type(OutputType.STRING).build()))
             .build();
 
         assertThatThrownBy(() -> flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of()))
@@ -934,7 +1073,7 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .outputs(List.of(Output.builder().id("duck").type(Type.STRING).required(false).build()))
+            .outputs(List.of(Output.builder().id("duck").type(OutputType.STRING).required(false).build()))
             .build();
 
         Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of());
@@ -950,7 +1089,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("secret").type(Type.SECRET).build()
+                    Output.builder().id("secret").type(OutputType.SECRET).build()
                 )
             )
             .build();

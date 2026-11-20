@@ -6,7 +6,7 @@
             <PausedAlert v-if="execution.state.current === State.PAUSED" :execution />
         </MobileSummary>
         <template v-else>
-            <KsCard class="banner" shadow="always">
+            <KsCard class="banner" shadow="always" :bodyStyle="{height: '100%', padding: '0'}">
                 <Banner :execution />
             </KsCard>
             <div id="alerts">
@@ -34,11 +34,9 @@
         />
         <PrevNext :execution />
     </div>
-    <KsNoData
-        v-else
-        id="empty"
-        :description="$t('execution not found', {executionId: route.params.id})"
-    />
+    <KsNoData v-else id="empty">
+        {{ $t("execution not found", {executionId: route.params.id}) }}
+    </KsNoData>
 </template>
 
 <script setup lang="ts">
@@ -110,11 +108,6 @@
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
-
-        & :deep(.kel-card__body) {
-            height: 100%;
-            padding: 0;
-        }
     }
 
     #alerts {

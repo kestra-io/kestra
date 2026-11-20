@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -68,9 +69,9 @@ public class TriggerWorkerJobPublisher {
             .build();
         Optional<WorkerQueueRouting> routing;
         try {
-            routing = workerQueueService.resolveWorkerQueueForJob(flow, workerTrigger);
-        } catch (NoMatchingWorkerQueueException e) {
-            // No Worker Queue matches the requested tags — a configuration error.
+            routing = workerQueueService.resolveWorkerQueueForJob(flow, workerTrigger, conditionContext.getRunContext());
+        } catch (NoMatchingWorkerQueueException | IllegalVariableEvaluationException e) {
+            // No Worker Queue matches the requested tags, or a tag cannot be rendered: a configuration error.
             // Drop the trigger evaluation with a clear, user-facing log message.
             conditionContext.getRunContext().logger()
                 .error("{}, ignoring the trigger.", e.getMessage());

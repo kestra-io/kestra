@@ -141,10 +141,11 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
 
     private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> predicate) throws IllegalVariableEvaluationException {
         return runContext.render(dates)
-            .asList(ZonedDateTime.class).stream().sorted()
-            .filter(predicate)
+            .asList(ZonedDateTime.class).stream()
             .map(throwFunction(date -> timezone == null ? date : date.withZoneSameInstant(ZoneId.of(runContext.render(timezone)))))
-            .findFirst()
-            .map(date -> date.truncatedTo(ChronoUnit.SECONDS));
+            .map(date -> date.truncatedTo(ChronoUnit.SECONDS))
+            .sorted()
+            .filter(predicate)
+            .findFirst();
     }
 }

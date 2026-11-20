@@ -295,6 +295,68 @@ LevelOfDetailPill.args = {
     defaultViewport: {x: 0, y: 0, zoom: 0.3},
 }
 
+const PILL_ZOOM = 0.3
+
+const PILL_STATUS_EXECUTION = {
+    ...MIXED_LANE_EXECUTION,
+    taskRunList: [...MIXED_LANE_EXECUTION.taskRunList, taskRun("hard_fail_after_parallel", "FAILED")],
+}
+
+export const LevelOfDetailPillStatuses: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Pill, states stay readable",
+    render: (args) => ({
+        components: {Topology},
+        setup() {
+            return {args}
+        },
+        template: `<div style="height: 600px; width: 100%;">
+            <Topology v-bind="args" />
+        </div>`,
+    }),
+    args: {
+        ...LevelOfDetailPill.args,
+        id: "story-lod-pill-statuses",
+        execution: PILL_STATUS_EXECUTION,
+        defaultViewport: {x: 0, y: 0, zoom: PILL_ZOOM},
+    },
+    play: async ({canvasElement}) => {
+        const statuses = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"topology-task-pill-status\"]"))
+
+        await waitFor(() => expect(statuses().length).toBeGreaterThan(0))
+
+        const labels = statuses().map((status) => status.getAttribute("aria-label"))
+        expect(labels).toContain("FAILED")
+        expect(labels).toContain("SUCCESS")
+        expect(labels).toContain("WARNING")
+
+        const pill = canvasElement.querySelector<HTMLElement>("[data-test=\"topology-task-pill\"]")!
+        const ring = parseFloat(getComputedStyle(pill).borderTopWidth)
+        expect(ring * PILL_ZOOM).toBeGreaterThan(0.8)
+        expect(ring * PILL_ZOOM).toBeLessThan(1.25)
+
+        expect(statuses()[0].getBoundingClientRect().height).toBeGreaterThan(8)
+    },
+}
+
+const DEEP_ZOOM = 0.1
+
+export const LevelOfDetailPillDeepZoom: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Pill, compensation stays bounded",
+    render: LevelOfDetailPillStatuses.render,
+    args: {
+        ...LevelOfDetailPillStatuses.args,
+        id: "story-lod-pill-deep-zoom",
+        defaultViewport: {x: 0, y: 0, zoom: DEEP_ZOOM},
+    },
+    play: async ({canvasElement}) => {
+        const pills = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"topology-task-pill\"]"))
+
+        await waitFor(() => expect(pills().length).toBeGreaterThan(0))
+
+        expect(getComputedStyle(pills()[0]).borderTopWidth).toBe("4px")
+    },
+}
+
 export const LevelOfDetailDefault = LodTemplate.bind({})
 LevelOfDetailDefault.storyName = "Level of Detail — Default"
 LevelOfDetailDefault.args = {
@@ -741,5 +803,27 @@ export const NestedFlowableLanes: StoryObj<typeof Topology> = {
         expect(inner.left).toBeGreaterThanOrEqual(outer.left)
         expect(inner.bottom).toBeLessThanOrEqual(outer.bottom)
         expect(inner.right).toBeLessThanOrEqual(outer.right)
+    },
+}
+
+/** `--ks-topology-panel-bottom` lifts the bottom panels (the zoom controls) off the canvas edge, set on the topology or an ancestor */
+export const PanelBottomOffset: StoryObj<typeof Topology> = {
+    render: (args) => ({
+        components: {Topology},
+        setup() {
+            return {args}
+        },
+        template: "<div style=\"height: 600px; width: 100%; --ks-topology-panel-bottom: 2rem;\"><Topology v-bind=\"args\" /></div>",
+    }),
+    args: {
+        id: "story-panel-bottom",
+        source: ALLOW_FAILURE_SOURCE,
+        flowGraph: allowFailureDemo as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+    },
+    async play({canvasElement}) {
+        await waitFor(() => expect(canvasElement.querySelector(".vue-flow__panel.bottom")).not.toBeNull())
+        await expect(getComputedStyle(canvasElement.querySelector(".vue-flow__panel.bottom")!).bottom).toBe("32px")
     },
 }

@@ -52,6 +52,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest(resolveParameters = false)
 class KVControllerTest {
@@ -241,6 +242,17 @@ class KVControllerTest {
         assertThat(body).doesNotContainIgnoringCase("order by");
     }
 
+    @Test
+    void shouldReturn422WhenListingKeysWithPageSizeAboveMaximum() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.GET("/api/v1/main/kv?size=1001"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        assertThat(e.getResponse().getBody(String.class).orElse("")).contains("validation-failed", "\"pointer\":\"/size\"");
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void listAllKeysSortsByUpdateDateAlias() throws IOException {
@@ -355,7 +367,8 @@ class KVControllerTest {
             Arguments.of(MediaType.TEXT_PLAIN, "false", Boolean.class),
             Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01", LocalDate.class),
             Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01T01:02:03Z", Instant.class),
-            Arguments.of(MediaType.TEXT_PLAIN, "\"PT5S\"", Duration.class)
+            Arguments.of(MediaType.TEXT_PLAIN, "\"PT5S\"", String.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "PT5S", Duration.class)
         );
     }
 
@@ -387,19 +400,63 @@ class KVControllerTest {
         assertThat(kvStore().getValue("my-key").get().value()).isEqualTo(value);
     }
 
-    @Test
-    void shouldRejectSetKeyValueWhenTtlIsBeyondTheLatestExpirationDate() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = {"PT9223372036854775807S", "P3000000D"})
+    void shouldRejectSetKeyValueWhenTtlIsBeyondTheLatestExpirationDate(String ttl) throws IOException {
         HttpClientResponseException exception = Assertions.assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
                 HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "value")
                     .contentType(MediaType.TEXT_PLAIN)
-                    .header("ttl", "PT9223372036854775807S")
+                    .header("ttl", ttl)
             )
         );
 
         Problems.assertProblem(exception, ProblemTypes.INVALID_ARGUMENT);
         assertThat(Problems.detail(exception)).contains("too large");
+        assertThat(kvStore().exists("my-key")).isFalse();
+    }
+
+    @Test
+    void shouldKeepAQuotedDurationShapedValueAsAStringWhenSetting() throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/quoted", "\"PT30M\"")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        KVValue stored = kvStore().getValue("quoted").get();
+
+        assertThat(stored.value()).isEqualTo("PT30M");
+        assertThat(KVType.from(stored.value())).isEqualTo(KVType.STRING);
+    }
+
+    @Test
+    void shouldNotRewriteAQuotedDurationShapedValueWhenSetting() throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/quoted-days", "\"P5D\"")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        assertThat(kvStore().getValue("quoted-days").get().value()).isEqualTo("P5D");
+    }
+
+    @Test
+    void shouldStillReadAnUnquotedDurationAsADurationWhenSetting() throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bare", "PT30M")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        assertThat(kvStore().getValue("bare").get().value()).isEqualTo(Duration.ofMinutes(30));
+    }
+
+    @Test
+    void shouldRejectSetKeyValueWhenTtlIsNotAnIsoDuration() throws IOException {
+        assertThatThrownBy(() -> client.toBlocking().exchange(
+            HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "value")
+                .contentType(MediaType.TEXT_PLAIN)
+                .header("ttl", "not-a-duration")
+        )).isInstanceOfSatisfying(
+            HttpClientResponseException.class,
+            exception -> Problems.assertProblem(exception, ProblemTypes.INVALID_ARGUMENT)
+        );
         assertThat(kvStore().exists("my-key")).isFalse();
     }
 

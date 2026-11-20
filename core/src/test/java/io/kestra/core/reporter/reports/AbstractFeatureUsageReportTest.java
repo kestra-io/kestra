@@ -10,10 +10,12 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.TriggerAssetsDeclaration;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.check.Check;
@@ -25,7 +27,7 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Cache;
-import io.kestra.core.models.tasks.WorkerSelector;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -91,9 +93,9 @@ public abstract class AbstractFeatureUsageReportTest {
                     ).build()
                 )
             )
-            .outputs(List.of(Output.builder().id("out").type(Type.STRING).value("value").build()))
+            .outputs(List.of(Output.builder().id("out").type(OutputType.STRING).value("value").build()))
             .variables(Map.of("var", "value"))
-            .workerSelector(new WorkerSelector(List.of("tag"), null))
+            .workerSelector(new FlowWorkerSelector(List.of("tag"), null))
             .concurrency(Concurrency.builder().limit(2).behavior(Concurrency.Behavior.CANCEL).build())
             .retry(Constant.builder().interval(Duration.ofSeconds(5)).maxAttempts(3).build())
             .sla(
@@ -124,7 +126,7 @@ public abstract class AbstractFeatureUsageReportTest {
                         .message("hello")
                         .retry(Constant.builder().interval(Duration.ofSeconds(1)).build())
                         .timeout(Property.ofValue(Duration.ofSeconds(30)))
-                        .workerSelector(new WorkerSelector(List.of("tag"), null))
+                        .workerSelector(new FlowWorkerSelector(List.of("tag"), null))
                         .allowFailure(true)
                         .logToFile(true)
                         .runIf("{{ 1 == 1 }}")
@@ -150,13 +152,13 @@ public abstract class AbstractFeatureUsageReportTest {
                         .id("schedule")
                         .type(Schedule.class.getName())
                         .cron("0 1 9 * * *")
-                        .workerSelector(new WorkerSelector(List.of("tag"), null))
+                        .workerSelector(new FlowWorkerSelector(List.of("tag"), null))
                         .labels(List.of(new Label("trig", "label")))
                         .stopAfter(List.of(State.Type.FAILED))
                         .logToFile(true)
                         .failOnTriggerError(true)
                         .allowConcurrent(true)
-                        .assets(new AssetsDeclaration(null, null, null, null))
+                        .assets(new TriggerAssetsDeclaration(null, null, null))
                         .build()
                 )
             )

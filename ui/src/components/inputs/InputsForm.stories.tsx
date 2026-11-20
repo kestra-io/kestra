@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {defineComponent, ref} from "vue";
+import {defineComponent, ref, type PropType} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {KsForm} from "@kestra-io/design-system";
@@ -41,7 +41,7 @@ export default meta;
 
 type Story = StoryObj<typeof InputsForm>;
 
-const Sut = defineComponent((props: {inputs: InputMetaData[]}) => {
+const Sut = defineComponent((props: {inputs: InputMetaData[], labelPosition?: "top" | "left", centered?: boolean}) => {
     const axios: Partial<AxiosLikeClient> = {}
 
     axios.post = async <T,>(uri: string) => {
@@ -62,8 +62,8 @@ const Sut = defineComponent((props: {inputs: InputMetaData[]}) => {
 
     const values = ref<Record<string, unknown> | undefined>({});
     return () => (<>
-        <KsForm label-position="top" model={values.value}>
-            <InputsForm initialInputs={props.inputs} modelValue={values.value} flow={FLOW}
+        <KsForm label-position={props.labelPosition ?? "top"} model={values.value}>
+            <InputsForm initialInputs={props.inputs} modelValue={values.value} flow={FLOW} centered={props.centered}
                         onUpdate:modelValue={(value) => values.value = value}
             />
         </KsForm>
@@ -72,7 +72,7 @@ const Sut = defineComponent((props: {inputs: InputMetaData[]}) => {
         }</pre>
     </>);
 }, {
-    props: {"inputs": {type: Array, required: true}}
+    props: {"inputs": {type: Array, required: true}, "labelPosition": {type: String as PropType<"top" | "left">, default: "top"}, "centered": {type: Boolean, default: false}}
 });
 
 export const InputTypes: Story = {
@@ -698,6 +698,28 @@ export const MultiSelectStateSources: Story = {
                 }
             ]}
             selectedTrigger={{inputs: {shards: ["Fifth value", "Seventh value"]}}}
+        />;
+    }
+};
+
+export const Centered: Story = {
+    async play({canvasElement}) {
+        await waitFor(() => expect(canvasElement.querySelector(".centered")).not.toBeNull());
+        await expect(getComputedStyle(canvasElement.querySelector(".centered")!).alignItems).toBe("center");
+    },
+    render() {
+        return <Sut
+            labelPosition="left"
+            centered
+            inputs={[
+                {
+                    id: "payload",
+                    type: "JSON",
+                    required: false,
+                    displayName: "Payload sent to the API",
+                    defaults: "{\n  \"a\": 1,\n  \"b\": 2\n}"
+                }
+            ]}
         />;
     }
 };

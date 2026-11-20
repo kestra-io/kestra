@@ -2,13 +2,10 @@ package io.kestra.mcp;
 
 import java.util.Optional;
 
-import io.kestra.core.models.AccessScope;
-
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 
 /**
- * Decides which flows an MCP server exposes to a caller as tools, and which of them that caller may invoke.
+ * Identifies the caller of an MCP server, whatever kind of tools it exposes.
  * <p>
  * The caller is resolved once per request and carried on {@link KestraMcpTransportContext} rather than read
  * from the request context, because tool handlers run on a reactor thread where the request's
@@ -21,10 +18,9 @@ public interface McpToolAccessControl {
     Optional<String> callerId(HttpRequest<?> request);
 
     /**
-     * @param callerId the caller, or {@code null} when anonymous
-     * @param tenantId the tenant the MCP server belongs to
-     * @param serverId the MCP server being connected to
-     * @return the namespaces whose flows this caller may execute through that server
+     * @return the caller's name for the {@code system.username} label, empty when there is no user to name
      */
-    AccessScope executableScope(@Nullable String callerId, String tenantId, String serverId);
+    default Optional<String> callerName(HttpRequest<?> request) {
+        return Optional.empty();
+    }
 }

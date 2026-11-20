@@ -2,6 +2,7 @@ package io.kestra.webserver.services.ai.agent.internals;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +74,7 @@ public final class ChatMessageAdaptor {
                 case TOOL_RESULT -> {
                     if (m.toolCall() != null) {
                         ToolExecutionRequest req = toRequest(m.toolCall());
-                        Map<String, Object> toolResult = m.toolResult();
+                        Map<String, Object> toolResult = capResult(m.toolResult());
                         // Preserve the error flag on reload so a previously-failed tool call is still
                         // presented to the model (and provider APIs) as an error, matching the live path.
                         boolean isError = toolResult != null && "error".equals(toolResult.get("outcome"));
@@ -174,6 +175,20 @@ public final class ChatMessageAdaptor {
             .name(toolCall.tool())
             .arguments(toJson(toolCall.arguments()))
             .build();
+    }
+
+    /**
+     * Cap an oversized {@code result} text on projection too, so a thread that already persisted a huge
+     * tool result before the dispatch-side cap existed recovers instead of failing every later turn.
+     */
+    @Nullable
+    private static Map<String, Object> capResult(@Nullable final Map<String, Object> toolResult) {
+        if (toolResult == null || !(toolResult.get("result") instanceof String text) || text.length() <= ToolResultLimit.MAX_CHARS) {
+            return toolResult;
+        }
+        Map<String, Object> capped = new LinkedHashMap<>(toolResult);
+        capped.put("result", ToolResultLimit.cap(text));
+        return capped;
     }
 
     private static String toJson(final Object value) {

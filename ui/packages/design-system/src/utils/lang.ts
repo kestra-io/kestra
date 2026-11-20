@@ -212,6 +212,7 @@ export function getPath<T = unknown>(object: unknown, path: PathSegments, defaul
         if (current === null || current === undefined) {
             return defaultValue
         }
+        // nosemgrep: prototype-pollution-loop -- read-only traversal, nothing is assigned.
         current = (current as Record<string, unknown>)[segment]
     }
     return current === undefined ? defaultValue : current as T
@@ -230,6 +231,7 @@ export function setPath(object: Record<string, unknown>, path: PathSegments, val
         if (next === null || typeof next !== "object") {
             current[segment] = /^\d+$/.test(segments[index + 1]) ? [] : {}
         }
+        // nosemgrep: prototype-pollution-loop -- segments were checked against UNSAFE_SEGMENTS above.
         current = current[segment] as Record<string, unknown>
     }
     current[segments[segments.length - 1]] = value

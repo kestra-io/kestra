@@ -70,6 +70,14 @@ describe("KsFormItem", () => {
         expect(wrapper.find(".kel-form-item.is-inline-row").exists()).toBe(false)
     })
 
+    test("adds is-stacked class when stacked", () => {
+        const wrapper = mount(KsFormItem, {
+            props: {label: "Name", stacked: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-form-item.is-stacked").exists()).toBe(true)
+    })
+
     test("forwards for so the label can opt out of pointing at a control", () => {
         const wrapper = mount(KsFormItem, {
             props: {label: "Name", for: ""},
@@ -88,5 +96,14 @@ describe("KsFormItem", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-form-item__label").attributes("for")).toBeUndefined()
+    })
+
+    test("keeps a field required by the form rules required when KsFormItem gets no required prop", () => {
+        const wrapper = mount(KsForm, {
+            props: {model: {name: ""}, rules: {name: [{required: true, message: "Name is required"}]}},
+            slots: {default: "<ks-form-item label=\"Name\" prop=\"name\"><input /></ks-form-item>"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-form-item").classes()).toContain("is-required")
     })
 })

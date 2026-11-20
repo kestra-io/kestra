@@ -37,18 +37,23 @@
             <NavBarActionsDropdown v-if="isMobile && !actionsMenuCount && bookmarkAction" standalone />
         </template>
         <template #panel-toggle>
-            <KsIconButton
+            <KsTooltip
                 v-if="showCopilotButton"
-                class="copilot-button"
-                :class="{'is-open': isCopilotOpen}"
-                data-testid="topnav-copilot-button"
-                :tooltip="$t('ai.copilot.title')"
+                :content="$t('ai.copilot.title')"
                 placement="bottom"
-                :aria-pressed="isCopilotOpen"
-                @click="toggleCopilot"
+                :enterable="false"
             >
-                <AiMenuIcon />
-            </KsIconButton>
+                <KsIconButton
+                    class="copilot-button"
+                    :class="{'is-open': isCopilotOpen}"
+                    data-testid="topnav-copilot-button"
+                    :ariaLabel="$t('ai.copilot.title')"
+                    :aria-pressed="isCopilotOpen"
+                    @click="toggleCopilot"
+                >
+                    <AiMenuIcon />
+                </KsIconButton>
+            </KsTooltip>
             <NotificationBell v-if="miscStore.configs" />
             <slot name="panel-toggle" />
         </template>
@@ -58,7 +63,7 @@
 <script setup lang="ts">
     import {computed, onBeforeUnmount, ref, watch, watchEffect} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import {KsIconButton} from "@kestra-io/design-system"
+    import {KsIconButton, KsTooltip} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
     import AiMenuIcon from "../ai/AiMenuIcon.vue"
     import NotificationBell from "./NotificationBell.vue"
@@ -244,9 +249,7 @@
 </script>
 
 <style scoped>
-    /* :deep because the tooltip wrapper renders a Fragment root, so this component's scope id */
-    /* reaches the nav ancestor but not the button itself. */
-    :deep(.copilot-button) {
+    .copilot-button {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
 

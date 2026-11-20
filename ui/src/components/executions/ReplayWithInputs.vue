@@ -45,7 +45,7 @@
 
     const handleReplaySubmit = async ({inputs, breakpoints}: ReplaySubmitOptions) => {
 
-        const formData = inputsToFormData(flattenInputs(flow.value?.inputs), inputs)
+        const formData = inputsToFormData(flattenInputs(flow.value?.inputs), inputs) ?? new FormData()
         const replayed = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,

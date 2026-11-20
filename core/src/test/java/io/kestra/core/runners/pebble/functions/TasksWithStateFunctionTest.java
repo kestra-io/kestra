@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble.functions;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -55,5 +56,17 @@ class TasksWithStateFunctionTest {
 
         assertThat(variableRenderer.render("{{ tasksWithState(state='FAILED') is not empty }}", vars)).isEqualTo("true");
         assertThat(variableRenderer.render("{{ tasksWithState(state='SUCCESS') is empty }}", vars)).isEqualTo("true");
+    }
+
+    @Test
+    void shouldMatchLowerCaseStateUnderTurkishLocale() throws IllegalVariableEvaluationException {
+        Locale previous = Locale.getDefault();
+        Locale.setDefault(Locale.of("tr", "TR"));
+
+        try {
+            assertThat(variableRenderer.render("{{ tasksWithState(state='failed') is not empty }}", tasksVar("FAILED"))).isEqualTo("true");
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 }

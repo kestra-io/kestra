@@ -78,7 +78,7 @@ public class HttpFunction<T> implements KestraFunction {
             ? uriObject
             : URI.create(args.get("uri").toString());
         Map<String, Object> query = (Map<String, Object>) args.getOrDefault("query", Collections.emptyMap());
-        String method = args.getOrDefault("method", "GET").toString().toUpperCase();
+        String method = args.getOrDefault("method", "GET").toString().toUpperCase(Locale.ROOT);
         String contentType = args.getOrDefault("contentType", MediaType.APPLICATION_JSON).toString();
         String accept = args.getOrDefault("accept", MediaType.APPLICATION_JSON).toString();
 

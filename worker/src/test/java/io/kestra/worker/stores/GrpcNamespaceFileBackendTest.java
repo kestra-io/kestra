@@ -70,6 +70,18 @@ class GrpcNamespaceFileBackendTest extends AbstractGrpcMetaStoreTest {
     }
 
     @Test
+    void shouldStoreAFileNamedLikeARevisionWhereTheClusterStorageReadsIt() throws Exception {
+        String namespace = namespace();
+        Namespace workerNamespace = workerNamespace(namespace);
+        workerNamespace.putFile(Path.of("/report.txt"), content("first"));
+        workerNamespace.putFile(Path.of("/report.txt"), content("second"));
+        workerNamespace.putFile(Path.of("/report.txt.v2"), content("other"));
+
+        assertThat(read(clusterNamespace(namespace).getFileContent(Path.of("/report.txt")))).isEqualTo("second");
+        assertThat(read(clusterNamespace(namespace).getFileContent(Path.of("/report.txt.v2")))).isEqualTo("other");
+    }
+
+    @Test
     void shouldMoveAndDeleteFilesOfTheClusterStorage() throws Exception {
         String namespace = namespace();
         clusterNamespace(namespace).putFile(Path.of("/from/file.txt"), content("moved"));

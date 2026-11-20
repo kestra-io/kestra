@@ -620,6 +620,46 @@ class InternalNamespaceTest {
         assertThat(namespace.getFileMetadata(COLLIDING_FILE).getType()).isEqualTo(FileAttributes.FileType.File);
     }
 
+    @Test
+    void shouldKeepAFileNamedLikeARevisionApartFromThatRevision() throws IOException, URISyntaxException {
+        // Given
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+        namespace.putFile(Path.of("/report.txt"), new ByteArrayInputStream("first".getBytes()));
+        namespace.putFile(Path.of("/report.txt"), new ByteArrayInputStream("second".getBytes()));
+
+        // When
+        namespace.putFile(Path.of("/report.txt.v2"), new ByteArrayInputStream("other".getBytes()));
+
+        // Then
+        assertThat(read(namespace.getFileContent(Path.of("/report.txt"), null))).isEqualTo("second");
+        assertThat(read(namespace.getFileContent(Path.of("/report.txt"), 1))).isEqualTo("first");
+        assertThat(read(namespace.getFileContent(Path.of("/report.txt.v2"), null))).isEqualTo("other");
+    }
+
+    @Test
+    void shouldReadAFileNamedLikeARevisionWhereItWasStoredBeforeItsFirstRevisionGotASuffix() throws IOException, URISyntaxException {
+        // Given
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+        namespace.putFile(Path.of("/model.v2"), new ByteArrayInputStream("legacy".getBytes()));
+        URI storedUri = namespace.get(Path.of("/model.v2")).storagePath().toUri();
+        URI legacyUri = NamespaceFile.ofStorageObject(namespaceId, "model.v2").storagePath().toUri();
+        try (InputStream content = storageInterface.get(MAIN_TENANT, namespaceId, storedUri)) {
+            storageInterface.put(MAIN_TENANT, namespaceId, legacyUri, content);
+        }
+        storageInterface.delete(MAIN_TENANT, namespaceId, storedUri);
+
+        // When / Then
+        assertThat(read(namespace.getFileContent(Path.of("/model.v2"), null))).isEqualTo("legacy");
+    }
+
+    private static String read(InputStream content) throws IOException {
+        try (content) {
+            return new String(content.readAllBytes());
+        }
+    }
+
     /**
      * Writes a directory entry straight to the index, as an object-storage folder marker picked up by a
      * metadata back-fill would, then soft-deletes it as a deletion through the API does.

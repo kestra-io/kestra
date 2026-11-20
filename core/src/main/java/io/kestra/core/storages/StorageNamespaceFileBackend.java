@@ -3,6 +3,8 @@ package io.kestra.core.storages;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
+import java.util.Optional;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -23,12 +25,12 @@ public class StorageNamespaceFileBackend implements NamespaceFileBackend {
 
     @Override
     public InputStream get(String tenant, NamespaceFile file) throws IOException {
-        return storage.get(tenant, file.namespace(), file.storagePath().toUri());
+        return storage.get(tenant, file.namespace(), readableUri(tenant, file));
     }
 
     @Override
     public boolean exists(String tenant, NamespaceFile file) throws IOException {
-        return storage.exists(tenant, file.namespace(), file.storagePath().toUri());
+        return storage.exists(tenant, file.namespace(), readableUri(tenant, file));
     }
 
     @Override
@@ -49,5 +51,14 @@ public class StorageNamespaceFileBackend implements NamespaceFileBackend {
     @Override
     public boolean delete(String tenant, NamespaceFile file) throws IOException {
         return storage.delete(tenant, file.namespace(), file.storagePath().toUri());
+    }
+
+    private URI readableUri(String tenant, NamespaceFile file) throws IOException {
+        URI uri = file.storagePath().toUri();
+        Optional<Path> legacyStoragePath = file.legacyStoragePath();
+        if (legacyStoragePath.isEmpty() || storage.exists(tenant, file.namespace(), uri)) {
+            return uri;
+        }
+        return legacyStoragePath.get().toUri();
     }
 }

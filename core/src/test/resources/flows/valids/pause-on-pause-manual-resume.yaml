@@ -1,0 +1,16 @@
+id: pause-on-pause-manual-resume
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    onPause:
+      id: on_pause
+      type: io.kestra.plugin.core.log.Log
+      message: on pause
+  - id: after
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: log
+        type: io.kestra.plugin.core.log.Log
+        message: after the pause

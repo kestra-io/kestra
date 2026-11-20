@@ -5,25 +5,29 @@ import {findApprovalTask, findApprovalTaskRun} from "../utils/approval"
 import {useExecutionsStore, type Execution} from "../stores/executions"
 import {useAuthStore} from "override/stores/auth"
 
-export function useApprovalReviewer(execution: () => Execution, taskRunId?: () => string | undefined) {
+export function useApprovalReviewer(execution: () => Execution | undefined, taskRunId?: () => string | undefined) {
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
     const approval = computed(() => {
+        const current = execution()
+        if (current === undefined) {
+            return undefined
+        }
         const requestedId = taskRunId?.()
         if (requestedId === undefined) {
-            return findApprovalTaskRun(execution(), executionsStore.flow, "PAUSED")
+            return findApprovalTaskRun(current, executionsStore.flow, "PAUSED")
         }
-        const taskRun = execution().taskRunList?.find(candidate => candidate.id === requestedId)
+        const taskRun = current.taskRunList?.find(candidate => candidate.id === requestedId)
         const task = taskRun?.state.current === "PAUSED" ? findApprovalTask(executionsStore.flow, taskRun.taskId) : undefined
         return taskRun && task ? {taskRun, task} : undefined
     })
-    const permitted = computed(() => authStore.user?.isAllowed(resource.EXECUTION, action.REVIEW, execution().namespace) === true)
+    const permitted = computed(() => authStore.user?.isAllowed(resource.EXECUTION, action.REVIEW, execution()?.namespace) === true)
     const allowed = ref(false)
     const checkedTaskRunId = ref<string>()
 
     watch(
-        [permitted, () => execution().id, () => approval.value?.taskRun.id],
+        [permitted, () => execution()?.id, () => approval.value?.taskRun.id],
         async ([isPermitted, id, approvalTaskRunId]) => {
             allowed.value = false
             checkedTaskRunId.value = undefined
@@ -31,7 +35,7 @@ export function useApprovalReviewer(execution: () => Execution, taskRunId?: () =
                 return
             }
             const isAllowed = await executionsStore.isReviewAllowed({id, taskRunId: approvalTaskRunId})
-            if (id === execution().id && approvalTaskRunId === approval.value?.taskRun.id) {
+            if (id === execution()?.id && approvalTaskRunId === approval.value?.taskRun.id) {
                 allowed.value = isAllowed
                 checkedTaskRunId.value = approvalTaskRunId
             }

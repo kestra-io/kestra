@@ -63,4 +63,10 @@ describe("EXECUTION_TAB_ROUTES banner", () => {
 
         expect(tabsWithBanner).toEqual(["gantt", "logs"])
     })
+
+    it("should flag every tab showing the banner, overview included, for the top bar", () => {
+        const flagged = EXECUTION_TAB_ROUTES.filter((route) => route.meta?.banner === true).map((route) => route.meta?.tab)
+
+        expect(flagged).toEqual(["overview", "gantt", "logs"])
+    })
 })

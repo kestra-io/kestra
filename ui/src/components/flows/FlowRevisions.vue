@@ -26,7 +26,6 @@
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
     import {useUnsavedChangesStore} from "../../stores/unsavedChanges"
-    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
@@ -126,9 +125,7 @@
     }
 
     function onRestoreError(error: unknown) {
-        if (!isReportedCentrally(error as KestraHttpError)) {
-            toast.error(asProblem(error)?.detail ?? t("error"))
-        }
+        toast.requestError(error, asProblem(error)?.detail ?? t("error"))
     }
 
     async function loadRevisionContent(revision: number) {

@@ -38,6 +38,10 @@ describe("buildSectionLanes", () => {
         expect(lane.icon).toBeDefined()
     })
 
+    it("gives every lane its own icon", () => {
+        expect(new Set(buildLanes().map((lane) => lane.icon)).size).toBe(5)
+    })
+
     it("takes each lane's blocks from the matching key of the sources", () => {
         for (const lane of buildLanes()) {
             expect(lane.blocks).toBe(sources[lane.section])

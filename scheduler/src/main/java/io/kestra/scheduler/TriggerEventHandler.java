@@ -14,6 +14,7 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.ConflictException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -50,9 +51,11 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
+import io.kestra.scheduler.internals.TriggerFlowParser;
 import io.kestra.scheduler.internals.TriggerResumer;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -77,6 +80,7 @@ public class TriggerEventHandler {
     private final ConditionService conditionService;
     private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
     private final AsyncOperationService asyncOperationService;
+    private final FlowParsingService flowParsingService;
 
     @Inject
     public TriggerEventHandler(@Named("cached") TriggerStateStore triggerStateStore,
@@ -85,7 +89,8 @@ public class TriggerEventHandler {
         RunContextFactory runContextFactory,
         ConditionService conditionService,
         BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
-        AsyncOperationService asyncOperationService) {
+        AsyncOperationService asyncOperationService,
+        FlowParsingService flowParsingService) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;
@@ -93,6 +98,7 @@ public class TriggerEventHandler {
         this.runContextFactory = runContextFactory;
         this.executionKilledQueue = executionKilledQueue;
         this.asyncOperationService = asyncOperationService;
+        this.flowParsingService = flowParsingService;
     }
 
     /**
@@ -625,7 +631,7 @@ public class TriggerEventHandler {
     }
 
     private boolean isDisabledInDefinition(TriggerEvent event) {
-        AbstractTrigger trigger = findTrigger(event, null).getRight();
+        AbstractTrigger trigger = findStoredTriggerIn(event, findFlow(event, null)).getRight();
         return trigger != null && trigger.isDisabled();
     }
 
@@ -657,6 +663,23 @@ public class TriggerEventHandler {
     }
 
     private Pair<Flow, AbstractTrigger> findTriggerIn(TriggerEvent event, FlowWithSource flow) {
+        return findStoredTriggerIn(event, flow == null ? null : governed(flow));
+    }
+
+    /**
+     * Applies runtime governance, so trigger states are computed from the configuration the evaluation loop
+     * uses. A blocked or unparseable flow falls back to its stored definition: the evaluation loop owns that
+     * reaction.
+     */
+    private FlowWithSource governed(FlowWithSource flow) {
+        try {
+            return TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOG);
+        } catch (FlowProcessingException e) {
+            return flow;
+        }
+    }
+
+    private Pair<Flow, AbstractTrigger> findStoredTriggerIn(TriggerEvent event, FlowWithSource flow) {
         if (flow == null) {
             return Pair.of(null, null);
         }

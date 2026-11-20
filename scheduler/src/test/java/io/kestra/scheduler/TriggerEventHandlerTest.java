@@ -23,6 +23,7 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.ConflictException;
+import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -33,6 +34,7 @@ import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -50,10 +52,12 @@ import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.scheduler.stores.CachedFlowMetaStore;
@@ -111,6 +115,14 @@ class TriggerEventHandlerTest {
     }
 
     TriggerEventHandler newTriggerEventHandler(FlowMetaStore flowMetaStore) {
+        return newTriggerEventHandler(flowMetaStore, Fixtures.passThroughFlowParsingService());
+    }
+
+    TriggerEventHandler newTriggerEventHandler(List<FlowWithSource> flows, FlowParsingService flowParsingService) {
+        return newTriggerEventHandler(new InMemoryFlowMetaStore(TEST_VNODE_COUNT, flows), flowParsingService);
+    }
+
+    TriggerEventHandler newTriggerEventHandler(FlowMetaStore flowMetaStore, FlowParsingService flowParsingService) {
         return new TriggerEventHandler(
             triggerStateStore,
             flowMetaStore,
@@ -118,7 +130,8 @@ class TriggerEventHandlerTest {
             runContextFactory,
             conditionService,
             executionKilledQueue,
-            new AsyncOperationService(asyncOperationProcessedEventQueue)
+            new AsyncOperationService(asyncOperationProcessedEventQueue),
+            flowParsingService
         );
     }
 
@@ -137,6 +150,76 @@ class TriggerEventHandlerTest {
         assertThat(TriggerId.of(saved.get())).isEqualTo(triggerId);
         assertThat(saved.get().getLastEventId()).isNotNull();
         assertThat(saved.get().getNextEvaluationDate()).isNotNull();
+    }
+
+    @Test
+    void shouldComputeNextEvaluationDateFromGovernedTriggerGivenTriggerCreatedEvent() {
+        // GIVEN a stored schedule without timezone (server default UTC) that a policy sets to Europe/Berlin
+        Clock clock = Clock.fixed(Instant.parse("2026-11-20T09:57:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        handler = newTriggerEventHandler(List.of(withRevision(storedElevenAndOneSchedule(), 1)), governedWithTimezone("Europe/Berlin"));
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, new TriggerCreated(triggerId, 1));
+
+        // THEN the first evaluation is 11:00 Berlin, not 11:00 UTC (12:00 Berlin, which is not a cron tick there)
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
+        assertThat(state.getNextEvaluationDate()).isEqualTo(Instant.parse("2026-11-20T10:00:00Z"));
+    }
+
+    @Test
+    void shouldComputeNextEvaluationDateFromGovernedTriggerGivenTriggerUpdatedEvent() {
+        // GIVEN a governed schedule whose flow is saved again
+        Clock clock = Clock.fixed(Instant.parse("2026-11-20T09:57:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        handler = newTriggerEventHandler(
+            List.of(withRevision(storedElevenAndOneSchedule(), 1), withRevision(storedElevenAndOneSchedule(), 2)),
+            governedWithTimezone("Europe/Berlin")
+        );
+        handler.handle(clock, TEST_VNODE, new TriggerCreated(triggerId, 1));
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, new TriggerUpdated(triggerId, 2));
+
+        // THEN
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
+        assertThat(state.getFlowRevision()).isEqualTo(2);
+        assertThat(state.getNextEvaluationDate()).isEqualTo(Instant.parse("2026-11-20T10:00:00Z"));
+    }
+
+    @Test
+    void shouldComputeNextEvaluationDateFromStoredTriggerWhenGovernedParseIsBlocked() throws Exception {
+        // GIVEN governance rejects the flow: the state is still created, the evaluation loop owns the block
+        Clock clock = Clock.fixed(Instant.parse("2026-11-20T09:57:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        FlowParsingService blocking = Mockito.mock(FlowParsingService.class);
+        Mockito.when(blocking.parseForRuntime(Mockito.any()))
+            .thenThrow(new FlowBlockedException(Blocker.Reason.POLICY, "Blocked by governance policy", List.of("deny"), null));
+        handler = newTriggerEventHandler(List.of(withRevision(storedElevenAndOneSchedule(), 1)), blocking);
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, new TriggerCreated(triggerId, 1));
+
+        // THEN
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
+        assertThat(state.getNextEvaluationDate()).isEqualTo(Instant.parse("2026-11-20T11:00:00Z"));
+    }
+
+    private static FlowWithSource storedElevenAndOneSchedule() {
+        return Fixtures.defaultFlow(b -> b.cron("0 11,13 * * *").timezone("UTC").build());
+    }
+
+    private static FlowParsingService governedWithTimezone(String timezone) {
+        return Mockito.mock(
+            FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
+                ? ProcessedFlow.of(
+                    withRevision(
+                        Fixtures.defaultFlow(b -> b.cron("0 11,13 * * *").timezone(timezone).build()),
+                        ((FlowWithSource) invocation.getArgument(0)).getRevision()
+                    )
+                )
+                : Mockito.RETURNS_DEFAULTS.answer(invocation)
+        );
     }
 
     @Test
@@ -1867,7 +1950,8 @@ class TriggerEventHandlerTest {
             runContextFactory,
             conditionService,
             executionKilledQueue,
-            new AsyncOperationService(asyncOperationProcessedEventQueue)
+            new AsyncOperationService(asyncOperationProcessedEventQueue),
+            Fixtures.passThroughFlowParsingService()
         );
         String operationId = IdUtils.create();
         SetDisableTrigger event = new SetDisableTrigger(triggerId, true).withOperationId(operationId);

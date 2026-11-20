@@ -305,7 +305,6 @@ describe("useApplyDraft", () => {
     })
 
     it("throws a non-404 error during the diff fetch instead of silently falling back to empty", async () => {
-        messageBox.mockResolvedValueOnce(undefined)
         loadFlow.mockRejectedValueOnce(Object.assign(new Error("server error"), {status: 500}))
         await useApplyDraft().apply(draft())
         expect(messageBox).not.toHaveBeenCalled()

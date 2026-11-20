@@ -25,7 +25,7 @@ class McpPlatformToolTest {
     List<AiAuthoringTool> authoringTools;
 
     @Test
-    void shouldOptInOnlyThePlatformToolsMeantForMcpClientsWhenCatalogIsBuilt() {
+    void shouldOptInOnlyTheToolsMeantForMcpClientsWhenCatalogIsBuilt() {
         // Given — the docs tools are stubbed so the catalog holds every tool bean without reaching kestra.io
         DocsMcpToolProvider docsMcpToolProvider = mock(DocsMcpToolProvider.class);
         when(docsMcpToolProvider.tools()).thenReturn(Map.of());
@@ -33,7 +33,7 @@ class McpPlatformToolTest {
 
         // When
         List<ToolCatalog.ToolEntry> exposed = catalog.entries().stream()
-            .filter(entry -> entry.tool() instanceof McpPlatformTool)
+            .filter(entry -> entry.tool() instanceof McpExposedTool)
             .toList();
 
         // Then
@@ -48,13 +48,14 @@ class McpPlatformToolTest {
             "list_namespaces", "list_namespace_dependencies",
             "list_namespace_files", "read_namespace_file", "write_namespace_file", "create_namespace_directory", "move_namespace_file", "delete_namespace_file",
             "list_kv_entries", "read_kv_entry", "create_kv_entry", "update_kv_entry", "delete_kv_entry",
-            "search_logs", "delete_execution_logs", "delete_flow_logs"
+            "search_logs", "delete_execution_logs", "delete_flow_logs",
+            "author_flow"
         );
         assertThat(exposed).allSatisfy(entry ->
         {
-            McpToolAnnotations annotations = ((McpPlatformTool) entry.tool()).annotations();
+            McpToolAnnotations annotations = ((McpExposedTool) entry.tool()).annotations();
             assertThat(annotations).as("annotations of %s", entry.name()).isNotNull();
-            assertThat(annotations.readOnly()).as("readOnly of %s", entry.name()).isEqualTo(AgentToolFamily.READ == entry.family());
+            assertThat(annotations.readOnly()).as("readOnly of %s", entry.name()).isEqualTo(entry.isAuthoring() || AgentToolFamily.READ == entry.family());
             if (annotations.destructive() && !annotations.readOnly()) {
                 assertThat(entry.writePolicy()).as("writePolicy of destructive %s", entry.name()).isEqualTo(AgentWritePolicy.CONFIRM);
             }

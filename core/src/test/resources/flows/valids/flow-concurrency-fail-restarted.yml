@@ -1,0 +1,19 @@
+id: flow-concurrency-fail-restarted
+namespace: io.kestra.tests
+
+inputs:
+  - id: sleep
+    type: STRING
+    defaults: PT1S
+
+concurrency:
+  behavior: FAIL
+  limit: 1
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: "{{ inputs.sleep }}"
+  - id: fail-first-attempt
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ taskrun.attemptsCount == 0 }}"

@@ -1,8 +1,10 @@
 package io.kestra.core.models.tasks.runners;
 
+import java.io.IOException;
 import java.io.Serial;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class TaskException extends Exception {
@@ -14,6 +16,10 @@ public class TaskException extends Exception {
     private final int stdErrCount;
 
     private transient AbstractLogConsumer logConsumer;
+
+    /** A failed transfer leaves local output files untrusted and prevents their collection. */
+    @Setter
+    private transient IOException outputFilesException;
 
     /**
      * Optional post-execution detail produced by the task runner before it failed.

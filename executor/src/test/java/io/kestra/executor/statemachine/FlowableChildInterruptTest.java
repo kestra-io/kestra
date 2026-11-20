@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilledTaskRuns;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -76,6 +78,18 @@ class FlowableChildInterruptTest {
         assertThat(interrupt.getTaskRunIds()).as("every running leaf, nested ones included").containsExactlyInAnyOrder(taskRun(created, "b").getId(), taskRun(created, "c").getId());
         assertThat(interrupt.getTaskRunState()).as("onChildFailure defaults to FAIL").isEqualTo(State.Type.FAILED);
         assertThat(taskRunState(created, "seq")).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void anInterruptedSiblingLogsWhichSiblingFailed() {
+        // Given
+        Execution created = runParallelWhereAFailsWhileTheOthersRun("");
+
+        // Then
+        assertThat(harness.logs())
+            .filteredOn(log -> taskRun(created, "b").getId().equals(log.getTaskRunId()) && log.getLevel() == Level.WARN)
+            .extracting(LogEntry::getMessage)
+            .containsExactly("Task terminated because sibling task 'a' failed");
     }
 
     @Test

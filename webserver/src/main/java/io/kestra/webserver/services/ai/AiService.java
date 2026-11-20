@@ -170,19 +170,24 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             )
         );
 
-        String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
+        try {
+            String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
 
-        String generatedFlow = flowAiCopilot.generateFlow(
-            this.pluginFinder(flowGenerationPrompt.getConversationId()),
-            this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
-            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
-            allPluginsMetadata(),
-            flowGenerationPrompt,
-            tenantId,
-            pebbleExpressions
-        );
+            String generatedFlow = flowAiCopilot.generateFlow(
+                this.pluginFinder(flowGenerationPrompt.getConversationId()),
+                this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
+                (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
+                allPluginsMetadata(),
+                flowGenerationPrompt,
+                tenantId,
+                pebbleExpressions
+            );
 
-        return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
+            return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
+        } catch (Exception e) {
+            this.afterGeneration(ctx, "FlowGenerationError", Map.of(), "", "generatedFlow");
+            throw e;
+        }
     }
 
     @Override
@@ -194,15 +199,20 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             )
         );
 
-        String generatedDashboard = dashboardAiCopilot.generateDashboard(
-            this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
-            this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
-            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
-            allPluginsMetadata(),
-            dashboardGenerationPrompt
-        );
+        try {
+            String generatedDashboard = dashboardAiCopilot.generateDashboard(
+                this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
+                this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
+                (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
+                allPluginsMetadata(),
+                dashboardGenerationPrompt
+            );
 
-        return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
+            return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
+        } catch (Exception e) {
+            this.afterGeneration(ctx, "DashboardGenerationError", Map.of(), "", "generatedDashboard");
+            throw e;
+        }
     }
 
     public String displayName() {

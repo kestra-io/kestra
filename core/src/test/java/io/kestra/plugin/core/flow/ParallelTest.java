@@ -164,6 +164,24 @@ class ParallelTest {
         assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/parallel-continue-sequential.yaml" })
+    void parallelContinueSequential() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            "io.kestra.tests", "parallel-continue-sequential", null, null, Duration.ofSeconds(20),
+            this::allTaskRunsTerminated
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("fail_now").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("branch").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("step_1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("step_2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("single").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
     private boolean allTaskRunsTerminated(Execution execution) {
         return execution.getState().isTerminated()
             && execution.getTaskRunList() != null

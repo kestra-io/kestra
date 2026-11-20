@@ -20,13 +20,16 @@ describe("pebbleTokens", () => {
         expect(next).toBe(tokens.length)
     })
 
-    it("merges a plain variable with its delimiters into one token", () => {
-        expect(paint("a: {{ inputs.name }} {{- vars.x -}}")).toEqual(["pebble:{{ inputs.name }}", "pebble:{{- vars.x -}}"])
+    it("paints a variable path in its own color, apart from the delimiters", () => {
+        expect(paint("a: {{ inputs.name }} {{- vars.x -}}")).toEqual([
+            "pebble:{{ ", "pebbleVariable:inputs.name", "pebble: }}",
+            "pebble:{{- ", "pebbleVariable:vars.x", "pebble: -}}",
+        ])
     })
 
     it("colors keywords, constants, strings and numbers", () => {
         expect(paint("{% if x == 1.5 and y is null %}{{ 'a' ~ \"b\\\"c\" }}{% endif %}")).toEqual([
-            "pebble:{% ", "keyword:if", "pebble: x ", "operator:==", "pebble: ", "number:1.5", "pebble: ", "keyword:and", "pebble: y ", "keyword:is", "pebble: ", "constant:null", "pebble: %}",
+            "pebble:{% ", "keyword:if", "pebble: ", "pebbleVariable:x", "pebble: ", "operator:==", "pebble: ", "number:1.5", "pebble: ", "keyword:and", "pebble: ", "pebbleVariable:y", "pebble: ", "keyword:is", "pebble: ", "constant:null", "pebble: %}",
             "pebble:{{ ", "string:'a'", "pebble: ", "operator:~", "pebble: ", "string:\"b\\\"c\"", "pebble: }}",
             "pebble:{% ", "keyword:endif", "pebble: %}",
         ])
@@ -34,21 +37,21 @@ describe("pebbleTokens", () => {
 
     it("colors a call and a filter as functions, with their arguments", () => {
         expect(paint("{{ now() | date('yyyy', timeZone=tz) }}")).toEqual([
-            "pebble:{{ ", "function:now", "punctuation:()", "pebble: ", "operator:|", "pebble: ", "function:date", "punctuation:(", "string:'yyyy'", "punctuation:,", "pebble: timeZone", "operator:=", "pebble:tz", "punctuation:)", "pebble: }}",
+            "pebble:{{ ", "function:now", "punctuation:()", "pebble: ", "operator:|", "pebble: ", "function:date", "punctuation:(", "string:'yyyy'", "punctuation:,", "pebble: ", "pebbleVariable:timeZone", "operator:=", "pebbleVariable:tz", "punctuation:)", "pebble: }}",
         ])
     })
 
     it("keeps a keyword used as a member or a filter from being a keyword", () => {
         expect(paint("{{ x.if | not }} {{ in.for }} {{ true.x }}")).toEqual([
-            "pebble:{{ x.if ", "operator:|", "pebble: ", "function:not", "pebble: }}",
-            "pebble:{{ in.for }}",
-            "pebble:{{ true.x }}",
+            "pebble:{{ ", "pebbleVariable:x.if", "pebble: ", "operator:|", "pebble: ", "function:not", "pebble: }}",
+            "pebble:{{ ", "pebbleVariable:in.for", "pebble: }}",
+            "pebble:{{ ", "pebbleVariable:true.x", "pebble: }}",
         ])
     })
 
     it("colors brackets, maps and ranges", () => {
         expect(paint("{{ outputs['t'].v ?? {'a': [1..3]} }}")).toEqual([
-            "pebble:{{ outputs", "punctuation:[", "string:'t'", "punctuation:]", "pebble:.v ", "operator:??", "pebble: ", "punctuation:{", "string:'a'", "punctuation::", "pebble: ", "punctuation:[", "number:1", "operator:..", "number:3", "punctuation:]}", "pebble: }}",
+            "pebble:{{ ", "pebbleVariable:outputs", "punctuation:[", "string:'t'", "punctuation:]", "pebbleVariable:.v", "pebble: ", "operator:??", "pebble: ", "punctuation:{", "string:'a'", "punctuation::", "pebble: ", "punctuation:[", "number:1", "operator:..", "number:3", "punctuation:]}", "pebble: }}",
         ])
     })
 
@@ -58,22 +61,22 @@ describe("pebbleTokens", () => {
 
     it("reads an accented name whole, as the grammar does", () => {
         expect(paint("{{ forçado ?? orçamento() | inégal }} {{ trueño }} {{ éif }}")).toEqual([
-            "pebble:{{ forçado ", "operator:??", "pebble: ", "function:orçamento", "punctuation:()", "pebble: ", "operator:|", "pebble: ", "function:inégal", "pebble: }}",
-            "pebble:{{ trueño }}",
-            "pebble:{{ éif }}",
+            "pebble:{{ ", "pebbleVariable:forçado", "pebble: ", "operator:??", "pebble: ", "function:orçamento", "punctuation:()", "pebble: ", "operator:|", "pebble: ", "function:inégal", "pebble: }}",
+            "pebble:{{ ", "pebbleVariable:trueño", "pebble: }}",
+            "pebble:{{ é", "pebbleVariable:if", "pebble: }}",
         ])
     })
 
     it("keeps a filter its function color when the pipe wraps to the next line", () => {
-        expect(paint("x: {{ inputs.list |\n    upper }}")).toEqual(["pebble:{{ inputs.list ", "operator:|", "pebble:\n    ", "function:upper", "pebble: }}"])
+        expect(paint("x: {{ inputs.list |\n    upper }}")).toEqual(["pebble:{{ ", "pebbleVariable:inputs.list", "pebble: ", "operator:|", "pebble:\n    ", "function:upper", "pebble: }}"])
     })
 
     it("stops a string at the closer the block ends on, as the block does", () => {
-        expect(paint("x: '{{ \"a}}b\" }}'")).toEqual(["pebble:{{ \"a}}"])
+        expect(paint("x: '{{ \"a}}b\" }}'")).toEqual(["pebble:{{ \"", "pebbleVariable:a", "pebble:}}"])
     })
 
-    it("leaves an unclosed block entirely in the Pebble color except for what it can read", () => {
-        expect(paint("x: {{ inputs.a | json\ny: 1")).toEqual(["pebble:{{ inputs.a ", "operator:|", "pebble: ", "function:json"])
-        expect(paint("x: {{ 'open\n  y: 1")).toEqual(["pebble:{{ 'open\n  y", "punctuation::", "pebble: ", "number:1"])
+    it("leaves an unclosed block in the Pebble color except for what it can read", () => {
+        expect(paint("x: {{ inputs.a | json\ny: 1")).toEqual(["pebble:{{ ", "pebbleVariable:inputs.a", "pebble: ", "operator:|", "pebble: ", "function:json"])
+        expect(paint("x: {{ 'open\n  y: 1")).toEqual(["pebble:{{ '", "pebbleVariable:open", "pebble:\n  ", "pebbleVariable:y", "punctuation::", "pebble: ", "number:1"])
     })
 })

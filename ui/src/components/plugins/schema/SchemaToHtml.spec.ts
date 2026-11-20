@@ -8,7 +8,7 @@ import type {JSONSchema} from "./utils/schemaUtils"
 
 vi.mock("@kestra-io/design-system/shiki", () => ({
     getShiki: vi.fn().mockResolvedValue({
-        codeToHtml: () => "<code>mock code</code>",
+        codeToHast: () => ({type: "root", children: [{type: "element", tagName: "code", properties: {}, children: [{type: "text", value: "mock code"}]}]}),
         getLoadedLanguages: () => ["yaml"],
     }),
     isSpecialLang: () => false,

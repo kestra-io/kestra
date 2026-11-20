@@ -234,6 +234,8 @@
         & .editor-container {
             display: flex;
             flex-grow: 1;
+            height: var(--ks-editor-height, auto);
+            max-height: var(--ks-editor-max-height, none);
 
             &:not(.single-line) .editor-wrapper {
                 padding-bottom: 4rem;
@@ -254,7 +256,7 @@
 
             & .placeholder {
                 position: absolute;
-                top: -3px;
+                top: var(--ks-editor-placeholder-top, -3px);
                 overflow: hidden;
                 padding-left: inherit;
                 padding-right: inherit;
@@ -353,6 +355,10 @@
         color: var(--code-pebble) !important;
     }
 
+    .highlight-pebble-pebbleVariable {
+        color: var(--code-pebbleVariable) !important;
+    }
+
     .highlight-pebble-keyword {
         color: var(--code-keyword) !important;
     }
@@ -395,6 +401,7 @@
         width: 100%;
         height: 100%;
         outline: none;
+        overflow-x: var(--ks-editor-overflow-x, visible);
     }
 
     .main-editor > #flowFileEditorTab .monaco-editor {

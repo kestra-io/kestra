@@ -292,6 +292,16 @@
     "last execution status": "Último estado de ejecución",
     "jump to": "Ir a",
     "jump to...": "Saltar a...",
+    "global_search": {
+      "open_flow": "Abrir flow",
+      "flow_executions": "Ejecuciones del flow",
+      "move": "Mover",
+      "menu": "Menú",
+      "sources": "Menú + flows + namespaces",
+      "sources_flows": "Menú + Flows",
+      "sources_namespaces": "Menú + namespaces",
+      "search_failed": "No se pudieron cargar los flows o namespaces"
+    },
     "contextBar": {
       "ai": "IA",
       "news": "Noticias",
@@ -1570,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "Elige tu tema de interfaz preferido.",
-            "color_mode_shortcut": "Consejo: pulsa <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>L</kbd> para cambiar de tema desde cualquier lugar.",
+            "color_mode_shortcut": "Consejo: pulsa {ctrl}+{shift}+{key} para cambiar de tema desde cualquier lugar.",
             "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales.",
             "editor_font_family": "Fuente monoespaciada utilizada en el editor YAML.",
             "editor_font_size": "Tamaño de fuente utilizado en los editores YAML y sin código.",
@@ -1780,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "Esto es un flow",
-            "body": "El flow está escrito en YAML con dos tasks:<ol><li><code>fetch_orders</code> para descargar los pedidos</li><li><code>summarize</code> para calcular los ingresos en Python</li></ol>Los tasks se ejecutan secuencialmente, en el orden en que se definen.",
+            "body": "El flow está escrito en YAML con dos tasks:",
+            "tasks": {
+              "fetch_orders": "{task} para descargar los pedidos",
+              "summarize": "{task} para calcular los ingresos en Python"
+            },
+            "after_tasks": "Los tasks se ejecutan secuencialmente, en el orden en que se definen.",
             "next": "Guardar y ejecutar"
           },
           "first_execution": {
@@ -2571,6 +2586,7 @@
           "generic": "Algo salió mal. Por favor, inténtelo de nuevo."
         },
         "emptyHelper": "Puedo editar este flow, generar pruebas, generar archivos relacionados o explicar cómo funciona.",
+        "emptyHelperNoFlow": "Puedo crear o editar flows, generar pruebas, generar archivos relacionados o explicar cómo funciona Kestra.",
         "suggestions": {
           "errorHandling": "Añadir manejo de errores",
           "unitTest": "Generar una prueba unitaria",

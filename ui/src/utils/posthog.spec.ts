@@ -184,7 +184,8 @@ describe("identifyPosthogUser", () => {
             ).resolves.toBeUndefined()
             expect(posthogLoadAttempted).toHaveBeenCalledOnce()
         } finally {
-            vi.doUnmock("posthog-js")
+            // vi.doUnmock would also drop the file-level mock, handing later tests the real client.
+            vi.doMock("posthog-js", () => ({default: posthogMock}))
             vi.resetModules()
         }
     })

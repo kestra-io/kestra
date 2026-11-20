@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
-import {within, expect} from "storybook/test"
+import {within, expect, waitFor} from "storybook/test"
 import KsUpload from "./KsUpload.vue"
 import KsButton from "../Basic/KsButton/KsButton.vue"
 
@@ -146,4 +146,30 @@ export const AcceptTypes: Story = {
             </div>
         `,
     }),
+}
+
+/** `--ks-upload-dragger-padding` and `--ks-upload-dragger-bg`, set on the upload or an ancestor; a background set this way also holds while a file is dragged over */
+export const DraggerVariables: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsUpload},
+        template: `
+            <div style="padding:24px;width:360px;--ks-upload-dragger-padding:var(--ks-spacing-5) var(--ks-spacing-4);--ks-upload-dragger-bg:var(--ks-bg-surface)">
+                <ks-upload action="#" drag>
+                    <div>Drop a .jar file here or click to upload</div>
+                </ks-upload>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const dragger = canvasElement.querySelector(".kel-upload-dragger")!
+        const before = getComputedStyle(dragger)
+        await expect(before.paddingTop).toBe("24px")
+        await expect(before.paddingLeft).toBe("16px")
+        const background = before.backgroundColor
+        dragger.dispatchEvent(new DragEvent("dragover", {bubbles: true, cancelable: true, dataTransfer: new DataTransfer()}))
+        await waitFor(() => expect(dragger.classList.contains("is-dragover")).toBe(true))
+        await expect(getComputedStyle(dragger).backgroundColor).toBe(background)
+        await expect(getComputedStyle(dragger).paddingTop).toBe("24px")
+    },
 }

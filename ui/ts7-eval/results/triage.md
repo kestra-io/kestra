@@ -2,7 +2,7 @@
 |---|---|
 | expected v4 (config): data-* attribute not in dataAttributes | 0 |
 | expected v4, relaxation asked upstream (vuejs/language-tools#6318): aria-* / role on a component | 0 |
-| expected v4, relaxation asked upstream (vuejs/language-tools#6334): native listener on a component without emits | 263 |
+| expected v4, relaxation asked upstream (vuejs/language-tools#6334): native listener on a component without emits | 269 |
 | mapper bug (v4 only, vuejs/language-tools#6306): v-else-if narrowing over a v-for local | 12 |
 | TS 7.1 intended change (microsoft/TypeScript#64656): TS5088 on a recursive mapped type (repros/ts5088-min) | 0 |
 | TS 7.1 regression, not reported upstream: TS2883 on a subpath of a deduplicated package (repros/ts2883-min, ISSUES.md #1) | 2 |
@@ -14,9 +14,9 @@
 | genuine (our code): global directive missing from GlobalDirectives | 0 |
 | expected v4: unknown custom element / component | 9 |
 | expected v4: v-model write-back of defineModel<T>() (T | undefined) | 93 |
-| expected v4: unknown prop or fallthrough attr (checkUnknownProps always on) | 16 |
+| expected v4: unknown prop or fallthrough attr (checkUnknownProps always on) | 7 |
 | unclassified | 1 |
-| **total** | **396** |
+| **total** | **393** |
 
 Unclassified:
 

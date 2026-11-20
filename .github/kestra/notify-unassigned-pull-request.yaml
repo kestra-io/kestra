@@ -1,0 +1,154 @@
+id: notify-unassigned-pull-request
+namespace: community.github
+
+description: |
+  Tells the maintainers on Slack when a contributor opens a pull request that is not backed by an assignment, in any repository of the organization.
+
+  When a pull request is opened, its linked issues are read from GitHub (closing keywords such as `Closes <issue URL>`, or the Development sidebar). A message is sent if the author is not assigned to one of them, or if no issue is linked. Maintainers, meaning anyone whose permission on that repository is in `maintainerPermissions`, and bots are skipped. GitHub only honours closing keywords on pull requests that target the default branch, so a pull request against another branch is reported as linking no issue.
+
+  The webhook key is its only authentication, so the pull request, its author and its linked issues are read from GitHub by number instead of being taken from the payload.
+
+  Limits: the message is sent again if GitHub delivers the same event twice, which it only does when someone redelivers it by hand.
+
+  ### Setup
+  1. Install the plugin `io.kestra.plugin:plugin-notifications`, which provides the Slack task, and create the secrets `GITHUB_TOKEN`, `GITHUB_PR_WEBHOOK_KEY` and `MAINTAINERS_SLACK_WEBHOOK_URL` (a Slack incoming webhook). The token needs read on Pull requests and Issues in every repository of the organization, and its owner needs push access to them: GitHub requires that to read a user's permission.
+  2. Add an organization webhook (Organization settings, Webhooks) to `https://<kestra-host>/api/v1/<tenant>/executions/webhook/community.github/notify-unassigned-pull-request/<GITHUB_PR_WEBHOOK_KEY>` with the content type `application/json`, subscribed to the `Pull requests` event only. It delivers the pull requests of every repository, and `repositoryPattern` decides which ones are handled.
+
+variables:
+  # Anyone with one of these permissions on the repository is a maintainer and is skipped.
+  maintainerPermissions: [admin, write]
+  # Repository names end up in request URLs: ".github" is a valid one, "." and ".." are not.
+  repositoryPattern: '^kestra-io/(?!\.{1,2}$)[A-Za-z0-9._-]+$'
+  # GraphQL is the only API that exposes the issues a pull request closes, by keyword or from the sidebar.
+  pullRequestQuery: |
+    query($owner: String!, $name: String!, $number: Int!) {
+      repository(owner: $owner, name: $name) {
+        pullRequest(number: $number) {
+          url
+          title
+          authorAssociation
+          author {
+            __typename
+            login
+          }
+          closingIssuesReferences(first: 20) {
+            nodes {
+              number
+              url
+              assignees(first: 20) {
+                nodes {
+                  login
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+triggers:
+  - id: github_pull_request
+    type: io.kestra.plugin.core.trigger.Webhook
+    # The key is part of the URL and is the only authentication, so it is kept in a secret.
+    key: "{{ secret('GITHUB_PR_WEBHOOK_KEY') }}"
+    # Only newly opened pull requests written by a person; "?? ''" makes GitHub's ping a plain no-match.
+    when: >-
+      {{ ((trigger.body.action ?? '') == 'opened')
+         and ((trigger.body.repository.full_name ?? '') | regexMatch(vars.repositoryPattern))
+         and ((trigger.body.pull_request.user.type ?? '') == 'User') }}
+
+tasks:
+  # The only things taken from the payload, which cannot be trusted: which pull request. The rest is read from GitHub.
+  - id: event
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      repository: "{{ trigger.body.repository.full_name }}"
+      owner: "{{ trigger.body.repository.full_name | substringBefore('/') }}"
+      name: "{{ trigger.body.repository.full_name | substringAfter('/') }}"
+      number: "{{ trigger.body.pull_request.number }}"
+
+  - id: get_pull_request
+    type: io.kestra.plugin.core.http.Request
+    method: POST
+    uri: https://api.github.com/graphql
+    contentType: application/json
+    headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+    timeout: PT30S
+    retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+    # GraphQL requires the number as an integer, hence the payload rather than the text above.
+    body: >-
+      {{ {
+        'query': vars.pullRequestQuery,
+        'variables': {
+          'owner': outputs.event.values.owner,
+          'name': outputs.event.values.name,
+          'number': trigger.body.pull_request.number
+        }
+      } }}
+
+  # GraphQL reports errors with a 200, which the HTTP task does not notice.
+  - id: check_response
+    type: io.kestra.plugin.core.execution.Fail
+    condition: >-
+      {{ outputs.get_pull_request.body | jq('.errors != null or .data.repository.pullRequest == null') | first }}
+    errorMessage: "GitHub could not return the pull request {{ outputs.event.values.repository }}#{{ outputs.event.values.number }}: {{ outputs.get_pull_request.body }}"
+
+  # Outputs are stored as text, hence the comparisons with 'true' further down.
+  - id: facts
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      # A deleted account has no author at all; GitHub shows it as "ghost".
+      author: >-
+        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.author.login // "ghost"') | first }}
+      association: >-
+        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.authorAssociation') | first }}
+      # Bots and deleted accounts are not contributors to follow up on.
+      isUser: >-
+        {{ (outputs.get_pull_request.body | jq('.data.repository.pullRequest.author.__typename') | first) == 'User' }}
+      # GitHub returns null for a linked issue that the token cannot see: it still counts as a link, but cannot be checked.
+      linkedCount: >-
+        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.closingIssuesReferences.nodes | length') | first }}
+      # The linked issues the author is not assigned to, as Slack links with who is.
+      notAssigned: >-
+        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest | .author.login as $author | [.closingIssuesReferences.nodes[] | select(. != null) | select(([.assignees.nodes[].login] | index($author)) == null) | "<" + .url + "|#" + (.number | tostring) + ">" + (if (.assignees.nodes | length) == 0 then " (nobody is assigned)" else " (assigned to " + ([.assignees.nodes[].login] | join(", ")) + ")" end)] | join(", ")') | first }}
+      # The title is the author's: Slack reads "<" and ">" as links and mentions such as <!channel>. It is shortened first so that no escape is cut in half.
+      title: >-
+        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.title') | first | abbreviate(120) | regexReplace('&', '&amp;') | regexReplace('<', '&lt;') | regexReplace('>', '&gt;') }}
+      url: >-
+        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.url') | first }}
+
+  - id: review
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.facts.values.isUser }}"
+    then:
+      # Permission identifies maintainers; an association cannot, as GitHub only reports MEMBER for public members.
+      - id: get_author_permission
+        type: io.kestra.plugin.core.http.Request
+        uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/collaborators/{{ outputs.facts.values.author }}/permission"
+        headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+        timeout: PT30S
+        retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+      - id: needs_attention
+        type: io.kestra.plugin.core.flow.If
+        condition: >-
+          {{ not (vars.maintainerPermissions contains (outputs.get_author_permission.body | jq('.permission') | first))
+             and (outputs.facts.values.linkedCount | number == 0 or outputs.facts.values.notAssigned != '') }}
+        then:
+          # Not an HTTP request: the output of one would echo the webhook URL, which is a secret, into the stored execution.
+          - id: notify_maintainers
+            type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+            url: "{{ secret('MAINTAINERS_SLACK_WEBHOOK_URL') }}"
+            timeout: PT30S
+            retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+            messageText: >-
+              {{ ':eyes: <' ~ outputs.facts.values.url ~ '|' ~ outputs.event.values.repository ~ '#' ~ outputs.event.values.number ~ ' ' ~ outputs.facts.values.title ~ '> by `' ~ outputs.facts.values.author ~ '` (' ~ outputs.facts.values.association ~ ') is not backed by an assignment. '
+                ~ (outputs.facts.values.linkedCount | number == 0 ? 'It does not link any issue.' : 'Not assigned to the author: ' ~ outputs.facts.values.notAssigned ~ '.') }}
+        else:
+          - id: no_attention_needed
+            type: io.kestra.plugin.core.log.Log
+            message: "{{ outputs.event.values.repository }}#{{ outputs.event.values.number }} by {{ outputs.facts.values.author }} needs no attention: a maintainer, or backed by an assignment."
+    else:
+      - id: not_a_contributor
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ outputs.event.values.repository }}#{{ outputs.event.values.number }} was opened by {{ outputs.facts.values.author }}, which is a bot or a deleted account."

@@ -156,6 +156,7 @@ public class InternalNamespace implements Namespace {
 
     @Override
     public List<Pair<NamespaceFile, NamespaceFile>> move(Path source, Path target) throws Exception {
+        StorageContext.requireNoEmptySegment(namespace);
         final Path normalizedSource = NamespaceFile.normalize(source);
         final Path normalizedTarget = NamespaceFile.normalize(target);
 
@@ -423,6 +424,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> putFile(final Path path, final InputStream content, final Conflicts onAlreadyExist) throws IOException, URISyntaxException {
+        StorageContext.requireNoEmptySegment(namespace);
         final Path normalizedPath = NamespaceFile.normalize(path);
 
         Optional<NamespaceFileMetadata> inRepository = discardConflictingEntry(findByPath(normalizedPath, true), false, normalizedPath);
@@ -577,6 +579,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public NamespaceFile createDirectory(Path path) throws IOException {
+        StorageContext.requireNoEmptySegment(namespace);
         final Path normalizedPath = NamespaceFile.normalize(path);
 
         mkDirs(normalizedPath.toString());
@@ -605,6 +608,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> delete(Path path) throws IOException {
+        StorageContext.requireNoEmptySegment(namespace);
         final Path normalizedPath = NamespaceFile.normalize(path);
 
         Optional<NamespaceFileMetadata> maybeNamespaceFileMetadata = namespaceFileMetadataRepository.find(

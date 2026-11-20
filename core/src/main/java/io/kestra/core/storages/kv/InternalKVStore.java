@@ -7,6 +7,7 @@ import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.micronaut.data.model.Pageable;
@@ -70,6 +71,7 @@ public class InternalKVStore implements KVStore {
      */
     @Override
     public void put(String key, KVValueAndMetadata value, boolean overwrite) throws IOException {
+        StorageContext.requireNoEmptySegment(namespace);
         KVStore.validateKey(key);
 
         if (!overwrite && exists(key)) {
@@ -110,6 +112,7 @@ public class InternalKVStore implements KVStore {
      * @param rawValue The raw ION-serialized value bytes.
      */
     public void putRaw(String key, @Nullable KVMetadata metadata, byte[] rawValue) throws IOException {
+        StorageContext.requireNoEmptySegment(namespace);
         KVStore.validateKey(key);
 
         PersistedKvMetadata saved = this.kvMetadataRepository.save(

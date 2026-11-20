@@ -475,12 +475,13 @@ public class FlowController {
     protected void validateBulkUpdate(List<GenericFlow> flows, List<? extends FlowInterface> toDelete) {
     }
 
-    // An existing flow is parsed leniently, as flowRepository.update does, so that an update accepted before is not rejected now.
+    // An existing flow gets the checks flowRepository.update applies (lenient parsing, no pluginDefaultsRef check),
+    // so that an update accepted before is not rejected now.
     @SneakyThrows
     private void validateBeforeBulkWrite(GenericFlow flow) {
         boolean exists = flowRepository.findById(tenantService.resolveTenant(), flow.getNamespace(), flow.getId()).isPresent();
         try {
-            flowService.validateFlow(flow, !exists);
+            flowService.validateFlow(flow, !exists, !exists);
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {
                 throw cve;

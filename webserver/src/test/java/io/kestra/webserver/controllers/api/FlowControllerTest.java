@@ -640,6 +640,87 @@ class FlowControllerTest {
             .isEqualTo("flow_b");
         assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_a"), Flow.class).getRevision())
             .isEqualTo(1);
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/flows/" + namespace + "/flow_a"));
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/flows/" + namespace + "/flow_b"));
+    }
+
+    @Test
+    void shouldNotDeleteAnyFlowWhenAnExistingFlowOfABulkUpdateIsInvalid() {
+        String namespace = "io.kestra.bulk.atomicexisting";
+        String flowTemplate = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.%s
+                message: %s
+            """;
+        client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/main/flows/" + namespace,
+                flowTemplate.formatted("flow_a", namespace, "Log", "v1") + "---\n" + flowTemplate.formatted("flow_b", namespace, "Log", "v1")
+            ).contentType(MediaType.APPLICATION_YAML)
+        );
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/flows/" + namespace + "?delete=true",
+                    flowTemplate.formatted("flow_a", namespace, "Lgo", "typo")
+                ).contentType(MediaType.APPLICATION_YAML)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_b"), Flow.class).getId())
+            .isEqualTo("flow_b");
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_a"), Flow.class).getRevision())
+            .isEqualTo(1);
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/flows/" + namespace + "/flow_a"));
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/flows/" + namespace + "/flow_b"));
+    }
+
+    @Test
+    void shouldStillAcceptWhatAnUpdateAcceptedForAnExistingFlowOfABulkUpdate() {
+        String namespace = "io.kestra.bulk.lenientexisting";
+        client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/main/flows/" + namespace,
+                """
+                    id: flow_a
+                    namespace: %s
+                    tasks:
+                      - id: hello
+                        type: io.kestra.plugin.core.log.Log
+                        message: v1
+                    """.formatted(namespace)
+            ).contentType(MediaType.APPLICATION_YAML)
+        );
+
+        // An unknown property and an unresolved pluginDefaultsRef are accepted by a single update (flowRepository.update),
+        // so a bulk update of the same existing flow must accept them too.
+        List<FlowWithSource> updated = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/flows/" + namespace + "?delete=false",
+                """
+                    id: flow_a
+                    namespace: %s
+                    tasks:
+                      - id: hello
+                        type: io.kestra.plugin.core.log.Log
+                        message: v2
+                        pluginDefaultsRef: does_not_exist
+                        unknownProperty: ignored
+                    """.formatted(namespace)
+            ).contentType(MediaType.APPLICATION_YAML),
+            Argument.listOf(FlowWithSource.class)
+        );
+
+        assertThat(updated).extracting(FlowWithSource::getRevision).containsExactly(2);
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/flows/" + namespace + "/flow_a"));
     }
 
     @Test

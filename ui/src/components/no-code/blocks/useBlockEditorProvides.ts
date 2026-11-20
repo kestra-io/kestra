@@ -22,6 +22,7 @@ import {
     ROOT_SCHEMA_INJECTION_KEY,
     SAVE_FLOW_FUNCTION_INJECTION_KEY,
     SCHEMA_DEFINITIONS_INJECTION_KEY,
+    SCHEMA_LOADER_INJECTION_KEY,
     UPDATE_YAML_FUNCTION_INJECTION_KEY,
 } from "../injectionKeys"
 
@@ -57,6 +58,11 @@ export function useBlockEditorProvides(ctx: BlockEditorProvideContext) {
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}))
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
+    // Loaded on demand: topology also renders read-only (an execution's graph) and must not fetch it then.
+    provide(SCHEMA_LOADER_INJECTION_KEY, {
+        load: () => void pluginsStore.lazyLoadSchemaType({type: "flow"}),
+        isLoading: computed(() => pluginsStore.isFlowSchemaLoading),
+    })
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, anchorEl) => {
         ctx.createTask(parentPath, blockSchemaPath, refPath, anchorEl)
     })

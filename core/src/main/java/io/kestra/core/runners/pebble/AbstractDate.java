@@ -108,15 +108,9 @@ public abstract class AbstractDate {
             if (digitCount(longValue) == 13) {
                 return Instant.ofEpochMilli(longValue).atZone(zoneId);
             } else if (digitCount(longValue) == 19) {
-                if (value.toString().endsWith("000")) {
-                    long seconds = longValue / 1_000_000_000;
-                    int nanos = (int) (longValue % 1_000_000_000);
-                    return Instant.ofEpochSecond(seconds, nanos).atZone(zoneId);
-                } else {
-                    long milliseconds = longValue / 1_000_000;
-                    int micros = (int) (longValue % 1_000_000);
-                    return Instant.ofEpochMilli(milliseconds).atZone(zoneId).withNano(micros * 1000);
-                }
+                long seconds = longValue / 1_000_000_000;
+                int nanos = (int) (longValue % 1_000_000_000);
+                return Instant.ofEpochSecond(seconds, nanos).atZone(zoneId);
             }
             return Instant.ofEpochSecond(longValue).atZone(zoneId);
         }

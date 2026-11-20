@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -16,6 +17,7 @@ import io.kestra.core.runners.VariableRenderer;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class NumberFilterTest {
@@ -38,5 +40,30 @@ class NumberFilterTest {
     void run(String exp, String expected) throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(exp, Map.of());
         assertThat(render).isEqualTo(expected);
+    }
+
+    static Stream<Arguments> zeroPadded() {
+        return Stream.of(
+            Arguments.of("{{ \"010\" | number }}", "10"),
+            Arguments.of("{{ \"08\" | number }}", "8"),
+            Arguments.of("{{ \"08\" | number('INT') }}", "8"),
+            Arguments.of("{{ \"-08\" | number('LONG') }}", "-8"),
+            Arguments.of("{{ \"010\" | number('BIGINTEGER') }}", "10"),
+            Arguments.of("{{ \"0\" | number }}", "0"),
+            Arguments.of("{{ \"0.5\" | number }}", "0.5")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("zeroPadded")
+    void shouldParseZeroPaddedStringsAsDecimal(String exp, String expected) throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render(exp, Map.of())).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldThrowNamingTheFilterWhenValueIsNotANumber() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ \"abc\" | number }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("The 'number' filter cannot parse 'abc' as a number.");
     }
 }

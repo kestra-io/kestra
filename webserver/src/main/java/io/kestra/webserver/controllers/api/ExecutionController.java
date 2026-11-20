@@ -1954,7 +1954,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             execution.getTenantId(), execution.getId(), "Cancel approval", actorResolver.resolve(),
-            (operationId, actor) -> executionCommandQueue.emit(Resume.cancelApproval(execution, taskRunId, resumed, false).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(Resume.cancelApproval(execution, taskRunId, resumed, false).withOperationId(operationId).withActor(actor))
         ).map(r -> (HttpResponse<?>) r);
     }
 

@@ -573,6 +573,23 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlowsWithTenant({ "flows/valids/approval-basic.yaml" })
+    void shouldAttributeCancellingAnApprovalToTheRequestActor(String tenantId) throws QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution paused = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "approval-basic");
+        String taskRunId = paused.findTaskRunsByTaskId("approval").getFirst().getId();
+
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/%s/actions/cancel-approval?taskRunId=%s".formatted(tenantId, paused.getId(), taskRunId), null));
+
+        CrudEvent<Execution> cancellation = awaitEvent(
+            CrudEventType.UPDATE,
+            paused.getId(),
+            it -> it.getTaskRunList().stream().anyMatch(taskRun -> taskRunId.equals(taskRun.getId()) && taskRun.getState().getCurrent() == State.Type.CANCELLED)
+        );
+        assertThat(cancellation.getActor()).isEqualTo(ACTOR);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "triggerexecution")
     void triggerExecution() {
         String tenantId = "triggerexecution";

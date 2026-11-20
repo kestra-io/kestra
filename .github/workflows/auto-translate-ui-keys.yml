@@ -59,6 +59,9 @@ jobs:
     needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # id-token: write lets the job call Gemini as translator through WIF (SEC-2311). write-all = the
+    # repo default (write) plus id-token, since a job-level block drops defaults.
+    permissions: write-all
     strategy:
       fail-fast: false
       # One branch at a time: the generator calls Gemini (through Vertex AI) per key, and a run is short anyway.
@@ -85,7 +88,9 @@ jobs:
         - name: Authenticate to Google Cloud
           uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
           with:
-            credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+            # SEC-2311: Gemini on Vertex AI as translator through WIF (no key).
+            workload_identity_provider: projects/956000344026/locations/global/workloadIdentityPools/github/providers/github
+            service_account: translator@kestra-dev.iam.gserviceaccount.com
 
         - name: Generate translations
           run: node --experimental-strip-types ui/scripts/translations/generate.ts ${{ inputs.retranslate_modified_keys }}

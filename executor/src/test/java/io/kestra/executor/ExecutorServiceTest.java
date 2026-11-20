@@ -1,13 +1,12 @@
 package io.kestra.executor;
 
-import io.kestra.core.debug.Breakpoint;
 import java.time.Instant;
 import java.util.List;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
@@ -21,6 +20,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.log.Log;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -101,7 +101,7 @@ class ExecutorServiceTest {
             .build()
             .withState(State.Type.SUCCESS);
 
-        var loopExecution = parentExecution.loopExecution(loopTaskRun, 0, null, "a",false)
+        var loopExecution = parentExecution.loopExecution(loopTaskRun, 0, null, "a", false)
             .toBuilder()
             .taskRunList(List.of(innerTaskRun))
             .build();

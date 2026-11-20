@@ -3,7 +3,6 @@ package io.kestra.executor.handler;
 import java.io.IOException;
 import java.util.*;
 
-import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -21,8 +20,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.TruthUtils;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.Loop;
 
@@ -166,7 +165,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                     "executionId", message.executionId(),
                                     "state", message.state(),
                                     "outputs", MapUtils.emptyOnNull(message.outputs())
-                                    )
+                                )
                             );
                             boolean shouldBreak = runContext.render(loop.getBreakWhen()).as(String.class, iterationVariables).map(s -> TruthUtils.isTruthy(s)).orElse(false);
                             if (shouldBreak) {
@@ -336,7 +335,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         );
     }
 
-    private void computeOutputs(TaskRun parentTaskRun, Map<String, Object> outputs, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration, Map<String, Integer> terminatedByState,
+    private void computeOutputs(TaskRun parentTaskRun, Map<String, Object> outputs, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration,
+        Map<String, Integer> terminatedByState,
         Long offset, TaskRunStatistic taskRunStatistic)
         throws InternalException {
         outputs.put(Loop.ITERATION_COUNT_OUTPUT, iterationCount);

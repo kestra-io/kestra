@@ -338,6 +338,7 @@
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
     import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
@@ -635,7 +636,9 @@
                 replacement: replacement.value,
             })
         } catch (e) {
-            toast.error(asProblem(e)?.detail ?? t("source_search.replace_preview_failed"))
+            if (!isReportedCentrally(e as KestraHttpError)) {
+                toast.error(asProblem(e)?.detail ?? t("source_search.replace_preview_failed"))
+            }
         } finally {
             previewLoading.value = false
         }
@@ -666,7 +669,9 @@
                 flows,
             }))
         } catch (e) {
-            toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
+            if (!isReportedCentrally(e as KestraHttpError)) {
+                toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
+            }
         }
     }
 
@@ -685,7 +690,9 @@
                 column: value.column,
             }))
         } catch (e) {
-            toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
+            if (!isReportedCentrally(e as KestraHttpError)) {
+                toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
+            }
         }
     }
 

@@ -674,7 +674,12 @@ public class TriggerEventHandler {
     }
 
     private Pair<Flow, AbstractTrigger> findTriggerIn(TriggerEvent event, FlowWithSource flow) {
-        return findStoredTriggerIn(event, flow == null ? null : governed(flow));
+        if (flow == null) {
+            return Pair.of(null, null);
+        }
+        FlowWithSource governed = governed(flow);
+        // A trigger removed by governance keeps its state from the stored definition; the evaluation loop skips it while the policy applies.
+        return triggerIn(event, governed).isPresent() ? findStoredTriggerIn(event, governed) : findStoredTriggerIn(event, flow);
     }
 
     /**
@@ -695,16 +700,19 @@ public class TriggerEventHandler {
             return Pair.of(null, null);
         }
 
-        AbstractTrigger trigger = ListUtils.emptyOnNull(flow.getTriggers()).stream()
-            .filter(it -> it.getId().equals(event.id().getTriggerId()))
-            .findFirst()
-            .orElse(null);
+        AbstractTrigger trigger = triggerIn(event, flow).orElse(null);
 
         if (trigger == null) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event '{}'. Cause: Trigger not found", event.type());
         }
 
         return Pair.of(flow, trigger);
+    }
+
+    private static Optional<AbstractTrigger> triggerIn(TriggerEvent event, FlowWithSource flow) {
+        return ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(it -> it.getId().equals(event.id().getTriggerId()))
+            .findFirst();
     }
 
     private FlowWithSource findFlow(TriggerEvent event, Integer revision) {

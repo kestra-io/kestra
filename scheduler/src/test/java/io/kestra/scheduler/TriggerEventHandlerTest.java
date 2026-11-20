@@ -227,6 +227,26 @@ class TriggerEventHandlerTest {
         assertThat(triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow().isSourceDisabled()).isFalse();
     }
 
+    @Test
+    void shouldCreateStateFromStoredTriggerWhenGovernanceRemovesTrigger() {
+        // GIVEN
+        Clock clock = Clock.fixed(Instant.parse("2026-11-20T09:57:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        FlowParsingService removingTriggers = Mockito.mock(
+            FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
+                ? ProcessedFlow.of(((FlowWithSource) invocation.getArgument(0)).toBuilder().triggers(null).build())
+                : Mockito.RETURNS_DEFAULTS.answer(invocation)
+        );
+        handler = newTriggerEventHandler(List.of(withRevision(storedElevenAndOneSchedule(), 1)), removingTriggers);
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, new TriggerCreated(triggerId, 1));
+
+        // THEN
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
+        assertThat(state.getNextEvaluationDate()).isEqualTo(Instant.parse("2026-11-20T11:00:00Z"));
+    }
+
     private static FlowWithSource storedElevenAndOneSchedule() {
         return Fixtures.defaultFlow(b -> b.cron("0 11,13 * * *").timezone("UTC").build());
     }

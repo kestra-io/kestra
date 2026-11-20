@@ -129,9 +129,9 @@ export function useAiChat() {
             idleWaitGeneration++
         })
     }
-    const rememberThread = (uid: string) => {
+    const rememberThread = (threadUid: string) => {
         try {
-            localStorage.setItem(THREAD_STORAGE_KEY, uid)
+            localStorage.setItem(THREAD_STORAGE_KEY, threadUid)
         } catch { /* storage unavailable (private mode) — resume simply won't persist */ }
     }
     const forgetThread = () => {
@@ -476,9 +476,9 @@ export function useAiChat() {
      * to the backend or persisted. Suppressed until a conversation has started: before that the context
      * pills already convey the focus, so the empty state stays clean.
      */
-    function noteContext(notice: ContextNotice): void {
+    function noteContext(contextNotice: ContextNotice): void {
         if (messages.value.length === 0) return
-        push({id: uid(), role: "SYSTEM", type: "CONTEXT", context: notice})
+        push({id: uid(), role: "SYSTEM", type: "CONTEXT", context: contextNotice})
     }
 
     /**

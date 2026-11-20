@@ -302,10 +302,10 @@
     })
 
     const results = computed(() => {
-        const menu = showEntityHints.value
+        const menuRows = showEntityHints.value
             ? menuResults.value.map(item => ({...item, destination: "menu" as const}))
             : menuResults.value
-        return showEntityHints.value ? [...entityResults.value, ...menu] : menu
+        return showEntityHints.value ? [...entityResults.value, ...menuRows] : menuRows
     })
 
     const hasResultRows = computed(() =>

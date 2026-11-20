@@ -66,7 +66,6 @@ import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
@@ -114,7 +113,6 @@ import reactor.core.publisher.Flux;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
-import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
@@ -123,7 +121,6 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -4696,6 +4693,25 @@ class ExecutionControllerRunnerTest {
         assertThat(response.getContentType()).contains(MediaType.TEXT_PLAIN_TYPE);
         assertThat(response.getHeaders().get("X-Webhook-Token")).isEqualTo("kestra");
         assertThat(response.body()).isEqualTo("verified");
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-custom-not-found.yaml")
+    void webhookWithCustomNotFoundResponse() {
+          
+          HttpClientResponseException exception = assertThrows(HttpClientResponseException.class,() -> {
+              client.toBlocking().exchange(
+              GET(
+                  "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS +
+                  "/webhook-response-probe/probe?code=404&challenge=gone"
+              ),
+                  String.class
+            );
+          });
+
+          assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+          assertThat(exception.getResponse().getHeaders().get("X-Probe")).isEqualTo("gone");
+          assertThat(exception.getResponse().getBody(String.class)).contains("gone");
     }
 
     @Test

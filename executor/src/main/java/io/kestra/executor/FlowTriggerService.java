@@ -68,6 +68,12 @@ public class FlowTriggerService {
     }
 
     public Stream<io.kestra.plugin.core.trigger.Flow> flowTriggers(Flow flow) {
+        // a FlowWithException carries no trigger list at all, and this is the entry point every caller
+        // funnels through - without this the stream below throws on a null getTriggers()
+        if (flow instanceof FlowWithException) {
+            return Stream.empty();
+        }
+
         return flow.getTriggers()
             .stream()
             .filter(Predicate.not(AbstractTrigger::isDisabled))

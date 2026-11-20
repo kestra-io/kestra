@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -836,6 +837,21 @@ class FlowTriggerServiceTest {
             .type(io.kestra.plugin.core.trigger.Flow.class.getName())
             .when(when)
             .build();
+    }
+
+    @Test
+    void shouldNotEvaluateFlowTriggersOfAFlowWithException() {
+        // Given a flow that could not be parsed but that still carries triggers
+        FlowWithException unparsable = FlowWithException.from(
+            flowWithFlowTriggerSource(),
+            new IllegalArgumentException("Unrecognized property \"conditions\" on trigger \"flowTrigger\"")
+        ).toBuilder().triggers(List.of(flowTriggerWithNoConditions())).build();
+        var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        // Then none of its triggers is considered, whichever entry point is used
+        assertThat(flowTriggerService.flowTriggers(unparsable)).isEmpty();
+        assertThat(flowTriggerService.withFlowTriggersOnly(Stream.of(unparsable))).isEmpty();
+        assertThat(flowTriggerService.computeExecutionsFromFlowTriggerConditions(simpleFlowExecution, unparsable)).isEmpty();
     }
 
     private static io.kestra.plugin.core.trigger.Flow flowTriggerWithNoConditions() {

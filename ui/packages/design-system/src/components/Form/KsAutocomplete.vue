@@ -55,7 +55,7 @@
     .kel-autocomplete {
         & .kel-input {
             height: 100%;
-            --kel-input-bg-color: var(--ks-bg-base);
+            --kel-input-bg-color: var(--ks-input-bg-color, var(--ks-bg-base));
         }
 
         & .kel-input__suffix-inner {

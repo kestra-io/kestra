@@ -11,12 +11,14 @@
             <KsDropdownMenu class="m-dropdown-menu">
                 <KsDropdownItem
                     :icon="StopCircleOutline"
+                    danger
                     @click="kill(true)"
                 >
                     {{ $t('kill parents and subflow') }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="StopCircleOutline"
+                    danger
                     @click="kill(false)"
                 >
                     {{ $t('kill only parents') }}
@@ -86,10 +88,7 @@
 
     .m-dropdown-menu {
         width: fit-content !important;
-
-        & :deep(.kel-dropdown-menu__item:hover) {
-            background-color: var(--ks-log-background-error) !important;
-            color: var(--ks-status-error) !important;
-        }
+        --ks-dropdown-danger-bg: var(--ks-log-background-error);
+        --ks-dropdown-danger-color: var(--ks-status-error);
     }
 </style>

@@ -12,10 +12,12 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutor;
+import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
+@Requires(property = "kestra.ai.agent.docs-mcp-enabled", notEquals = "false")
 @Slf4j
 public class DocsMcpToolProvider {
     private final String url;

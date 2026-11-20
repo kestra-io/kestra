@@ -194,10 +194,7 @@
     .change-state__select {
         width: 120px;
         flex-shrink: 0;
-
-        & :deep(.kel-select__wrapper) {
-            padding: 4px 8px 5px 4px;
-        }
+        --ks-select-padding: 4px 8px 5px 4px;
     }
 
     .change-state__footer {

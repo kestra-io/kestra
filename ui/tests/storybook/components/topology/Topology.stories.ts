@@ -805,3 +805,25 @@ export const NestedFlowableLanes: StoryObj<typeof Topology> = {
         expect(inner.right).toBeLessThanOrEqual(outer.right)
     },
 }
+
+/** `--ks-topology-panel-bottom` lifts the bottom panels (the zoom controls) off the canvas edge, set on the topology or an ancestor */
+export const PanelBottomOffset: StoryObj<typeof Topology> = {
+    render: (args) => ({
+        components: {Topology},
+        setup() {
+            return {args}
+        },
+        template: "<div style=\"height: 600px; width: 100%; --ks-topology-panel-bottom: 2rem;\"><Topology v-bind=\"args\" /></div>",
+    }),
+    args: {
+        id: "story-panel-bottom",
+        source: ALLOW_FAILURE_SOURCE,
+        flowGraph: allowFailureDemo as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+    },
+    async play({canvasElement}) {
+        await waitFor(() => expect(canvasElement.querySelector(".vue-flow__panel.bottom")).not.toBeNull())
+        await expect(getComputedStyle(canvasElement.querySelector(".vue-flow__panel.bottom")!).bottom).toBe("32px")
+    },
+}

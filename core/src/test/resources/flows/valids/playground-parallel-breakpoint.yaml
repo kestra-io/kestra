@@ -1,0 +1,19 @@
+id: playground-parallel-breakpoint
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: slow
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT3S
+      - id: fast
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+          - id: a
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ task.id }}"
+          - id: b
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ task.id }}"

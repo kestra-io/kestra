@@ -49,6 +49,7 @@ describe("flowLabelEntriesOf", () => {
                 {key: "env"},
                 {key: "retries", value: 0},
                 {key: "active", value: false},
+                {key: 404, value: "not found"},
             ],
         }
 
@@ -56,6 +57,7 @@ describe("flowLabelEntriesOf", () => {
             ["env", ""],
             ["retries", "0"],
             ["active", "false"],
+            ["404", "not found"],
         ])
 
         const mapParsed = {labels: {env: null, retries: 0, active: false}}

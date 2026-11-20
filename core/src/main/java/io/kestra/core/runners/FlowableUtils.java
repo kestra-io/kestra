@@ -4,6 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -295,33 +297,41 @@ public class FlowableUtils {
             _finally,
             parentTaskRun,
             concurrency,
-            (nextTaskRunStream, taskRuns) -> nextTaskRunStream
-                .filter(nextTaskRun ->
-                {
-                    Task task = nextTaskRun.getTask();
-                    List<String> taskDependIds = taskDependencies
-                        .stream()
-                        .filter(
-                            taskDepend -> taskDepend
-                                .getTask()
-                                .getId()
-                                .equals(task.getId())
-                        )
-                        .findFirst()
-                        .map(Dag.DagTask::getDependsOn)
-                        .orElse(null);
+            (nextTaskRunStream, taskRuns) ->
+            {
+                Map<String, Dag.DagTask> dagTasksById = taskDependencies
+                    .stream()
+                    .collect(Collectors.toMap(dagTask -> dagTask.getTask().getId(), Function.identity(), (first, second) -> first));
+                Set<String> terminatedTaskIds = taskRuns
+                    .stream()
+                    .filter(taskRun -> taskRun.getState().isTerminated())
+                    .map(TaskRun::getTaskId)
+                    .collect(Collectors.toSet());
 
-                    // Check if have no dependencies OR all dependencies are terminated
-                    return taskDependIds == null ||
-                        new HashSet<>(
-                            taskRuns
-                                .stream()
-                                .filter(taskRun -> taskRun.getState().isTerminated())
-                                .map(TaskRun::getTaskId).toList()
-                        )
-                            .containsAll(taskDependIds);
-                })
+                return nextTaskRunStream
+                    .filter(nextTaskRun -> areDagDependenciesDone(nextTaskRun.getTask().getId(), dagTasksById, terminatedTaskIds));
+            }
         );
+    }
+
+    private static boolean areDagDependenciesDone(String taskId, Map<String, Dag.DagTask> dagTasksById, Set<String> terminatedTaskIds) {
+        Dag.DagTask dagTask = dagTasksById.get(taskId);
+        if (dagTask == null || dagTask.getDependsOn() == null) {
+            return true;
+        }
+
+        return dagTask.getDependsOn().stream().allMatch(dependId ->
+        {
+            if (terminatedTaskIds.contains(dependId)) {
+                return true;
+            }
+
+            // a disabled task never gets a task run, so it counts as done once its own dependencies are, which keeps the order around it like in Sequential
+            Dag.DagTask dependency = dagTasksById.get(dependId);
+            return dependency != null
+                && Boolean.TRUE.equals(dependency.getTask().getDisabled())
+                && areDagDependenciesDone(dependId, dagTasksById, terminatedTaskIds);
+        });
     }
 
     public static List<NextTaskRun> resolveParallelNexts(

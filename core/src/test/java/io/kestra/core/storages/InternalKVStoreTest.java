@@ -52,6 +52,16 @@ class InternalKVStoreTest {
     private KVStoreService storeService;
 
     @Test
+    void shouldRejectWritesButNotReadsGivenNamespaceWithAnEmptySegment() throws IOException {
+        InternalKVStore kv = new InternalKVStore(MAIN_TENANT, "team.", storageInterface, kvMetadataStateStore);
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, "value")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> kv.putRaw(TEST_KV_KEY, null, "value".getBytes()));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> kv.delete(TEST_KV_KEY));
+        assertThat(kv.list()).isEmpty();
+    }
+
+    @Test
     void list() throws IOException, InterruptedException {
         Instant now = Instant.now();
         InternalKVStore kv = kv();

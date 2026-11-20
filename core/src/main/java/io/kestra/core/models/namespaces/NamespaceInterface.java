@@ -7,6 +7,12 @@ import java.util.List;
 import io.kestra.core.models.HasUID;
 
 public interface NamespaceInterface extends HasUID {
+    /**
+     * Pattern of a valid namespace id: dot-separated segments, none of them empty, since each dot becomes a
+     * storage path separator.
+     */
+    String ID_PATTERN = "^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)*";
+
     String getId();
 
     /**

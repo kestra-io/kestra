@@ -1080,7 +1080,7 @@ describe("generateGraph triggers lane join dot", () => {
             parents: [],
             start: "root.seq.root-2",
             end: "root.seq.end-2",
-        } as unknown as VueFlowUtils.FlowGraph["clusters"][number])
+        } as unknown as VueFlowUtils.FlowGraphCluster)
 
         const edge = generateTriggered(flowGraph).find((element) =>
             element.type === "edge" && element.source === TRIGGERS_END && element.target === "root.seq.root-2",
@@ -1123,7 +1123,7 @@ describe("generateGraph triggers lane join dot", () => {
             parents: [],
             start: "root.seq.root-2",
             end: "root.seq.end-2",
-        } as unknown as VueFlowUtils.FlowGraph["clusters"][number])
+        } as unknown as VueFlowUtils.FlowGraphCluster)
 
         const elements = generateTriggered(withFlowable)
         const ids = elements.map((element) => element.id)

@@ -20,7 +20,7 @@
             </NavBarActions>
         </template>
     </TopNavBar>
-    <section :class="{'full-container': fitHeightResolved}">
+    <section class="flows" :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -28,13 +28,14 @@
             :total="flowStore.total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'id', order: 'ascending'}"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            :defaultSort="defaultSort"
+            @page-changed="onPageChanged"
             @ready="ready = true"
             @row-click="onRowClick"
             :mobileColumns="mobileColumns"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
+            :rowStyle="{cursor: 'pointer'}"
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
             :no-data-text="$t('no_results.flows')"
@@ -312,6 +313,7 @@
 <script setup lang="ts">
     import {ref, computed, useTemplateRef, watch} from "vue"
     import {useIsMobile} from "../../composables/useIsMobile"
+    import {usePageSize} from "../../composables/usePageSize"
     import {isPlainRowActivation} from "../../utils/rowNavigation"
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
@@ -361,11 +363,10 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
+    import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
-    import type {ExecutionControllerLastExecutionResponse, QueryFilter} from "@kestra-io/kestra-sdk"
-    import type {Flow} from "../../stores/flow"
+    import type {ExecutionControllerLastExecutionResponse, Flow, QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
     import {defaultTimeRange} from "../executions/timeRangeWiden"
 
@@ -535,7 +536,7 @@
             })
     }
 
-    const onRowClick = (item: Flow, column: {type?: string} | undefined, event: Event) => {
+    const onRowClick = (item: Flow, column: {type?: string} | null | undefined, event: Event) => {
         if (!isPlainRowActivation(column, event)) return
 
         router.push({
@@ -550,7 +551,13 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "id", order: "ascending"})
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
@@ -727,11 +734,6 @@
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
-:deep(nav .dropdown-menu) {
-    display: flex;
-    width: 20rem;
-}
-
 .flow-id {
     min-width: 200px;
     display: flex;
@@ -761,12 +763,8 @@
     vertical-align: middle;
 }
 
-:deep(.flows-table) .kel-table__row {
-    cursor: pointer;
-}
-
-:deep(.flows-table) th.row-action .cell {
-    padding-right: var(--ks-spacing-4);
+.flows {
+    --ks-table-action-header-padding-right: var(--ks-spacing-4);
 }
 
 .header-actions-list {

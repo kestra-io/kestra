@@ -8,7 +8,7 @@ import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.models.api.Pagination;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
@@ -17,13 +17,13 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.Valid;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
@@ -40,13 +40,11 @@ public class MetricController {
     @Get(uri = "/{executionId}")
     @Operation(tags = { "Metrics" }, summary = "Get metrics for a specific execution")
     public PagedResults<MetricEntry> searchByExecution(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId) {
-        var pageable = PageableUtils.from(page, size, sort, metricsRepository.sortMapping());
+        var pageable = paging.toPageable(metricsRepository.sortMapping());
         if (taskId != null) {
             return PagedResults.of(metricsRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, pageable));
         } else if (taskRunId != null) {

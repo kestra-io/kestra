@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.mcp.McpServerHandlerTransport;
-import io.kestra.mcp.McpToolAccessControl;
 import io.kestra.mcp.PlatformMcpServerProvider;
 
 import io.micronaut.http.HttpRequest;
@@ -17,12 +16,10 @@ import reactor.core.publisher.Mono;
 @Controller("/api/v1/mcp")
 public class McpPlatformController {
     private final McpServerHandlerTransport handlerRegistry;
-    private final McpToolAccessControl accessControl;
 
     @Inject
-    public McpPlatformController(McpServerHandlerTransport handlerRegistry, McpToolAccessControl accessControl) {
+    public McpPlatformController(McpServerHandlerTransport handlerRegistry) {
         this.handlerRegistry = handlerRegistry;
-        this.accessControl = accessControl;
     }
 
     @Get
@@ -43,6 +40,6 @@ public class McpPlatformController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({ MediaType.TEXT_EVENT_STREAM, MediaType.APPLICATION_JSON })
     public Mono<? extends HttpResponse<?>> handleRequest(HttpRequest<String> request) {
-        return handlerRegistry.handle(null, PlatformMcpServerProvider.SERVER_ID, accessControl.callerId(request).orElse(null), request);
+        return handlerRegistry.handle(null, PlatformMcpServerProvider.SERVER_ID, request);
     }
 }

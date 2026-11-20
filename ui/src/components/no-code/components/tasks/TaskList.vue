@@ -129,7 +129,10 @@
     const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
 
     const filteredElements = computed(() => elements.value?.filter(Boolean) ?? [])
-    const expanded = props.merge ? computed(() => section.value) : ref<CollapseItem["title"]>(props.root ?? "tasks")
+    // In merge mode the collapse item is disabled, so the section stays open and writes are dropped.
+    const expanded = props.merge
+        ? computed({get: () => section.value, set: () => {}})
+        : ref<CollapseItem["title"]>(props.root ?? "tasks")
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined)
@@ -226,7 +229,7 @@
     margin-left: var(--ks-spacing-1);
 }
 
-.merge :deep(.kel-collapse-item__header){
-    cursor: default;
+.merge {
+    --ks-collapse-item-disabled-cursor: default;
 }
 </style>

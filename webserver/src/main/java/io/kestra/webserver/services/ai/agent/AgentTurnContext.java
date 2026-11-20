@@ -5,9 +5,12 @@ import java.util.Map;
 import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
+import io.kestra.core.events.Actor;
 
 import io.micronaut.core.annotation.Nullable;
+import lombok.Builder;
 
+@Builder
 public record AgentTurnContext(
     AgentThread thread,
     String prompt,
@@ -15,5 +18,6 @@ public record AgentTurnContext(
     String tenant,
     @Nullable String providerId,
     @Nullable AgentPrincipal principal,
-    @Nullable Map<String, Object> additionalContext) {
+    @Nullable Map<String, Object> additionalContext,
+    @Nullable Actor actor) {
 }

@@ -5,6 +5,7 @@ import * as Utils from "../../utils/utils"
 import {computed, type Ref} from "vue"
 import {useFlowStore} from "../../stores/flow"
 import {routeQueryToQueryFilters} from "../../utils/queryFilters"
+import {useBulkAction} from "../../composables/useBulkAction"
 import type {IdWithNamespace} from "@kestra-io/kestra-sdk"
 import type {LocationQuery} from "vue-router"
 
@@ -27,6 +28,7 @@ export default function useFlowsBulkActions(options: {
     const selection = computed<SelectedFlow[]>(() => dataTable.value?.selection ?? [])
     const toast = useToast()
     const flowStore = useFlowStore()
+    const {runBulkAction} = useBulkAction(dataTable)
 
     const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
@@ -42,18 +44,14 @@ export default function useFlowsBulkActions(options: {
                 const flowCount = queryBulkAction.value ? flowStore.total : selection.value.length
                 if (queryBulkAction.value) {
                     return FlowsAPI.exportFlowsByQuery({filters: routeQueryToQueryFilters(loadQuery())}, {responseType: "blob"}).then(data => {
-                        const blob = new Blob([data], {type: "application/octet-stream"})
-                        const url = window.URL.createObjectURL(blob)
-                        Utils.downloadUrl(url, "flows.zip")
+                        Utils.downloadBlob(new Blob([data], {type: "application/octet-stream"}), "flows.zip")
                     }).then(() => {
                         toast.success(t("flows exported", {count: flowCount}))
                         toggleAllUnselected()
                     })
                 } else {
                     return FlowsAPI.exportFlowsByIds({body: selectionIds.value}, {responseType: "blob"}).then(data => {
-                        const blob = new Blob([data], {type: "application/octet-stream"})
-                        const url = window.URL.createObjectURL(blob)
-                        Utils.downloadUrl(url, "flows.zip")
+                        Utils.downloadBlob(new Blob([data], {type: "application/octet-stream"}), "flows.zip")
                     }).then(() => {
                         toast.success(t("flows exported", {count: flowCount}))
                         toggleAllUnselected()
@@ -66,21 +64,11 @@ export default function useFlowsBulkActions(options: {
     function disableFlows() {
         toast.confirm(
             t("flow disable", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
-            () => {
-                if (queryBulkAction.value) {
-                    return FlowsAPI.disableFlowsByQuery({filters: routeQueryToQueryFilters(loadQuery())}).then((r) => {
-                        toast.success(t("flows disabled", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                } else {
-                    return FlowsAPI.disableFlowsByIds({body: selectionIds.value}).then((r) => {
-                        toast.success(t("flows disabled", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                }
-            },
+            () => runBulkAction({
+                byQuery: () => FlowsAPI.disableFlowsByQuery({filters: routeQueryToQueryFilters(loadQuery())}),
+                byIds: () => FlowsAPI.disableFlowsByIds({body: selectionIds.value}),
+                success: (r) => t("flows disabled", {count: r.count}),
+            }),
         )
     }
 
@@ -92,45 +80,24 @@ export default function useFlowsBulkActions(options: {
     })
 
     function enableFlows() {
-
         toast.confirm(
             t("flow enable", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
-            () => {
-                if (queryBulkAction.value) {
-                    return FlowsAPI.enableFlowsByQuery({filters: routeQueryToQueryFilters(loadQuery())}).then((r) => {
-                        toast.success(t("flows enabled", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                } else {
-                    return FlowsAPI.enableFlowsByIds({body: selectionIds.value}).then((r) => {
-                        toast.success(t("flows enabled", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                }
-            },
+            () => runBulkAction({
+                byQuery: () => FlowsAPI.enableFlowsByQuery({filters: routeQueryToQueryFilters(loadQuery())}),
+                byIds: () => FlowsAPI.enableFlowsByIds({body: selectionIds.value}),
+                success: (r) => t("flows enabled", {count: r.count}),
+            }),
         )
     }
 
     function deleteFlows() {
         toast.confirm(
             t("flow delete", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
-            () => {
-                if (queryBulkAction.value) {
-                    return FlowsAPI.deleteFlowsByQuery({filters: routeQueryToQueryFilters(loadQuery())}).then((r) => {
-                        toast.success(t("flows deleted", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                } else {
-                    return FlowsAPI.deleteFlowsByIds({body: selectionIds.value}).then((r) => {
-                        toast.success(t("flows deleted", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                }
-            },
+            () => runBulkAction({
+                byQuery: () => FlowsAPI.deleteFlowsByQuery({filters: routeQueryToQueryFilters(loadQuery())}),
+                byIds: () => FlowsAPI.deleteFlowsByIds({body: selectionIds.value}),
+                success: (r) => t("flows deleted", {count: r.count}),
+            }),
         )
     }
 
@@ -151,14 +118,7 @@ export default function useFlowsBulkActions(options: {
 
     async function exportFlowsAsStream(query: LocationQuery) {
         const data = await FlowsAPI.exportFlows({filters: routeQueryToQueryFilters(query)})
-        const url = window.URL.createObjectURL(new Blob([data as unknown as string]))
-        const link = document.createElement("a")
-        link.href = url
-        link.setAttribute("download", "flows.csv")
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
+        Utils.downloadBlob(new Blob([data as unknown as string]), "flows.csv")
     }
 
     return {

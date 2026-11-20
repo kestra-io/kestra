@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.property.Property;
 import io.kestra.plugin.core.flow.Approval;
 import io.kestra.plugin.core.flow.PausableTask;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,7 +53,10 @@ public class TaskForExecution implements TaskInterface {
         }
 
         if (task instanceof FlowableTask<?> flowable) {
-            taskForExecutionBuilder.tasks(flowable.allChildTasks().stream().map(TaskForExecution::of).toList());
+            taskForExecutionBuilder.tasks(flowable.allChildTasks().stream()
+                .filter(child -> !(child instanceof WorkingDirectory.Open || child instanceof WorkingDirectory.Close))
+                .map(TaskForExecution::of)
+                .toList());
         }
 
         return taskForExecutionBuilder.build();

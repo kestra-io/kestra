@@ -1,9 +1,11 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
+import {nextTick} from "vue"
 import {createPinia, setActivePinia} from "pinia"
 import type {ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import {generateFlowGraphFromSource, validateFlows} from "@kestra-io/kestra-sdk/flows"
 import {useFlowStore} from "./flow"
 import {useCoreStore} from "./core"
+import {useUnsavedChangesStore} from "./unsavedChanges"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}}),
@@ -21,6 +23,19 @@ describe("flow store", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         auth.user = undefined
+    })
+
+    it("should warn before leaving while a namespace file tab has unsaved edits", async () => {
+        const store = useFlowStore()
+        const unsavedChanges = useUnsavedChangesStore()
+
+        store.hasDirtyEditorFiles = true
+        await nextTick()
+        expect(unsavedChanges.unsavedChange).toBe(true)
+
+        store.hasDirtyEditorFiles = false
+        await nextTick()
+        expect(unsavedChanges.unsavedChange).toBe(false)
     })
 
     it("should report a single error when its detail contains commas", () => {

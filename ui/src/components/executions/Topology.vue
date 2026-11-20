@@ -1,5 +1,5 @@
 <template>
-    <KsCard>
+    <KsCard :bodyStyle="{height: '100%', display: 'flex', padding: '0'}">
         <div class="vueflow">
             <LowCodeEditor
                 ref="editor"
@@ -13,7 +13,6 @@
                 :horizontalDefault="horizontalDefault"
                 isReadOnly
                 @follow="$emit('follow', $event)"
-                viewType="topology"
                 @expand-subflow="onExpandSubflow"
             />
             <div v-else-if="loading" v-ks-loading="true" style="height:100%;position:relative" />
@@ -253,12 +252,6 @@
         height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
-
-        & :deep(.kel-card__body) {
-            height: 100%;
-            display: flex;
-            padding: 0;
-        }
     }
 
     .vueflow {

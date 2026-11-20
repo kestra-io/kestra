@@ -332,19 +332,11 @@
         padding: 0.5rem;
         display: inline-flex;
         align-items: center;
-
-        & :deep(svg) {
-            font-size: var(--ks-font-size-lg);
-        }
     }
 
     .search-field {
         width: 35%;
         margin-left: auto;
-
-        & :deep(.kel-input__inner) {
-            font-size: var(--ks-font-size-sm);
-        }
     }
 
 }
@@ -396,9 +388,7 @@
 .doc-view {
     flex: 1;
     overflow-y: auto;
+    --ks-markdown-h3-margin-top: 0;
 }
 
-:deep(.markdown h3){
-    margin-top: 0;
-}
 </style>

@@ -92,7 +92,7 @@ function createHarnessContext(harness: MockEditorHarness, overrides: Partial<Edi
 }
 
 describe("useEditorDecorations", () => {
-    test("applying decorations creates a collection with one entry per range", () => {
+    test("applying decorations creates a collection with one entry per Pebble token", () => {
         const text = "tasks:\n  - id: {{ task.id }}\n    message: {% if enabled %}yes{% endif %}"
         const harness = createEditorHarness(text)
         const dec = useEditorDecorations(createHarnessContext(harness))
@@ -100,28 +100,39 @@ describe("useEditorDecorations", () => {
         dec.attach(harness.editor)
         dec.highlightPebble()
 
+        expect(harness.collection.decorations.map(({options, range}) => [options.inlineClassName, range.startLineNumber, range.startColumn, range.endColumn])).toEqual([
+            ["highlight-pebble-pebble", 2, 9, 12],
+            ["highlight-pebble-pebbleVariable", 2, 12, 19],
+            ["highlight-pebble-pebble", 2, 19, 22],
+            ["highlight-pebble-pebble", 3, 14, 17],
+            ["highlight-pebble-keyword", 3, 17, 19],
+            ["highlight-pebble-pebble", 3, 19, 20],
+            ["highlight-pebble-pebbleVariable", 3, 20, 27],
+            ["highlight-pebble-pebble", 3, 27, 30],
+            ["highlight-pebble-pebble", 3, 33, 36],
+            ["highlight-pebble-keyword", 3, 36, 41],
+            ["highlight-pebble-pebble", 3, 41, 44],
+        ])
+    })
+
+    test("an unchanged model version keeps its decorations instead of rebuilding them on every cursor move", () => {
+        const harness = createEditorHarness("{{ first }} and {{ second }}")
+        let version = 1
+        const model = harness.editor.getModel() as unknown as {getVersionId?: () => number}
+        model.getVersionId = () => version
+        const dec = useEditorDecorations(createHarnessContext(harness))
+
+        dec.attach(harness.editor)
+        dec.highlightPebble()
+        dec.highlightPebble()
+        expect(harness.collection.clear).toHaveBeenCalledTimes(1)
+        expect(harness.collection.length).toBe(6)
+
+        version = 2
+        harness.setText("only {{ single }}")
+        dec.highlightPebble()
+        expect(harness.collection.clear).toHaveBeenCalledTimes(2)
         expect(harness.collection.length).toBe(3)
-        expect(harness.collection.decorations[0].options.inlineClassName).toBe("highlight-pebble")
-        expect(harness.collection.decorations[0].range).toEqual({
-            startLineNumber: 2,
-            startColumn: 9,
-            endLineNumber: 2,
-            endColumn: 22,
-        })
-        expect(harness.collection.decorations[1].options.inlineClassName).toBe("highlight-pebble")
-        expect(harness.collection.decorations[1].range).toEqual({
-            startLineNumber: 3,
-            startColumn: 14,
-            endLineNumber: 3,
-            endColumn: 30,
-        })
-        expect(harness.collection.decorations[2].options.inlineClassName).toBe("highlight-pebble")
-        expect(harness.collection.decorations[2].range).toEqual({
-            startLineNumber: 3,
-            startColumn: 33,
-            endLineNumber: 3,
-            endColumn: 44,
-        })
     })
 
     test("applying lines range creates a collection entry for the specified range", () => {
@@ -143,19 +154,13 @@ describe("useEditorDecorations", () => {
 
         dec.attach(harness.editor)
         dec.highlightPebble()
-        expect(harness.collection.length).toBe(2)
+        expect(harness.collection.length).toBe(6)
 
         harness.setText("only {{ single }}")
         dec.highlightPebble()
 
         expect(harness.collection.clear).toHaveBeenCalled()
-        expect(harness.collection.length).toBe(1)
-        expect(harness.collection.decorations[0].range).toEqual({
-            startLineNumber: 1,
-            startColumn: 6,
-            endLineNumber: 1,
-            endColumn: 18,
-        })
+        expect(harness.collection.decorations.map(({range}) => [range.startColumn, range.endColumn])).toEqual([[6, 9], [9, 15], [15, 18]])
     })
 
     test("applying line range again replaces previous line range rather than adding to it", () => {
@@ -173,18 +178,18 @@ describe("useEditorDecorations", () => {
     })
 
     test("clearing removes everything", () => {
-        const harness = createEditorHarness("{{ block }}")
+        const harness = createEditorHarness("{{ value }}")
         const pebbleEnabled = ref(true)
         const dec = useEditorDecorations(createHarnessContext(harness, {pebbleEnabled}))
 
         dec.attach(harness.editor)
         dec.highlightPebble()
         dec.highlightLinesRange({start: 1, end: 1})
-        expect(harness.collection.length).toBe(2)
+        expect(harness.collection.length).toBe(4)
 
         dec.clearLinesRangeHighlights()
-        expect(harness.collection.length).toBe(1)
-        expect(harness.collection.decorations[0].options.inlineClassName).toBe("highlight-pebble")
+        expect(harness.collection.length).toBe(3)
+        expect(harness.collection.decorations[0].options.inlineClassName).toBe("highlight-pebble-pebble")
 
         pebbleEnabled.value = false
         dec.highlightPebble()
@@ -197,7 +202,7 @@ describe("useEditorDecorations", () => {
 
         dec.attach(harness.editor)
         dec.highlightPebble()
-        expect(harness.collection.length).toBe(1)
+        expect(harness.collection.length).toBe(3)
         expect(harness.getCreateCollectionCalls()).toBe(1)
 
         harness.setText("plain text with no block")
@@ -219,7 +224,7 @@ describe("useEditorDecorations", () => {
 
         dec.attach(harness.editor)
         dec.highlightPebble()
-        expect(harness.collection.length).toBe(1)
+        expect(harness.collection.length).toBe(3)
 
         scope.stop()
 

@@ -11,10 +11,13 @@
                 v-if="isPluginsRoute"
                 :class="['mobile-close-toggle']"
                 @click="mobileMenuOpen = false"
-                :icon="Close"
                 :aria-label="$t('docsPage.close_menu')"
                 link
-            />
+            >
+                <template #icon>
+                    <Close />
+                </template>
+            </KsButton>
             <div v-if="!collapsed" class="menu-slot-wrapper">
                 <slot name="menu" />
             </div>
@@ -25,10 +28,13 @@
                     v-if="$slots.menu && isPluginsRoute"
                     :class="['mobile-menu-toggle']"
                     @click="mobileMenuOpen = !mobileMenuOpen"
-                    :icon="Menu"
                     :aria-label="$t('docsPage.open_menu')"
                     link
-                />
+                >
+                    <template #icon>
+                        <Menu />
+                    </template>
+                </KsButton>
                 <slot name="secondary-header" />
             </div>
             <div class="main-container">
@@ -202,7 +208,7 @@
                     transform: scale(0.95);
                 }
 
-                & :deep(.material-design-icon) {
+                & .material-design-icon {
                     width: 24px;
                     height: 24px;
                 }
@@ -230,7 +236,7 @@
                 transform: scale(0.95);
             }
 
-            & :deep(.material-design-icon) {
+            & .material-design-icon {
                 width: 24px;
                 height: 24px;
             }

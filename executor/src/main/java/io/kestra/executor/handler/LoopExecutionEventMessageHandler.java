@@ -104,6 +104,11 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         {
             try {
                 final FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                // the Loop task run was removed by a WorkingDirectory that runs again, which killed its iterations
+                if (execution.findTaskRunByTaskRunIdIfPresent(message.loopRun().taskRunId()).isEmpty()) {
+                    log.warn("Ignoring loop execution event for sub-execution {} as its Loop task run no longer exists", message.executionId());
+                    return null;
+                }
                 ExecutorContext executor = new ExecutorContext(execution, flow);
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
                 Loop loop = (Loop) executor.getFlow().findTaskByTaskId(message.loopRun().taskId());
@@ -119,7 +124,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 terminatedByState.merge(message.state().name(), 1, Integer::sum);
                 int terminatedIteration = terminatedByState.values().stream().mapToInt(Integer::intValue).sum();
                 @SuppressWarnings("unchecked")
-                List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT) ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT) : new ArrayList<>();
+                List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT)
+                    ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT)
+                    : new ArrayList<>();
                 if (!MapUtils.isEmpty(message.outputs())) {
                     taskOutputs.add(buildIterationOutput(message));
                 }
@@ -295,7 +302,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 // throws InternalException if not found — treated as a hard failure below
                 TaskRun loopTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
 
-                Execution resumedExecution = executionService.resumeFlowable(execution, loopTaskRun);
+                Execution resumedExecution = executionService.resumeFlowable(execution, loopTaskRun, message.executionId());
 
                 return executor.withExecution(resumedExecution, "resumedLoopIteration");
             } catch (InternalException e) {
@@ -338,7 +345,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (offset != null) {
             outputs.put(Loop.NEXT_OFFSET_OUTPUT, offset);
         }
-        if (!ListUtils.isEmpty(taskOutputs)) {
+        if (!taskOutputs.isEmpty()) {
             outputs.put(Loop.OUTPUTS_OUTPUT, taskOutputs);
         }
         if (taskRunStatistic.count() > 0) {

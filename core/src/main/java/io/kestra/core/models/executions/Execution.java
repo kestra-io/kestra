@@ -552,6 +552,21 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
+    /**
+     * Whether the given task run must not run again: this execution was explicitly stopped (killing, killed or
+     * cancelled), or the task run already ended in it. A FAILED or SUCCESS execution does not count, since it can
+     * itself be the consequence of losing the worker that held the task run.
+     */
+    public boolean hasTaskRunEnded(String taskRunId) {
+        State.Type current = this.getState().getCurrent();
+        if (State.Type.KILLING == current || State.Type.KILLED == current || State.Type.CANCELLED == current) {
+            return true;
+        }
+        return findTaskRunByTaskRunIdIfPresent(taskRunId)
+            .map(taskRun -> taskRun.getState().isTerminated())
+            .orElse(false);
+    }
+
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values)
         throws InternalException {
         Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun> emptyList()
@@ -687,14 +702,16 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             return Collections.emptyList();
         }
 
-        // to avoid nested loops, we pre-compute a per-uid resolved task map for fast retrieval
-        Map<String, ResolvedTask> resolvedTaskMap = HashMap.newHashMap(resolvedTasks.size());
-        resolvedTasks.forEach(resolvedTask -> resolvedTaskMap.put(resolvedTask.uid(), resolvedTask));
+        // to avoid nested loops, we pre-compute the resolved task keys for fast retrieval
+        Set<TaskRunKey> resolvedTaskKeys = HashSet.newHashSet(resolvedTasks.size());
+        for (ResolvedTask resolvedTask : resolvedTasks) {
+            resolvedTaskKeys.add(TaskRunKey.of(resolvedTask));
+        }
         return this
             .getTaskRunList()
             .stream()
             .filter(
-                t -> resolvedTaskMap.containsKey(IdUtils.fromParts(t.getTaskId(), t.getValue()))
+                t -> resolvedTaskKeys.contains(TaskRunKey.of(t))
                     && (parentTaskRun == null || parentTaskRun.getId().equals(t.getParentTaskRunId()))
             )
             .toList();
@@ -764,14 +781,19 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         // A bare count of terminated task runs can be inflated by a duplicated task run
         // (e.g. a retry race appending a second run for the same task id), letting the
         // execution report terminated while a task never ran.
-        Set<String> terminatedTaskUids = this
-            .findTaskRunByTasks(resolvedTasks, parentTaskRun)
-            .stream()
-            .filter(taskRun -> taskRun.getState().isTerminated())
-            .map(taskRun -> IdUtils.fromParts(taskRun.getTaskId(), taskRun.getValue()))
-            .collect(Collectors.toSet());
+        Set<TaskRunKey> terminatedTaskKeys = new HashSet<>();
+        for (TaskRun taskRun : this.findTaskRunByTasks(resolvedTasks, parentTaskRun)) {
+            if (taskRun.getState().isTerminated()) {
+                terminatedTaskKeys.add(TaskRunKey.of(taskRun));
+            }
+        }
 
-        return resolvedTasks.stream().allMatch(resolvedTask -> terminatedTaskUids.contains(resolvedTask.uid()));
+        for (ResolvedTask resolvedTask : resolvedTasks) {
+            if (!terminatedTaskKeys.contains(TaskRunKey.of(resolvedTask))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean hasFailed() {
@@ -1188,5 +1210,19 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         crc32.update(this.toStringState().getBytes());
 
         return crc32.getValue();
+    }
+
+    /**
+     * Task id and value of a task run, compared without building the uid string the executor would otherwise
+     * allocate per task run on every cycle: see ExecutionTerminationBenchmark in jmh-benchmarks.
+     */
+    private record TaskRunKey(String taskId, String value) {
+        static TaskRunKey of(TaskRun taskRun) {
+            return new TaskRunKey(taskRun.getTaskId(), taskRun.getValue());
+        }
+
+        static TaskRunKey of(ResolvedTask resolvedTask) {
+            return new TaskRunKey(resolvedTask.getTask().getId(), resolvedTask.getValue());
+        }
     }
 }

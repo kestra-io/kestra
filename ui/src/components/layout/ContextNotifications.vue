@@ -70,7 +70,7 @@
 <script setup lang="ts">
     import {computed, onMounted, ref, useTemplateRef} from "vue"
     import {useRouter} from "vue-router"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import CheckAll from "vue-material-design-icons/CheckAll.vue"
     import {useMiscStore} from "override/stores/misc"
@@ -80,7 +80,7 @@
     import OperationCard from "./OperationCard.vue"
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import {useNotificationsStore, type Notification} from "../../stores/notifications"
-    import {resolveNotificationRoute} from "../../utils/notificationRoute"
+    import {isAbsoluteNotificationUrl, isRelativeNotificationUrl, resolveNotificationRoute} from "../../utils/notificationRoute"
 
     const store = useNotificationsStore()
     const miscStore = useMiscStore()
@@ -110,6 +110,16 @@
         if (!notification.read) {
             await setRead(notification, true)
         }
+
+        if (isRelativeNotificationUrl(notification.url)) {
+            await beforeNotificationNavigation(notification)
+            miscStore.contextInfoBarOpenTab = ""
+            await router.push(notification.url)
+            return
+        }
+
+        // An absolute url is a real link in the row, so the browser handles the navigation.
+        if (isAbsoluteNotificationUrl(notification.url)) return
 
         const route = await resolveNotificationRoute(notification)
         if (route === null) return

@@ -110,6 +110,31 @@ export const InlineRow: Story = {
     },
 }
 
+/** Stacked – `stacked` on a KsFormItem puts each child of the content on its own full-width line */
+export const Stacked: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsForm, KsFormItem, KsButton},
+        template: `
+            <div style="padding:24px;max-width:420px">
+                <ks-form label-position="top">
+                    <ks-form-item stacked label="Tags">
+                        <ks-button>Add a tag</ks-button>
+                        <p>Labels shown next to the flow.</p>
+                    </ks-form-item>
+                </ks-form>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const content = canvasElement.querySelector(".kel-form-item.is-stacked .kel-form-item__content") as HTMLElement
+        await expect(content).toBeTruthy()
+        await expect(getComputedStyle(content).display).toBe("block")
+        const [button, help] = Array.from(content.children) as HTMLElement[]
+        await expect(help.getBoundingClientRect().top).toBeGreaterThanOrEqual(button.getBoundingClientRect().bottom)
+    },
+}
+
 /** Size control – form-level size affects all children */
 export const SizeControl: Story = {
     parameters: {controls: {disable: true}},
@@ -160,4 +185,35 @@ export const LabelPositions: Story = {
             </div>
         `,
     }),
+}
+
+export const WideLabel: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsForm, KsFormItem, KsInput, KsButton},
+        setup() {
+            const form = reactive({tags: ""})
+            return {form}
+        },
+        template: `
+            <div style="padding:24px;max-width:400px">
+                <ks-form :model="form" label-position="top">
+                    <ks-form-item wide-label data-test="wide">
+                        <template #label>
+                            <div style="display:flex;justify-content:space-between;width:100%">
+                                <span>Tags</span>
+                                <ks-button size="small">Add</ks-button>
+                            </div>
+                        </template>
+                        <ks-input v-model="form.tags" />
+                    </ks-form-item>
+                </ks-form>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const item = canvasElement.querySelector("[data-test=wide]")!.getBoundingClientRect()
+        const label = canvasElement.querySelector("[data-test=wide] .kel-form-item__label")!.getBoundingClientRect()
+        await expect(Math.round(label.width)).toBe(Math.round(item.width))
+    },
 }

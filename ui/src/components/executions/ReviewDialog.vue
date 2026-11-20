@@ -61,6 +61,9 @@
 
     const visible = defineModel<boolean>({default: false})
 
+    const REVIEW_COMMENT_PART = "kestra_review_comment"
+    const REVIEW_COMMENT_PLACEHOLDER = "-"
+
     const {t} = useI18n()
     const executionsStore = useExecutionsStore()
     const toast = useToast()
@@ -112,7 +115,9 @@
         }
     }
 
-    function validateInputs({formData, callback}: ValidationEventPayload) {
+    // This check only validates the inputs, the comment is checked on submit: a placeholder keeps commentRequired from refusing it.
+    function validateInputs({formData = new FormData(), callback}: ValidationEventPayload) {
+        formData.set(REVIEW_COMMENT_PART, REVIEW_COMMENT_PLACEHOLDER)
         executionsStore.validateReview({id: props.execution.id, taskRunId: props.taskRun.id, decision: "APPROVE", formData}).then(callback)
     }
 
@@ -130,7 +135,7 @@
 
             const formData = inputsToFormData(inputsList.value, inputs.value) ?? new FormData()
             if (trimmedComment !== "") {
-                formData.append("kestra_review_comment", trimmedComment)
+                formData.append(REVIEW_COMMENT_PART, trimmedComment)
             }
 
             submitting.value = true

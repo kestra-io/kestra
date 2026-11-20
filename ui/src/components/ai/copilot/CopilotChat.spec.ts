@@ -5,6 +5,7 @@ import type {RouteParams} from "vue-router"
 import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import type {ChatMessage} from "./useAiChat"
 import type {ProposedActionEvent, ThreadSummary} from "./types"
+import type {FlowPreviewBanner} from "../../../stores/flow"
 import {mountGlobal} from "../../../../tests/unit/components/ai/copilot/_helpers"
 
 // Drive the composable from the test so we can assert how CopilotChat renders each
@@ -56,7 +57,7 @@ vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 // CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
 // create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419), and writes
 // `previewSource` back so the main editor mirrors a pending confirmation/draft's diff.
-const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined})
+const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined, previewBanner: undefined as FlowPreviewBanner | undefined})
 vi.mock("../../../stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "./CopilotChat.vue"
@@ -100,6 +101,7 @@ describe("CopilotChat", () => {
         miscStore.configs = {isAiApiKeyConfigured: true}
         flowStore.flowYaml = ""
         flowStore.previewSource = undefined
+        flowStore.previewBanner = undefined
     })
 
     afterEach(() => {
@@ -108,6 +110,22 @@ describe("CopilotChat", () => {
 
     it("shows the empty state when there are no messages", () => {
         expect(mountChat().text()).toContain("Turn your idea into a workflow")
+    })
+
+    // The standalone AI Copilot page has no flow open, so its placeholder must not say "this flow".
+    it("uses a flow-agnostic placeholder when no flow is open", () => {
+        const placeholder = mountChat().findComponent({name: "CopilotComposer"}).props("placeholder")
+        expect(placeholder).toBe("I can create or edit flows, generate tests, scaffold related files, or explain how Kestra works.")
+        expect(placeholder).not.toContain("this flow")
+    })
+
+    it.each([
+        ["flows/update/edit", {namespace: "company.team", id: "my-flow"}],
+        ["flows/create", {}],
+    ])("keeps the \"this flow\" placeholder on %s, where a flow is open", (name, params) => {
+        routeStub = {name, params}
+        expect(mountChat().findComponent({name: "CopilotComposer"}).props("placeholder"))
+            .toBe("I can edit this flow, generate tests, scaffold related files, or explain how it works.")
     })
 
     it("renders one message per transcript entry (and hides the empty state)", () => {
@@ -563,6 +581,19 @@ describe("CopilotChat", () => {
             expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: mine")
         })
 
+        it("drops the banner another preview left, so its own draft gets the Copilot banner", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            mountChat()
+            flowStore.previewSource = "id: my-flow\nnamespace: company.team\nlabels:\n  managed-by: governance"
+            flowStore.previewBanner = {message: "Previewing policy changes", actionLabel: "Turn off preview", onAction: vi.fn()}
+
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: drafted")]
+            await flushPromises()
+
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: drafted")
+            expect(flowStore.previewBanner).toBeUndefined()
+        })
+
         it("clears once the pending mutate confirmation is approved", async () => {
             routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
             flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
@@ -760,53 +791,80 @@ describe("CopilotChat", () => {
         expect(mountChat().findComponent(CopilotThreadControls).exists()).toBe(true)
     })
 
-    it("shows the AI-unavailable state (and no composer) when unavailable", () => {
-        state.unavailable.value = true
-        const w = mountChat()
-        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
-    })
-
-    // Configuring a provider is an instance-config change, so the unavailable state points at the
-    // docs rather than offering a retry that could never succeed within the session.
-    it("offers the configuration docs — not a retry — from the unavailable state", () => {
-        state.unavailable.value = true
-        const w = mountChat()
-        const docs = w.find("[data-test=\"copilot-unavailable-docs\"]")
-        expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
-        expect(docs.attributes("target")).toBe("_blank")
-        expect(w.find("[data-test=\"copilot-unavailable-retry\"]").exists()).toBe(false)
-    })
-
-    // kestra-io/kestra-ee#10739: `/configs` says up front that no provider is configured, but the
-    // copilot still opens on the regular chat — the unavailable state waits for a send attempt.
-    it("opens on the regular chat when no AI provider is configured", () => {
+    // The composer and the quick suggestions stay on screen with no provider, but nothing can be sent.
+    it("keeps the regular home with an info notice and disabled controls when no AI provider is configured", async () => {
         miscStore.configs = {isAiApiKeyConfigured: false}
         const w = mountChat()
-        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+
         expect(w.text()).toContain("Turn your idea into a workflow")
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
-        expect(w.find(".copilot-suggestions").exists()).toBe(true)
+        const notice = w.find("[data-test=\"copilot-unavailable\"]")
+        expect(notice.attributes("role")).toBe("status")
+        expect(notice.text()).toContain("No AI provider is configured")
+
+        const composer = w.findComponent({name: "CopilotComposer"})
+        expect(composer.props("disabledReason")).toContain("no AI provider is configured")
+        expect(w.find("[data-test=\"copilot-composer-input\"]").attributes("disabled")).toBeDefined()
+        expect(w.find("[data-test=\"copilot-send\"]").attributes("disabled")).toBeDefined()
+
+        const suggestions = w.findAll("[data-test=\"copilot-suggestion\"]")
+        expect(suggestions.length).toBeGreaterThan(0)
+        suggestions.forEach((s) => {
+            expect(s.attributes("disabled")).toBeDefined()
+            expect(s.attributes("aria-describedby")).toBe(notice.attributes("id"))
+        })
+
+        await suggestions[0].trigger("click")
+        expect(state.sendChat).not.toHaveBeenCalled()
     })
 
-    it("shows the unavailable state once a prompt is attempted with no AI provider configured", async () => {
+    it("opens the configuration docs in a new tab from the notice", () => {
         miscStore.configs = {isAiApiKeyConfigured: false}
+        const docs = mountChat().find("[data-test=\"copilot-unavailable-docs\"]")
+        expect(docs.attributes("href")).toContain("kestra.io/docs/develop-with-ai/ai-copilot")
+        expect(docs.attributes("href")).toMatch(/#configure-an-llm-provider$/)
+        expect(docs.attributes("target")).toBe("_blank")
+    })
+
+    // The provider can still refuse a send (a 503 on an instance whose flag says configured): the
+    // chat stays in place, the prompt goes back into the composer and an alert explains.
+    it("restores the prompt and shows an error alert when a send is refused, never the full-view screen", async () => {
+        state.sendChat.mockImplementation(async () => {
+            state.unavailable.value = true
+        })
         const w = mountChat()
 
-        // A quick-start suggestion is a send attempt like any other.
-        await w.find(".copilot-suggestion").trigger("click")
+        await w.find("[data-test=\"copilot-composer-input\"]").setValue("build me a flow")
+        await w.find("[data-test=\"copilot-send\"]").trigger("click")
+        await flushPromises()
 
-        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
-        // The turn is short-circuited: it could only ever come back 503.
-        expect(state.sendChat).not.toHaveBeenCalled()
+        const alert = w.find("[data-test=\"copilot-not-sent\"]")
+        expect(alert.attributes("role")).toBe("alert")
+        expect(alert.text()).toContain("Your prompt was not sent")
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("build me a flow")
+        expect(w.find("[data-test=\"copilot-composer-input\"]").attributes("disabled")).toBeUndefined()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-notice-retry\"]").exists()).toBe(false)
     })
 
     it("keeps the copilot usable when the availability flag is absent (older backend)", () => {
         miscStore.configs = {}
-        expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        const absent = mountChat()
+        expect(absent.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        expect(absent.find("[data-test=\"copilot-composer-input\"]").attributes("disabled")).toBeUndefined()
 
         miscStore.configs = undefined
         expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+    })
+
+    it("does not send a seeded prompt with no AI provider, leaving it in the composer", async () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        miscStore.copilotPrompt = "Fix this error"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+
+        expect(state.sendChat).not.toHaveBeenCalled()
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("Fix this error")
     })
 
     it("auto-scrolls the transcript to the bottom as new content arrives", async () => {

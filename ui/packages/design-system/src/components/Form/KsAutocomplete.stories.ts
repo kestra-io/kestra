@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref, type ConcreteComponent} from "vue"
+import {expect} from "storybook/test"
 import KsAutocomplete from "./KsAutocomplete.vue"
 
 const SUGGESTIONS = [
@@ -170,4 +171,25 @@ export const Mobile: Story = {
             </div>
         `,
     }),
+}
+
+/** Background: `--ks-input-bg-color` replaces the base background, set on the field or an ancestor */
+export const Background: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsAutocomplete},
+        setup() {
+            return {value: ref(""), fetchSuggestions: (_query: string, callback: (results: {value: string}[]) => void) => callback([])}
+        },
+        template: `
+            <div style="padding:24px;width:360px;--ks-input-bg-color:var(--ks-bg-input)">
+                <ks-autocomplete v-model="value" placeholder="Namespace" :fetch-suggestions="fetchSuggestions" />
+                <span data-test="reference" style="background:var(--ks-bg-input)">reference</span>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const reference = getComputedStyle(canvasElement.querySelector("[data-test=reference]")!).backgroundColor
+        await expect(getComputedStyle(canvasElement.querySelector(".kel-input__wrapper")!).backgroundColor).toBe(reference)
+    },
 }

@@ -124,6 +124,7 @@
     import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
     import {authoringSurfaceAnswersKeyFor} from "../no-code/blocks/useAuthoringSurface"
+    import {useRevealRouteLine} from "../../composables/useRevealRouteLine"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -310,6 +311,8 @@
             ? editor as monaco.editor.IStandaloneCodeEditor
             : undefined
     }
+
+    useRevealRouteLine(monacoEditor, source, computed(() => Boolean(props.flow)))
 
     // Gated on the editor too, not just on the flow being editable. This value
     // does double duty: it enables the guard, and it tells the store to drop the

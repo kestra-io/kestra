@@ -4,7 +4,7 @@ import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 const mockRoute = reactive({
-    query: {q: "first-query"},
+    query: {q: "first-query"} as Record<string, string>,
     params: {},
     meta: {},
 })
@@ -141,6 +141,27 @@ describe("FlowsSearch", () => {
 
         // The stale search must not clear the loading state.
         expect(wrapper.find("[data-test=\"source-search-loading\"]").exists()).toBe(true)
+
+        wrapper.unmount()
+    })
+
+    it("starts with regex and case sensitivity taken from the URL", async () => {
+        mockRoute.query = {q: "kv\\('k'", regex: "true", caseSensitive: "true"}
+        search.mockResolvedValue(1)
+
+        const wrapper = i18nMount(FlowsSearch, {
+            global: {
+                stubs: {
+                    TopNavBar: true,
+                    NamespaceSelect: true,
+                    SourceSearchResults: true,
+                    SourceSearchPreview: true,
+                },
+            },
+        })
+        await flushPromises()
+
+        expect(search).toHaveBeenCalledWith(expect.objectContaining({regex: true, caseSensitive: true}))
 
         wrapper.unmount()
     })

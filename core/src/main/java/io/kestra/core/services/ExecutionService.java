@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.searchable.SearchableData;
 import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import org.reactivestreams.Publisher;
@@ -116,6 +117,7 @@ public class ExecutionService {
     private final AsyncOperationWaiter asyncOperationWaiter;
     private final AsyncOperationsConfiguration asyncOperationsConfiguration;
     private final TriggerEventQueue triggerEventQueue;
+    private final LogEntryEmitter logEntryEmitter;
     private final Optional<OpenTelemetry> openTelemetry;
 
     @Inject
@@ -140,6 +142,7 @@ public class ExecutionService {
         AsyncOperationWaiter asyncOperationWaiter,
         AsyncOperationsConfiguration asyncOperationsConfiguration,
         TriggerEventQueue triggerEventQueue,
+        LogEntryEmitter logEntryEmitter,
         Optional<OpenTelemetry> openTelemetry) {
         this.storageInterface = Objects.requireNonNull(storageInterface);
         this.executionRepository = Objects.requireNonNull(executionRepository);
@@ -161,6 +164,7 @@ public class ExecutionService {
         this.asyncOperationWaiter = Objects.requireNonNull(asyncOperationWaiter);
         this.asyncOperationsConfiguration = Objects.requireNonNull(asyncOperationsConfiguration);
         this.triggerEventQueue = Objects.requireNonNull(triggerEventQueue);
+        this.logEntryEmitter = Objects.requireNonNull(logEntryEmitter);
         this.openTelemetry = Objects.requireNonNull(openTelemetry);
     }
 
@@ -635,6 +639,18 @@ public class ExecutionService {
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
         String newExecutionId) throws Exception {
+        return replay(execution, flow, taskRunId, revision, breakpoints, emitEvent, newExecutionId, Map.of());
+    }
+
+    /**
+     * @param outputOverrides outputs to save in place of the copied ones, by id of a task run the replay reuses
+     */
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
+        String newExecutionId, Map<String, Map<String, Object>> outputOverrides) throws Exception {
+        if (taskRunId == null && !outputOverrides.isEmpty()) {
+            throw new IllegalArgumentException("Cannot replay execution '%s' with overridden outputs: outputs can only be overridden on a replay from a task run.".formatted(execution.getId()));
+        }
+
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
             Set<String> taskRunToRestart = this.taskRunToRestart(
@@ -669,6 +685,15 @@ public class ExecutionService {
                 .map(TaskRun::getId)
                 .forEach(originalTaskRunToRemove::add);
 
+            List<String> notReused = outputOverrides.keySet().stream()
+                .filter(id -> taskRunToRestart.contains(id) || originalTaskRunToRemove.contains(id) || execution.findTaskRunByTaskRunIdIfPresent(id).isEmpty())
+                .toList();
+            if (!notReused.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Cannot replay execution '%s' with overridden outputs: task runs %s are not reused by the replay.".formatted(execution.getId(), notReused)
+                );
+            }
+
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
             newTaskRuns.addAll(
@@ -685,7 +710,19 @@ public class ExecutionService {
                             State.Type.RESTARTED,
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
-                        taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        Map<String, Object> override = outputOverrides.get(originalTaskRun.getId());
+                        if (override == null) {
+                            taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        } else {
+                            taskOutputService.saveOutputs(newTaskRun, override);
+                            logEntryEmitter.emits(LogEntry.of(newTaskRun, execution.getKind()).toBuilder()
+                                .attemptNumber(Math.max(newTaskRun.attemptNumber() - 1, 0))
+                                .level(Level.WARN)
+                                .timestamp(Instant.now())
+                                .thread(Thread.currentThread().getName())
+                                .message("The outputs of this task run were replaced when replaying it from execution '%s'; the original values remain on task run '%s' there.".formatted(execution.getId(), originalTaskRun.getId()))
+                                .build());
+                        }
                         return newTaskRun;
                     }))
                     .toList()

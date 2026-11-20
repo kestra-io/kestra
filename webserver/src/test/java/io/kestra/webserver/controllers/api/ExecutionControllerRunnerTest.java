@@ -29,6 +29,7 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
@@ -66,6 +67,7 @@ import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
@@ -160,6 +162,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     SearchableDataRepositoryInterface searchableDataRepository;
+
+    @Inject
+    LogDataStoreInterface logRepository;
 
     @Inject
     @Client("/")
@@ -1137,6 +1142,56 @@ class ExecutionControllerRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-output-overrides.yaml" })
+    void shouldReadOverriddenOutputsWithoutRunningUpstreamTaskAgainWhenReplayingWithOverrides() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-overrides");
+        assertThat(failed.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        replayWithOverrides(failed, "adjust", "fetch", Map.of("values", Map.of("code", "KR-0412", "region", "us")));
+        Flow flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "replay-output-overrides").orElseThrow();
+        Execution replay = runnerUtils.awaitChildExecution(flow, failed, Duration.ofSeconds(15));
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        assertThat(replay.findTaskRunsByTaskId("fetch").getFirst().getAttempts()).isEqualTo(failed.findTaskRunsByTaskId("fetch").getFirst().getAttempts());
+        assertThat(outputsOf(replay, "notify")).containsEntry("value", "KR-0412 in us");
+        assertThat(outputsOf(failed, "fetch")).containsEntry("values", Map.of("code", "KR-0412 ", "region", "eu"));
+        TaskRun reusedFetch = replay.findTaskRunsByTaskId("fetch").getFirst();
+        Await.until(
+            () -> logRepository.findByExecutionIdAndTaskId(TENANT_ID, replay.getId(), "fetch", Level.WARN).stream()
+                .anyMatch(log -> reusedFetch.getId().equals(log.getTaskRunId())
+                    && log.getAttemptNumber() == reusedFetch.getAttempts().size() - 1
+                    && log.getMessage().contains(failed.getId())),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(10)
+        );
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-output-overrides.yaml" })
+    void shouldRefuseOverrideOfTaskRunTheReplayRunsAgain() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-overrides");
+
+        var exception = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "fetch", "adjust", Map.of("value", "x")));
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(exception.getResponse().getBody(String.class).orElse("")).contains("are not reused by the replay");
+    }
+
+    private void replayWithOverrides(Execution execution, String fromTaskId, String overriddenTaskId, Map<String, Object> outputs) {
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/%s/actions/replay-with-overrides?taskRunId=%s".formatted(execution.getId(), execution.findTaskRunsByTaskId(fromTaskId).getFirst().getId()),
+                Map.of("outputs", Map.of(execution.findTaskRunsByTaskId(overriddenTaskId).getFirst().getId(), outputs))
+            ),
+            Execution.class
+        );
+    }
+
+    private Map<String, Object> outputsOf(Execution execution, String taskId) throws InternalException {
+        return taskOutputService.getOutputs(execution.findTaskRunsByTaskId(taskId).getFirst().toBuilder().tenantId(TENANT_ID).build());
     }
 
     @Test

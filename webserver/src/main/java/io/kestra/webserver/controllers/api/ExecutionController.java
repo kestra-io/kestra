@@ -151,6 +151,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -1551,6 +1552,29 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/replay-with-overrides")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Create a new execution from an old one and start it from a task run, on the original flow revision, with the outputs of previous task runs replaced"
+    )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed, or if an overridden task run is not reused by the replay")
+    public HttpResponse<Execution> replayExecutionWithOverrides(
+        @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @QueryValue String taskRunId,
+        @RequestBody(description = "The outputs to use, by id of a previous task run. They replace all the outputs of that task run.") @Valid @Body ReplayWithOverridesRequest request)
+        throws Exception {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        executionReplayService.validateReplay(execution, taskRunId, execution.getFlowRevision());
+
+        return blockingReplay(execution, IdUtils.create(), taskRunId, null, Optional.empty(), request.outputs());
+    }
+
+    public record ReplayWithOverridesRequest(@NotEmpty Map<String, Map<String, Object>> outputs) {
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/replay/validate")
     @Operation(
         tags = { "Executions" },
@@ -1570,6 +1594,11 @@ public class ExecutionController {
     }
 
     private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+        return blockingReplay(execution, newExecutionId, taskRunId, revision, breakpoints, null);
+    }
+
+    private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints,
+        @Nullable Map<String, Map<String, Object>> outputOverrides) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
@@ -1590,6 +1619,7 @@ public class ExecutionController {
                         // emit Replay command; signals completion via operationId when new execution is created
                         executionCommandQueue.emit(
                             Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null))
+                                .withOutputOverrides(outputOverrides)
                                 .withOperationId(operationId)
                                 .withActor(actor)
                         );

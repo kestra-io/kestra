@@ -3,17 +3,16 @@ package io.kestra.executor.statemachine;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.testkit.Executions;
 import io.kestra.executor.testkit.ExecutorTestHarness;
 import io.kestra.executor.testkit.Flows;
@@ -173,16 +172,132 @@ class FlowableRetryErrorsTest {
                 message: handler
             """);
 
-        // the WorkingDirectory runs on the worker, which reports its failed child
         Execution created = runUntilQuiet(flow, task -> {
             dispatched.add(task);
-            return "working-directory".equals(task.getTaskRun().getTaskId())
-                ? failedChildOf(task, "child")
+            WorkerTaskResult result = "child".equals(task.getTaskRun().getTaskId())
+                ? Results.failed(task, ATTEMPT_END)
                 : Results.success(task, ATTEMPT_END);
+            List<TaskRunAttempt> attempts = result.getTaskRun().getAttempts().stream()
+                .map(attempt -> TaskRunAttempt.builder().state(attempt.getState()).workerId("worker").build())
+                .toList();
+            return new WorkerTaskResult(result.getTaskRun().withAttempts(attempts));
         });
 
-        assertThat(dispatchedTaskIds()).containsExactly("working-directory", "working-directory", "handler");
+        assertThat(dispatchedTaskIds()).containsExactly(
+            "working-directory_open", "child", "working-directory_close",
+            "working-directory_open", "child", "working-directory_close",
+            "handler"
+        );
         assertThat(harness).hasExecutionInState(created, State.Type.FAILED);
+    }
+
+    @Test
+    void shouldRunTheWholeWorkingDirectoryAgainForTheRetryOfItsParent() {
+        FlowWithSource flow = Flows.yaml("""
+            id: working-directory-parent-retry
+            namespace: io.kestra.tests
+            tasks:
+              - id: sequential
+                type: io.kestra.plugin.core.flow.Sequential
+                retry:
+                  type: constant
+                  interval: PT1S
+                  maxAttempts: 2
+                tasks:
+                  - id: working-directory
+                    type: io.kestra.plugin.core.flow.WorkingDirectory
+                    tasks:
+                      - id: child
+                        type: io.kestra.plugin.core.log.Log
+                        message: child
+            """);
+
+        Execution created = runUntilQuiet(flow, task -> {
+            dispatched.add(task);
+            return ranOnOneWorker(task);
+        });
+
+        assertThat(dispatchedTaskIds()).containsExactly(
+            "working-directory_open", "child", "working-directory_close",
+            "working-directory_open", "child", "working-directory_close"
+        );
+        assertThat(harness).hasExecutionInState(created, State.Type.FAILED);
+    }
+
+    @Test
+    void shouldRetryAWorkingDirectoryInANewExecutionWhenItsRetryAsksForIt() {
+        FlowWithSource flow = Flows.yaml("""
+            id: working-directory-retry-new-execution
+            namespace: io.kestra.tests
+            tasks:
+              - id: working-directory
+                type: io.kestra.plugin.core.flow.WorkingDirectory
+                retry:
+                  type: constant
+                  interval: PT1S
+                  maxAttempts: 2
+                  behavior: CREATE_NEW_EXECUTION
+                tasks:
+                  - id: child
+                    type: io.kestra.plugin.core.log.Log
+                    message: child
+            """);
+
+        Execution created = runUntilQuiet(flow, task -> {
+            dispatched.add(task);
+            return ranOnOneWorker(task);
+        });
+
+        assertThat(dispatched)
+            .filteredOn(task -> task.getTaskRun().getExecutionId().equals(created.getId()))
+            .extracting(task -> task.getTaskRun().getTaskId())
+            .containsExactly("working-directory_open", "child", "working-directory_close");
+        assertThat(harness).hasExecutionInState(created, State.Type.RETRIED);
+    }
+
+    @Test
+    void shouldRunTheWholeWorkingDirectoryAgainWhenItsCloseFailsUnderAFlowRetry() {
+        FlowWithSource flow = Flows.yaml("""
+            id: working-directory-close-flow-retry
+            namespace: io.kestra.tests
+            retry:
+              type: constant
+              interval: PT1S
+              maxAttempts: 2
+            tasks:
+              - id: working-directory
+                type: io.kestra.plugin.core.flow.WorkingDirectory
+                tasks:
+                  - id: child
+                    type: io.kestra.plugin.core.log.Log
+                    message: child
+            """);
+        AtomicBoolean closeFailed = new AtomicBoolean();
+
+        Execution created = runUntilQuiet(flow, task -> {
+            dispatched.add(task);
+            boolean fail = "working-directory_close".equals(task.getTaskRun().getTaskId()) && !closeFailed.getAndSet(true);
+            return onWorker(fail ? Results.failed(task, ATTEMPT_END) : Results.success(task, ATTEMPT_END));
+        });
+
+        assertThat(dispatchedTaskIds()).containsExactly(
+            "working-directory_open", "child", "working-directory_close",
+            "working-directory_open", "child", "working-directory_close"
+        );
+        assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
+    }
+
+    private static WorkerTaskResult ranOnOneWorker(WorkerTask task) {
+        return onWorker("child".equals(task.getTaskRun().getTaskId())
+            ? Results.failed(task, ATTEMPT_END)
+            : Results.success(task, ATTEMPT_END));
+    }
+
+    private static WorkerTaskResult onWorker(WorkerTaskResult result) {
+        List<TaskRunAttempt> attempts = result.getTaskRun().getAttempts().stream()
+            .map(attempt -> TaskRunAttempt.builder().state(attempt.getState()).workerId("worker").build())
+            .toList();
+        return new WorkerTaskResult(result.getTaskRun().withAttempts(attempts));
     }
 
     private Execution runUntilQuiet(FlowWithSource flow, ScriptedWorker worker) {
@@ -214,14 +329,4 @@ class FlowableRetryErrorsTest {
         };
     }
 
-    private static WorkerTaskResult failedChildOf(WorkerTask workingDirectory, String taskId) {
-        TaskRun child = workingDirectory.getTaskRun().toBuilder()
-            .id(IdUtils.create())
-            .taskId(taskId)
-            .parentTaskRunId(workingDirectory.getTaskRun().getId())
-            .attempts(List.of(TaskRunAttempt.builder().workerId("worker").state(new State().withState(State.Type.FAILED)).build()))
-            .state(new State().withState(State.Type.FAILED))
-            .build();
-        return new WorkerTaskResult(child);
-    }
 }

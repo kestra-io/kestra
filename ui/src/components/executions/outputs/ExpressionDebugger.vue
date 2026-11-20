@@ -68,12 +68,14 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
+    import {useI18n} from "vue-i18n"
 
     import Download from "vue-material-design-icons/Download.vue"
     import {KsEditor, KsButton, KsAlert, copyToClipboard} from "@kestra-io/design-system"
     import {evalExpression} from "@kestra-io/kestra-sdk/executions"
 
     import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import {useToast} from "../../../utils/toast"
     import * as Utils from "../../../utils/utils"
     import type {Execution} from "../../../stores/executions"
 
@@ -89,6 +91,8 @@
     }>()
 
     const editorBindings = useEditorBindings()
+    const {t} = useI18n()
+    const toast = useToast()
 
     const editorValue = ref(props.expression ?? "")
 
@@ -121,7 +125,10 @@
 
     const resultSize = computed(() => Utils.humanTextSize(result.value ?? ""))
 
-    const copyFullResult = () => copyToClipboard(result.value ?? "")
+    const copyFullResult = async () => {
+        await copyToClipboard(result.value ?? "")
+        toast.success(t("copied"))
+    }
 
     const downloadFullResult = () => Utils.downloadText(
         result.value ?? "",

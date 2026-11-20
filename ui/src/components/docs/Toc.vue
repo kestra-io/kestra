@@ -21,16 +21,16 @@
             <span class="toc-section-title">
                 {{ section.toUpperCase() }}
             </span>
-            <RecursiveToc :parent="{children}" />
+            <RecursiveToc :parent="{children}" :activePath="docPath" />
         </li>
     </ul>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch, inject} from "vue"
     import {useDocStore, type DocMetadata} from "../../stores/doc"
     import RecursiveToc from "./RecursiveToc.vue"
-    import {buildDocsSections, buildDocsToc} from "./docsUtils"
+    import {buildDocsSections, buildDocsToc, DOC_PATH_INJECTION_KEY} from "./docsUtils"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     interface SearchResult {
@@ -39,6 +39,7 @@
     }
 
     const docStore = useDocStore()
+    const docPath = inject(DOC_PATH_INJECTION_KEY, undefined)
 
     const rawStructure = ref<Record<string, DocMetadata> | undefined>(undefined)
     const query = ref<string>("")
@@ -109,61 +110,5 @@
         padding: var(--ks-spacing-1) var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         letter-spacing: 0.05em;
-    }
-
-    .toc :deep(a[class*="depth-"]), .toc :deep(span[class*="depth-"]) {
-        display: block;
-        width: 100%;
-        padding: var(--ks-spacing-1) var(--ks-spacing-2);
-        margin-bottom: 0.125rem;
-        border-radius: var(--ks-radius-base);
-        color: var(--ks-text-primary);
-        text-decoration: none;
-
-        &.depth-0 {
-            padding-left: calc(var(--ks-spacing-2) + 0 * var(--ks-spacing-4));
-            font-weight: var(--ks-font-weight-medium);
-        }
-
-        &.depth-1 {
-            padding-left: calc(var(--ks-spacing-2) + 1 * var(--ks-spacing-4));
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-        }
-
-        &.depth-2 {
-            padding-left: calc(var(--ks-spacing-2) + 2 * var(--ks-spacing-4));
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-        }
-
-        &.depth-3 {
-            padding-left: calc(var(--ks-spacing-2) + 3 * var(--ks-spacing-4));
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-        }
-
-        &.depth-4 {
-            padding-left: calc(var(--ks-spacing-2) + 4 * var(--ks-spacing-4));
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-        }
-
-        &.depth-5 {
-            padding-left: calc(var(--ks-spacing-2) + 5 * var(--ks-spacing-4));
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-        }
-
-        &:hover {
-            color: var(--ks-text-link);
-            background-color: var(--ks-bg-hover);
-        }
-
-        &.router-link-exact-active {
-            color: var(--ks-text-link);
-            font-weight: var(--ks-font-weight-semibold);
-            background-color: var(--ks-bg-hover);
-        }
     }
 </style>

@@ -1,13 +1,13 @@
 <template>
-    <div class="p-4" style="text-align: center;">
-        <div class="mb-4">
+    <div style="text-align: center;">
+        <div>
             <ElButton size="large" @click="toast">
                 El Message
             </ElButton>
         </div>
 
-        <div class="my-2 flex flex-wrap items-center justify-center text-center">
-            <div class="mb-4">
+        <div>
+            <div>
                 <ElButton>Default</ElButton>
                 <ElButton type="primary">
                     Primary
@@ -26,7 +26,7 @@
                 </ElButton>
             </div>
 
-            <div class="mb-4">
+            <div>
                 <ElButton plain>
                     Plain
                 </ElButton>
@@ -47,7 +47,7 @@
                 </ElButton>
             </div>
 
-            <div class="mb-4">
+            <div>
                 <ElButton round>
                     Round
                 </ElButton>
@@ -99,13 +99,13 @@
 
         <div>
             <span>Light</span>&nbsp;
-            <ElTag v-for="t of ['success', 'warning', 'danger', 'info']" :key="t" :type="t" class="m-1">
+            <ElTag v-for="t of ['success', 'warning', 'danger', 'info']" :key="t" :type="t">
                 {{ t }}
             </ElTag>
         </div>
         <div>
             <span>Dark</span>&nbsp;
-            <ElTag v-for="t of ['success', 'warning', 'danger', 'info']" :key="t" :type="t" effect="dark" class="m-1">
+            <ElTag v-for="t of ['success', 'warning', 'danger', 'info']" :key="t" :type="t" effect="dark">
                 {{ t }}
             </ElTag>
         </div>
@@ -118,7 +118,7 @@
             />
         </div>
 
-        <div class="my-2">
+        <div>
             <ElInput v-model="input" style="width: 200px; margin: .5rem" />
             <ElDatePicker
                 v-model="curDate"
@@ -189,14 +189,14 @@
 
         <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="(tab) => { if(tab.name) tabChanged({name:tab.name}) }" />
         <div>
-            <div class="sub-title my-2 text-sm text-gray-600">
+            <div class="sub-title">
                 list suggestions when activated
             </div>
             <ElAutocomplete
                 v-model="state1"
                 :fetchSuggestions="querySearch"
                 clearable
-                class="inline-input w-50"
+                class="inline-input"
                 placeholder="Please Input"
             />
         </div>

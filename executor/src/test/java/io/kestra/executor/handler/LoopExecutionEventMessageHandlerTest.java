@@ -101,6 +101,21 @@ class LoopExecutionEventMessageHandlerTest {
     }
 
     @Test
+    void shouldIgnoreTheIterationOfALoopTaskRunTheExecutionNoLongerHolds() {
+        // Given: the Loop task run was removed, as a WorkingDirectory holding it runs again
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        executionRepository.save(execution);
+
+        // When
+        var loopRun = new LoopRun(execution, "loop", IdUtils.create(), 0, null, "a", null, false);
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, IdUtils.create(), State.Type.KILLED, null, null));
+
+        // Then
+        assertThat(maybeExecutor).isEmpty();
+    }
+
+    @Test
     void shouldTerminateLoopWithSuccessOnLastIteration() throws InternalException {
         // Given
         var flow = flowRepository.create(GenericFlow.of(loopFlow()));

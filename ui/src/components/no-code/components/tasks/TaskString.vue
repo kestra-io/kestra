@@ -23,7 +23,7 @@
             v-if="disabled"
             :modelValue="String(modelValue ?? '')"
             disabled
-            class="disabled-field"
+            noMargin
         />
         <KsEditor
             v-else-if="pebble || (!schema?.format && schema?.type !== 'boolean')"
@@ -134,11 +134,8 @@
 </script>
 
 <style scoped>
-:deep(.placeholder) {
-    top: -7px !important;
-}
-
 .wrapper {
+    --ks-editor-placeholder-top: -7px;
     display: flex;
     align-items: stretch;
     justify-content: stretch;
@@ -147,21 +144,16 @@
     overflow: hidden;
     width: 100%;
     transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    --input-text-width: 100%;
 
-    & :deep(.disabled-field) {
-        margin: 0!important;
-        border-radius: 4px;
-        width: 100%;
-    }
-
-    & :deep(.ks-editor){
+    & .string-editor {
         flex: 1;
     }
 }
 
-.wrapper:not(.wrapper--toggle) :deep(.kel-input__wrapper),
-.wrapper:not(.wrapper--toggle) :deep(.editor-container) {
-    box-shadow: none;
+.wrapper:not(.wrapper--toggle) {
+    --ks-input-border-color: transparent;
+    --ks-editor-single-line-border-color: transparent;
 }
 
 .wrapper:not(.wrapper--toggle):focus-within {

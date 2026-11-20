@@ -1,4 +1,4 @@
-import {defineAsyncComponent} from "vue"
+import {defineAsyncComponent, nextTick} from "vue"
 import type {App, AsyncComponentLoader, Component} from "vue"
 import {
     INSTALLED_KEY,
@@ -20,16 +20,20 @@ type InstalledApp = App & {
 // real name lets consumers stub the component by name in tests and read it in
 // devtools, exactly as they could before it was made async.
 // Shared through globalThis because unit tests reset the module registry per file, which leaves several copies of this module alive in one worker.
-const PENDING_LOADS_KEY = Symbol.for("kestra.designSystem.pendingComponentLoads")
-const pendingComponentLoads: Set<Promise<unknown>> = ((globalThis as Record<symbol, unknown>)[PENDING_LOADS_KEY] ??= new Set<Promise<unknown>>()) as Set<Promise<unknown>>
-const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
-    Object.assign(defineAsyncComponent(() => {
-        const load = loader()
-        const settled = () => void pendingComponentLoads.delete(load)
-        pendingComponentLoads.add(load)
-        load.then(settled, settled)
-        return load
-    }), {name})
+// Holds the wrappers whose import has started (a bounded set, one entry per lazy component), not the import promises: a promise dropped from a
+// set once it settled would let `designSystemAsyncComponentsReady` miss the few microtasks Vue still needs to render the loaded component.
+const ASYNC_LOADER = "__asyncLoader"
+type AsyncWrapper = Component & {[ASYNC_LOADER]?: () => Promise<unknown>}
+const STARTED_LOADS_KEY = Symbol.for("kestra.designSystem.startedAsyncComponents")
+const startedAsyncComponents: Set<AsyncWrapper> = ((globalThis as Record<symbol, unknown>)[STARTED_LOADS_KEY] ??= new Set<AsyncWrapper>()) as Set<AsyncWrapper>
+// Pure so a consumer that never renders these components drops their lazy chunks from its build.
+const asyncComponent = /* @__NO_SIDE_EFFECTS__ */ (name: string, loader: AsyncComponentLoader) => {
+    const wrapper: AsyncWrapper = defineAsyncComponent(() => {
+        startedAsyncComponents.add(wrapper)
+        return loader()
+    })
+    return Object.assign(wrapper, {name})
+}
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 // Async on purpose: every chart statically pulls ECharts, which the barrel would
@@ -63,13 +67,18 @@ import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsDrillRow from "./components/Navigation/KsDrillRow/KsDrillRow.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 export type {KsButtonType} from "./components/Basic/KsButton/KsButton.vue"
+export type {KsTooltipProps} from "./components/Feedback/KsTooltip.vue"
+export type {NativeAttributes} from "./utils/nativeAttributes"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
 import KsTopologyDetails from "./components/Data/KsTopologyDetails.vue"
 import KsDateAgo from "./components/Data/KsDateAgo.vue"
 import KsDataTable from "./components/Data/KsDataTable/KsDataTable.vue"
-export type {SortItem} from "./components/Data/KsDataTable/KsDataTable.vue"
+export type {SortItem, KsDataTableInstance} from "./components/Data/KsDataTable/KsDataTable.vue"
 import KsCascaderPanel from "./components/Form/KsCascaderPanel.vue"
+import KsChangeReview from "./components/Data/KsChangeReview.vue"
+export type {KsChangeReviewTone, KsChangeReviewSegment, KsChangeReviewTab} from "./components/Data/KsChangeReview.vue"
+export {KS_CHANGE_REVIEW_ALL} from "./components/Data/KsChangeReview.vue"
 import KsCheckbox from "./components/Form/KsCheckbox/KsCheckbox.vue"
 import KsCheckboxButton from "./components/Form/KsCheckbox/KsCheckboxButton.vue"
 import KsCheckboxGroup from "./components/Form/KsCheckbox/KsCheckboxGroup.vue"
@@ -170,7 +179,8 @@ import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsLogoBadge from "./components/Kestra/KsLogoBadge.vue"
 import KsTree from "./components/Data/KsTree.vue"
-export type {KsTreeNode} from "./components/Data/KsTree.vue"
+export type {KsTreeNode, KsTreeInstance} from "./components/Data/KsTree.vue"
+export type {TreeOptionProps} from "element-plus"
 import KsJsonTree from "./components/Data/KsJsonTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
@@ -195,6 +205,7 @@ export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
 export {rowKey} from "./utils/rowKey"
+export {sortFromQuery} from "./utils/tableSort"
 export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
 export {
@@ -231,9 +242,19 @@ let i18nRegistration: Promise<void> = Promise.resolve()
 /** The registration `install` started, so a caller can await it rather than leave it in flight. */
 export const designSystemI18nReady = (): Promise<void> => i18nRegistration
 
-/** The lazy component imports (`KsMarkdown`, charts, `KsEditor`) still in flight, so a caller can await them rather than leave them in flight. */
+/**
+ * The lazy component imports (`KsMarkdown`, charts, `KsEditor`) still in flight, and the render of what they loaded, so a caller can await them
+ * rather than leave them in flight. `ASYNC_LOADER` is Vue's own handle on the wrapper's load: it returns the same promise Vue chained its
+ * `loaded` flag on, so once it settles the re-render is already queued and `nextTick` waits for it. A component the load itself mounts can start
+ * a further lazy import, hence the loop.
+ */
 export const designSystemAsyncComponentsReady = async (): Promise<void> => {
-    await Promise.allSettled([...pendingComponentLoads])
+    let started: number
+    do {
+        started = startedAsyncComponents.size
+        await Promise.allSettled([...startedAsyncComponents].map(component => component[ASYNC_LOADER]?.()))
+        await nextTick()
+    } while (startedAsyncComponents.size !== started)
 }
 export {useDiscardGuard} from "./composables/useDiscardGuard"
 export {useTopLayer} from "./composables/useTopLayer"
@@ -330,6 +351,7 @@ const components: Record<string, Component> = {
     KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
+    KsChangeReview,
     KsCheckbox,
     KsCheckboxButton,
     KsCheckboxGroup,
@@ -443,6 +465,7 @@ export {
     KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
+    KsChangeReview,
     KsCheckbox,
     KsCheckboxButton,
     KsCheckboxGroup,
@@ -591,6 +614,7 @@ declare module "vue" {
         KsDateAgo: typeof KsDateAgo
         KsDataTable: typeof KsDataTable
         KsCascaderPanel: typeof KsCascaderPanel
+        KsChangeReview: typeof KsChangeReview
         KsCheckbox: typeof KsCheckbox
         KsCheckboxButton: typeof KsCheckboxButton
         KsCheckboxGroup: typeof KsCheckboxGroup
@@ -673,5 +697,9 @@ declare module "vue" {
         KsTree: typeof KsTree
         KsJsonTree: typeof KsJsonTree
         KsUpload: typeof KsUpload
+    }
+
+    interface GlobalDirectives {
+        vKsLoading: typeof vKsLoading
     }
 }

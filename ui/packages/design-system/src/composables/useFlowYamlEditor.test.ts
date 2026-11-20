@@ -99,4 +99,17 @@ describe("useFlowYamlEditor", () => {
 
         expect(setModelMarkers).toHaveBeenLastCalledWith(model, "duplicate-task-ids", [])
     })
+
+    it("builds the duplicate task id marker from the translated message", () => {
+        const {editor, model} = fakeEditor("")
+        useFlowYamlEditor({
+            isFlowYaml: true,
+            duplicateTaskIdMarkers: undefined,
+            value: DUPLICATE_IDS,
+            codeEditor: editor,
+            duplicateTaskIdMessage: (ids) => `Doppelte task id: ${ids}`,
+        })
+
+        expect(setModelMarkers).toHaveBeenCalledWith(model, "duplicate-task-ids", [expect.objectContaining({message: "Doppelte task id: \"same\""})])
+    })
 })

@@ -14,6 +14,7 @@ import java.util.stream.StreamSupport;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.HierarchicType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -48,6 +49,7 @@ import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.property.Data;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -724,8 +726,15 @@ public class JsonSchemaGenerator {
 
         // default value
         builder.forFields()
-            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null || fieldScope.getAnnotation(ServerOwned.class) != null)
+            .withIgnoreCheck(JsonSchemaGenerator::isHiddenFromSchema)
             .withDefaultResolver(this::defaults);
+
+        // asset types expose the attributes they keep in metadata through getters, rendered with the whole declaration
+        builder
+            .with(Option.NONSTATIC_NONVOID_NONGETTER_METHODS, Option.FIELDS_DERIVED_FROM_ARGUMENTFREE_METHODS)
+            .forMethods()
+            .withIgnoreCheck(methodScope -> !isAssetAttribute(methodScope) || isHiddenFromSchema(methodScope))
+            .withInstanceAttributeOverride((memberAttributes, methodScope, context) -> memberAttributes.put("$dynamic", true));
 
         // def name
         builder.forTypesInGeneral()
@@ -918,6 +927,18 @@ public class JsonSchemaGenerator {
             anyOf.add(literalBranch);
             anyOf.add(expressionBranch);
             memberAttributes.set("anyOf", anyOf);
+        });
+
+        // UNKNOWN only lets a flow saved with a removed output type still load, it is never a type to write.
+        builder.forTypesInGeneral().withTypeAttributeOverride((typeAttributes, scope, context) ->
+        {
+            if (OutputType.class.equals(scope.getType().getErasedType()) && typeAttributes.get("enum") instanceof ArrayNode values) {
+                for (int i = values.size() - 1; i >= 0; i--) {
+                    if (OutputType.UNKNOWN.name().equals(values.get(i).asText())) {
+                        values.remove(i);
+                    }
+                }
+            }
         });
 
         // Add Plugin annotation special docs
@@ -1384,6 +1405,17 @@ public class JsonSchemaGenerator {
             }
         }
         return false;
+    }
+
+    private static boolean isHiddenFromSchema(MemberScope<?, ?> memberScope) {
+        return memberScope.getAnnotation(Hidden.class) != null || memberScope.getAnnotation(ServerOwned.class) != null;
+    }
+
+    private static boolean isAssetAttribute(MethodScope methodScope) {
+        Class<?> declaringType = methodScope.getDeclaringType().getErasedType();
+        return declaringType != Asset.class && Asset.class.isAssignableFrom(declaringType)
+            && methodScope.getArgumentCount() == 0
+            && methodScope.getAnnotation(JsonProperty.class) != null;
     }
 
     protected <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base) {

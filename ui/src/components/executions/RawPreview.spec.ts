@@ -1,10 +1,14 @@
 import {describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {defineComponent} from "vue"
 import RawPreview from "./RawPreview.vue"
 
-const {copyToClipboard} = vi.hoisted(() => ({copyToClipboard: vi.fn()}))
+const {copyToClipboard, toastSuccess} = vi.hoisted(() => ({copyToClipboard: vi.fn(), toastSuccess: vi.fn()}))
+
+vi.mock("../../utils/toast", () => ({
+    useToast: () => ({success: toastSuccess}),
+}))
 
 vi.mock("../../composables/useEditorBindings", () => ({
     useEditorBindings: () => ({}),
@@ -30,7 +34,7 @@ const i18n = createI18n({
     legacy: false,
     globalInjection: true,
     locale: "en",
-    messages: {en: {copy_to_clipboard: "Copy", toggle_word_wrap: "Toggle word wrap"}},
+    messages: {en: {copy_to_clipboard: "Copy", copied: "Copied", toggle_word_wrap: "Toggle word wrap"}},
 })
 
 describe("RawPreview", () => {
@@ -50,6 +54,8 @@ describe("RawPreview", () => {
 
         await buttons[0].trigger("click")
         expect(copyToClipboard).toHaveBeenCalledWith(content)
+        await flushPromises()
+        expect(toastSuccess).toHaveBeenCalledWith("Copied")
 
         await buttons[1].trigger("click")
         expect(editor.props("options").wordWrap).toBe(false)

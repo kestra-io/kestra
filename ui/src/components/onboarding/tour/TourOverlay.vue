@@ -99,7 +99,19 @@
                 <h3 class="guide-title">
                     {{ $t(sceneKey("title")) }}
                 </h3>
-                <div class="guide-body" v-html="$t(sceneKey('body'))" />
+                <div class="guide-body">
+                    <span v-html="$t(sceneKey('body'))" />
+                    <template v-if="sceneTasks.length">
+                        <ol class="guide-tasks">
+                            <li v-for="task in sceneTasks" :key="task">
+                                <i18n-t :keypath="sceneKey(`tasks.${task}`)" tag="span" scope="global">
+                                    <template #task><code>{{ task }}</code></template>
+                                </i18n-t>
+                            </li>
+                        </ol>
+                        {{ $t(sceneKey("after_tasks")) }}
+                    </template>
+                </div>
 
                 <p
                     v-if="scene.callout"
@@ -114,7 +126,10 @@
                     class="guide-alert"
                 >
                     <template #title>
-                        <span v-if="error.isHtml" v-html="error.message" />
+                        <i18n-t v-if="'key' in error" :keypath="error.key" tag="span" scope="global">
+                            <template v-for="(value, name) in error.params" #[name] :key="name">{{ value }}</template>
+                            <template #task><code>notify</code></template>
+                        </i18n-t>
                         <span v-else>{{ error.message }}</span>
                     </template>
                 </KsAlert>
@@ -161,7 +176,7 @@
     import {useOnboardingAnalytics, type OnboardingTourEvent} from "../../../composables/useOnboardingAnalytics"
     import {useToast} from "../../../utils/toast"
 
-    const {t, te} = useI18n()
+    const {t, te, tm} = useI18n()
     const route = useRoute()
     const router = useRouter()
     const tourStore = useProductTourStore()
@@ -222,7 +237,7 @@
         return true
     }
 
-    type TourError = {message: string; isHtml: boolean}
+    type TourError = {key: string; params: Record<string, unknown>} | {message: string}
 
     const isBusy = ref(false)
     const isReady = ref(false)
@@ -240,6 +255,7 @@
     )
 
     const sceneKey = (suffix: string) => translationKey(`scenes.${scene.value.id}.${suffix}`)
+    const sceneTasks = computed(() => Object.keys(tm(sceneKey("tasks"))))
 
     const isTickFilled = (step: number, tickIndex: number) => {
         if (step < scene.value.step) {
@@ -522,9 +538,9 @@
 
     const describeError = (e: unknown): TourError => {
         if (e instanceof TourSceneError) {
-            return {message: t(e.key, e.params), isHtml: true}
+            return {key: e.key, params: e.params}
         }
-        return {message: (e as {message?: string} | null)?.message ?? String(e), isHtml: false}
+        return {message: (e as {message?: string} | null)?.message ?? String(e)}
     }
 
     const runScene = async () => {
@@ -778,7 +794,7 @@
         line-height: var(--ks-line-height-loose);
     }
 
-    .guide-body :deep(ol) {
+    .guide-tasks {
         margin: var(--ks-spacing-1) 0;
         padding-left: var(--ks-spacing-5);
     }

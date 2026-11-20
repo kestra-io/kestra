@@ -247,7 +247,8 @@ export function setupKestraHttp(
             return kestraError
         }
         if (isKestraApiRequest(request)) {
-            if (GATEWAY_STATUSES.has(response.status)) markServerUnreachable()
+            const fromGateway = GATEWAY_STATUSES.has(response.status) && !response.headers.get("content-type")?.includes("json")
+            if (fromGateway) markServerUnreachable()
             else markServerReachable()
         }
 

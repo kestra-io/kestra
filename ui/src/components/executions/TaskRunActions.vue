@@ -20,7 +20,7 @@
                 />
 
                 <KsDropdownItem
-                    v-if="selectedAttempt?.state.current === 'FAILED'"
+                    v-if="aiEnabled && selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
                     <span class="fix-with-ai">
@@ -172,6 +172,7 @@
     import TaskEdit from "../flows/TaskEdit.vue"
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
+    import {useAiEnabled} from "../../composables/useAiEnabled"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
     import {loopIterationsRoute} from "../../utils/executionUtils"
     import TaskRunIterationSelector from "./TaskRunIterationSelector.vue"
@@ -209,6 +210,7 @@
     const router = useRouter()
     const toast = useToast()
     const miscStore = useMiscStore()
+    const aiEnabled = useAiEnabled()
     const coreStore = useCoreStore()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
@@ -259,7 +261,7 @@
             executionId: props.execution.id,
             filters: [{field: "taskRunId", operation: "EQUALS", value: currentTaskRunId}],
         }).then((response: unknown) => {
-            Utils.downloadUrl(window.URL.createObjectURL(new Blob([response as BlobPart])), downloadNameFor(currentTaskRunId))
+            Utils.downloadBlob(new Blob([response as BlobPart]), downloadNameFor(currentTaskRunId))
         })
     }
 

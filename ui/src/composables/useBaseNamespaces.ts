@@ -8,6 +8,7 @@ import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import * as FilesAPI from "@kestra-io/kestra-sdk/files"
 import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
 import {handled, handledIf, type KestraHttpError} from "../utils/kestraHttp"
+import {latestRequest} from "../utils/latestRequest"
 
 export {PagedResultsNamespace}
 
@@ -37,12 +38,12 @@ export const useBaseNamespacesStore = () => {
 
     const axios = useClient()
 
-    let latestAutocomplete = 0
+    const startAutocomplete = latestRequest()
 
     async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
-        const current = ++latestAutocomplete
+        const isLatest = startAutocomplete()
         const response = await NamespaceAPI.autocompleteNamespaces({existingOnly: false, ...options})
-        if (current === latestAutocomplete) {
+        if (isLatest()) {
             autocomplete.value = response
         }
         return response
@@ -55,10 +56,10 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
-    let latestLoad = 0
+    const startLoad = latestRequest()
 
     async function load(id: string) {
-        const current = ++latestLoad
+        const isLatest = startLoad()
         let data: Namespace
         try {
             data = await NamespaceAPI.loadNamespace({id})
@@ -68,13 +69,13 @@ export const useBaseNamespacesStore = () => {
                 // A load the user has navigated away from must not report its absence for the
                 // namespace they are on, the same way a superseded search is dropped in
                 // `stores/logs.ts`.
-                if (current === latestLoad) existing.value = false
+                if (isLatest()) existing.value = false
                 return null
             }
             throw e
         }
 
-        if (current !== latestLoad) return data
+        if (!isLatest()) return data
 
         namespace.value = data
         existing.value = true
@@ -279,7 +280,7 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function moveFileDirectory(payload: {namespace: string; old: string; new: string}) {
-        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
+        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: safePath(payload.old), to: safePath(payload.new)})
     }
 
     /**
@@ -289,7 +290,7 @@ export const useBaseNamespacesStore = () => {
      */
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
         await FilesAPI.moveFileDirectory(
-            {namespace: payload.namespace, from: payload.old, to: payload.new},
+            {namespace: payload.namespace, from: safePath(payload.old), to: safePath(payload.new)},
         )
     }
 

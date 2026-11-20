@@ -12,6 +12,8 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElRadioGroup, type RadioGroupProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -22,7 +24,7 @@
     const props = defineProps<{
         disabled?: boolean
         size?: "large" | "default" | "small"
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
         change: [value: string | number | boolean | undefined]
@@ -43,7 +45,7 @@
 <style>
     .kel-radio-group {
         & .kel-radio__label {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-radio-label-font-size, var(--kel-font-size-small));
         }
 
         &:not(.kel-radio-group--small) {

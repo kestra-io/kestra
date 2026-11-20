@@ -13,7 +13,6 @@ import org.jooq.impl.DSL;
 
 import io.kestra.core.mcp.models.McpSession;
 import io.kestra.core.mcp.repositories.McpSessionRepositoryInterface;
-import io.kestra.core.utils.IdUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -110,13 +109,24 @@ public abstract class AbstractJdbcMcpSessionRepository extends AbstractJdbcCrudR
         return session;
     }
 
+    /**
+     * Deletes by column rather than by key, so a row written under an older key format is removed too.
+     * {@inheritDoc}
+     */
     @Override
-    public Optional<McpSession> delete(String tenantId, String sessionId) {
-        Optional<McpSession> existing = findBySessionId(tenantId, sessionId);
+    public Optional<McpSession> delete(String tenantId, String serverId, String sessionId) {
+        Optional<McpSession> existing = find(tenantId, serverId, sessionId);
         if (existing.isEmpty()) {
             return Optional.empty();
         }
-        this.jdbcRepository.delete(existing.get());
+        jdbcRepository.getDslContextWrapper().transaction(
+            configuration -> DSL.using(configuration)
+                .deleteFrom(jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(SERVER_ID_FIELD.eq(serverId))
+                .and(SESSION_ID_FIELD.eq(sessionId))
+                .execute()
+        );
         return existing;
     }
 
@@ -129,20 +139,5 @@ public abstract class AbstractJdbcMcpSessionRepository extends AbstractJdbcCrudR
                 .where(CREATED_AT_FIELD.lt(Timestamp.from(threshold)))
                 .execute();
         });
-    }
-
-    private Optional<McpSession> findBySessionId(String tenantId, String sessionId) {
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                DSLContext context = DSL.using(configuration);
-                Record record = context
-                    .select(VALUE_FIELD)
-                    .from(jdbcRepository.getTable())
-                    .where(KEY_FIELD.eq(IdUtils.fromParts(tenantId, sessionId)))
-                    .fetchAny();
-                return record == null ? Optional.empty() : Optional.of(jdbcRepository.map(record));
-            });
     }
 }

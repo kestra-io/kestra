@@ -62,13 +62,13 @@ describe("useEditorBindings", () => {
 
     it("follows the misc store theme and re-evaluates when it changes", async () => {
         const bindings = await loadBindings()
-        expect(bindings.theme).toBe("light")
+        expect(bindings.theme).toBe("kestra-light")
 
         setTheme("dark")
-        expect(bindings.theme).toBe("dark")
+        expect(bindings.theme).toBe("kestra-dark")
 
         setTheme("light")
-        expect(bindings.theme).toBe("light")
+        expect(bindings.theme).toBe("kestra-light")
     })
 
     it("follows an OS theme change under Sync with system, which leaves the misc store theme unchanged", async () => {
@@ -85,12 +85,12 @@ describe("useEditorBindings", () => {
         localStorage.setItem(storageKeys.THEME, "syncWithSystem")
         mocks.misc.theme = "syncWithSystem"
         const bindings = await loadBindings()
-        expect(bindings.theme).toBe("light")
+        expect(bindings.theme).toBe("kestra-light")
 
         osDark = true
         osListeners.forEach((listener) => listener({matches: true}))
 
-        expect(bindings.theme).toBe("dark")
+        expect(bindings.theme).toBe("kestra-dark")
         vi.unstubAllGlobals()
     })
 
@@ -105,16 +105,16 @@ describe("useEditorBindings", () => {
         const consumerTheme = computed(() => bindings.theme)
 
         expect(isReactive(bindings)).toBe(true)
-        expect(consumerTheme.value).toBe("light")
+        expect(consumerTheme.value).toBe("kestra-light")
 
         setTheme("dark")
-        expect(consumerTheme.value).toBe("dark")
+        expect(consumerTheme.value).toBe("kestra-dark")
     })
 
     it("does not load the language configurator until configureLanguage is first called", async () => {
         const bindings = await loadBindings()
 
-        expect(bindings.theme).toBe("light")
+        expect(bindings.theme).toBe("kestra-light")
         expect(mocks.configuratorLoaded).not.toHaveBeenCalled()
 
         await bindings.configureLanguage(editor, "yaml", "flow")

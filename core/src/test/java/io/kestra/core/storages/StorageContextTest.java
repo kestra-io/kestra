@@ -1,6 +1,8 @@
 package io.kestra.core.storages;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -136,5 +138,24 @@ class StorageContextTest {
                     .build()
             ).getCacheURI("taskid", "value")
         ).isEqualTo(URI.create("/namespace/flowid/taskid/cache/7d04fd3bbbc0946dc06caf7356fdf051/cache.zip"));
+    }
+
+    @Test
+    void shouldOnlyTrustTheTriggeringExecutionSetByAFlowOrSubflowTrigger() {
+        Map<String, Object> ids = Map.of("namespace", "company.team", "flowId", "My Flow", "executionId", "exec1");
+
+        assertThat(StorageContext.triggeringExecutionPrefix(Map.of("trigger", withContext(ids, "io.kestra.plugin.core.flow.Subflow"))))
+            .isEqualTo("/company/team/my-flow/executions/exec1/");
+        assertThat(StorageContext.triggeringExecutionPrefix(Map.of("trigger", withContext(ids, "io.kestra.plugin.core.trigger.Flow"))))
+            .isEqualTo("/company/team/my-flow/executions/exec1/");
+        assertThat(StorageContext.triggeringExecutionPrefix(Map.of("trigger", withContext(ids, "io.kestra.plugin.core.trigger.Webhook")))).isNull();
+        assertThat(StorageContext.triggeringExecutionPrefix(Map.of("trigger", ids))).isNull();
+        assertThat(StorageContext.triggeringExecutionPrefix(Map.of())).isNull();
+    }
+
+    private static Map<String, Object> withContext(Map<String, Object> ids, String type) {
+        Map<String, Object> trigger = new HashMap<>(ids);
+        trigger.put("_context", Map.of("id", "trigger", "type", type));
+        return trigger;
     }
 }

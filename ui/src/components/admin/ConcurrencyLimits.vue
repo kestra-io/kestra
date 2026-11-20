@@ -15,18 +15,18 @@
             <Empty v-if="data !== undefined" type="concurrency_limits" />
         </template>
         <KsTableColumn
-            v-for="k in KEYS"
-            :key="k"
-            :prop="k"
-            :label="k === 'queued' ? $t('concurrency_limit.queued') : k"
+            v-for="column in COLUMNS"
+            :key="column.prop"
+            :prop="column.prop"
+            :label="$t(column.label)"
         >
             <template #default="scope">
-                <button v-if="k === 'running' && canReset(scope.row as ConcurrencyLimit)" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
-                    {{ scope.row[k] }}
+                <button v-if="column.prop === 'running' && canReset(scope.row as ConcurrencyLimit)" class="edit-running" data-test="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
+                    {{ scope.row[column.prop] }}
                     <IconEdit />
                 </button>
                 <span v-else>
-                    {{ scope.row[k] }}
+                    {{ scope.row[column.prop] }}
                 </span>
             </template>
         </KsTableColumn>
@@ -36,12 +36,12 @@
             {{ $t("concurrency_limit.warning") }}
         </KsAlert>
         <br>
-        <KsInputNumber v-model="newRunningCount" />
+        <KsInputNumber v-model="newRunningCount" :min="0" />
         <template #footer>
             <KsButton @click="editRunning = false">
                 {{ $t("cancel") }}
             </KsButton>
-            <KsButton type="primary" @click="saveEditRunning()">
+            <KsButton type="primary" data-test="save-running" :disabled="!isRunningCountValid" @click="saveEditRunning()">
                 {{ $t("save") }}
             </KsButton>
         </template>
@@ -60,6 +60,7 @@
     import {apiUrlWithTenant} from "override/utils/route"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
     import action from "../../models/action"
 
@@ -80,7 +81,13 @@
     type ConcurrencyLimitRow = ConcurrencyLimit & {queued?: number}
     type ConcurrencyLimitPage = {results: ConcurrencyLimitRow[], total: number}
 
-    const KEYS: (keyof ConcurrencyLimitRow)[] = ["tenantId", "namespace", "flowId", "running", "queued"]
+    const COLUMNS: {prop: keyof ConcurrencyLimitRow, label: string}[] = [
+        {prop: "tenantId", label: "tenantId"},
+        {prop: "namespace", label: "namespace"},
+        {prop: "flowId", label: "flow"},
+        {prop: "running", label: "running"},
+        {prop: "queued", label: "concurrency_limit.queued"},
+    ]
 
     const axios = useClient()
     const data = ref<ConcurrencyLimitPage>()
@@ -107,7 +114,8 @@
     }
 
     const editRunning = ref(false)
-    const newRunningCount = ref(0)
+    const newRunningCount = ref<number>()
+    const isRunningCountValid = computed(() => typeof newRunningCount.value === "number")
     const editingRow = ref<ConcurrencyLimit|null>(null)
 
     const isEditDirty = computed(() => editingRow.value != null && newRunningCount.value !== editingRow.value.running)
@@ -130,7 +138,7 @@
 
     async function saveEditRunning(){
         const row = editingRow.value
-        if(!row){
+        if(!row || !isRunningCountValid.value){
             return
         }
         try {
@@ -139,8 +147,10 @@
                 flowId: row.flowId,
                 running: newRunningCount.value,
             })
-        } catch {
-            toast.error(t("concurrency_limit.save_error"))
+        } catch (error) {
+            if (!isReportedCentrally(error as KestraHttpError)) {
+                toast.error(t("concurrency_limit.save_error"))
+            }
             return
         }
         editRunning.value = false

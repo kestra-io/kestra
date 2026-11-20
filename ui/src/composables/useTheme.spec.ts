@@ -1,5 +1,5 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
-import {ref} from "vue"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
+import {nextTick, ref} from "vue"
 
 let mockTheme = ref("light")
 let currentReportedTheme: "light" | "dark" = "light"
@@ -20,7 +20,8 @@ vi.mock("../utils/utils", async (importOriginal) => ({
     getTheme: () => currentReportedTheme,
 }))
 
-import {useTheme} from "./useTheme"
+import {storageKeys} from "../utils/constants"
+import {editorDarkTheme, editorLightTheme, useCodeTheme, useTheme} from "./useTheme"
 
 describe("useTheme", () => {
     beforeEach(() => {
@@ -61,5 +62,63 @@ describe("useTheme", () => {
 
         expect(theme.value).toBe("dark")
         vi.unstubAllGlobals()
+    })
+})
+
+describe("useCodeTheme", () => {
+    beforeEach(() => {
+        mockTheme.value = "light"
+        currentReportedTheme = "light"
+        editorDarkTheme.value = null
+        editorLightTheme.value = null
+        localStorage.removeItem(storageKeys.THEME)
+    })
+
+    afterEach(async () => {
+        editorDarkTheme.value = null
+        editorLightTheme.value = null
+        await nextTick()
+        localStorage.removeItem(storageKeys.THEME)
+    })
+
+    function switchApp(theme: "light" | "dark" | "dark-2") {
+        localStorage.setItem(storageKeys.THEME, theme)
+        currentReportedTheme = theme === "light" ? "light" : "dark"
+        mockTheme.value = theme
+    }
+
+    it("uses Kestra Light and Kestra Dark until a theme is picked for the mode", () => {
+        const codeTheme = useCodeTheme()
+        expect(codeTheme.value).toBe("kestra-light")
+
+        switchApp("dark-2")
+        expect(codeTheme.value).toBe("kestra-dark")
+
+        switchApp("dark")
+        expect(codeTheme.value).toBe("kestra-dark")
+    })
+
+    it("uses the theme picked for the current mode and switches as soon as it changes", () => {
+        const codeTheme = useCodeTheme()
+        editorLightTheme.value = "kestra-light-high-contrast"
+        editorDarkTheme.value = "kestra-midnight"
+        expect(codeTheme.value).toBe("kestra-light-high-contrast")
+
+        switchApp("dark-2")
+        expect(codeTheme.value).toBe("kestra-midnight")
+
+        editorDarkTheme.value = null
+        expect(codeTheme.value).toBe("kestra-dark")
+    })
+
+    it("ignores a stored theme that is unknown or made for the other mode", () => {
+        switchApp("dark")
+        const codeTheme = useCodeTheme()
+
+        editorDarkTheme.value = "kestra-light"
+        expect(codeTheme.value).toBe("kestra-dark")
+
+        editorDarkTheme.value = "a-theme-that-was-removed"
+        expect(codeTheme.value).toBe("kestra-dark")
     })
 })

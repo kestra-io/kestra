@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
 import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize, hasMissingRequiredInputs, type InputType} from "./inputs"
-import {inputsToFormData, normalizeInputValues} from "./submitTask"
+import {inputsToFormData} from "./submitTask"
 import type {InputMetaData} from "../stores/executions"
 
 // Regression guard, fixed more than once: `defaults` is a Property, so it crosses the wire as its
@@ -351,45 +351,5 @@ describe("hasMissingRequiredInputs", () => {
         expect(hasMissingRequiredInputs(formInputs, {"env.region": "EU"})).toBe(false)
         expect(hasMissingRequiredInputs(formInputs, {"env.zone": "a"})).toBe(true)
         expect(hasMissingRequiredInputs(formInputs, {env: "EU"})).toBe(true)
-    })
-})
-
-describe("normalizeInputValues collection semantics (#22065)", () => {
-    it("drops empty arrays for required ARRAY and MULTISELECT inputs so they cannot bypass required validation", () => {
-        const inputs = [
-            {id: "requiredArray", type: "ARRAY", required: true},
-            {id: "requiredMulti", type: "MULTISELECT", required: true},
-            {id: "optionalArray", type: "ARRAY", required: false},
-            {id: "optionalMulti", type: "MULTISELECT", required: false},
-        ]
-        const values = {
-            requiredArray: "[  ]",
-            requiredMulti: [],
-            optionalArray: "[]",
-            optionalMulti: [],
-        }
-
-        const normalized = normalizeInputValues(inputs, values)
-
-        expect(normalized?.requiredArray).toBeUndefined()
-        expect(normalized?.requiredMulti).toBeUndefined()
-        expect(normalized?.optionalArray).toBe("[]")
-        expect(normalized?.optionalMulti).toEqual([])
-    })
-
-    it("preserves non-empty collections for required ARRAY and MULTISELECT", () => {
-        const inputs = [
-            {id: "requiredArray", type: "ARRAY", required: true},
-            {id: "requiredMulti", type: "MULTISELECT", required: true},
-        ]
-        const values = {
-            requiredArray: "[\"item1\"]",
-            requiredMulti: ["choiceA"],
-        }
-
-        const normalized = normalizeInputValues(inputs, values)
-
-        expect(normalized?.requiredArray).toBe("[\"item1\"]")
-        expect(normalized?.requiredMulti).toEqual(["choiceA"])
     })
 })

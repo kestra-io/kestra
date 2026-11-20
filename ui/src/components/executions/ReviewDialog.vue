@@ -22,7 +22,7 @@
                 v-model="inputs"
                 @validation="validateInputs"
                 @ready="baseline = snapshot()"
-                @change="onFieldChange"
+                @clear-validation="onClearValidation"
             />
             <KsFormItem :label="$t('approval.comment')">
                 <KsInput v-model="comment" type="textarea" :rows="3" data-test="review-comment" />
@@ -72,9 +72,8 @@
     const comment = ref("")
     const submitting = ref(false)
 
-    function onFieldChange(fieldId: string) {
-        const prop = fieldId.includes(".") ? [fieldId] : fieldId
-        form.value?.clearValidate(prop)
+    function onClearValidation(fieldId: string) {
+        form.value?.clearValidate(fieldId)
     }
 
     const inputsList = computed(() => props.task.inputs ?? [])

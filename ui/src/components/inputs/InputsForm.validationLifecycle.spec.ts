@@ -35,11 +35,10 @@ function createTestHarness(inputsList: InputMetaData[]) {
         setup() {
             const formRef = ref<FormInstance | null>(null)
             const inputs = ref<Record<string, unknown>>({})
-            const onFieldChange = (fieldId: string) => {
-                const prop = fieldId.includes(".") ? [fieldId] : fieldId
-                formRef.value?.clearValidate(prop)
+            const onClearValidation = (fieldId: string) => {
+                formRef.value?.clearValidate(fieldId)
             }
-            return {formRef, inputs, onFieldChange, inputsList, flow}
+            return {formRef, inputs, onClearValidation, inputsList, flow}
         },
         template: `
             <KsForm ref="formRef" :model="inputs" labelPosition="top">
@@ -47,7 +46,7 @@ function createTestHarness(inputsList: InputMetaData[]) {
                     :flow="flow"
                     :initialInputs="inputsList"
                     v-model="inputs"
-                    @change="onFieldChange"
+                    @clear-validation="onClearValidation"
                 />
             </KsForm>
         `,
@@ -100,12 +99,12 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
             isValid = valid
         })
         await flushPromises()
-        await new Promise(r => setTimeout(r, 150))
-        await flushPromises()
 
         // 3. Verify 'reason is required' appears
         expect(isValid).toBe(false)
-        expect(wrapper.text()).toContain("reason is required")
+        await vi.waitFor(() => {
+            expect(wrapper.text()).toContain("reason is required")
+        })
 
         // 4. Type a valid value into the KsEditor
         const textarea = wrapper.find("textarea")
@@ -116,11 +115,11 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         // 5. Click elsewhere / blur
         await textarea.trigger("blur")
         await flushPromises()
-        await new Promise(r => setTimeout(r, 150))
-        await flushPromises()
 
         // 6. Verify the error disappears without another form submission
-        expect(wrapper.text()).not.toContain("reason is required")
+        await vi.waitFor(() => {
+            expect(wrapper.text()).not.toContain("reason is required")
+        })
     })
 
     test("clears error on dotted field paths without clearing unrelated field errors", async () => {
@@ -148,13 +147,13 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         const form = wrapper.vm.formRef
         await form?.validate(() => {})
         await flushPromises()
-        await new Promise(r => setTimeout(r, 150))
-        await flushPromises()
 
         // Both fields have required error messages initially
-        expect(wrapper.text().match(/is required/g)).toHaveLength(2)
-        expect(wrapper.text()).toContain("approval.approver is required")
-        expect(wrapper.text()).toContain("reason is required")
+        await vi.waitFor(() => {
+            expect(wrapper.text().match(/is required/g)).toHaveLength(2)
+            expect(wrapper.text()).toContain("approval.approver is required")
+            expect(wrapper.text()).toContain("reason is required")
+        })
 
         // Type into dotted field approval.approver only
         const textareas = wrapper.findAll("textarea")
@@ -163,12 +162,72 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         await textareas[0].trigger("input")
         await textareas[0].trigger("blur")
         await flushPromises()
-        await new Promise(r => setTimeout(r, 150))
-        await flushPromises()
 
         // approval.approver error is cleared, only reason error remains
-        expect(wrapper.text().match(/is required/g)).toHaveLength(1)
-        expect(wrapper.text()).not.toContain("approval.approver is required")
-        expect(wrapper.text()).toContain("reason is required")
+        await vi.waitFor(() => {
+            expect(wrapper.text().match(/is required/g)).toHaveLength(1)
+            expect(wrapper.text()).not.toContain("approval.approver is required")
+            expect(wrapper.text()).toContain("reason is required")
+        })
+    })
+
+    test("preserves existing server-side validation error when entering another invalid value", async () => {
+        const store = useExecutionsStore()
+        const errorMessage = "Invalid value: must match pattern ^[A-Z]+$"
+        store.validateExecution = vi.fn().mockResolvedValue({
+            checks: [],
+            inputs: [
+                {
+                    enabled: true,
+                    isDefault: false,
+                    input: {id: "code", type: "STRING", required: true},
+                    errors: [{message: errorMessage, renderError: false}],
+                },
+            ],
+        })
+
+        const harness = createTestHarness([
+            {id: "code", type: "STRING", required: true},
+        ])
+
+        const wrapper = i18nMount(harness, {
+            global: {
+                plugins: [KestraDesignSystem],
+            },
+        })
+        await flushPromises()
+
+        // 1. Initial state before entering a value: server error is not visible yet (normal delay)
+        expect(wrapper.text()).not.toContain(errorMessage)
+
+        // 2. Enter an invalid value
+        const textarea = wrapper.find("textarea")
+        expect(textarea.exists()).toBe(true)
+        textarea.element.value = "invalid-1"
+        await textarea.trigger("input")
+        await textarea.trigger("blur")
+        await flushPromises()
+
+        // 3. Wait for the server validation error to become visible after the normal validation delay
+        await vi.waitFor(() => {
+            expect(wrapper.text()).toContain(errorMessage)
+        }, {timeout: 3000})
+
+        // 4. Enter another invalid value
+        textarea.element.value = "invalid-2"
+        await textarea.trigger("input")
+        await textarea.trigger("blur")
+        await flushPromises()
+
+        // 5. Verify that the existing server-side error is not cleared (clearValidation is guarded)
+        expect(wrapper.text()).toContain(errorMessage)
+
+        // 6. Let revalidation return the same error message
+        await flushPromises()
+
+        // 7. Verify the rendered error remains visible
+        await vi.waitFor(() => {
+            expect(wrapper.text()).toContain(errorMessage)
+        })
     })
 })

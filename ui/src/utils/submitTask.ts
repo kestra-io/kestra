@@ -11,36 +11,15 @@ import {storageKeys} from "./constants"
 export type ExecutionInputValues = Record<string, unknown>
 
 export const normalizeInputValues = (
-    inputsList: {id: string, type?: string, required?: boolean}[] | undefined,
+    inputsList: {id:string, type?: string}[] | undefined,
     values: ExecutionInputValues,
 ): ExecutionInputValues | undefined => {
 
     let inputValuesCloned = cloneDeep(values)
 
     for (const input of inputsList || []) {
-        const val = inputValuesCloned[input.id]
-        if (val === undefined || val === null || val === "") {
+        if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === null || inputValuesCloned[input.id] === "") {
             delete inputValuesCloned[input.id]
-        } else if (input.required !== false && (input.type === "ARRAY" || input.type === "MULTISELECT")) {
-            let isCollectionEmpty = false
-            if (Array.isArray(val)) {
-                isCollectionEmpty = val.length === 0
-            } else if (typeof val === "string") {
-                const trimmed = val.trim()
-                if (trimmed === "") {
-                    isCollectionEmpty = true
-                } else {
-                    try {
-                        const parsed = JSON.parse(trimmed)
-                        isCollectionEmpty = Array.isArray(parsed) && parsed.length === 0
-                    } catch {
-                        isCollectionEmpty = false
-                    }
-                }
-            }
-            if (isCollectionEmpty) {
-                delete inputValuesCloned[input.id]
-            }
         }
     }
 

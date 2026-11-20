@@ -20,6 +20,7 @@
                 :prop="input.id.includes('.') ? [input.id] : input.id"
                 :error="customInputs[input.id] ? undefined : inputError(input.id)"
                 :inlineMessage="true"
+                :class="{centered}"
             >
                 <template #label>
                     <span
@@ -51,6 +52,7 @@
                 <KsMarkdown v-if="input.description && input.descriptionDisplayMode !== 'TOOLTIP'" :data-testid="`input-description-${input.id}`" class="text-description" :content="input.description" />
                 <KsEditor
                     v-bind="editorBindings"
+                    class="editor"
                     :options="{fullHeight: false}"
                     :inline="true"
                     :navbar="false"
@@ -209,6 +211,7 @@
                             <KsTag
                                 v-for="(item, index) in parseArrayValue(input.id)"
                                 :key="index"
+                                class="tag"
                             >
                                 {{ item }}
                             </KsTag>
@@ -281,6 +284,7 @@
                 />
                 <KsEditor
                     v-bind="editorBindings"
+                    class="editor"
                     :options="{fullHeight: false, showScroll: ((inputsValues[input.id] as string)?.length ?? 0) > 530}"
                     :inline="true"
                     :navbar="false"
@@ -292,6 +296,7 @@
                 />
                 <KsEditor
                     v-bind="editorBindings"
+                    class="editor"
                     :options="{fullHeight: false}"
                     :inline="true"
                     :navbar="false"
@@ -414,6 +419,8 @@
         // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
         // so an expression or a default can read a label the caller already knows.
         renderLabels?: string[];
+        /** Centres each label vertically against its input, for inputs taller than one line. */
+        centered?: boolean;
     }>(), {
         executeClicked: false,
         initialInputs: () => [],
@@ -424,6 +431,7 @@
         hideRecapNavigation: false,
         formGroups: undefined,
         renderLabels: undefined,
+        centered: false,
     })
 
     const emit = defineEmits<{
@@ -433,7 +441,7 @@
         "validation": [payload: ValidationEventPayload];
         "update:onRecap": [value: boolean];
         "ready": [];
-        "change": [fieldId: string];
+        "clearValidation": [fieldId: string];
     }>()
 
     const executionsStore = useExecutionsStore()
@@ -545,99 +553,31 @@
         }
     }
 
-    function hasInputValue(input: InputMetaData): boolean {
-        const id = input.id
-        if (input.type === "MULTISELECT" || input.type === "ARRAY") {
-            const items = input.type === "MULTISELECT"
-                ? multiSelectComponentValue(multiSelectInputs[id] ?? inputsValues[id])
-                : multiSelectComponentValue(inputsValues[id])
-            return items.length > 0
-        }
-
-        if (input.type === "BOOL") {
-            const val = inputsValues[id]
-            return typeof val !== "undefined" && val !== null
-        }
-
-        const val = inputsValues[id]
-        if (val === undefined || val === null || val === "") {
-            return false
-        }
-        if (Array.isArray(val)) {
-            return val.length > 0
-        }
-        return true
-    }
-
-    function isRequiredError(err: InputError, input: InputMetaData): boolean {
-        if (err.renderError) {
-            return false
-        }
-        const message = err.message
-        if (!message) {
-            return false
-        }
-        if (message.includes(`Missing required input:${input.id}`) ||
-            message.includes("Missing required input")) {
-            return true
-        }
-        const requiredPattern = t("is required", {field: inputLabel(input)})
-        return message === requiredPattern || message.includes(requiredPattern)
-    }
-
-    function activeInputErrors(id: string): InputError[] {
-        if (isLoadingInput(id)) {
-            return []
-        }
-        const meta = inputsMetaData.value.find((it) => it.id === id)
-        if (!meta) {
-            return []
-        }
-
-        const errors = meta.errors ?? []
-        const isRenderError = errors.some(err => err.renderError)
-
-        if (!isRenderError && !inputsValidated.value.has(id)) {
-            return []
-        }
-
-        const valuePresent = hasInputValue(meta)
-        const isUntouchedDynamicInput = !userEditedInputs.has(id) && dynamicInputIds.value.has(id)
-
-        const result: InputError[] = []
-        let hasRequiredError = false
-
-        for (const err of errors) {
-            if (err.renderError) {
-                result.push(err)
-            } else if (isRequiredError(err, meta)) {
-                hasRequiredError = true
-                if (!valuePresent || isUntouchedDynamicInput) {
-                    result.push(err)
-                }
-            } else {
-                result.push(err)
-            }
-        }
-
-        if (meta.required !== false && !meta.isDefault && !valuePresent && inputsValidated.value.has(id) && !hasRequiredError && !isRenderError) {
-            result.push({message: t("is required", {field: inputLabel(meta)}), path: meta.id})
-        }
-
-        return result
-    }
-
     function inputError(id: string): string | undefined {
-        const errors = activeInputErrors(id)
-        if (errors.length === 0) {
+        if (isLoadingInput(id)) {
             return undefined
         }
-        return errors.map(err => err.message).join("\n")
+        const meta = inputsMetaData.value.find((it) => it.id === id && it.errors && it.errors.length > 0)
+        if (!meta) {
+            return undefined
+        }
+        const message = meta.errors!.map(err => err.message).join("\n")
+
+        const isRenderError = meta.errors!.some(err => err.renderError)
+
+        if (!isRenderError && !inputsValidated.value.has(id)) {
+            return undefined
+        }
+
+        return message
     }
 
     /** The errors `inputError` joins into one message, for a control that anchors each of them itself. */
     function valueErrors(id: string): InputError[] {
-        return activeInputErrors(id)
+        if (!inputError(id)) {
+            return []
+        }
+        return inputsMetaData.value.find((it) => it.id === id)?.errors ?? []
     }
 
     function updateDefaults(): void {
@@ -685,7 +625,9 @@
         input.isDefault = false
         modelValue.value = {...inputsValues}
         emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
-        emit("change", input.id)
+        if (!inputError(input.id)) {
+            emit("clearValidation", input.id)
+        }
     }
 
     function onSubmit(): void {
@@ -975,16 +917,14 @@
             }]
         }
 
-        if (input.type === "SELECT" || input.type === "MULTISELECT" || input.type === "ARRAY") {
+        if (input.type === "SELECT" || input.type === "MULTISELECT") {
             return [{
                 required: true,
                 validator: (_rule, _val: unknown, callback: (error?: Error) => void) => {
-                    const items = input.type === "MULTISELECT"
-                        ? multiSelectComponentValue(multiSelectInputs[input.id] ?? inputsValues[input.id])
-                        : input.type === "ARRAY"
-                            ? multiSelectComponentValue(inputsValues[input.id])
-                            : inputsValues[input.id]
-                    if (!items || (Array.isArray(items) ? items.length === 0 : !items)) {
+                    const val = input.type === "MULTISELECT"
+                        ? multiSelectInputs[input.id] as unknown[] | undefined
+                        : inputsValues[input.id] as unknown[] | string | undefined
+                    if (!val || (Array.isArray(val) ? val.length === 0 : !val)) {
                         return callback(new Error(t("is required", {field: inputLabel(input)})))
                     }
                     callback()
@@ -997,7 +937,17 @@
     }
 
     function parseArrayValue(inputId: string): unknown[] {
-        return multiSelectComponentValue(inputsValues[inputId])
+        const value = inputsValues[inputId]
+        if (!value) return []
+
+        if (typeof value === "string") {
+            try {
+                return JSON.parse(value)
+            } catch {
+                return []
+            }
+        }
+        return []
     }
 
     function addNewArrayItem(input: InputMetaData): void {
@@ -1192,6 +1142,10 @@
 </script>
 
 <style scoped>
+.centered {
+    align-items: center;
+}
+
 .md-label {
     display: inline-flex;
     height: var(--ks-font-size-lg);
@@ -1299,35 +1253,10 @@
     overflow-y: auto;
 }
 
-:deep(.boolean-inputs) {
+.boolean-inputs {
     display: flex;
     align-items: center;
     width: 100%;
-
-    .kel-radio-button {
-        &.is-active {
-            .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
-                color: var(--ks-text-primary);
-                background-color: var(--ks-btn-secondary-bg-active);
-                box-shadow: 0 0 0 0 var(--ks-border-focus);
-            }
-        }
-
-        .kel-radio-button__inner {
-            border: var(--ks-border-default);
-            transition: 0.3s ease-in-out;
-
-            &:hover {
-                color: var(--ks-text-secondary);
-                border-color: var(--ks-border-focus);
-                background-color: var(--ks-bg-surface);
-            }
-
-            &:first-child {
-                border-left: var(--ks-border-default);
-            }
-        }
-    }
 }
 
 .kel-input-file {
@@ -1370,7 +1299,7 @@
         box-sizing: border-box;
         gap: 4px;
 
-        & :deep(.kel-tag) {
+        & .tag {
             display: inline-flex;
             align-items: center;
             border-radius: 4px;
@@ -1394,17 +1323,12 @@
         }
 
         .array-cell {
-            & :deep(.kel-input__wrapper) {
-                box-shadow: none;
-                border: 1px solid var(--ks-border-default);
-                border-radius: 5px;
-                padding-right: var(--ks-spacing-5);
-            }
-
-            & :deep(.kel-input__inner) {
-                color: var(--ks-text-warning) !important;
-                font-size: var(--ks-font-size-sm) !important;
-            }
+            --ks-input-border-color: transparent;
+            --ks-input-border: 1px solid var(--ks-border-default);
+            --ks-input-radius: 5px;
+            --ks-input-inner-padding-end: 0.8125rem;
+            --ks-input-text-color: var(--ks-text-warning);
+            --ks-input-font-size: var(--ks-font-size-sm);
         }
 
         .controls-input {
@@ -1450,13 +1374,10 @@
     }
 }
 
-:deep(.editor-container){
-        max-height: 200px;
-
-        & .ks-monaco-editor {
-            overflow-x: hidden;
-        }
-    }
+.editor {
+    --ks-editor-max-height: 200px;
+    --ks-editor-overflow-x: hidden;
+}
 
 .custom-file-input {
   color: transparent;

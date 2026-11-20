@@ -19,7 +19,7 @@
                 :initialInputs="inputsList"
                 :execution="execution"
                 v-model="inputs"
-                @change="onFieldChange"
+                @clear-validation="onClearValidation"
             />
         </KsForm>
         <template #footer>
@@ -83,9 +83,8 @@
 
     const needInputs = computed(() => inputsList.value?.length > 0)
 
-    function onFieldChange(fieldId: string) {
-        const prop = fieldId.includes(".") ? [fieldId] : fieldId
-        form.value?.clearValidate(prop)
+    function onClearValidation(fieldId: string) {
+        form.value?.clearValidate(fieldId)
     }
 
     function click() {

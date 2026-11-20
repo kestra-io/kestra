@@ -130,20 +130,6 @@ public final class SourceSearchMatcher {
     }
 
     public static List<SourceMatch> findMatches(String source, String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope) {
-        List<SourceMatch> matches = findMatches(source, query, caseSensitive, wholeWord, regex);
-        if (scope == null || scope == SourceSearchScope.ALL || matches.isEmpty()) {
-            return matches;
-        }
-
-        int[] range = topLevelBlockLineRange(source, scope.name().toLowerCase(Locale.ROOT));
-        if (range == null) {
-            return List.of();
-        }
-
-        return matches.stream().filter(match -> match.line() >= range[0] && match.line() <= range[1]).toList();
-    }
-
-    public static List<SourceMatch> findMatches(String source, String query, boolean caseSensitive, boolean wholeWord, boolean regex) {
         if (source == null || query == null || query.isEmpty()) {
             return List.of();
         }
@@ -151,6 +137,12 @@ public final class SourceSearchMatcher {
         Pattern pattern = toPattern(query, caseSensitive, wholeWord, regex);
         Matcher matcher = RegexUtils.matcher(pattern, source);
         List<int[]> lineBounds = lineBounds(source);
+        int[] range = scope == null || scope == SourceSearchScope.ALL
+            ? new int[] { 1, lineBounds.size() }
+            : topLevelBlockLineRange(source, scope.name().toLowerCase(Locale.ROOT));
+        if (range == null) {
+            return List.of();
+        }
 
         List<SourceMatch> matches = new ArrayList<>();
         int lineIndex = 0;
@@ -166,6 +158,13 @@ public final class SourceSearchMatcher {
             while (lineIndex < lineBounds.size() - 1 && lineBounds.get(lineIndex)[1] < start) {
                 lineIndex++;
             }
+            searchFrom = end == start ? end + 1 : end;
+            if (lineIndex + 1 < range[0]) {
+                continue;
+            }
+            if (lineIndex + 1 > range[1]) {
+                break;
+            }
             int[] bounds = lineBounds.get(lineIndex);
             int highlightEnd = Math.max(start, Math.min(end, bounds[1]));
 
@@ -173,11 +172,13 @@ public final class SourceSearchMatcher {
                 + "[mark]" + source.substring(start, highlightEnd) + "[/mark]"
                 + source.substring(highlightEnd, bounds[1]);
             matches.add(new SourceMatch(lineIndex + 1, start - bounds[0], snippet));
-
-            searchFrom = end == start ? end + 1 : end;
         }
 
         return matches;
+    }
+
+    public static List<SourceMatch> findMatches(String source, String query, boolean caseSensitive, boolean wholeWord, boolean regex) {
+        return findMatches(source, query, caseSensitive, wholeWord, regex, SourceSearchScope.ALL);
     }
 
     public static String replaceWithinScope(String source, Pattern pattern, String replacement, SourceSearchScope scope) {
@@ -230,7 +231,7 @@ public final class SourceSearchMatcher {
             }
         }
 
-        return start == -1 ? null : new int[]{start, end};
+        return start == -1 ? null : new int[] { start, end };
     }
 
     private static List<int[]> lineBounds(String source) {
@@ -238,11 +239,11 @@ public final class SourceSearchMatcher {
         int start = 0;
         for (int i = 0; i < source.length(); i++) {
             if (source.charAt(i) == '\n') {
-                bounds.add(new int[]{start, i});
+                bounds.add(new int[] { start, i });
                 start = i + 1;
             }
         }
-        bounds.add(new int[]{start, source.length()});
+        bounds.add(new int[] { start, source.length() });
         return bounds;
     }
 }

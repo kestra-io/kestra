@@ -36,7 +36,7 @@
                 :icon="ArrowExpand"
                 :title="$t('expand')"
                 data-test="tour-expand"
-                @click="setMinimized(false)"
+                @click="toggleMinimized(false)"
             >
                 {{ $t(translationKey("step_of"), {current: sceneIndex + 1, total: totalSteps}) }}
             </KsButton>
@@ -84,10 +84,10 @@
                         {{ $t(translationKey("actions.skip")) }}
                     </KsButton>
                     <KsIconButton
-                        :ariaLabel="$t('collapse')"
-                        :title="$t('collapse')"
+                        :tooltip="$t('collapse')"
+                        placement="top"
                         data-test="tour-collapse"
-                        @click="setMinimized(true)"
+                        @click="toggleMinimized(true)"
                     >
                         <ArrowCollapse />
                     </KsIconButton>
@@ -183,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue"
     import {useEventListener, useIntervalFn, useResizeObserver} from "@vueuse/core"
     import {cssVar, useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
@@ -278,12 +278,20 @@
         () => tourStore.isGuidedActive && !tourStore.state.tour.introSeen,
     )
 
-    // An error is only readable on the card, so it brings the card back.
     const isMinimized = computed(
         () => tourStore.state.tour.minimized && !showIntro.value && !error.value,
     )
 
     const setMinimized = (minimized: boolean) => tourStore.setTourState({minimized})
+
+    // The clicked button is replaced by the other one, which would drop keyboard focus to <body>.
+    const toggleMinimized = async (minimized: boolean) => {
+        setMinimized(minimized)
+        await nextTick()
+        cardEl.value
+            ?.querySelector<HTMLElement>(`[data-test="${minimized ? "tour-expand" : "tour-collapse"}"]`)
+            ?.focus()
+    }
 
     const sceneKey = (suffix: string) => translationKey(`scenes.${scene.value.id}.${suffix}`)
     const sceneTasks = computed(() => Object.keys(tm(sceneKey("tasks"))))
@@ -487,7 +495,6 @@
     let placedKey: string | null = null
     let draggedKey: string | null = null
 
-    // The intro is placed like a scene of its own, one that points at nothing.
     const placementKey = () => (showIntro.value ? "intro" : scene.value?.id ?? "")
 
     const visibleRects = (elements: Iterable<Element>) =>
@@ -508,7 +515,6 @@
         const {x, y} = dragOffset.value
         const isDragged = x !== 0 || y !== 0
         const current = shiftRect(cornerRect(corner.value, card, area), dragOffset.value)
-        // Once placed for a scene, or dragged, the card only moves when that uncovers more.
         const staysPut = (placedKey === key || isDragged)
             && coverScore(current, targets, avoid) <= best.score
         placedKey = key
@@ -790,8 +796,6 @@
 </script>
 
 <style scoped>
-    /* The box the card sits in the corners of: the page, clear of the menu and the top bar,
-       and never narrower than the card, so on a small screen the left corners stay on it. */
     .tour-overlay {
         --guide-width: min(460px, calc(100vw - var(--ks-spacing-16)));
         position: fixed;

@@ -1,11 +1,12 @@
 import {describe, expect, it} from "vitest"
-import {bestCorner, cornerOrder} from "./tourPlacement"
+import {bestCorner, cornerOrder, cornerRect, coverScore, shiftRect} from "./tourPlacement"
 
-const AREA = {top: 0, left: 0, bottom: 800, right: 1200}
+// Offset from the viewport origin, as the menu and the top bar make it.
+const AREA = {top: 60, left: 280, bottom: 860, right: 1480}
 const CARD = {width: 400, height: 300}
 const PAGE = AREA
-const BOTTOM_RIGHT = {top: 600, left: 900, bottom: 700, right: 1100}
-const BOTTOM_LEFT = {top: 600, left: 100, bottom: 700, right: 300}
+const BOTTOM_RIGHT = {top: 660, left: 1180, bottom: 760, right: 1380}
+const BOTTOM_LEFT = {top: 660, left: 380, bottom: 760, right: 580}
 
 describe("tour card placement", () => {
     it("leaves the default corner when the target is under it", () => {
@@ -21,9 +22,21 @@ describe("tour card placement", () => {
     })
 
     it("covers the target rather than what the scene avoids", () => {
-        const bottom = {top: 600, left: 0, bottom: 800, right: 1200}
-        const top = {top: 0, left: 0, bottom: 200, right: 1200}
+        const bottom = {top: 660, left: 280, bottom: 860, right: 1480}
+        const top = {top: 60, left: 280, bottom: 260, right: 1480}
 
         expect(bestCorner(CARD, AREA, [top], [bottom]).corner).toBe("top-right")
+    })
+
+    it("puts each corner inside the area", () => {
+        expect(cornerRect("top-left", CARD, AREA)).toEqual({top: 60, left: 280, bottom: 360, right: 680})
+        expect(cornerRect("bottom-right", CARD, AREA)).toEqual({top: 560, left: 1080, bottom: 860, right: 1480})
+    })
+
+    it("scores a dragged card where it was dragged to", () => {
+        const corner = cornerRect("bottom-left", CARD, AREA)
+
+        expect(coverScore(corner, [BOTTOM_RIGHT], [])).toBe(0)
+        expect(coverScore(shiftRect(corner, {x: 800, y: 0}), [BOTTOM_RIGHT], [])).toBe(1)
     })
 })

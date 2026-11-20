@@ -34,7 +34,6 @@ const BOX = "position: fixed; background: var(--ks-bg-surface); border: 1px soli
 // Where the card sits by default, so a card that does not move covers these.
 const BOTTOM_RIGHT = `${BOX} right: 3rem; bottom: 3rem; width: 30rem; height: 16rem;`
 
-/** Resumes the real tour on `sceneId`, over a page holding only what that scene points at. */
 const tourOn = (sceneId: string, page: string): Story["render"] => () => ({
     components: {TourOverlay},
     setup() {
@@ -60,7 +59,6 @@ const overlap = (canvasElement: HTMLElement, selector: string) => {
     return card.left < other.right && other.left < card.right && card.top < other.bottom && other.top < card.bottom
 }
 
-/** The highlighted element is under the default corner, so the card takes another one. */
 export const MovesOffTheHighlightedElement: Story = {
     render: tourOn("failed_execution", `<div class="log-row-error" style="${BOTTOM_RIGHT}">ERROR</div>`),
     async play({canvasElement}) {
@@ -70,7 +68,6 @@ export const MovesOffTheHighlightedElement: Story = {
     },
 }
 
-/** A scene with nothing highlighted still keeps the card off what it names in `avoid`. */
 export const MovesOffAnAvoidedElement: Story = {
     render: tourOn("chain", `<span class="labels-container" style="${BOTTOM_RIGHT}">started_by:you</span>`),
     async play({canvasElement}) {
@@ -80,7 +77,6 @@ export const MovesOffAnAvoidedElement: Story = {
     },
 }
 
-/** Nothing leaves room for the card here, so it collapses to the step pill and comes back from it. */
 export const CollapsesToAPill: Story = {
     render: tourOn("failed_execution", `<div class="log-row-error" style="${BOX} inset: 0;">ERROR</div>`),
     async play({canvasElement}) {
@@ -92,9 +88,11 @@ export const CollapsesToAPill: Story = {
         const pill = await canvas.findByRole("button", {name: /Step 6 of 14/})
         await expect(canvas.queryByText("A task failed")).toBeNull()
         await expect(useProductTourStore().state.tour.minimized).toBe(true)
+        await waitFor(() => expect(pill).toHaveFocus())
 
         await userEvent.click(pill)
 
         await expect(await canvas.findByText("A task failed")).toBeVisible()
+        await waitFor(() => expect(find(canvasElement, "[data-test=\"tour-collapse\"]")).toHaveFocus())
     },
 }

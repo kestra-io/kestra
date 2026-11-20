@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {ref, computed, toRaw, nextTick} from "vue"
+import {ref, shallowRef, shallowReactive, computed, toRaw, nextTick} from "vue"
 import {trackPluginDocumentationView} from "../utils/tabTracking"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
@@ -240,12 +240,15 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
-    const schemaType = ref<Record<string, RootJsonSchema>>()
+    // Shallow: a schema is megabytes of read-only JSON, replaced as a whole and never mutated in place.
+    const schemaType = shallowRef<Record<string, RootJsonSchema>>()
+    const pendingSchemaLoads = shallowReactive(new Map<string, Promise<RootJsonSchema>>())
     const forceIncludeProperties = ref<string[]>()
 
     const flowSchema = computed<RootJsonSchema>(() => {
         return schemaType.value?.flow ?? InitialFlowSchema
     })
+    const isFlowSchemaLoading = computed(() => pendingSchemaLoads.has("flow"))
     const flowDefinitions = computed(() => {
         return flowSchema.value.definitions
     })
@@ -416,18 +419,23 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     function lazyLoadSchemaType(options: {type: string}) {
-        if(schemaType.value?.[options.type]) {
-            return Promise.resolve(schemaType.value[options.type])
+        const loaded = schemaType.value?.[options.type]
+        if(loaded) {
+            return Promise.resolve(loaded)
         }
 
-        return loadSchemaType(options)
+        let pending = pendingSchemaLoads.get(options.type)
+        if(!pending) {
+            pending = loadSchemaType(options).finally(() => pendingSchemaLoads.delete(options.type))
+            pendingSchemaLoads.set(options.type, pending)
+        }
+        return pending
     }
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
             const schema = data as RootJsonSchema
-            schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = schema
+            schemaType.value = {...schemaType.value, [options.type]: schema}
             return schema
         })
     }
@@ -611,6 +619,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         forceIncludeProperties,
 
         flowSchema,
+        isFlowSchemaLoading,
         flowDefinitions,
         flowRootSchema,
         flowRootProperties,

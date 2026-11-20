@@ -36,6 +36,7 @@ import {
     ROOT_SCHEMA_INJECTION_KEY,
     SAVE_FLOW_FUNCTION_INJECTION_KEY,
     SCHEMA_DEFINITIONS_INJECTION_KEY,
+    SCHEMA_LOADER_INJECTION_KEY,
     UPDATE_YAML_FUNCTION_INJECTION_KEY,
 } from "../injectionKeys"
 
@@ -57,6 +58,7 @@ const KEYS = {
     FULL_SCHEMA: FULL_SCHEMA_INJECTION_KEY,
     ROOT_SCHEMA: ROOT_SCHEMA_INJECTION_KEY,
     SCHEMA_DEFINITIONS: SCHEMA_DEFINITIONS_INJECTION_KEY,
+    SCHEMA_LOADER: SCHEMA_LOADER_INJECTION_KEY,
     CREATE_TASK_FUNCTION: CREATE_TASK_FUNCTION_INJECTION_KEY,
     EDIT_TASK_FUNCTION: EDIT_TASK_FUNCTION_INJECTION_KEY,
     CLOSE_TASK_FUNCTION: CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -140,6 +142,7 @@ describe("useBlockEditorProvides", () => {
         for (const store of [flowStore, pluginsStore]) {
             Object.keys(store).forEach((k) => delete store[k])
         }
+        pluginsStore.lazyLoadSchemaType = vi.fn()
     })
 
     it.each(Object.keys(KEYS) as KeyName[])("provides the %s key", (name) => {
@@ -263,6 +266,20 @@ describe("useBlockEditorProvides", () => {
             expect(value("FULL_SCHEMA")).toEqual(flowSchema)
             expect(value("ROOT_SCHEMA")).toEqual(flowRootSchema)
             expect(value("SCHEMA_DEFINITIONS")).toEqual(flowDefinitions)
+        })
+
+        // Topology also mounts read-only on an execution, where nothing ever needs the megabytes of schema.
+        it("requests the flow schema only once a form asks for it, and exposes whether it is on its way", () => {
+            const {injected} = setupWithStores(() => {
+                pluginsStore.isFlowSchemaLoading = true
+            })
+            const loader = injected.SCHEMA_LOADER as {load: () => void, isLoading: {value: boolean}}
+            expect(pluginsStore.lazyLoadSchemaType).not.toHaveBeenCalled()
+
+            loader.load()
+
+            expect(pluginsStore.lazyLoadSchemaType).toHaveBeenCalledWith({type: "flow"})
+            expect(loader.isLoading.value).toBe(true)
         })
 
         it("falls back to an empty object for the schema, root schema and definitions", () => {

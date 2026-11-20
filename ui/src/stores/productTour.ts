@@ -11,6 +11,7 @@ export interface TourProgress {
     flowId: string;
     reportFlowId: string;
     introSeen: boolean;
+    minimized: boolean;
     menuDismissed: boolean;
     blueprintsNudgeDismissed: boolean;
     webhookKey: string | null;
@@ -44,6 +45,7 @@ const defaultTourState = (): TourProgress => ({
     flowId: TOUR_FLOW_ID,
     reportFlowId: TOUR_REPORT_FLOW_ID,
     introSeen: false,
+    minimized: false,
     menuDismissed: false,
     blueprintsNudgeDismissed: false,
     webhookKey: null,

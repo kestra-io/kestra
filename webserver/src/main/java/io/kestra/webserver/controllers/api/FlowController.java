@@ -432,6 +432,8 @@ public class FlowController {
             );
         }
 
+        flows.forEach(this::validateBeforeBulkWrite);
+
         // list all ids of updated flows
         List<String> ids = flows
             .stream()
@@ -450,9 +452,11 @@ public class FlowController {
             }
             deleted = deleted.stream()
                 .filter(flow -> !ids.contains(flow.getId()))
-                .peek(flow -> flowRepository.delete(flow))
                 .toList();
         }
+
+        validateBulkUpdate(flows, deleted);
+        deleted.forEach(flowRepository::delete);
 
         // update or create flows
         List<? extends FlowInterface> updatedOrCreated = flows.stream()
@@ -463,6 +467,27 @@ public class FlowController {
             )
             .toList();
         return Stream.concat(deleted.stream(), updatedOrCreated.stream()).toList();
+    }
+
+    /**
+     * Called once by a bulk update, after the content of every flow is validated and before anything is written, so that an override can reject the whole request.
+     */
+    protected void validateBulkUpdate(List<GenericFlow> flows, List<? extends FlowInterface> toDelete) {
+    }
+
+    // An existing flow gets the checks flowRepository.update applies (lenient parsing, no pluginDefaultsRef check),
+    // so that an update accepted before is not rejected now.
+    @SneakyThrows
+    private void validateBeforeBulkWrite(GenericFlow flow) {
+        boolean exists = flowRepository.findById(tenantService.resolveTenant(), flow.getNamespace(), flow.getId()).isPresent();
+        try {
+            flowService.validateFlow(flow, !exists, !exists);
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            }
+            throw e;
+        }
     }
 
     @Put(uri = "{namespace}/{id}", consumes = MediaType.APPLICATION_YAML)

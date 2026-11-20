@@ -21,7 +21,7 @@ class CachedFlowMetaStoreTest {
 
     // Use 1 vNode so all flows hash to vNode 0
     private static final int TEST_VNODE_COUNT = 1;
-    private static final SchedulerConfiguration SCHEDULER_CONFIGURATION = new SchedulerConfiguration(TEST_VNODE_COUNT, Duration.ofSeconds(5), 100);
+    private static final SchedulerConfiguration SCHEDULER_CONFIGURATION = new SchedulerConfiguration(TEST_VNODE_COUNT, Duration.ofSeconds(5), 100, Duration.ofMinutes(5));
 
     private FlowMetaStore delegate;
     private CachedFlowMetaStore cachedStore;
@@ -297,7 +297,7 @@ class CachedFlowMetaStoreTest {
     @Test
     void shouldRevokeOldVNodesAndKeepNewOnesOnInit() {
         // GIVEN - use 2 vNodes to properly test revocation
-        SchedulerConfiguration config2VNodes = new SchedulerConfiguration(2, Duration.ofSeconds(5), 100);
+        SchedulerConfiguration config2VNodes = new SchedulerConfiguration(2, Duration.ofSeconds(5), 100, Duration.ofMinutes(5));
         InMemoryFlowMetaStore delegate2 = spy(new InMemoryFlowMetaStore(2, List.of()));
         CachedFlowMetaStore cachedStore2 = new CachedFlowMetaStore(delegate2, config2VNodes);
 

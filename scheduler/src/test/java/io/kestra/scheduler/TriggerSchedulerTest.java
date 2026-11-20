@@ -1000,7 +1000,7 @@ class TriggerSchedulerTest {
             new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, flowParsingService),
             workerJobPublisher,
             triggerExecutionPublisher,
-            new SchedulerConfiguration(1, Duration.ZERO, 100)
+            new SchedulerConfiguration(1, Duration.ZERO, 100, Duration.ofMinutes(5))
         );
     }
 

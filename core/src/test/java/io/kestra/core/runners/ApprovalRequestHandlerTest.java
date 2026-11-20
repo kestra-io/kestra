@@ -215,4 +215,15 @@ class ApprovalRequestHandlerTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         verify(handler, never()).open(any(), any(), any(), any(), any());
     }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-run-if-false.yaml" })
+    void shouldNotOpenARequestWhenTheApprovalIsSkippedByRunIf() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "approval-run-if-false", null, null, Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("nested").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        verify(handler, never()).open(any(), any(), any(), any(), any());
+    }
 }

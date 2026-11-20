@@ -11,18 +11,22 @@
 </template>
 
 <script setup lang="ts">
+    import type {HTMLAttributes} from "vue"
     import {ElText, type TextProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    interface KsTextProps {
         type?: "" | "primary" | "secondary" | "success" | "warning" | "danger" | "info"
         size?: "small" | "default" | "large"
         truncated?: boolean
         lineClamp?: string | number
         tag?: string
-    }>()
+    }
+
+    const props = defineProps<KsTextProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsTextProps>>()
 
     defineSlots<{
         default?(): unknown

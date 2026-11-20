@@ -107,7 +107,7 @@ public class NamespaceFileService {
         );
 
         long actualDeletedEntries = namespaceFiles.stream()
-            .map(nsFile -> nsFile.storagePath().toUri())
+            .map(NamespaceFile::uri)
             .map(throwFunction(uri -> storage.delete(tenantId, namespace, uri)))
             .filter(Boolean::booleanValue)
             .count();

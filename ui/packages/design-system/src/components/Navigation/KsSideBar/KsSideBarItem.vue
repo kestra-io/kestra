@@ -18,17 +18,20 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import type {AnchorHTMLAttributes, Component} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
 
-    const props = defineProps<{
+    interface KsSideBarItemProps {
         title: string
         icon?: Component
         href?: string
         active?: boolean
         locked?: boolean
         disabled?: boolean
-    }>()
+    }
+
+    const props = defineProps<KsSideBarItemProps & /* @vue-ignore */ Omit<NativeAttributes<AnchorHTMLAttributes>, keyof KsSideBarItemProps>>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

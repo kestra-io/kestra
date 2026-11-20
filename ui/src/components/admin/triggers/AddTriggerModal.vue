@@ -1,6 +1,7 @@
 <template>
     <KsDialog
         v-model="visible"
+        :dirty="isDirty"
         destroyOnClose
         appendToBody
         large
@@ -191,6 +192,11 @@
         triggerId: generateId(),
     })
     const triggerPropertiesModel = ref<Record<string, unknown>>({})
+    const baseline = ref("")
+    /** The no-code switch writes `false` on mount when the schema default is the string "false", so only a real value counts. */
+    const isDirty = computed(() => JSON.stringify(formModel.value) !== baseline.value || Object.values(triggerPropertiesModel.value).some(value =>
+        value !== undefined && value !== null && value !== "" && value !== false && !(Array.isArray(value) && value.length === 0),
+    ))
 
     // Fields handled by the modal itself, not rendered through the no-code form.
     const RESERVED_FIELDS = new Set(["id", "type", "description"])
@@ -316,6 +322,7 @@
             copied.value = false
             formModel.value = {namespace: "", flowId: "", triggerId: generateId()}
             triggerPropertiesModel.value = {}
+            baseline.value = JSON.stringify(formModel.value)
             loadDocumentation()
         }
     }, {immediate: true})
@@ -353,21 +360,11 @@
     }
 
     .modal-tabs {
-        & :deep(.kel-tabs__header) {
-            margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
-        }
+        --ks-tabs-header-margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
     }
 
     .form {
-        & :deep(.kel-form-item):first-of-type {
-            margin-top: 0;
-        }
-
-        & :deep(.kel-form-item__label) {
-            font-weight: var(--ks-font-weight-semibold);
-        }
-
-        & :deep(.id-input .kel-input__inner) {
+        & .id-input {
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
         }
@@ -394,7 +391,7 @@
         color: var(--ks-text-success);
     }
 
-    .docs :deep(.plugin-doc) {
+    .docs .plugin-doc {
         max-width: 100%;
         background: transparent !important;
     }

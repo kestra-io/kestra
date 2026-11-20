@@ -314,7 +314,7 @@ describe("executions store follow stream", () => {
         store.followExecution({id: "exec-1"}, (key) => key)
         await vi.waitFor(() => expect(followExecutionMock).toHaveBeenCalled())
 
-        const running = {
+        const runningExecution = {
             id: "exec-1",
             namespace: "ns",
             flowId: "flow",
@@ -322,11 +322,11 @@ describe("executions store follow stream", () => {
             state: {current: "RUNNING"},
         }
         const success = {
-            ...running,
+            ...runningExecution,
             state: {current: "SUCCESS"},
         }
 
-        stream.push({sseId: "progress", execution: running})
+        stream.push({sseId: "progress", execution: runningExecution})
         await vi.waitFor(() => expect(store.execution?.state?.current).toBe("RUNNING"))
 
         stream.push({sseId: "end", execution: success})

@@ -62,11 +62,7 @@
     .bell {
         .toggle {
             color: var(--ks-icon-muted);
-
-            & :deep(svg) {
-                fill: currentColor;
-                stroke: currentColor;
-            }
+            stroke: currentColor;
 
             &.pulsing {
                 color: var(--ks-icon-active);

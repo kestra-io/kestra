@@ -338,15 +338,10 @@
             }
         }
 
-        .kel-select {
+        .attempt-select {
+            --ks-select-height: 32px;
             width: 115px;
             height: 32px;
-
-            & :deep(.kel-select__wrapper) {
-                height: 32px;
-                min-height: 32px;
-            }
-
         }
 
         .attempt-number {

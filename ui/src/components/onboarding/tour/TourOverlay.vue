@@ -120,7 +120,19 @@
                 <h3 class="guide-title">
                     {{ $t(sceneKey("title")) }}
                 </h3>
-                <div class="guide-body" v-html="$t(sceneKey('body'))" />
+                <div class="guide-body">
+                    <span v-html="$t(sceneKey('body'))" />
+                    <template v-if="sceneTasks.length">
+                        <ol class="guide-tasks">
+                            <li v-for="task in sceneTasks" :key="task">
+                                <i18n-t :keypath="sceneKey(`tasks.${task}`)" tag="span" scope="global">
+                                    <template #task><code>{{ task }}</code></template>
+                                </i18n-t>
+                            </li>
+                        </ol>
+                        {{ $t(sceneKey("after_tasks")) }}
+                    </template>
+                </div>
 
                 <p
                     v-if="scene.callout"
@@ -188,7 +200,7 @@
     import {useOnboardingAnalytics, type OnboardingTourEvent} from "../../../composables/useOnboardingAnalytics"
     import {useToast} from "../../../utils/toast"
 
-    const {t, te} = useI18n()
+    const {t, te, tm} = useI18n()
     const route = useRoute()
     const router = useRouter()
     const tourStore = useProductTourStore()
@@ -274,6 +286,7 @@
     const setMinimized = (minimized: boolean) => tourStore.setTourState({minimized})
 
     const sceneKey = (suffix: string) => translationKey(`scenes.${scene.value.id}.${suffix}`)
+    const sceneTasks = computed(() => Object.keys(tm(sceneKey("tasks"))))
 
     const isTickFilled = (step: number, tickIndex: number) => {
         if (step < scene.value.step) {
@@ -887,7 +900,7 @@
         line-height: var(--ks-line-height-loose);
     }
 
-    .guide-body :deep(ol) {
+    .guide-tasks {
         margin: var(--ks-spacing-1) 0;
         padding-left: var(--ks-spacing-5);
     }

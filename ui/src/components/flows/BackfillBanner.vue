@@ -32,7 +32,6 @@
             <KsIconButton
                 data-test="backfill-stop"
                 :tooltip="$t('delete backfill')"
-                class="bf-stop"
                 @click="confirmStop"
             >
                 <Stop />
@@ -118,9 +117,5 @@
 .bf-actions {
     display: flex;
     gap: 0.25rem;
-}
-
-.bf-stop :deep(.material-design-icon) {
-    color: var(--ks-text-error);
 }
 </style>

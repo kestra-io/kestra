@@ -556,20 +556,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private boolean isTaskRunOver(TaskRun taskRun) {
         try {
             Execution execution = executionStateStore.findByIdWithoutAcl(taskRun.getExecutionId());
-            if (execution == null) {
-                return true;
-            }
-
-            // Only an explicit stop counts: FAILED or SUCCESS can themselves be the consequence of
-            // losing the worker, and recovering those task runs is what the resubmission is for.
-            State.Type executionState = execution.getState().getCurrent();
-            if (State.Type.KILLING == executionState || State.Type.KILLED == executionState || State.Type.CANCELLED == executionState) {
-                return true;
-            }
-
-            return execution.findTaskRunByTaskRunIdIfPresent(taskRun.getId())
-                .map(current -> current.getState().isTerminated())
-                .orElse(false);
+            return execution == null || execution.hasTaskRunEnded(taskRun.getId());
         } catch (Exception e) {
             log.warn("Unable to read execution '{}' to check whether task run '{}' has already ended.", taskRun.getExecutionId(), taskRun.getId(), e);
             return false;
@@ -582,12 +569,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
      * trigger definition and ignore a disabled or deleted state.
      */
     private void notifyTriggerWorkerLost(TransactionContext txContext, WorkerTriggerRunning workerTriggerRunning) {
-        TriggerId triggerId = TriggerId.of(
-            workerTriggerRunning.getData().tenantId(),
-            workerTriggerRunning.getData().namespace(),
-            workerTriggerRunning.getData().flowId(),
-            workerTriggerRunning.getTrigger().getId()
-        );
+        TriggerId triggerId = workerTriggerRunning.triggerId();
         workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTriggerRunning.uid(), workerTriggerRunning.getWorkerInstance().uid());
         triggerEventQueue.send(new TriggerWorkerLost(triggerId, workerTriggerRunning.getWorkerInstance().uid(), workerTriggerRunning.getDispatchEpoch()));
         Logs.logTrigger(

@@ -2,6 +2,7 @@
     <ElTable
         ref="tableRef"
         v-bind="({...filteredProps(), ...$attrs} as TableProps<TableRow>)"
+        :class="{'kel-table--flush-expand': flushExpand}"
         @selection-change="(selection) => emit('selectionChange', selection)"
         @select="(selection, row) => emit('select', selection, row)"
         @sort-change="(e) => emit('sortChange', e)"
@@ -31,7 +32,11 @@
 
     type TableRow = NonNullable<TableProps["data"]>[number]
 
-    type KsTableProps = Omit<TableProps<T & TableRow>, "data"> & {data?: T[]}
+    type KsTableProps = Omit<TableProps<T & TableRow>, "data"> & {
+        data?: T[]
+        /** Expanded rows render their content edge to edge: no cell padding, no border. */
+        flushExpand?: boolean
+    }
 
     const props = defineProps<KsTableProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsTableProps>>()
 
@@ -50,7 +55,7 @@
 
     const tableRef = ref<TableInstance>()
 
-    const filteredProps = usePassedProps(props)
+    const filteredProps = usePassedProps(props, ["flushExpand"])
 
     defineExpose({
         clearSelection: () => tableRef.value?.clearSelection(),
@@ -110,7 +115,12 @@
         }
 
         & .kel-table__empty-text {
+            width: var(--ks-table-empty-text-width, 50%);
             color: var(--ks-text-dim) !important;
+        }
+
+        & tr.selected {
+            background-color: var(--ks-bg-tag);
         }
 
         & .kel-table__body tr:hover > td.kel-table__cell,
@@ -177,6 +187,15 @@
             & .kel-button:hover {
                 background-color: var(--ks-bg-tag);
             }
+        }
+
+        & th.row-action .cell {
+            padding-right: var(--ks-table-action-header-padding-right, 8px);
+        }
+
+        &.kel-table--flush-expand td.kel-table__expanded-cell {
+            padding: 0;
+            border: none;
         }
 
         & th.shrink {

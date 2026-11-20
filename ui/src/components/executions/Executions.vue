@@ -1303,35 +1303,11 @@
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
-.custom-warning {
-    border: 1px solid var(--ks-status-warning);
-    border-radius: 7px;
-    box-shadow: 1px 1px 3px 1px var(--ks-status-warning);
-
-    & :deep(.kel-alert__title) {
-        font-size: var(--ks-font-size-base);
-        color: var(--ks-status-warning);
-        font-weight: bold;
-    }
-
-    & :deep(.kel-alert__description) {
-        font-size: var(--ks-font-size-xs);
-    }
-
-    & :deep(.kel-alert__icon) {
-        color: var(--ks-status-warning);
-    }
-}
-
 .code-text {
     color: var(--ks-text-primary);
 }
 
-:deep(.executions-table) .kel-table__row {
-    cursor: pointer;
-}
-
-:deep(a.execution-id) code {
-    color: var(--ks-text-link);
+.execution-id {
+    --ks-id-color: var(--ks-text-link);
 }
 </style>

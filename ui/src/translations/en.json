@@ -292,6 +292,16 @@
     "last execution status": "Last execution status",
     "jump to": "Jump to",
     "jump to...": "Jump to...",
+    "global_search": {
+        "open_flow": "Open flow",
+        "flow_executions": "Flow executions",
+        "move": "Move",
+        "menu": "Menu",
+        "sources": "Menu + flows + namespaces",
+        "sources_flows": "Menu + flows",
+        "sources_namespaces": "Menu + namespaces",
+        "search_failed": "Couldn't load flows or namespaces"
+    },
     "contextBar": {
       "ai": "AI",
       "news": "News",
@@ -1570,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
-            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
+            "color_mode_shortcut": "Tip: press {ctrl}+{shift}+{key} to cycle themes from anywhere.",
             "logs_font_size": "Font size used in log viewers and terminals.",
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",
@@ -1780,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "This is a flow",
-            "body": "The flow is written in YAML with two tasks:<ol><li><code>fetch_orders</code> to download the orders</li><li><code>summarize</code> to compute the revenue in Python</li></ol>Tasks are executed sequentially, in the order in which they are defined.",
+            "body": "The flow is written in YAML with two tasks:",
+            "tasks": {
+              "fetch_orders": "{task} to download the orders",
+              "summarize": "{task} to compute the revenue in Python"
+            },
+            "after_tasks": "Tasks are executed sequentially, in the order in which they are defined.",
             "next": "Save and execute"
           },
           "first_execution": {

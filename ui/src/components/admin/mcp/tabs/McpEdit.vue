@@ -11,7 +11,8 @@
                 prop="id"
                 required
                 labelPosition="left"
-                class="id-row"
+                class="field"
+                inline
                 :rules="idRules"
             >
                 <KsInput
@@ -29,21 +30,25 @@
                 </KsInput>
             </KsFormItem>
 
-            <KsFormItem :label="$t('description')">
+            <KsFormItem class="field" :label="$t('description')">
                 <KsInput
                     v-model="form.description"
                     type="textarea"
                     :rows="2"
+                    resize="none"
+                    thinScrollbar
                     :placeholder="$t('description')"
                     :disabled="readOnly"
                 />
             </KsFormItem>
 
-            <KsFormItem :label="$t('mcp.instructions')">
+            <KsFormItem class="field" :label="$t('mcp.instructions')">
                 <KsInput
                     v-model="form.instructions"
                     type="textarea"
                     :rows="3"
+                    resize="none"
+                    thinScrollbar
                     :placeholder="$t('mcp.instructions')"
                     class="mono"
                     :disabled="readOnly"
@@ -53,7 +58,8 @@
             <KsFormItem
                 :label="$t('mcp.private_server')"
                 labelPosition="left"
-                class="spread-row"
+                class="field spread-row"
+                inline
             >
                 <KsSwitch
                     v-model="privateServer"
@@ -70,7 +76,7 @@
                 {{ $t("mcp.public_hint") }}
             </KsAlert>
 
-            <KsFormItem v-if="isPrivate">
+            <KsFormItem v-if="isPrivate" class="field">
                 <KsRadioCardGroup
                     v-model="form.authType"
                     :options="authOptions"
@@ -80,6 +86,7 @@
 
             <KsFormItem
                 v-if="isOAuth"
+                class="field"
                 :label="$t('mcp.oauth_provider')"
                 prop="oauthProvider"
                 :rules="oauthProviderRules"
@@ -101,6 +108,7 @@
 
             <KsFormItem
                 v-if="isOAuth"
+                class="field"
                 :label="$t('mcp.scopes_supported')"
             >
                 <KsSelect
@@ -121,7 +129,8 @@
             <KsFormItem
                 :label="$t('enabled')"
                 labelPosition="left"
-                class="spread-row"
+                class="field spread-row"
+                inline
             >
                 <KsSwitch
                     v-model="enabled"
@@ -362,6 +371,7 @@
 
 <style scoped>
     .mcp-edit {
+        --ks-form-item-label-font-weight: var(--ks-font-weight-semibold);
         max-width: 653px;
         border: 1px solid var(--ks-border-default);
         border-radius: 8px;
@@ -372,53 +382,13 @@
         margin-inline: auto;
     }
 
-    .mono :deep(input),
-    .mono :deep(textarea) {
+    .mono {
         font-family: var(--ks-font-family-mono);
     }
 
-    .mcp-edit :deep(textarea) {
-        resize: none;
-    }
-
-    .mcp-edit :deep(textarea)::-webkit-scrollbar {
-        width: 0.5rem;
-    }
-
-    .mcp-edit :deep(textarea)::-webkit-scrollbar-thumb {
-        background-color: var(--ks-scrollbar-content);
-        background-clip: padding-box;
-        border: 2px solid transparent;
-        border-radius: 999px;
-    }
-
-    :deep(.kel-form-item__label) {
-        font-weight: var(--ks-font-weight-semibold);
-    }
-
-    .mcp-edit :deep(.kel-form-item:not(:first-child)) {
+    .field:not(:first-child) {
         border-top: 1px solid var(--ks-border-subtle);
         padding-top: var(--ks-spacing-4);
-    }
-
-    .id-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .id-row :deep(.kel-form-item__content) {
-        flex: 0 0 auto;
-    }
-
-    .spread-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .spread-row :deep(.kel-form-item__content) {
-        flex: 0 0 auto;
     }
 
     .spread-row:last-child {

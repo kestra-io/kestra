@@ -292,6 +292,16 @@
     "last execution status": "Último status de execução",
     "jump to": "Ir para",
     "jump to...": "Ir para...",
+    "global_search": {
+      "open_flow": "Abrir flow",
+      "flow_executions": "Execuções do flow",
+      "move": "Mover",
+      "menu": "Menu",
+      "sources": "Menu + flows + namespaces",
+      "sources_flows": "Menu + flows",
+      "sources_namespaces": "Menu + namespaces",
+      "search_failed": "Não foi possível carregar flows ou namespaces"
+    },
     "contextBar": {
       "ai": "IA",
       "news": "Notícias",
@@ -1570,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "Escolha o tema de interface preferido.",
-            "color_mode_shortcut": "Dica: prima <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> para alternar temas a partir de qualquer lugar.",
+            "color_mode_shortcut": "Dica: prima {ctrl}+{shift}+{key} para alternar temas a partir de qualquer lugar.",
             "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais.",
             "editor_font_family": "Fonte monoespaçada usada no editor YAML.",
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
@@ -1780,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "Isto é um flow",
-            "body": "O flow é escrito em YAML com duas tasks:<ol><li><code>fetch_orders</code> para baixar os pedidos</li><li><code>summarize</code> para calcular a receita em Python</li></ol>As tasks são executadas sequencialmente, na ordem em que são definidas.",
+            "body": "O flow é escrito em YAML com duas tasks:",
+            "tasks": {
+              "fetch_orders": "{task} para baixar os pedidos",
+              "summarize": "{task} para calcular a receita em Python"
+            },
+            "after_tasks": "As tasks são executadas sequencialmente, na ordem em que são definidas.",
             "next": "Salvar e executar"
           },
           "first_execution": {

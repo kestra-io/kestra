@@ -259,15 +259,10 @@
         min-height: 200px;
     }
 
-    :deep(.ks-data-table-content) {
-        border-top: 1px solid var(--ks-border-default);
-        border-bottom: 1px solid var(--ks-border-default);
-        padding: var(--ks-spacing-2) 0;
-    }
-
-    :deep(.kel-pagination) {
-        margin-bottom: 0 !important;
-        flex-wrap: wrap;
-        row-gap: var(--ks-spacing-2);
+    #table {
+        --ks-data-table-pagination-margin-bottom: 0;
+        --ks-data-table-pagination-wrap: wrap;
+        --ks-data-table-content-border: 1px solid var(--ks-border-default);
+        --ks-data-table-content-padding-block: var(--ks-spacing-2);
     }
 </style>

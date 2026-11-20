@@ -292,6 +292,16 @@
     "last execution status": "마지막 실행 상태",
     "jump to": "이동",
     "jump to...": "이동...",
+    "global_search": {
+      "open_flow": "flow 열기",
+      "flow_executions": "flow 실행",
+      "move": "이동",
+      "menu": "메뉴",
+      "sources": "메뉴 + flows + namespaces",
+      "sources_flows": "메뉴 + Flow",
+      "sources_namespaces": "메뉴 + namespace",
+      "search_failed": "flows 또는 namespaces를 불러오지 못했습니다"
+    },
     "contextBar": {
       "ai": "AI",
       "news": "뉴스",
@@ -1570,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
-            "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요.",
+            "color_mode_shortcut": "팁: 어디서나 {ctrl}+{shift}+{key}을 눌러 테마를 전환하세요.",
             "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기.",
             "editor_font_family": "YAML 편집기에서 사용되는 모노스페이스 글꼴.",
             "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",
@@ -1780,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "이것은 flow입니다",
-            "body": "flow는 YAML로 작성되었으며, 두 개의 task를 포함합니다:<ol><li><code>fetch_orders</code>: 주문을 다운로드합니다.</li><li><code>summarize</code>: Python에서 수익을 계산합니다.</li></ol>task는 정의된 순서대로 순차적으로 실행됩니다.",
+            "body": "flow는 YAML로 작성되었으며, 두 개의 task를 포함합니다:",
+            "tasks": {
+              "fetch_orders": "{task}: 주문을 다운로드합니다.",
+              "summarize": "{task}: Python에서 수익을 계산합니다."
+            },
+            "after_tasks": "task는 정의된 순서대로 순차적으로 실행됩니다.",
             "next": "저장 및 실행"
           },
           "first_execution": {

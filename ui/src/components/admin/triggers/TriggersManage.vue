@@ -11,7 +11,7 @@
             fitHeight
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
-            :rowClassName="getClasses"
+            :expandableRow="(row: TriggerRow) => hasLogsContent(row) || !!row.backfill"
             :rowKey="(row: TriggerRow) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
             :forceExpandedRowKeys="expandedRowKeys"
             :no-data-text="$t('no_results.triggers')"
@@ -155,6 +155,7 @@
                     <template v-else-if="col.prop === 'executionId'">
                         <router-link
                             v-if="scope.row.executionId && scope.row.namespace && scope.row.flowId"
+                            class="execution-link"
                             :to="{name: 'executions/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
                         >
                             <KsId :value="scope.row.executionId" :shrink="true" />
@@ -726,9 +727,6 @@
 
     const hasLogsContent = (row: TriggerRow) => !!row.logs?.length
 
-    const getClasses = ({row}: {row: TriggerRow}) =>
-        hasLogsContent(row) || row.backfill ? "expandable" : "no-expand"
-
     const disabledStartDate = (time: Date): boolean => {
         return new Date() < time || (backfill.value.end !== null && time > backfill.value.end)
     }
@@ -1056,15 +1054,7 @@
         flex-direction: column;
         min-height: 0;
 
-        & :deep(tr.no-expand .kel-table__expand-icon) {
-            pointer-events: none;
-
-            .kel-icon {
-                display: none;
-            }
-        }
-
-        & :deep(.kel-table) a {
+        & .execution-link {
             color: var(--ks-text-link);
         }
     }

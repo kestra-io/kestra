@@ -292,6 +292,16 @@
     "last execution status": "最後の実行ステータス",
     "jump to": "移動",
     "jump to...": "ジャンプ先...",
+    "global_search": {
+      "open_flow": "flowを開く",
+      "flow_executions": "flowの実行",
+      "move": "移動",
+      "menu": "メニュー",
+      "sources": "メニュー + flows + namespaces",
+      "sources_flows": "メニュー + Flow",
+      "sources_namespaces": "メニュー + namespace",
+      "search_failed": "flows または namespaces を読み込めませんでした"
+    },
     "contextBar": {
       "ai": "エーアイ",
       "news": "ニュース",
@@ -1570,7 +1580,7 @@
           },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
-            "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
+            "color_mode_shortcut": "ヒント: {ctrl}+{shift}+{key} を押すとどこからでもテーマを切り替えられます。",
             "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。",
             "editor_font_family": "YAMLエディタで使用される等幅フォント。",
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
@@ -1780,7 +1790,12 @@
           },
           "flow_generated": {
             "title": "これは flow です",
-            "body": "このflowはYAMLで記述されており、2つのtasksがあります。<ol><li><code>fetch_orders</code>: 注文をダウンロードする</li><li><code>summarize</code>: Pythonで収益を計算する</li></ol>Tasksは、定義された順序で順次実行されます。",
+            "body": "このflowはYAMLで記述されており、2つのtasksがあります。",
+            "tasks": {
+              "fetch_orders": "{task}: 注文をダウンロードする",
+              "summarize": "{task}: Pythonで収益を計算する"
+            },
+            "after_tasks": "Tasksは、定義された順序で順次実行されます。",
             "next": "保存して実行"
           },
           "first_execution": {

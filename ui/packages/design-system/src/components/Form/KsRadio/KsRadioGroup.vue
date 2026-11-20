@@ -45,7 +45,7 @@
 <style>
     .kel-radio-group {
         & .kel-radio__label {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-radio-label-font-size, var(--kel-font-size-small));
         }
 
         &:not(.kel-radio-group--small) {

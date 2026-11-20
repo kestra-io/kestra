@@ -64,9 +64,18 @@
 
     // Adopt a value the parent sets, but leave the text already being typed alone: its parse is what was emitted.
     watch(() => props.modelValue, (value) => {
-        if (isDeepEqual(collapseEmptyValues(parseValue(localEditorValue.value)), value)) return
+        if (emittedBy(localEditorValue.value, value)) return
         localEditorValue.value = editorValue.value
     }, {deep: true})
+
+    // A text that is not valid YAML was never emitted as such, so it cannot be the echo of what was typed.
+    function emittedBy(text: string, value: unknown) {
+        try {
+            return isDeepEqual(collapseEmptyValues(parseValue(text)), value)
+        } catch {
+            return false
+        }
+    }
 
     function parseValue(value: string) {
         if(value.match(/^\s*{{/)) {

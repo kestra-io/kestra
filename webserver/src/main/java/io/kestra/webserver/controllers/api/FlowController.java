@@ -542,9 +542,23 @@ public class FlowController {
             }
             deleted = deleted.stream()
                 .filter(flow -> !ids.contains(flow.getId()))
-                .peek(throwConsumer(flow -> flowService.delete(flow)))
                 .toList();
         }
+
+        validateBulkUpdate(flows, deleted);
+
+        for (GenericFlow flow : flows) {
+            try {
+                flowService.validateFlow(flow);
+            } catch (FlowProcessingException e) {
+                if (e.getCause() instanceof ConstraintViolationException cve) {
+                    throw cve;
+                }
+                throw e;
+            }
+        }
+
+        deleted.forEach(throwConsumer(flowService::delete));
 
         // update or create flows
         List<? extends FlowInterface> updatedOrCreated = flows.stream()
@@ -603,6 +617,12 @@ public class FlowController {
 
     protected FlowWithSource doUpdateFlow(GenericFlow current, FlowInterface previous) throws FlowProcessingException, QueueException {
         return flowService.update(current, previous);
+    }
+
+    /**
+     * Called once by a bulk update with the flows to create or update and the flows to delete, before anything is written, so that an override can reject the whole request on a permission or policy check. The content of the flows is validated right after it, still before the deletions.
+     */
+    protected void validateBulkUpdate(List<GenericFlow> flows, List<FlowWithSource> toDelete) {
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -147,6 +147,7 @@
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import {
         flowOrNamespaceFilter,
         highlightMatch,
@@ -262,8 +263,33 @@
 
         const root = scopeStack.value.length > 0 ? scopeStack.value[scopeStack.value.length - 1].items : menu.value
         const order = {value: 0}
-        // When scoped, we treat the scope root as depth 0 for ordering.
-        return buildEntries(root, [], 0, order)
+        const entries = buildEntries(root, [], 0, order)
+
+        const findFlowsItem = (items: MenuItem[]): MenuItem | undefined => {
+            for (const item of items) {
+                if (item.id === "flows") return item
+                if (item.child) {
+                    const found = findFlowsItem(item.child)
+                    if (found) return found
+                }
+            }
+            return undefined
+        }
+
+        const flowsItem = findFlowsItem(root)
+        if (flowsItem) {
+            entries.push({
+                kind: "link",
+                title: t("source search"),
+                parentTitle: flowsItem.title,
+                href: {name: "flows/search"},
+                icon: {element: TextBoxSearch},
+                depth: 1,
+                order: order.value++,
+            })
+        }
+
+        return entries
     })
 
     const menuResults = computed(() => {
@@ -307,7 +333,28 @@
         const menuRows = showEntityHints.value
             ? menuResults.value.map(item => ({...item, destination: "menu" as const}))
             : menuResults.value
-        return showEntityHints.value ? [...entityResults.value, ...menuRows] : menuRows
+        const rows = showEntityHints.value ? [...entityResults.value, ...menuRows] : [...menuRows]
+
+        const trimmed = query.value.trim()
+        if (trimmed) {
+            rows.push({
+                kind: "link",
+                destination: "menu",
+                title: t("search_in_flow_source", {query: trimmed}),
+                parentTitle: t("flows"),
+                href: {
+                    name: "flows/search",
+                    query: {q: trimmed},
+                },
+                icon: {
+                    element: TextBoxSearch,
+                },
+                depth: 1,
+                order: Number.MAX_SAFE_INTEGER,
+            })
+        }
+
+        return rows
     })
 
     const hasResultRows = computed(() =>
@@ -451,7 +498,8 @@
                 const params = "params" in href && href.params && typeof href.params === "object" ? href.params : undefined
                 const namespace = params && "namespace" in params ? String(params.namespace ?? "") : ""
                 const id = params && "id" in params ? String(params.id ?? "") : ""
-                return `name:${String(href.name)}:${namespace}:${id || item.title}`
+                const queryParam = "query" in href && href.query ? `?${JSON.stringify(href.query)}` : ""
+                return `name:${String(href.name)}:${namespace}:${id || item.title}${queryParam}`
             }
         }
 

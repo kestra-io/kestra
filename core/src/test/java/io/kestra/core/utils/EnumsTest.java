@@ -2,12 +2,15 @@ package io.kestra.core.utils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -68,6 +71,19 @@ class EnumsTest {
 
         assertThrows(IllegalArgumentException.class, () -> Enums.fromList(List.of("string1", "string2"), TestEnum.class));
         assertThrows(IllegalArgumentException.class, () -> Enums.fromList("non enum value", TestEnum.class));
+    }
+
+    @Test
+    @ResourceLock(Resources.LOCALE)
+    void shouldGetFromListUnderTurkishLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertThat(Enums.fromList(List.of("enum1"), TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1));
+            assertThat(Enums.fromList("enum1", TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1));
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 
     enum TestEnum {

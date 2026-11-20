@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -297,7 +298,7 @@ public class TaskLogLineMatcher {
 
         String severityText = logRecord.severityText();
         if (severityText != null && !severityText.isBlank()) {
-            return switch (severityText.trim().toUpperCase()) {
+            return switch (severityText.trim().toUpperCase(Locale.ROOT)) {
                 case "TRACE" -> Level.TRACE;
                 case "DEBUG" -> Level.DEBUG;
                 case "WARN", "WARNING" -> Level.WARN;

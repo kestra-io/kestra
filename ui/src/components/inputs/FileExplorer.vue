@@ -385,7 +385,7 @@
     import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {safePath} from "../../composables/useBaseNamespaces"
-    import {handled, isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
+    import {handled} from "../../utils/kestraHttp"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
     import Magnify from "vue-material-design-icons/Magnify.vue"
@@ -1000,9 +1000,7 @@
             await filesStore.importFiles(importedFiles)
             toast.success(t("namespace files.import.success"))
         } catch (error) {
-            if (!isReportedCentrally(error as KestraHttpError)) {
-                toast.error(t("namespace files.import.error"))
-            }
+            toast.requestError(error, t("namespace files.import.error"))
         } finally {
             (event.target as HTMLInputElement).value = ""
             dialog.value = {...DIALOG_DEFAULTS}

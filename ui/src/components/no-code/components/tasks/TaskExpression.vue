@@ -12,11 +12,12 @@
 </template>
 
 <script setup lang="ts">
+    import isEqual from "lodash/isEqual"
     import {collapseEmptyValues} from "./MixinTask"
     import {KsEditor} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
-    import {computed, ref} from "vue"
+    import {computed, ref, watch} from "vue"
 
     const editorBindings = useEditorBindings()
 
@@ -52,6 +53,21 @@
     })
 
     const localEditorValue = ref(editorValue.value)
+
+    // Adopt a value the parent sets, but leave the text already being typed alone: its parse is what was emitted.
+    watch(() => props.modelValue, (value) => {
+        if (emittedBy(localEditorValue.value, value)) return
+        localEditorValue.value = editorValue.value
+    }, {deep: true})
+
+    // A text that is not valid YAML was never emitted as such, so it cannot be the echo of what was typed.
+    function emittedBy(text: string, value: unknown) {
+        try {
+            return isEqual(collapseEmptyValues(parseValue(text)), value)
+        } catch {
+            return false
+        }
+    }
 
     function parseValue(value: string) {
         if(value.match(/^\s*{{/)) {

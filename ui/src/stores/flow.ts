@@ -1,5 +1,5 @@
 import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+import {escapeHtml, KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
@@ -14,7 +14,7 @@ import {InputType} from "../utils/inputs"
 import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/utils/transform"
 import {useAuthStore} from "override/stores/auth"
-import {useRoute} from "vue-router"
+import {useRoute, type Router} from "vue-router"
 import type {
     AbstractTrigger,
     Flow as SdkFlow,
@@ -714,7 +714,7 @@ export const useFlowStore = defineStore("flow", () => {
         return request
     }
 
-function deleteFlowAndDependencies() {
+function deleteFlowAndDependencies(router: Router) {
     const metadataForDelete = flowYamlMetadata.value
 
     return FlowsAPI.flowDependencies({namespace: metadataForDelete.namespace ?? "", id: metadataForDelete.id ?? "", destinationOnly: true})
@@ -729,14 +729,17 @@ function deleteFlowAndDependencies() {
                                 n.id === metadataForDelete.id
                             ),
                     )
-                    .map(
-                        (n) =>
-                            "<li>" +
-                            n.namespace +
-                            ".<code>" +
-                            n.id +
-                            "</code></li>",
-                    )
+                    .map((n) => {
+                        const {href} = router.resolve({
+                            name: "flows/update/overview",
+                            params: {
+                                tenant: router.currentRoute.value.params.tenant,
+                                namespace: n.namespace,
+                                id: n.id,
+                            },
+                        })
+                        return `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.namespace)}.<code>${escapeHtml(n.id)}</code></a></li>`
+                    })
                     .join("\n")
 
                 if (deps.length) {

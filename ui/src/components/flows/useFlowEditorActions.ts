@@ -306,7 +306,7 @@ export function useFlowEditorActions() {
 
     function deleteFlow() {
         const flowId = flowStore.flowYamlMetadata?.id
-        return flowStore.deleteFlowAndDependencies()
+        return flowStore.deleteFlowAndDependencies(router)
             .then(() => {
                 toast.deleted(flowId ?? "")
                 return router.push({

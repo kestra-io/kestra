@@ -87,7 +87,7 @@ public class ConcurrencySlotReleaseProcessor {
             // (current definitions, when still present, are carried along for the pop). Executions
             // without the claim stamp (admitted before it existed, or never admitted) fall back to
             // the current definitions.
-            List<ScopedConcurrencyLimit> currentLimits = concurrencyLimitResolver.resolveLimits(executor.getFlow());
+            List<ScopedConcurrencyLimit> currentLimits = ScopedConcurrencyLimit.claimableBy(concurrencyLimitResolver.resolveLimits(executor.getFlow()), execution);
             List<String> admittedScopes = execution.getMetadata() == null ? null : execution.getMetadata().getConcurrencyScopes();
             List<ScopedConcurrencyLimit> limits = admittedScopes == null
                 ? currentLimits
@@ -192,7 +192,7 @@ public class ConcurrencySlotReleaseProcessor {
 
     private List<ScopedConcurrencyLimit> candidateLimits(Execution candidate) {
         return flowMetaStore.findByExecution(candidate)
-            .map(concurrencyLimitResolver::resolveLimits)
+            .map(flow -> ScopedConcurrencyLimit.claimableBy(concurrencyLimitResolver.resolveLimits(flow), candidate))
             .orElse(List.of());
     }
 }

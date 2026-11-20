@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +60,7 @@ import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.scheduler.stores.CachedFlowMetaStore;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -205,19 +207,38 @@ class TriggerEventHandlerTest {
         assertThat(state.getNextEvaluationDate()).isEqualTo(Instant.parse("2026-11-20T11:00:00Z"));
     }
 
+    @Test
+    void shouldKeepAuthoredSourceDisabledWhenGovernanceDisablesTrigger() {
+        // GIVEN
+        Clock clock = Clock.fixed(Instant.parse("2026-11-20T09:57:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        handler = newTriggerEventHandler(
+            List.of(withRevision(storedElevenAndOneSchedule(), 1), withRevision(storedElevenAndOneSchedule(), 2)),
+            governedAs(b -> b.cron("0 11,13 * * *").timezone("UTC").disabled(true).build())
+        );
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, new TriggerCreated(triggerId, 1));
+        boolean createdSourceDisabled = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow().isSourceDisabled();
+        handler.handle(clock, TEST_VNODE, new TriggerUpdated(triggerId, 2));
+
+        // THEN
+        assertThat(createdSourceDisabled).isFalse();
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow().isSourceDisabled()).isFalse();
+    }
+
     private static FlowWithSource storedElevenAndOneSchedule() {
         return Fixtures.defaultFlow(b -> b.cron("0 11,13 * * *").timezone("UTC").build());
     }
 
     private static FlowParsingService governedWithTimezone(String timezone) {
+        return governedAs(b -> b.cron("0 11,13 * * *").timezone(timezone).build());
+    }
+
+    private static FlowParsingService governedAs(Function<Schedule.ScheduleBuilder<?, ?>, Schedule> governed) {
         return Mockito.mock(
             FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
-                ? ProcessedFlow.of(
-                    withRevision(
-                        Fixtures.defaultFlow(b -> b.cron("0 11,13 * * *").timezone(timezone).build()),
-                        ((FlowWithSource) invocation.getArgument(0)).getRevision()
-                    )
-                )
+                ? ProcessedFlow.of(withRevision(Fixtures.defaultFlow(governed), ((FlowWithSource) invocation.getArgument(0)).getRevision()))
                 : Mockito.RETURNS_DEFAULTS.answer(invocation)
         );
     }

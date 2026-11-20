@@ -509,14 +509,16 @@ public class TriggerEventHandler {
     void onTriggerUpdated(Clock clock, TriggerUpdated event) {
         findTriggerState(event).filter(state -> !isStale(state, event, event.revision())).ifPresent(state ->
         {
-            Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
+            FlowWithSource stored = findFlow(event, event.revision());
+            Pair<Flow, AbstractTrigger> data = findTriggerIn(event, stored);
             if (data.getRight() != null) {
                 // Kill the running instance so the updated definition is applied: its termination
                 // unlocks the state and the scheduler resubmits the trigger with the new configuration.
                 maySendExecutionKilled(state);
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight(), event.revision());
+                    .update(clock, data.getRight(), event.revision())
+                    .sourceDisabled(clock, isDisabledIn(event, stored));
                 if (TriggerType.isEvaluatedByScheduler(state.getType())) {
                     state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
                 }
@@ -599,12 +601,14 @@ public class TriggerEventHandler {
         }
 
         // Built from the latest revision, so a late event can neither recreate a removed trigger nor apply an outdated definition.
-        Pair<Flow, AbstractTrigger> data = findTriggerIn(event, findLatestFlow(event, event.revision()));
+        FlowWithSource stored = findLatestFlow(event, event.revision());
+        Pair<Flow, AbstractTrigger> data = findTriggerIn(event, stored);
         if (data.getRight() != null && !data.getLeft().isDeleted()) {
             Flow flow = data.getLeft();
             AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
                 .of(event.id(), trigger, vNode)
+                .sourceDisabled(clock, isDisabledIn(event, stored))
                 .flowRevision(clock, flow.getRevision())
                 .lastEventId(clock, event.eventId());
             // A trigger the scheduler does not evaluate has no next evaluation date to show.
@@ -631,7 +635,14 @@ public class TriggerEventHandler {
     }
 
     private boolean isDisabledInDefinition(TriggerEvent event) {
-        AbstractTrigger trigger = findStoredTriggerIn(event, findFlow(event, null)).getRight();
+        return isDisabledIn(event, findFlow(event, null));
+    }
+
+    /**
+     * Reads the authored flag, which {@code sourceDisabled} mirrors, so a trigger disabled by governance is not reported as disabled in its definition.
+     */
+    private boolean isDisabledIn(TriggerEvent event, FlowWithSource stored) {
+        AbstractTrigger trigger = findStoredTriggerIn(event, stored).getRight();
         return trigger != null && trigger.isDisabled();
     }
 

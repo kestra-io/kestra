@@ -110,6 +110,10 @@
 </style>
 
 <style>
+    .kel-button + .kel-button {
+        margin-left: var(--ks-button-adjacent-margin, 12px);
+    }
+
     .kel-button {
         --kel-button-font-weight: 600;
         --kel-button-border-color: var(--ks-btn-secondary-border-default);
@@ -189,7 +193,7 @@
         }
 
         &.is-link {
-            --kel-button-text-color: var(--ks-text-secondary);
+            --kel-button-text-color: var(--ks-button-link-color, var(--ks-text-secondary));
             --kel-button-hover-link-text-color: var(--ks-text-primary);
             --kel-button-active-color: var(--ks-text-primary);
 

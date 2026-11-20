@@ -1,11 +1,11 @@
 <template>
     <div class="error-wrapper">
-        <KsAlert id="error" type="error" :closable="false">
+        <KsAlert id="error" type="error" :closable="false" fill>
             <template #title>
-                <span>{{ $t('execution_failed') }}</span>
+                <span class="title">{{ $t('execution_failed') }}</span>
             </template>
 
-            <div v-if="logs.length">
+            <div v-if="logs.length" class="body">
                 <p v-if="!expanded" class="error-preview">
                     {{ $t('last error was') }}: {{ stripBackticks(linkTagsAsText(logs.at(-1)?.message ?? '')) }}
                 </p>
@@ -20,7 +20,7 @@
                     </div>
                     <div v-if="logs.length >= MAX_PREVIEW_LOGS" class="link">
                         <router-link :to @click.stop>
-                            <KsButton>{{ $t("errorLogs") }}</KsButton>
+                            <KsButton class="errors-button">{{ $t("errorLogs") }}</KsButton>
                         </router-link>
                     </div>
                 </div>
@@ -138,55 +138,38 @@
         min-width: 0;
         overflow: hidden;
 
-        & :deep(.kel-alert__content) {
-            min-width: 0;
-            width: 100%;
-            gap: 0;
+        & .title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding-right: var(--ks-spacing-7);
+            font-size: var(--kel-alert-title-font-size);
+            line-height: 1.5;
+            color: var(--ks-text-error);
+        }
 
-            .kel-alert__title > div,
-            .kel-alert__title > span {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: var(--kel-alert-title-font-size);
-                line-height: 1.5;
-                color: var(--ks-text-error);
+        & .body {
+            padding-right: var(--ks-spacing-7);
+            color: var(--ks-text-primary);
+        }
+
+        & .logs {
+            --ks-button-link-color: var(--ks-text-error);
+            padding-top: var(--ks-spacing-5);
+
+            & > div {
+                width: 100%;
             }
 
-            .kel-alert__description {
-                min-width: 0;
-                overflow: hidden;
-                color: var(--ks-text-primary);
-
-                .logs {
-                    padding-top: var(--ks-spacing-5);
-
-                    & > div {
-                        width: 100%;
-                    }
-
-                    .line .header {
-                        display: flex;
-                        flex-wrap: wrap;
-                        margin-bottom: var(--ks-spacing-2);
-
-                        span {
-                            margin-left: 0;
-                        }
-                    }
-
-                    .kel-button {
-                        color: var(--ks-text-error);
-                    }
-
-                    .link {
-                        padding: var(--ks-spacing-4) 0 var(--ks-spacing-2);
-                        border-top: 1px solid var(--ks-border-default);
-                        text-align: right;
-                    }
-                }
+            .link {
+                padding: var(--ks-spacing-4) 0 var(--ks-spacing-2);
+                border-top: 1px solid var(--ks-border-default);
+                text-align: right;
             }
+        }
+
+        & .errors-button {
+            color: var(--ks-text-error);
         }
     }
 </style>

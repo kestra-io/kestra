@@ -65,9 +65,9 @@
 
     .kel-date-editor.kel-input {
         --kel-date-editor-width: 100%;
-        --kel-input-border-color: var(--ks-border-default);
+        --kel-input-border-color: var(--ks-input-border-color, var(--ks-border-default));
         --kel-input-bg-color: var(--ks-bg-base);
-        --kel-input-hover-border-color: var(--ks-border-strong);
+        --kel-input-hover-border-color: var(--ks-input-border-color, var(--ks-border-strong));
 
         & .kel-input__icon {
             margin-right: .25rem;
@@ -75,6 +75,7 @@
 
         /* The clear icon only mounts on hover, so it sits over space reserved for it instead of widening a shrink-to-fit picker under the cursor. */
         & .kel-input__inner {
+            font-size: var(--ks-input-font-size, inherit);
             padding-inline-end: var(--ks-spacing-5);
         }
 
@@ -83,6 +84,14 @@
             inset-block: 0;
             inset-inline-end: var(--ks-spacing-3);
         }
+    }
+
+    .kel-date-editor.kel-range-editor .kel-range-input {
+        font-size: var(--ks-input-font-size, var(--kel-font-size-base));
+    }
+
+    .kel-date-editor.kel-range-editor--small .kel-range-input {
+        font-size: var(--ks-input-font-size, 12px);
     }
 
     .kel-date-table td.disabled .kel-date-table-cell {

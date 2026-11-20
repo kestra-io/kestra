@@ -353,21 +353,11 @@
     }
 
     .modal-tabs {
-        & :deep(.kel-tabs__header) {
-            margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
-        }
+        --ks-tabs-header-margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
     }
 
     .form {
-        & :deep(.kel-form-item):first-of-type {
-            margin-top: 0;
-        }
-
-        & :deep(.kel-form-item__label) {
-            font-weight: var(--ks-font-weight-semibold);
-        }
-
-        & :deep(.id-input .kel-input__inner) {
+        & .id-input {
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
         }
@@ -394,7 +384,7 @@
         color: var(--ks-text-success);
     }
 
-    .docs :deep(.plugin-doc) {
+    .docs .plugin-doc {
         max-width: 100%;
         background: transparent !important;
     }

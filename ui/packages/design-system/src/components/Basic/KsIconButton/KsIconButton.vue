@@ -88,7 +88,7 @@
 <style scoped>
     .ks-icon-button {
         --ks-icon-button-glyph: var(--ks-icon-size-sm);
-        color: var(--ks-text-primary);
+        color: var(--ks-icon-button-color, var(--ks-text-primary));
         width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
         height: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
         min-width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));

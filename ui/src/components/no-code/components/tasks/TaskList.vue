@@ -229,7 +229,7 @@
     margin-left: var(--ks-spacing-1);
 }
 
-.merge :deep(.kel-collapse-item__header){
-    cursor: default;
+.merge {
+    --ks-collapse-item-disabled-cursor: default;
 }
 </style>

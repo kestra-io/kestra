@@ -3,6 +3,7 @@
         ref="elInputRef"
         v-model="model"
         class="ks-search"
+        :class="{'ks-search--borderless': borderless}"
         v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         @change="emit('change', $event)"
     >
@@ -43,6 +44,8 @@
         readonly?: boolean
         name?: string
         id?: string
+        /** Drop the border, shadow and background so the field sits flush in a container that draws them (the global search). */
+        borderless?: boolean
     } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
@@ -54,7 +57,7 @@
         suffix?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["borderless"])
 </script>
 
 <style>
@@ -90,6 +93,17 @@
 
         & .kel-input__inner {
             font-size: var(--ks-font-size-sm);
+        }
+
+        &.ks-search--borderless .kel-input__wrapper {
+            &, &:hover, &.is-focus, &.is-focus:hover {
+                border: 0;
+                box-shadow: none;
+            }
+
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            background-color: transparent;
+            border-radius: 0;
         }
 
         & .ks-search__icon {

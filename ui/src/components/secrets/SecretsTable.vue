@@ -187,7 +187,7 @@
                         resize="vertical"
                     />
                 </KsFormItem>
-                <KsFormItem prop="tags" labelPosition="top" class="secret-tags-item">
+                <KsFormItem prop="tags" labelPosition="top" class="secret-tags-item" wideLabel>
                     <template #label>
                         <div class="secret-tags-label">
                             <span>{{ $t('secret.tags') }}</span>
@@ -693,16 +693,12 @@
         pointer-events: none;
     }
 
-    .field-item :deep(.kel-form-item__content) {
-        flex: 0 0 260px;
-        max-width: 260px;
-    }
-
-    .field-item :deep(.kel-form-item__content) > * {
-        width: 100%;
+    .field-item {
+        --ks-form-item-content-width: 260px;
     }
 
     .secret-value-control {
+        width: 100%;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -710,10 +706,6 @@
     }
 
     .secret-value-control > :first-child {
-        width: 100%;
-    }
-
-    .secret-tags-item :deep(.kel-form-item__label) {
         width: 100%;
     }
 

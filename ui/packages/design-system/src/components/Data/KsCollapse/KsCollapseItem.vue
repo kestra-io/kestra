@@ -44,4 +44,7 @@
 </style>
 
 <style>
+    .kel-collapse-item.is-disabled .kel-collapse-item__header {
+        cursor: var(--ks-collapse-item-disabled-cursor, not-allowed);
+    }
 </style>

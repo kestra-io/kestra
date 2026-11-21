@@ -60,7 +60,8 @@ public class RunContextLoggerFactory {
             logEmitter,
             LogEntry.of(taskRun, executionKind),
             task.getLogLevel(),
-            task.isLogToFile()
+            // only the worker uploads a log file, with the task attempt, so a file written here would be lost
+            false
         );
     }
 

@@ -7,7 +7,10 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
@@ -17,6 +20,7 @@ import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -40,6 +44,9 @@ public class KVPurgeCleanerTest {
 
     @Inject
     private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private KvMetadataRepositoryInterface kvMetadataRepository;
 
     @MockBean(FlowRepositoryInterface.class)
     public FlowRepositoryInterface getFlowRepository() {
@@ -93,4 +100,31 @@ public class KVPurgeCleanerTest {
         assertThat(kvStore3.getValue(kvEntries3.getFirst().key()).get().value()).isEqualTo("present3");
     }
 
+    @Test
+    void should_purge_expired_kv_entries_in_a_namespace_without_flow() throws IOException, ResourceExpiredException {
+        // No flow exists in this namespace: the mocked flow repository knows no namespace at all
+        when(flowRepository.findDistinctNamespace(MAIN_TENANT)).thenReturn(List.of());
+
+        String namespace = "io.kestra." + IdUtils.create();
+        InternalKVStore kvStore = new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataStateStore);
+        kvStore.put("expired", new KVValueAndMetadata(new KVMetadata(null, Instant.now().minusSeconds(1)), "expired"));
+        kvStore.put("kept", new KVValueAndMetadata(new KVMetadata(null), "kept"));
+
+        // Expired keys are hidden from reads, so check the stored metadata, expired entries included
+        assertThat(storedKeys(namespace)).containsExactlyInAnyOrder("expired", "kept");
+
+        kvPurgeCleaner.purgeExpired();
+
+        assertThat(storedKeys(namespace)).containsExactly("kept");
+    }
+
+    private List<String> storedKeys(String namespace) {
+        return kvMetadataRepository.find(
+            Pageable.from(1, 100),
+            MAIN_TENANT,
+            List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).value(namespace).operation(QueryFilter.Op.EQUALS).build()),
+            false,
+            true
+        ).stream().map(PersistedKvMetadata::getName).toList();
+    }
 }

@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS executions (
         'SUBMITTED',
         'RESUBMITTED'
     ) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.state.current')),
-    "state_duration" FLOAT GENERATED ALWAYS AS (JQ_DOUBLE("value", '.state.duration')),
+    "state_duration" FLOAT GENERATED ALWAYS AS (JQ_DOUBLE("value", '.state.duration') * 1000),
     "start_date" TIMESTAMP GENERATED ALWAYS AS (PARSEDATETIME(LEFT(JQ_STRING("value", '.state.startDate'), 23) || '+00:00', 'yyyy-MM-dd''T''HH:mm:ss.SSSXXX')),
     "end_date" TIMESTAMP GENERATED ALWAYS AS (PARSEDATETIME(LEFT(JQ_STRING("value", '.state.endDate'), 23) || '+00:00', 'yyyy-MM-dd''T''HH:mm:ss.SSSXXX')),
     "fulltext" TEXT NOT NULL GENERATED ALWAYS AS (

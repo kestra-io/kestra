@@ -349,13 +349,12 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         if (this.outputFiles != null) {
             try {
                 Map<String, URI> outputFilesURIs = FilesService.outputFiles(runContext, runContext.render(this.outputFiles).asList(String.class));
-                if (!outputFilesURIs.isEmpty()) {
-                    final ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    try (os) {
-                        FileSerde.write(os, outputFilesURIs);
-                    }
-                    runContext.storage().putFile(new ByteArrayInputStream(os.toByteArray()), outputsFile(workingDirectoryContextBaseURI(runContext)));
+                // written even when empty, to replace the file a previous run of this task run left, after a restart or a retry
+                final ByteArrayOutputStream os = new ByteArrayOutputStream();
+                try (os) {
+                    FileSerde.write(os, outputFilesURIs);
                 }
+                runContext.storage().putFile(new ByteArrayInputStream(os.toByteArray()), outputsFile(workingDirectoryContextBaseURI(runContext)));
             } catch (Exception e) {
                 runContext.logger().error("Unable to capture WorkingDirectory output files", e);
                 throw e;

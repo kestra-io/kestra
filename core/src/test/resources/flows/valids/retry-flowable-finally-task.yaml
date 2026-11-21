@@ -1,0 +1,22 @@
+id: retry-flowable-finally-task
+namespace: io.kestra.tests
+
+tasks:
+  - id: flowable
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: work
+        type: io.kestra.plugin.core.log.Log
+        message: work
+    finally:
+      - id: cleanup
+        type: io.kestra.plugin.core.execution.Fail
+        condition: "{{ taskrun.attemptsCount == 0 }}"
+        retry:
+          type: constant
+          interval: PT0.25S
+          maxAttempts: 3
+
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: after

@@ -49,7 +49,7 @@ public abstract class AbstractDate {
         final String format = args.containsKey("format") ? (String) args.get("format") : "iso";
         final String timeZone = (String) args.get("timeZone");
         final String existingFormat = (String) args.get("existingFormat");
-        final Locale locale = args.containsKey("locale") ? LocaleUtils.toLocale((String) args.get("locale")) : context.getLocale();
+        final Locale locale = args.containsKey("locale") ? LocaleUtils.toLocale((String) args.get("locale")) : (context != null ? context.getLocale() : Locale.getDefault());
 
         ZoneId zoneId = zoneId(timeZone);
         ZonedDateTime date = convert(input, zoneId, existingFormat);
@@ -71,7 +71,11 @@ public abstract class AbstractDate {
         } else if (formatterFind != null) {
             return formatterFind;
         } else {
-            return DateTimeFormatter.ofPattern(format);
+            try {
+                return DateTimeFormatter.ofPattern(format);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid date format '" + format + "': " + e.getMessage(), e);
+            }
         }
     }
 
@@ -105,18 +109,17 @@ public abstract class AbstractDate {
         }
 
         if (value instanceof Long longValue) {
-            if (digitCount(longValue) == 13) {
+            int digits = digitCount(longValue);
+            if (digits == 13) {
                 return Instant.ofEpochMilli(longValue).atZone(zoneId);
-            } else if (digitCount(longValue) == 19) {
-                if (value.toString().endsWith("000")) {
-                    long seconds = longValue / 1_000_000_000;
-                    int nanos = (int) (longValue % 1_000_000_000);
-                    return Instant.ofEpochSecond(seconds, nanos).atZone(zoneId);
-                } else {
-                    long milliseconds = longValue / 1_000_000;
-                    int micros = (int) (longValue % 1_000_000);
-                    return Instant.ofEpochMilli(milliseconds).atZone(zoneId).withNano(micros * 1000);
-                }
+            } else if (digits == 16) {
+                long seconds = Math.floorDiv(longValue, 1_000_000L);
+                long micros = Math.floorMod(longValue, 1_000_000L);
+                return Instant.ofEpochSecond(seconds, micros * 1_000L).atZone(zoneId);
+            } else if (digits >= 18 && digits <= 19) {
+                long seconds = Math.floorDiv(longValue, 1_000_000_000L);
+                long nanos = Math.floorMod(longValue, 1_000_000_000L);
+                return Instant.ofEpochSecond(seconds, nanos).atZone(zoneId);
             }
             return Instant.ofEpochSecond(longValue).atZone(zoneId);
         }

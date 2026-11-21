@@ -27,7 +27,6 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.annotations.Plugin;
@@ -284,8 +283,7 @@ public class WorkingDirectoryTest {
         suite.inputFiles(runnerUtils);
     }
 
-    // FIXME can be moved back to regular @Test once https://github.com/kestra-io/kestra/issues/13134 is handled
-    @FlakyTest(description = "Blocked by #13134: working directory output file handling")
+    @Test
     @LoadFlows(value = { "flows/valids/working-directory-outputs.yml" }, tenantId = "output")
     void outputFiles() throws Exception {
         suite.outputFiles("output", runnerUtils);

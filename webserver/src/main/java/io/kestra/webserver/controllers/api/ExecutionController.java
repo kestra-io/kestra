@@ -80,6 +80,7 @@ import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.trace.propagation.TracePropagation;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.*;

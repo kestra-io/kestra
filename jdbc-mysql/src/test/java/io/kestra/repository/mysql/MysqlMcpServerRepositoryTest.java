@@ -1,6 +1,6 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.mcp.repositories.AbstractMcpServerRepositoryTest;
+import io.kestra.jdbc.repository.AbstractJdbcMcpServerRepositoryTest;
 
-public class MysqlMcpServerRepositoryTest extends AbstractMcpServerRepositoryTest {
+public class MysqlMcpServerRepositoryTest extends AbstractJdbcMcpServerRepositoryTest {
 }

@@ -1,6 +1,6 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.mcp.repositories.AbstractMcpServerRepositoryTest;
+import io.kestra.jdbc.repository.AbstractJdbcMcpServerRepositoryTest;
 
-public class PostgresMcpServerRepositoryTest extends AbstractMcpServerRepositoryTest {
+public class PostgresMcpServerRepositoryTest extends AbstractJdbcMcpServerRepositoryTest {
 }

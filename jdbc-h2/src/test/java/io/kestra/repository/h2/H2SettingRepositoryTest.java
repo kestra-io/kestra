@@ -1,7 +1,7 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.repositories.AbstractSettingRepositoryTest;
+import io.kestra.jdbc.repository.AbstractJdbcSettingRepositoryTest;
 
-public class H2SettingRepositoryTest extends AbstractSettingRepositoryTest {
+public class H2SettingRepositoryTest extends AbstractJdbcSettingRepositoryTest {
 
 }

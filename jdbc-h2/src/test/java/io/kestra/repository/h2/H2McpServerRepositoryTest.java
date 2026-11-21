@@ -1,6 +1,6 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.mcp.repositories.AbstractMcpServerRepositoryTest;
+import io.kestra.jdbc.repository.AbstractJdbcMcpServerRepositoryTest;
 
-public class H2McpServerRepositoryTest extends AbstractMcpServerRepositoryTest {
+public class H2McpServerRepositoryTest extends AbstractJdbcMcpServerRepositoryTest {
 }

@@ -249,4 +249,9 @@ public class RetryCaseTest {
         assertThat(execution.findTaskRunsByTaskId("leaf")).hasSize(1);
         assertThat(execution.findTaskRunsByTaskId("leaf").getFirst().getAttempts()).hasSize(2);
     }
+
+    public void retryFlowableLoop(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("loop_block").getFirst().getAttempts()).hasSize(3);
+    }
 }

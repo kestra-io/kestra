@@ -184,4 +184,10 @@ public abstract class AbstractRunnerRetryTest {
     void retryFlowableBehaviorNestedLeaf(Execution execution) {
         retryCaseTest.retryFlowableBehaviorNestedLeaf(execution);
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-loop.yaml")
+    void retryFlowableLoop(Execution execution) {
+        retryCaseTest.retryFlowableLoop(execution);
+    }
 }

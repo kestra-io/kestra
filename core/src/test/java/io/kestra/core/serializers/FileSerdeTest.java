@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -611,6 +612,25 @@ class FileSerdeTest {
         assertThat(second.completed).isTrue();
         assertThat(second.error).isNull();
         verify(iterator, times(1)).close();
+    }
+
+    @Test
+    void shouldCloseStreamWhenIteratorCloseFailsWhenReadingOnDemand() throws IOException {
+        var closed = new AtomicInteger();
+        var stream = new FilterInputStream(new ByteArrayInputStream(records(3).getBytes())) {
+            @Override
+            public void close() throws IOException {
+                closed.incrementAndGet();
+                super.close();
+            }
+        };
+        MappingIterator<Map<String, Object>> iterator = spy(JacksonMapper.ofIon().readerFor(Map.class).readValues(stream));
+        doThrow(new IOException("The iterator can't be closed.")).when(iterator).close();
+
+        var read = FileSerde.readOnDemand(iterator, stream).collectList().block();
+
+        assertThat(read).hasSize(3);
+        assertThat(closed).hasValue(1);
     }
 
     private static String records(int count) {

@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -65,12 +67,29 @@ class DataTest {
 
     @Test
     void shouldCloseStoredFileWhenOpeningItFails() throws Exception {
-        assertClosedOnceWhenFirstReadThrows(new IllegalStateException("The first read failed."));
-        assertClosedOnceWhenFirstReadThrows(new IOException("The first read failed."));
+        var unchecked = new IllegalStateException("The first read failed.");
+        assertThat(readOnDemandWithFirstReadThrowing(unchecked)).isSameAs(unchecked);
+
+        var checked = new IOException("The first read failed.");
+        assertThat(readOnDemandWithFirstReadThrowing(checked)).hasCause(checked);
     }
 
     @Test
-    void shouldReadInlineListOnDemandAsRead() throws Exception {
+    void shouldThrowUncheckedIOExceptionWhenFetchingStoredFileFails() throws Exception {
+        var uri = storage.put(MAIN_TENANT, null, URI.create("/data-test/unreadable.ion"), new ByteArrayInputStream("{id:0}\n".getBytes()));
+        var failure = new IOException("The stored file can't be fetched.");
+        var runContext = spy(runContextFactory.of());
+        var runContextStorage = spy(runContext.storage());
+        doThrow(failure).when(runContextStorage).getFile(uri);
+        when(runContext.storage()).thenReturn(runContextStorage);
+
+        var thrown = catchThrowable(() -> Data.from(uri.toString()).readOnDemand(runContext));
+
+        assertThat(thrown).isInstanceOf(UncheckedIOException.class).hasCause(failure);
+    }
+
+    @Test
+    void shouldReturnSameRecordsAsReadWhenInlineListIsReadOnDemand() throws Exception {
         var runContext = runContextFactory.of();
         var inline = List.of(Map.of("id", 1), Map.of("id", 2));
 
@@ -80,7 +99,7 @@ class DataTest {
         assertThat(onDemand).hasSize(2);
     }
 
-    private void assertClosedOnceWhenFirstReadThrows(Exception failure) throws Exception {
+    private Throwable readOnDemandWithFirstReadThrowing(Exception failure) throws Exception {
         var uri = storage.put(MAIN_TENANT, null, URI.create("/data-test/failing.ion"), new ByteArrayInputStream("{id:0}\n".getBytes()));
         var closes = new AtomicInteger();
         var runContext = spy(runContextFactory.of());
@@ -108,7 +127,7 @@ class DataTest {
 
         var thrown = catchThrowable(() -> Data.from(uri.toString()).readOnDemand(runContext));
 
-        assertThat(thrown == failure || thrown.getCause() == failure).isTrue();
         assertThat(closes).hasValue(1);
+        return thrown;
     }
 }

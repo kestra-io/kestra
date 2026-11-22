@@ -306,7 +306,7 @@ public final class FileSerde {
     }
 
     /**
-     * Reads one record per requested record instead of the whole stream up front; the returned Flux owns the stream and closes it when it ends.
+     * Reads one record per request, for the first subscription only, instead of the whole stream up front, and closes the stream when the Flux completes, fails or is cancelled.
      */
     public static <T> Flux<T> readOnDemand(InputStream inputStream, Class<T> type) throws IOException {
         return readOnDemand(createMappingIterator(DEFAULT_OBJECT_MAPPER, inputStream, type), inputStream);
@@ -318,7 +318,7 @@ public final class FileSerde {
         });
     }
 
-    private static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator, Closeable source) {
+    static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator, Closeable source) {
         var subscribed = new AtomicBoolean();
         var records = Flux.<T, MappingIterator<T>> generate(
             () -> mappingIterator,

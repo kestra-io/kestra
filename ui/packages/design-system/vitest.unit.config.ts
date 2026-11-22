@@ -1,5 +1,6 @@
 import {defineConfig} from "vitest/config"
 import vue from "@vitejs/plugin-vue"
+import "../../scripts/vue-sfc-typescript6.mjs"
 
 /** Node 26's own `localStorage` shadows jsdom's and stays undefined, so let jsdom provide storage. */
 process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ""} --no-experimental-webstorage`.trim()

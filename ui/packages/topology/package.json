@@ -36,7 +36,7 @@
         "build": "tsdown",
         "dev": "tsdown --watch",
         "generate:standalone": "node scripts/generate-standalone-css.mjs",
-        "check:types": "vue-tsc --noEmit",
+        "check:types": "node ../../node_modules/typescript/bin/tsc --noEmit --runExternalCode",
         "test": "npm run test:unit",
         "test:unit": "vitest run --config vitest.unit.config.ts",
         "test:unit:watch": "vitest --config vitest.unit.config.ts",
@@ -71,14 +71,14 @@
         "@types/js-yaml": "^4.0.9",
         "@types/node": "^26.6.6",
         "@vitejs/plugin-vue": "^6.0.10",
+        "@vue/content-mapper": "4.0.0-alpha.3",
         "sass-embedded": "^1.105.2",
         "tsdown": "^0.23.7",
-        "typescript": "^6",
+        "typescript": "7.1.0-beta",
         "unrun": "^0.3.1",
         "vite": "^8.3.4",
         "vitest": "^5.0.5",
         "vue": "^3.5.44",
-        "vue-i18n": "^11.4.16",
-        "vue-tsc": "^3.3.13"
+        "vue-i18n": "^11.4.16"
     }
 }

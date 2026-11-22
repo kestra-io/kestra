@@ -3,6 +3,7 @@
 import path from "path"
 import {loadEnv} from "vite"
 import vue from "@vitejs/plugin-vue"
+import "./scripts/vue-sfc-typescript6.mjs"
 
 import {loaderFragment} from "./plugins/loaderFragment.js"
 import {devBootStatus} from "./plugins/devBootStatus.js"

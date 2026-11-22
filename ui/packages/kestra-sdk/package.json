@@ -36,16 +36,16 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "generate:openapi": "openapi-ts",
+    "generate:openapi": "node --import ../../scripts/typescript6.mjs ../../node_modules/@hey-api/openapi-ts/dist/run.mjs",
     "build": "tsdown",
-    "check:types": "tsc --noEmit -p tsconfig.json"
+    "check:types": "node ../../node_modules/typescript/bin/tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
     "@kestra-io/hey-api-plugin": "*",
     "@types/node": "^26.6.6",
     "tsdown": "^0.23.7",
-    "typescript": "^6",
+    "typescript": "7.1.0-beta",
     "unrun": "^0.3.1"
   }
 }

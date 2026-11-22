@@ -12,7 +12,7 @@ export default defineConfig({
     },
     copy: [{from: "src/standalone.css", to: "dist"}],
     fromVite: true,
-    dts: {vue: true},
+    dts: {generator: "tsgo", tsgo: {runExternalCode: true}},
     deps: {
         neverBundle: ["@vue/reactivity"],
     },

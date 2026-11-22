@@ -30,9 +30,6 @@ export default defineConfig({
         alwaysBundle: [/^@kestra-io\/hey-api-plugin/],
     },
     dts: {
-        // Use the tsc resolver so it honors tsconfig `moduleResolution: "bundler"` when resolving the
-        // bundled runtime's types.
-        resolver: "tsc",
         sourcemap: true,
     },
     sourcemap: "hidden",

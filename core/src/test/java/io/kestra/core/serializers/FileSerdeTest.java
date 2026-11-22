@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
+import reactor.util.context.Context;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,6 +39,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class FileSerdeTest {
+    private static final Closeable NO_STREAM = () ->
+    {
+    };
+
     static Stream<Arguments> source() {
         return Stream.of(
             Arguments.of("hello", null),
@@ -486,7 +493,7 @@ class FileSerdeTest {
         var iterator = countingIterator(records(10_000), deserialized);
         var subscriber = new RecordingSubscriber();
 
-        FileSerde.readOnDemand(iterator).subscribe(subscriber);
+        FileSerde.readOnDemand(iterator, NO_STREAM).subscribe(subscriber);
 
         subscriber.request(1);
         assertThat(deserialized).hasValue(1);
@@ -507,7 +514,7 @@ class FileSerdeTest {
         var iterator = countingIterator(records(10), new AtomicInteger());
         var subscriber = new RecordingSubscriber();
 
-        FileSerde.readOnDemand(iterator).subscribe(subscriber);
+        FileSerde.readOnDemand(iterator, NO_STREAM).subscribe(subscriber);
         subscriber.request(10);
 
         assertThat(subscriber.received).hasSize(10);
@@ -520,7 +527,7 @@ class FileSerdeTest {
         var iterator = countingIterator("", new AtomicInteger());
         var subscriber = new RecordingSubscriber();
 
-        FileSerde.readOnDemand(iterator).subscribe(subscriber);
+        FileSerde.readOnDemand(iterator, NO_STREAM).subscribe(subscriber);
         subscriber.request(1);
 
         assertThat(subscriber.received).isEmpty();
@@ -533,7 +540,7 @@ class FileSerdeTest {
         var deserialized = new AtomicInteger();
         var iterator = countingIterator(records(10_000), deserialized);
 
-        var taken = FileSerde.readOnDemand(iterator)
+        var taken = FileSerde.readOnDemand(iterator, NO_STREAM)
             .take(10)
             .collectList()
             .block();
@@ -548,7 +555,7 @@ class FileSerdeTest {
         var iterator = countingIterator(records(1_000) + "{id:1000,name:\"unterminated}\n{id:1001}\n", new AtomicInteger());
         var subscriber = new RecordingSubscriber();
 
-        FileSerde.readOnDemand(iterator).subscribe(subscriber);
+        FileSerde.readOnDemand(iterator, NO_STREAM).subscribe(subscriber);
 
         subscriber.request(1_000);
         assertThat(subscriber.received).hasSize(1_000);
@@ -567,7 +574,7 @@ class FileSerdeTest {
         var received = new ArrayList<Long>();
 
         assertThatThrownBy(
-            () -> FileSerde.readOnDemand(iterator)
+            () -> FileSerde.readOnDemand(iterator, NO_STREAM)
                 .flatMapIterable(List::of)
                 .doOnNext(entry -> received.add(entry.id()))
                 .blockLast()
@@ -596,7 +603,7 @@ class FileSerdeTest {
     @Test
     void shouldGiveRecordsToFirstSubscriptionOnlyWhenSubscribedTwice() throws IOException {
         var iterator = countingIterator(records(10), new AtomicInteger());
-        var flux = FileSerde.readOnDemand(iterator);
+        var flux = FileSerde.readOnDemand(iterator, NO_STREAM);
         var first = new RecordingSubscriber();
         var second = new RecordingSubscriber();
 
@@ -615,7 +622,7 @@ class FileSerdeTest {
     }
 
     @Test
-    void shouldCloseStreamWhenIteratorCloseFailsWhenReadingOnDemand() throws IOException {
+    void shouldCloseStreamWhenIteratorCloseFailsOnDemand() throws IOException {
         var closed = new AtomicInteger();
         var stream = new FilterInputStream(new ByteArrayInputStream(records(3).getBytes())) {
             @Override
@@ -625,12 +632,19 @@ class FileSerdeTest {
             }
         };
         MappingIterator<Map<String, Object>> iterator = spy(JacksonMapper.ofIon().readerFor(Map.class).readValues(stream));
-        doThrow(new IOException("The iterator can't be closed.")).when(iterator).close();
+        var closeError = new IOException("The iterator can't be closed.");
+        doThrow(closeError).when(iterator).close();
+        var dropped = new CopyOnWriteArrayList<Throwable>();
 
-        var read = FileSerde.readOnDemand(iterator, stream).collectList().block();
+        var read = FileSerde.readOnDemand(iterator, stream)
+            .collectList()
+            // Context-local hook (its key constant is package-private), so no global hook leaks into parallel tests.
+            .contextWrite(Context.of("reactor.onErrorDropped.local", (Consumer<Throwable>) dropped::add))
+            .block();
 
         assertThat(read).hasSize(3);
         assertThat(closed).hasValue(1);
+        assertThat(dropped).singleElement().satisfies(error -> assertThat(error).hasCause(closeError));
     }
 
     private static String records(int count) {

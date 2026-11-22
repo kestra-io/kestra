@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
+import com.google.common.annotations.VisibleForTesting;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -312,12 +313,7 @@ public final class FileSerde {
         return readOnDemand(createMappingIterator(DEFAULT_OBJECT_MAPPER, inputStream, type), inputStream);
     }
 
-    static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator) {
-        return readOnDemand(mappingIterator, () ->
-        {
-        });
-    }
-
+    @VisibleForTesting
     static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator, Closeable source) {
         var subscribed = new AtomicBoolean();
         var records = Flux.<T, MappingIterator<T>> generate(

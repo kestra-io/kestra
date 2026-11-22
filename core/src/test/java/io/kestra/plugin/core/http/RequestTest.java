@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,7 +23,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -176,6 +176,28 @@ class RequestTest {
         assertThat((String) output.getBody()).contains("foo=bar");
         assertThat((String) output.getBody()).contains("bar=foo1");
         assertThat((String) output.getBody()).contains("bar=foo2");
+        assertThat(output.getCode()).isEqualTo(200);
+    }
+
+    @Test
+    void paramsWithNullValue() throws Exception {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("hello", "world");
+        params.put("ignored", null);
+
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/params"))
+            .params(Property.ofValue(params))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Request.Output output = task.run(runContext);
+
+        assertThat((String) output.getBody()).contains("hello=world");
+        assertThat((String) output.getBody()).doesNotContain("ignored");
         assertThat(output.getCode()).isEqualTo(200);
     }
 
@@ -372,6 +394,52 @@ class RequestTest {
     }
 
     @Test
+    void headersWithNullValue() throws Exception {
+        Map<CharSequence, CharSequence> headers = new LinkedHashMap<>();
+        headers.put("hello", "world");
+        headers.put("ignored", null);
+
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/hello"))
+            .headers(Property.ofValue(headers))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        io.kestra.core.http.HttpRequest request = task.request(runContext);
+
+        assertThat(request.getHeaders().map()).containsKey("hello").doesNotContainKey("ignored");
+    }
+
+    @Test
+    void formDataWithNullValue() throws Exception {
+        Map<String, Object> formData = new LinkedHashMap<>();
+        formData.put("hello", "world");
+        formData.put("ignored", null);
+
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
+            .uri(Property.ofValue(serverUrl() + "/post/url-encoded"))
+            .formData(Property.ofValue(formData))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Request.Output output = task.run(runContext);
+
+        assertThat(output.getBody()).isEqualTo("world > null");
+        assertThat(output.getCode()).isEqualTo(200);
+
+        HttpEntity entity = task.request(runContext).getBody().to();
+        assertThat(IOUtils.toString(entity.getContent(), StandardCharsets.US_ASCII)).isEqualTo("hello=world");
+    }
+
+    @Test
     void formPreservesCharsetAndEncodesNonAsciiValues() throws Exception {
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
@@ -446,6 +514,34 @@ class RequestTest {
 
         assertThat(output.getBody()).isEqualTo("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8));
         assertThat(output.getCode()).isEqualTo(200);
+    }
+
+    @Test
+    void multipartWithNullNameOrContentFallsBackToSerialization() throws Exception {
+        Map<String, Object> filePart = new LinkedHashMap<>();
+        filePart.put("name", null);
+        filePart.put("content", "whatever");
+
+        Map<String, Object> formData = new LinkedHashMap<>();
+        formData.put("hello", "world");
+        formData.put("file", filePart);
+
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+            .uri(Property.ofValue(serverUrl() + "/post/multipart"))
+            .formData(Property.ofValue(formData))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        io.kestra.core.http.HttpRequest request = task.request(runContext);
+
+        Map<String, Object> content = ((io.kestra.core.http.HttpRequest.MultipartRequestBody) request.getBody()).getContent();
+        assertThat(content.get("hello")).isEqualTo("world");
+        assertThat(content.get("file")).isInstanceOf(String.class);
     }
 
     @Test

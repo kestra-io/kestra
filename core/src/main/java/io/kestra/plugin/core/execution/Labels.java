@@ -2,6 +2,7 @@ package io.kestra.plugin.core.execution;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -99,6 +100,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         if (labels instanceof String labelStr) {
             try {
                 labelsAsMap = MAPPER.readValue(runContext.render(labelStr), MAP_TYPE_REFERENCE);
+                labelsAsMap.values().removeIf(Objects::isNull);
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
@@ -125,6 +127,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         } else if (labels instanceof Map<?, ?> map) {
             labelsAsMap = map.entrySet()
                 .stream()
+                .filter(entry -> entry.getValue() != null)
                 .map(throwFunction(entry -> Map.entry(runContext.render((String) entry.getKey()), renderValue(runContext, entry.getValue()))))
                 .collect(
                     Collectors.toMap(

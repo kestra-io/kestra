@@ -1,24 +1,35 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.log.Log;
 
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @KestraTest(startRunner = true)
 class SwitchTest {
@@ -31,6 +42,91 @@ class SwitchTest {
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private TestRunContextFactory runContextFactory;
+
+    @Test
+    void shouldIgnoreNullCaseWhenCollectingChildTasks() {
+        Log child = Log.builder()
+            .id("child")
+            .type(Log.class.getName())
+            .message("hello")
+            .build();
+
+        Map<String, List<Task>> cases = new HashMap<>();
+        cases.put("FIRST", List.of(child));
+        cases.put("NULL_CASE", null);
+
+        Switch task = Switch.builder()
+            .id("switch")
+            .type(Switch.class.getName())
+            .value(Property.ofValue("NULL_CASE"))
+            .cases(cases)
+            .build();
+
+        assertThat(task.allChildTasks()).containsExactly(child);
+    }
+
+    @Test
+    void shouldFallBackToDefaultsWhenMatchingCaseIsNull() throws Exception {
+        Switch task = switchWithNullCase();
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+        TaskRun parentTaskRun = TaskRun.builder()
+            .id("parent")
+            .executionId("execution")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .taskId("switch")
+            .build();
+
+        assertThat(task.childTasks(runContext, parentTaskRun))
+            .extracting(resolvedTask -> resolvedTask.getTask().getId())
+            .containsExactly("default");
+    }
+
+    @Test
+    void shouldReportDefaultsWhenMatchingCaseIsNull() throws Exception {
+        Switch task = switchWithNullCase();
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+
+        Switch.Output output = task.outputs(runContext);
+
+        assertThat(output.isDefaults()).isTrue();
+        assertThat(output.getValue()).isEqualTo("NULL_CASE");
+    }
+
+    @Test
+    void shouldIgnoreNullCaseWhenBuildingTheTaskTree() {
+        Switch task = switchWithNullCase();
+
+        assertThatCode(() -> task.tasksTree(null, null, null)).doesNotThrowAnyException();
+    }
+
+    private Switch switchWithNullCase() {
+        Log child = Log.builder()
+            .id("child")
+            .type(Log.class.getName())
+            .message("hello")
+            .build();
+        Log defaultTask = Log.builder()
+            .id("default")
+            .type(Log.class.getName())
+            .message("default")
+            .build();
+
+        Map<String, List<Task>> cases = new HashMap<>();
+        cases.put("FIRST", List.of(child));
+        cases.put("NULL_CASE", null);
+
+        return Switch.builder()
+            .id("switch")
+            .type(Switch.class.getName())
+            .value(Property.ofValue("NULL_CASE"))
+            .cases(cases)
+            .defaults(List.of(defaultTask))
+            .build();
+    }
 
     @Test
     @LoadFlows(value = { "flows/valids/switch.yaml" }, tenantId = "switch")

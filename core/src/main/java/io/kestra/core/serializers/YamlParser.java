@@ -34,7 +34,7 @@ import jakarta.validation.ConstraintViolationException;
 public final class YamlParser {
     public static final Pattern DOCUMENT_SEPARATOR = Pattern.compile("(?m)^---[ \\t]*(?:#.*)?\\r?$");
 
-    private static final ObjectMapper NON_STRICT_MAPPER = JacksonMapper.ofYaml()
+    private static final ObjectMapper NON_STRICT_MAPPER = JacksonMapper.ofYamlWithNullValues().copy()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
 

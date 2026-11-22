@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -228,7 +229,7 @@ public class HttpClient implements Closeable {
     }
 
     private SSLConnectionSocketFactory selfSignedConnectionSocketFactory() {
-        return new SSLConnectionSocketFactory(this.insecureSslContext(), new String[] {"TLSv1.3", "TLSv1.2"}, null, NoopHostnameVerifier.INSTANCE);
+        return new SSLConnectionSocketFactory(this.insecureSslContext(), new String[] { "TLSv1.3", "TLSv1.2" }, null, NoopHostnameVerifier.INSTANCE);
     }
 
     private SSLContext insecureSslContext() {
@@ -857,7 +858,7 @@ public class HttpClient implements Closeable {
 
             for (Map.Entry<String, List<Integer>> entry : byMethod.entrySet()) {
                 if (entry.getKey().equalsIgnoreCase(method)) {
-                    return entry.getValue();
+                    return entry.getValue() == null ? List.of() : entry.getValue().stream().filter(Objects::nonNull).toList();
                 }
             }
         }
@@ -867,7 +868,10 @@ public class HttpClient implements Closeable {
             return List.of();
         }
 
-        return runContext.render(configuration.getRetryOnStatusCodes()).asList(Integer.class);
+        return runContext.render(configuration.getRetryOnStatusCodes()).asList(Integer.class)
+            .stream()
+            .filter(Objects::nonNull)
+            .toList();
     }
 
     /**
@@ -899,7 +903,9 @@ public class HttpClient implements Closeable {
         if (resolveAuthority(uri) == null) {
             // A list is configured but the URI carries no authority at all, so there is no host to check it
             // against: fail closed on both directions instead of silently letting an unmatchable URI through.
-            throw new IllegalArgumentException("The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(uri));
+            throw new IllegalArgumentException(
+                "The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(uri)
+            );
         }
 
         // first check that if there is an allow list, it matches one
@@ -1146,7 +1152,9 @@ public class HttpClient implements Closeable {
     private static void rejectDeniedAddresses(String host, InetAddress[] addresses, List<String> deniedList) {
         for (InetAddress address : addresses) {
             if (deniedList.stream().anyMatch(entry -> isDeniedAddress(entry, address))) {
-                throw new IllegalArgumentException("The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(host, address.getHostAddress()));
+                throw new IllegalArgumentException(
+                    "The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(host, address.getHostAddress())
+                );
             }
         }
     }

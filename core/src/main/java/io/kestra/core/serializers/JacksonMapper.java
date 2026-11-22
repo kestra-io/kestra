@@ -66,13 +66,15 @@ public final class JacksonMapper {
 
     // Registered the KestraDateTimeModule only for the JSON mapper.
     // YAML should not change the date format as it would break compatibility, and ION has its own date format.
-    private static final ObjectMapper MAPPER = JacksonMapper.configure(new ObjectMapper(
-        JsonFactory.builder()
-            // the default thread-local pool never reuses a buffer on virtual threads, where most of Kestra's serialization runs,
-            // and the lock-free pool is deprecated because it grows without bound under contention (jackson-core#1260)
-            .recyclerPool(JsonRecyclerPools.newBoundedPool(RECYCLER_POOL_CAPACITY))
-            .build()
-    ))
+    private static final ObjectMapper MAPPER = JacksonMapper.configure(
+        new ObjectMapper(
+            JsonFactory.builder()
+                // the default thread-local pool never reuses a buffer on virtual threads, where most of Kestra's serialization runs,
+                // and the lock-free pool is deprecated because it grows without bound under contention (jackson-core#1260)
+                .recyclerPool(JsonRecyclerPools.newBoundedPool(RECYCLER_POOL_CAPACITY))
+                .build()
+        )
+    )
         .registerModule(new KestraDateTimeModule());
 
     private static final ObjectMapper NON_STRICT_MAPPER = MAPPER
@@ -104,6 +106,19 @@ public final class JacksonMapper {
         return YAML_MAPPER;
     }
 
+    /**
+     * Keeps null map entries and collection elements ({@code ALWAYS} content inclusion) while still omitting null
+     * bean properties ({@code NON_NULL} value inclusion), the YAML counterpart of {@link #ofJsonWithNullValues()}.
+     */
+    private static final ObjectMapper YAML_MAPPER_WITH_NULL = YAML_MAPPER
+        .copy()
+        .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS));
+
+    /** Returns the YAML mapper that keeps null map entries and collection elements, unlike {@link #ofYaml()}. */
+    public static ObjectMapper ofYamlWithNullValues() {
+        return YAML_MAPPER_WITH_NULL;
+    }
+
     public static Map<String, Object> toMap(Object object, ZoneId zoneId) {
         return MAPPER
             .copy()
@@ -124,8 +139,20 @@ public final class JacksonMapper {
         .copy()
         .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS));
 
+    /**
+     * Returns the strict JSON mapper that keeps null map entries and collection elements, unlike the non-strict
+     * {@link #ofJson()}.
+     */
     public static ObjectMapper ofJsonWithNullValues() {
         return MAPPER_WITH_NULL;
+    }
+
+    private static final ObjectMapper NON_STRICT_MAPPER_WITH_NULL = NON_STRICT_MAPPER
+        .copy()
+        .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS));
+
+    public static ObjectMapper ofJsonWithNullValues(boolean strict) {
+        return strict ? MAPPER_WITH_NULL : NON_STRICT_MAPPER_WITH_NULL;
     }
 
     public static <T> T toMap(Object map, Class<T> cls) {

@@ -478,13 +478,14 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             try {
                 // pull image only if we will create a new container
                 if (containerId == null) {
-                    var rTmpfs = runContext.render(this.tmpfs).asMap(String.class, String.class, additionalVars);
-                    var validatedTmpfs = rTmpfs.isEmpty() ? Map.<String, String> of() : Tmpfs.mounts(
-                        rTmpfs,
-                        windowsToUnixPath(taskCommands.getWorkingDirectory().toString()),
-                        strategy,
-                        needVolume
-                    );
+                    var rTmpfs = withoutNullValues(runContext.render(this.tmpfs).asMap(String.class, String.class, additionalVars));
+                    var validatedTmpfs = rTmpfs.isEmpty() ? Map.<String, String> of()
+                        : Tmpfs.mounts(
+                            rTmpfs,
+                            windowsToUnixPath(taskCommands.getWorkingDirectory().toString()),
+                            strategy,
+                            needVolume
+                        );
 
                     var renderedPolicy = runContext.render(this.getPullPolicy()).as(PullPolicy.class).orElseThrow();
                     if (!PullPolicy.NEVER.equals(renderedPolicy)) {
@@ -1046,7 +1047,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                                 .withCount(runContext.render(deviceRequest.getCount()).as(Integer.class).orElse(null))
                                 .withDeviceIds(runContext.render(deviceRequest.getDeviceIds()).asList(String.class))
                                 .withCapabilities(runContext.render(deviceRequest.getCapabilities()).asList(List.class))
-                                .withOptions(runContext.render(deviceRequest.getOptions()).asMap(String.class, String.class))
+                                .withOptions(withoutNullValues(runContext.render(deviceRequest.getOptions()).asMap(String.class, String.class)))
                         )
                     )
                     .toList()
@@ -1116,6 +1117,12 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return READABLE_BYTES_TYPE_CONVERTER.convert(bytes, Number.class)
             .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + bytes + "'"))
             .longValue();
+    }
+
+    private static Map<String, String> withoutNullValues(Map<String, String> map) {
+        Map<String, String> filtered = new HashMap<>(map);
+        filtered.values().removeIf(Objects::isNull);
+        return filtered;
     }
 
     private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) {

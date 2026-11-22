@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble.functions;
 
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -159,6 +160,36 @@ class HttpFunctionTest {
                     )
                 }}""", Map.of(
                 "url", "http://localhost:28182/withHeadersApi"
+            )
+        );
+
+        Assertions.assertEquals("{\"headers\":\"received\"}", rendered);
+    }
+
+    @Test
+    void withNullHeaderValue() throws IllegalVariableEvaluationException {
+        stubFor(
+            get(urlMatching("/withNullHeaderApi"))
+                .withHeader("custom-header", equalTo("custom-value"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(
+                            """
+                                {"headers":"received"}"""
+                        )
+                )
+        );
+
+        Map<String, Object> headers = new LinkedHashMap<>();
+        headers.put("custom-header", "custom-value");
+        headers.put("ignored", null);
+
+        String rendered = variableRenderer.render(
+            "{{ http(url, 'GET', headers=headers) }}",
+            Map.of(
+                "url", "http://localhost:28182/withNullHeaderApi",
+                "headers", headers
             )
         );
 

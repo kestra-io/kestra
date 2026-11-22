@@ -12,8 +12,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.AbstractMap;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -82,8 +84,11 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                 .asMap(String.class, Object.class)
                 .forEach((s, o) ->
                 {
+                    if (o == null) {
+                        return;
+                    }
                     if (o instanceof List<?> oList) {
-                        oList.stream().map(Object::toString).forEach(s1 ->
+                        oList.stream().filter(Objects::nonNull).map(Object::toString).forEach(s1 ->
                         {
                             uriBuilder.addParameter(s, s1);
                         });
@@ -99,7 +104,8 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
             .method(runContext.render(this.method).as(String.class).orElse(null))
             .uri(uriBuilder.build());
 
-        var renderedFormData = runContext.render(this.formData).asMap(String.class, Object.class);
+        Map<String, Object> renderedFormData = new LinkedHashMap<>(runContext.render(this.formData).asMap(String.class, Object.class));
+        renderedFormData.values().removeIf(v -> v == null);
         if (!renderedFormData.isEmpty()) {
             if ("multipart/form-data".equals(runContext.render(this.contentType).as(String.class).orElse(null))) {
                 HashMap<String, Object> multipart = new HashMap<>();
@@ -121,7 +127,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                         } else {
                             multipart.put(key, render);
                         }
-                    } else if (e.getValue() instanceof Map mapValue && ((Map<String, String>) mapValue).containsKey("name") && ((Map<String, String>) mapValue).containsKey("content")) {
+                    } else if (e.getValue() instanceof Map mapValue && ((Map<String, String>) mapValue).get("name") != null && ((Map<String, String>) mapValue).get("content") != null) {
                         String name = runContext.render(((Map<String, String>) mapValue).get("name"));
                         String content = runContext.render(((Map<String, String>) mapValue).get("content"));
 
@@ -166,6 +172,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                     renderedHeader
                         .entrySet()
                         .stream()
+                        .filter(e -> e.getValue() != null)
                         .map(
                             throwFunction(
                                 e -> new AbstractMap.SimpleEntry<>(

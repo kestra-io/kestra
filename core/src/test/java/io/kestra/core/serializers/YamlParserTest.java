@@ -27,6 +27,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.output.OutputValues;
 
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -292,6 +293,30 @@ class YamlParserTest {
             "id: flow1\ndescription: a --- b",
             "id: flow2"
         );
+    }
+
+    @Test
+    void shouldKeepNullMapValuesWhenParsingFlowMap() throws IOException {
+        String yaml = """
+            id: null-map-values
+            namespace: io.kestra.tests
+            tasks:
+              - id: output
+                type: io.kestra.plugin.core.output.OutputValues
+                values:
+                  billing: Payments
+                  other: null
+            """;
+        TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {
+        };
+        Map<String, Object> map = JacksonMapper.ofYaml().readValue(yaml, typeReference);
+
+        Flow flow = YamlParser.parse(map, Flow.class, false);
+
+        OutputValues task = (OutputValues) flow.getTasks().getFirst();
+        assertThat(task.getValues().toString())
+            .contains("\"billing\":\"Payments\"")
+            .contains("\"other\":null");
     }
 
     private Flow parse(String path) {

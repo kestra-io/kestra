@@ -2,6 +2,8 @@ package io.kestra.plugin.core.trigger;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.WebhookService;
 import io.kestra.core.utils.IdUtils;
@@ -75,5 +78,34 @@ public class WebhookBuilderTest {
 
         assertThat(evaluate).isNotNull();
         assertThat(Objects.requireNonNull(evaluate.block()).getStatus().getCode()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldOmitNullResponseHeaderWhenEvaluatingWebhook() throws Exception {
+        Map<String, String> headers = new LinkedHashMap<>();
+        headers.put("hello", "world");
+        headers.put("ignored", null);
+
+        Webhook webhook = Webhook.builder()
+            .id("test-webhook")
+            .type(Webhook.class.getName())
+            .key("testkey")
+            .responseHeaders(Property.ofValue(headers))
+            .build();
+
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.tests")
+            .build();
+
+        HttpRequest request = HttpRequest.of(URI.create("/api/v1/main/executions/webhook/io.kestra.tests/test-flow/testkey"));
+        var webhookContext = new WebhookContext(request, null, flow, webhook, webhookService, IdUtils.create(), null);
+
+        var response = webhook.evaluate(webhookContext).block();
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus().getCode()).isEqualTo(200);
+        assertThat(response.getHeaders().firstValue("hello")).contains("world");
+        assertThat(response.getHeaders().firstValue("ignored")).isEmpty();
     }
 }

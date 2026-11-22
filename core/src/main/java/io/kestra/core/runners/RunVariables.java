@@ -4,6 +4,8 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
@@ -29,7 +31,6 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import lombok.AllArgsConstructor;
 import lombok.With;
-import org.slf4j.Logger;
 
 /**
  * Class for building {@link RunContext} variables.
@@ -525,6 +526,8 @@ public final class RunVariables {
                 .ifPresent(variables ->
                 {
                     Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
+                    // `vars` cannot carry null values: ImmutableMap.copyOf rejects them.
+                    variables.entrySet().removeIf(e -> e.getValue() == null);
                     builder.put("vars", ImmutableMap.copyOf(variables));
 
                     if (fixtureFiles != null) {

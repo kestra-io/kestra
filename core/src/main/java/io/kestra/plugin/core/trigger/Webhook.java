@@ -369,6 +369,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             .asMap(String.class, String.class)
             .entrySet()
             .stream()
+            .filter(entry -> entry.getValue() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, entry -> List.of(entry.getValue())));
 
         if (this.responseContentType != null && headers.keySet().stream().noneMatch(name -> name.equalsIgnoreCase("Content-Type"))) {
@@ -417,9 +418,9 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
      * A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
      * under, which is exposed as {@code uri}.
      *
-     * @param context       the webhook request context
-     * @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
-     *                      stored rather than read
+     * @param context the webhook request context
+     * @param requestBody the body of the webhook request, {@code null} if the request has none, or if it was
+     *        stored rather than read
      * @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
      * @return the trigger output
      */
@@ -433,7 +434,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
 
         switch (requestBody) {
-            case null -> { }
+            case null -> {
+            }
             case HttpRequest.MultipartFormDataRequestBody multipart -> {
                 MultipartContent content = multipartContent(multipart);
                 output.parts(content.parts()).formFields(content.formFields());
@@ -462,13 +464,15 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         multipart.getContent().forEach(part ->
         {
             switch (part) {
-                case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(Output.Part.builder()
-                    .name(file.name())
-                    .filename(file.filename())
-                    .contentType(file.contentType())
-                    .size(file.size())
-                    .uri(file.uri().toString())
-                    .build());
+                case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(
+                    Output.Part.builder()
+                        .name(file.name())
+                        .filename(file.filename())
+                        .contentType(file.contentType())
+                        .size(file.size())
+                        .uri(file.uri().toString())
+                        .build()
+                );
                 case HttpRequest.MultipartFormDataRequestBody.FormFieldPart formField ->
                     formFields.computeIfAbsent(formField.name(), name -> new ArrayList<>()).add(new String(formField.content(), charset));
             }
@@ -495,7 +499,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
     }
 
-    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {}
+    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {
+    }
 
     @SuperBuilder
     @EqualsAndHashCode

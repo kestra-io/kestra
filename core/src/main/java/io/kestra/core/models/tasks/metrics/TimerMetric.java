@@ -1,8 +1,6 @@
 package io.kestra.core.models.tasks.metrics;
 
 import java.time.Duration;
-import java.util.Map;
-import java.util.stream.Stream;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
@@ -32,10 +30,7 @@ public class TimerMetric extends AbstractMetric {
         String name = runContext.render(this.name).as(String.class).orElseThrow();
         Duration value = runContext.render(this.value).as(Duration.class).orElseThrow();
         String description = runContext.render(this.description).as(String.class).orElse(null);
-        Map<String, String> tags = runContext.render(this.tags).asMap(String.class, String.class);
-        String[] tagsAsStrings = tags.entrySet().stream()
-            .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
-            .toArray(String[]::new);
+        String[] tagsAsStrings = tagsAsArray(runContext);
 
         return Timer.of(name, description, value, tagsAsStrings);
     }

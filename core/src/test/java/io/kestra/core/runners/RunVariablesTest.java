@@ -2,12 +2,12 @@ package io.kestra.core.runners;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -35,6 +35,8 @@ import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
@@ -47,6 +49,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -89,7 +92,6 @@ class RunVariablesTest {
 
         assertThat(variables).extractingByKey("inputs").isEqualTo(Map.of("main_value", "provided value"));
     }
-
 
     @Inject
     VariableRenderer renderer;
@@ -435,6 +437,56 @@ class RunVariablesTest {
             .namespace("namespace-value")
             .revision(42)
             .variables(Map.of("region", "us-east-1"))
+            .build();
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat(variables.get("vars")).isEqualTo(Map.of("region", "us-east-1"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldOmitNullFlowVariableFromVarsWhenFlowIsParsedFromMap() throws Exception {
+        String yaml = """
+            id: null-variable
+            namespace: io.kestra.tests
+            variables:
+              region: us-east-1
+              optional: null
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """;
+
+        Map<String, Object> map = JacksonMapper.ofYaml().readValue(yaml, JacksonMapper.MAP_TYPE_REFERENCE);
+        Flow flow = YamlParser.parse(map, Flow.class, false);
+
+        assertThat(flow.getVariables()).containsKey("optional");
+        assertThat(flow.getVariables().get("optional")).isNull();
+        assertThat(flow.getVariables()).containsEntry("region", "us-east-1");
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        Map<String, Object> vars = (Map<String, Object>) variables.get("vars");
+        assertThat(vars).containsEntry("region", "us-east-1").doesNotContainKey("optional");
+    }
+
+    @Test
+    void shouldOmitNullFlowVariablesWhenBuildingVars() {
+        Map<String, Object> flowVariables = new LinkedHashMap<>();
+        flowVariables.put("region", "us-east-1");
+        flowVariables.put("nullable", null);
+
+        Flow flow = Flow.builder()
+            .id("id-value")
+            .namespace("namespace-value")
+            .revision(42)
+            .variables(flowVariables)
             .build();
 
         Map<String, Object> variables = new RunVariables.DefaultBuilder()

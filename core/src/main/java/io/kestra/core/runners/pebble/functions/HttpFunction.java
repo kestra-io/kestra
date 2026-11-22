@@ -119,6 +119,7 @@ public class HttpFunction<T> implements KestraFunction {
 
     private Map<String, List<String>> singleValueToListForHeaders(Map<String, Object> m) {
         return m.entrySet().stream()
+            .filter(e -> e.getValue() != null)
             .map(e -> Map.entry(e.getKey(), e.getValue() instanceof String valueStr ? List.of(valueStr) : (List<String>) e.getValue()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }

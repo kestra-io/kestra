@@ -6,6 +6,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -311,6 +312,19 @@ class FlowableUtilsTest {
     }
 
     @Test
+    void resolveValues_withStringJsonObjectContainingNull_shouldOmitTheNullEntry() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, "{\"a\":\"foo\",\"b\":null}");
+
+        // Then
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight()).containsExactly(Pair.of("a", "foo"));
+    }
+
+    @Test
     void resolveValues_withList_shouldReturnListOfStrings() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();
@@ -388,6 +402,22 @@ class FlowableUtilsTest {
             Pair.of("k1", "v1"),
             Pair.of("k2", "v2")
         );
+    }
+
+    @Test
+    void resolveValues_withMapContainingNull_shouldOmitTheNullEntry() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("a", "foo");
+        values.put("b", null);
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, values);
+
+        // Then
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight()).containsExactly(Pair.of("a", "foo"));
     }
 
     @Test
@@ -607,7 +637,6 @@ class FlowableUtilsTest {
         assertThat(result.getLeft()).containsExactly("c", "d");
         assertThat(result.getRight()).isEqualTo(4L);
     }
-
 
     @Test
     void resolveSequentialNexts_shouldNotDuplicateTaskRunWhenTaskIsRetrying() {

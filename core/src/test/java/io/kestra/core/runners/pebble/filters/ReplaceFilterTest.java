@@ -1,6 +1,9 @@
 package io.kestra.core.runners.pebble.filters;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -32,6 +35,41 @@ class ReplaceFilterTest {
         String render = variableRenderer.render("{{ 'aa1bb2cc3dd4ee5' | replace({'(\\d)': '-$1-'}, regexp=true) }}", Map.of());
 
         assertThat(render).isEqualTo("aa-1-bb-2-cc-3-dd-4-ee-5-");
+    }
+
+    @Test
+    void mapWithNullValue() throws IllegalVariableEvaluationException {
+        Map<String, Object> input = new LinkedHashMap<>();
+        input.put("first", "john");
+        input.put("empty", null);
+
+        Map<String, Object> replacePairs = new LinkedHashMap<>();
+        replacePairs.put("john", "jane");
+        replacePairs.put("unmatched", null);
+
+        String render = variableRenderer.render(
+            "{{ map | replace(pairs) }}",
+            Map.of("map", input, "pairs", replacePairs)
+        );
+
+        assertThat(render).isEqualTo("{\"first\":\"jane\"}");
+    }
+
+    @Test
+    void listWithNullValue() throws IllegalVariableEvaluationException {
+        List<Object> input = new ArrayList<>();
+        input.add("john");
+        input.add(null);
+
+        Map<String, Object> replacePairs = new LinkedHashMap<>();
+        replacePairs.put("john", "jane");
+
+        String render = variableRenderer.render(
+            "{{ list | replace(pairs) }}",
+            Map.of("list", input, "pairs", replacePairs)
+        );
+
+        assertThat(render).isEqualTo("[\"jane\"]");
     }
 
     @Test

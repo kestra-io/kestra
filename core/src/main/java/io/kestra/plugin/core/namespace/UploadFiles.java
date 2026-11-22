@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -202,7 +203,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
 
     private void uploadFilesMap(RunContext runContext, Map<String, Object> filesMap, Namespace storageNamespace, String destination)
         throws IOException, URISyntaxException, IllegalVariableEvaluationException {
-        Map<String, Object> renderedMap = runContext.render(filesMap);
+        Map<String, Object> renderedMap = new LinkedHashMap<>(runContext.render(filesMap));
+        renderedMap.values().removeIf(value -> value == null);
         for (Map.Entry<String, Object> entry : renderedMap.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();

@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble.expression;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,16 @@ public class InExpressionTest {
     }
 
     @Test
+    void inListWithNullElement() throws IllegalVariableEvaluationException {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("state", State.Type.SUCCESS);
+
+        String render = variableRenderer.render("{{ state isIn ['SUCCESS', null] }}", vars);
+
+        assertThat(render).isEqualTo("true");
+    }
+
+    @Test
     void inMap() throws IllegalVariableEvaluationException {
         Map<String, Object> vars = new HashMap<>();
         vars.put("map", Map.of("key", "value"));
@@ -47,6 +58,21 @@ public class InExpressionTest {
         render = variableRenderer.render("{{ value isIn map }}", vars);
 
         assertThat(render).isEqualTo("true");
+    }
+
+    @Test
+    void inMapWithNullValue() throws IllegalVariableEvaluationException {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("key", null);
+        map.put("other", "match");
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("map", map);
+        vars.put("present", "match");
+        vars.put("absent", "absent");
+
+        assertThat(variableRenderer.render("{{ present isIn map }}", vars)).isEqualTo("true");
+        assertThat(variableRenderer.render("{{ absent isIn map }}", vars)).isEqualTo("false");
     }
 
 }

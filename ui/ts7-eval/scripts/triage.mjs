@@ -7,7 +7,7 @@ const RULES = [
     ["expected v4, relaxation asked upstream (vuejs/language-tools#6334): native listener on a component without emits", (c, m) => c === "TS2353" && /'on[A-Z]\w*' does not exist/.test(m)],
     ["mapper bug (v4 only, vuejs/language-tools#6306): v-else-if narrowing over a v-for local", (c) => c === "TS2367"],
     ["TS 7.1 intended change (microsoft/TypeScript#64656): TS5088 on a recursive mapped type (repros/ts5088-min)", (c) => c === "TS5088"],
-    ["TS 7.1 regression, not reported upstream: TS2883 on a subpath of a deduplicated package (repros/ts2883-min, ISSUES.md #1)", (c) => c === "TS2883"],
+    ["TS 7.1 regression (microsoft/TypeScript#65601): TS2883 on a subpath of a deduplicated package (repros/ts2883-min, ISSUES.md #1)", (c) => c === "TS2883"],
     ["unconfirmed (EE only): GlobalComponents augmented twice with different types", (c) => c === "TS2717"],
     ["unconfirmed (EE only): SDK key-parity type assertions", (c) => c === "TS2344"],
     ["cascade of TS5088/TS2883 (declaration not emitted for a referenced file)", (c) => ["TS6305", "TS7016", "TS7006", "TS7031"].includes(c)],

@@ -38,10 +38,10 @@ copies, then finds no specifier for the kept one from the other folder. 6.0.3 an
 `repros/ts2883-min/repro.sh` is the element-plus-shaped version of the standalone repro.
 
 Workarounds, tested on 7.0 and 7.1: a `paths` entry mapping the package to one copy, installing it once (symlinked or
-in a shared parent folder), or annotating the return type. EE maps `@popperjs/core` to the OSS copy in
-kestra-io/kestra-ee#12729, which removes its 2 TS2883. The other 10 EE TS2883 come from the OSS and EE SDKs, two
-different packages that share the name `@kestra-io/kestra-sdk@2.0.0`, so no path mapping applies; they need annotated
-return types.
+in a shared parent folder), or annotating the return type. kestra-io/kestra-ee#12729 removed all 12 EE TS2883: it maps
+`@popperjs/core` to the OSS copy (2), and type-checks the OSS project against the EE SDK through
+`ui-ee/tsconfig.oss.json`, as Vite already serves it (10). The OSS and EE SDKs are different packages that share the
+name `@kestra-io/kestra-sdk@2.0.0`, so the store types EE re-exported came from a package EE could not name.
 
 TS5088, the other half of the original draft, is closed as fixed by microsoft/TypeScript#65567, and
 `repros/ts5088-min` passes on `7.1.0-dev.20261120.1`. Whether the app still needs the `Ref<T>` annotations of

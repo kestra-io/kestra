@@ -64,6 +64,25 @@ public class Data {
     }
 
     /**
+     * Same as {@link #read(RunContext)}, but a stored file is read record by record as the Flux is consumed instead of being buffered whole, so prefer it for large files.
+     */
+    public Flux<Map<String, Object>> readOnDemand(RunContext runContext) throws IllegalVariableEvaluationException {
+        if (from instanceof String str) {
+            var renderedString = runContext.render(str);
+            if (URIFetcher.supports(renderedString)) {
+                try {
+                    var inputStream = new BufferedInputStream(URIFetcher.of(renderedString).fetch(runContext), FileSerde.BUFFER_SIZE);
+                    return FileSerde.readOnDemand(inputStream, MAP_OF_STRING_OBJECT)
+                        .publishOn(Schedulers.boundedElastic());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        }
+        return read(runContext);
+    }
+
+    /**
      * Generates a <code>Flux</code> of objects for the data items.
      * The mapper passed to this method will be used to map to the desired type when the `from` attribute is a Map or a List of Maps.
      * If you want to work with maps, use {@link #read(RunContext)} instead.

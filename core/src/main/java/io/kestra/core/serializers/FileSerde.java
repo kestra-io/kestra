@@ -304,6 +304,45 @@ public final class FileSerde {
             .doFinally(throwConsumer(ignored -> mappingIterator.close()));
     }
 
+    /**
+     * Reads one record per requested record instead of the whole stream up front; the returned Flux owns the stream and closes it when it ends.
+     */
+    public static <T> Flux<T> readOnDemand(InputStream inputStream, Class<T> type) throws IOException {
+        return readOnDemand(createMappingIterator(DEFAULT_OBJECT_MAPPER, inputStream, type), inputStream);
+    }
+
+    static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator) {
+        return readOnDemand(mappingIterator, () ->
+        {
+        });
+    }
+
+    private static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator, Closeable source) {
+        return Flux.<T, MappingIterator<T>> generate(
+            () -> mappingIterator,
+            (iterator, sink) ->
+            {
+                if (iterator.hasNext()) {
+                    sink.next(iterator.next());
+                }
+                if (!iterator.hasNext()) {
+                    sink.complete();
+                }
+                return iterator;
+            },
+            iterator ->
+            {
+                try (source) {
+                    iterator.close();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        )
+            // Fusion would let a cancel close the parser during a read and drop the last record before a look-ahead error.
+            .hide();
+    }
+
     public static <T> Mono<Long> writeAll(Flux<T> values, SequenceWriter seqWriter) throws IOException {
         return values
             .filter(Objects::nonNull)

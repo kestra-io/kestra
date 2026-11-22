@@ -592,6 +592,27 @@ class FileSerdeTest {
         assertThat(closed).hasValue(1);
     }
 
+    @Test
+    void shouldGiveRecordsToFirstSubscriptionOnlyWhenSubscribedTwice() throws IOException {
+        var iterator = countingIterator(records(10), new AtomicInteger());
+        var flux = FileSerde.readOnDemand(iterator);
+        var first = new RecordingSubscriber();
+        var second = new RecordingSubscriber();
+
+        flux.subscribe(first);
+        first.request(2);
+        flux.subscribe(second);
+        second.request(Long.MAX_VALUE);
+        first.request(Long.MAX_VALUE);
+
+        assertThat(first.received).extracting(CountedEntry::id).containsExactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L);
+        assertThat(first.completed).isTrue();
+        assertThat(second.received).isEmpty();
+        assertThat(second.completed).isTrue();
+        assertThat(second.error).isNull();
+        verify(iterator, times(1)).close();
+    }
+
     private static String records(int count) {
         var builder = new StringBuilder();
         for (int i = 0; i < count; i++) {

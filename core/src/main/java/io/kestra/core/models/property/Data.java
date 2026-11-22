@@ -72,8 +72,17 @@ public class Data {
             if (URIFetcher.supports(renderedString)) {
                 try {
                     var inputStream = new BufferedInputStream(URIFetcher.of(renderedString).fetch(runContext), FileSerde.BUFFER_SIZE);
-                    return FileSerde.readOnDemand(inputStream, MAP_OF_STRING_OBJECT)
-                        .publishOn(Schedulers.boundedElastic());
+                    try {
+                        return FileSerde.readOnDemand(inputStream, MAP_OF_STRING_OBJECT)
+                            .publishOn(Schedulers.boundedElastic());
+                    } catch (IOException | RuntimeException e) {
+                        try {
+                            inputStream.close();
+                        } catch (IOException closeError) {
+                            e.addSuppressed(closeError);
+                        }
+                        throw e;
+                    }
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }

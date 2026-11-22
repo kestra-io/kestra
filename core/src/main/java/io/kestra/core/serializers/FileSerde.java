@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -318,7 +319,8 @@ public final class FileSerde {
     }
 
     private static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator, Closeable source) {
-        return Flux.<T, MappingIterator<T>> generate(
+        var subscribed = new AtomicBoolean();
+        var records = Flux.<T, MappingIterator<T>> generate(
             () -> mappingIterator,
             (iterator, sink) ->
             {
@@ -338,9 +340,9 @@ public final class FileSerde {
                     throw new UncheckedIOException(e);
                 }
             }
-        )
-            // Fusion would let a cancel close the parser during a read and drop the last record before a look-ahead error.
-            .hide();
+        );
+        // Only the first subscription reads, as with readAll; fusion would let a cancel close the parser during a read.
+        return Flux.defer(() -> subscribed.compareAndSet(false, true) ? records : Flux.<T> empty()).hide();
     }
 
     public static <T> Mono<Long> writeAll(Flux<T> values, SequenceWriter seqWriter) throws IOException {

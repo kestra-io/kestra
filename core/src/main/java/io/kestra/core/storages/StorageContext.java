@@ -69,6 +69,7 @@ public class StorageContext {
      * {@code kestra:///<namespace-as-path>/} — namespace root, flow dirs as direct children.
      */
     public static URI namespaceRootUri(@NotNull String namespace) {
+        requireNoEmptySegment(namespace);
         return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/");
     }
 
@@ -77,6 +78,7 @@ public class StorageContext {
      */
     public static URI executionsRootUri(@NotNull String namespace, @NotNull String flowId) {
         Objects.requireNonNull(flowId, "flowId");
+        requireNoEmptySegment(namespace);
         return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/" + Slugify.of(flowId) + "/" + EXECUTIONS_DIR_NAME + "/");
     }
 
@@ -86,6 +88,22 @@ public class StorageContext {
     public static String namespaceAsPath(@NotNull String namespace) {
         Objects.requireNonNull(namespace, "namespace");
         return namespace.replace(".", "/");
+    }
+
+    /**
+     * Guards the paths made of the namespace alone, where a namespace with an empty segment such as {@code team.}
+     * would share its objects with {@code team}. Paths that hold an execution id are unique and need no guard, so
+     * the data of existing executions stays readable and purgeable.
+     *
+     * @throws IllegalArgumentException if the namespace has an empty segment.
+     */
+    private static void requireNoEmptySegment(String namespace) {
+        Objects.requireNonNull(namespace, "namespace");
+        if (namespace.startsWith(".") || namespace.endsWith(".") || namespace.contains("..")) {
+            throw new IllegalArgumentException(
+                "The namespace '%s' cannot be used as a storage path: it must not start or end with a dot or contain consecutive dots.".formatted(namespace)
+            );
+        }
     }
 
     /**
@@ -253,7 +271,7 @@ public class StorageContext {
     public static boolean isInNamespaceFiles(String namespace, URI path) {
         return path.getPath() != null
             && !FileUtils.isParentTraversal(path)
-            && path.getPath().startsWith(namespaceFilePrefix(namespace) + "/");
+            && path.getPath().startsWith(String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespaceAsPath(namespace)) + "/");
     }
 
     /**
@@ -265,6 +283,7 @@ public class StorageContext {
      */
     public URI getCacheURI(final String cacheId, @Nullable final String objectId) {
         Objects.requireNonNull(cacheId, "Cannot create URI with id null");
+        requireNoEmptySegment(getNamespace());
 
         final String prefix;
         if (objectId == null) {
@@ -288,7 +307,7 @@ public class StorageContext {
     }
 
     public String getNamespaceAsPath() {
-        return getNamespace().replace(".", "/");
+        return namespaceAsPath(getNamespace());
     }
 
     /**
@@ -300,6 +319,7 @@ public class StorageContext {
      * @return the storage prefix.
      */
     public String getStateStorePrefix(String id, Boolean isNamespace, String value) {
+        requireNoEmptySegment(getNamespace());
         ArrayList<String> paths = new ArrayList<>(List.of(getNamespaceAsPath()));
 
         if (!isNamespace) {
@@ -384,11 +404,13 @@ public class StorageContext {
     }
 
     public static String namespaceFilePrefix(String namespace) {
-        return String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespace.replace(".", "/"));
+        requireNoEmptySegment(namespace);
+        return String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespaceAsPath(namespace));
     }
 
     public static String kvPrefix(String namespace) {
-        return String.format(PREFIX_FORMAT_KV, namespace.replace(".", "/"));
+        requireNoEmptySegment(namespace);
+        return String.format(PREFIX_FORMAT_KV, namespaceAsPath(namespace));
     }
 
     /**

@@ -68,4 +68,12 @@ describe("HTML attributes on design-system wrappers", () => {
         }
         expect(document.querySelector(`[aria-label="${name}"]`)).not.toBeNull()
     })
+
+    test("KsCheckboxButton forwards title to its label", async () => {
+        const wrapper = i18nMount(defineComponent({render: () => h(DS.KsCheckboxButton, {value: "case", title: "Match case"}, () => "Aa")}), {attachTo: document.body})
+        unmount = () => wrapper.unmount()
+        await nextTick()
+
+        expect(document.querySelector("label[title=\"Match case\"]")).not.toBeNull()
+    })
 })

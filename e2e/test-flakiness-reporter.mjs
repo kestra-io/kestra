@@ -5,10 +5,10 @@ import {join} from "node:path"
 import {test} from "node:test"
 import FlakinessReporter from "./flakiness-reporter.ts"
 
-function fakeTest(title, outcome, statuses) {
+function fakeTest(title, outcome, statuses, file) {
     return {
         titlePath: () => ["sample.spec.ts", title],
-        location: {file: "e2e/sample.spec.ts", line: 12, column: 1},
+        location: {file, line: 12, column: 1},
         outcome: () => outcome,
         results: statuses.map((status, retry) => ({status, retry, duration: 10 + retry})),
     }
@@ -16,6 +16,8 @@ function fakeTest(title, outcome, statuses) {
 
 test("reports retry-passed tests as flaky and persistent failures separately", () => {
     const temporaryDirectory = mkdtempSync(join(tmpdir(), "kestra-flakiness-report-"))
+    const rootDirectory = join(temporaryDirectory, "e2e")
+    const sampleFile = join(rootDirectory, "sample.spec.ts")
     const reportDirectory = join(temporaryDirectory, "report")
     const summaryPath = join(temporaryDirectory, "step-summary.md")
     const previousSummaryPath = process.env.GITHUB_STEP_SUMMARY
@@ -24,13 +26,13 @@ test("reports retry-passed tests as flaky and persistent failures separately", (
 
     try {
         const tests = [
-            fakeTest("passes on retry", "flaky", ["failed", "passed"]),
-            fakeTest("still fails", "unexpected", ["failed", "failed", "failed"]),
-            fakeTest("passes first time", "expected", ["passed"]),
-            fakeTest("is skipped", "skipped", []),
+            fakeTest("passes on retry", "flaky", ["failed", "passed"], sampleFile),
+            fakeTest("still fails", "unexpected", ["failed", "failed", "failed"], sampleFile),
+            fakeTest("passes first time", "expected", ["passed"], sampleFile),
+            fakeTest("is skipped", "skipped", [], sampleFile),
         ]
         const reporter = new FlakinessReporter({outputDirectory: reportDirectory})
-        reporter.onBegin({}, {allTests: () => tests})
+        reporter.onBegin({rootDir: rootDirectory}, {allTests: () => tests})
         reporter.onEnd({status: "failed"})
 
         const report = JSON.parse(readFileSync(join(reportDirectory, "flakiness-report.json"), "utf8"))
@@ -43,6 +45,8 @@ test("reports retry-passed tests as flaky and persistent failures separately", (
         assert.equal(report.unexpectedOutcomeCount, 1)
         assert.equal(report.retryAttempts, 3)
         assert.deepEqual(report.flakyTests[0].attempts.map((attempt) => attempt.status), ["failed", "passed"])
+        assert.equal(report.flakyTests[0].file, "sample.spec.ts")
+        assert.equal(report.unexpectedTests[0].file, "sample.spec.ts")
         assert.match(markdown, /Flaky tests \(failed, then passed\)/)
         assert.match(markdown, /Unexpected outcomes \(not counted as flaky\)/)
         assert.match(markdown, /sample\.spec\.ts › passes on retry/)

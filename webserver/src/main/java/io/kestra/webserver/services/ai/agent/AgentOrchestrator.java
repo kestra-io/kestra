@@ -371,7 +371,12 @@ public class AgentOrchestrator {
                     ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family(), ChatMessageAdaptor.thinkingOf(ai)));
 
                 if (ChatMessageAdaptor.hasMalformedArguments(req.arguments())) {
-                    failTool(ctx, req, entry.kind(), entry.family(), malformedArgumentsMessage(req, response.finishReason()), sink);
+                    // The arguments are model-written text, so they go to the model but never to the server log.
+                    log.warn(
+                        "Copilot thread {}: tool '{}' was not executed: malformed arguments ({} chars, finish reason {})",
+                        ctx.thread().uid(), req.name(), req.arguments().length(), response.finishReason()
+                    );
+                    recordToolError(ctx, req, entry.kind(), entry.family(), malformedArgumentsMessage(req, response.finishReason()), sink);
                     continue;
                 }
 
@@ -441,6 +446,11 @@ public class AgentOrchestrator {
     private void failTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
         final AgentToolFamily family, final String message, final TurnEventSink sink) {
         log.warn("Copilot thread {}: tool '{}' failed: {}", ctx.thread().uid(), req.name(), message);
+        recordToolError(ctx, req, kind, family, message, sink);
+    }
+
+    private void recordToolError(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
+        final AgentToolFamily family, final String message, final TurnEventSink sink) {
         // Mark the result as an error so the model (and provider APIs, e.g. Gemini's functionResponse)
         // see it as a failed tool call rather than a normal result — ToolExecutionResultMessage.from(..)
         // leaves isError null.

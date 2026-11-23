@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
     import {h} from "vue"
-    import ChildTableOfContents from "../content/ChildTableOfContents.vue"
+    import ChildTableOfContents from "../content/ChildTableOfContents"
     import ContextDocsLink from "./ContextDocsLink.vue"
 
     const ContextDocsTOCLink = (link: {path: string, title: string}) => {

@@ -53,7 +53,7 @@
     import HomePageHeader from "../content/HomePageHeader.vue"
     import ProseImg from "../content/ProseImg.vue"
     import ProseA from "../content/ProseA.vue"
-    import ChildTableOfContents from "../content/ChildTableOfContents.vue"
+    import ChildTableOfContents from "../content/ChildTableOfContents"
     import ChildCard from "../content/ChildCard.vue"
     import ApiDoc from "../content/ApiDoc.vue"
     import ApiDocee from "../content/ApiDocee.vue"

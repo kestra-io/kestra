@@ -3,6 +3,29 @@ import {countUnsetRequiredFields, findRequiredFieldFrames, type PartialSchema} f
 import {shouldDrillItem} from "../components/tasks/fieldNesting"
 
 describe("countUnsetRequiredFields", () => {
+    const assertionSchema: PartialSchema = {
+        type: "object",
+        properties: {
+            value: {type: "string"},
+            equalTo: {anyOf: [{type: "string", $group: "operators"}], $group: "operators"},
+            isNull: {type: "boolean", $group: "operators"},
+        },
+        required: ["value"],
+        $requiredGroups: ["operators"],
+    }
+
+    it("counts a required group in which no property is set, pointing at its first property", () => {
+        const result = countUnsetRequiredFields([{value: "x"}], {type: "array", items: assertionSchema}, {})
+
+        expect(result).toEqual([{path: "[0].equalTo", label: "operators"}])
+    })
+
+    it("does not count a required group once one of its properties is set", () => {
+        const result = countUnsetRequiredFields({value: "x", isNull: false}, assertionSchema, {})
+
+        expect(result).toEqual([])
+    })
+
     it("counts a required subfield left unset inside a drillable array item, without drilling into it", () => {
         const itemSchema = {
             type: "object",

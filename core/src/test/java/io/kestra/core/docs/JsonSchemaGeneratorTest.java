@@ -49,6 +49,7 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.test.TestSuite;
+import io.kestra.core.test.flow.Assertion;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
@@ -307,7 +308,21 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldListOnlyOpenSourceOutputTypesWhenGeneratingTheFlowOutputSchema() throws URISyntaxException {
+    void assertionOperatorsShouldFormARequiredGroup() {
+        var definitions = (Map<String, Map<String, Object>>) jsonSchemaGenerator.schemas(TestSuite.class).get("definitions");
+        var assertion = definitions.get(Assertion.class.getName());
+        var assertionProperties = properties(assertion);
+
+        assertThat((List<String>) assertion.get("$requiredGroups"), contains(Assertion.OPERATORS_GROUP));
+        Arrays.stream(Assertion.Operator.values()).forEach(operator ->
+            assertThat(operator.key, assertionProperties.get(operator.key).get("$group"), is(Assertion.OPERATORS_GROUP))
+        );
+        assertThat(assertionProperties.get("description").containsKey("$group"), is(false));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldListOnlyOpenSourceOutputTypesWhenGeneratingTheFlowOutputSchema()throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
         {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);

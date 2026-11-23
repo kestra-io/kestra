@@ -227,7 +227,7 @@ describe("resolveSubflowLinks", () => {
             "tasks:",
             "  - id: child",
             "    type: io.kestra.plugin.core.flow.Subflow",
-            '    namespace: "{{ flow.namespace }}"',
+            "    namespace: \"{{ flow.namespace }}\"",
             "    flowId: child_flow",
         ].join("\n")
 

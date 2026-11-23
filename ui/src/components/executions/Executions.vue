@@ -154,31 +154,31 @@
                     </KsButton>
                     <template #dropdown>
                         <KsDropdownMenu>
-                            <KsTooltip v-if="canChangeLabels" :content="bulkActionTooltip(action.CHANGE_LABELS)" :disabled="!bulkActionTooltip(action.CHANGE_LABELS)">
-                                <KsDropdownItem :icon="LabelMultiple" :disabled="bulkActionDisabled(action.CHANGE_LABELS)" @click="isOpenLabelsModal = !isOpenLabelsModal">
-                                    {{ $t("Set labels") }}
-                                </KsDropdownItem>
-                            </KsTooltip>
-                            <KsTooltip v-if="canResume" :content="bulkActionTooltip(action.RESUME)" :disabled="!bulkActionTooltip(action.RESUME)">
-                                <KsDropdownItem :icon="Play" :disabled="bulkActionDisabled(action.RESUME)" @click="resumeExecutions()">
-                                    {{ $t("resume") }}
-                                </KsDropdownItem>
-                            </KsTooltip>
-                            <KsTooltip v-if="canPause" :content="bulkActionTooltip(action.PAUSE)" :disabled="!bulkActionTooltip(action.PAUSE)">
-                                <KsDropdownItem :icon="Pause" :disabled="bulkActionDisabled(action.PAUSE)" @click="pauseExecutions()">
-                                    {{ $t("pause") }}
-                                </KsDropdownItem>
-                            </KsTooltip>
-                            <KsTooltip v-if="canUnqueue" :content="bulkActionTooltip(action.UNQUEUE)" :disabled="!bulkActionTooltip(action.UNQUEUE)">
-                                <KsDropdownItem :icon="QueueFirstInLastOut" :disabled="bulkActionDisabled(action.UNQUEUE)" @click="unqueueDialogVisible = true">
-                                    {{ $t("unqueue") }}
-                                </KsDropdownItem>
-                            </KsTooltip>
-                            <KsTooltip v-if="canForceRun" :content="bulkActionTooltip(action.FORCE_RUN)" :disabled="!bulkActionTooltip(action.FORCE_RUN)">
-                                <KsDropdownItem :icon="RunFast" :disabled="bulkActionDisabled(action.FORCE_RUN)" @click="forceRunExecutions()">
-                                    {{ $t("force run") }}
-                                </KsDropdownItem>
-                            </KsTooltip>
+                            <KsDropdownItem v-if="canChangeLabels" :icon="LabelMultiple" :disabled="bulkActionDisabled(action.CHANGE_LABELS)" @click="isOpenLabelsModal = !isOpenLabelsModal">
+                                <KsTooltip :content="bulkActionTooltip(action.CHANGE_LABELS)" :disabled="!bulkActionTooltip(action.CHANGE_LABELS)">
+                                    <span>{{ $t("Set labels") }}</span>
+                                </KsTooltip>
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canResume" :icon="Play" :disabled="bulkActionDisabled(action.RESUME)" @click="resumeExecutions()">
+                                <KsTooltip :content="bulkActionTooltip(action.RESUME)" :disabled="!bulkActionTooltip(action.RESUME)">
+                                    <span>{{ $t("resume") }}</span>
+                                </KsTooltip>
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canPause" :icon="Pause" :disabled="bulkActionDisabled(action.PAUSE)" @click="pauseExecutions()">
+                                <KsTooltip :content="bulkActionTooltip(action.PAUSE)" :disabled="!bulkActionTooltip(action.PAUSE)">
+                                    <span>{{ $t("pause") }}</span>
+                                </KsTooltip>
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" :disabled="bulkActionDisabled(action.UNQUEUE)" @click="unqueueDialogVisible = true">
+                                <KsTooltip :content="bulkActionTooltip(action.UNQUEUE)" :disabled="!bulkActionTooltip(action.UNQUEUE)">
+                                    <span>{{ $t("unqueue") }}</span>
+                                </KsTooltip>
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" :disabled="bulkActionDisabled(action.FORCE_RUN)" @click="forceRunExecutions()">
+                                <KsTooltip :content="bulkActionTooltip(action.FORCE_RUN)" :disabled="!bulkActionTooltip(action.FORCE_RUN)">
+                                    <span>{{ $t("force run") }}</span>
+                                </KsTooltip>
+                            </KsDropdownItem>
                         </KsDropdownMenu>
                     </template>
                 </KsDropdown>

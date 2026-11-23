@@ -129,6 +129,7 @@ export const BulkActionEligibility: Story = {
         await expect(restart).toBeDisabled()
         await userEvent.hover(restart)
         await waitFor(() => expect(within(document.body).getByText("1 of 2 selected executions are not in FAILED state.")).toBeVisible())
+        await userEvent.unhover(restart)
 
         await userEvent.click(runningCheckbox)
         await waitFor(() => expect(restart).toBeEnabled())

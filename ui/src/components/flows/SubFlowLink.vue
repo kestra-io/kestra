@@ -1,5 +1,5 @@
 <template>
-    <component :icon="AxisYArrow" :is="component" @click="click" class="node-action" size="small">
+    <component :icon="AxisYArrow" :is="component" :link="link" @click="click" class="node-action" size="small">
         <span v-if="component !== 'KsButton' || showLabel">{{ $t('sub flow') }}</span>
     </component>
 </template>
@@ -13,6 +13,7 @@
     const props = withDefaults(defineProps<{
         component?: string;
         showLabel?: boolean;
+        link?: boolean;
         executionId?: string;
         namespace?: string;
         flowId?: string;
@@ -21,6 +22,7 @@
     }>(), {
         component: "KsButton",
         showLabel: false,
+        link: undefined,
         tabFlow: "overview",
         tabExecution: "overview",
         executionId: undefined,

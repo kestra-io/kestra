@@ -35,6 +35,7 @@ import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.GET;
 import static io.micronaut.http.HttpRequest.POST;
+import static io.micronaut.http.HttpRequest.PUT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -102,7 +103,8 @@ class ErrorControllerTest {
             )
         );
 
-        Problems.assertProblem(exception, ProblemTypes.INVALID_JSON);
+        ProblemDetail problem = Problems.assertProblem(exception, ProblemTypes.INVALID_JSON);
+        assertThat(problem.detail()).isEqualTo(ProblemTypes.INVALID_JSON.title());
     }
 
     @Test
@@ -157,6 +159,23 @@ class ErrorControllerTest {
         assertThat(body).doesNotContain("ApiTriggerId");
         assertThat(body).doesNotContain(ProblemTypes.INTERNAL_ERROR.title());
         assertThat(exception.getStatus().getCode()).isBetween(400, 499);
+    }
+
+    @Test
+    void shouldNameFieldAndRangeWithoutParserInternalsWhenNumberIsOutOfRange() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                PUT("/api/v1/main/concurrency-limit", "{\"namespace\":\"io.kestra.tests\",\"flowId\":\"flow\",\"running\":99999999999}")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+        );
+
+        ProblemDetail problem = Problems.assertProblem(exception, ProblemTypes.INVALID_JSON);
+        assertThat(problem.detail()).isEqualTo("Invalid value for 'running': the number must be between -2147483648 and 2147483647.");
+        Problems.assertErrors(exception).anySatisfy(error -> assertThat(error.path()).isEqualTo("running"));
+        String body = exception.getResponse().getBody(String.class).orElseThrow();
+        assertThat(body).doesNotContain("ConcurrencyLimitUpdateRequest", "Source:", "reference chain");
     }
 
     @Test

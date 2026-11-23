@@ -24,11 +24,13 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.server.exceptions.NotAllowedException;
+import io.micronaut.json.JsonSyntaxException;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ElementKind;
 import jakarta.validation.Path;
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.exc.InputCoercionException;
 
 /**
  * Translates every exception reaching the HTTP layer into an RFC 9457 problem document.
@@ -108,6 +110,12 @@ public class ErrorController {
         return jacksonBodyError(request, e, e);
     }
 
+    /** Micronaut 5 wraps every Jackson stream-read failure in this, copying the raw parser message that names the DTO class. */
+    @Error(global = true)
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, JsonSyntaxException e) {
+        return jacksonBodyError(request, e, e.getCause());
+    }
+
     private HttpResponse<ProblemDetail> jacksonBodyError(HttpRequest<?> request, Throwable reported, Throwable cause) {
         if (cause instanceof InvalidTypeIdException invalidTypeId) {
             return this.problems.response(
@@ -145,6 +153,21 @@ public class ErrorController {
             );
         }
 
+        if (cause instanceof InputCoercionException coercion) {
+            String path = pathOf(coercion);
+            String range = outOfRangeDetail(coercion.getTargetType());
+            String detail = path.isEmpty()
+                ? "Invalid value: %s".formatted(range)
+                : "Invalid value for '%s': %s".formatted(path, range);
+            return this.problems.response(
+                request,
+                reported,
+                ProblemTypes.INVALID_JSON,
+                detail,
+                List.of(ProblemError.of(detail, null, path.isEmpty() ? null : path))
+            );
+        }
+
         if (cause instanceof JacksonException jacksonException) {
             String path = pathOf(jacksonException);
             return this.problems.responseWithoutMessage(
@@ -176,6 +199,16 @@ public class ErrorController {
                 : "[" + reference.getIndex() + "]")
             .collect(Collectors.joining("."))
             .replace(".[", "[");
+    }
+
+    private static String outOfRangeDetail(final Class<?> targetType) {
+        if (Integer.TYPE == targetType || Integer.class == targetType) {
+            return "the number must be between %d and %d.".formatted(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        }
+        if (Long.TYPE == targetType || Long.class == targetType) {
+            return "the number must be between %d and %d.".formatted(Long.MIN_VALUE, Long.MAX_VALUE);
+        }
+        return "the number is out of range.";
     }
 
     private static boolean isMethodValidation(final ConstraintViolationException e) {

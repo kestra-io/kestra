@@ -257,7 +257,9 @@ Rules:
 
 ### Types
 
-**Import `DynamicScroller` from `src/utils/virtualScroller.ts`**, not from `vue-virtual-scroller`. Its 3.0.5 types (the latest) leave out what it forwards to `RecycleScroller` (`buffer`, `prerender`, `emitUpdate`, `updateInterval`, HTML attributes), and the re-export adds them.
+**A prop the component does not declare is a type error.** `vueCompilerOptions.checkUnknownProps` is on, with `data-*` and `aria-*` accepted everywhere. When vue-tsc rejects a prop, it is either dead (remove it) or forwarded through `$attrs` without a type (type it, as in "When extending the design system"). A library component missing a prop it forwards gets a typed re-export, like `DynamicScroller` below.
+
+**Import `DynamicScroller` from `src/utils/virtualScroller.ts`**, not from `vue-virtual-scroller`. `no-restricted-imports` rejects the direct import. Its 3.0.5 types (the latest) leave out what it forwards to `RecycleScroller` (`buffer`, `prerender`, `emitUpdate`, `updateInterval`, HTML attributes), and the re-export adds them.
 
 **Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`, in the `<script>` block and in template expressions alike.
 
@@ -404,7 +406,7 @@ If your `<style>` block needs to exist:
 | `KsInputNumber` | Numeric input with increment / decrement |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select; `--ks-select-height`, `--ks-select-padding` (default size only) and `--ks-select-font-size` size the field; `--ks-select-bg`, `--ks-select-hover-bg`, `--ks-select-border` and `--ks-select-gap` style the field, and `--ks-select-padding` applies at every size, each keeping its own default |
 | `KsAutocomplete` | Autocomplete input with suggestions |
-| `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |
+| `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants; `ariaLabel` names a `KsCheckboxButton` whose content is a glyph (`Aa`, `.*`) |
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants; `--ks-radio-size`, `--ks-radio-dot-size` and `--ks-radio-label-font-size` size the control and its label; `KsRadioButton` reads `--ks-radio-button-padding`, `--ks-radio-button-radius` (every corner, whatever the position), `--ks-radio-button-bg`, `--ks-radio-button-active-bg`, `--ks-radio-button-active-color` and `--ks-radio-button-active-border-color` |
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |

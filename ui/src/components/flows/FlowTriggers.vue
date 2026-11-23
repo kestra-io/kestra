@@ -26,6 +26,7 @@
             v-bind="$attrs"
             :data="triggersWithType"
             :total="triggersWithType.length"
+            :pageSizeOptions="[triggersWithType.length || 1]"
             :defaultSort="{prop: 'triggerId', order: 'ascending'}"
             :rowKey="(row: TriggerRow) => row.id"
             :forceExpandedRowKeys="expandedRowKeys"

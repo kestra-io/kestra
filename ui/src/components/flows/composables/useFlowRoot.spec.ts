@@ -136,6 +136,23 @@ describe("useFlowRoot", () => {
         scope.stop()
     })
 
+    it("loads the dependencies count when the route guard loaded the flow before mount", async () => {
+        loadDependencies.mockResolvedValue({count: 1})
+        flowStore.flow = makeFlow("myflow")
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot())
+        await vi.advanceTimersByTimeAsync(1000)
+
+        expect(loadDependencies).toHaveBeenCalledWith({
+            subtype: "FLOW",
+            namespace: "company.team",
+            id: "myflow",
+        }, true)
+
+        scope.stop()
+    })
+
     it("reuses the flow the route guard loaded, instead of fetching it a second time", async () => {
         flowStore.flow = makeFlow("myflow")
 

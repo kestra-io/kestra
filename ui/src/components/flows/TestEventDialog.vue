@@ -1,5 +1,5 @@
 <template>
-    <KsDialog v-model="open" destroyOnClose :appendToBody="true" width="560px" scrollable>
+    <KsDialog v-model="open" :dirty="isDirty" destroyOnClose :appendToBody="true" width="560px" scrollable>
         <template #header>
             <span>{{ $t("test_event.title") }}</span>
         </template>
@@ -97,6 +97,7 @@
     const headers = ref("")
     const sending = ref(false)
     const result = ref<TestEventResult | null>(null)
+    const isDirty = computed(() => result.value === null && (payload.value !== SAMPLE_TEST_EVENT_PAYLOAD || headers.value !== ""))
 
     const open = computed({
         get: () => props.modelValue,

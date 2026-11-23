@@ -104,7 +104,7 @@
             />
         </KsSelect>
 
-        <div class="task-status">
+        <div v-if="hideHeader || attempts(currentTaskRun).length > 1" class="task-status">
             <KsExecutionStatus size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 

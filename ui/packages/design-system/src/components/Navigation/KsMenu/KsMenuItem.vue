@@ -1,7 +1,7 @@
 <template>
     <ElMenuItem
         v-bind="({...filteredProps(), ...$attrs} as MenuItemProps)"
-        @click="emit('click', $event)"
+        @click="(item) => emit('click', item as MenuItemRegistered)"
     >
         <template v-if="$slots.default" #default>
             <slot />

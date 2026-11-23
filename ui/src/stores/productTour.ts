@@ -82,6 +82,10 @@ export const useProductTourStore = defineStore("productTour", () => {
         () => state.value.status === "completed" || state.value.tour.menuDismissed,
     )
 
+    const canAutoStart = computed(
+        () => state.value.status === "not_started" && !isDismissed.value,
+    )
+
     const dismissMenuEntry = () => {
         state.value.tour = {...state.value.tour, menuDismissed: true}
     }
@@ -173,6 +177,7 @@ export const useProductTourStore = defineStore("productTour", () => {
         state,
         isGuidedActive,
         isDismissed,
+        canAutoStart,
         reset,
         startGuided,
         skip,

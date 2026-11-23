@@ -405,7 +405,7 @@
 
     type PrefillInput = Pick<InputMetaData, "id"> & {type?: InputType | string}
 
-    const modelValue = defineModel<Record<string, unknown>>()
+    const modelValue = defineModel<Record<string, unknown>>({default: () => ({})})
 
     const props = withDefaults(defineProps<{
         executeClicked?: boolean;

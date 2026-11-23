@@ -204,7 +204,7 @@
         executionTrigger: []
         updateInputs: [inputs: Record<string, unknown>]
         updateInputsNoDefault: [inputs: Record<string, unknown>]
-        updateLabels: [labels: Label[]]
+        updateLabels: [labels: ExecutionLabelInput[]]
     }>()
 
     const {t} = useI18n({useScope: "global"})
@@ -502,7 +502,7 @@
     }, {deep: true})
 
     watch(executionLabels, () => {
-        emit("updateLabels", executionLabels.value.filter((label): label is Label => Boolean(label.key && label.value)))
+        emit("updateLabels", executionLabels.value)
     }, {deep: true})
 </script>
 

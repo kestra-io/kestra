@@ -12,7 +12,6 @@ declare module "vue" {
         onDragstart?: Listener<"dragstart">
         onDrop?: Listener<"drop">
         onFocus?: Listener<"focus">
-        onFocusout?: Listener<"focusout">
         onKeydown?: Listener<"keydown">
         onKeyup?: Listener<"keyup">
         onMousedown?: Listener<"mousedown">

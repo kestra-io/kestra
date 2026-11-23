@@ -19,6 +19,13 @@ const SEARCH_PAGE_SIZE = 200
  */
 const NAMESPACE_FETCH_CONCURRENCY = 8
 
+/**
+ * Searching files across all namespaces requires one HTTP request per namespace. For suggestions
+ * without a namespace filter, skip the check if the namespace count exceeds this limit to avoid
+ * high request volume.
+ */
+const MAX_SUGGESTION_NAMESPACES = 10
+
 const isTruncated = (total: number | undefined, shown: number) => total !== undefined && shown < total
 
 function searchErrorMessage(error: unknown): string | undefined {
@@ -206,7 +213,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
 
         const checkSecrets = async (): Promise<boolean> => {
-            if (!types.includes("secrets")) return false
+            if (!types.includes("secrets") || params.regex) return false
             try {
                 const filters = buildQueryFilters(alternativeQuery, params.namespace)
                 const response = await SecretsAPI.listSecrets({filters, page: 1, size: 1})
@@ -217,7 +224,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
 
         const checkKv = async (): Promise<boolean> => {
-            if (!types.includes("kv")) return false
+            if (!types.includes("kv") || params.regex) return false
             try {
                 const filters = buildQueryFilters(alternativeQuery, params.namespace)
                 const response = await KvAPI.listAllKeys({filters, page: 1, size: 1})
@@ -228,14 +235,14 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
 
         const checkFiles = async (): Promise<boolean> => {
-            if (!types.includes("files")) return false
+            if (!types.includes("files") || params.regex) return false
             try {
                 const namespaces = params.namespace
                     ? [params.namespace]
                     : (files.value.namespaces.length > 0
                         ? files.value.namespaces.map((n) => n.namespace)
                         : (await NamespacesAPI.autocompleteNamespaces({existingOnly: true}) ?? []))
-                if (namespaces.length === 0) return false
+                if (namespaces.length === 0 || namespaces.length > MAX_SUGGESTION_NAMESPACES) return false
 
                 let found = false
                 await runBounded(namespaces, NAMESPACE_FETCH_CONCURRENCY, async (namespace) => {

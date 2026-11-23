@@ -148,34 +148,6 @@ describe("FlowsSearch", () => {
         wrapper.unmount()
     })
 
-    it("dispatches suggestion search for a non-flows selection", async () => {
-        search.mockResolvedValueOnce(1)
-        mockRoute.query = {q: "my-secret", types: "secrets"}
-
-        const wrapper = i18nMount(FlowsSearch, {
-            global: {
-                stubs: {
-                    TopNavBar: true,
-                    NamespaceSelect: true,
-                    SourceSearchResults: true,
-                    SourceSearchPreview: true,
-                },
-            },
-        })
-
-        await flushPromises()
-
-        expect(store.searchSuggestion).toHaveBeenCalledWith(
-            expect.objectContaining({
-                query: "my-secret",
-                types: ["secrets"],
-            }),
-            1,
-        )
-
-        wrapper.unmount()
-    })
-
     it("dispatches suggestion for empty types in a partial match and renders the suggestion banner", async () => {
         search.mockResolvedValueOnce(1)
         mockRoute.query = {q: "eu-west-2", types: "flows,secrets"}

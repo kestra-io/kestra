@@ -555,6 +555,33 @@ describe("useCrossResourceSearchStore", () => {
         expect(store.suggestedQuery).toBeNull()
     })
 
+    it("does not check namespace files for suggestions when namespaces count exceeds limit", async () => {
+        mockAutocompleteNamespaces.mockResolvedValue(
+            Array.from({length: 15}, (_, i) => `ns-${i}`),
+        )
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["files"],
+            query: "my-script",
+            ...flowFilters,
+        })
+
+        mockSearchNamespaceFiles.mockClear()
+
+        await store.searchSuggestion(
+            {
+                types: ["files"],
+                query: "my-script",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBeNull()
+        expect(mockSearchNamespaceFiles).not.toHaveBeenCalled()
+    })
+
     it("discards a namespace-file retry once the query has moved on", async () => {
         mockAutocompleteNamespaces.mockResolvedValue(["ns"])
         mockSearchNamespaceFiles.mockRejectedValueOnce(new Error("timed out"))

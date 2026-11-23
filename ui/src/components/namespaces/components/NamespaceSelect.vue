@@ -53,6 +53,7 @@
     import {defaultNamespace} from "../../../composables/useNamespaces"
 
     const props = withDefaults(defineProps<{
+        modelValue?: T,
         multiple?: boolean,
         readOnly?: boolean,
         clearable?: boolean,
@@ -75,7 +76,17 @@
         inheritAttrs: false,
     })
 
-    const modelValue = defineModel<T>()
+    // A single select can be cleared; a multiple one always sends its array.
+    type Selection = T extends string[] ? T : T | undefined
+
+    const emit = defineEmits<{
+        "update:modelValue": [value: Selection]
+    }>()
+
+    const modelValue = computed({
+        get: () => props.modelValue,
+        set: (value) => emit("update:modelValue", value as Selection),
+    })
 
     const namespacesStore = useNamespacesStore()
 

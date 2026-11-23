@@ -377,7 +377,7 @@ public class StorageContext {
         }
         String logicalPath = logicalPath(path);
         return !FileUtils.isParentTraversal(logicalPath)
-            && logicalPath.startsWith(namespaceFilePrefix(namespace) + "/");
+            && logicalPath.startsWith(String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespaceAsPath(namespace)) + "/");
     }
 
     /**

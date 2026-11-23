@@ -8,13 +8,13 @@
         <div class="list">
             <div v-if="chartShown" class="row">
                 <span class="label">{{ $t("filter.show chart") }}</span>
-                <KsSwitch v-model="localChartVisible" />
+                <KsSwitch :modelValue="localChartVisible" @update:modelValue="(value) => (localChartVisible = value === true)" />
             </div>
             <div class="row">
                 <KsTooltip :content="refreshTooltip" placement="top">
                     <span class="label">{{ $t("filter.auto refresh") }}</span>
                 </KsTooltip>
-                <KsSwitch v-model="periodicRefreshEnabled" />
+                <KsSwitch :modelValue="periodicRefreshEnabled" @update:modelValue="(value) => (periodicRefreshEnabled = value === true)" />
             </div>
 
             <slot name="extra-options" />

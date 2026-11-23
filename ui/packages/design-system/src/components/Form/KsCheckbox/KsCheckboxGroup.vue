@@ -1,6 +1,7 @@
 <template>
     <ElCheckboxGroup
-        v-model="model"
+        :modelValue="model"
+        @update:modelValue="(value: CheckboxGroupValueType) => (model = value as T[])"
         :class="props.size ? `kel-checkbox-group--${props.size}` : undefined"
         v-bind="({...filteredProps(), ...$attrs} as CheckboxGroupProps)"
         @change="emit('change', $event as T[])"
@@ -12,7 +13,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends string | number">
-    import {ElCheckboxGroup, type CheckboxGroupProps} from "element-plus"
+    import {ElCheckboxGroup, type CheckboxGroupProps, type CheckboxGroupValueType} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 

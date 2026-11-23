@@ -57,7 +57,8 @@
 
                 <div v-show="sectionExpanded" class="sheet-section-body">
                     <KsSegmented
-                        v-model="tab"
+                        :modelValue="tab"
+                        @update:modelValue="(value) => (tab = String(value ?? TAB_ALL))"
                         :options="tabOptions"
                         block
                         class="sheet-tabs"

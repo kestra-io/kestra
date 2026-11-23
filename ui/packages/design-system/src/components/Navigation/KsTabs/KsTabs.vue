@@ -1,6 +1,7 @@
 <template>
     <ElTabs
-        v-model="model"
+        :modelValue="model"
+        @update:modelValue="(name: TabPaneName) => (model = name as string)"
         v-bind="({...filteredProps(), ...$attrs} as TabsProps)"
         :type="type"
         :class="{
@@ -18,7 +19,7 @@
 
 <script setup lang="ts">
     import {computed, type HTMLAttributes} from "vue"
-    import {ElTabs, type TabsProps, type TabsPropsPublic} from "element-plus"
+    import {ElTabs, type TabPaneName, type TabsProps, type TabsPropsPublic} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
     import type {NativeAttributes} from "../../../utils/nativeAttributes"
 

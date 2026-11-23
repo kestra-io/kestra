@@ -1,6 +1,7 @@
 <template>
     <ElAutocomplete
-        v-model="model"
+        :modelValue="model"
+        @update:modelValue="(value: string | number) => (model = value as string)"
         v-bind="({...filteredProps(), ...$attrs} as AutocompleteProps)"
         @select="emit('select', $event as T)"
     >

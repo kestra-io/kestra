@@ -7,7 +7,8 @@
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-days"
-                    v-model="days"
+                    :modelValue="days"
+                    @update:modelValue="(value) => (days = value ?? 0)"
                     :disabled="disabled"
                     :min="0"
                     @change="updateDuration"
@@ -19,7 +20,8 @@
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-hours"
-                    v-model="hours"
+                    :modelValue="hours"
+                    @update:modelValue="(value) => (hours = value ?? 0)"
                     :disabled="disabled"
                     :min="0"
                     @change="updateDuration"
@@ -31,7 +33,8 @@
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-minutes"
-                    v-model="minutes"
+                    :modelValue="minutes"
+                    @update:modelValue="(value) => (minutes = value ?? 0)"
                     :disabled="disabled"
                     :min="0"
                     @change="updateDuration"
@@ -43,7 +46,8 @@
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-seconds"
-                    v-model="seconds"
+                    :modelValue="seconds"
+                    @update:modelValue="(value) => (seconds = value ?? 0)"
                     :disabled="disabled"
                     :min="0"
                     @change="updateDuration"
@@ -54,7 +58,7 @@
             <KsText size="small" :type="durationIssue ? 'danger': ''">
                 {{ durationIssue ?? $t('input_custom_duration') }}
             </KsText>
-            <KsInput type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :disabled="disabled" :placeholder="$t('datepicker.custom duration')" />
+            <KsInput type="text" id="ks-duration-custom" :modelValue="customDuration" @update:modelValue="parseDuration" :disabled="disabled" :placeholder="$t('datepicker.custom duration')" />
         </div>
     </div>
 </template>

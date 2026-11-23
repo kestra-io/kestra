@@ -1,5 +1,6 @@
 import {defineAsyncComponent, nextTick} from "vue"
 import type {App, AsyncComponentLoader, Component} from "vue"
+import "./utils/nativeListeners"
 import {
     INSTALLED_KEY,
     provideGlobalConfig,

@@ -44,7 +44,7 @@
             </KsText>
         </div>
 
-        <KsTabs v-model="tab" type="box">
+        <KsTabs :modelValue="tab" type="box" @update:modelValue="(name) => (tab = name ?? tab)">
             <KsTabPane v-for="item in tabs" :key="item.name" :name="item.name">
                 <template #label>
                     <span class="ks-change-review__tab">

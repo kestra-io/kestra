@@ -1,13 +1,13 @@
 <template>
     <div class="failure-error-summary">
         <div v-if="loading" v-ks-loading="true" class="failure-error-summary__status" />
-        <KsEmpty v-else-if="!text" :description="$t('gantt_panel.no_error')" :imageSize="80" />
+        <KsNoData v-else-if="!text" :description="$t('gantt_panel.no_error')" />
         <pre v-else class="failure-error-summary__text">{{ text }}</pre>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {KsEmpty} from "@kestra-io/design-system"
+    import {KsNoData} from "@kestra-io/design-system"
 
     defineProps<{
         text: string

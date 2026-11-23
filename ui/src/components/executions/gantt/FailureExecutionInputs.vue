@@ -3,13 +3,13 @@
     <KsAlert v-else-if="error" type="error" :closable="false">
         {{ $t("gantt_panel.inputs_error") }}
     </KsAlert>
-    <KsEmpty v-else-if="props.inputIds.length === 0" :imageSize="80" :description="$t('gantt_panel.no_inputs')" />
+    <KsNoData v-else-if="props.inputIds.length === 0" :description="$t('gantt_panel.no_inputs')" />
     <Vars v-else :data="values" />
 </template>
 
 <script setup lang="ts">
     import {ref, watch} from "vue"
-    import {KsAlert, KsEmpty} from "@kestra-io/design-system"
+    import {KsAlert, KsNoData} from "@kestra-io/design-system"
     import {renderExpressions} from "@kestra-io/kestra-sdk/expressions"
     import Vars from "../Vars.vue"
 

@@ -3,13 +3,13 @@
     <KsAlert v-else-if="error" type="error" :closable="false">
         {{ $t("gantt_panel.consumed_outputs_error") }}
     </KsAlert>
-    <KsEmpty v-else-if="Object.keys(values).length === 0" :imageSize="80" :description="$t('gantt_panel.no_consumed_outputs')" />
+    <KsNoData v-else-if="Object.keys(values).length === 0" :description="$t('gantt_panel.no_consumed_outputs')" />
     <Vars v-else :data="values" />
 </template>
 
 <script setup lang="ts">
     import {ref, watch} from "vue"
-    import {KsAlert, KsEmpty} from "@kestra-io/design-system"
+    import {KsAlert, KsNoData} from "@kestra-io/design-system"
     import Vars from "../Vars.vue"
     import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
     import type {ExecutionTaskRun} from "../executionTaskRun"

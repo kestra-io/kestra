@@ -3,13 +3,13 @@
     <KsAlert v-else-if="flowError || error" type="error" :closable="false">
         {{ $t("gantt_panel.configuration_error") }}
     </KsAlert>
-    <KsEmpty v-else-if="!resolvedYaml" :description="$t('gantt_panel.configuration_empty')" />
+    <KsNoData v-else-if="!resolvedYaml" :description="$t('gantt_panel.configuration_empty')" />
     <KsMarkdown v-else :content="markdownContent" />
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {KsAlert, KsEmpty, KsMarkdown} from "@kestra-io/design-system"
+    import {KsAlert, KsNoData, KsMarkdown} from "@kestra-io/design-system"
     import {renderExpressions} from "@kestra-io/kestra-sdk/expressions"
 
     const props = defineProps<{

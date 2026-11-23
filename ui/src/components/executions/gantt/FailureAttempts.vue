@@ -1,5 +1,5 @@
 <template>
-    <KsEmpty v-if="rows.length === 0" :description="$t('gantt_panel.no_attempts')" :imageSize="80" />
+    <KsNoData v-if="rows.length === 0" :description="$t('gantt_panel.no_attempts')" />
     <ul v-else class="failure-attempts">
         <li v-for="row in rows" :key="row.index" class="failure-attempts__row">
             <span class="failure-attempts__label">{{ $t("state_history.attempt_n", {index: row.index + 1}) }}</span>
@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {KsEmpty, KsExecutionStatus, durationUtils} from "@kestra-io/design-system"
+    import {KsNoData, KsExecutionStatus, durationUtils} from "@kestra-io/design-system"
     import {date as dateFilter} from "../../../utils/filters"
     import type {ExecutionTaskRun} from "../executionTaskRun"
 

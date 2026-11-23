@@ -1,5 +1,12 @@
 {
   "es": {
+    "support_links": {
+      "slack_title": "Slack de la comunidad",
+      "slack_description": "Conversa con otros usuarios y con el equipo de Kestra",
+      "github_description": "Dale una estrella a nuestro proyecto de código abierto",
+      "help_center_title": "Centro de ayuda",
+      "help_center_description": "Contacta con soporte para obtener ayuda con tu cuenta Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra se actualizó a la versión {version} y puede incluir cambios importantes que requieren actualizaciones en tus Flows.",
       "cta": "Ver qué cambió"
@@ -292,6 +299,16 @@
     "last execution status": "Último estado de ejecución",
     "jump to": "Ir a",
     "jump to...": "Saltar a...",
+    "global_search": {
+      "open_flow": "Abrir flow",
+      "flow_executions": "Ejecuciones del flow",
+      "move": "Mover",
+      "menu": "Menú",
+      "sources": "Menú + flows + namespaces",
+      "sources_flows": "Menú + Flows",
+      "sources_namespaces": "Menú + namespaces",
+      "search_failed": "No se pudieron cargar los flows o namespaces"
+    },
     "contextBar": {
       "ai": "IA",
       "news": "Noticias",
@@ -552,6 +569,7 @@
     "output": "Salida",
     "flow_outputs": "Salidas del Flow",
     "eval": {
+      "failed": "No se pudo evaluar la expresión",
       "title": "Depurar Expresión",
       "preview": "Vista previa",
       "expression": "Expresión"
@@ -573,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Esta Task se reintentó",
+      "task-details": "Detalles de {task}",
       "artifacts": "ningún artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientación del gráfico",
       "zoom-in": "Acercar",
@@ -647,6 +666,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "no iniciado"
+      },
+      "diff": {
+        "added": "añadido",
+        "removed": "eliminado",
+        "changed": "modificado",
+        "renamed": "renombrado",
+        "moved": "movido"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "unchanged": "{count} sin cambios",
+      "graph_error": "No se pudo dibujar el grafo. Abre la pestaña YAML para ver el cambio.",
+      "status": {
+        "added": "Añadido",
+        "removed": "Eliminado",
+        "changed": "Modificado",
+        "renamed": "Renombrado",
+        "moved": "Movido"
       }
     },
     "show task logs": "Mostrar task logs",
@@ -1556,7 +1595,7 @@
           },
           "descriptions": {
             "color_mode": "Elige tu tema de interfaz preferido.",
-            "color_mode_shortcut": "Consejo: pulsa <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>L</kbd> para cambiar de tema desde cualquier lugar.",
+            "color_mode_shortcut": "Consejo: pulsa {ctrl}+{shift}+{key} para cambiar de tema desde cualquier lugar.",
             "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales.",
             "editor_font_family": "Fuente monoespaciada utilizada en el editor YAML.",
             "editor_font_size": "Tamaño de fuente utilizado en los editores YAML y sin código.",
@@ -1766,7 +1805,12 @@
           },
           "flow_generated": {
             "title": "Esto es un flow",
-            "body": "El flow está escrito en YAML con dos tasks:<ol><li><code>fetch_orders</code> para descargar los pedidos</li><li><code>summarize</code> para calcular los ingresos en Python</li></ol>Los tasks se ejecutan secuencialmente, en el orden en que se definen.",
+            "body": "El flow está escrito en YAML con dos tasks:",
+            "tasks": {
+              "fetch_orders": "{task} para descargar los pedidos",
+              "summarize": "{task} para calcular los ingresos en Python"
+            },
+            "after_tasks": "Los tasks se ejecutan secuencialmente, en el orden en que se definen.",
             "next": "Guardar y ejecutar"
           },
           "first_execution": {
@@ -2115,6 +2159,7 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
+      "unknown_schema": "Esquema desconocido",
       "toggle_pebble": "Alternar editor de Pebble",
       "version_oss_placeholder": "Desbloquea la Versionado de Plugins con la Enterprise Edition",
       "adding": "+ Agregar un {what}",
@@ -2557,6 +2602,7 @@
           "generic": "Algo salió mal. Por favor, inténtelo de nuevo."
         },
         "emptyHelper": "Puedo editar este flow, generar pruebas, generar archivos relacionados o explicar cómo funciona.",
+        "emptyHelperNoFlow": "Puedo crear o editar flows, generar pruebas, generar archivos relacionados o explicar cómo funciona Kestra.",
         "suggestions": {
           "errorHandling": "Añadir manejo de errores",
           "unitTest": "Generar una prueba unitaria",
@@ -2622,7 +2668,8 @@
           "applied": "Aplicado",
           "previewBanner": "Revisando un cambio sugerido por la IA: el editor es de solo lectura hasta que lo apliques o lo descartes.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "¿Guardar el flow {namespace}.{id} como una revisión en borrador para revisión? Se creará, o se añadirá una nueva revisión en borrador si ya existe. Los borradores no serán recogidos por triggers ni subflows hasta que se publiquen.",
+          "applyDraftTitle": "Al aplicar se guarda una revisión en borrador.",
+          "applyDraftHint": "Todavía no se activa nada. Los triggers y subflows ignoran los borradores hasta que publiques.",
           "applyConfirmDashboard": "Aplicar el panel de control {id}? Se creará, o se sobrescribirá si ya existe.",
           "applyError": "No se pudo aplicar el flow. Por favor, inténtalo de nuevo.",
           "applyErrorDashboard": "No se pudo aplicar el dashboard. Por favor, inténtelo de nuevo.",

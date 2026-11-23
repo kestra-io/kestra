@@ -31,8 +31,8 @@ public class ExecutionOutputService extends AbstractOutputService {
     private final SearchableDataRepositoryInterface searchableDataRepository;
 
     public ExecutionOutputService(ExecutionOutputRepositoryInterface outputRepository, SearchableDataRepositoryInterface searchableDataRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
-                                  ExecutionOutputConfiguration executionOutputConfiguration) {
-        super(storageInterface, namespaceFactory, executionOutputConfiguration.limit());
+                                  NamespaceService namespaceService, ExecutionOutputConfiguration executionOutputConfiguration) {
+        super(storageInterface, namespaceFactory, namespaceService, executionOutputConfiguration.limit());
         this.outputRepository = outputRepository;
         this.searchableDataRepository = searchableDataRepository;
     }

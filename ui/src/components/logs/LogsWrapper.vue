@@ -608,9 +608,7 @@
     }
 
     .logs-toolbar {
-        & :deep(.kel-button) {
-            margin: 0;
-        }
+        --ks-button-adjacent-margin: 0;
     }
 
     .log-panel {

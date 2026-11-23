@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref, watchEffect} from "vue"
 import {themes} from "@kestra-io/plumage"
+import {expect} from "storybook/test"
 import KsEditor from "./KsEditor.vue"
 
 const meta: Meta<typeof KsEditor> = {
@@ -337,5 +338,20 @@ export const InstallsWindowHelpers: Story = {
         for (const helper of ["pasteToEditor", "clearEditor", "acceptSuggestion", "nextSuggestion"]) {
             if (typeof w[helper] !== "function") throw new Error(`window.${helper} is no longer installed on mount`)
         }
+    },
+}
+
+/** Height: `--ks-editor-height` and `--ks-editor-max-height` size the editor area, set on the editor or an ancestor */
+export const Height: Story = {
+    render: () => ({
+        components: {KsEditor},
+        setup() { return {value: ref("{\n  \"name\": \"kestra\"\n}")} },
+        template: "<div style=\"padding:24px;width:480px;--ks-editor-height:3.125rem;--ks-editor-max-height:7.5rem\"><ks-editor v-model=\"value\" lang=\"json\" :inline=\"true\" :navbar=\"false\" /></div>",
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const container = canvasElement.querySelector<HTMLElement>(".editor-container")!
+        await expect(getComputedStyle(container).height).toBe("50px")
+        await expect(getComputedStyle(container).maxHeight).toBe("120px")
     },
 }

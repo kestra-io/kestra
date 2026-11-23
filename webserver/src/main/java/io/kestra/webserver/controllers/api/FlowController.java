@@ -534,6 +534,17 @@ public class FlowController {
             );
         }
 
+        for (GenericFlow flow : flows) {
+            try {
+                flowService.validateFlow(flow);
+            } catch (FlowProcessingException e) {
+                if (e.getCause() instanceof ConstraintViolationException cve) {
+                    throw cve;
+                }
+                throw e;
+            }
+        }
+
         deleted.forEach(flowService::delete);
 
         // update or create flows
@@ -596,7 +607,7 @@ public class FlowController {
     }
 
     /**
-     * Called once by a bulk update with the flows to create or update and the flows to delete, before anything is written, so that an override can reject the whole request on a permission or policy check. It does not validate the content of the flows, which can still fail after the deletions.
+     * Called once by a bulk update with the flows to create or update and the flows to delete, before anything is written, so that an override can reject the whole request on a permission or policy check. The content of the flows is validated right after it, still before the deletions.
      */
     protected void validateBulkUpdate(List<GenericFlow> flows, List<FlowWithSource> toDelete) {
     }

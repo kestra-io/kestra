@@ -1,7 +1,7 @@
 <template>
     <ElSegmented
         v-model="model"
-        :class="[props.disabled ? 'is-disabled' : undefined, props.variant === 'neutral' ? 'ks-segmented-neutral' : undefined]"
+        :class="[props.disabled ? 'is-disabled' : undefined, props.variant === 'neutral' ? 'ks-segmented-neutral' : undefined, {'ks-segmented-equal': props.equalWidth}]"
         v-bind="({...filteredProps(), ...$attrs} as SegmentedProps)"
         @change="emit('change', $event)"
     >
@@ -36,13 +36,15 @@
         disabled?: boolean
         block?: boolean
         variant?: "primary" | "neutral"
+        /** Every item takes the width of the widest one, in a control that still shrink-wraps its content. */
+        equalWidth?: boolean
     } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
         change: [value: string | number | boolean]
     }>()
 
-    const filteredProps = useFilteredProps(props, ["variant"])
+    const filteredProps = useFilteredProps(props, ["variant", "equalWidth"])
 
     // Only take over the item rendering when an icon is actually in play, so options without one
     // keep Element Plus's own markup.
@@ -100,6 +102,12 @@
         & .kel-segmented__item {
             padding: var(--ks-spacing-1) var(--ks-spacing-3);
         }
+    }
+
+    .kel-segmented.ks-segmented-equal .kel-segmented__group {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
     }
 
     html:not(.dark) .kel-segmented.ks-segmented-neutral {

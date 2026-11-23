@@ -153,7 +153,7 @@
             gap: var(--ks-spacing-1);
             min-width: 0;
 
-            & :deep(.date) {
+            & .date {
                 font-size: var(--ks-font-size-2xs);
                 font-weight: 400;
                 color: var(--ks-text-secondary);
@@ -163,10 +163,6 @@
                 margin: 0;
                 font-size: var(--ks-font-size-md);
                 color: var(--ks-text-primary);
-            }
-
-            .link :deep(code) {
-                color: var(--ks-text-link);
             }
 
             .progress {

@@ -1,5 +1,12 @@
 {
   "ru": {
+    "support_links": {
+      "slack_title": "Сообщество в Slack",
+      "slack_description": "Обсуждайте темы с другими пользователями и командой Kestra",
+      "github_description": "Поставьте звезду нашему open-source-проекту",
+      "help_center_title": "Центр помощи",
+      "help_center_description": "Обратитесь в поддержку за помощью с учетной записью Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra был обновлен до версии {version} и может включать критические изменения, требующие обновления ваших Flow.",
       "cta": "Посмотреть изменения"
@@ -292,6 +299,16 @@
     "last execution status": "Последний статус выполнения",
     "jump to": "Перейти",
     "jump to...": "Перейти к...",
+    "global_search": {
+      "open_flow": "Открыть flow",
+      "flow_executions": "Выполнения flow",
+      "move": "Переместить",
+      "menu": "Меню",
+      "sources": "Меню + flows + namespaces",
+      "sources_flows": "Меню + Flows",
+      "sources_namespaces": "Меню + namespace'ы",
+      "search_failed": "Не удалось загрузить flows или namespaces"
+    },
     "contextBar": {
       "ai": "ИИ",
       "news": "Новости",
@@ -552,6 +569,7 @@
     "output": "Вывод",
     "flow_outputs": "Выходы Flow",
     "eval": {
+      "failed": "Не удалось вычислить выражение",
       "title": "Отладка выражения",
       "preview": "Предварительный просмотр",
       "expression": "Выражение"
@@ -573,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Эта Task была повторена",
+      "task-details": "Сведения о {task}",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
       "graph-orientation": "Ориентация графика",
       "zoom-in": "Увеличить",
@@ -647,6 +666,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "не запущено"
+      },
+      "diff": {
+        "added": "добавлено",
+        "removed": "удалено",
+        "changed": "изменено",
+        "renamed": "переименовано",
+        "moved": "перемещено"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Граф",
+      "yaml": "YAML",
+      "unchanged": "{count} без изменений",
+      "graph_error": "Не удалось построить граф. Откройте вкладку YAML, чтобы увидеть изменение.",
+      "status": {
+        "added": "Добавлено",
+        "removed": "Удалено",
+        "changed": "Изменено",
+        "renamed": "Переименовано",
+        "moved": "Перемещено"
       }
     },
     "show task logs": "Показать логи задачи",
@@ -1556,7 +1595,7 @@
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
-            "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места.",
+            "color_mode_shortcut": "Совет: нажмите {ctrl}+{shift}+{key}, чтобы переключать темы из любого места.",
             "logs_font_size": "Размер шрифта, используемый в Log Viewer и терминалах.",
             "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",
@@ -1766,7 +1805,12 @@
           },
           "flow_generated": {
             "title": "Это flow",
-            "body": "flow написан на YAML с двумя tasks:<ol><li><code>fetch_orders</code> для загрузки заказов</li><li><code>summarize</code> для расчета выручки на Python</li></ol>Tasks выполняются последовательно, в том порядке, в котором они определены.",
+            "body": "flow написан на YAML с двумя tasks:",
+            "tasks": {
+              "fetch_orders": "{task} для загрузки заказов",
+              "summarize": "{task} для расчета выручки на Python"
+            },
+            "after_tasks": "Tasks выполняются последовательно, в том порядке, в котором они определены.",
             "next": "Сохранить и выполнить"
           },
           "first_execution": {
@@ -2115,6 +2159,7 @@
     "custom value": "Пользовательское значение",
     "chart": "График",
     "no_code": {
+      "unknown_schema": "Неизвестная схема",
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",
@@ -2557,6 +2602,7 @@
           "generic": "Что-то пошло не так. Пожалуйста, попробуйте еще раз."
         },
         "emptyHelper": "Я могу редактировать этот flow, генерировать тесты, создавать связанные файлы или объяснить, как это работает.",
+        "emptyHelperNoFlow": "Я могу создавать или редактировать flows, генерировать тесты, создавать связанные файлы или объяснять, как работает Kestra.",
         "suggestions": {
           "errorHandling": "Добавить обработку ошибок",
           "unitTest": "Сгенерировать модульный тест",
@@ -2622,7 +2668,8 @@
           "applied": "Применено",
           "previewBanner": "Просмотр изменения, предложенного ИИ. Редактор доступен только для чтения, пока вы не примените или не отклоните его.",
           "applyTitle": "Применить flow",
-          "applyConfirm": "Сохранить flow {namespace}.{id} как черновую редакцию для проверки? Он будет создан, или будет добавлена новая черновая редакция, если он уже существует. Черновики не запускаются triggers или subflows до публикации.",
+          "applyDraftTitle": "При применении сохраняется черновая редакция.",
+          "applyDraftHint": "Пока ничего не запускается. Triggers и subflows игнорируют черновики до публикации.",
           "applyConfirmDashboard": "Применить панель мониторинга {id}? Она будет создана или перезаписана, если уже существует.",
           "applyError": "Не удалось применить flow. Повторите попытку.",
           "applyErrorDashboard": "Не удалось применить панель мониторинга. Пожалуйста, попробуйте еще раз.",

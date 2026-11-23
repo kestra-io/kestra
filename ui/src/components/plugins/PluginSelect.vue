@@ -155,10 +155,7 @@
         return selected ? [selected] : []
     })
 
-    const modelValue = defineModel({
-        type: String,
-        default: "",
-    })
+    const modelValue = defineModel<string | undefined>({default: ""})
 
     const props = defineProps<{
         blockSchemaPath: string,

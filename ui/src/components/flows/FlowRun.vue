@@ -139,7 +139,7 @@
     import action from "../../models/action"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
-    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys} from "../../utils/executionLabels"
+    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys, type ExecutionLabelInput} from "../../utils/executionLabels"
     import {executeTask, normalizeInputValues} from "../../utils/submitTask"
     import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
@@ -222,7 +222,7 @@
     const openTab = ref("inputs")
     const inputs = ref<Record<string, unknown>>({})
     const inputsNoDefaults = ref<Record<string, unknown>>({})
-    const executionLabels = ref<Label[]>([])
+    const executionLabels = ref<ExecutionLabelInput[]>([])
     const scheduleDate = ref<string | undefined>(undefined)
     const breakpoints = ref<string[]>([])
     const taskIds = computed(() => {
@@ -502,7 +502,7 @@
     }, {deep: true})
 
     watch(executionLabels, () => {
-        emit("updateLabels", executionLabels.value)
+        emit("updateLabels", executionLabels.value.filter((label): label is Label => Boolean(label.key && label.value)))
     }, {deep: true})
 </script>
 

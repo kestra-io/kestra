@@ -22,7 +22,7 @@
                 :key="value"
                 closable
                 type="info"
-                @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
+                @close="modelValue = (modelValue as string[]).filter(v => v !== value) as T"
             >
                 <FolderOpenOutline />
                 <span class="tag-label" :title="value">{{ value }}</span>
@@ -45,7 +45,7 @@
     </KsSelect>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string | string[] = string">
     import {computed, onMounted} from "vue"
     import {useNamespacesStore} from "override/stores/namespaces"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
@@ -75,7 +75,7 @@
         inheritAttrs: false,
     })
 
-    const modelValue = defineModel<string | string[]>()
+    const modelValue = defineModel<T>()
 
     const namespacesStore = useNamespacesStore()
 
@@ -111,10 +111,10 @@
             const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {
-                    modelValue.value = [defaultNamespaceVal]
+                    modelValue.value = [defaultNamespaceVal] as T
                 }
             } else {
-                modelValue.value = defaultNamespaceVal ?? modelValue.value
+                modelValue.value = (defaultNamespaceVal ?? modelValue.value) as T
             }
         }
     })

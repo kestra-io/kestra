@@ -39,6 +39,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
 import io.kestra.core.metrics.MetricRegistry;
@@ -2161,6 +2162,7 @@ public class ExecutionController {
 
     private MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutions(BulkExecutionSource source) throws QueueException {
         AtomicInteger pausedCount = new AtomicInteger();
+        Map<String, Map<String, Object>> resumeInputsByExecutionId = new HashMap<>();
 
         List<BulkItem> items = prepareBulkItems(
             source,
@@ -2178,8 +2180,21 @@ public class ExecutionController {
                 if (!validateExecutionACL(execution)) {
                     return Optional.of(executionProblem(execution.getId(), "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN));
                 }
-                if (isPausedOnApproval(execution)) {
+                if (!execution.getState().isPaused()) {
+                    return Optional.empty();
+                }
+                FlowWithSource flow = flowRepository.findByExecutionWithoutAcl(execution);
+                if (isPausedOnApproval(execution, flow)) {
                     return Optional.of(executionProblem(execution.getId(), "execution is paused on an Approval task, use the review action", ProblemTypes.CONFLICT));
+                }
+                try {
+                    resumeInputsByExecutionId.put(execution.getId(), executionService.readResumeInputs(execution, flow, Map.of()).block());
+                } catch (InputOutputValidationException e) {
+                    return Optional.of(executionProblem(
+                        execution.getId(),
+                        "execution needs onResume inputs, resume it from its execution page: %s".formatted(e.getMessage()),
+                        ProblemTypes.VALIDATION_FAILED
+                    ));
                 }
                 return Optional.empty();
             },
@@ -2187,7 +2202,7 @@ public class ExecutionController {
             {
                 if (execution.getState().isPaused()) {
                     pausedCount.incrementAndGet();
-                    Resume command = Resume.from(execution, createResumed());
+                    Resume command = Resume.from(execution, createResumed(), resumeInputsByExecutionId.remove(execution.getId()));
                     return new BulkItem(execution.getId(), (opId, actor) -> executionCommandQueue.emit(command.withOperationId(opId).withActor(actor)));
                 }
                 ResumeFromBreakpoint command = ResumeFromBreakpoint.from(execution, Optional.empty());
@@ -2809,8 +2824,12 @@ public class ExecutionController {
         if (!execution.getState().isPaused()) {
             return false;
         }
+        return isPausedOnApproval(execution, flowRepository.findByExecutionWithoutAcl(execution));
+    }
+
+    private boolean isPausedOnApproval(Execution execution, Flow flow) {
         try {
-            return executionService.isPausedOnApproval(execution, flowRepository.findByExecutionWithoutAcl(execution));
+            return executionService.isPausedOnApproval(execution, flow);
         } catch (InternalException | FlowProcessingException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }

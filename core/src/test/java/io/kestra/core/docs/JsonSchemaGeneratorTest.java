@@ -34,6 +34,8 @@ import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -302,6 +304,23 @@ class JsonSchemaGeneratorTest {
             var testSuiteProperties = properties(testSuiteDefinitions.get(TestSuite.class.getName()));
             assertThat(List.of("source", "deleted"), everyItem(not(in(testSuiteProperties.keySet()))));
             assertThat(testSuiteProperties.keySet(), hasItems("id", "flowId", "testCases"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldOmitPropertiesThatCannotHoldAValueWhenTheInputTypeIsVoid() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            var definitions = (Map<String, Map<String, Object>>) jsonSchemaGenerator.schemas(Flow.class).get("definitions");
+            var formProperties = properties(definitionOf(definitions, FormInput.class));
+            var intProperties = properties(definitionOf(definitions, IntInput.class));
+
+            assertThat(List.of("defaults", "prefill"), everyItem(not(in(formProperties.keySet()))));
+            assertThat(formProperties.keySet(), hasItems("id", "inputs", "displayName"));
+            assertThat(intProperties.keySet(), hasItems("defaults", "prefill"));
         });
     }
 
@@ -702,6 +721,14 @@ class JsonSchemaGeneratorTest {
     }
 
     @SuppressWarnings("unchecked")
+    private static Map<String, Object> definitionOf(Map<String, Map<String, Object>> definitions, Class<?> cls) {
+        return definitions.entrySet().stream()
+            .filter(entry -> entry.getKey().startsWith(cls.getName()))
+            .map(Map.Entry::getValue)
+            .findFirst()
+            .orElseThrow();
+    }
+
     private Map<String, Map<String, Object>> properties(Map<String, Object> generate) {
         return (Map<String, Map<String, Object>>) generate.get("properties");
     }

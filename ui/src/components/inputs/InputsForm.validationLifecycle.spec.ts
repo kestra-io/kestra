@@ -90,33 +90,27 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         const form = wrapper.vm.formRef
         expect(form).toBeDefined()
 
-        // 1. Initial state: no error is shown
         expect(wrapper.text()).not.toContain("reason is required")
 
-        // 2. Submit with required reason empty: form.validate() triggers validation
         let isValid: boolean | undefined
         await form?.validate((valid: boolean) => {
             isValid = valid
         })
         await flushPromises()
 
-        // 3. Verify 'reason is required' appears
         expect(isValid).toBe(false)
         await vi.waitFor(() => {
             expect(wrapper.text()).toContain("reason is required")
         })
 
-        // 4. Type a valid value into the KsEditor
         const textarea = wrapper.find("textarea")
         expect(textarea.exists()).toBe(true)
         textarea.element.value = "deploying urgent hotfix"
         await textarea.trigger("input")
 
-        // 5. Click elsewhere / blur
         await textarea.trigger("blur")
         await flushPromises()
 
-        // 6. Verify the error disappears without another form submission
         await vi.waitFor(() => {
             expect(wrapper.text()).not.toContain("reason is required")
         })
@@ -148,14 +142,12 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         await form?.validate(() => {})
         await flushPromises()
 
-        // Both fields have required error messages initially
         await vi.waitFor(() => {
             expect(wrapper.text().match(/is required/g)).toHaveLength(2)
             expect(wrapper.text()).toContain("approval.approver is required")
             expect(wrapper.text()).toContain("reason is required")
         })
 
-        // Type into dotted field approval.approver only
         const textareas = wrapper.findAll("textarea")
         expect(textareas).toHaveLength(2)
         textareas[0].element.value = "admin-user"
@@ -163,7 +155,6 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         await textareas[0].trigger("blur")
         await flushPromises()
 
-        // approval.approver error is cleared, only reason error remains
         await vi.waitFor(() => {
             expect(wrapper.text().match(/is required/g)).toHaveLength(1)
             expect(wrapper.text()).not.toContain("approval.approver is required")
@@ -197,10 +188,8 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         })
         await flushPromises()
 
-        // 1. Initial state before entering a value: server error is not visible yet (normal delay)
         expect(wrapper.text()).not.toContain(errorMessage)
 
-        // 2. Enter an invalid value
         const textarea = wrapper.find("textarea")
         expect(textarea.exists()).toBe(true)
         textarea.element.value = "invalid-1"
@@ -208,24 +197,19 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         await textarea.trigger("blur")
         await flushPromises()
 
-        // 3. Wait for the server validation error to become visible after the normal validation delay
         await vi.waitFor(() => {
             expect(wrapper.text()).toContain(errorMessage)
         }, {timeout: 3000})
 
-        // 4. Enter another invalid value
         textarea.element.value = "invalid-2"
         await textarea.trigger("input")
         await textarea.trigger("blur")
         await flushPromises()
 
-        // 5. Verify that the existing server-side error is not cleared (clearValidation is guarded)
         expect(wrapper.text()).toContain(errorMessage)
 
-        // 6. Let revalidation return the same error message
         await flushPromises()
 
-        // 7. Verify the rendered error remains visible
         await vi.waitFor(() => {
             expect(wrapper.text()).toContain(errorMessage)
         })

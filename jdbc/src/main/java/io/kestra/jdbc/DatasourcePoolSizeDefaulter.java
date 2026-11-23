@@ -18,11 +18,13 @@ import jakarta.inject.Singleton;
  * <p>
  * Also, default the idle size to half that value as otherwise HikariCP will use the maximum-pool-size.
  * <p>
- * To balance performance with resource usage, we raise the default to {@link #DEFAULT_MAXIMUM_POOL_SIZE}.
+ * To balance performance with resource usage, we raise the default to {@link #DEFAULT_MAXIMUM_POOL_SIZE},
+ * overridable with {@code kestra.datasource.default-maximum-pool-size}.
  */
 @Singleton
 public class DatasourcePoolSizeDefaulter implements BeanCreatedEventListener<DatasourceConfiguration> {
     private static final int DEFAULT_MAXIMUM_POOL_SIZE = 20;
+    private static final String DEFAULT_MAXIMUM_POOL_SIZE_PROPERTY = "kestra.datasource.default-maximum-pool-size";
 
     private final Environment environment;
 
@@ -36,10 +38,12 @@ public class DatasourcePoolSizeDefaulter implements BeanCreatedEventListener<Dat
         DatasourceConfiguration configuration = event.getBean();
 
         if (!environment.containsProperty("datasources." + configuration.getName() + ".maximum-pool-size")) {
-            configuration.setMaximumPoolSize(DEFAULT_MAXIMUM_POOL_SIZE);
+            int maximumPoolSize = environment.getProperty(DEFAULT_MAXIMUM_POOL_SIZE_PROPERTY, Integer.class)
+                .orElse(DEFAULT_MAXIMUM_POOL_SIZE);
+            configuration.setMaximumPoolSize(maximumPoolSize);
 
             if (!environment.containsProperty("datasources." + configuration.getName() + ".minimum-idle")) {
-                configuration.setMinimumIdle(DEFAULT_MAXIMUM_POOL_SIZE / 2);
+                configuration.setMinimumIdle(Math.max(1, maximumPoolSize / 2));
             }
         }
 

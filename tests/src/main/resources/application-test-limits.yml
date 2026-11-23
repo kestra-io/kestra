@@ -1,0 +1,24 @@
+# Test-only: keep thread and connection pools small. Activated by the Gradle `micronaut.environments` property.
+micronaut:
+  executors:
+    io:
+      type: fixed
+      nThreads: 8
+    scheduled:
+      type: scheduled
+      core-pool-size: 1
+  netty:
+    event-loops:
+      default:
+        num-threads: 2
+
+kestra:
+  executor:
+    thread-count: 2
+  worker:
+    max-num-threads: 4
+  datasource:
+    default-maximum-pool-size: 5
+  queue:
+    jdbc:
+      maximum-pool-size: 3

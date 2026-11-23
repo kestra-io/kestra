@@ -1,5 +1,7 @@
 package io.kestra.jdbc;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -34,6 +36,22 @@ class DatasourcePoolSizeDefaulterTest {
 
         // Then
         assertThat(result.getMaximumPoolSize()).isEqualTo(20);
+    }
+
+    @Test
+    void shouldUseTheConfiguredDefaultPoolSize() {
+        // Given
+        DatasourceConfiguration configuration = new DatasourceConfiguration("postgres");
+        when(event.getBean()).thenReturn(configuration);
+        when(environment.containsProperty("datasources.postgres.maximum-pool-size")).thenReturn(false);
+        when(environment.getProperty("kestra.datasource.default-maximum-pool-size", Integer.class)).thenReturn(Optional.of(5));
+
+        // When
+        DatasourceConfiguration result = new DatasourcePoolSizeDefaulter(environment).onCreated(event);
+
+        // Then
+        assertThat(result.getMaximumPoolSize()).isEqualTo(5);
+        assertThat(result.getMinimumIdle()).isEqualTo(2);
     }
 
     @Test

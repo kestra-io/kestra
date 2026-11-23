@@ -280,6 +280,9 @@ subprojects {subProj ->
             // Exit immediately instead.
             t.jvmArgs += ["-XX:+ExitOnOutOfMemoryError"]
 
+            // shared thread and connection pool limits, see tests/src/main/resources/application-test-limits.yml
+            t.systemProperty 'micronaut.environments', 'test-limits'
+
             // configure en_US default locale for tests
             t.systemProperty 'user.language', 'en'
             t.systemProperty 'user.country', 'US'

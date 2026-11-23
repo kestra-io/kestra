@@ -9,5 +9,5 @@
 <script lang="ts" setup>
     import NamespaceSelect from "../../../namespaces/components/NamespaceSelect.vue"
 
-    const modelValue = defineModel<string[]>({default: () => []})
+    const modelValue = defineModel<string[] | undefined>({default: () => []})
 </script>

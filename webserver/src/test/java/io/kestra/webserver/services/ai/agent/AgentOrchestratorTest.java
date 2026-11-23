@@ -61,6 +61,7 @@ import dev.langchain4j.model.chat.response.PartialResponseContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.chat.response.StreamingHandle;
 import dev.langchain4j.model.googleai.GoogleAiGeminiTokenUsage;
+import dev.langchain4j.model.output.FinishReason;
 import dev.langchain4j.model.output.TokenUsage;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -634,6 +635,47 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldAskForShorterArgumentsWhenArgumentsAreCutOffByOutputTokenLimit() {
+        // Given — Ask mode; the response hit the output token limit in the middle of the arguments
+        AgentThread thread = newThread(AgentMode.ASK);
+        String truncated = "{\"executionId\": \"exec-";
+        scriptedModel.enqueue(
+            AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(truncated).build())),
+            FinishReason.LENGTH
+        );
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("why did it fail").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then — the model is told about the limit, not handed a parser error it cannot act on
+        assertThat(sink.error).isNull();
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error()).contains("output token limit").doesNotContain(truncated);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
+    void shouldCapReceivedArgumentsWhenMalformedArgumentsAreLong() {
+        // Given — Ask mode; malformed arguments far longer than the cap on what is echoed back
+        AgentThread thread = newThread(AgentMode.ASK);
+        String malformed = "{\"executionId\": " + "x".repeat(5000) + "}";
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(malformed).build())));
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("why did it fail").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then — only the first 2000 characters of the arguments are echoed back
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error())
+            .contains(malformed.substring(0, 2000) + "…")
+            .doesNotContain(malformed.substring(0, 2001));
+    }
+
+    @Test
     void shouldNotAskForConfirmationWhenConfirmToolArgumentsAreNotValidJson() {
         // Given — Edit mode; the model proposes a write whose arguments are not valid JSON
         AgentThread thread = newThread(AgentMode.EDIT);
@@ -1124,6 +1166,7 @@ class AgentOrchestratorTest {
     private static final class ScriptedStreamingChatModel implements StreamingChatModel {
         private final Deque<AiMessage> responses = new ArrayDeque<>();
         private final Deque<TokenUsage> usages = new ArrayDeque<>();
+        private final Map<AiMessage, FinishReason> finishReasons = new java.util.IdentityHashMap<>();
         private final List<List<ChatMessage>> requestMessages = new java.util.concurrent.CopyOnWriteArrayList<>();
         private volatile boolean hang;
         private CountDownLatch hungChatStarted;
@@ -1137,6 +1180,12 @@ class AgentOrchestratorTest {
         private void enqueue(final AiMessage message, final TokenUsage usage) {
             responses.addLast(message);
             usages.addLast(usage);
+        }
+
+        /** Enqueues a response that ends for the given reason, e.g. the output token limit. */
+        private void enqueue(final AiMessage message, final FinishReason finishReason) {
+            responses.addLast(message);
+            finishReasons.put(message, finishReason);
         }
 
         private int callCount() {
@@ -1159,6 +1208,7 @@ class AgentOrchestratorTest {
         private void clear() {
             responses.clear();
             usages.clear();
+            finishReasons.clear();
             requestMessages.clear();
             this.hang = false;
             this.hungChatStarted = null;
@@ -1192,7 +1242,7 @@ class AgentOrchestratorTest {
             if (ai.text() != null && !ai.text().isEmpty()) {
                 handler.onPartialResponse(new PartialResponse(ai.text()), new PartialResponseContext(lastHandle));
             }
-            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).tokenUsage(usages.pollFirst()).build());
+            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).tokenUsage(usages.pollFirst()).finishReason(finishReasons.get(ai)).build());
         }
     }
 

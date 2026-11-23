@@ -194,6 +194,7 @@
     import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf, workingLabelKey} from "./tourScenes"
     import {bestCorner, cornerOrder, cornerRect, coverScore, shiftRect, type Corner} from "./tourPlacement"
     import {scrimClipPath, type Hole} from "./tourScrim"
+    import {TourQueryMode} from "./tourVariant"
     import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
     import {useMiscStore} from "override/stores/misc"
@@ -221,12 +222,19 @@
     const translationKey = (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 
     const consumeStartQuery = async () => {
-        if (route.query.tour !== "start") {
+        const mode = route.query.tour
+        if (mode !== TourQueryMode.START && mode !== TourQueryMode.AUTO) {
             return false
         }
         const query = {...route.query}
         delete query.tour
         await router.replace({name: route.name ?? undefined, params: route.params, query})
+        if (mode === TourQueryMode.AUTO) {
+            syncTourScope()
+            if (!tourStore.canAutoStart) {
+                return false
+            }
+        }
         tourStore.startGuided(variant)
         return true
     }
@@ -245,7 +253,7 @@
             return false
         }
         syncTourScope()
-        if (tourStore.state.status !== "not_started" || tourStore.isDismissed) {
+        if (!tourStore.canAutoStart) {
             return false
         }
         try {

@@ -1,5 +1,12 @@
 {
   "hi": {
+    "support_links": {
+      "slack_title": "कम्युनिटी Slack",
+      "slack_description": "अन्य उपयोगकर्ताओं और Kestra टीम के साथ चर्चा करें",
+      "github_description": "हमारे ओपन-सोर्स प्रोजेक्ट को स्टार दें",
+      "help_center_title": "सहायता केंद्र",
+      "help_center_description": "अपने Enterprise खाते में मदद के लिए सहायता टीम से संपर्क करें"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra को {version} में अपग्रेड किया गया था और इसमें ऐसे ब्रेकिंग बदलाव शामिल हो सकते हैं जिनके लिए आपके Flows में अपडेट की आवश्यकता होती है।",
       "cta": "देखें क्या बदला"
@@ -562,6 +569,7 @@
     "output": "आउटपुट",
     "flow_outputs": "फ्लो Outputs",
     "eval": {
+      "failed": "एक्सप्रेशन का मूल्यांकन नहीं हो सका",
       "title": "डिबग अभिव्यक्ति",
       "preview": "पूर्वावलोकन",
       "expression": "अभिव्यक्ति"
@@ -2145,6 +2153,7 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
+      "unknown_schema": "अज्ञात स्कीमा",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",

@@ -1,5 +1,5 @@
 import type {Component} from "vue"
-import {computed} from "vue"
+import {computed, defineAsyncComponent} from "vue"
 import {useRoute} from "vue-router"
 
 import {useI18n} from "vue-i18n"
@@ -7,11 +7,10 @@ import {useI18n} from "vue-i18n"
 import {useNetwork, useStorage} from "@vueuse/core"
 const {isOnline} = useNetwork()
 
-import ContextNews from "../../components/layout/ContextNews.vue"
-import ContextDocs from "../../components/docs/ContextDocs.vue"
-import CopilotChat from "../../components/ai/copilot/CopilotChat.vue"
 import AiIcon from "../../components/ai/AiIcon.vue"
 import {useApiStore} from "../../stores/api"
+import {useNotificationsStore} from "../../stores/notifications"
+import {useAiEnabled} from "../../composables/useAiEnabled"
 
 import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
 import FileDocument from "vue-material-design-icons/FileDocument.vue"
@@ -19,6 +18,13 @@ import Slack from "vue-material-design-icons/Slack.vue"
 import Github from "vue-material-design-icons/Github.vue"
 import Calendar from "vue-material-design-icons/Calendar.vue"
 import Star from "vue-material-design-icons/Star.vue"
+import BellOutline from "vue-material-design-icons/BellOutline.vue"
+import {storageKeys} from "../../utils/constants"
+
+const ContextNews = defineAsyncComponent(() => import("../../components/layout/ContextNews.vue"))
+const ContextDocs = defineAsyncComponent(() => import("../../components/docs/ContextDocs.vue"))
+const ContextNotifications = defineAsyncComponent(() => import("../../components/layout/ContextNotifications.vue"))
+const CopilotChat = defineAsyncComponent(() => import("../../components/ai/copilot/CopilotChat.vue"))
 
 export interface Button {
     title: string;
@@ -37,9 +43,10 @@ export interface Button {
 export function useContextButtons() {
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
+    const aiEnabled = useAiEnabled()
 
     const apiStore = useApiStore()
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    const lastNewsReadDate = useStorage<string | null>(storageKeys.LAST_NEWS_READ_DATE, null)
     const newsUnread = computed<boolean>(() => {
         const feeds = apiStore.feeds
         return Boolean(
@@ -47,6 +54,9 @@ export function useContextButtons() {
             (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate))),
         )
     })
+
+    const notificationsStore = useNotificationsStore()
+    const notificationsUnread = computed<boolean>(() => notificationsStore.unreadCount > 0)
 
     const buttons: Record<string, Button> = isOnline.value
         ? {
@@ -57,7 +67,7 @@ export function useContextButtons() {
                   component: CopilotChat,
                   // The full-page AI Copilot (`/ai`) is the same agent — hide the redundant dock tab there.
                   get hidden() {
-                      return route.name === "ai"
+                      return !aiEnabled.value || route.name === "ai"
                   },
               },
               news: {
@@ -67,6 +77,18 @@ export function useContextButtons() {
                   component: ContextNews,
                   hasUnreadMarker: true,
                   unread: newsUnread,
+              },
+              // NotificationBell.vue (in the top nav bar) is the entry point for this panel and
+              // owns the unread badge + badge polling — kept resolvable here (ContextDrawer still
+              // needs the component/title for panel content) but hidden from the visible tab strip.
+              notifications: {
+                  title: t("contextBar.notifications"),
+                  icon: BellOutline,
+                  component: ContextNotifications,
+                  hasUnreadMarker: true,
+                  unread: notificationsUnread,
+                  hidden: true,
+                  panelOnly: true,
               },
               docs: {
                   title: t("contextBar.docs"),

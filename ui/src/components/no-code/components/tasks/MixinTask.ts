@@ -39,7 +39,7 @@ export default defineComponent({
         isRequired(key: string) {
             return this.schema?.required?.includes(key)
         },
-        onInput(value:any) {
+        onInput(value: unknown) {
             this.$emit("update:modelValue", collapseEmptyValues(value))
         },
     },

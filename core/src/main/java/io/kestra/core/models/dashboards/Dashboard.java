@@ -3,6 +3,7 @@ package io.kestra.core.models.dashboards;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -14,6 +15,8 @@ import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.DashboardQueryTimeoutValidation;
+import io.kestra.core.validations.DashboardValidation;
 import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -30,6 +33,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @ToString
+@DashboardValidation
 public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     // Reserved sentinel id resolving to the built-in default dashboard; not a real stored dashboard, never shown in autocompletion
     public static final String DEFAULT_DASHBOARD_ID = "_default";
@@ -52,6 +56,10 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     @Valid
     @Builder.Default
     private TimeWindow timeWindow = TimeWindow.builder().build();
+
+    /** Overrides {@code kestra.dashboards.query-timeout} for this dashboard's charts, up to the configured maximum. */
+    @DashboardQueryTimeoutValidation
+    private Duration queryTimeout;
 
     @Valid
     private List<Chart<?>> charts;

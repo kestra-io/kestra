@@ -44,7 +44,7 @@
     ])
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-code-status {
         display: inline-flex;
         align-items: center;
@@ -53,32 +53,32 @@
         border-radius: var(--ks-radius-sm);
         font-size: var(--ks-font-size-xs);
         font-weight: var(--ks-font-weight-semibold);
+    }
 
-        &--icon-only {
-            padding: var(--ks-spacing-1);
-            aspect-ratio: 1 / 1;
-            justify-content: center;
-        }
+    .ks-code-status--icon-only {
+        padding: var(--ks-spacing-1);
+        aspect-ratio: 1 / 1;
+        justify-content: center;
+    }
 
-        &__text {
-            display: inline-flex;
-            align-items: center;
-        }
+    .ks-code-status__text {
+        display: inline-flex;
+        align-items: center;
+    }
 
-        &--valid {
-            color: var(--ks-text-success);
-        }
+    .ks-code-status--valid {
+        color: var(--ks-text-success);
+    }
 
-        &--error {
-            color: var(--ks-text-error);
-        }
+    .ks-code-status--error {
+        color: var(--ks-text-error);
+    }
 
-        &--warning {
-            color: var(--ks-status-warning);
-        }
+    .ks-code-status--warning {
+        color: var(--ks-status-warning);
+    }
 
-        &--info {
-            color: var(--ks-status-info);
-        }
+    .ks-code-status--info {
+        color: var(--ks-status-info);
     }
 </style>

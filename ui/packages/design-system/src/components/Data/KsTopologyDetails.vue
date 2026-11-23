@@ -19,38 +19,38 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .ks-topology-details {
         margin: 0;
         display: flex;
         flex-direction: column;
         font-size: var(--ks-font-size-xs);
+    }
 
-        &__row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-4);
-            padding: var(--ks-spacing-2) var(--ks-spacing-3);
-            border-bottom: 1px solid var(--ks-border-subtle);
+    .ks-topology-details__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        border-bottom: 1px solid var(--ks-border-subtle);
 
-            &:last-child {
-                border-bottom: none;
-            }
+        &:last-child {
+            border-bottom: none;
         }
+    }
 
-        &__label {
-            color: var(--ks-text-secondary);
-            white-space: nowrap;
-            font-weight: var(--ks-font-weight-regular);
-        }
+    .ks-topology-details__label {
+        color: var(--ks-text-secondary);
+        white-space: nowrap;
+        font-weight: var(--ks-font-weight-regular);
+    }
 
-        &__value {
-            margin: 0;
-            color: var(--ks-text-primary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+    .ks-topology-details__value {
+        margin: 0;
+        color: var(--ks-text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 </style>

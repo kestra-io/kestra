@@ -1,9 +1,11 @@
+import type {LocationQueryRaw} from "vue-router"
+
 const TIME_RANGE_FILTER_PREFIX = "filters[timeRange]["
 const TIME_RANGE_EQUALS_FILTER_KEY = "filters[timeRange][EQUALS]"
 const LEGACY_TIME_RANGE_FILTER_KEY = "timeRange"
 
 export const normalizeRouteTimeRangeFilter = (
-    query: Record<string, any>,
+    query: LocationQueryRaw,
     value: string | undefined,
 ) => {
     const normalized = {...query}

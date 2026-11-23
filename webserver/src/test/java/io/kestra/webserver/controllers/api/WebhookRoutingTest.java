@@ -1,18 +1,28 @@
 package io.kestra.webserver.controllers.api;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.services.AsyncOperationWaiter;
+import io.kestra.webserver.errors.ProblemDetail;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Mono;
@@ -45,6 +55,9 @@ public class WebhookRoutingTest {
     @Client("/")
     ReactorHttpClient client;
 
+    @Inject
+    EmbeddedServer embeddedServer;
+
     private static final String TESTS_FLOW_NS = "io.kestra.tests";
 
     @Test
@@ -60,6 +73,31 @@ public class WebhookRoutingTest {
         );
 
         assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml" })
+    void shouldAcceptMultipartFileWhenItsFilenameHoldsCharactersAURIRejects() throws Exception {
+        // Given
+        String boundary = "webhook-boundary";
+        String body = Stream.of("ok.txt", "bad%.txt")
+            .map(filename -> "--%s\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\nContent-Type: text/plain\r\n\r\ncontent\r\n".formatted(boundary, filename))
+            .collect(Collectors.joining()) + "--%s--\r\n".formatted(boundary);
+
+        // When
+        try (HttpClient http = HttpClient.newHttpClient()) {
+            var response = http.send(
+                java.net.http.HttpRequest.newBuilder(URI.create(embeddedServer.getURL() + "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-routing-test/testkey"))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                    .build(),
+                java.net.http.HttpResponse.BodyHandlers.ofString()
+            );
+
+            // Then
+            assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.getCode());
+        }
     }
 
     @Test
@@ -173,61 +211,67 @@ public class WebhookRoutingTest {
         assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.OK);
     }
 
+    /**
+     * A caller without the correct key must not be able to tell a wrong key on a real flow apart from a
+     * flow, namespace or trigger that does not exist at all: the webhook route is anonymous by design, so
+     * any distinguishable response is an enumeration oracle (GHSA-6wcq-4vx6-rx53).
+     */
     @Test
-    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml" })
-    void webhookInvalidKey() {
-        // Test that wrong key returns 404
-        HttpClientResponseException exception = assertThrows(
+    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml", "flows/valids/webhook-flow-disabled.yaml" })
+    void webhookWithoutTheCorrectKeyIsIndistinguishableFromANonExistentWebhook() {
+        ProblemDetail wrongKeyOnExistingFlow = Problems.of(assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-routing-test/wrongkey",
-                    "{\"test\": \"data\"}"
-                ),
+                POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-routing-test/wrongkey", "{\"test\": \"data\"}"),
                 String.class
             )
-        );
+        ));
+        assertThat(wrongKeyOnExistingFlow.detail()).isEqualTo("Webhook not found");
 
-        assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(exception.getMessage()).contains("Webhook not found");
+        ProblemDetail nonExistentFlow = Problems.of(assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/nonexistent-flow/testkey", "{\"test\": \"data\"}"),
+                String.class
+            )
+        ));
+        ProblemDetail nonExistentNamespace = Problems.of(assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST("/api/v1/main/executions/webhook/invalid.namespace/webhook-routing-test/testkey", "{\"test\": \"data\"}"),
+                String.class
+            )
+        ));
+        ProblemDetail wrongKeyOnDisabledFlow = Problems.of(assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-flow-disabled/wrongkey", "{\"test\": \"data\"}"),
+                String.class
+            )
+        ));
+
+        assertThat(nonExistentFlow).usingRecursiveComparison().ignoringFields("instance").isEqualTo(wrongKeyOnExistingFlow);
+        assertThat(nonExistentNamespace).usingRecursiveComparison().ignoringFields("instance").isEqualTo(wrongKeyOnExistingFlow);
+        assertThat(wrongKeyOnDisabledFlow).usingRecursiveComparison().ignoringFields("instance").isEqualTo(wrongKeyOnExistingFlow);
     }
 
+    /**
+     * The reorder that closes the oracle above must not weaken the disabled-flow check for a caller who
+     * does know the key: it is only deferred past the key match, not removed.
+     */
     @Test
-    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml" })
-    void webhookInvalidFlow() {
-        // Test that wrong flow returns 404
+    @LoadFlows(value = { "flows/valids/webhook-flow-disabled.yaml" })
+    void webhookWithTheCorrectKeyOnADisabledFlowStillReturnsConflict() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/nonexistent-flow/testkey",
-                    "{\"test\": \"data\"}"
-                ),
+                POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-flow-disabled/webhook-flow-disabled-key", "{\"test\": \"data\"}"),
                 String.class
             )
         );
 
-        assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(exception.getMessage()).contains("Flow not found");
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml" })
-    void webhookInvalidNamespace() {
-        // Test that wrong namespace returns 404
-        HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(
-                POST(
-                    "/api/v1/main/executions/webhook/invalid.namespace/webhook-routing-test/testkey",
-                    "{\"test\": \"data\"}"
-                ),
-                String.class
-            )
-        );
-
-        assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(exception.getMessage()).contains("Flow not found");
+        assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(Problems.of(exception).detail()).contains("flow is disabled");
     }
 
     @Test

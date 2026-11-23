@@ -72,12 +72,13 @@
 
     import {blueprintTaskTypes, useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {PluginIconData} from "../../../stores/plugins"
 
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint & {kind?: "FLOW" | "DASHBOARD" | "APP"};
         tags?: Record<string, BlueprintTag>;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, PluginIconData>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         columns?: number;
     }>(), {
         blueprint: undefined,
@@ -119,7 +120,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .overview {
         display: flex;
         flex-direction: column;
@@ -172,7 +173,7 @@
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
 
-            :deep(.task-icon) {
+            & .task-icon {
                 flex-shrink: 0;
                 width: 1.5rem;
                 height: 1.5rem;
@@ -181,7 +182,7 @@
             &.missing {
                 color: var(--ks-text-secondary);
 
-                :deep(.task-icon) {
+                & .task-icon {
                     opacity: 0.4;
                     filter: grayscale(1);
                 }
@@ -220,7 +221,7 @@
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-bold);
 
-            :deep(.open-in-new-icon) {
+            & .open-in-new-icon {
                 margin-left: 0.25rem;
             }
         }

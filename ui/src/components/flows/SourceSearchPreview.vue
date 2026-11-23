@@ -1,7 +1,7 @@
 <template>
     <div class="source-search-preview" data-test="source-search-preview">
         <div v-if="!selection" class="source-search-preview__empty">
-            <KsEmpty :description="$t('source_search.preview_empty')" :background="false" />
+            <KsNoData :title="$t('source_search.preview_empty_title')" :description="$t('source_search.preview_empty_description')" />
         </div>
 
         <div v-else-if="selection.type === 'flows'" class="source-search-preview__flow">
@@ -50,16 +50,10 @@
 
                     <div v-if="showConfirmBar" class="source-search-preview__confirm-bar">
                         <span class="source-search-preview__confirm-msg">
-                            <i18n-t keypath="source_search.confirm_bar_message" tag="span">
-                                <template #matches>
-                                    <b>{{ $t('source_search.match_count', {count: selectionSummary?.selectedMatchCount ?? 0}) }}</b>
-                                </template>
-                                <template #flows>
-                                    <b>{{ selectionSummary?.selectedFlowCount ?? 0 }}</b>
-                                </template>
-                                <template #skipped>
-                                    <b>{{ readOnlyExcludedCount }}</b>
-                                </template>
+                            <i18n-t keypath="source_search.confirm_bar_message" tag="span" scope="global">
+                                <template #matches><b>{{ $t("source_search.match_count", {count: selectionSummary?.selectedMatchCount ?? 0}) }}</b></template>
+                                <template #flows><b>{{ selectionSummary?.selectedFlowCount ?? 0 }}</b></template>
+                                <template #skipped><b>{{ readOnlyExcludedCount }}</b></template>
                             </i18n-t>
                             <span v-if="excludedFromReplaceCount > 0" class="source-search-preview__confirm-excluded">
                                 {{ $t('source_search.confirm_bar_excluded', {count: excludedFromReplaceCount}) }}
@@ -107,7 +101,7 @@
                         <component :is="metaGlyph" />
                     </span>
                     <div>
-                        <div class="source-search-preview__meta-name" v-html="metaNameHtml" />
+                        <div class="source-search-preview__meta-name"><span v-for="(segment, index) in metaNameSegments" :key="index" :class="{'source-search-preview__meta-dir': segment.dim}"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></span></div>
                         <div class="source-search-preview__meta-sub">{{ selection.namespace }}</div>
                     </div>
                 </div>
@@ -158,10 +152,9 @@
     import {useFlowStore} from "../../stores/flow"
     import type {SourceSearchReplacePreviewResponse} from "@kestra-io/kestra-sdk"
     import {buildDiffHunks, type SelectionSummary, type SourceSearchDiffMatch} from "../../utils/sourceSearchDiff"
-    import {buildHighlightHtml, buildTermHighlightHtml, buildPathSegments, type CrossSearchSelection} from "../../utils/crossResourceSearch"
+    import {buildHighlightSegments, buildTermHighlightSegments, buildPathSegments, type CrossSearchSelection, type PathSegment} from "../../utils/crossResourceSearch"
     import type {KvMatchEntry} from "../../stores/crossResourceSearch"
     import type {KsEditorExposes} from "@kestra-io/design-system"
-    import _escape from "lodash/escape"
 
     const props = defineProps<{
         selection: CrossSearchSelection | null
@@ -219,7 +212,7 @@
 
     function applyHighlight() {
         if (!flowSelection.value) return
-        const editor = editorRef.value?.getEditor?.() as any
+        const editor = editorRef.value?.getEditor?.()
         if (!editor) return
         const line = flowSelection.value.line
         activeDecoration?.clear()
@@ -300,22 +293,18 @@
         return ""
     })
 
-    const metaNameHtml = computed(() => {
-        if (!props.selection) return ""
+    const metaNameSegments = computed<PathSegment[]>(() => {
+        if (!props.selection) return []
         if (props.selection.type === "files") {
             return buildPathSegments(props.selection.path, props.query, props.caseSensitive)
-                .map((segment) => {
-                    const text = segment.matched ? `<mark>${_escape(segment.text)}</mark>` : _escape(segment.text)
-                    return segment.dim ? `<span class="source-search-preview__meta-dir">${text}</span>` : text
-                })
-                .join("")
         }
         if (props.selection.type === "kv" || props.selection.type === "secrets") {
-            return props.selection.type === "kv"
-                ? buildTermHighlightHtml(props.selection.key, props.query, props.caseSensitive)
-                : buildHighlightHtml(props.selection.key, props.query, props.caseSensitive)
+            const segments = props.selection.type === "kv"
+                ? buildTermHighlightSegments(props.selection.key, props.query, props.caseSensitive)
+                : buildHighlightSegments(props.selection.key, props.query, props.caseSensitive)
+            return segments.map((segment) => ({...segment, dim: false}))
         }
-        return ""
+        return []
     })
 
     const metaRows = computed(() => {
@@ -361,7 +350,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search-preview {
     height: 100%;
     display: flex;
@@ -556,7 +545,7 @@
     font-weight: 600;
     overflow-wrap: anywhere;
 
-    :deep(mark) {
+    & mark {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -564,7 +553,7 @@
     }
 }
 
-:global(.source-search-preview__meta-dir) {
+.source-search-preview__meta-dir {
     color: var(--ks-text-secondary);
 }
 

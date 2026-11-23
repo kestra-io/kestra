@@ -7,8 +7,12 @@ import java.util.Optional;
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -77,6 +81,7 @@ public class FlowWithException extends FlowWithSource {
                 .disabled(jsonNode.hasNonNull("disabled") && jsonNode.get("disabled").asBoolean())
                 .exception(exception.getMessage())
                 .tasks(List.of())
+                .labels(extractLabels(jsonNode))
                 .source(jsonNode.hasNonNull("source") ? jsonNode.get("source").asText() : null)
                 .build();
             return Optional.of(flow);
@@ -84,6 +89,23 @@ public class FlowWithException extends FlowWithSource {
 
         // if there is no id and namespace, we return null as we cannot create a meaningful FlowWithException
         return Optional.empty();
+    }
+
+    private static List<Label> extractLabels(final JsonNode jsonNode) {
+        try {
+            if (!jsonNode.hasNonNull("labels")) {
+                return null;
+            }
+            ObjectNode wrapper = JacksonMapper.ofJson().createObjectNode();
+            wrapper.set("labels", jsonNode.get("labels"));
+            return JacksonMapper.ofJson().convertValue(wrapper, LabelsHolder.class).labels();
+        } catch (IllegalArgumentException | NullPointerException e) {
+            // NullPointerException can occur during label deserialization (e.g., null list entries), fall back to no labels.
+            return null;
+        }
+    }
+
+    private record LabelsHolder(@JsonDeserialize(using = ListOrMapOfLabelDeserializer.class) List<Label> labels) {
     }
 
     /** {@inheritDoc} **/

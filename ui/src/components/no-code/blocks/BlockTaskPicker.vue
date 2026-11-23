@@ -3,6 +3,7 @@
         <div
             v-if="taskPickerVisible"
             class="block-editor-picker-overlay"
+            data-authoring-overlay
             :class="{'block-editor-picker-overlay--modal': modal}"
             @click="taskPickerVisible = false"
         >
@@ -17,7 +18,7 @@
                 <p class="block-editor-picker-context">{{ $t('block_editor.inserting_into', {section: sectionLabel}) }}</p>
 
                 <KsInput
-                    :ref="(el) => (picker.pickerSearchInput.value = el)"
+                    :ref="setSearchInput"
                     v-model="taskPickerSearch"
                     :placeholder="$t('block_editor.search_task_placeholder')"
                     :aria-label="$t('block_editor.search_task_placeholder')"
@@ -122,6 +123,7 @@
 </template>
 
 <script setup lang="ts">
+    import type {ComponentPublicInstance} from "vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import {KsInput, vKsLoading} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"
@@ -129,6 +131,11 @@
     import type {TaskPickerApi} from "./useTaskPicker"
 
     const props = defineProps<{picker: TaskPickerApi, modal?: boolean}>()
+
+    const {pickerSearchInput} = props.picker
+    const setSearchInput = (el: Element | ComponentPublicInstance | null) => {
+        pickerSearchInput.value = el
+    }
 
     const pluginsStore = usePluginsStore()
 
@@ -152,7 +159,7 @@
     } = props.picker
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-editor-picker-overlay {
         position: fixed;
         inset: 0;
@@ -243,10 +250,10 @@
         min-height: 0;
         max-height: 320px;
         overflow-y: auto;
+    }
 
-        &--loading {
-            min-height: var(--ks-spacing-10);
-        }
+    .block-editor-picker-list--loading {
+        min-height: var(--ks-spacing-10);
     }
 
     .block-editor-picker-row {
@@ -261,10 +268,13 @@
         text-align: left;
         transition: background-color 0.15s;
 
-        &:hover,
-        &--focused {
+        &:hover {
             background: var(--ks-bg-hover);
         }
+    }
+
+    .block-editor-picker-row--focused {
+        background: var(--ks-bg-hover);
     }
 
     .block-editor-picker-icon {

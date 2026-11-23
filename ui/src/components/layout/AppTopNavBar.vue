@@ -5,7 +5,8 @@
         :title="store.title"
         :description="store.description"
         :breadcrumb="store.breadcrumb"
-        :mainIcon="store.hideMainIcon ? undefined : activeMenuIcon"
+        :titleSiblings="store.titleSiblings"
+        :mainIcon="activeMenuIcon"
         :beta="store.beta"
         :isBookmarked="bookmarked"
         :hideBookmark
@@ -32,18 +33,43 @@
             <GlobalSearch class="trigger-flow-guided-step" />
         </template>
         <template #actions>
-            <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
+            <div id="topnav-actions-slot" />
+            <NavBarActionsDropdown v-if="isMobile && !actionsMenuCount && bookmarkAction" standalone />
         </template>
         <template #panel-toggle>
+            <KsTooltip
+                v-if="showCopilotButton"
+                :content="$t('ai.copilot.title')"
+                placement="bottom"
+                :enterable="false"
+            >
+                <KsIconButton
+                    class="copilot-button"
+                    :class="{'is-open': isCopilotOpen}"
+                    data-testid="topnav-copilot-button"
+                    :ariaLabel="$t('ai.copilot.title')"
+                    :aria-pressed="isCopilotOpen"
+                    @click="toggleCopilot"
+                >
+                    <AiMenuIcon />
+                </KsIconButton>
+            </KsTooltip>
+            <NotificationBell v-if="miscStore.configs" />
             <slot name="panel-toggle" />
         </template>
     </KsTopNavBar>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, onBeforeUnmount, ref, watch, watchEffect} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import {KsIconButton, KsTooltip} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
+    import AiMenuIcon from "../ai/AiMenuIcon.vue"
+    import NotificationBell from "./NotificationBell.vue"
+    import NavBarActionsDropdown from "./NavBarActionsDropdown.vue"
+    import {useBookmarkAction} from "../../composables/useBookmarkAction"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
@@ -66,6 +92,16 @@
 
     function togglePanel() {
         miscStore.contextInfoBarOpenTab = miscStore.contextInfoBarOpenTab ? "" : miscStore.lastContextTab
+    }
+
+    const isCopilotOpen = computed(() => miscStore.contextInfoBarOpenTab === "ai")
+
+    function toggleCopilot() {
+        if (isCopilotOpen.value) {
+            miscStore.contextInfoBarOpenTab = ""
+            return
+        }
+        miscStore.openCopilot()
     }
 
     const selectTabs = computed(() =>
@@ -118,20 +154,43 @@
 
     const activeMenuIcon = computed(() => activeMenuItem.value?.icon?.element)
 
+    // The menu resolves its hrefs to path strings, so match on where the item leads rather than
+    // on the shape of its href.
+    const isCopilotMenuItem = (item: MenuItem) =>
+        !item.child && !!item.href && router.resolve(item.href).name === "ai"
+
+    // The top bar entry follows the left-menu copilot item, so whatever hides that item (EE hides
+    // it for users without the COPILOT permission) hides this button too, with no second copy of
+    // the rule. It also stays out of the way on the full-page copilot, where the dock tab it opens
+    // is hidden.
+    const showCopilotButton = computed(() => {
+        const item = flattenMenu(menu.value).find(isCopilotMenuItem)
+        return !!item && !item.hidden && route.name !== "ai"
+    })
+
     const hideBookmark = computed(() => {
         const href = activeMenuItem.value?.href
         return !!href && router.resolve(href).name === route.name
     })
 
-    const currentFavURI = computed(() =>
-        route.fullPath
+    const currentFavURI = computed(() => {
+        const fallback = route.fullPath
             .replace(/[&?]page=[^&]*/gi, "")
             .replace(/\?&/, "?")
-            .replace(/\?$/, ""),
-    )
+            .replace(/\?$/, "")
+        const query = Object.fromEntries(
+            Object.entries(route.query).filter(([key]) => key.toLowerCase() !== "page"),
+        )
+
+        return router.resolve({
+            path: route.path ?? fallback.split(/[?#]/)[0],
+            query,
+            hash: route.hash,
+        }).fullPath ?? fallback
+    })
 
     const bookmarked = computed(() =>
-        bookmarksStore.pages.some((page) => page.path === currentFavURI.value),
+        bookmarksStore.isBookmarked(currentFavURI.value),
     )
 
     const derivedBookmarkLabel = computed(() =>
@@ -139,6 +198,9 @@
             ? `${store.breadcrumb[store.breadcrumb.length - 1].label}: ${store.title}`
             : store.title),
     )
+
+    const isMobile = useIsMobile()
+    const {bookmarkAction, actionsMenuCount} = useBookmarkAction()
 
     const onStarClick = () => {
         if (bookmarked.value) {
@@ -150,6 +212,14 @@
             })
         }
     }
+
+    watchEffect(() => {
+        bookmarkAction.value = hideBookmark.value ? undefined : {bookmarked: bookmarked.value, toggle: onStarClick}
+    })
+
+    onBeforeUnmount(() => {
+        bookmarkAction.value = undefined
+    })
 
     // Which path the store's label was last written for. The store is filled by the visited page's
     // own TopNavBar, which lands a flush after the route — and on a route that mounts none, never:
@@ -178,21 +248,44 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .copilot-button {
+        flex-shrink: 0;
+        color: var(--ks-icon-muted);
+
+        /* :hover is covered so this matches KsIconButton's own hover rule on specificity; without it */
+        /* the open state is repainted while the pointer is on the button. */
+        &.is-open,
+        &.is-open:hover {
+            color: var(--ks-text-link);
+        }
+
+        /* Same breakpoint as the dock toggle it sits next to: the dock it opens is desktop-only. */
+        @media (max-width: 767px) {
+            display: none;
+        }
+    }
+
+    #topnav-actions-slot {
+        display: flex;
+        gap: var(--ks-spacing-2);
+        align-items: center;
+    }
+
     .playgroundMode {
         background:
             linear-gradient(
                 to right,
-                rgba(23, 97, 253, 0.22) 0%,
-                rgba(23, 97, 253, 0.08) 45%,
+                color-mix(in srgb, var(--ks-toggle-playground) 22%, transparent) 0%,
+                color-mix(in srgb, var(--ks-toggle-playground) 8%, transparent) 45%,
                 transparent 80%
             ),
             var(--ks-bg-overlay);
 
         .dark & {
             background:
-                linear-gradient(0deg, rgba(23, 97, 253, 0.15) 0%, rgba(23, 97, 253, 0.15) 100%),
-                var(--ks-bg-overlay, #1A1C22);
+                linear-gradient(color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent), color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent)),
+                var(--ks-bg-overlay);
         }
     }
 </style>

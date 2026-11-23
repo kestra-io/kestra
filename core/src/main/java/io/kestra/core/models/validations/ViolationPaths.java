@@ -41,15 +41,16 @@ public final class ViolationPaths {
                 pointer.setLength(0);
                 continue;
             }
-            if (node.getName() != null) {
-                for (String segment : segmentsOf(node.getName())) {
-                    pointer.append('/').append(escape(segment));
-                }
-            }
+            // A node's index or key is its position in the previous node's collection, so it comes first.
             if (node.getIndex() != null) {
                 pointer.append('/').append(node.getIndex());
             } else if (node.getKey() != null) {
                 pointer.append('/').append(escape(String.valueOf(node.getKey())));
+            }
+            if (node.getName() != null) {
+                for (String segment : segmentsOf(node.getName())) {
+                    pointer.append('/').append(escape(segment));
+                }
             }
         }
         return pointer.toString();
@@ -91,10 +92,11 @@ public final class ViolationPaths {
 
     /**
      * The human-friendly path, e.g. {@code tasks[my-task].type} rather than {@code tasks[0].type}. Falls back
-     * to the raw property path when the offending bean carries no id.
+     * to the raw property path when the offending bean carries no id. The leading method and parameter nodes of
+     * a method-level validation are dropped, so the path is relative to the submitted body.
      */
     public static String toFriendlyPath(final ConstraintViolation<?> violation) {
-        String raw = violation.getPropertyPath().toString();
+        String raw = withoutJavaCallPrefix(violation.getPropertyPath());
         try {
             if (violation.getLeafBean() instanceof Task task) {
                 return replaceIndexWithId(raw, "tasks", task.getId());
@@ -106,6 +108,21 @@ public final class ViolationPaths {
             // An id we cannot read is not worth failing an error response over.
         }
         return raw;
+    }
+
+    /** {@code updateFlow.flow.id} becomes {@code id}; a path made only of call nodes is returned unchanged. */
+    private static String withoutJavaCallPrefix(final Path path) {
+        String raw = path.toString();
+        StringBuilder prefix = new StringBuilder();
+        for (Path.Node node : path) {
+            if (!isJavaCallNode(node)) {
+                break;
+            }
+            prefix.append(node.getName()).append('.');
+        }
+        return 0 < prefix.length() && prefix.length() < raw.length() && raw.startsWith(prefix.toString())
+            ? raw.substring(prefix.length())
+            : raw;
     }
 
     /** {@code tasks[0].type} becomes {@code tasks[my-task].type}. */

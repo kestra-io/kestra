@@ -1,5 +1,6 @@
 package io.kestra.executor;
 
+import java.io.IOException;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
@@ -12,17 +13,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
-import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.assets.AssetIdentifier;
-import io.kestra.core.models.assets.AssetUser;
-import io.kestra.core.models.assets.AssetsDeclaration;
-import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -42,6 +40,7 @@ import io.kestra.core.utils.*;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.plugin.core.flow.*;
 
+import io.micronaut.core.annotation.Nullable;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -51,7 +50,6 @@ import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
@@ -67,7 +65,6 @@ public class ExecutorService {
     protected final BroadcastQueueInterface<ExecutionKilled> killQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final RunContextLoggerFactory runContextLoggerFactory;
-    private final AssetService assetService;
     private final RunContextInitializer runContextInitializer;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
@@ -85,7 +82,6 @@ public class ExecutorService {
         BroadcastQueueInterface<ExecutionKilled> killQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         RunContextLoggerFactory runContextLoggerFactory,
-        AssetService assetService,
         RunContextInitializer runContextInitializer,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
@@ -100,19 +96,13 @@ public class ExecutorService {
         this.killQueue = killQueue;
         this.loopExecutionEventQueue = loopExecutionEventQueue;
         this.runContextLoggerFactory = runContextLoggerFactory;
-        this.assetService = assetService;
         this.runContextInitializer = runContextInitializer;
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
         this.pausedTaskNotifier = pausedTaskNotifier;
     }
 
-    /**
-     * Evaluate the scoped concurrency limits in order against their running counts: the first
-     * limit reached defines the behavior applied to the execution; when none is reached the
-     * execution runs.
-     */
-    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, ExecutionRunning executionRunning) {
+    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
         for (int i = 0; i < limits.size(); i++) {
             ScopedConcurrencyLimit limit = limits.get(i);
             int runningCount = runningCounts.get(i);
@@ -122,6 +112,25 @@ public class ExecutorService {
 
             return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {
+                    if (limit.scope() == ScopedConcurrencyLimit.Scope.FLOW && limit.concurrency().getQueueLimit() != null && queuedCount >= limit.concurrency().getQueueLimit()) {
+                        Logs.logExecution(
+                            executionRunning.getExecution(),
+                            Level.INFO,
+                            "Execution cancelled: concurrency queue limit reached ({}/{})", queuedCount, limit.concurrency().getQueueLimit()
+                        );
+                        runContextLoggerFactory.create(executionRunning.getExecution()).get().warn(
+                            "Execution is CANCELLED due to concurrency queue limit reached ({}/{}).", queuedCount, limit.concurrency().getQueueLimit()
+                        );
+
+                        yield executionRunning
+                            .withExecution(
+                                executionRunning
+                                    .getExecution()
+                                    .withState(io.kestra.core.models.flows.State.Type.CANCELLED)
+                            )
+                            .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
+                    }
+
                     Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
@@ -136,9 +145,14 @@ public class ExecutorService {
                         .withExecution(newExecution)
                         .withConcurrencyState(ExecutionRunning.ConcurrencyState.QUEUED);
                 }
-                case CANCEL -> executionRunning
-                    .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
-                    .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
+                case CANCEL -> {
+                    runContextLoggerFactory.create(executionRunning.getExecution()).get().warn(
+                        "Execution is CANCELLED due to {}concurrency limit exceeded.", scopeDescription(limit)
+                    );
+                    yield executionRunning
+                        .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
+                }
                 case FAIL -> {
                     var failedExecution = executionRunning.getExecution()
                         .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + scopeDescription(limit) + "concurrency limit exceeded"));
@@ -181,15 +195,16 @@ public class ExecutorService {
         try {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
-            // if killing: move created tasks to killed as they are not already started
-            executor = this.handleCreatedKilling(executor);
+            // if killing: kill the task runs no worker will ever answer for — created (not yet started)
+            // and retrying (waiting on the executor's own retry delay, which a kill must not fire)
+            executor = this.handleNeverRunnedKilling(executor);
             //then set the execution to killed
             executor = this.handleKilling(executor);
 
-            // process next task if not killing, killed or queued
+            // process next task if not killing, killed, queued or already terminated (an SLA may end it while afterExecution tasks are pending)
             if (
                 executor.getExecution().getState().getCurrent() != State.Type.KILLING && executor.getExecution().getState().getCurrent() != State.Type.KILLED
-                    && executor.getExecution().getState().getCurrent() != State.Type.QUEUED
+                    && executor.getExecution().getState().getCurrent() != State.Type.QUEUED && !executor.getExecution().getState().isTerminated()
             ) {
                 executor = this.handleNext(executor);
             }
@@ -197,13 +212,14 @@ public class ExecutorService {
             // but keep listeners on killing
             executor = this.handleAfterExecution(executor);
 
-            // send worker task to the Worker
-            executor = this.handleWorkerTasks(executor);
-
             // process flowable tasks
             executor = this.handleFlowableTasks(executor);
 
-            // search for execution updating tasks
+            // send worker task to the Worker
+            // this is important to do it after handleFlowableTasks so tasks created by flowable tasks are processed immediately.
+            executor = this.handleWorkerTasks(executor);
+
+            // search for execution-updating tasks
             executor = this.handleExecutionUpdatingTasks(executor);
 
             // search for flow task
@@ -450,18 +466,18 @@ public class ExecutorService {
     private ExecutorContext onEnd(ExecutorContext executor) {
         final FlowWithSource flow = executor.getFlow();
 
-        // For LOOP sub-executions, use guessFinalState(List<ResolvedTask>, TaskRun, boolean, boolean) to compute the final state from the Loop's child tasks directly.
+        // For LOOP sub-executions, use computeFinalState(List<ResolvedTask>, TaskRun, boolean, boolean) to compute the final state from the Loop's child tasks directly.
         State.Type finalState;
         if (executor.getExecution().getKind() == ExecutionKind.LOOP && executor.getExecution().getLoopRun() != null) {
             Loop loop = (Loop) flow.findTaskByTaskIdOrNull(executor.getExecution().getLoopRun().taskId());
             if (loop != null) {
                 List<ResolvedTask> childTasks = loop.getTasks().stream().map(ResolvedTask::of).toList();
-                finalState = executor.getExecution().guessFinalState(childTasks, null, false, false);
+                finalState = executor.getExecution().computeFinalState(childTasks, null, false, false);
             } else {
-                finalState = executor.getExecution().guessFinalState(flow);
+                finalState = executor.getExecution().computeFinalState(flow);
             }
         } else {
-            finalState = executor.getExecution().guessFinalState(flow);
+            finalState = executor.getExecution().computeFinalState(flow);
         }
 
         Execution newExecution = executor.getExecution()
@@ -474,7 +490,7 @@ public class ExecutorService {
             try {
                 Map<String, Object> outputs = inputAndOutput.renderOutputs(flow.getOutputs());
                 outputs = inputAndOutput.typedOutputs(flow, executor.getExecution(), outputs);
-                executionOutputService.saveOutputs(newExecution, outputs);
+                executionOutputService.saveOutputs(runContext.logger(), flow, newExecution, outputs);
             } catch (Exception e) {
                 Logs.logExecution(
                     executor.getExecution(),
@@ -483,7 +499,10 @@ public class ExecutorService {
                     e
                 );
                 runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
-                newExecution = newExecution.withState(State.Type.FAILED);
+                // the outputs of a killed execution are expected to be missing, and failing it would turn the kill into a retryable failure
+                if (finalState != State.Type.KILLED) {
+                    newExecution = newExecution.withState(State.Type.FAILED);
+                }
             }
         }
 
@@ -548,6 +567,9 @@ public class ExecutorService {
         );
     }
 
+    // NOTE: handleFlowableTask will resolve flowable children, so it must be called before handleWorkerTasks.
+    // It will also process flowable tasks custom logic; for flowable tasks that resolve children that are also flowable tasks,
+    // this custom logic must also be processed on their children (this is done by calling handleFlowableChildCreated() on them).
     private ExecutorContext handleFlowableTasks(ExecutorContext executor) throws Exception {
         if (executor.getExecution().getTaskRunList() == null) {
             return executor;
@@ -556,7 +578,8 @@ public class ExecutorService {
         List<TaskRun> nextTaskRuns = new ArrayList<>();
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
-        List<ExecutorContext.ExecutorWorkerTask> onPauses = new ArrayList<>();
+        List<TaskRun> onPauseTaskRuns = new ArrayList<>();
+        Map<String, State.Type> executionLevelOutcomes = new LinkedHashMap<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
@@ -568,15 +591,35 @@ public class ExecutorService {
                     nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));
                     Optional<WorkerTaskResult> flowableResult = this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext);
                     if (flowableResult.isPresent()) {
-                        list.add(flowableResult.get());
-                        // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
-                        if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
-                            this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                        Optional<ExecutionDelay> flowableRetry = flowableRetryDelay(executor, task, taskRun, flowableResult.get());
+                        if (flowableRetry.isPresent()) {
+                            executionDelays.add(flowableRetry.get());
+                            executor.withExecution(
+                                executor.getExecution()
+                                    .withTaskRun(
+                                        taskRun.withStateAndAttempt(State.Type.FAILED)
+                                            .withState(State.Type.RETRYING)
+                                    )
+                                    .withState(State.Type.RETRYING),
+                                "handleRetryFlowable"
+                            );
+                            // do NOT add the result: the parent must not terminate
+                        } else {
+                            list.add(flowableResult.get());
+                            TaskRun resolvedTaskRun = flowableResult.get().getTaskRun();
+                            if (task instanceof PausableTask pausableTask && resolvedTaskRun.getState().isTerminated()) {
+                                pausableTask.executionLevelOutcome(runContext, executor.getExecution(), resolvedTaskRun)
+                                    .ifPresent(outcome -> executionLevelOutcomes.put(resolvedTaskRun.getId(), outcome));
+                            }
+                            // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
+                            if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
+                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, flowableResult.get().getTaskRun(), runContext);
+                            }
                         }
                     }
-                } catch (ConstraintViolationException e) {
-                    // An invalid flowable configuration fails the flowable task run, which terminates the
-                    // execution cleanly (failing the execution while the task run stays RUNNING would loop).
+                } catch (ConstraintViolationException | InternalException e) {
+                    // An invalid flowable configuration fails the flowable task run, which terminates the execution cleanly (failing the execution while the task run stays RUNNING would loop).
+                    // An InternalException is thrown when the onChildFailure value is CONTINUE or UNKNOWN, which never trigger an interrupt.
                     runContext.logger().error("Failed to process flowable task {}: {}", taskRun.getId(), e.getMessage(), e);
                     executor.withExecution(executor.getExecution().withTaskRun(taskRun.withState(State.Type.FAILED)), "flowableValidation");
                 }
@@ -592,7 +635,7 @@ public class ExecutorService {
             if (
                 !executor.getExecution().getState().isRetrying() &&
                     taskRun.getState().isFailed() &&
-                    (task instanceof RunnableTask<?> || task instanceof Subflow)
+                    task != null && task.shouldRetryOnFailure()
             ) {
                 Instant nextRetryDate = null;
                 AbstractRetry.Behavior behavior = null;
@@ -602,20 +645,26 @@ public class ExecutorService {
                     if (task.getRetry() != null) {
                         AbstractRetry retry = task.getRetry();
                         behavior = retry.getBehavior();
-                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                            : taskRun.nextRetryDate(retry);
                     } else {
                         // Case parent task has a retry
                         Task parentTaskWithRetry = searchForParentTaskWithRetry(taskRun, executor);
                         AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                         if (retry != null) {
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
-                            if (!isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                            if (!isRetriedAsAWorkingDirectory(taskRun, parentTaskWithRetry, retry, executor)
+                                    && retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
                                 behavior = retry.getBehavior();
-                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                                    : taskRun.nextRetryDate(retry);
+                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                                    : taskRun.nextRetryDate(retry);
                             }
                         }
                         // Case flow has a retry
-                        else if (executor.getFlow().getRetry() != null) {
+                        else if (executor.getFlow().getRetry() != null && !isRetriedAsAWorkingDirectory(taskRun, null, executor.getFlow().getRetry(), executor)) {
                             retry = executor.getFlow().getRetry();
                             behavior = retry.getBehavior();
                             nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? executionService.nextRetryDate(retry, executor.getExecution())
@@ -627,15 +676,16 @@ public class ExecutorService {
                 }
 
                 if (nextRetryDate != null) {
+                    boolean createNewExecution = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION);
                     ExecutionDelay.ExecutionDelayBuilder executionDelayBuilder = ExecutionDelay.builder()
                         .taskRunId(taskRun.getId())
                         .executionId(executor.getExecution().getId())
                         .date(nextRetryDate)
                         .state(State.Type.RUNNING)
-                        .delayType(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? ExecutionDelay.DelayType.RESTART_FAILED_FLOW : ExecutionDelay.DelayType.RESTART_FAILED_TASK);
+                        .delayType(createNewExecution ? ExecutionDelay.DelayType.RESTART_FAILED_FLOW : ExecutionDelay.DelayType.RESTART_FAILED_TASK);
                     executionDelays.add(executionDelayBuilder.build());
                     executor.withExecution(
-                        behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true)
+                        createNewExecution ? executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true)
                             : executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRYING, false),
                         "handleRetryTask"
                     );
@@ -650,8 +700,12 @@ public class ExecutorService {
             // handle flowable tasks Executor custom logic
             if (task instanceof FlowableTask<?>) {
                 try {
+                    if (task instanceof PausableTask pausableTask && taskRun.getState().getCurrent() == State.Type.CREATED) {
+                        this.handlePausableCreated(executor, pausableTask, taskRun);
+                    }
+
                     switch (task) {
-                        case LoopUntil waitFor when taskRun.getState().isRunning() -> {
+                        case LoopUntil waitFor when taskRun.getState().getCurrent() == State.Type.RUNNING -> {
                             if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                                 Map<String, Object> previousOutput = taskOutputService.getOutputs(taskRun);
                                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(taskRun), taskRun);
@@ -676,89 +730,17 @@ public class ExecutorService {
                             }
                         }
                         case Pause pause when pause.getOnPause() != null -> {
-                            // if a Pause task defines an onPause, we must create a TaskRun and a WorkerTask
-                            RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                            WorkerTask pauseWorkerTask = WorkerTask.builder()
-                                .data(WorkerTaskData.from(runContext))
-                                .taskRun(
-                                    TaskRun.of(
-                                        executor.getExecution(),
-                                        ResolvedTask.of(pause.getOnPause())
-                                    )
-                                )
-                                .task(pause.getOnPause())
-                                .executionKind(executor.getExecution().getKind())
-                                .build();
-                            onPauses.add(new ExecutorContext.ExecutorWorkerTask(pauseWorkerTask, runContext));
+                            // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks will dispatch it.
+                            // A Pause whose runIf is false is skipped when its worker task is handled, so it has no onPause.
+                            RunContext runContext = runContextFactory.of(executor.getFlow(), pause, executor.getExecution(), taskRun);
+                            if (TruthUtils.isTruthy(runContext.render(pause.getRunIf()))) {
+                                onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                            }
                         }
                         case Loop loop -> {
                             if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
                                 if (taskRun.getState().getCurrent() == State.Type.CREATED) {
-                                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                                    var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
-
-                                    if (valuesUri.isPresent()) {
-                                        var init = loop.initFromUri(runContext, valuesUri.get());
-                                        // save the iteration information in outputs to know how many loop iterations we already triggered
-                                        taskOutputService.saveOutputs(
-                                            taskRun, Map.of(
-                                                Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
-                                                Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
-                                                Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
-                                            )
-                                        );
-                                        for (int i = 0; i < init.values().size(); i++) {
-                                            var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i));
-                                            executor.withLoopExecution(loopExecution, "handleLoopExecution");
-                                        }
-                                    } else {
-                                        var init = loop.initFromValues(runContext);
-                                        // save the iteration information in outputs to know how many loop iterations we already triggered
-                                        taskOutputService.saveOutputs(
-                                            taskRun, Map.of(
-                                                Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
-                                                Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
-                                            )
-                                        );
-
-                                        if (init.totalCount() == 0) {
-                                            // if no loop iteration, we end the task immediately
-                                            executor.withExecution(
-                                                executor.getExecution()
-                                                    .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
-                                                "handleLoop"
-                                            );
-                                            // replace existing CREATED WorkerTask to SUCCESS
-                                            executor.getWorkerTasks().replaceAll(
-                                                ewt -> ewt.workerTask().getTaskRun().getId().equals(taskRun.getId())
-                                                    ? new ExecutorContext.ExecutorWorkerTask(ewt.workerTask().withTaskRun(taskRun.withState(State.Type.SUCCESS)), ewt.runContext())
-                                                    : ewt
-                                            );
-                                        } else {
-                                            if (init.values().isLeft()) {
-                                                List<String> values = init.values().getLeft();
-                                                for (int i = 0; i < init.limit(); i++) {
-                                                    var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, values.get(i));
-                                                    executor.withLoopExecution(loopExecution, "handleLoopExecution");
-                                                }
-                                            } else {
-                                                List<Pair<String, String>> values = init.values().getRight();
-                                                for (int i = 0; i < init.limit(); i++) {
-                                                    var value = values.get(i);
-                                                    var loopExecution = executor.getExecution().loopExecution(taskRun, i, value.getKey(), value.getValue());
-                                                    executor.withLoopExecution(loopExecution, "handleLoopExecution");
-                                                }
-                                            }
-
-                                            executor.withExecution(
-                                                executor.getExecution()
-                                                    .withTaskRun(taskRun.withState(State.Type.RUNNING)),
-                                                "handleLoop"
-                                            );
-                                        }
-                                    }
+                                    this.handleLoopCreated(executor, loop, taskRun);
                                 } else if (taskRun.getState().getCurrent() == State.Type.RESTARTED) {
                                     // On restart, find the last failing sub-execution and restart it instead of
                                     // re-initializing from scratch.
@@ -773,7 +755,7 @@ public class ExecutorService {
                                         executor.withLoopExecution(restarted, "restartLoopExecution");
                                         executor.withExecution(
                                             executor.getExecution()
-                                                .withTaskRun(taskRun.withState(State.Type.RUNNING)),
+                                                .withTaskRun(taskRun.run()),
                                             "handleLoop"
                                         );
                                     } else {
@@ -784,11 +766,6 @@ public class ExecutorService {
                                             executor.getExecution()
                                                 .withTaskRun(taskRun.withState(State.Type.FAILED)),
                                             "handleLoop"
-                                        );
-                                        executor.getWorkerTasks().replaceAll(
-                                            ewt -> ewt.workerTask().getTaskRun().getId().equals(taskRun.getId())
-                                                ? new ExecutorContext.ExecutorWorkerTask(ewt.workerTask().withTaskRun(taskRun.withState(State.Type.FAILED)), ewt.runContext())
-                                                : ewt
                                         );
                                     }
                                 }
@@ -805,12 +782,6 @@ public class ExecutorService {
                         executor.getExecution()
                             .withTaskRun(taskRun.withState(State.Type.FAILED)),
                         "handleChildWorkerTaskResult"
-                    );
-                    // replace existing RESTARTED WorkerTask to FAILED to prevent it from transitioning to RUNNING
-                    executor.getWorkerTasks().replaceAll(
-                        ewt -> ewt.workerTask().getTaskRun().getId().equals(taskRun.getId())
-                            ? new ExecutorContext.ExecutorWorkerTask(ewt.workerTask().withTaskRun(taskRun.withState(State.Type.FAILED)), ewt.runContext())
-                            : ewt
                     );
                 }
             }
@@ -846,6 +817,12 @@ public class ExecutorService {
 
         if (!nextTaskRuns.isEmpty()) {
             executor.withTaskRun(nextTaskRuns, "handleFlowableTasks");
+            // A flowable child that is a flowable task itself needs to have its custom CREATED logic runs right away, on this same pass's
+            // newly merged children, since it is invisible to the for-loop above (only merged after it completes),
+            // otherwise it would sit CREATED in front of handleWorkerTasks' generic CREATED->RUNNING transition below.
+            for (TaskRun nextTaskRun : nextTaskRuns) {
+                this.handleFlowableChildCreated(executor, nextTaskRun, onPauseTaskRuns);
+            }
         }
 
         metricRegistry
@@ -861,17 +838,238 @@ public class ExecutorService {
             return executor;
         }
 
-        if (!onPauses.isEmpty()) {
-            List<TaskRun> taskRuns = onPauses.stream().map(executorTask -> executorTask.workerTask().getTaskRun()).toList();
-            executor.withTaskRun(taskRuns, "handlePauses");
-            executor.withWorkerTasks(onPauses, "handlePauses");
+        if (!onPauseTaskRuns.isEmpty()) {
+            executor.withTaskRun(onPauseTaskRuns, "handlePauses");
         }
 
         executor = this.handlePausedDelay(executor, list);
 
         this.addWorkerTaskResults(executor, list);
 
+        executor = this.handleExecutionLevelOutcomes(executor, executionLevelOutcomes);
+
+        boolean pausedThisPass = list.stream().anyMatch(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED);
+        return this.handlePauseState(executor, pausedThisPass);
+    }
+
+    /** Applied once the results are merged, so the terminating cascade starts from the pausable task run's own terminal state. */
+    private ExecutorContext handleExecutionLevelOutcomes(ExecutorContext executor, Map<String, State.Type> outcomes) throws QueueException, InternalException {
+        for (Map.Entry<String, State.Type> outcome : outcomes.entrySet()) {
+            if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
+                break;
+            }
+
+            if (outcome.getValue() == State.Type.KILLED) {
+                Execution killing = executionService.kill(executor.getExecution(), executor.getFlow(), Optional.empty());
+                executor.withExecution(killing, "handleExecutionLevelOutcomes");
+                killQueue.emit(
+                    ExecutionKilledExecution.builder()
+                        .state(ExecutionKilled.State.REQUESTED)
+                        .executionId(killing.getId())
+                        .isOnKillCascade(true)
+                        .tenantId(killing.getTenantId())
+                        .build()
+                );
+            } else {
+                TaskRun current = executor.getExecution().findTaskRunByTaskRunId(outcome.getKey());
+                Execution cascaded = executor.getExecution().withTaskRunStateCascaded(current, outcome.getValue());
+                if (this.canRunFlowFinally(executor, cascaded)) {
+                    executor.withExecution(cascaded, "handleExecutionLevelOutcomes");
+                    executor.withTaskRun(this.skippedFlowTaskRuns(cascaded, executor.getFlow()), "handleExecutionLevelOutcomes");
+                } else {
+                    executor.withExecution(this.withUnfinishedFlowableTaskRuns(cascaded, executor.getFlow(), outcome.getValue()).withState(outcome.getValue()), "handleExecutionLevelOutcomes");
+                }
+            }
+        }
+
         return executor;
+    }
+
+    // With a sibling still running or paused, the flow could not reach its finally, so the execution is terminated directly.
+    private boolean canRunFlowFinally(ExecutorContext executor, Execution cascaded) {
+        return executor.getExecution().getKind() != ExecutionKind.LOOP
+            && !ListUtils.isEmpty(executor.getFlow().getFinally())
+            && ListUtils.emptyOnNull(cascaded.getTaskRunList()).stream().allMatch(t -> t.getState().isTerminated());
+    }
+
+    // A terminated execution is no longer processed, so a flowable left running would never resolve; worker task runs still report their own end.
+    private Execution withUnfinishedFlowableTaskRuns(Execution execution, FlowWithSource flow, State.Type state) throws InternalException {
+        Execution ended = execution;
+        for (TaskRun taskRun : ListUtils.emptyOnNull(execution.getTaskRunList())) {
+            if (!taskRun.getState().isTerminated() && flow.findTaskByTaskIdOrNull(taskRun.getTaskId()) instanceof FlowableTask<?>) {
+                ended = ended.withTaskRun(taskRun.withState(state));
+            }
+        }
+        return ended;
+    }
+
+    private List<TaskRun> skippedFlowTaskRuns(Execution execution, FlowWithSource flow) {
+        return flow.getTasks().stream()
+            .filter(task -> execution.findTaskRunsByTaskId(task.getId()).isEmpty())
+            .map(task -> TaskRun.of(execution, ResolvedTask.of(task)).withState(State.Type.SKIPPED))
+            .toList();
+    }
+
+    private void handlePausableCreated(ExecutorContext executor, PausableTask pausableTask, TaskRun taskRun) throws Exception {
+        RunContext runContext = runContextFactory.of(executor.getFlow(), (Task) pausableTask, executor.getExecution(), taskRun);
+        Map<String, Object> outputs = pausableTask.created(executor.getFlow(), executor.getExecution(), taskRun, runContext);
+        if (!outputs.isEmpty()) {
+            taskOutputService.saveOutputs(taskRun, MapUtils.merge(taskOutputService.getOutputs(taskRun), outputs));
+        }
+    }
+
+    /**
+     * Determines whether a flowable should be retried and creates a delay to restart it from the beginning.
+     */
+    private Optional<ExecutionDelay> flowableRetryDelay(ExecutorContext executor, Task task, TaskRun taskRun, WorkerTaskResult result) {
+        AbstractRetry retry = task instanceof WorkingDirectory ? workingDirectoryRetry(executor, task, taskRun) : task.getRetry();
+
+        // a WorkingDirectory can only run again as a whole, since its folder is deleted once it ends
+        if (retry == null
+            || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE && !(task instanceof WorkingDirectory)
+            || retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION
+            || !result.getTaskRun().getState().isTerminated()) {
+            return Optional.empty();
+        }
+
+        // allowFailure / AllowFailure can resolve the flowable to WARNING or SUCCESS even though a child failed,
+        // so decide from the children rather than from the flowable's resolved state
+        boolean childFailed = executor.getExecution().findChildren(taskRun).stream()
+            .anyMatch(child -> child.getState().isFailed());
+        if (!childFailed) {
+            return Optional.empty();
+        }
+
+        // null once maxAttempts / maxDuration is reached, so the flowable then terminates normally
+        Instant nextRetryDate = taskRun.nextRetryDate(retry);
+        if (nextRetryDate == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(
+            ExecutionDelay.builder()
+                .taskRunId(taskRun.getId())
+                .executionId(executor.getExecution().getId())
+                .date(nextRetryDate)
+                .state(State.Type.RUNNING)
+                .delayType(ExecutionDelay.DelayType.RESTART_FLOWABLE)
+                .build()
+        );
+    }
+
+    /**
+     * Runs the CREATED-only part of a flowable's custom executor logic (Loop's sub-execution spawning, creating a
+     * Pause's onPause task run) for a flowable child {@link #handleFlowableTasks} just created this pass.
+     */
+    private void handleFlowableChildCreated(ExecutorContext executor, TaskRun taskRun, List<TaskRun> onPauseTaskRuns) throws InternalException {
+        Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
+        try {
+            if (task instanceof PausableTask pausableTask && taskRun.getState().getCurrent() == State.Type.CREATED) {
+                this.handlePausableCreated(executor, pausableTask, taskRun);
+            }
+
+            if (task instanceof Loop loop && !loop.isMySubExecution(executor.getExecution(), taskRun) && taskRun.getState().getCurrent() == State.Type.CREATED) {
+                this.handleLoopCreated(executor, loop, taskRun);
+            } else if (task instanceof Pause pause && pause.getOnPause() != null) {
+                // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks
+                // dispatches it like any other CREATED task run, immediately since it runs right after.
+                // A Pause whose runIf is false is skipped when its worker task is handled, so it has no onPause.
+                RunContext runContext = runContextFactory.of(executor.getFlow(), pause, executor.getExecution(), taskRun);
+                if (TruthUtils.isTruthy(runContext.render(pause.getRunIf()))) {
+                    onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                }
+            }
+        } catch (Exception e) {
+            RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+            runContext.logger().error("Failed to process flowable task {}: {}", taskRun.getId(), e.getMessage(), e);
+            executor.withExecution(
+                executor.getExecution()
+                    .withTaskRun(taskRun.withState(State.Type.FAILED)),
+                "handleChildWorkerTaskResult"
+            );
+        }
+    }
+
+    /**
+     * Initializes a {@link Loop} task run the moment it is CREATED: resolves its values, records the iteration
+     * bookkeeping in its outputs, and either spawns one sub-execution per iteration (moving the task run to
+     * RUNNING) or, for an empty loop, ends it immediately as SUCCESS.
+     */
+    private void handleLoopCreated(ExecutorContext executor, Loop loop, TaskRun taskRun) throws InternalException, IOException {
+        RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), taskRun);
+        // a Loop whose runIf is false is skipped when its worker task is handled: don't start any iteration
+        if (!TruthUtils.isTruthy(runContext.render(loop.getRunIf()))) {
+            return;
+        }
+
+        var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
+        int iterationCount;
+
+        if (valuesUri.isPresent()) {
+            var init = loop.initFromUri(runContext, valuesUri.get());
+            iterationCount = init.totalCount();
+
+            // save the iteration information in outputs to know how many loop iterations we already triggered
+            taskOutputService.saveOutputs(
+                taskRun, Map.of(
+                    Loop.ITERATION_COUNT_OUTPUT, iterationCount,
+                    Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
+                    Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
+                    Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
+                )
+            );
+            for (int i = 0; i < init.values().size(); i++) {
+                var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i), loop.getParseValues());
+                executor.withLoopExecution(loopExecution, "handleLoopExecution");
+            }
+        } else {
+            var init = loop.initFromValues(runContext);
+            iterationCount = init.totalCount();
+            // save the iteration information in outputs to know how many loop iterations we already triggered
+            taskOutputService.saveOutputs(
+                taskRun, Map.of(
+                    Loop.ITERATION_COUNT_OUTPUT, iterationCount,
+                    Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
+                    Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
+                )
+            );
+
+            if (iterationCount > 0) {
+                if (init.values().isLeft()) {
+                    List<String> values = init.values().getLeft();
+                    for (int i = 0; i < init.limit(); i++) {
+                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, values.get(i), loop.getParseValues());
+                        executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                    }
+                } else {
+                    List<Pair<String, String>> values = init.values().getRight();
+                    for (int i = 0; i < init.limit(); i++) {
+                        var value = values.get(i);
+                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, value.getKey(), value.getValue(), loop.getParseValues());
+                        executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                    }
+                }
+
+                executor.withExecution(
+                    executor.getExecution()
+                        .withTaskRun(taskRun.run()),
+                    "handleLoop"
+                );
+            }
+        }
+
+        if (iterationCount == 0) {
+            if (!ListUtils.isEmpty(loop.getOutputs())) {
+                Map<String, Object> current = new HashMap<>(taskOutputService.getOutputs(taskRun));
+                current.put(Loop.OUTPUTS_OUTPUT, Collections.emptyList());
+                taskOutputService.saveOutputs(taskRun, current);
+            }
+            executor.withExecution(
+                executor.getExecution()
+                    .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
+                "handleLoop"
+            );
+        }
     }
 
     /**
@@ -901,7 +1099,7 @@ public class ExecutorService {
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
-    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, RunContext runContext) throws InternalException {
+    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext) throws InternalException {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);
@@ -927,6 +1125,13 @@ public class ExecutorService {
             } else {
                 leafTaskRunIds.add(descendant.getId());
             }
+            // No worker job or state transition of its own records why the task stopped: without this the task run
+            // shows a terminal state with no log line naming the sibling that failed. Logged on the interrupted task
+            // run itself so an operator looking at it sees the cause inline.
+            RunContext childRunContext = descendantTask != null
+                ? runContextFactory.of(executor.getFlow(), descendantTask, executor.getExecution(), descendant)
+                : runContextFactory.of(executor.getFlow(), executor.getExecution());
+            childRunContext.logger().warn("Task terminated because sibling task '{}' failed", failedTaskRun.getTaskId());
         }
 
         if (!resolvedFlowables.isEmpty()) {
@@ -948,6 +1153,63 @@ public class ExecutorService {
                 log.error("Unable to interrupt task runs {} after child failure", leafTaskRunIds, e);
             }
         }
+    }
+
+    /**
+     * Resolves the Worker Queue of a task. The tasks of a WorkingDirectory take the one of their WorkingDirectory, since
+     * they all run on the worker holding its folder.
+     */
+    public Optional<WorkerQueueRouting> resolveWorkerQueue(Flow flow, Execution execution, WorkerTask workerTask, RunContext runContext)
+        throws NoMatchingWorkerQueueException, IllegalVariableEvaluationException {
+        WorkerTask routed = Optional.ofNullable(workerTask.getWorkingDirectoryId())
+            .flatMap(execution::findTaskRunByTaskRunIdIfPresent)
+            .map(workingDirectory -> flow.findTaskByTaskIdOrNull(workingDirectory.getTaskId()))
+            .map(workerTask::withTask)
+            .orElse(workerTask);
+        return workerQueueService.resolveWorkerQueueForJob(flow, routed, runContext);
+    }
+
+    private Optional<TaskRun> enclosingWorkingDirectory(TaskRun taskRun, ExecutorContext executor) {
+        Optional<TaskRun> parent = Optional.ofNullable(taskRun.getParentTaskRunId())
+            .flatMap(id -> executor.getExecution().findTaskRunByTaskRunIdIfPresent(id));
+        while (parent.isPresent()) {
+            if (executor.getFlow().findTaskByTaskIdOrNull(parent.get().getTaskId()) instanceof WorkingDirectory) {
+                return parent;
+            }
+            parent = Optional.ofNullable(parent.get().getParentTaskRunId())
+                .flatMap(id -> executor.getExecution().findTaskRunByTaskRunIdIfPresent(id));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Whether a retry set on the given owner, or on the flow when it is null, runs a WorkingDirectory holding the task
+     * again as a whole: its finally deletes the folder before a retry of the task alone could fire.
+     */
+    private boolean isRetriedAsAWorkingDirectory(TaskRun taskRun, @Nullable Task retryOwner, AbstractRetry retry, ExecutorContext executor) {
+        if (retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION) {
+            return false;
+        }
+        Task parent = executor.getFlow().findParentTasksByTaskId(taskRun.getTaskId());
+        while (parent != null && (retryOwner == null || !parent.getId().equals(retryOwner.getId()))) {
+            if (parent instanceof WorkingDirectory) {
+                return true;
+            }
+            parent = executor.getFlow().findParentTasksByTaskId(parent.getId());
+        }
+        return parent instanceof WorkingDirectory;
+    }
+
+    /**
+     * The retry of a WorkingDirectory: its own, or the one set above it that its tasks leave to it.
+     */
+    private AbstractRetry workingDirectoryRetry(ExecutorContext executor, Task workingDirectory, TaskRun taskRun) {
+        if (workingDirectory.getRetry() != null) {
+            return workingDirectory.getRetry();
+        }
+        Task retryOwner = searchForParentTaskWithRetry(taskRun, executor);
+        AbstractRetry inherited = retryOwner != null ? retryOwner.getRetry() : executor.getFlow().getRetry();
+        return inherited == null || inherited.getBehavior() == AbstractRetry.Behavior.RETRY_FLOWABLE ? null : inherited;
     }
 
     private Task searchForParentTaskWithRetry(TaskRun taskRun, ExecutorContext executor) {
@@ -1033,27 +1295,17 @@ public class ExecutorService {
             {
                 Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
 
-                if (task instanceof Pause pauseTask) {
-                    if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
-                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
-                        if (duration != null && (duration.isZero() || duration.isNegative())) {
-                            throw new InternalException("The Pause 'pauseDuration' must be a strictly positive duration but was '%s'.".formatted(duration));
-                        }
-                        Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
-                        Pause.Behavior behavior = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
-                        if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
-                            // if duration is set, we use it, and we use the Pause behavior as a state
-                            // if no duration, we use the standard timeout property and use FAILED as the target state
-                            return ExecutionDelay.builder()
-                                .taskRunId(workerTaskResult.getTaskRun().getId())
-                                .executionId(executor.getExecution().getId())
-                                .date(DateUtils.plusOrThrow(workerTaskResult.getTaskRun().getState().maxDate(), duration != null ? duration : timeout))
-                                .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
-                                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-                                .build();
-                        }
+                if (task instanceof PausableTask pausableTask) {
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), workerTaskResult.getTaskRun());
+                    Optional<ExecutionDelay> delay = pausableTask.pauseDelay(workerTaskResult.getTaskRun(), runContext);
+
+                    Map<String, Object> pausedOutputs = pausableTask.pausedOutputs(runContext, delay);
+                    if (!pausedOutputs.isEmpty()) {
+                        Map<String, Object> current = taskOutputService.getOutputs(workerTaskResult.getTaskRun());
+                        taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), MapUtils.merge(current, pausedOutputs));
                     }
+
+                    return delay.orElse(null);
                 }
 
                 return null;
@@ -1065,7 +1317,7 @@ public class ExecutorService {
             workerTaskResults
                 .stream()
                 .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
-                .forEach(throwConsumer(workerTaskResult ->
+                .forEach(Rethrow.throwConsumer(workerTaskResult ->
                 {
                     try {
                         Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
@@ -1074,16 +1326,34 @@ public class ExecutorService {
                         log.warn("Unable to notify paused task '{}' for execution '{}'", workerTaskResult.getTaskRun().getTaskId(), executor.getExecution().getId(), e);
                     }
                 }));
+        }
 
-            ExecutorContext updated = executor
-                .withExecution(executor.getExecution().withState(State.Type.PAUSED), "handlePausedDelay")
-                .withWorkerTaskDelays(list, "handlePausedDelay");
+        return executor.withWorkerTaskDelays(list, "handlePausedDelay");
+    }
+
+    /** A PAUSING task run gates the pause (unlike Pause's fire-and-forget onPause): the execution stays PAUSING until none is left. */
+    private ExecutorContext handlePauseState(ExecutorContext executor, boolean pausedThisPass) throws QueueException {
+        State.Type current = executor.getExecution().getState().getCurrent();
+        if (executor.getExecution().getState().isTerminated() || current == State.Type.KILLING) {
+            return executor;
+        }
+
+        if (executor.getExecution().getTaskRunList().stream().anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.PAUSING)) {
+            return current == State.Type.RUNNING ? executor.withExecution(executor.getExecution().withState(State.Type.PAUSING), "handlePauseState") : executor;
+        }
+
+        boolean pause = pausedThisPass
+            ? current != State.Type.PAUSED
+            : current == State.Type.PAUSING && executor.getExecution().getTaskRunList().stream().anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.PAUSED);
+
+        if (pause) {
+            ExecutorContext updated = executor.withExecution(executor.getExecution().withState(State.Type.PAUSED), "handlePauseState");
 
             // propagate the pause to the parent execution when running inside a Loop sub-execution
             if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
                 loopExecutionEventQueue.emit(
                     new LoopExecutionEvent(
-                        executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null
+                        executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null, null
                     )
                 );
             }
@@ -1091,10 +1361,10 @@ public class ExecutorService {
             return updated;
         }
 
-        return executor.withWorkerTaskDelays(list, "handlePausedDelay");
+        return current == State.Type.PAUSING ? executor.withExecution(executor.getExecution().withState(State.Type.RUNNING), "handlePauseState") : executor;
     }
 
-    private ExecutorContext handleCreatedKilling(ExecutorContext executor) throws InternalException {
+    private ExecutorContext handleNeverRunnedKilling(ExecutorContext executor) throws InternalException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
             return executor;
         }
@@ -1102,7 +1372,7 @@ public class ExecutorService {
         List<WorkerTaskResult> workerTaskResults = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
+            .filter(taskRun -> taskRun.getState().getCurrent().isCreated() || taskRun.getState().getCurrent() == State.Type.RETRYING)
             .map(
                 t -> childWorkerTaskTypeToWorkerTask(
                     Optional.of(State.Type.KILLED),
@@ -1203,7 +1473,7 @@ public class ExecutorService {
         return executor.withExecution(newExecution, "handleKilling");
     }
 
-    private ExecutorContext handleWorkerTasks(final ExecutorContext executor) throws InternalException {
+    private ExecutorContext handleWorkerTasks(final ExecutorContext executor) throws InternalException, QueueException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
             return executor;
         }
@@ -1230,12 +1500,16 @@ public class ExecutorService {
                     .taskRun(taskRun)
                     .task(task)
                     .executionKind(executor.getExecution().getKind())
+                    .workingDirectoryId(enclosingWorkingDirectory(taskRun, executor).map(TaskRun::getId).orElse(null))
                     .build();
+                if (workerTask.getWorkingDirectoryId() != null && task.getWorkerSelector() != null) {
+                    runContext.logger().warn("The workerSelector of task '{}' is ignored: it runs on the worker holding the folder of its WorkingDirectory.", task.getId());
+                }
                 // Resolve the target Worker Queue for this task
                 Optional<WorkerQueueRouting> routing;
                 try {
-                    routing = workerQueueService.resolveWorkerQueueForJob(executor.getFlow(), workerTask);
-                } catch (NoMatchingWorkerQueueException e) {
+                    routing = resolveWorkerQueue(executor.getFlow(), executor.getExecution(), workerTask, runContext);
+                } catch (NoMatchingWorkerQueueException | IllegalVariableEvaluationException e) {
                     runContext.logger()
                         .error(e.getMessage(), workerTask.getTaskRun().getId(), e);
                     // fail the task-run because we cannot determine the target Worker Queue
@@ -1291,28 +1565,8 @@ public class ExecutorService {
                 .flatMap(taskRun -> executor.getExecution().getFixtureForTaskRun(taskRun).stream().map(fixture -> new FixtureAndTaskRun(fixture, taskRun)))
                 .map(throwFunction(fixtureAndTaskRun ->
                 {
-                    AssetsDeclaration assetsDeclaration = executor.getFlow().findTaskByTaskId(fixtureAndTaskRun.taskRun.getTaskId()).getAssets();
                     return WorkerTaskResult.builder()
-                        .taskRun(
-                            fixtureAndTaskRun.taskRun()
-                                .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
-                                .withAssetEmits(
-                                    List.of(
-                                        new AssetsInOut(
-                                            Optional.ofNullable(assetsDeclaration).map(AssetsDeclaration::getInputs)
-                                                .map(throwFunction(assetInputs -> runContext.render(assetInputs).asList(AssetIdentifier.class)))
-                                                .stream()
-                                                .flatMap(Collection::stream)
-                                                .map(throwFunction(assetIdentifier -> assetIdentifier.withTenantId(executor.getFlow().getTenantId())))
-                                                .toList(),
-                                            fixtureAndTaskRun.fixture().getAssets() == null ? null
-                                                : fixtureAndTaskRun.fixture().getAssets().stream()
-                                                    .map(asset -> asset.withTenantId(executor.getFlow().getTenantId()))
-                                                    .toList()
-                                        )
-                                    )
-                                )
-                        )
+                        .taskRun(fixtureAndTaskRun.taskRun().withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS)))
                         .outputs(fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
                         .build();
                 }
@@ -1354,6 +1608,12 @@ public class ExecutorService {
                     Level.INFO,
                     "Flow is suspended at a breakpoint."
                 );
+
+                if (newExecution.getKind() == ExecutionKind.LOOP) {
+                    loopExecutionEventQueue.emit(
+                        new LoopExecutionEvent(newExecution.getLoopRun(), newExecution.getId(), State.Type.BREAKPOINT, null, null)
+                    );
+                }
             }
         }
 
@@ -1382,8 +1642,13 @@ public class ExecutorService {
     }
 
     private boolean shouldSuspend(TaskRun taskRun, List<Breakpoint> breakpoints) {
-        return taskRun.getState().getCurrent().isCreated() && breakpoints.stream()
-            .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId()) && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
+        return taskRun.getState().getCurrent().isCreated()
+            && !taskRun.getState().isResumingFromBreakpoint()
+            && breakpoints.stream()
+                .anyMatch(
+                    breakpoint -> taskRun.getTaskId().equals(breakpoint.getId())
+                        && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue()))
+                );
     }
 
     private ExecutorContext handleExecutableTasks(final ExecutorContext executor) {
@@ -1502,10 +1767,7 @@ public class ExecutorService {
                         return false;
                     }
 
-                    TaskRun runningTaskRun = workerTask
-                        .getTaskRun()
-                        .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()))
-                        .withState(State.Type.RUNNING);
+                    TaskRun runningTaskRun = workerTask.getTaskRun().run();
 
                     var newExecution = executionUpdatingTask.update(executor.getExecution(), executorTask.runContext());
                     if (newExecution.getState().getCurrent() == State.Type.KILLED) {
@@ -1572,14 +1834,19 @@ public class ExecutorService {
     }
 
     public void addWorkerTaskResult(ExecutorContext executor, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
-        // add dynamic taskruns + taskruns created by the WorkingDirectory
+        TaskRun taskRun = workerTaskResult.getTaskRun();
+        if (taskRun.getParentTaskRunId() != null && executor.getExecution().findTaskRunByTaskRunIdIfPresent(taskRun.getId()).isEmpty()) {
+            // a task of a WorkingDirectory that ran again after losing its worker
+            log.debug("Ignoring the result of task run '{}' which is no longer part of execution '{}'", taskRun.getId(), taskRun.getExecutionId());
+            return;
+        }
+
+        // add dynamic taskruns
         this.addAdditionalTaskRun(
             executor,
-            flow,
             workerTaskResult
         );
 
-        TaskRun taskRun = workerTaskResult.getTaskRun();
         Execution newExecution = executor.getExecution().withTaskRun(taskRun);
         // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
         // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.
@@ -1591,81 +1858,32 @@ public class ExecutorService {
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
 
-            // may be escalated below by assetFailureBehavior; kept separate from `taskRun` for the metrics in the finally block
-            TaskRun finalTaskRun = taskRun;
             try {
                 // outputs
                 taskOutputService.saveOutputs(taskRun, workerTaskResult.getOutputs());
-
-                ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
-                boolean hasAssets = taskRun.getAssetEmits() != null && taskRun.getAssetEmits().stream()
-                    .anyMatch(bundle -> !bundle.getInputs().isEmpty() || !bundle.getOutputs().isEmpty());
-                if (
-                    hasAssets
-                        && executionKind != ExecutionKind.TEST
-                ) {
-                    AssetUser assetUser = new AssetUser(
-                        taskRun.getTenantId(),
-                        taskRun.getNamespace(),
-                        taskRun.getFlowId(),
-                        newExecution.getFlowRevision(),
-                        taskRun.getExecutionId(),
-                        taskRun.getTaskId(),
-                        taskRun.getId(),
-                        taskRun.getState().getCurrent(),
-                        taskRun.getState().getStartDate(),
-                        taskRun.getState().getEndDate().orElse(null)
-                    );
-
-                    try {
-                        Optional<TaskRun> escalated = assetService.processTaskRunAssets(assetUser, taskRun, newExecution, flow, executionKind);
-                        if (escalated.isPresent()) {
-                            finalTaskRun = escalated.get();
-                            executor.withExecution(executor.getExecution().withTaskRun(finalTaskRun), "addWorkerTaskResult");
-                        }
-                    } catch (Exception e) {
-                        // a bug in asset-lineage/escalation processing must not prevent the taskRun's own
-                        // (already-terminated) result from being recorded; metrics below still tag from taskRun
-                        log.error("Unable to process assets for taskRun {}", taskRun.getId(), e);
-                    }
-                }
             } finally {
-                // tagged from finalTaskRun so a state escalated above by assetFailureBehavior is reflected in the metrics too
-                WorkerTaskResult finalWorkerTaskResult = workerTaskResult.withTaskRun(finalTaskRun);
                 metricRegistry
                     .counter(
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION,
-                        metricRegistry.tags(finalWorkerTaskResult)
+                        metricRegistry.tags(workerTaskResult)
                     )
                     .increment();
 
-                // duration from the original taskRun: withState() above would otherwise inflate it by the escalation delay
                 metricRegistry
                     .timer(
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION,
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
-                        metricRegistry.tags(finalWorkerTaskResult)
+                        metricRegistry.tags(workerTaskResult)
                     )
                     .record(taskRun.getState().getDurationOrComputeIt());
             }
         }
     }
 
-    // Note: as the flow is only used in an error branch, and it can take time to load, we pass it thought a Supplier
-    private void addAdditionalTaskRun(ExecutorContext executor, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    private void addAdditionalTaskRun(ExecutorContext executor, WorkerTaskResult workerTaskResult) {
         Execution execution = executor.getExecution();
         List<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
-
-        // if there is a parent but the taskrun didn't exist: the parent should be the WorkingDirectory
-        // as inside a WorkingDirectory, a taskrun is directly created inside the Worker and not inside the Executor
-        if (workerTaskResult.getTaskRun().getParentTaskRunId() != null && taskRuns.stream().noneMatch(t -> t.getId().equals(workerTaskResult.getTaskRun().getId()))) {
-            TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
-            Task parentTask = flow.get().findTaskByTaskId(parentTaskRun.getTaskId());
-            if (parentTask instanceof WorkingDirectory) {
-                taskRuns.add(workerTaskResult.getTaskRun());
-            }
-        }
 
         // declared dynamic tasks
         if (!ListUtils.isEmpty(workerTaskResult.getDynamicTaskRuns())) {
@@ -1787,8 +2005,10 @@ public class ExecutorService {
      *      WARNING: ATM, only the first violation will update the execution.
      */
     public ExecutorContext handleExecutionChangedSLA(ExecutorContext executor) throws QueueException {
-        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
-            executor.getExecution().getKind() ==  ExecutionKind.LOOP) {
+        if (
+            executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
+                executor.getExecution().getKind() == ExecutionKind.LOOP
+        ) {
             return executor;
         }
 

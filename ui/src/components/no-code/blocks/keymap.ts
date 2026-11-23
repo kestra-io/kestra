@@ -22,11 +22,15 @@ export const BLOCK_EDITOR_KEYMAP: BlockEditorKeyBinding[] = [
     {id: "command-menu", keys: ["Meta+Shift+p", "Control+Shift+p"], group: "insert", i18nKey: "block_editor.shortcuts.command_palette"},
 
     {id: "duplicate", keys: ["d"], group: "edit", i18nKey: "block_editor.duplicate"},
+    {id: "copy", keys: ["Meta+c", "Control+c"], group: "edit", i18nKey: "block_editor.shortcuts.copy"},
+    {id: "cut", keys: ["Meta+x", "Control+x"], group: "edit", i18nKey: "block_editor.shortcuts.cut"},
+    {id: "paste", keys: ["Meta+v", "Control+v"], group: "edit", i18nKey: "block_editor.shortcuts.paste"},
     {id: "delete", keys: ["Backspace", "Delete"], group: "edit", i18nKey: "block_editor.delete"},
     {id: "reorder", keys: ["Alt+ArrowUp", "Alt+ArrowDown"], group: "edit", i18nKey: "block_editor.shortcuts.reorder"},
 
     {id: "save", keys: ["Meta+s", "Control+s"], group: "global", i18nKey: "block_editor.shortcuts.save"},
     {id: "undo", keys: ["Meta+z", "Control+z"], group: "global", i18nKey: "block_editor.shortcuts.undo"},
+    {id: "redo", keys: ["Meta+Shift+z", "Control+y"], group: "global", i18nKey: "block_editor.shortcuts.redo"},
     {id: "help", keys: ["?"], group: "global", i18nKey: "block_editor.shortcuts.toggle"},
 ]
 

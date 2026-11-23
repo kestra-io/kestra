@@ -1,10 +1,7 @@
 <template>
     <span v-if="description">
-        <a @click="open()">
-            <HelpCircle
-                title=""
-                :id="'tooltip-desc-' + id"
-            />
+        <a :id="'tooltip-desc-' + id" @click="open()">
+            <HelpCircle title="" />
         </a>
 
         <KsDrawer
@@ -44,7 +41,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     a {
         cursor: pointer;
     }

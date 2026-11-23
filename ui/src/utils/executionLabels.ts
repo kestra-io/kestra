@@ -1,4 +1,5 @@
-const SYSTEM_PREFIX = "system."
+const SYSTEM_KEY = "system"
+const SYSTEM_PREFIX = `${SYSTEM_KEY}.`
 const SYSTEM_FROM_KEY = `${SYSTEM_PREFIX}from`
 const ALLOWED_USER_SYSTEM_LABEL_KEYS = new Set([`${SYSTEM_PREFIX}correlationId`])
 const SYSTEM_FROM_UI_LABEL = `${SYSTEM_FROM_KEY}:ui`
@@ -24,7 +25,7 @@ export function hasInvalidLabelKeys(labels: ExecutionLabelInput[]): boolean {
  * Only {@code system.correlationId} may be set manually; {@code system.from} is injected by the UI.
  */
 export function isForbiddenUserSystemLabel(key: string): boolean {
-    return key.startsWith(SYSTEM_PREFIX) && !ALLOWED_USER_SYSTEM_LABEL_KEYS.has(key)
+    return (key === SYSTEM_KEY || key.startsWith(SYSTEM_PREFIX)) && !ALLOWED_USER_SYSTEM_LABEL_KEYS.has(key)
 }
 
 export function hasForbiddenUserSystemLabels(labels: ExecutionLabelInput[]): boolean {

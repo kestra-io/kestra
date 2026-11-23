@@ -30,6 +30,7 @@ import io.kestra.core.utils.Enums;
         @JsonSubTypes.Type(value = TriggerDeleted.class, name = "TRIGGER_DELETED"),
         @JsonSubTypes.Type(value = TriggerEvaluated.class, name = "TRIGGER_EVALUATED"),
         @JsonSubTypes.Type(value = TriggerExecutionTerminated.class, name = "TRIGGER_EXECUTION_TERMINATED"),
+        @JsonSubTypes.Type(value = TriggerExecutionDeleted.class, name = "TRIGGER_EXECUTION_DELETED"),
         @JsonSubTypes.Type(value = CreateBackfillTrigger.class, name = "CREATE_BACKFILL_TRIGGER"),
         @JsonSubTypes.Type(value = DeleteBackfillTrigger.class, name = "DELETE_BACKFILL_TRIGGER"),
         @JsonSubTypes.Type(value = SetPauseBackfillTrigger.class, name = "SET_PAUSE_BACKFILL_TRIGGER"),

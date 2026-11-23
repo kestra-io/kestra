@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -107,6 +108,37 @@ class RunContextLoggerTest {
 
         matchingLog = TestsUtils.awaitLogs(logs, 1);
         assertThat(matchingLog.stream().findFirst().orElseThrow().getMessage()).isEmpty();
+    }
+
+    @Test
+    void shouldLogCauseClassNameWhenCauseHasNoMessage() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            false
+        );
+
+        ConnectException connectException = new ConnectException();
+        connectException.initCause(new IllegalStateException("Connection refused by localhost:1"));
+        RuntimeException exception = new RuntimeException(connectException);
+
+        runContextLogger.logger().error(exception.getMessage(), exception);
+
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 3);
+        assertThat(matchingLog)
+            .filteredOn(logEntry -> logEntry.getLevel().equals(Level.ERROR))
+            .extracting(LogEntry::getMessage)
+            .containsExactly(
+                "java.net.ConnectException",
+                "java.net.ConnectException\nConnection refused by localhost:1"
+            );
     }
 
     @Test
@@ -391,6 +423,29 @@ class RunContextLoggerTest {
         assertThat(fileContent).contains("to file ******");
         // file-only: ContextAppender is not attached, so nothing reaches the inline queue
         assertThat(logs).isEmpty();
+    }
+
+    @Test
+    void shouldMaskThrowableWhenLoggingToFile() throws Exception {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            true
+        );
+        String secret = "super-secret-value";
+        runContextLogger.usedSecret(secret);
+
+        runContextLogger.logger().error("Task failure {}", secret, new Exception("Task failure %s".formatted(secret)));
+
+        runContextLogger.closeLogFile();
+        String fileContent = java.nio.file.Files.readString(runContextLogger.getLogFile().toPath());
+        assertThat(fileContent)
+            .contains("Task failure ******")
+            .contains("java.lang.Exception: Task failure ******")
+            .doesNotContain(secret);
     }
 
     @Test

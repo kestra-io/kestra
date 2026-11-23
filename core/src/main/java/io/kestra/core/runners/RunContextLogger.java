@@ -160,7 +160,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                         .getCausalChain(throwable)
                         .stream()
                         .skip(1)
-                        .map(Throwable::getMessage)
+                        .map(cause -> cause.getMessage() != null ? cause.getMessage() : cause.toString())
                         .collect(Collectors.joining("\n")),
                     null,
                     logEntry
@@ -205,6 +205,20 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             index++;
         }
         this.useSecrets.add(index, secret);
+    }
+
+    boolean hasSecrets() {
+        return !this.useSecrets.isEmpty();
+    }
+
+    String maskSecrets(String data) {
+        for (String s : this.useSecrets) {
+            if (data.contains(s)) {
+                data = data.replace(s, "******");
+            }
+        }
+
+        return data;
     }
 
     public org.slf4j.Logger logger() {
@@ -391,13 +405,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         }
 
         protected String replaceSecret(String data) {
-            for (String s : runContextLogger.useSecrets) {
-                if (data.contains(s)) {
-                    data = data.replace(s, "******");
-                }
-            }
-
-            return data;
+            return runContextLogger.maskSecrets(data);
         }
 
         private Object recursive(@Nullable Object object) {
@@ -533,7 +541,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             e = this.transform(e);
 
             try {
-                String line = PATTERN_LAYOUT.doLayout(e);
+                String line = replaceSecret(PATTERN_LAYOUT.doLayout(e));
                 fileOS.write(line.getBytes());
             } catch (IOException ex) {
                 // silently do nothing, the message will still be forwarded to the server log

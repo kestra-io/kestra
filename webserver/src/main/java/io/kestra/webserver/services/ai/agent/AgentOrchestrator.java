@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -20,6 +21,7 @@ import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
+import io.kestra.core.events.Actor;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
@@ -29,6 +31,8 @@ import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.AiUsageService;
+import io.kestra.webserver.services.ai.AiUsageStatus;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
@@ -44,7 +48,14 @@ import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.PartialResponse;
+import dev.langchain4j.model.chat.response.PartialResponseContext;
+import dev.langchain4j.model.chat.response.PartialThinking;
+import dev.langchain4j.model.chat.response.PartialThinkingContext;
+import dev.langchain4j.model.chat.response.PartialToolCall;
+import dev.langchain4j.model.chat.response.PartialToolCallContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
+import dev.langchain4j.model.chat.response.StreamingHandle;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -59,11 +70,14 @@ import lombok.extern.slf4j.Slf4j;
 @Requires(bean = AiServiceManager.class)
 @Slf4j
 public class AgentOrchestrator {
+    private static final long MODEL_CANCEL_POLL_MS = 50;
+
     private final AiServiceManager aiServiceManager;
     private final ToolCatalog catalog;
     private final ModeProfiles modeProfiles;
     private final AiThreadManager threadManager;
     private final SystemPromptResolver systemPromptResolver;
+    private final AiUsageService usageService;
     private final Duration modelCallTimeout;
     private final int maxContextTurns;
     private final int maxSequentialToolsInvocations;
@@ -75,12 +89,14 @@ public class AgentOrchestrator {
         final ModeProfiles modeProfiles,
         final AiThreadManager threadManager,
         final SystemPromptResolver systemPromptResolver,
+        final AiUsageService usageService,
         final AgentConfiguration configuration) {
         this.aiServiceManager = aiServiceManager;
         this.catalog = catalog;
         this.modeProfiles = modeProfiles;
         this.threadManager = threadManager;
         this.systemPromptResolver = systemPromptResolver;
+        this.usageService = usageService;
         this.modelCallTimeout = configuration.modelCallTimeout();
         this.maxContextTurns = configuration.maxContextTurns();
         this.maxSequentialToolsInvocations = configuration.maxSequentialToolsInvocations();
@@ -91,7 +107,7 @@ public class AgentOrchestrator {
         String traceId = thread.uid() + "-turn-" + (threadManager.load(thread.tenant(), thread.uid()).size() + 1);
         try {
             ResolvedProfile profile = modeProfiles.resolve(context.mode(), context.tenant(), context.principal());
-            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(List.of());
+            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(context.principal(), List.of());
 
             threadManager.appendUser(thread.tenant(), thread.uid(), traceId, context.prompt());
 
@@ -106,7 +122,7 @@ public class AgentOrchestrator {
 
             runLoop(
                 new AgentLoopContext(
-                    thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false), new AtomicInteger(0)
+                    thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false), new AtomicInteger(0), context.actor()
                 ), sink
             );
         } catch (Exception e) {
@@ -152,7 +168,7 @@ public class AgentOrchestrator {
      * turn is. So a resume can run on any node, not only the one that suspended the turn.
      */
     public void resume(final AgentThread running, final String providerId, final boolean approve, final String reason,
-        final AgentPrincipal principal, final TurnEventSink sink) {
+        final AgentPrincipal principal, @Nullable final Actor actor, final TurnEventSink sink) {
         try {
             List<AgentMessage> log = threadManager.load(running.tenant(), running.uid());
             AgentMessage pending = pendingActionOrThrow(log);
@@ -161,7 +177,7 @@ public class AgentOrchestrator {
             // keeps every tool-call/result pair inside one turn so turn-windowing can never split them.
             String traceId = pending.traceId();
             ResolvedProfile profile = modeProfiles.resolve(running.mode(), running.tenant(), principal);
-            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(List.of());
+            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(principal, List.of());
 
             List<ChatMessage> projected = ChatMessageAdaptor.project(TurnWindow.lastNTurns(log, maxContextTurns));
             List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
@@ -174,7 +190,7 @@ public class AgentOrchestrator {
             // it from the tool rounds already recorded in this turn.
             AgentLoopContext ctx = new AgentLoopContext(
                 running, running.tenant(), principal, providerId, running.mode(), profile,
-                model, messages, traceId, new AtomicBoolean(planProposal), new AtomicInteger(toolInvocationsInTurn(log, traceId))
+                model, messages, traceId, new AtomicBoolean(planProposal), new AtomicInteger(toolInvocationsInTurn(log, traceId)), actor
             );
 
             if (planProposal) {
@@ -232,6 +248,15 @@ public class AgentOrchestrator {
             return;
         }
 
+        if (sink.isCancelled()) {
+            threadManager.appendToolResult(
+                ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(),
+                ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()),
+                Map.of("outcome", "cancelled")
+            );
+            abortCancelled(ctx);
+            return;
+        }
         emitToolCall(sink, held, entry.kind(), entry.family());
         ToolCatalog.DispatchResult result;
         try {
@@ -261,14 +286,23 @@ public class AgentOrchestrator {
                 return;
             }
 
+            AiUsageStatus usage = usageService.status(ctx.providerId(), userId(ctx));
+            if (usage.isExceeded()) {
+                stopForUsageLimit(ctx, sink, usage);
+                return;
+            }
+
             ChatRequest request = ChatRequest.builder()
                 .messages(ctx.messages())
                 .toolSpecifications(ctx.profile().toolSpecifications())
                 .build();
 
             ChatResponse response = callModel(ctx.model(), request, sink);
+            if (response != null) {
+                recordUsage(ctx, response);
+            }
 
-            if (sink.isCancelled()) {
+            if (sink.isCancelled() || response == null) {
                 abortCancelled(ctx);
                 return;
             }
@@ -289,7 +323,8 @@ public class AgentOrchestrator {
                     return;
                 }
 
-                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get()) {
+                // A draft already proposed this turn is the outcome, not a plan: asking to approve its summary would only replay the authoring.
+                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get() && !hasDraftInTurn(ctx)) {
                     suspendForPlan(ctx, ai.text(), sink);
                     return;
                 }
@@ -315,6 +350,11 @@ public class AgentOrchestrator {
             Map<String, Object> heldArgs = null;
 
             for (ToolExecutionRequest req : ai.toolExecutionRequests()) {
+                if (sink.isCancelled()) {
+                    abortCancelled(ctx);
+                    return;
+                }
+
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {
@@ -343,6 +383,10 @@ public class AgentOrchestrator {
                 executeTool(ctx, req, entry, sink);
             }
 
+            if (sink.isCancelled()) {
+                abortCancelled(ctx);
+                return;
+            }
             if (heldAction != null) {
                 suspendForAction(ctx, heldAction, heldEntry, heldArgs, sink);
                 return;
@@ -422,18 +466,43 @@ public class AgentOrchestrator {
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
+    @Nullable
     private ChatResponse callModel(final StreamingChatModel model, final ChatRequest request, final TurnEventSink sink) {
         CompletableFuture<ChatResponse> future = new CompletableFuture<>();
+        AtomicReference<StreamingHandle> handle = new AtomicReference<>();
         model.chat(request, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(final String partial) {
-                // The client may disconnect mid-stream; stop emitting tokens once the sink is cancelled.
-                if (sink.isCancelled()) {
+                if (abortIfCancelled(sink, handle, handle.get())) {
                     return;
                 }
                 if (partial != null && !partial.isEmpty()) {
                     sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(partial));
                 }
+            }
+
+            @Override
+            public void onPartialResponse(final PartialResponse partial, final PartialResponseContext context) {
+                if (abortIfCancelled(sink, handle, context.streamingHandle())) {
+                    return;
+                }
+                onPartialResponse(partial.text());
+            }
+
+            @Override
+            public void onPartialThinking(final PartialThinking thinking, final PartialThinkingContext context) {
+                if (abortIfCancelled(sink, handle, context.streamingHandle())) {
+                    return;
+                }
+                onPartialThinking(thinking);
+            }
+
+            @Override
+            public void onPartialToolCall(final PartialToolCall toolCall, final PartialToolCallContext context) {
+                if (abortIfCancelled(sink, handle, context.streamingHandle())) {
+                    return;
+                }
+                onPartialToolCall(toolCall);
             }
 
             @Override
@@ -443,23 +512,93 @@ public class AgentOrchestrator {
 
             @Override
             public void onError(final Throwable error) {
+                // Closing the HTTP stream after Stop looks like an I/O failure; ignore it so the
+                // turn is cancelled rather than failed.
+                if (sink.isCancelled()) {
+                    return;
+                }
                 future.completeExceptionally(error);
             }
         });
         try {
-
-            return future.get(modelCallTimeout.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            future.cancel(true);
-            throw new IllegalStateException("LLM streaming call timed out after " + modelCallTimeout, e);
+            // Stop must not wait out modelCallTimeout: after StreamingHandle.cancel() the provider
+            // often never calls onCompleteResponse, so a single future.get(timeout) would hang.
+            long deadlineNanos = System.nanoTime() + modelCallTimeout.toNanos();
+            while (!future.isDone()) {
+                if (abortIfCancelled(sink, handle, handle.get())) {
+                    return null;
+                }
+                long remainingNanos = deadlineNanos - System.nanoTime();
+                if (remainingNanos <= 0) {
+                    future.cancel(true);
+                    cancelProviderStream(handle.get());
+                    throw new IllegalStateException("LLM streaming call timed out after " + modelCallTimeout, new TimeoutException());
+                }
+                long waitMs = Math.min(TimeUnit.NANOSECONDS.toMillis(remainingNanos), MODEL_CANCEL_POLL_MS);
+                try {
+                    future.get(Math.max(waitMs, 1), TimeUnit.MILLISECONDS);
+                } catch (TimeoutException ignored) {
+                }
+            }
+            if (abortIfCancelled(sink, handle, handle.get())) {
+                return null;
+            }
+            return future.get();
         } catch (InterruptedException e) {
             future.cancel(true);
+            cancelProviderStream(handle.get());
             Thread.currentThread().interrupt();
             throw new IllegalStateException("LLM streaming call interrupted", e);
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw new IllegalStateException("LLM streaming call failed: " + cause.getMessage(), cause);
         }
+    }
+
+    private static boolean abortIfCancelled(final TurnEventSink sink, final AtomicReference<StreamingHandle> handle,
+        final StreamingHandle incoming) {
+        if (incoming != null) {
+            handle.compareAndSet(null, incoming);
+        }
+        if (!sink.isCancelled()) {
+            return false;
+        }
+        cancelProviderStream(handle.get());
+        return true;
+    }
+
+    private static void cancelProviderStream(final StreamingHandle handle) {
+        if (handle != null && !handle.isCancelled()) {
+            handle.cancel();
+        }
+    }
+
+    /**
+     * Books what the call just cost. Deliberately ahead of the cancellation check — a user closing the tab does
+     * not un-bill tokens the provider already generated.
+     */
+    private void recordUsage(final AgentLoopContext ctx, final ChatResponse response) {
+        String model = response.metadata() == null ? null : response.metadata().modelName();
+        usageService.record(ctx.tenant(), ctx.providerId(), userId(ctx), model, response.tokenUsage());
+    }
+
+    /**
+     * Ends a turn gracefully once the provider's spend ceiling is reached. Stopped rather than failed, like the
+     * tool-step cap: the request was valid and the work so far stands, so the thread stays usable.
+     */
+    private void stopForUsageLimit(final AgentLoopContext ctx, final TurnEventSink sink, final AiUsageStatus usage) {
+        log.warn("Copilot turn for thread {} stopped: provider '{}' has reached its usage limit", ctx.thread().uid(), ctx.providerId());
+        usageService.recordRefusal(usage);
+        String message = usage.exceededMessage();
+        threadManager.appendAssistantText(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), message);
+        sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(message));
+        finishTurn(ctx);
+        done(sink, AgentThreadStatus.IDLE);
+    }
+
+    @Nullable
+    private static String userId(final AgentLoopContext ctx) {
+        return ctx.principal() == null ? null : ctx.principal().userId();
     }
 
     private void finishTurn(final AgentLoopContext ctx) {
@@ -487,6 +626,11 @@ public class AgentOrchestrator {
             .count();
     }
 
+    private boolean hasDraftInTurn(final AgentLoopContext ctx) {
+        return threadManager.load(ctx.thread().tenant(), ctx.thread().uid()).stream()
+            .anyMatch(m -> AgentMessageType.ARTEFACT_DRAFT == m.type() && ctx.traceId().equals(m.traceId()));
+    }
+
     private void abortCancelled(final AgentLoopContext ctx) {
         log.debug("Client disconnected; aborting turn for thread {}", ctx.thread().uid());
         threadManager.appendCancelled(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId());
@@ -504,7 +648,13 @@ public class AgentOrchestrator {
     }
 
     private AgentCallContext.Context callContext(final AgentLoopContext ctx) {
-        return new AgentCallContext.Context(ctx.tenant(), ctx.principal(), ctx.providerId(), ctx.thread().uid());
+        return AgentCallContext.Context.builder()
+            .tenant(ctx.tenant())
+            .principal(ctx.principal())
+            .providerId(ctx.providerId())
+            .conversationId(ctx.thread().uid())
+            .actor(ctx.actor())
+            .build();
     }
 
     /** Persist and stream an artefact a tool produced — the counterpart of the tool's publishable result. */

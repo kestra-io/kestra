@@ -1,8 +1,6 @@
 package io.kestra.core.runners;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -18,8 +16,6 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -32,8 +28,8 @@ import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
-
 import io.kestra.core.utils.ListUtils;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -77,25 +73,27 @@ public class RunContextFactory {
     protected KestraConfiguration kestraConfiguration;
 
     @Inject
-    private RunContextLoggerFactory runContextLoggerFactory;
+    protected RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
-    private KVStoreService kvStoreService;
+    protected KVStoreService kvStoreService;
 
     @Inject
-    private NamespaceFactory namespaceFactory;
+    protected NamespaceFactory namespaceFactory;
 
     @Inject
-    private AssetManagerFactory assetManagerFactory;
+    protected AssetManagerFactory assetManagerFactory;
+
+    // Late injection: both read a repository, which a worker does not have, and a worker only ever
+    // builds a run context from variables — never from an execution.
+    @Inject
+    protected Provider<TaskOutputService> taskOutputServiceProvider;
 
     @Inject
-    private TaskOutputService taskOutputService;
+    protected Provider<ExecutionOutputService> executionOutputServiceProvider;
 
     @Inject
-    private ExecutionOutputService executionOutputService;
-
-    @Inject
-    private Provider<RunContextInitializer> runContextInitializerProvider;
+    protected Provider<RunContextInitializer> runContextInitializerProvider;
 
     // hacky
     public RunContextInitializer initializer() {
@@ -123,7 +121,7 @@ public class RunContextFactory {
             newRunVariablesBuilder()
                 .withFlow(flow)
                 .withExecution(execution)
-                .withOutputs(taskOutputService.computeOutputs(execution))
+                .withOutputs(taskOutputServiceProvider.get().computeOutputs(execution))
                 .withExecutionOutputs(executionOutputs(flow, execution))
         );
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
@@ -133,7 +131,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Execution
             .withPluginConfiguration(Map.of())
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory, StorageContext.triggeringExecutionPrefix(variables)))
             .withVariableRenderer(variableRenderer)
             .withVariables(variables)
             .withDecryptVariables(decryptVariables)
@@ -155,7 +153,7 @@ public class RunContextFactory {
             .withFlow(flow)
             .withTask(task)
             .withExecution(execution)
-            .withOutputs(taskOutputService.computeOutputs(execution))
+            .withOutputs(taskOutputServiceProvider.get().computeOutputs(execution))
             .withExecutionOutputs(executionOutputs(flow, execution))
             .withTaskRun(taskRun);
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
@@ -165,7 +163,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Task
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()))
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory, StorageContext.triggeringExecutionPrefix(variables)))
             .withVariables(variables)
             .withDecryptVariables(decryptVariables)
             .withTask(task)
@@ -253,8 +251,8 @@ public class RunContextFactory {
     }
 
     /**
-     * Loads the flow-level outputs of an execution. For a loop sub-execution, the outputs of the parent execution are
-     * used as the parent is the execution exposed inside the run variables.
+     * Loads the flow-level outputs of an execution. For a loop sub-execution, the outputs of the root execution are
+     * used because it is the execution exposed inside the run variables.
      *
      * @return the execution outputs or null if no outputs are defined in the flow or already computed in the execution
      */
@@ -264,15 +262,14 @@ public class RunContextFactory {
             return null;
         }
 
-        Execution realExecution = execution != null && execution.getLoopRun() != null ? execution.getLoopRun().parent() : execution;
+        Execution realExecution = execution == null ? null : execution.rootExecution();
 
         try {
-            return executionOutputService.getOutputs(realExecution);
+            return executionOutputServiceProvider.get().getOutputs(realExecution);
         } catch (InternalException e) {
             throw new KestraRuntimeException(e);
         }
     }
-
 
     private DefaultRunContext.Builder newBuilder() {
         return new DefaultRunContext.Builder()

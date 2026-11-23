@@ -2,7 +2,6 @@ package io.kestra.scheduler;
 
 import java.time.Clock;
 import java.time.Duration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -20,13 +20,13 @@ import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodesAssigner;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.vnodes.VNodesAssigner;
 
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -72,7 +72,9 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
     private Disposable maintenanceListener;
 
-    private final Set<Integer> currentVNodesAssignment = new HashSet<>();
+    // Published as an immutable snapshot: written by the vNodes-assignment consumer and by the
+    // teardown, while the scheduler endpoint and the trigger monitor read it from their own threads.
+    private volatile Set<Integer> currentVNodesAssignment = Set.of();
 
     private Disposable rebalanceDisposable;
 
@@ -180,7 +182,8 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                 // (Re)initialize trigger state store for assigned VNodes
                 triggerStateStore.init(vNodes);
 
-                currentVNodesAssignment.addAll(vNodes);
+                currentVNodesAssignment = Stream.concat(currentVNodesAssignment.stream(), vNodes.stream())
+                    .collect(Collectors.toUnmodifiableSet());
 
                 // Create and assign the scheduling-loops even in maintenance mode, so that exiting
                 // maintenance only has to resubmit them.
@@ -226,18 +229,19 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
      * those vNodes across them.
      */
     private void assignVNodesToSchedulingLoops() {
-        if (currentVNodesAssignment.isEmpty()) {
+        final Set<Integer> vNodes = currentVNodesAssignment;
+        if (vNodes.isEmpty()) {
             return; // nothing to assign
         }
 
-        final int numSchedulingLoop = Math.min(maxThreads, currentVNodesAssignment.size());
+        final int numSchedulingLoop = Math.min(maxThreads, vNodes.size());
         for (int i = schedulingLoops.size(); i < numSchedulingLoop; i++) {
             schedulingLoops.add(schedulerEventLoopFactory.create(i, clock));
         }
 
         schedulingLoops.forEach(schedulingLoop ->
         {
-            Set<Integer> assignments = currentVNodesAssignment.stream()
+            Set<Integer> assignments = vNodes.stream()
                 .filter(vNodeId -> vNodeId % schedulingLoops.size() == schedulingLoop.id())
                 .collect(Collectors.toSet());
             schedulingLoop.setAssignments(assignments);
@@ -305,7 +309,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         if (clearAssignment) {
             // Clear local assignments
             schedulingLoops.clear();
-            currentVNodesAssignment.clear();
+            currentVNodesAssignment = Set.of();
         }
     }
 

@@ -11,8 +11,7 @@ import {
     TOUR_WEBHOOK_TRIGGER_TYPE,
     tourFlowSource,
 } from "./tourFlows"
-
-export const TOUR_STEP_GROUP_COUNT = 4
+import type {Execution} from "../../../stores/executions"
 
 export class TourSceneError extends Error {
     constructor(
@@ -24,34 +23,67 @@ export class TourSceneError extends Error {
     }
 }
 
-const expectState = (execution: any, expected: string, key: string) => {
+const expectState = (execution: Execution | undefined, expected: string, key: string) => {
     const state = execution?.state?.current
     if (state !== expected) {
         throw new TourSceneError(key, {state: state ?? "unknown"})
     }
 }
 
-export interface TourSceneContext {
-    actions: TourActions;
+// Generic over the actions, so a tour variant can bring its own set.
+export interface TourSceneContext<A = TourActions> {
+    actions: A;
     store: ReturnType<typeof useProductTourStore>;
 }
 
-export interface TourScene {
-    /** Also the i18n key suffix: `onboarding.tour.scenes.<id>.*`. */
+export interface TourScene<A = TourActions> {
+    /** Also the i18n key suffix: `<variant i18n prefix>.scenes.<id>.*`. */
     id: string;
     step: number;
     targetSelector?: string;
+    /** What the card must stay off even when the target fills the page; not highlighted. */
+    avoid?: string;
+    /** The corner tried first; the card leaves it for one covering neither `avoid` nor the target. */
     placement?: "left";
     dim?: boolean;
     milestone?: boolean;
     callout?: boolean;
     confetti?: boolean;
     offersExit?: boolean;
-    enter?: (context: TourSceneContext) => Promise<void> | void;
-    action?: (context: TourSceneContext) => Promise<void> | void;
-    completedByUser?: (context: TourSceneContext & {route: TourRoute}) => boolean;
-    poll?: (context: TourSceneContext) => Promise<boolean>;
+    enter?(context: TourSceneContext<A>): Promise<void> | void;
+    action?(context: TourSceneContext<A>): Promise<void> | void;
+    completedByUser?(context: TourSceneContext<A> & {route: TourRoute}): boolean;
+    poll?(context: TourSceneContext<A>): Promise<boolean>;
 }
+
+type SceneShape = {id: string; step: number};
+
+export interface TourStepGroup {
+    step: number;
+    scenes: string[];
+}
+
+export const sceneIdsOf = (scenes: readonly SceneShape[]) => scenes.map((scene) => scene.id)
+
+export const stepGroupsOf = (scenes: readonly SceneShape[]): TourStepGroup[] =>
+    scenes.reduce((groups, scene) => {
+        const group = groups.find((candidate) => candidate.step === scene.step)
+        if (group) {
+            group.scenes.push(scene.id)
+        } else {
+            groups.push({step: scene.step, scenes: [scene.id]})
+        }
+        return groups
+    }, [] as TourStepGroup[])
+
+/** Falls back to the first scene, so a renamed or dropped scene id cannot strand the tour. */
+export const sceneIndexOf = (scenes: readonly SceneShape[], id: string | null) => {
+    const index = sceneIdsOf(scenes).indexOf(id ?? "")
+    return index >= 0 ? index : 0
+}
+
+export const workingLabelKey = (sceneKey: string, genericKey: string, exists: (key: string) => boolean) =>
+    exists(sceneKey) ? sceneKey : genericKey
 
 export interface TourRoute {
     name?: string | symbol | null;
@@ -88,6 +120,8 @@ const GANTT = "[data-onboarding-target=\"execution-gantt\"], #gantt"
 const FAILED_LOG = `.log-row-error, .task-details, ${GANTT}`
 const REPLAYED_TASK = `.task-details, ${GANTT}`
 const REVISION_DIFF = ".revision .ks-editor, .revision-select"
+const REVISION_CHANGES = ".revision .line-insert, .revision .line-delete"
+const EXECUTION_LABELS = ".labels-container"
 const TEST_EVENT_BUTTON = "[data-onboarding-target=\"trigger-test-event-button\"]"
 const EXPRESSION_DEBUGGER = ".expression-debugger .button"
 
@@ -184,6 +218,7 @@ export const TOUR_SCENES: TourScene[] = [
         id: "fix_and_replay",
         step: 2,
         targetSelector: REVISION_DIFF,
+        avoid: REVISION_CHANGES,
         placement: "left",
         enter: async ({actions}) => {
             await actions.saveSource(tourFlowSource.withFixedNotify())
@@ -308,30 +343,9 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "chain",
         step: 4,
+        avoid: EXECUTION_LABELS,
         milestone: true,
         confetti: true,
         enter: ({actions}) => actions.openExecutionsList(),
     },
 ]
-
-export const TOUR_SCENE_IDS = TOUR_SCENES.map((scene) => scene.id)
-
-export const TOUR_TOTAL_STEPS = TOUR_SCENES.length
-
-export const TOUR_STEP_GROUPS: {step: number; scenes: string[]}[] = TOUR_SCENES.reduce(
-    (groups, scene) => {
-        const group = groups.find((candidate) => candidate.step === scene.step)
-        if (group) {
-            group.scenes.push(scene.id)
-        } else {
-            groups.push({step: scene.step, scenes: [scene.id]})
-        }
-        return groups
-    },
-    [] as {step: number; scenes: string[]}[],
-)
-
-export const tourSceneIndex = (id: string | null) => {
-    const index = TOUR_SCENE_IDS.indexOf(id ?? "")
-    return index >= 0 ? index : 0
-}

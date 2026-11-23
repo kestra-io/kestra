@@ -294,6 +294,36 @@ public class GraphUtils {
         fillAlternativePaths(graph, errors, _finally, null, parent, execution, null);
     }
 
+    /**
+     * Like {@link #switchCase}, with {@code before} run on every path ahead of the cases, so the cases branch out from its last task.
+     */
+    public static void sequentialThenSwitchCase(
+        GraphCluster graph,
+        List<Task> before,
+        Map<String, List<Task>> cases,
+        List<Task> errors,
+        List<Task> _finally,
+        TaskRun parent,
+        Execution execution) throws IllegalVariableEvaluationException {
+        if (ListUtils.isEmpty(before)) {
+            switchCase(graph, cases, errors, _finally, parent, execution);
+            return;
+        }
+
+        AbstractGraph last = fillGraph(graph, before, RelationType.SEQUENTIAL, parent, execution, null, null, RelationType.SEQUENTIAL);
+        AbstractGraph lastExit = last instanceof GraphCluster cluster && cluster.getEnd() != null ? cluster.getEnd() : last;
+        // an empty case still leaves through finally, so the edge to it is only dropped when every case has tasks
+        if (cases.values().stream().noneMatch(ListUtils::isEmpty)) {
+            graph.getGraph().removeEdge(lastExit, graph.getFinally());
+        }
+
+        for (Map.Entry<String, List<Task>> entry : cases.entrySet()) {
+            fillGraph(graph, entry.getValue(), RelationType.SEQUENTIAL, parent, execution, entry.getKey(), last, null);
+        }
+
+        fillAlternativePaths(graph, errors, _finally, null, parent, execution, null);
+    }
+
     public static void ifElse(
         GraphCluster graph,
         List<Task> then,
@@ -418,10 +448,23 @@ public class GraphUtils {
         TaskRun parent,
         Execution execution,
         String value) throws IllegalVariableEvaluationException {
+        fillGraph(graph, tasks, relationType, parent, execution, value, null, null);
+    }
+
+    /** {@code start} and {@code firstRelationType} default to the cluster's task node (or root) and the cluster's relation type when null; returns the last node added. */
+    private static AbstractGraph fillGraph(
+        GraphCluster graph,
+        List<Task> tasks,
+        RelationType relationType,
+        TaskRun parent,
+        Execution execution,
+        String value,
+        AbstractGraph start,
+        RelationType firstRelationType) throws IllegalVariableEvaluationException {
         Iterator<Task> iterator = tasks.iterator();
         AbstractGraph previous;
 
-        previous = Optional.<AbstractGraph> ofNullable(graph.getTaskNode()).orElse(graph.getRoot());
+        previous = start != null ? start : Optional.<AbstractGraph> ofNullable(graph.getTaskNode()).orElse(graph.getRoot());
         if (relationType == RelationType.FINALLY) {
             previous = graph.getFinally();
 
@@ -445,7 +488,7 @@ public class GraphUtils {
                 List<String> parentValues = null;
 
                 // we use the graph relation type by default but we change it to pass relation for case below
-                RelationType newRelation = graph.getRelationType();
+                RelationType newRelation = firstRelationType != null ? firstRelationType : graph.getRelationType();
                 if (relationType == RelationType.ERROR) {
                     newRelation = relationType;
                 } else if ((!isFirst && relationType != RelationType.PARALLEL && graph.getRelationType() != RelationType.DYNAMIC)) {
@@ -526,6 +569,8 @@ public class GraphUtils {
                 }
             }
         }
+
+        return previous;
     }
 
     private static AbstractGraph toEdgeTarget(AbstractGraph currentGraph) {

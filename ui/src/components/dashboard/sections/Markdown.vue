@@ -53,7 +53,5 @@
         refresh,
     })
 
-    watch(() => route.params.filters, () => {
-        refresh()
-    }, {deep: true, immediate: true})
+    watch(() => route.fullPath, () => refresh(), {immediate: true})
 </script>

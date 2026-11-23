@@ -15,6 +15,12 @@ function isMap(value: unknown): value is TaskLike {
     return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
+function isAtRootLevel(source: string, cursorIndex: number): boolean {
+    const lineStart = source.lastIndexOf("\n", Math.max(0, cursorIndex - 1)) + 1
+    const line = source.slice(lineStart, cursorIndex)
+    return !/^[ \t]/.test(line) && !line.startsWith("- ")
+}
+
 function probeIndexes(source: string, cursorIndex: number): number[] {
     const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1))
     const indexes = [safeCursorIndex]
@@ -28,10 +34,10 @@ function probeIndexes(source: string, cursorIndex: number): number[] {
     return indexes
 }
 
-function probe<T>(source: string, cursorIndex: number, pick: (candidates: unknown[]) => T | undefined): T | undefined {
+function probe<T>(source: string, cursorIndex: number, pick: (candidates: unknown[], path?: string[]) => T | undefined): T | undefined {
     for (const probeIndex of probeIndexes(source, cursorIndex)) {
         const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
-        const found = pick([...(localized?.parents ?? []), localized?.value])
+        const found = pick([...(localized?.parents ?? []), localized?.value], localized?.path)
         if (found !== undefined) {
             return found
         }
@@ -55,8 +61,8 @@ function probeTaskLike(source: string, cursorIndex: number): TaskLike | undefine
     })
 }
 
-function probeTaskOwningCursor(source: string, cursorIndex: number): TaskLike | undefined {
-    return probe(source, cursorIndex, (candidates) => {
+function probeTaskOwningCursor(source: string, cursorIndex: number): {task: TaskLike; candidates: unknown[]; path?: string[]} | undefined {
+    return probe(source, cursorIndex, (candidates, path) => {
         const taskIndex = innermostTaskIndex(candidates)
         if (taskIndex === -1) {
             return undefined
@@ -65,7 +71,7 @@ function probeTaskOwningCursor(source: string, cursorIndex: number): TaskLike | 
         // `taskRunner:`…) whose keys come from its own schema, so the task must not scope them.
         return candidates.slice(taskIndex + 1).some(isMap)
             ? undefined
-            : (candidates[taskIndex] as TaskLike)
+            : {task: candidates[taskIndex] as TaskLike, candidates, path}
     })
 }
 
@@ -81,7 +87,7 @@ function blankLineAtCursor(source: string, cursorIndex: number): string {
  * cursor and walking its ancestry outwards to the nearest node that has both an `id` and a `type`.
  */
 export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cursorIndex: number}): TaskLike | undefined {
-    if (!source.length) {
+    if (!source.length || isAtRootLevel(source, cursorIndex)) {
         return undefined
     }
 
@@ -103,15 +109,23 @@ export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cur
 export function taskIdentityAtCursor(
     {source, cursorIndex}: {source: string; cursorIndex: number},
 ): {type: string; version?: string} | undefined {
-    if (!source.length) {
+    if (!source.length || isAtRootLevel(source, cursorIndex)) {
         return undefined
     }
 
     try {
-        const task = probeTaskOwningCursor(source, cursorIndex)
+        const result = probeTaskOwningCursor(source, cursorIndex)
             ?? probeTaskOwningCursor(blankLineAtCursor(source, cursorIndex), cursorIndex)
-        if (!isTaskLike(task)) {
+        if (!result || !isTaskLike(result.task)) {
             return undefined
+        }
+
+        const {task, path} = result
+        if (path && path.length > 0) {
+            const isExcluded = ["triggers", "inputs", "outputs"].includes(path[0])
+            if (isExcluded) {
+                return undefined
+            }
         }
 
         return {
@@ -171,4 +185,42 @@ export function scopePropertySuggestionsToTaskType<T extends {label: string; kin
 
     const valid = new Set(validPropertyKeys)
     return suggestions.filter((suggestion) => suggestion.kind !== propertyKind || valid.has(suggestion.label))
+}
+
+/**
+ * Collapses property-key suggestions sharing a label into one plain `key: ` suggestion. Monaco YAML emits one per
+ * schema branch whose insert snippet differs (a key typed `string` in one input type and `array` in another), which
+ * reads as the same key listed several times while no `type` narrows the branches.
+ */
+export function mergeDuplicatePropertySuggestions<T extends {label: string; kind?: number; insertText: string}>({
+    suggestions,
+    propertyKind,
+}: {
+    suggestions: T[];
+    propertyKind: number;
+}): T[] {
+    const countByLabel = new Map<string, number>()
+    const indentByLabel = new Map<string, string>()
+    for (const suggestion of suggestions) {
+        if (suggestion.kind === propertyKind) {
+            countByLabel.set(suggestion.label, (countByLabel.get(suggestion.label) ?? 0) + 1)
+            // The worker prefixes the space after a bare list dash on some branches only, so keep the widest prefix.
+            const indent = suggestion.insertText.match(/^\s*/)?.[0] ?? ""
+            if (indent.length > (indentByLabel.get(suggestion.label) ?? "").length) {
+                indentByLabel.set(suggestion.label, indent)
+            }
+        }
+    }
+
+    const seen = new Set<string>()
+    return suggestions.flatMap((suggestion) => {
+        if (suggestion.kind !== propertyKind || countByLabel.get(suggestion.label) === 1) {
+            return [suggestion]
+        }
+        if (seen.has(suggestion.label)) {
+            return []
+        }
+        seen.add(suggestion.label)
+        return [{...suggestion, insertText: `${indentByLabel.get(suggestion.label) ?? ""}${suggestion.label}: `}]
+    })
 }

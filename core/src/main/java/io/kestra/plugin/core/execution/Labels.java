@@ -29,7 +29,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
@@ -42,7 +41,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     description = """
         Accepts labels as a map, list of `{key,value}` pairs, or JSON string. Values are rendered, merged into existing labels, and overwrite by default.
 
-        System labels (`system.*`) are rejected and empty values are not allowed. Useful for tagging runs with payload metadata (customer, env, etc.)."""
+        System labels (`system` and `system.*`) are rejected and empty values are not allowed. Useful for tagging runs with payload metadata (customer, env, etc.)."""
 )
 @Plugin(
     examples = {
@@ -139,7 +138,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
 
         // check for system labels: none can be passed at runtime
         Optional<Map.Entry<String, String>> systemLabel = labelsAsMap.entrySet().stream()
-            .filter(entry -> entry.getKey().startsWith(SYSTEM_PREFIX))
+            .filter(entry -> Label.isSystem(entry.getKey()))
             .findFirst();
         if (systemLabel.isPresent()) {
             throw new IllegalArgumentException(

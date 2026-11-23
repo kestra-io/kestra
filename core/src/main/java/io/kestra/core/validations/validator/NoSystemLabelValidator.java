@@ -18,7 +18,7 @@ public class NoSystemLabelValidator implements ConstraintValidator<NoSystemLabel
             return true; // nulls are allowed according to spec
         }
 
-        if (value.key().startsWith(Label.SYSTEM_PREFIX)) {
+        if (Label.isSystem(value.key())) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("System labels can only be set by Kestra itself, offending label: " + value.key() + "=" + value.value() + ".")
                 .addConstraintViolation();

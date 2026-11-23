@@ -35,10 +35,16 @@ import {
 } from "./subflowLinkProvider"
 import {
     filterMissingRequiredTaskProperties,
+    mergeDuplicatePropertySuggestions,
     scopePropertySuggestionsToTaskType,
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
+import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
+import {registerIndentedBlockScalarTokenizer} from "./yamlBlockScalarTokenizer"
+import {registerPebbleDefinitionProvider} from "./pebbleDefinitionProvider"
+import {registerPebbleHoverProvider, registerPebbleHoverToggle} from "./pebbleHoverProvider"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
+import {storageKeys} from "../../../utils/constants"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
@@ -65,11 +71,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         // Base YAML language setup shared across all YAML editors.
         const monacoYaml = configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
-            hover: localStorage.getItem("hoverTextEditor") === "true",
+            hover: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
             completion: true,
             validate: validateYAML.value ?? true,
             schemas: yamlSchemas(),
         })
+
+        // Keep multi-line string content highlighted as plain text, whatever its indentation.
+        void registerIndentedBlockScalarTokenizer("yaml")
 
         // Keep Monaco YAML validation in sync with the blueprint store setting. The single instance must be
         // updated in place: calling configureMonacoYaml again would stack a second undisposed instance whose
@@ -173,14 +182,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 .map((s) => {
                     const r = {...s}
 
-                    if (typeof r.insertText === "string") {
-                        r.insertText = r.insertText.replaceAll("\\\\\"", "\"")
-                    } else if (typeof r.insertText === "object" && r.insertText !== null) {
-                        const textObj = r.insertText as any
-                        if (typeof textObj.value === "string") {
-                            textObj.value = textObj.value.replaceAll("\\\\\"", "\"")
-                        }
-                    }
+                    r.insertText = r.insertText.replaceAll("\\\\\"", "\"")
 
                     if (typeof r.filterText === "string") {
                         r.filterText = r.filterText.replaceAll("\\\\\"", "\"")
@@ -326,19 +328,20 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     return suggestion
                 })
 
-            // Monaco YAML derives property suggestions from the union of every task type, so a task
-            // body offers keys from unrelated plugins. Restrict them to the task's resolved `type`.
-            let scopedSuggestions = suggestions
+            let scopedSuggestions = mergeDuplicatePropertySuggestions({
+                suggestions,
+                propertyKind: monaco.languages.CompletionItemKind.Property,
+            })
             if (!isTypeValueContext) {
                 const task = taskIdentityAtCursor({
                     source: model.getValue(),
                     cursorIndex: model.getOffsetAt(position),
                 })
-                // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
-                // task shape but carry types like `STRING`, which would 404 on every keystroke.
-                const scopeKey = task && task.type.includes(".")
-                    ? `${task.type}@${task.version ?? ""}`
-                    : undefined
+                // The flow schema describes a single version of each plugin, so a task pinning a
+                // `version` is scoped against that version's documentation instead.
+                // Guard on dotted FQCNs to skip 404s for enum types like MAX_DURATION.
+                const isPluginType = task?.type.includes(".")
+                const scopeKey = task?.version && isPluginType ? `${task.type}@${task.version}` : undefined
                 if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
                     try {
                         // `all` is required: without it the endpoint omits every inherited `Task`
@@ -351,7 +354,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         })
                         const properties = pluginDoc?.schema?.properties?.properties
                         scopedSuggestions = scopePropertySuggestionsToTaskType({
-                            suggestions,
+                            suggestions: scopedSuggestions,
                             validPropertyKeys: properties ? Object.keys(properties) : undefined,
                             propertyKind: monaco.languages.CompletionItemKind.Property,
                         })
@@ -363,10 +366,25 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 }
             }
 
+            // Done last: every step above reads `label` as the fully qualified string.
+            const labelledSuggestions = scopedSuggestions.map((suggestion) => {
+                const split = splitPluginTypeLabel(suggestion.label)
+                if (split === undefined) {
+                    return suggestion
+                }
+
+                return {
+                    ...suggestion,
+                    label: split,
+                    // Keeps package segments searchable now that the label is only the class name.
+                    filterText: suggestion.filterText ?? suggestion.label,
+                }
+            })
+
             return {
                 ...defaultCompletion,
                 incomplete: true,
-                suggestions: scopedSuggestions,
+                suggestions: labelledSuggestions,
             }
         }
     }
@@ -387,7 +405,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 async provideCompletionItems(model, position) {
                     const source = model.getValue()
                     const cursorPosition = model.getOffsetAt(position)
-                    const parsed = YAML_UTILS.parse(source, false)
+                    const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
 
                     const currentWord = model.findPreviousMatch(
                         RegexProvider.beforeSeparator(),
@@ -409,7 +427,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     const parentStartLine = model.getPositionAt(
                         elementUnderCursor.range![0],
                     ).lineNumber
-                    
+
                     let autoCompletions = []
                     try {
                         autoCompletions = await yamlAutoCompletion.valueAutoCompletion(
@@ -475,7 +493,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
         autoCompletionProviders.push(
             monaco.languages.registerInlineCompletionsProvider("yaml", {
-                provideInlineCompletions: async (model: any, position: any) => {
+                provideInlineCompletions: async (model: IModel, position: IPosition) => {
                     // Only suggest inline required properties in flow/testsuite editors.
                     const isFlowModel =
                         model.uri.path.includes("flow-") ||
@@ -552,10 +570,6 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         items: [
                             {
                                 insertText: snippet,
-                                insertTextRules:
-                                monaco.languages
-                                    .CompletionItemInsertTextRule
-                                    .InsertAsSnippet,
                                 range: new monaco.Range(
                                     position.lineNumber,
                                     position.column,
@@ -564,6 +578,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                 ),
                                 command: {
                                     id: "moveCursor",
+                                    title: "",
                                     arguments: [
                                         {
                                             lineNumber: position.lineNumber,
@@ -576,13 +591,10 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         enableForwardStability: true,
                     }
                 },
-                handleItemDidShow() {
+                disposeInlineCompletions() {
+                    // No resources to release: the completions are plain objects with no external references.
                 },
-                handlePartialAccept() {
-                },
-                freeInlineCompletions() {
-                },
-            } as any),
+            }),
         )
 
         registerPebbleAutocompletion(
@@ -610,6 +622,15 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         )
 
         this.registerSubflowLinks(autoCompletionProviders)
+        const pluginsStore = usePluginsStore()
+        const loadOutputProperties = async (cls: string) =>
+            (await pluginsStore.load({cls, commit: false}))?.schema?.outputs?.properties
+        registerPebbleDefinitionProvider(autoCompletionProviders, loadOutputProperties)
+        registerPebbleHoverProvider(autoCompletionProviders, loadOutputProperties)
+        const toast = makeToast(t)
+        registerPebbleHoverToggle(autoCompletionProviders, t("pebble_hover.toggle"), (enabled) =>
+            toast.success(t(enabled ? "pebble_hover.enabled" : "pebble_hover.disabled")),
+        )
         this.registerEditionProviders(autoCompletionProviders, t)
 
         return autoCompletionProviders

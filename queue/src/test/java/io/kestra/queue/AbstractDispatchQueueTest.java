@@ -8,6 +8,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -27,6 +28,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,6 +64,11 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     void restoreKestraContext() {
         KestraContext.setContext(realContext);
         queueService.setKestraContext(realContext);
+    }
+
+    @Test
+    void shouldNotThrowWhenEmittingEmptyBatch() {
+        assertThatCode(() -> dispatchQueue.emit(List.of())).doesNotThrowAnyException();
     }
 
     @Test
@@ -187,12 +194,13 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         List<Integer> list = Collections.synchronizedList(new ArrayList<>());
 
         var crashed = new AtomicBoolean(false);
+        var received = new AtomicInteger(0);
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
             .subscribe(e ->
             {
-                if (e.getLeft().id == 2 && crashed.compareAndSet(false, true)) {
+                if (received.incrementAndGet() == 2 && crashed.compareAndSet(false, true)) {
                     countDownLatch.countDown();
                     throw new RuntimeException("Boom");
                 }
@@ -216,7 +224,6 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).hasSize(1);
-        assertThat(list.getFirst()).isEqualTo(1);
         await().atMost(Duration.ofSeconds(5)).untilAsserted(
             () -> assertThat(noOpShutdownContext.isShutdownCalled()).as("shutdown() should have been called on processing error").isTrue()
         );

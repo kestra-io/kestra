@@ -8,12 +8,12 @@ import java.util.stream.Collectors;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.mcp.models.McpServer;
-import io.kestra.core.models.Label;
+import io.kestra.core.models.AccessScope;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.Flow;
@@ -34,6 +34,8 @@ import io.kestra.core.services.LabelService;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.sse.Event;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -44,9 +46,13 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/**
+ * The {@link McpToolSource.Kind#FLOWS} tool source: exposes each enabled flow with an {@link McpToolTrigger}
+ * targeting a server as one of its tools, limited to the namespaces the caller may execute flows in.
+ */
 @Slf4j
 @Singleton
-public class McpToolService {
+public class McpToolService implements McpToolSource {
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final FlowRepositoryInterface flowRepositoryInterface;
     private final FlowToolSchemaMapper flowToolSchemaMapper;
@@ -56,11 +62,17 @@ public class McpToolService {
     private final FlowInputOutput flowInputOutput;
     private final FlowMetaStoreInterface flowMetaStore;
     private final ExecutionOutputService executionOutputService;
+    private final McpFlowToolAccessControl accessControl;
     private final Cache<ToolHandlerCacheKey, McpServerFeatures.AsyncToolSpecification> asyncToolSpecificationCache;
 
     private static final McpSchema.CallToolResult FLOW_ERROR_CALL_TOOL_RESULT = McpSchema.CallToolResult.builder()
         .isError(true)
         .addTextContent("Failed to execute flow")
+        .build();
+
+    private static final McpSchema.CallToolResult FORBIDDEN_CALL_TOOL_RESULT = McpSchema.CallToolResult.builder()
+        .isError(true)
+        .addTextContent("Not permitted to execute this tool")
         .build();
 
     public McpToolService(
@@ -71,7 +83,8 @@ public class McpToolService {
         McpConfig mcpConfig,
         FlowInputOutput flowInputOutput,
         FlowMetaStoreInterface flowMetaStore,
-        ExecutionOutputService executionOutputService) {
+        ExecutionOutputService executionOutputService,
+        McpFlowToolAccessControl accessControl) {
         this.executionCommandQueue = executionCommandQueue;
         this.flowRepositoryInterface = flowRepositoryInterface;
         this.flowToolSchemaMapper = flowToolSchemaMapper;
@@ -81,23 +94,37 @@ public class McpToolService {
         this.flowInputOutput = flowInputOutput;
         this.flowMetaStore = flowMetaStore;
         this.executionOutputService = executionOutputService;
+        this.accessControl = accessControl;
         asyncToolSpecificationCache = Caffeine.newBuilder()
             .maximumSize(mcpConfig.toolCacheConfig().maximumSize())
             .expireAfterAccess(mcpConfig.toolCacheConfig().expireAfterAccess())
             .build();
     }
 
-    public List<McpServerFeatures.AsyncToolSpecification> listToolSpecsForServer(String tenantId, String serverId, McpServer.ServerType serverType) {
-        return fetchFlowWithMcpToolTrigger(tenantId, serverId, serverType).stream().flatMap(
-            flow -> flow.getTriggers().stream()
-                .filter(isMcpTriggerTypeAndEnabledPredicate())
-                .filter(
-                    trigger -> serverId.equals(
-                        Objects.requireNonNullElse(((McpToolTrigger) trigger).getMcpServer(), McpToolTrigger.DEFAULT_SERVER_ID)
+    @Override
+    public Kind kind() {
+        return Kind.FLOWS;
+    }
+
+    @Override
+    public McpToolView view(KestraMcpTransportContext context) {
+        AccessScope scope = accessControl.executableScope(context.getUserId(), context.getTenantId(), context.getServerId());
+        return new FlowToolView(this, context.getTenantId(), context.getServerId(), scope);
+    }
+
+    public List<McpServerFeatures.AsyncToolSpecification> listToolSpecsForServer(String tenantId, String serverId, AccessScope scope) {
+        return fetchFlowWithMcpToolTrigger(tenantId, serverId).stream()
+            .filter(flow -> McpToolScope.allows(scope, flow.getNamespace()))
+            .flatMap(
+                flow -> flow.getTriggers().stream()
+                    .filter(isMcpTriggerTypeAndEnabledPredicate())
+                    .filter(
+                        trigger -> serverId.equals(
+                            Objects.requireNonNullElse(((McpToolTrigger) trigger).getMcpServer(), McpToolTrigger.DEFAULT_SERVER_ID)
+                        )
                     )
-                )
-                .map(trigger -> getAsyncToolSpecification(flow, (McpToolTrigger) trigger))
-        ).toList();
+                    .map(trigger -> getAsyncToolSpecification(flow, (McpToolTrigger) trigger))
+            ).toList();
     }
 
     private McpServerFeatures.AsyncToolSpecification getAsyncToolSpecification(Flow flow, McpToolTrigger toolTrigger) {
@@ -134,15 +161,18 @@ public class McpToolService {
 
             KestraMcpTransportContext context = (KestraMcpTransportContext) exchange.transportContext();
 
-            Execution execution = toolTrigger.evaluate(
-                flow, input, additionalInputs, Label.from(
-                    Map.of(
-                        Label.FROM, Label.FromLabel.MCP.value,
-                        Label.MCP_SERVER_ID, context.getServerId(),
-                        Label.MCP_SESSION_ID, context.getSessionId()
-                    )
-                )
+            AccessScope callerScope = accessControl.executableScope(
+                context.getUserId(), context.getTenantId(), context.getServerId()
             );
+            if (!McpToolScope.allows(callerScope, flow.getNamespace())) {
+                log.debug(
+                    "Rejecting MCP tool '{}' call for flow {}/{}/{}: caller '{}' cannot execute in that namespace",
+                    toolTrigger.getToolName(), flow.getTenantId(), flow.getNamespace(), flow.getId(), context.getUserId()
+                );
+                return Mono.just(FORBIDDEN_CALL_TOOL_RESULT);
+            }
+
+            Execution execution = toolTrigger.evaluate(flow, input, additionalInputs, McpExecutionLabels.of(context));
 
             List<String> validationErrors = collectInputValidationErrors(flow, execution, input);
             if (!validationErrors.isEmpty()) {
@@ -154,7 +184,7 @@ public class McpToolService {
                 return Mono.just(invalidInputResult(validationErrors));
             }
 
-            return runFlowForMcpTask(flow, execution)
+            return runFlowForMcpTask(flow, execution, context.getActor())
                 .flatMap(executionResult ->
                 {
                     try {
@@ -208,7 +238,8 @@ public class McpToolService {
 
     private Mono<Execution> runFlowForMcpTask(
         Flow flow,
-        Execution execution) {
+        Execution execution,
+        @Nullable Actor actor) {
         try {
             executionCommandQueue.emit(
                 Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
@@ -217,7 +248,9 @@ public class McpToolService {
                     .withLabels(execution.getLabels())
                     .withInputs(execution.getInputs())
             );
-            eventPublisher.publishEvent(CrudEvent.create(execution));
+            try (PropagatedContext.Scope _ = Actor.propagate(actor)) {
+                eventPublisher.publishEvent(CrudEvent.create(execution));
+            }
 
             String subscriberId = UUID.randomUUID().toString();
             return Flux.<Event<Execution>> create(
@@ -237,12 +270,15 @@ public class McpToolService {
         }
     }
 
-    private List<Flow> fetchFlowWithMcpToolTrigger(String tenantId, String serverId, McpServer.ServerType serverType) {
-        var flows = McpServer.ServerType.PUBLIC.equals(serverType)
-            ? flowRepositoryInterface.findWithNoAcl(Pageable.unpaged(), tenantId, McpToolTrigger.class)
-            : flowRepositoryInterface.find(Pageable.unpaged(), tenantId, McpToolTrigger.class);
-
-        return flows.stream()
+    /**
+     * Which flows a server exposes is a property of the server, not of whoever asks: the caller's own
+     * permissions are applied by the {@link AccessScope} filter in
+     * {@link #listToolSpecsForServer(String, String, AccessScope)} and again when a tool is invoked. This
+     * path also serves the tool refresh, which carries no caller to resolve permissions from.
+     */
+    private List<Flow> fetchFlowWithMcpToolTrigger(String tenantId, String serverId) {
+        return flowRepositoryInterface.findWithNoAcl(Pageable.unpaged(), tenantId, McpToolTrigger.class)
+            .stream()
             .filter(
                 flow -> !flow.isDisabled() &&
                     flow.getTriggers().stream().anyMatch(
@@ -255,6 +291,26 @@ public class McpToolService {
 
     private static Predicate<AbstractTrigger> isMcpTriggerTypeAndEnabledPredicate() {
         return trigger -> trigger.getClass().equals(McpToolTrigger.class) && !trigger.isDisabled();
+    }
+
+    /**
+     * Callers granted the same namespaces see the same tools, which keeps this to one server per distinct
+     * permission set rather than one per user.
+     */
+    private record FlowToolView(
+        McpToolService service,
+        String tenantId,
+        String serverId,
+        AccessScope scope) implements McpToolView {
+        @Override
+        public String cacheKey() {
+            return McpToolScope.cacheKey(scope);
+        }
+
+        @Override
+        public List<McpServerFeatures.AsyncToolSpecification> tools() {
+            return service.listToolSpecsForServer(tenantId, serverId, scope);
+        }
     }
 
     private record ToolHandlerCacheKey(

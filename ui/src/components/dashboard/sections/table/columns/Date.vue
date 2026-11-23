@@ -1,15 +1,14 @@
 <template>
-    <KsTooltip v-if="date" :content="absolute">
-        <span class="date">{{ date }}</span>
+    <KsTooltip v-if="date" :content="tooltip">
+        <span class="date" :class="{overdue}">{{ overdue ? $t("dashboards.overdue", {date}) : date }}</span>
     </KsTooltip>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import moment from "moment-timezone"
-    import {storageKeys} from "../../../../../utils/constants"
+    import {useI18n} from "vue-i18n"
     import {date as dateFilter} from "../../../../../utils/filters"
-    import {KsTooltip} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, KsTooltip} from "@kestra-io/design-system"
 
     const props = defineProps({
         field: {
@@ -22,25 +21,34 @@
         },
     })
 
-    // The relative branch needs moment's calendar(), which dateFilter cannot express, so it applies
-    // the stored timezone itself rather than falling back to the machine's.
-    const inTimezone = (value: string) =>
-        moment(value).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
+    const {t} = useI18n({useScope: "global"})
+
+    // The relative branch needs calendar(), which dateFilter cannot express, so it applies the
+    // stored timezone itself rather than falling back to the machine's.
+    const inTimezone = (value: string) => dayjs(value).tz(dateUtils.currentTimezone())
 
     const date = computed(() => {
         if (!props.field) return undefined
-        // moment(date) always return a Moment, if the date is undefined, it will return current date, we don't want that here
+        // dayjs(undefined) returns the current date, which is not what an empty cell should show
         return props.relative
             ? inTimezone(props.field).calendar(null, {sameElse: "L [at] LT"})
             : dateFilter(props.field)
     })
 
+    // A due date already past means the trigger is stuck, not that the date is wrong, so the row
+    // stays visible and says so rather than reading as an ordinary upcoming run.
+    const overdue = computed(() => Boolean(props.relative && props.field && dayjs(props.field).isBefore(dayjs())))
+
     const absolute = computed(() =>
         props.field ? dateFilter(props.field) : undefined,
     )
+
+    const tooltip = computed(() =>
+        overdue.value ? t("dashboards.overdue", {date: absolute.value}) : absolute.value,
+    )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .date {
         display: inline-block;
         max-width: 100%;
@@ -48,5 +56,9 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         vertical-align: bottom;
+
+        &.overdue {
+            color: var(--ks-text-warning);
+        }
     }
 </style>

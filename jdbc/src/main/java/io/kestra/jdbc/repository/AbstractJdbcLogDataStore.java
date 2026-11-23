@@ -1,5 +1,8 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -210,6 +213,51 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     @Override
+    public List<KeyedLog> findAfterWithoutAcl(
+        @Nullable String tenantId,
+        List<QueryFilter> filters,
+        Instant afterTimestamp,
+        @Nullable String afterKey,
+        int pageSize) {
+        // Same default-kind rule as findAsync: NORMAL only unless a KIND or executionId filter is present.
+        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
+
+        // With a key, seek strictly after the (timestamp, key) row; without one (first run or a legacy date-only
+        // offset), fall back to a strict timestamp lower bound (which matches the previous START_DATE behaviour).
+        Field<OffsetDateTime> dateField = field(DATE_COLUMN, OffsetDateTime.class);
+        Field<String> keyField = keySeekField();
+        OffsetDateTime after = afterTimestamp.atOffset(ZoneOffset.UTC);
+        Condition seek = afterKey == null
+            ? dateField.gt(after)
+            : DSL.row(dateField, keyField).gt(DSL.row(DSL.val(after), DSL.val(afterKey)));
+
+        final Condition finalCondition = condition;
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(
+            configuration -> DSL.using(configuration)
+                .select(KEY_FIELD, VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(finalCondition)
+                .and(seek)
+                .orderBy(dateField.asc(), keyField.asc())
+                .limit(pageSize)
+                .fetch()
+                .map(record -> new KeyedLog(record.get(KEY_FIELD), this.jdbcRepository.map(record)))
+        );
+    }
+
+    // The key column used to order and seek a keyset page. LogPosition picks the resume offset key (a FriendlyId,
+    // which is case-sensitive Base62) with String.compareTo, so the seek must order key case-sensitively too; a
+    // dialect whose default collation is case-insensitive overrides this, otherwise a same-timestamp boundary row
+    // whose key sorts differently under the two orders is re-shipped on the next run.
+    protected Field<String> keySeekField() {
+        return KEY_FIELD;
+    }
+
+    @Override
     public List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel) {
         return findByExecutionId(tenantId, executionId, minLevel, true);
     }
@@ -409,9 +457,10 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
             // its descendants, consistent with the documented behavior and PurgeExecutions. With a
             // flowId, it targets that flow's exact namespace.
             if (flowId != null) {
-                condition = condition.and(field("namespace").eq(namespace));
+                condition = condition.and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace));
             } else {
-                condition = condition.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+                condition = condition
+                    .and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace).or(CaseSensitiveMatch.startsWith(field("namespace", String.class), namespace + ".")));
             }
         }
         if (flowId != null) {
@@ -480,7 +529,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         }
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<Logs.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
@@ -514,7 +563,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         }
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
             Map<String, ? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                 .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
@@ -567,8 +616,8 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
             case NAMESPACES -> {
                 List<Condition> ors = new ArrayList<>();
                 for (String namespace : scope.namespaces()) {
-                    ors.add(field("namespace").eq(namespace));
-                    ors.add(field("namespace").startsWith(namespace + "."));
+                    ors.add(CaseSensitiveMatch.eq(field("namespace", String.class), namespace));
+                    ors.add(CaseSensitiveMatch.startsWith(field("namespace", String.class), namespace + "."));
                 }
                 yield DSL.or(ors);
             }

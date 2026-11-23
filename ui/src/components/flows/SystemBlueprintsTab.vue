@@ -14,7 +14,7 @@
                 data-test="system-blueprints-link"
             >
                 <div class="blueprint-link-icon">
-                    <KsIcon size="base">
+                    <KsIcon size="sm">
                         <ViewGridOutline />
                     </KsIcon>
                 </div>
@@ -30,7 +30,7 @@
                 data-test="system-blank-flow-link"
             >
                 <div class="blueprint-link-icon">
-                    <KsIcon size="base">
+                    <KsIcon size="sm">
                         <Plus />
                     </KsIcon>
                 </div>
@@ -75,7 +75,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .system-blueprints-tab {
         display: flex;
         flex-direction: column;

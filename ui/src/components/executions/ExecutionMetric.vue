@@ -6,13 +6,16 @@
         :showTask="true"
         :execution="executionsStore.execution"
         :optionalColumns="optionalColumns"
+        :fitHeight
     >
         <template #navbar>
+            <LoopIterationsNotice kind="metrics" />
             <KSFilter
                 :configuration="metricFilter"
                 :properties="{
                     shown: true,
                     columns: optionalColumns,
+                    displayColumns: table?.displayColumns,
                     storageKey: 'execution-metrics'
                 }"
                 :prefix="'execution-metrics'"
@@ -30,9 +33,12 @@
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
     import {useExecutionsStore} from "../../stores/executions"
-    import {useMetricFilter} from "../filter/configurations"
+    import {useMetricFilter} from "../filter/configurations/metricFilters"
     import MetricsTable from "../executions/MetricsTable.vue"
+    import LoopIterationsNotice from "./LoopIterationsNotice.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
+
+    withDefaults(defineProps<{fitHeight?: boolean}>(), {fitHeight: true})
 
     const {t} = useI18n()
     const route = useRoute()
@@ -40,7 +46,7 @@
 
     const metricFilter = useMetricFilter()
 
-    const table = ref<typeof MetricsTable>()
+    const table = ref<InstanceType<typeof MetricsTable>>()
 
     const taskRunId = computed(() => route.query["filters[metric][EQUALS]"] as string | undefined)
 

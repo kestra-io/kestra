@@ -34,14 +34,14 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .pwa-install-prompt {
         position: fixed;
         bottom: var(--ks-spacing-5);
         right: var(--ks-spacing-5);
         width: 22rem;
         max-width: calc(100vw - var(--ks-spacing-6));
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         box-shadow: var(--ks-shadow-lg);
 
         &:before {

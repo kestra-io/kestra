@@ -6,7 +6,7 @@
             :title="$t('dependency.dag.group_by')"
         >
             <SelectGroup />
-            <span class="label">{{ pinnedLabel ?? $t("dependency.dag.groups", {n: groups.length}) }}</span>
+            <span class="label">{{ pinnedLabel ?? $t("dependency.dag.groups") }}</span>
             <ChevronDown />
         </KsButton>
 
@@ -31,7 +31,7 @@
                         @blur="onPreviewOut"
                     >
                         <span :class="['row', {active: group.key === activeGroup}]">
-                            <KsIcon size="xs" class="check">
+                            <KsIcon size="sm" class="check">
                                 <Check />
                             </KsIcon>
                             <span class="name">{{ group.label }}</span>
@@ -111,7 +111,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .picker {
         min-width: 16rem;
 

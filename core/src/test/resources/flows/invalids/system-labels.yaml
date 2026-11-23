@@ -4,6 +4,7 @@ namespace: io.kestra.tests
 labels:
   system.label: system_key
   system.id: id
+  system: value
   another: label
 
 tasks:

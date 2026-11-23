@@ -74,12 +74,15 @@
     import {useFlowFields} from "../utils/useFlowFields"
     import {removeNullAndUndefined} from "../utils/cleanUp"
     import {getFlowFields} from "./flowFields"
+    import type {JsonSchemaDef} from "../../../stores/plugins"
     import {useMiscStore} from "override/stores/misc"
     import {
         CREATE_TASK_FUNCTION_INJECTION_KEY,
+        FIELD_VALIDATION_ERRORS_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../injectionKeys"
+    import {FLOW_ROOT_PATH, useFieldValidationErrors} from "../utils/useFieldValidationErrors"
 
     const flowStore = useFlowStore()
     const miscStore = useMiscStore()
@@ -93,6 +96,8 @@
     const bubbleCreate = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {})
     const flowYaml = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
     const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
+
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => FLOW_ROOT_PATH))
 
     const flowId = computed(() => flowStore.flow?.id ?? "")
     const namespace = computed(() => flowStore.flow?.namespace ?? "")
@@ -171,12 +176,12 @@
             .filter((field): field is NonNullable<typeof field> => Boolean(field))
     })
 
-    function shouldMerge(schema: any): boolean {
-        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf
+    function shouldMerge(schema?: JsonSchemaDef): boolean {
+        const complexObject = Boolean((schema?.type && ["object", "array"].includes(schema.type)) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf)
         return !complexObject
     }
 
-    function onUpdateField(key: string, val: any) {
+    function onUpdateField(key: string, val: unknown) {
         const realValue = val === null || val === undefined
             ? undefined
             : typeof val === "object" && !Array.isArray(val)
@@ -191,7 +196,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .flow-properties-edit {
     display: flex;
     flex-direction: column;

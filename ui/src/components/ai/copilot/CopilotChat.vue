@@ -3,41 +3,56 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
+            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="onNewChat">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
             <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
         </div>
 
-        <!-- AI unavailable: the copilot has no provider to run on — either `/configs` said so and the
-             user tried to send anyway, or the turn came back 503. It only ever replaces the chat once
-             a prompt has been attempted; opening the copilot never lands here (kestra-io/kestra-ee#10739).
-             Configuring a provider is an instance-config change (a restart), never something a retry in
-             this panel could pick up, so the only action here points at the docs. -->
-        <div v-if="unavailable" class="copilot-unavailable" data-test="copilot-unavailable">
-            <KsIcon class="copilot-unavailable-icon">
-                <RobotOffOutline />
-            </KsIcon>
-            <KsText class="copilot-unavailable-title">{{ $t("ai.copilot.unavailable.title") }}</KsText>
-            <KsText size="small" class="copilot-unavailable-detail">{{ $t("ai.copilot.unavailable.detail") }}</KsText>
-            <KsButton
-                size="small"
-                tag="a"
-                target="_blank"
-                :href="docsUrl"
-                data-test="copilot-unavailable-docs"
-            >
-                {{ $t("ai.copilot.unavailable.docs") }}
-            </KsButton>
-        </div>
-
-        <div v-else-if="isEmpty" class="copilot-empty">
+        <div v-if="isEmpty" class="copilot-empty">
             <div class="copilot-empty-inner">
                 <div class="copilot-artwork">
                     <img :src="logo" alt="" class="copilot-artwork-img" >
                 </div>
                 <KsText size="large" class="copilot-empty-title">{{ $t("ai.copilot.empty.title") }}</KsText>
+                <KsAlert
+                    v-if="noProviderConfigured"
+                    :id="noticeId"
+                    type="info"
+                    showIcon
+                    :closable="false"
+                    role="status"
+                    class="copilot-provider-alert"
+                    :title="$t('ai.copilot.unavailable.title')"
+                    data-test="copilot-unavailable"
+                >
+                    <div class="copilot-provider-body">
+                        <span>{{ $t("ai.copilot.unavailable.detail") }}</span>
+                        <KsButton
+                            size="small"
+                            tag="a"
+                            target="_blank"
+                            :href="docsUrl"
+                            class="copilot-docs-link"
+                            data-test="copilot-unavailable-docs"
+                        >
+                            {{ $t("ai.copilot.unavailable.docs") }}
+                        </KsButton>
+                    </div>
+                </KsAlert>
+                <KsAlert
+                    v-else-if="unavailable"
+                    type="error"
+                    showIcon
+                    :closable="false"
+                    role="alert"
+                    class="copilot-provider-alert"
+                    :title="$t('ai.copilot.unavailable.notSent')"
+                    data-test="copilot-not-sent"
+                >
+                    {{ $t("ai.copilot.unavailable.detail") }}
+                </KsAlert>
                 <CopilotContextChip v-if="activeScope" :scope="activeScope" @remove="removeContext" />
                 <CopilotComposer
                     ref="emptyComposer"
@@ -45,10 +60,15 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
-                    :placeholder="$t('ai.copilot.emptyHelper')"
+                    :disabledReason="disabledReason"
+                    :describedBy="describedBy"
+                    :streaming="streaming"
+                    :placeholder="emptyPlaceholder"
                     :rows="3"
                     @submit="onSubmit"
+                    @stop="onStop"
                 />
                 <div class="copilot-suggestions">
                     <KsButton
@@ -56,12 +76,16 @@
                         :key="suggestion"
                         size="small"
                         class="copilot-suggestion"
-                        :disabled="!canSend"
+                        data-test="copilot-suggestion"
+                        :disabled="!canSend || noProviderConfigured"
+                        :aria-describedby="describedBy"
                         @click="onSubmit(suggestion)"
                     >
                         {{ suggestion }}
                     </KsButton>
                 </div>
+
+                <CopilotMcpTip />
 
                 <CopilotHelp v-if="layout === 'page'" />
             </div>
@@ -85,6 +109,10 @@
                         :message="message"
                         :isPending="message.id === pendingProposalMessageId"
                         :isRunning="message.id === runningToolCallId"
+                        :dismissedDraftIds="dismissedDraftIds"
+                        :appliedDraftIds="appliedDraftIds"
+                        @dismissDraft="dismissDraft"
+                        @draftApplied="markDraftApplied"
                     />
 
                     <CopilotThinking v-if="working" :phase="workPhase" />
@@ -93,6 +121,7 @@
                         v-if="pendingConfirmation"
                         :action="pendingConfirmation"
                         :disabled="streaming"
+                        :currentFlowSource="pendingConfirmationFlowSource"
                         @approve="confirm('APPROVE', undefined, selectedProvider)"
                         @reject="onReject"
                     />
@@ -102,10 +131,21 @@
                 </div>
             </KsScrollbar>
 
+            <CopilotDraftTray v-if="trayDrafts.length" :items="trayDrafts" @dismiss="dismissDraft" @applied="markDraftApplied" />
+
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
                  horizontal margin would push it past the panel (100% + margin) and overflow. -->
-            <div v-if="error || errorDetail || notice" class="copilot-banner">
-                <KsAlert v-if="error || errorDetail" type="error" role="alert" data-test="copilot-error">
+            <div v-if="error || errorDetail || notice || unavailable" class="copilot-banner">
+                <KsAlert
+                    v-if="unavailable"
+                    type="error"
+                    role="alert"
+                    :title="$t('ai.copilot.unavailable.notSent')"
+                    data-test="copilot-not-sent"
+                >
+                    {{ $t("ai.copilot.unavailable.detail") }}
+                </KsAlert>
+                <KsAlert v-else-if="error || errorDetail" type="error" role="alert" data-test="copilot-error">
                     {{ errorDetail || $t(`ai.copilot.error.${error}`) }}
                 </KsAlert>
                 <KsAlert v-else-if="notice" type="warning" role="status" data-test="copilot-notice">
@@ -126,8 +166,13 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
+                    :disabledReason="disabledReason"
+                    :describedBy="describedBy"
+                    :streaming="streaming"
                     @submit="onSubmit"
+                    @stop="onStop"
                 />
             </div>
         </template>
@@ -135,11 +180,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch, onBeforeUnmount, onMounted} from "vue"
+    import {ref, computed, nextTick, useId, watch, onBeforeUnmount, onMounted} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import RobotOffOutline from "vue-material-design-icons/RobotOffOutline.vue"
     import * as AiApi from "@kestra-io/kestra-sdk/ai"
     import type {AgentMode, AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
     import logo from "../../../assets/copilot-illustration.png"
@@ -148,10 +192,15 @@
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import CopilotContextChip from "./CopilotContextChip.vue"
+    import CopilotDraftTray from "./CopilotDraftTray.vue"
     import CopilotHelp from "./CopilotHelp.vue"
+    import CopilotMcpTip from "./CopilotMcpTip.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
+    import {useAiUsage} from "./useAiUsage"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
+    import {isViewingFlow, parseArtefactYaml} from "./useApplyDraft"
+    import {collectPendingDrafts, type PendingDraft} from "./pendingDrafts"
     import type {ScopeBinding, ContextPart} from "./types"
     import {useMiscStore} from "override/stores/misc"
     import {useFlowStore} from "../../../stores/flow"
@@ -241,7 +290,11 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
-    onMounted(async () => {
+    // Where the selected provider stands against its ceiling, so an exhausted allowance is visible before a
+    // turn is spent finding out. Re-read after each turn, which is the only thing that moves the figure.
+    const {status: usage, refresh: refreshUsage} = useAiUsage(selectedProvider)
+
+    const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
             providers.value = list ?? []
@@ -249,7 +302,7 @@
         } catch {
             // No provider list (e.g. AI unavailable) — the composer just omits the picker.
         }
-    })
+    })()
 
     // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
     // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
@@ -263,6 +316,8 @@
         previousProvider = now
     })
 
+    const emptyPlaceholder = computed(() => t(routeInFocus.value?.kind === "FLOW" ? "ai.copilot.emptyHelper" : "ai.copilot.emptyHelperNoFlow"))
+
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
         t("ai.copilot.suggestions.errorHandling"),
@@ -273,20 +328,139 @@
 
     const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
 
-    // `/configs` reports whether any AI provider is configured. It's known up front, but the copilot
-    // waits for the user to actually try sending something before acting on it: an instance with no
-    // provider opens on the regular chat, not on the unavailable state (kestra-io/kestra-ee#10739).
-    // An older backend that doesn't send the flag leaves it undefined and the copilot usable.
+    // The "before" side of the pending proposal's diff: only when it's a flow-mutating action whose own
+    // namespace/id arguments match the flow currently focused, so a diff is never shown against the
+    // wrong flow's content. `id` is accepted alongside `flowId` since tool argument naming isn't fixed.
+    const pendingConfirmationFlowSource = computed<string | undefined>(() => {
+        const scope = routeInFocus.value
+        const args = pendingConfirmation.value?.arguments
+        if (!args || scope?.kind !== "FLOW" || !scope.namespace || !scope.flowId) return undefined
+        const namespace = typeof args.namespace === "string" ? args.namespace : undefined
+        const flowId = typeof args.flowId === "string" ? args.flowId : typeof args.id === "string" ? args.id : undefined
+        if (namespace !== scope.namespace || flowId !== scope.flowId) return undefined
+        return editorFlowSource.value
+    })
+
+    // Drafts the user has explicitly declined or already applied — excluded from the pending-draft scan
+    // below so neither re-locks the editor later (dismissing: kestra-io/kestra#19330 review; applying:
+    // `flowStore.loadFlow` clears `previewSource` on success, but the draft message itself is still
+    // sitting in the transcript as "the newest matching draft" with nothing to mark it resolved, so a
+    // later recompute — a new message, a route change — would otherwise pick it back up against
+    // now-identical content). Local to this component's lifetime; reset per-thread below.
+    const dismissedDraftIds = ref(new Set<string>())
+    const appliedDraftIds = ref(new Set<string>())
+
+    /** Decline a drafted artefact from its transcript card — see `dismissedDraftIds` above. */
+    function dismissDraft(draftId: string): void {
+        dismissedDraftIds.value.add(draftId)
+    }
+
+    /** Mark a drafted artefact as applied once `useApplyDraft.ts` confirms the write succeeded. */
+    function markDraftApplied(draftId: string): void {
+        appliedDraftIds.value.add(draftId)
+    }
+
+    /** Dismissed/applied tracking is per-conversation — called everywhere a new/different thread starts. */
+    function resetDraftTracking(): void {
+        dismissedDraftIds.value.clear()
+        appliedDraftIds.value.clear()
+    }
+
+    // The most recent FLOW-kind artefact draft that targets the flow currently open, if any (and isn't
+    // dismissed/applied) — mirrors `pendingConfirmationFlowSource`'s "is this targeting the open flow"
+    // check but for the non-mutating draft-card path (`useApplyDraft.ts`), reusing its
+    // `isViewingFlow`/`parseArtefactYaml` so the two "is this the flow I'm looking at" checks can't
+    // drift apart. Scanned newest-first so a later draft in the same thread supersedes an earlier one
+    // for the same flow, while an unrelated draft for a different flow in between doesn't hide it.
+    //
+    // Kept out of a plain `computed()` on purpose: `messages.value` is deeply reactive and a streamed
+    // token mutates the active assistant bubble's `content` in place, so a computed reading the array
+    // directly would re-scan (and re-parse every candidate draft's YAML) on every token. A `watch`
+    // callback isn't tracked the same way — it only re-runs when the signal below actually changes
+    // (a message added, dismissed/applied tracking changed, or the route changed), never on a token tick.
+    const pendingDraft = ref<{draftId: string; yaml: string} | undefined>(undefined)
+    const trayDrafts = ref<PendingDraft[]>([])
+    const draftScanSignal = computed(() =>
+        `${messages.value.length}|${messages.value[messages.value.length - 1]?.id ?? ""}|${dismissedDraftIds.value.size}|${appliedDraftIds.value.size}|${route.fullPath}`,
+    )
+    watch(draftScanSignal, () => {
+        pendingDraft.value = findPendingDraft()
+        trayDrafts.value = collectPendingDrafts(
+            messages.value,
+            (draftId) => dismissedDraftIds.value.has(draftId) || appliedDraftIds.value.has(draftId),
+            flowStore.flowYaml,
+        )
+    }, {immediate: true})
+
+    function findPendingDraft(): {draftId: string; yaml: string} | undefined {
+        for (let i = messages.value.length - 1; i >= 0; i--) {
+            const message = messages.value[i]
+            if (message.type !== "ARTEFACT_DRAFT" || message.draft?.kind !== "FLOW") continue
+            const {draftId, yaml} = message.draft
+            if (dismissedDraftIds.value.has(draftId) || appliedDraftIds.value.has(draftId)) continue
+            // A draft whose YAML already matches the editor is resolved regardless of whether the
+            // local applied/dismissed tracking survived (a reload, or the copilot dock's KeepAlive
+            // being destroyed by closing it) — a zero-change diff should never lock the editor.
+            if (yaml === flowStore.flowYaml) continue
+            const {namespace, id} = parseArtefactYaml(yaml)
+            if (namespace && id && isViewingFlow(route, namespace, id)) return {draftId, yaml}
+        }
+        return undefined
+    }
+
+    const pendingDraftFlowSource = computed<string | undefined>(() => pendingDraft.value?.yaml)
+
+    // The one flow diff the main editor can mirror at a time: a pending mutate confirmation takes
+    // priority over a draft card on the rare chance both exist together.
+    const activeFlowPreview = computed<string | undefined>(() => pendingConfirmationFlowSource.value ?? pendingDraftFlowSource.value)
+
+    // Mirror it into the flow store so `FlowFileEditorTab.vue`'s main "Flow Code" editor shows the same
+    // diff live, in-place, instead of only inside this chat panel (kestra-io/kestra#19330). Reactive on
+    // `activeFlowPreview`, so it already clears itself once the confirmation/draft no longer targets the
+    // open flow (approved, rejected, superseded, or navigated away from) — `loadFlow` also resets it for
+    // free on a successful apply (`stores/flow.ts`). `immediate: true` also fires this once on mount with
+    // whatever's pending yet (nothing, since `messages`/`pendingConfirmation` start empty) — a harmless
+    // `undefined` write in the common case, but it's what clears a stale `previewSource` left over from a
+    // prior CopilotChat instance sharing this same (persistent) flow store.
+    function mirrorEditorPreview(source: string | undefined): void {
+        flowStore.previewSource = source
+        flowStore.previewBanner = undefined
+    }
+
+    watch(activeFlowPreview, mirrorEditorPreview, {immediate: true})
+
+    /** Decline whichever preview the editor is currently mirroring — the shared "give up the diff back
+     *  to my own editing" action behind both the transcript card's Dismiss button and the main editor's
+     *  read-only banner (`FlowFileEditorTab.vue`, via `flowStore.declinePreview`). */
+    function declineActivePreview(): void {
+        // Only mark a draft dismissed when it's the thing actually being mirrored — a pending mutate
+        // confirmation takes priority in `activeFlowPreview`, and declining that one goes through its
+        // own Reject action on the interactive card, not this shared "drop the preview" shortcut.
+        if (!pendingConfirmationFlowSource.value && pendingDraft.value) dismissDraft(pendingDraft.value.draftId)
+        mirrorEditorPreview(undefined)
+    }
+
+    flowStore.declinePreview = declineActivePreview
+    onBeforeUnmount(() => {
+        if (flowStore.declinePreview === declineActivePreview) flowStore.declinePreview = null
+    })
+
+    // `/configs` reports whether any AI provider is configured; an older backend that doesn't send the
+    // flag leaves it undefined and the copilot usable. With no provider the chat keeps its regular
+    // home but says so up front and disables the controls, instead of refusing a prompt later.
     const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
+    const noticeId = useId()
+    const describedBy = computed(() => noProviderConfigured.value ? noticeId : undefined)
+    const disabledReason = computed(() => noProviderConfigured.value ? t("ai.copilot.unavailable.sendTooltip") : undefined)
 
-    /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
-    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=kestra_app&utm_medium=referral&utm_campaign=ai_copilot_unavailable&utm_content=learn_more#configuration"
+    /** Where the no-provider notice sends the user: the Copilot docs, on the configuration section. */
+    const docsUrl = "https://kestra.io/docs/develop-with-ai/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configure-an-llm-provider"
 
-    // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
-    onMounted(() => { restoreThread() })
+    const restored = restoreThread()
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
+        resetDraftTracking()
         loadThread(threadId)
     }
 
@@ -340,6 +514,14 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            // Ahead of the cancel guard below: a cancelled turn still spent whatever the provider generated.
+            refreshUsage()
+            const last = lastMessage.value
+            // Stop and New chat also drop `streaming`; the gather is a completion beat, not a cancel beat.
+            if (!last || last.type === "CANCELLED") {
+                ending.value = false
+                return
+            }
             ending.value = true
             // Covers the full end sequence: dots gather + mark bloom (~0.7s), a 3s hold, then the fade.
             endTimer = setTimeout(() => (ending.value = false), 4300)
@@ -354,19 +536,34 @@
         ending.value ? "end" : answering.value ? "answering" : "thinking",
     )
 
-    function onSubmit(prompt: string): void {
-        // Known-unconfigured instance: the turn could only come back 503, so raise the unavailable
-        // state here rather than round-tripping for it.
-        if (noProviderConfigured.value) {
-            unavailable.value = true
-            return
-        }
-        sendChat({
+    async function onSubmit(prompt: string): Promise<void> {
+        if (noProviderConfigured.value) return
+        // A new turn drops the editor's diff preview even before it resolves: `sendChat` already nulls
+        // `pendingConfirmation` (self-clearing `pendingConfirmationFlowSource`), but a past draft card
+        // stays in the transcript forever with no such reset, so it must be cleared here explicitly.
+        mirrorEditorPreview(undefined)
+        await sendChat({
             prompt,
             mode: mode.value,
             additionalContext: scopeToContext(activeScope.value, editorFlowSource.value),
             providerId: selectedProvider.value,
         })
+
+        // The provider refused the turn: hand the prompt back so nothing the user wrote is lost.
+        if (unavailable.value && !composerText.value) {
+            composerText.value = prompt
+            await nextTick()
+            focusActiveComposer()
+        }
+    }
+
+    /** "New chat": same stale-preview reasoning as `onSubmit` — a leftover draft card's preview
+     *  otherwise survives into the fresh conversation since `reset()` clears the transcript, not the
+     *  editor. */
+    function onNewChat(): void {
+        mirrorEditorPreview(undefined)
+        resetDraftTracking()
+        reset()
     }
 
     // Keep the transcript pinned to the bottom as content arrives: new messages, streamed
@@ -385,6 +582,11 @@
     // user can type what to change (the next turn re-plans). Focus once the turn resolves and
     // the composer is enabled again.
     const footerComposer = ref<InstanceType<typeof CopilotComposer> | null>(null)
+    const focusAfterStop = ref(false)
+
+    function focusActiveComposer(): void {
+        (isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+    }
 
     async function onReject(): Promise<void> {
         await confirm("REJECT", undefined, selectedProvider.value)
@@ -392,25 +594,97 @@
         footerComposer.value?.focus()
     }
 
-    // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
-    // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
-    // run on mount (drawer just opened) and via a watcher (already open / kept alive).
+    function onStop(): void {
+        // Stop only aborts the fetch; canSend flips later in runStream's finally. Focus then,
+        // after the textarea is re-enabled — focusing a disabled textarea is a no-op.
+        focusAfterStop.value = true
+        cancel()
+    }
+
+    watch(canSend, async (now) => {
+        if (!now || !focusAfterStop.value) return
+        focusAfterStop.value = false
+        await nextTick()
+        focusActiveComposer()
+    })
+
+    /** How long the first message waits on the provider list before going out on the backend default. */
+    const PROVIDERS_WAIT_MS = 2000
+
+    /** Set on unmount only: `KeepAlive` deactivation deliberately isn't disposal, so a parked send still goes out. */
+    let disposed = false
+
+    /** A seed arriving while one is parked on an await is handled once that one finishes, never alongside it. */
+    let consuming = false
+
+    // Entry points stash a prompt in miscStore; it's seeded into the composer, or sent straight away when `sendInitialMessage` is set and no turn is in flight.
     async function consumeSeededPrompt(): Promise<void> {
+        if (consuming) return
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
-        // EE seeds each fix as its own conversation: drop the active thread (still reachable from
-        // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
-        // where resetting would discard the only conversation for good.
-        if (miscStore.copilotNewThread) {
-            if (thread.value || messages.value.length > 0) reset()
-            nextThreadTitle.value = miscStore.copilotThreadTitle
+        consuming = true
+        try {
+            await consumeSeeded(seeded)
+        } finally {
+            consuming = false
         }
-        composerText.value = seeded
+
+        // Same text means the entry point was clicked twice while this run was parked: drop the repeat rather than send it again.
+        if (miscStore.copilotPrompt === seeded) clearSeededPrompt()
+        else if (miscStore.copilotPrompt) consumeSeededPrompt()
+    }
+
+    function clearSeededPrompt(): void {
         miscStore.copilotPrompt = null
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
+        miscStore.copilotSendInitialMessage = false
+    }
+
+    async function consumeSeeded(seeded: string): Promise<void> {
+        const newThread = miscStore.copilotNewThread
+        const threadTitle = miscStore.copilotThreadTitle
+        const sendInitialMessage = miscStore.copilotSendInitialMessage
+        clearSeededPrompt()
+
+        // Resetting before the restore lands would be undone by it, and sending before it would fork a second thread.
+        if (newThread || sendInitialMessage) await restored
+        if (disposed) return
+
+        // EE seeds each fix as its own conversation: drop the active thread (still reachable from
+        // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
+        // where resetting would discard the only conversation for good.
+        if (newThread) {
+            if (thread.value || messages.value.length > 0) {
+                resetDraftTracking()
+                reset()
+            }
+            nextThreadTitle.value = threadTitle
+        }
+
+        // Seeded before the provider wait, so a slow `/ai/providers` never hides the prompt.
+        composerText.value = seeded
+
+        if (sendInitialMessage) {
+            // Bounded, so a hanging `/ai/providers` falls back to the backend's default provider instead of never sending.
+            let timer: ReturnType<typeof setTimeout> | undefined
+            try {
+                await Promise.race([providersLoaded, new Promise((resolve) => { timer = setTimeout(resolve, PROVIDERS_WAIT_MS) })])
+            } finally {
+                clearTimeout(timer)
+            }
+            if (disposed) return
+
+            if (composerText.value !== seeded) return
+            if (canSend.value && !noProviderConfigured.value) {
+                composerText.value = ""
+                onSubmit(seeded)
+                return
+            }
+        }
+
         await nextTick()
-        ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+        focusActiveComposer()
     }
 
     onMounted(consumeSeededPrompt)
@@ -418,7 +692,13 @@
         if (value) consumeSeededPrompt()
     })
 
-    onBeforeUnmount(cancel)
+    onBeforeUnmount(() => {
+        disposed = true
+        cancel()
+        // The editor's diff preview must not outlive this panel — e.g. closing the copilot dock
+        // while a draft/proposal is still pending.
+        mirrorEditorPreview(undefined)
+    })
 </script>
 
 <style scoped>
@@ -467,36 +747,34 @@
         flex: 1 1 auto;
         min-height: 0;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        overflow-y: auto;
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
-    /* AI-unavailable state (no provider configured): centered message + docs link, no composer. */
-    .copilot-unavailable {
-        flex: 1 1 auto;
-        min-height: 0;
+    /* `ui/src/styles/app.css` themes only the WebKit scrollbar, so Firefox needs this to avoid
+       a default scrollbar on the copilot surface. Scoped to engines without `::-webkit-scrollbar`
+       because Chromium ignores those rules as soon as `scrollbar-color` is set. */
+    @supports not selector(::-webkit-scrollbar) {
+        .copilot-empty {
+            scrollbar-color: var(--ks-border-default) transparent;
+        }
+    }
+
+    .copilot-provider-alert {
+        text-align: start;
+    }
+
+    .copilot-provider-body {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-6) var(--ks-spacing-5);
-        text-align: center;
+        align-items: flex-start;
+        gap: var(--ks-spacing-2);
     }
 
-    .copilot-unavailable-icon {
-        font-size: var(--ks-spacing-8);
-        color: var(--ks-text-secondary);
-    }
-
-    .copilot-unavailable-title {
-        font-weight: 600;
-    }
-
-    .copilot-unavailable-detail {
-        --kel-text-color: var(--ks-text-secondary);
-        max-width: 22rem;
+    @media (pointer: coarse) {
+        .copilot-docs-link {
+            min-height: 2.75rem;
+        }
     }
 
     .copilot-empty-inner {
@@ -506,6 +784,10 @@
         gap: var(--ks-spacing-4);
         width: 100%;
         max-width: 30rem;
+        /* Safe centering: auto margins center the column while free space is positive and collapse
+           to 0 once the content overflows, so the top never lands above the scroller's origin the
+           way `align-items: center` did (https://github.com/kestra-io/kestra/issues/19777). */
+        margin: auto;
     }
 
     /* The full-page home gives the hero + composer + help more room than the narrow dock. */
@@ -550,6 +832,12 @@
         box-shadow: var(--ks-shadow-element);
     }
 
+    .copilot-suggestion:disabled {
+        background: var(--ks-bg-inactive);
+        color: var(--ks-text-inactive);
+        box-shadow: none;
+    }
+
     /* Wider horizontal breathing room for the transcript; the footer/error keep the same
        inset so bubbles and the composer stay aligned to one gutter. */
     .copilot-body {
@@ -589,6 +877,7 @@
        page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
        stay pinned to the left edge of the page instead of floating with the centered column. */
     .copilot-chat--page .copilot-transcript,
+    .copilot-chat--page .copilot-tray,
     .copilot-chat--page .copilot-banner,
     .copilot-chat--page .copilot-footer {
         width: 100%;

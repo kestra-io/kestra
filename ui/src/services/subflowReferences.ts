@@ -7,6 +7,10 @@ const SUBFLOW_TASK_TYPES = new Set<string>([
     "io.kestra.core.tasks.flows.ForEachItem",
 ])
 
+export function isSubflowTaskType(type: string | undefined): boolean {
+    return type !== undefined && SUBFLOW_TASK_TYPES.has(type)
+}
+
 export interface SubflowLink {
     range: [number, number]
     target: {namespace: string; flowId: string}
@@ -17,7 +21,7 @@ function scalarString(node: unknown): string | undefined {
 }
 
 function isTemplated(value: string): boolean {
-    return value.includes("{{")
+    return /\{\{|\{%/.test(value)
 }
 
 function valueRange(node: unknown): [number, number] | undefined {

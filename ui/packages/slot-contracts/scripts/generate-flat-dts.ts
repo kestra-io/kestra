@@ -50,7 +50,9 @@ export const splitTopLevelMembers = (raw: string): string[] => {
 }
 
 // Single line `{ a: T; b: U; }` -> multi-line.
-const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
+export const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
+    // zod 4 prints an empty object schema as `Record<string, never>`, which has no members to split.
+    if (!raw.trim().startsWith("{")) return raw
     const members = splitTopLevelMembers(raw)
     if (members.length === 0) return "{}"
 
@@ -63,9 +65,9 @@ const memberNames = (raw: string): string[] =>
     splitTopLevelMembers(raw).map((m) => m.split(/[?:]/)[0].trim())
 
 type SlotImport = {
-    /** Local default-import name in src/index.ts, e.g. "topologyDetails". */
+    /** Local default-import name in src/index.ts, e.g. "executionArtifact". */
     localName: string
-    /** Module specifier as written, e.g. "./topology-details". */
+    /** Module specifier as written, e.g. "./execution-artifact". */
     moduleSpec: string
     /** Resolved source file for the slot module. */
     sourceFile: SourceFile

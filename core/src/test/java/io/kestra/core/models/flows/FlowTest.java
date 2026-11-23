@@ -85,17 +85,6 @@ class FlowTest {
     }
 
     @Test
-    void workingDirectoryTaskInvalid() {
-        Flow flow = this.parse("flows/invalids/workingdirectory-invalid.yaml");
-        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
-
-        assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
-
-        assertThat(validate.get().getMessage()).contains("tasks[impossible]: Only runnable tasks are allowed as children of a WorkingDirectory task");
-    }
-
-    @Test
     void workingDirectoryNoTasks() {
         Flow flow = this.parse("flows/invalids/workingdirectory-no-tasks.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
@@ -104,6 +93,15 @@ class FlowTest {
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
         assertThat(validate.get().getMessage()).contains("tasks[impossible]: The 'tasks' property cannot be empty");
+    }
+
+    @Test
+    void shouldRejectATaskIdOfAWorkingDirectoryInternalTask() {
+        Flow flow = this.parse("flows/invalids/workingdirectory-reserved-task-id.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Duplicate task id with name [build_close]");
     }
 
     @Test
@@ -120,7 +118,7 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(9);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(17);
 
         assertThat(validate.get().getMessage()).contains("inputs[file]: inputs of type 'FILE' only support `defaults` as local files using a file URI");
         assertThat(validate.get().getMessage()).contains("inputs[array1]: `itemType` cannot be ARRAY");
@@ -131,6 +129,14 @@ class FlowTest {
         assertThat(validate.get().getMessage()).contains("inputs[multiselect2]: `itemType` cannot be SECRET");
         assertThat(validate.get().getMessage()).contains("inputs[multiselect3]: `itemType` cannot be MULTISELECT");
         assertThat(validate.get().getMessage()).contains("inputs[multiselect4]: `itemType` cannot be SELECT");
+        assertThat(validate.get().getMessage()).contains("inputs[array5]: `itemType` cannot be TABLE");
+        assertThat(validate.get().getMessage()).contains("inputs[table4]: field `attachment` cannot be of type FILE");
+        assertThat(validate.get().getMessage()).contains("inputs[table1]: `columns` declares the id `size` more than once");
+        assertThat(validate.get().getMessage()).contains("inputs[table2]: field `region` cannot declare `dependsOn`");
+        assertThat(validate.get().getMessage()).contains("inputs[table3]: `minRows` cannot be greater than `maxRows`");
+        assertThat(validate.get().getMessage()).contains("inputs[table3]: filter on `region` is not about a declared column");
+        assertThat(validate.get().getMessage()).contains("inputs[table3]: filter on `size` has an empty list to compare the cells to");
+        assertThat(validate.get().getMessage()).contains("Input 'table1' of type TABLE is only available in Enterprise Edition.");
     }
 
     // This test is done to ensure the equals is checking the right fields and also make sure the Maps orders don't negate the equality even if they are not the same.

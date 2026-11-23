@@ -1,6 +1,6 @@
 <template>
     <ElCarousel
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as CarouselProps)"
         @change="(current, prev) => emit('change', current, prev)"
     >
         <template v-if="$slots.default" #default>
@@ -10,12 +10,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCarousel} from "element-plus"
+    import {ElCarousel, type CarouselProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         initialIndex?: number
         height?: string
         trigger?: "hover" | "click"
@@ -29,7 +29,7 @@
         direction?: "horizontal" | "vertical"
         pauseOnHover?: boolean
         motionBlur?: boolean
-    }>()
+    }>(), {autoplay: undefined, loop: undefined, pauseOnHover: undefined})
 
     const emit = defineEmits<{
         change: [current: number, prev: number]
@@ -46,4 +46,7 @@
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/carousel';
     @use 'element-plus/theme-chalk/src/carousel-item';
+</style>
+
+<style>
 </style>

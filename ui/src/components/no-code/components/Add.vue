@@ -21,7 +21,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .add-value-btn {
     width: 100%;
     padding: var(--ks-spacing-2);

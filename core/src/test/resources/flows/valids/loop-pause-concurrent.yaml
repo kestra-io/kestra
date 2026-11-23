@@ -1,0 +1,13 @@
+id: loop-pause-concurrent
+namespace: io.kestra.tests
+
+tasks:
+  - id: each
+    type: io.kestra.plugin.core.flow.Loop
+    values: '["a", "b"]'
+    tasks:
+      - id: p
+        type: io.kestra.plugin.core.flow.Pause
+  - id: last
+    type: io.kestra.plugin.core.log.Log
+    message: after

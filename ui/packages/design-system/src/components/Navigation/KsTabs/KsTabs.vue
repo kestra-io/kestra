@@ -1,13 +1,14 @@
 <template>
     <ElTabs
         v-model="model"
+        v-bind="({...filteredProps(), ...$attrs} as TabsProps)"
         :type="type"
         :class="{
             'kel-tabs--box': props.type === 'box',
             'kel-tabs--segmented': props.type === 'segmented',
             'kel-tabs--pane-scroll': paneScroll,
+            'kel-tabs--hide-disabled-arrows': hideDisabledArrows,
         }"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -16,18 +17,23 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {ElTabs} from "element-plus"
+    import {computed, type HTMLAttributes} from "vue"
+    import {ElTabs, type TabsProps, type TabsPropsPublic} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<string>()
 
-    const props = defineProps<{
+    export interface KsTabsProps {
         type?: "" | "card" | "border-card" | "box" | "segmented"
         paneScroll?: boolean
-    }>()
+        /** Hides a scroll arrow once it is disabled, at either end of the tab list. */
+        hideDisabledArrows?: boolean
+    }
+
+    const props = defineProps<KsTabsProps & /* @vue-ignore */ Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue">>()
 
     defineSlots<{
         default?(): unknown
@@ -37,15 +43,17 @@
         (props.type === "box" || props.type === "segmented" ? "" : props.type),
     )
 
-    const filteredProps = useFilteredProps(props, ["type", "paneScroll"])
+    const filteredProps = useFilteredProps(props, ["type", "paneScroll", "hideDisabledArrows"])
 </script>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/tabs';
+</style>
 
+<style>
     .kel-tabs {
-        a {
+        & a {
             color: currentColor;
         }
 
@@ -54,19 +62,19 @@
             flex-direction: column;
             min-height: 0;
 
-            .kel-tabs__content {
+            & .kel-tabs__content {
                 flex: 1;
                 min-height: 0;
                 overflow-y: auto;
             }
         }
 
-        .kel-tabs__active-bar {
+        & .kel-tabs__active-bar {
             height: 4px;
             background-color: var(--ks-btn-primary-bg-default);
         }
 
-        .kel-tabs__item {
+        & .kel-tabs__item {
             padding: 1rem 1.5rem !important;
             transition: color 0.3s ease;
             color: var(--ks-text-secondary);
@@ -81,7 +89,7 @@
         }
 
         &.kel-tabs--card {
-            .kel-tabs__item {
+            & .kel-tabs__item {
                 &:first-child {
                     border-radius: 4px 0 0 0;
                 }
@@ -99,24 +107,24 @@
 
         &.kel-tabs--box,
         &.kel-tabs--segmented {
-            .kel-tabs__active-bar {
+            & .kel-tabs__active-bar {
                 display: none;
             }
 
-            .kel-tabs__nav-wrap::after {
+            & .kel-tabs__nav-wrap::after {
                 display: none;
             }
 
-            .kel-tabs__header {
-                margin-bottom: 0;
+            & .kel-tabs__header {
+                margin: var(--ks-tabs-header-margin, 0);
             }
 
-            .kel-tabs__nav {
+            & .kel-tabs__nav {
                 gap: var(--ks-spacing-1);
                 padding: var(--ks-spacing-2);
             }
 
-            .kel-tabs__item {
+            & .kel-tabs__item {
                 min-width: 45px;
                 max-width: fit-content;
                 height: 28px;
@@ -146,24 +154,37 @@
 
         &.kel-tabs--box {
             position: sticky;
-            z-index: 1000;
+            z-index: var(--ks-z-dropdown);
 
-            .kel-tabs__nav-scroll {
+            /* Covers a disabled tab so the link in its label cannot be followed. */
+            & .kel-tabs__item.is-disabled::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                z-index: var(--ks-z-dropdown);
+            }
+
+            &.kel-tabs--hide-disabled-arrows .kel-tabs__nav-prev.is-disabled,
+            &.kel-tabs--hide-disabled-arrows .kel-tabs__nav-next.is-disabled {
+                display: none;
+            }
+
+            & .kel-tabs__nav-scroll {
                 display: flex;
                 align-items: center;
                 height: 44px;
             }
 
-            .kel-tabs__item {
+            & .kel-tabs__item {
                 padding: 4px 8px !important;
             }
 
-            .kel-tabs__nav-wrap {
+            & .kel-tabs__nav-wrap {
                 background: var(--ks-bg-surface);
                 border-bottom: var(--ks-border-width-thin) solid var(--ks-border-default);
             }
 
-            .kel-tabs__nav-prev {
+            & .kel-tabs__nav-prev {
                 &:after {
                     content: '';
                     position: absolute;
@@ -171,12 +192,12 @@
                     right: -10px;
                     height: 100%;
                     width: 10px;
-                    background: linear-gradient(90deg, var(--ks-bg-input) 0%, rgba(0, 0, 0, 0) 100%);
+                    background: linear-gradient(90deg, var(--ks-bg-input) 0%, transparent 100%);
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }
 
-            .kel-tabs__nav-next {
+            & .kel-tabs__nav-next {
                 &:before {
                     content: '';
                     position: absolute;
@@ -184,19 +205,19 @@
                     left: -15px;
                     height: 100%;
                     width: 15px;
-                    background: linear-gradient(-90deg, var(--ks-bg-input) 0%, rgba(0, 0, 0, 0) 100%);
+                    background: linear-gradient(-90deg, var(--ks-bg-input) 0%, transparent 100%);
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }
         }
 
         &.kel-tabs--segmented {
-            .kel-tabs__nav-wrap {
+            & .kel-tabs__nav-wrap {
                 background: transparent;
                 border-bottom: none;
             }
 
-            .kel-tabs__nav {
+            & .kel-tabs__nav {
                 width: fit-content;
                 padding: 4px;
                 background: var(--ks-bg-tabs-default);
@@ -204,7 +225,7 @@
                 border: var(--ks-border-width-thin) solid var(--ks-border-default);
             }
 
-            .kel-tabs__item.is-active {
+            & .kel-tabs__item.is-active {
                 background: var(--ks-btn-secondary-bg-default);
                 border-color: var(--ks-btn-secondary-border-active);
             }

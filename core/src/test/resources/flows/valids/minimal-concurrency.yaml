@@ -1,0 +1,11 @@
+id: minimal-concurrency
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+- id: date
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{taskrun.startDate}}"

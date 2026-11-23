@@ -1,9 +1,9 @@
 <template>
     <div class="radio">
-        <div class="option" :class="{selected: selectedOption === 'ALL'}" @click="selectOption('ALL')">
+        <div class="option" data-test="filter-radio-default" :class="{selected: selectedOption === 'ALL'}" @click="selectOption('ALL')">
             <div class="content">
-                <span class="title">{{ $t("filter.hierarchy.all") }}</span>
-                <span class="desc">{{ $t("filter.show default") }}</span>
+                <span class="title">{{ allLabel ?? $t("filter.hierarchy.all") }}</span>
+                <span class="desc">{{ allDescription ?? $t("filter.show default") }}</span>
             </div>
             <KsRadio :modelValue="selectedOption" :value="'ALL'" label="" />
         </div>
@@ -11,6 +11,7 @@
         <div
             v-for="option in options"
             :key="option.value"
+            :data-test="`filter-radio-${option.value}`"
             class="option"
             :class="{selected: selectedOption === option.value}"
             @click="selectOption(option.value)"
@@ -31,6 +32,8 @@
     const props = defineProps<{
         modelValue: string;
         options: FilterValue[];
+        allLabel?: string;
+        allDescription?: string;
     }>()
 
     const emits = defineEmits<{
@@ -49,14 +52,14 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .radio {
     padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
 
-    .option {
+    & .option {
         cursor: pointer;
         transition: background-color 0.2s;
         padding: 0.25rem 0.75rem;
@@ -75,11 +78,11 @@
             background-color: var(--ks-bg-hover-elevated);
         }
 
-        :deep(.kel-radio) {
+        & :deep(.kel-radio) {
             margin-right: 0;
             height: 2.5rem;
 
-            .kel-radio__inner {
+            & .kel-radio__inner {
                 width: 1.15rem;
                 height: 1.15rem;
                 border: 0.125rem solid var(--ks-text-link);
@@ -93,40 +96,40 @@
             }
 
             &.is-checked {
-                .kel-radio__label {
+                & .kel-radio__label {
                     color: var(--ks-text-link);
                 }
 
-                .kel-radio__inner {
+                & .kel-radio__inner {
                     border-color: var(--ks-text-link);
                     background: transparent;
                 }
             }
 
             &:hover {
-                .kel-radio__label {
+                & .kel-radio__label {
                     color: var(--ks-text-link);
                 }
 
-                .kel-radio__inner {
+                & .kel-radio__inner {
                     border-color: var(--ks-text-link);
                 }
             }
         }
 
-        .content {
+        & .content {
             display: flex;
             flex-direction: column;
             flex: 1;
             padding-right: .5rem;
 
-            .title {
+            & .title {
                 font-size: var(--ks-font-size-sm);
                 font-weight: 500;
                 color: var(--ks-text-primary);
             }
 
-            .desc {
+            & .desc {
                 font-size: var(--ks-font-size-xs);
                 color: var(--ks-text-dim);
                 line-height: 1.4;

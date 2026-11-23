@@ -44,7 +44,7 @@ public interface TriggerStateStore {
      * @param triggerId The trigger identifier.
      * @return an optional {@link TriggerState}
      */
-    Optional<TriggerState> findById(TriggerId triggerId);
+    Optional<TriggerState> findByIdWithoutAcl(TriggerId triggerId);
 
     /**
      * Saves the given {@link TriggerState}.

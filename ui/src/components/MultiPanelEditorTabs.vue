@@ -73,7 +73,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tabs-wrapper {
         container: editor-header / inline-size;
         display: flex;
@@ -92,7 +92,7 @@
         align-items: center;
         gap: var(--ks-spacing-1);
 
-        > button {
+        & > button {
             background: transparent;
             border: 1px solid transparent;
             border-radius: var(--ks-radius-base);

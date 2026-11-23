@@ -1,8 +1,11 @@
 package io.kestra.mcp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -11,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.*;
 import io.kestra.core.serializers.JacksonMapper;
@@ -27,21 +31,11 @@ public class FlowToolSchemaMapper {
     };
 
     public McpSchema.Tool buildTool(Flow flow, McpToolTrigger toolTrigger) {
-        McpToolTrigger.Annotations a = toolTrigger.getAnnotations();
         return McpSchema.Tool.builder()
             .name(toolTrigger.getToolName())
             .description(toolTrigger.getToolDescription())
             .title(toolTrigger.getTitle())
-            .annotations(
-                new McpSchema.ToolAnnotations(
-                    null,
-                    a.readOnly(),
-                    a.destructive(),
-                    a.idempotent(),
-                    a.openWorld(),
-                    a.returnDirect()
-                )
-            )
+            .annotations(McpToolAnnotationsMapper.toToolAnnotations(toolTrigger.getAnnotations()))
             .inputSchema(
                 buildToolInputSchema(
                     // FORM inputs are expanded to dotted leaf paths; FORM never reaches convert().
@@ -101,11 +95,12 @@ public class FlowToolSchemaMapper {
     }
 
     public Map<String, Object> convert(Output output) {
-        Map<String, Object> outputSchema = new HashMap<>(
-            Map.of(
-                "type", getJsonSchemaType(output.getType())
-            )
-        );
+        Map<String, Object> outputSchema = new HashMap<>();
+        if (OutputType.ASSET == output.getType()) {
+            outputSchema.put("description", "The id of a Kestra asset, or a list of asset ids.");
+        } else if (output.getType().parsedAs() != null) {
+            outputSchema.put("type", getJsonSchemaType(output.getType().parsedAs()));
+        }
 
         if (output.getDescription() != null) {
             outputSchema.put("description", output.getDescription());
@@ -144,6 +139,8 @@ public class FlowToolSchemaMapper {
             case TimeInput i -> toTimeType((TimeInput) input, baseSchema);
             case URIInput i -> toURIType((URIInput) input, baseSchema);
             case YamlInput i -> toObjectType(input, baseSchema);
+            case TableInput i -> toTableType(i, baseSchema);
+            case AssetInput i -> toAssetType(i, baseSchema);
             default -> throw new IllegalStateException("Unexpected value: " + input);
         };
     }
@@ -160,6 +157,23 @@ public class FlowToolSchemaMapper {
         return Map.of(
             "type", getJsonSchemaType(arrayInput.getItemType())
         );
+    }
+
+    private Map<String, Object> toTableType(TableInput input, Map<String, Object> baseSchema) {
+        baseSchema.put("items", Map.of(
+            "type", "object",
+            "properties", input.getColumns().stream().collect(Collectors.toMap(Input::getId, this::convert)),
+            "required", findRequiredInputFields(input.getColumns()),
+            "additionalProperties", false
+        ));
+        if (input.getMinRows() != null) {
+            baseSchema.put("minItems", input.getMinRows());
+        }
+        if (input.getMaxRows() != null) {
+            baseSchema.put("maxItems", input.getMaxRows());
+        }
+
+        return baseSchema;
     }
 
     private static Map<String, Object> toBoolType(BoolInput input, Map<String, Object> baseSchema) {
@@ -331,6 +345,27 @@ public class FlowToolSchemaMapper {
         );
     }
 
+    private static Map<String, Object> toAssetType(AssetInput input, Map<String, Object> baseSchema) {
+        boolean multiple = Boolean.TRUE.equals(input.getMultiple());
+        if (multiple) {
+            baseSchema.put("type", "array");
+            baseSchema.put("items", Map.of("type", "string"));
+        }
+
+        List<String> filters = new ArrayList<>();
+        Optional.ofNullable(input.getAssetType()).ifPresent(type -> filters.add("of type " + type));
+        Optional.ofNullable(input.getNamespace()).ifPresent(namespace -> filters.add("in namespace " + namespace + " or a child namespace"));
+        Optional.ofNullable(input.getStatus()).ifPresent(status -> filters.add("with status " + status));
+        Optional.ofNullable(input.getAssetId()).ifPresent(pattern -> filters.add("whose id matches " + pattern));
+        Optional.ofNullable(input.getMetadata()).filter(metadata -> !metadata.isEmpty()).ifPresent(metadata -> filters.add("with metadata " + new TreeMap<>(metadata).entrySet().stream()
+            .map(entry -> entry.getKey() + " = " + entry.getValue())
+            .collect(Collectors.joining(" and "))));
+
+        String expected = multiple ? "The ids of Kestra assets" : "The id of a Kestra asset";
+        appendConstraint(baseSchema, filters.isEmpty() ? expected + "." : expected + ", " + String.join(", ", filters) + ".");
+        return baseSchema;
+    }
+
     private static Map<String, Object> toURIType(URIInput input, Map<String, Object> baseSchema) {
         baseSchema.put(
             "format", "uri"
@@ -340,13 +375,13 @@ public class FlowToolSchemaMapper {
 
     private static String getJsonSchemaType(Type type) {
         return switch (type) {
-            case STRING, SECRET, EMAIL, DATE, DURATION, TIME, FILE, URI, DATETIME -> "string";
+            case STRING, SECRET, EMAIL, DATE, DURATION, TIME, FILE, URI, DATETIME, ASSET -> "string";
             case JSON, ION, YAML -> "object";
             case SELECT -> "string";
             case INT -> "integer";
             case FLOAT -> "number";
             case BOOL -> "boolean";
-            case ARRAY, MULTISELECT -> "array";
+            case ARRAY, MULTISELECT, TABLE -> "array";
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }

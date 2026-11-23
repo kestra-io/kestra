@@ -4,12 +4,16 @@
             <slot name="button" :execute="runAction" :disabled="actionDisabled">
                 <KsButton
                     :id="actionId"
-                    :icon="PlayOutlineIcon"
+                    :icon="PlayIcon"
                     :type="type"
                     :disabled="actionDisabled"
+                    :square="iconOnly"
+                    :aria-label="iconOnly ? actionLabel : undefined"
                     @click="runAction()"
                 >
-                    {{ actionLabel }}
+                    <template v-if="!iconOnly" #default>
+                        {{ actionLabel }}
+                    </template>
                 </KsButton>
             </slot>
         </span>
@@ -18,15 +22,19 @@
             v-model="isOpen"
             destroyOnClose
             :showClose="true"
+            :dirty="flowRunRef?.isDirty"
+            :dirtyMessage="$t('discard execution confirmation')"
             :beforeClose="beforeClose"
             :appendToBody="true"
             scrollable
             large
         >
             <template #header>
-                <span v-html="$t('execute the flow', {id: flowId})" />
+                <i18n-t keypath="execute the flow" tag="span" scope="global">
+                    <template #id><code>{{ flowId }}</code></template>
+                </i18n-t>
             </template>
-            <FlowRun ref="flowRunRef" :embed="true" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
                 <FlowRunActions :flowRun="flowRunRef" />
             </template>
@@ -35,7 +43,9 @@
             v-if="isSelectFlowOpen"
             v-model="isSelectFlowOpen"
             destroyOnClose
-            :beforeClose="beforeSelectFlowClose"
+            :dirty="selectFlowRunRef?.isDirty"
+            :dirtyMessage="$t('discard execution confirmation')"
+            :beforeClose="beforeClose"
             :appendToBody="true"
             scrollable
             large
@@ -72,7 +82,7 @@
                     </KsSelect>
                 </KsFormItem>
                 <KsFormItem v-if="localFlow" :label="$t('inputs')">
-                    <div class="w-100">
+                    <div class="flow-inputs">
                         <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </KsFormItem>
@@ -89,21 +99,16 @@
     import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useApiStore} from "../../stores/api"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
     import FlowRun, {type ReplaySubmitOptions} from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
-    import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
-
-    interface ExecutableFlow {
-        id: string
-        deleted?: boolean
-        [key: string]: unknown
-    }
+    import PlayIcon from "vue-material-design-icons/Play.vue"
+    import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{
         flowId?: string
@@ -113,15 +118,21 @@
         flowSource?: string | null
         submit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
         lazy?: boolean
+        renderLabels?: string[]
+        compact?: boolean
     }>(), {
         disabled: false,
         type: "primary",
         flowSource: null,
         submit: null,
         lazy: false,
+        renderLabels: undefined,
+        compact: false,
     })
 
     const {t} = useI18n({useScope: "global"})
+    const isMobile = useIsMobile()
+    const iconOnly = computed(() => props.compact && isMobile.value)
     const toast = useToast()
     const apiStore = useApiStore()
     const executionsStore = useExecutionsStore()
@@ -132,7 +143,7 @@
     const isSelectFlowOpen = ref(false)
     const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
-    const localFlow = ref<ExecutableFlow | undefined>(undefined)
+    const localFlow = ref<FlowForExecution | undefined>(undefined)
     const localNamespace = ref<string | undefined>(undefined)
 
     function trackExecutionAction(action: string) {
@@ -173,27 +184,9 @@
         localNamespace.value = undefined
     }
 
-    const {guardedClose: guardExecuteClose} = useDiscardGuard(
-        () => flowRunRef.value?.isDirty,
-        {message: t("discard execution confirmation")},
-    )
-    const {guardedClose: guardSelectFlowClose} = useDiscardGuard(
-        () => selectFlowRunRef.value?.isDirty,
-        {message: t("discard execution confirmation")},
-    )
-
     function beforeClose(done: () => void) {
-        guardExecuteClose(() => {
-            reset()
-            done()
-        })
-    }
-
-    function beforeSelectFlowClose(done: () => void) {
-        guardSelectFlowClose(() => {
-            reset()
-            done()
-        })
+        reset()
+        done()
     }
 
     async function toggleModal(newValue?: boolean) {
@@ -210,7 +203,7 @@
     function onClick() {
         trackExecutionAction("open_modal")
         if (checkForTrigger.value) {
-            toast.confirm(FlowWarningDialog as unknown as string, () => toggleModal(), true as unknown as "warning", null as unknown as boolean)
+            toast.confirm(FlowWarningDialog, () => toggleModal(), false, false)
         } else if (computedNamespace.value !== undefined && computedFlowId.value !== undefined) {
             toggleModal(true)
         } else {
@@ -310,5 +303,9 @@
 <style scoped>
     .trigger-flow-wrapper {
         display: inline;
+    }
+
+    .flow-inputs {
+        width: 100%;
     }
 </style>

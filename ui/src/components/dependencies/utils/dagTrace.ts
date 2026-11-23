@@ -10,8 +10,8 @@ interface Trace {
     edges: Set<string>;
 }
 
-/** Stable key for an edge. NUL separates so an id containing the separator cannot collide. */
-export const traceEdgeKey = (source: string, target: string): string => `${source}\0${target}`
+/** Stable key for an edge; JSON encodes the pair unambiguously, so no id content can make two pairs collide. */
+export const traceEdgeKey = (source: string, target: string): string => JSON.stringify([source, target])
 
 /**
  * Everything upstream and downstream of one node, transitively; null when there is nothing.
@@ -57,6 +57,35 @@ export function computeTrace(
 
     walk(outgoing, true)
     walk(incoming, false)
+
+    return {nodes, edges: traced}
+}
+
+/**
+ * Extends a lineage trace with the direct (one-hop) non-lineage edges touching the focused node,
+ * so a directly-connected PART_OF/RELATED neighbor lights up without inheriting its own lineage.
+ */
+export function extendTraceWithDirectEdges(
+    trace: Trace | null,
+    edges: (TraceEdge & {kind?: string})[],
+    focusID: string | undefined,
+    isLineage: (kind?: string) => boolean,
+): Trace | null {
+    if (!focusID) return trace
+
+    const nodes = new Set(trace?.nodes ?? [focusID])
+    const traced = new Set(trace?.edges ?? [])
+
+    edges.forEach((edge) => {
+        if (isLineage(edge.kind)) return
+        if (edge.source === focusID) {
+            nodes.add(edge.target)
+            traced.add(traceEdgeKey(edge.source, edge.target))
+        } else if (edge.target === focusID) {
+            nodes.add(edge.source)
+            traced.add(traceEdgeKey(edge.source, edge.target))
+        }
+    })
 
     return {nodes, edges: traced}
 }

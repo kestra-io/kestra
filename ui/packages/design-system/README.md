@@ -11,7 +11,7 @@ writing feature code against this package.
 ## Peer dependencies
 
 The package ships no framework of its own: `vue`, `element-plus`, `vue-i18n`, `vue-router`,
-`vue-material-design-icons`, `moment`, `moment-timezone`, `echarts`, `monaco-editor`, `bootstrap`
+`vue-material-design-icons`, `echarts`, `monaco-editor`
 and `yaml` are peer dependencies, so the host app owns their versions. See `peerDependencies` in
 [`package.json`](package.json) for the supported ranges.
 
@@ -93,19 +93,18 @@ to stub or enumerate the exports.
 
 ### Styles and tokens
 
-The global stylesheet (Element Plus theme, Bootstrap reset, fonts, `--ks-*` tokens for light and
+The global stylesheet (Element Plus theme, CSS reset, fonts, `--ks-*` tokens for light and
 both dark themes) is a separate entry of the published package, imported once at bootstrap:
 
 ```ts
 import "@kestra-io/design-system/styleBase"
 ```
 
-In-repo consumers pull the SCSS source instead — this is what
-[`ui/src/styles/app.scss`](../../src/styles/app.scss) does:
+In-repo consumers pull the SCSS source instead, before the app's own stylesheet, as
+[`ui/src/App.vue`](../../src/App.vue) does:
 
-```scss
-@use "@kestra-io/design-system/src/assets/styles/variables.scss" as design;
-@use "@kestra-io/design-system/src/assets/styles/index.scss" as *;
+```ts
+import "@kestra-io/design-system/src/assets/styles/index.scss"
 ```
 
 In feature code, read colors through `var(--ks-*)` in CSS, or `cssVar("--ks-status-success")` when
@@ -134,10 +133,11 @@ npm run build               # tsdown: JS + per-component .d.ts + CSS into dist/
 npm run dev                 # same, in watch mode
 
 npm run test                # lint + types + unit + storybook, in parallel
-npm run unit:test           # vitest units only
-npm run storybook:test      # storybook component tests (needs chromium)
-npm run types:test          # vue-tsc --noEmit
-npm run lint:fix            # oxlint + eslint, with fixes
+npm run test:unit           # vitest units only
+npm run test:storybook      # storybook component tests (needs chromium)
+npm run check:types         # vue-tsc --noEmit
+npm run test:lint           # oxlint + eslint
+npm run lint                # oxlint + eslint, with fixes
 ```
 
 Every new `Ks*` component needs a Storybook story; prefer a story over a Vitest unit test when the
@@ -190,3 +190,7 @@ failures are the package's own suite and are reproducible with `npm run test`. A
 *Publish to npm* step leaves nothing published, but a failure **after** the *Commit and tag* step
 leaves the tag pushed: delete it (`git push origin :refs/tags/design-system/v<version>`) before
 re-running, or the next run will collide.
+
+## License
+
+[Apache 2.0](https://github.com/kestra-io/kestra/blob/develop/LICENSE)

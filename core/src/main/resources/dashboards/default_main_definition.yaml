@@ -83,7 +83,7 @@ charts:
   - id: total_executions_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
     chartOptions:
-      displayName: Total Executions
+      displayName: Executions over time
       description: Executions duration and count per date
       legend:
         enabled: true
@@ -111,7 +111,7 @@ charts:
   - id: total_executions_pie
     type: io.kestra.plugin.core.dashboard.chart.Pie
     chartOptions:
-      displayName: Total Executions
+      displayName: Executions by status
       description: By status
       graphStyle: DONUT
       tooltip: ALL
@@ -133,7 +133,7 @@ charts:
       displayName: Executions
       pagination:
         enabled: true
-      width: 6
+      width: 12
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
@@ -149,29 +149,15 @@ charts:
         start_date:
           field: START_DATE
           displayName: Start Date
+        duration:
+          field: DURATION
+          displayName: Duration
         state:
           field: STATE
           displayName: State
-
-  - id: next_executions
-    type: io.kestra.plugin.core.dashboard.chart.Table
-    chartOptions:
-      displayName: Next Executions
-      pagination:
-        enabled: true
-      width: 6
-    data:
-      type: io.kestra.plugin.core.dashboard.data.Triggers
-      columns:
-        namespace:
-          field: NAMESPACE
-          displayName: Namespace
-        flowId:
-          field: FLOW_ID
-          displayName: Flow
-        nextExec:
-          field: NEXT_EXECUTION_DATE
-          displayName: Next Execution Date
+      orderBy:
+        - column: start_date
+          order: DESC
 
   - id: executions_per_namespace_bars
     type: io.kestra.plugin.core.dashboard.chart.Bar

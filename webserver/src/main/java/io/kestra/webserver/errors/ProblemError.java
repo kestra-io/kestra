@@ -7,7 +7,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import io.kestra.core.models.validations.ViolationPaths;
+import io.kestra.core.models.validations.ValidationError;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolation;
@@ -51,13 +51,14 @@ public record ProblemError(
     /** One entry per violated constraint, ordered so the same input always produces the same document. */
     public static List<ProblemError> ofViolations(final Set<? extends ConstraintViolation<?>> violations) {
         return violations.stream()
-            .map(violation -> of(
-                violation.getMessage(),
-                ViolationPaths.toJsonPointer(violation.getPropertyPath()),
-                ViolationPaths.toFriendlyPath(violation)
-            ))
+            .map(ValidationError::ofViolation)
+            .map(ProblemError::of)
             .sorted(Comparator.comparing(ProblemError::pointer, Comparator.nullsLast(Comparator.naturalOrder())))
             .toList();
+    }
+
+    public static ProblemError of(ValidationError error) {
+        return of(error.detail(), error.pointer(), error.path());
     }
 
     public static ProblemError of(String detail, String pointer, String path) {

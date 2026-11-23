@@ -14,7 +14,7 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.ConflictException;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -24,8 +24,6 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
@@ -42,6 +40,7 @@ import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
@@ -52,11 +51,15 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
+import io.kestra.scheduler.internals.TriggerFlowParser;
+import io.kestra.scheduler.internals.TriggerResumer;
+import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.stores.FlowMetaStore;
 
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -77,6 +80,7 @@ public class TriggerEventHandler {
     private final ConditionService conditionService;
     private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
     private final AsyncOperationService asyncOperationService;
+    private final FlowParsingService flowParsingService;
 
     @Inject
     public TriggerEventHandler(@Named("cached") TriggerStateStore triggerStateStore,
@@ -85,7 +89,8 @@ public class TriggerEventHandler {
         RunContextFactory runContextFactory,
         ConditionService conditionService,
         BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
-        AsyncOperationService asyncOperationService) {
+        AsyncOperationService asyncOperationService,
+        FlowParsingService flowParsingService) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;
@@ -93,6 +98,7 @@ public class TriggerEventHandler {
         this.runContextFactory = runContextFactory;
         this.executionKilledQueue = executionKilledQueue;
         this.asyncOperationService = asyncOperationService;
+        this.flowParsingService = flowParsingService;
     }
 
     /**
@@ -125,6 +131,7 @@ public class TriggerEventHandler {
             case TriggerUpdated evt -> onTriggerUpdated(clock, evt);
             case TriggerFlowRevisionUpdated evt -> onTriggerFlowRevisionUpdated(evt);
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
+            case TriggerExecutionDeleted evt -> onTriggerExecutionDeleted(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
             case TriggerWorkerLost evt -> onTriggerWorkerLost(clock, evt);
@@ -182,7 +189,7 @@ public class TriggerEventHandler {
                 return;
             }
 
-            if (trigger instanceof PollingTriggerInterface) {
+            if (trigger instanceof Schedulable) {
                 state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             }
 
@@ -251,78 +258,14 @@ public class TriggerEventHandler {
             if (wasDisabled && !event.disabled()) {
                 Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
                 if (data.getRight() != null) {
-                    state = updateForReEnabledTrigger(clock, state, data.getLeft(), data.getRight(), event.recoverMissedSchedules());
+                    TriggerEvaluationContext context = evaluationContext(data.getLeft(), data.getRight(), state);
+                    state = Boolean.TRUE.equals(event.recoverMissedSchedules())
+                        ? TriggerResumer.resume(clock, context)
+                        : TriggerResumer.skipMissed(clock, context);
                 }
             }
             triggerStateStore.save(state);
         });
-    }
-
-    /**
-     * Updates the state of a re-enabled trigger. When recovery is requested, missed schedules are recovered
-     * according to the trigger's own {@code recoverMissedSchedules} configuration; the configuration is always
-     * re-resolved (never overridden per action) so that this decision and the scheduler startup recovery
-     * ({@code TriggerScheduler#onStart}) stay consistent across restarts and vNode re-assignments.
-     * By default (no recovery requested), missed schedules are skipped by re-computing the next evaluation date.
-     */
-    private TriggerState updateForReEnabledTrigger(Clock clock, TriggerState state, Flow flow,
-            AbstractTrigger trigger, @Nullable Boolean recoverMissedSchedules) {
-        return switch (resolveRecoverMissedSchedules(flow, trigger, recoverMissedSchedules)) {
-            // Keep the frozen past nextEvaluationDate so the scheduling loop replays each missed tick.
-            case ALL -> state.getNextEvaluationDate() != null
-                ? state
-                : state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
-            case LAST -> updateForLastMissedSchedule(clock, state, flow, trigger);
-            // Also advance evaluatedAt so the startup recovery cannot resurrect the skipped schedules.
-            case NONE -> state
-                .evaluatedAt(clock, ZonedDateTime.now(clock))
-                .updateForNextEvaluationDate(clock, nextEvaluationDateSkippingMissed(clock, state, flow, trigger));
-        };
-    }
-
-    private RecoverMissedSchedules resolveRecoverMissedSchedules(Flow flow, AbstractTrigger trigger,
-            @Nullable Boolean recoverMissedSchedules) {
-        if (!Boolean.TRUE.equals(recoverMissedSchedules) || !(trigger instanceof Schedulable schedulable)) {
-            return RecoverMissedSchedules.NONE;
-        }
-        return Optional.ofNullable(schedulable.getRecoverMissedSchedules())
-            .orElseGet(() -> schedulable.defaultRecoverMissedSchedules(runContextFactory.of(flow, trigger)));
-    }
-
-    private TriggerState updateForLastMissedSchedule(Clock clock, TriggerState state, Flow flow, AbstractTrigger trigger) {
-        // A running backfill must resume untouched: recomputing the next evaluation date would re-derive
-        // the backfill from the new date and silently drop or corrupt its remaining range.
-        if (state.getBackfill() != null) {
-            return state;
-        }
-        // Never evaluated (e.g. created disabled): there is no missed schedule to recover, and the last
-        // cron tick before now could even predate the trigger's creation.
-        if (state.getEvaluatedAt() == null) {
-            return state.updateForNextEvaluationDate(clock, nextEvaluationDateSkippingMissed(clock, state, flow, trigger));
-        }
-        RunContext runContext = runContextFactory.of(flow, trigger);
-        ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-        try {
-            ZonedDateTime previousDate = ((Schedulable) trigger).previousEvaluationDate(conditionContext);
-            if (previousDate.toInstant().isAfter(state.getEvaluatedAt())) {
-                return state.updateForNextEvaluationDate(clock, previousDate);
-            }
-            // Nothing was missed: keep the stored next evaluation date.
-            return state;
-        } catch (IllegalVariableEvaluationException e) {
-            Logs.logTrigger(state, Level.WARN, "Cannot compute the previous evaluation date, missed schedules will be skipped. Cause: {}", e.getMessage());
-            return state.updateForNextEvaluationDate(clock, nextEvaluationDateSkippingMissed(clock, state, flow, trigger));
-        }
-    }
-
-    /**
-     * Computes the next evaluation date of a re-enabled trigger so that missed schedules are skipped: the stale
-     * pre-disable evaluation date is dropped from the trigger context so the computation seeds from now, while a
-     * running backfill is preserved so it resumes from its current date.
-     */
-    private ZonedDateTime nextEvaluationDateSkippingMissed(Clock clock, TriggerState state, Flow flow, AbstractTrigger trigger) {
-        TriggerContext context = state.context().toBuilder().date(null).build();
-        return nextEvaluationDate(clock, flow, trigger, context);
     }
 
     /**
@@ -331,7 +274,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerExecutionTerminated(Clock clock, TriggerExecutionTerminated event) {
-        Optional<TriggerState> maybeState = triggerStateStore.findById(event.id());
+        Optional<TriggerState> maybeState = triggerStateStore.findByIdWithoutAcl(event.id());
         if (maybeState.isEmpty()) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
             return;
@@ -339,6 +282,17 @@ public class TriggerEventHandler {
 
         if (TriggerType.REALTIME.equals(maybeState.get().getType())) {
             onRealtimeExecutionTerminated(clock, event, maybeState.get());
+            return;
+        }
+
+        // An unscheduled trigger takes no lock to release, and its disabled flag comes from the flow source:
+        // applying stopAfter here would only make its state disagree with the trigger that keeps firing.
+        if (TriggerType.UNSCHEDULED.equals(maybeState.get().getType())) {
+            return;
+        }
+
+        if (maybeState.get().getExecutionId() != null) {
+            onLockingExecutionTerminated(clock, event, maybeState.get());
             return;
         }
 
@@ -350,6 +304,53 @@ public class TriggerEventHandler {
                     .updateOnExecutionTerminated(clock, event.executionState())
             )
         );
+    }
+
+    /**
+     * Fenced by the locking execution id, as event-id ordering is unreliable across independent producers.
+     */
+    private void onLockingExecutionTerminated(Clock clock, TriggerExecutionTerminated event, TriggerState state) {
+        if (!state.getExecutionId().equals(event.executionId())) {
+            Logs.logTrigger(
+                event.id(),
+                Level.DEBUG,
+                "Ignoring event '{}' for execution '{}'. Cause: the trigger is locked on execution '{}'.",
+                event.type(),
+                event.executionId(),
+                state.getExecutionId()
+            );
+            return;
+        }
+        if (state.getLastEventId() == null || event.eventId().isNewerThan(state.getLastEventId())) {
+            state = state.lastEventId(clock, event.eventId());
+        }
+        triggerStateStore.save(
+            state
+                .locked(clock, false)
+                .updateOnExecutionTerminated(clock, event.executionState())
+        );
+    }
+
+    /**
+     * Handler method for {@link TriggerExecutionDeleted}.
+     * <p>
+     * Only releases a lock still held by the deleted execution, as the deletion may race with its termination.
+     *
+     * @param event the event.
+     */
+    void onTriggerExecutionDeleted(Clock clock, TriggerExecutionDeleted event) {
+        triggerStateStore.findByIdWithoutAcl(event.id()).ifPresent(state ->
+        {
+            if (!event.executionId().equals(state.getExecutionId())) {
+                return;
+            }
+            triggerStateStore.save(
+                state
+                    .locked(clock, false)
+                    .executionId(clock, null)
+                    .workerId(clock, null)
+            );
+        });
     }
 
     /**
@@ -436,7 +437,7 @@ public class TriggerEventHandler {
             // The trigger was deleted while its worker job was in flight: kill the instance
             // the worker just started. Only do so when the state is truly missing, not when
             // the event was de-duplicated.
-            if (triggerStateStore.findById(event.id()).isEmpty()) {
+            if (triggerStateStore.findByIdWithoutAcl(event.id()).isEmpty()) {
                 sendExecutionKilled(event.id());
             }
             return;
@@ -444,7 +445,7 @@ public class TriggerEventHandler {
         TriggerState state = maybeState.get();
         // The trigger was disabled while its worker job was in flight: the kill broadcast
         // found no holder at that time, so kill the instance now that a worker reports it.
-        if (state.isDisabled()) {
+        if (state.isDisabled() || isDisabledInDefinition(event)) {
             maySendExecutionKilled(state);
         }
         triggerStateStore.save(
@@ -463,7 +464,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerWorkerLost(Clock clock, TriggerWorkerLost event) {
-        triggerStateStore.findById(event.id()).ifPresent(state ->
+        triggerStateStore.findByIdWithoutAcl(event.id()).ifPresent(state ->
         {
             if (state.getWorkerId() != null && !state.getWorkerId().equals(event.workerUid())) {
                 // The trigger is already held by another worker.
@@ -506,17 +507,21 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerUpdated(Clock clock, TriggerUpdated event) {
-        findTriggerState(event).ifPresent(state ->
+        findTriggerState(event).filter(state -> !isStale(state, event, event.revision())).ifPresent(state ->
         {
-            Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
+            FlowWithSource stored = findFlow(event, event.revision());
+            Pair<Flow, AbstractTrigger> data = findTriggerIn(event, stored);
             if (data.getRight() != null) {
                 // Kill the running instance so the updated definition is applied: its termination
                 // unlocks the state and the scheduler resubmits the trigger with the new configuration.
                 maySendExecutionKilled(state);
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight())
-                    .updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
+                    .update(clock, data.getRight(), event.revision())
+                    .sourceDisabled(clock, isDisabledIn(event, stored));
+                if (TriggerType.isEvaluatedByScheduler(state.getType())) {
+                    state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
+                }
                 triggerStateStore.save(state);
             }
         });
@@ -541,11 +546,13 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerDeleted(TriggerDeleted event) {
-        triggerStateStore.findById(event.id()).ifPresent(state ->
-        {
-            triggerStateStore.delete(event.id());
-            maySendExecutionKilled(state);
-        });
+        triggerStateStore.findByIdWithoutAcl(event.id())
+            .filter(state -> event.revision() == null || !isStale(state, event, event.revision()))
+            .ifPresent(state ->
+            {
+                triggerStateStore.delete(event.id());
+                maySendExecutionKilled(state);
+            });
     }
 
     /**
@@ -554,11 +561,15 @@ public class TriggerEventHandler {
      */
     private void maySendExecutionKilled(TriggerState state) {
         if (TriggerType.REALTIME.equals(state.getType())) {
-            sendExecutionKilled(state);
+            sendExecutionKilled(state, state.getDispatchEpoch());
         }
     }
 
     private void sendExecutionKilled(TriggerId id) {
+        sendExecutionKilled(id, null);
+    }
+
+    private void sendExecutionKilled(TriggerId id, Long dispatchEpoch) {
         try {
             this.executionKilledQueue.emit(
                 ExecutionKilledTrigger
@@ -570,6 +581,7 @@ public class TriggerEventHandler {
                     .namespace(id.getNamespace())
                     .flowId(id.getFlowId())
                     .triggerId(id.getTriggerId())
+                    .dispatchEpoch(dispatchEpoch)
                     .build()
             );
         } catch (QueueException e) {
@@ -583,14 +595,26 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerCreated(Clock clock, TriggerCreated event, Integer vNode) {
-        Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
-        if (data.getRight() != null) {
+        Optional<TriggerState> existing = triggerStateStore.findByIdWithoutAcl(event.id());
+        if (existing.isPresent() && isStale(existing.get(), event, event.revision())) {
+            return;
+        }
+
+        // Built from the latest revision, so a late event can neither recreate a removed trigger nor apply an outdated definition.
+        FlowWithSource stored = findLatestFlow(event, event.revision());
+        Pair<Flow, AbstractTrigger> data = findTriggerIn(event, stored);
+        if (data.getRight() != null && !data.getLeft().isDeleted()) {
             Flow flow = data.getLeft();
             AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
-                .of(event.id(), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vNode)
+                .of(event.id(), trigger, vNode)
+                .sourceDisabled(clock, isDisabledIn(event, stored))
+                .flowRevision(clock, flow.getRevision())
                 .lastEventId(clock, event.eventId());
-            state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
+            // A trigger the scheduler does not evaluate has no next evaluation date to show.
+            if (TriggerType.isEvaluatedByScheduler(state.getType())) {
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
+            }
             triggerStateStore.save(state);
         }
     }
@@ -605,22 +629,90 @@ public class TriggerEventHandler {
         return NextEvaluationDate.get(clock, trigger, triggerContext, conditionContext);
     }
 
+    private TriggerEvaluationContext evaluationContext(Flow flow, AbstractTrigger trigger, TriggerState state) {
+        RunContext runContext = runContextFactory.of(flow, trigger);
+        return new TriggerEvaluationContext(flow, trigger, state, conditionService.conditionContext(runContext, flow, null));
+    }
+
+    private boolean isDisabledInDefinition(TriggerEvent event) {
+        return isDisabledIn(event, findFlow(event, null));
+    }
+
+    /**
+     * Reads the authored flag, which {@code sourceDisabled} mirrors, so a trigger disabled by governance is not reported as disabled in its definition.
+     */
+    private boolean isDisabledIn(TriggerEvent event, FlowWithSource stored) {
+        AbstractTrigger trigger = findStoredTriggerIn(event, stored).getRight();
+        return trigger != null && trigger.isDisabled();
+    }
+
+    private boolean isStale(TriggerState state, TriggerEvent event, int revision) {
+        if (!state.isAppliedFromRevisionNewerThan(revision)) {
+            return false;
+        }
+
+        FlowWithSource latest = findFlow(event, null);
+        // A revision above the latest one was not applied from this flow (e.g. a restored backup), so it cannot order events.
+        if (latest != null && state.getFlowRevision() > latest.getRevision()) {
+            return false;
+        }
+
+        Logs.logTrigger(
+            event.id(), Level.WARN, "Skipping event {} from flow revision {}. Cause: The trigger state was applied from flow revision {}.", event.type(), revision, state.getFlowRevision()
+        );
+        return true;
+    }
+
+    private FlowWithSource findLatestFlow(TriggerEvent event, int minRevision) {
+        FlowWithSource latest = findFlow(event, null);
+        // The flow cache only moves to a newer revision when that revision is asked for.
+        return latest != null && latest.getRevision() < minRevision ? findFlow(event, minRevision) : latest;
+    }
+
     private Pair<Flow, AbstractTrigger> findTrigger(TriggerEvent event, Integer revision) {
-        FlowWithSource flow = findFlow(event, revision);
+        return findTriggerIn(event, findFlow(event, revision));
+    }
+
+    private Pair<Flow, AbstractTrigger> findTriggerIn(TriggerEvent event, FlowWithSource flow) {
+        if (flow == null) {
+            return Pair.of(null, null);
+        }
+        FlowWithSource governed = governed(flow);
+        // A trigger removed by governance keeps its state from the stored definition; the evaluation loop skips it while the policy applies.
+        return triggerIn(event, governed).isPresent() ? findStoredTriggerIn(event, governed) : findStoredTriggerIn(event, flow);
+    }
+
+    /**
+     * Applies runtime governance, so trigger states are computed from the configuration the evaluation loop
+     * uses. A blocked or unparsable flow falls back to its stored definition: the evaluation loop owns that
+     * reaction.
+     */
+    private FlowWithSource governed(FlowWithSource flow) {
+        try {
+            return TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOG);
+        } catch (FlowProcessingException e) {
+            return flow;
+        }
+    }
+
+    private Pair<Flow, AbstractTrigger> findStoredTriggerIn(TriggerEvent event, FlowWithSource flow) {
         if (flow == null) {
             return Pair.of(null, null);
         }
 
-        AbstractTrigger trigger = flow.getTriggers().stream()
-            .filter(it -> it.getId().equals(event.id().getTriggerId()))
-            .findFirst()
-            .orElse(null);
+        AbstractTrigger trigger = triggerIn(event, flow).orElse(null);
 
         if (trigger == null) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event '{}'. Cause: Trigger not found", event.type());
         }
 
         return Pair.of(flow, trigger);
+    }
+
+    private static Optional<AbstractTrigger> triggerIn(TriggerEvent event, FlowWithSource flow) {
+        return ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(it -> it.getId().equals(event.id().getTriggerId()))
+            .findFirst();
     }
 
     private FlowWithSource findFlow(TriggerEvent event, Integer revision) {
@@ -634,7 +726,7 @@ public class TriggerEventHandler {
     }
 
     private Optional<TriggerState> findTriggerState(final TriggerEvent event) {
-        Optional<TriggerState> state = triggerStateStore.findById(event.id());
+        Optional<TriggerState> state = triggerStateStore.findByIdWithoutAcl(event.id());
         if (state.isEmpty()) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
             return Optional.empty();

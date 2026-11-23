@@ -1,5 +1,6 @@
 package io.kestra.worker.services;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -18,6 +19,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.runners.WorkingDirFactory;
 import io.kestra.core.utils.Logs;
 
 import io.micrometer.core.instrument.Counter;
@@ -33,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Maintains a cache of killed execution IDs for pre-processing checks</li>
  * <li>Tracks running jobs with their interrupt callbacks</li>
  * <li>Matches incoming kill/cancel events against running jobs and invokes callbacks, remembering
- * task-run-scoped cancellations that arrive before the matching job is registered</li>
+ * task-run-scoped cancellations and dispatch-fenced trigger kills that arrive before the matching job is registered</li>
  * </ul>
  */
 @Singleton
@@ -54,18 +56,31 @@ public class ExecutionKilledManager {
     private final Cache<String, State.Type> pendingTaskRunInterrupts;
 
     /**
+     * Trigger kills received before the matching trigger was registered on this worker, keyed by trigger uid
+     * and holding the dispatch epoch they were issued for. A trigger id is reused on every dispatch, so a
+     * pending kill only applies to the dispatch with the same epoch.
+     */
+    private final Cache<String, Long> pendingTriggerKills;
+
+    /**
      * Registry of running jobs with their interrupt callbacks.
      */
     private final ConcurrentHashMap<String, KillableJob> runningJobs = new ConcurrentHashMap<>();
 
     private final Counter workerKilledCounter;
 
+    private final WorkingDirFactory workingDirFactory;
+
     @Inject
-    public ExecutionKilledManager(MetricRegistry metricRegistry) {
+    public ExecutionKilledManager(MetricRegistry metricRegistry, WorkingDirFactory workingDirFactory) {
+        this.workingDirFactory = workingDirFactory;
         this.killedExecutions = Caffeine.newBuilder()
             .expireAfterWrite(KILLED_CACHE_TTL)
             .build();
         this.pendingTaskRunInterrupts = Caffeine.newBuilder()
+            .expireAfterWrite(KILLED_CACHE_TTL)
+            .build();
+        this.pendingTriggerKills = Caffeine.newBuilder()
             .expireAfterWrite(KILLED_CACHE_TTL)
             .build();
         this.workerKilledCounter = metricRegistry.counter(
@@ -94,11 +109,22 @@ public class ExecutionKilledManager {
                     killableJob.interruptAction().accept(State.Type.KILLED);
                 }
             });
+
+            // a killed execution never runs the close task that deletes the folder of its WorkingDirectories
+            try {
+                workingDirFactory.deleteWorkingDirectories(killedExecution.getExecutionId());
+            } catch (IOException e) {
+                log.warn("[execution: {}] Unable to delete the WorkingDirectory folders of the killed execution", killedExecution.getExecutionId(), e);
+            }
         } else if (killed instanceof ExecutionKilledTrigger killedTrigger) {
             log.info(
                 "[tenant: {}] [namespace: {}] [flow: {}] [trigger: {}] Received kill command",
                 killedTrigger.getTenantId(), killedTrigger.getNamespace(), killedTrigger.getFlowId(), killedTrigger.getTriggerId()
             );
+
+            if (killedTrigger.getDispatchEpoch() != null) {
+                pendingTriggerKills.put(killedTrigger.uid(), killedTrigger.getDispatchEpoch());
+            }
 
             // Kill any matching running trigger jobs
             runningJobs.forEach((_, killableJob) ->
@@ -128,8 +154,9 @@ public class ExecutionKilledManager {
     }
 
     /**
-     * Registers a running job with its interrupt callback. If a task-run-scoped interrupt for this
-     * job was received before it got here, it is applied immediately and the pending entry removed.
+     * Registers a running job with its interrupt callback. If a task-run-scoped interrupt, or a trigger kill
+     * for the same dispatch epoch, was received before it got here, it is applied immediately and the
+     * pending entry removed.
      *
      * @param jobUid the unique identifier of the job
      * @param job the worker job
@@ -143,6 +170,11 @@ public class ExecutionKilledManager {
             if (pendingState != null) {
                 Logs.logTaskRun(workerTask.getTaskRun(), Level.INFO, "Cancelling running task");
                 interruptAction.accept(pendingState);
+            }
+        } else if (job instanceof WorkerTrigger workerTrigger) {
+            if (pendingTriggerKills.asMap().remove(workerTrigger.uid(), workerTrigger.getDispatchEpoch())) {
+                Logs.logTrigger(workerTrigger.triggerId(), Level.INFO, "Killing running trigger");
+                interruptAction.accept(State.Type.KILLED);
             }
         }
     }

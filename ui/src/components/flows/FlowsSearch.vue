@@ -139,21 +139,10 @@
 
                 <div class="source-search__spacer" />
 
-                <i18n-t
-                    v-if="!showLoadingState"
-                    keypath="source_search.summary_cross"
-                    tag="span"
-                    class="source-search__summary"
-                >
-                    <template #matches>
-                        <strong>{{ $t('source_search.match_count', summaryMatchCount) }}</strong>
-                    </template>
-                    <template #resources>
-                        <strong>{{ $t('source_search.count_resources', summaryResourceCount) }}</strong>
-                    </template>
-                    <template #types>
-                        <strong>{{ $t('source_search.count_types', summaryActiveTypeCount) }}</strong>
-                    </template>
+                <i18n-t v-if="!showLoadingState" keypath="source_search.summary_cross" tag="span" scope="global" class="source-search__summary">
+                    <template #matches><strong>{{ $t("source_search.match_count", summaryMatchCount) }}</strong></template>
+                    <template #resources><strong>{{ $t("source_search.count_resources", summaryResourceCount) }}</strong></template>
+                    <template #types><strong>{{ $t("source_search.count_types", summaryActiveTypeCount) }}</strong></template>
                 </i18n-t>
 
                 <div v-if="!showLoadingState" class="source-search__match-nav">
@@ -241,33 +230,37 @@
         </div>
 
         <div v-else-if="showLoadingState" class="source-search__states">
-            <div class="source-search__skeleton-rows">
+            <div data-test="source-search-loading" class="source-search__skeleton-rows">
                 <KsSkeleton v-for="n in 4" :key="n" animated :rows="1" class="source-search__skeleton-row" />
             </div>
         </div>
 
         <div v-else-if="showEmptyResultsState" class="source-search__states">
-            <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
-                <template #description>
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <h3 class="source-search__no-results-title" v-html="noResultsMessage" />
-                    <p v-if="hiddenTypeHint" class="source-search__no-results-hint">{{ hiddenTypeHint }}</p>
+            <KsNoData class="source-search__empty" :title="$t('source_search.no_results_title', {query})">
+                {{ $t('source_search.no_results_description') }}
+                <template v-if="hiddenTypeHint">
+                    <br>{{ hiddenTypeHint }}
                 </template>
-                <div class="source-search__examples">
-                    <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
-                        {{ $t('source_search.select_all_types') }}
-                    </KsButton>
-                    <KsButton v-if="caseSensitive" @click="caseSensitive = false">
-                        {{ $t('source_search.turn_off', {option: $t('source_search.match_case')}) }}
-                    </KsButton>
-                    <KsButton v-if="wholeWord" @click="wholeWord = false">
-                        {{ $t('source_search.turn_off', {option: $t('source_search.match_whole_word')}) }}
-                    </KsButton>
-                    <KsButton v-if="regexEnabled" @click="regexEnabled = false">
-                        {{ $t('source_search.turn_off', {option: $t('source_search.use_regex')}) }}
-                    </KsButton>
-                </div>
-            </KsEmpty>
+            </KsNoData>
+            <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p" scope="global">
+                <template #suggestion>
+                    <KsButton link size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>
+                </template>
+            </i18n-t>
+            <div class="source-search__examples">
+                <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
+                    {{ $t('source_search.select_all_types') }}
+                </KsButton>
+                <KsButton v-if="caseSensitive" @click="caseSensitive = false">
+                    {{ $t('source_search.turn_off', {option: $t('source_search.match_case')}) }}
+                </KsButton>
+                <KsButton v-if="wholeWord" @click="wholeWord = false">
+                    {{ $t('source_search.turn_off', {option: $t('source_search.match_whole_word')}) }}
+                </KsButton>
+                <KsButton v-if="regexEnabled" @click="regexEnabled = false">
+                    {{ $t('source_search.turn_off', {option: $t('source_search.use_regex')}) }}
+                </KsButton>
+            </div>
         </div>
 
         <KsSplitter v-else class="source-search__splitter">
@@ -322,8 +315,8 @@
 <script setup lang="ts">
     import {ref, computed, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute, useRouter} from "vue-router"
-    import debounce from "lodash/debounce"
+    import {useRoute, useRouter, type LocationQuery} from "vue-router"
+    import {debounce} from "@kestra-io/design-system"
     import TopNavBar from "../layout/TopNavBar.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import SourceSearchResults from "./SourceSearchResults.vue"
@@ -334,7 +327,6 @@
     import ArrowExpandVertical from "vue-material-design-icons/ArrowExpandVertical.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import Magnify from "vue-material-design-icons/Magnify.vue"
-    import {images} from "../layout/empty/images"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
@@ -349,7 +341,6 @@
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
     import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
-
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
     import {asProblem, type SourceSearchReplacePreviewResponse, type SourceSearchReplaceApplyResponse, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
@@ -360,7 +351,7 @@
     const router = useRouter()
     const toast = useToast()
     const crossResourceSearchStore = useCrossResourceSearchStore()
-
+    const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
     const selection = ref<CrossSearchSelection | null>(null)
@@ -417,7 +408,7 @@
 
     useRouteContext(routeInfo)
 
-    function pushQuery(mutate: (query: Record<string, any>) => void, options?: {replace?: boolean}) {
+    function pushQuery(mutate: (query: LocationQuery) => void, options?: {replace?: boolean}) {
         const routeQuery = {...route.query}
         mutate(routeQuery)
         if (options?.replace) router.replace({query: routeQuery})
@@ -476,7 +467,7 @@
         selectedTypes.value = [...SEARCH_RESOURCE_TYPES]
     }
 
-    function onNamespaceChange(val: any) {
+    function onNamespaceChange(val: string | string[] | undefined) {
         pushQuery((q) => {
             if (val === undefined || val === "" || val === null || (Array.isArray(val) && val.length === 0)) {
                 delete q.namespace
@@ -485,7 +476,6 @@
             }
         })
     }
-
     const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
 
     const showDiffPreview = computed(() => previewResponse.value !== null)
@@ -524,14 +514,11 @@
         .filter((entry) => entry.count > 0))
 
     const hiddenTypeHint = computed(() => hiddenTypeCounts.value
-        .map((entry) => t("source_search.no_results_hidden_type", {count: entry.count, type: typeLabel(entry.type)}))
+        .map((entry) => t("source_search.no_results_hidden_type", {
+            count: entry.count,
+            type: typeLabel(entry.type),
+        }))
         .join(" "))
-
-    const selectedTypesLabel = computed(() => selectedTypes.value.map(typeLabel).join(", "))
-    const noResultsMessage = computed(() => t("source_search.no_results_in_types", {
-        query: `<code>${query.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>`,
-        types: selectedTypesLabel.value,
-    }))
 
     const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
     const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
@@ -566,7 +553,6 @@
     function onSelect(value: CrossSearchSelection) {
         selection.value = value
     }
-
     function goToMatch(delta: number) {
         const list = visibleFlatSelections.value
         if (list.length === 0) return
@@ -648,7 +634,7 @@
                 namespace: namespaceFilter.value,
                 replacement: replacement.value,
             })
-        } catch (e: any) {
+        } catch (e) {
             toast.error(asProblem(e)?.detail ?? t("source_search.replace_preview_failed"))
         } finally {
             previewLoading.value = false
@@ -666,6 +652,7 @@
             toast.warning(t("source_search.replace_apply_skipped", {count: response.skipped.length, reasons}))
         }
         previewResponse.value = null
+        startSearch()
         return fetchResults()
     }
 
@@ -678,7 +665,7 @@
                 replacement: replacement.value,
                 flows,
             }))
-        } catch (e: any) {
+        } catch (e) {
             toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
@@ -697,7 +684,7 @@
                 line: value.line,
                 column: value.column,
             }))
-        } catch (e: any) {
+        } catch (e) {
             toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
@@ -709,26 +696,51 @@
         return applyReplace(flowsToApply)
     }
 
+    let searchPendingToken = 0
+
+    function startSearch() {
+        searchPendingToken++
+        searchPending.value = Boolean(query.value)
+    }
+
     async function fetchResults() {
         if (!loadInit.value) return
+
+        const currentSearchPendingToken = searchPendingToken
+
         if (!query.value) {
             searchPending.value = false
             crossResourceSearchStore.reset()
             return
         }
 
+        const currentQuery = query.value
+
         previewResponse.value = null
-        searchPending.value = true
 
         try {
-            await crossResourceSearchStore.search({
+            const gen = await crossResourceSearchStore.search({
                 types: SEARCH_RESOURCE_TYPES,
-                query: query.value,
+                query: currentQuery,
                 namespace: namespaceFilter.value,
                 ...searchFilters.value,
             })
+
+            if (
+                selectedTypes.value.includes("flows") &&
+                !anyCountingSelected.value &&
+                summaryMatchCount.value === 0
+            ) {
+                await crossResourceSearchStore.searchFlowSuggestion({
+                    query: currentQuery,
+                    namespace: namespaceFilter.value,
+                    ...searchFilters.value,
+                }, gen)
+            }
         } finally {
-            searchPending.value = false
+            if (currentSearchPendingToken === searchPendingToken) {
+                searchPending.value = false
+            }
         }
     }
 
@@ -738,7 +750,7 @@
         () => [query.value, namespaceFilter.value, JSON.stringify(searchFilters.value)].join("|"),
         () => {
             // Synchronous, so the debounce window is already covered by the loading state.
-            searchPending.value = Boolean(query.value)
+            startSearch()
             debouncedFetch()
         },
     )
@@ -761,11 +773,12 @@
             selection.value = list.length > 0 ? {...list[0]} : null
         }
     })
-
+    
+    startSearch()
     fetchResults()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search {
     display: flex;
     flex-direction: column;
@@ -947,11 +960,6 @@
     padding: var(--ks-spacing-8) var(--ks-spacing-5);
     text-align: center;
 
-    h3 {
-        margin: 0 0 var(--ks-spacing-2);
-        font-size: var(--ks-font-size-lg);
-    }
-
     p {
         margin: 0;
         color: var(--ks-text-secondary);
@@ -970,33 +978,6 @@
 
 .source-search__empty {
     height: auto;
-}
-
-.source-search__no-results-title {
-    margin: 0 auto;
-    max-width: 28rem;
-    font-size: var(--ks-font-size-sm);
-    font-weight: var(--ks-font-weight-medium);
-    line-height: var(--ks-line-height-base);
-    color: var(--ks-text-secondary);
-
-    :deep(code) {
-        padding: 0 var(--ks-spacing-1);
-        background: var(--ks-bg-base);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-primary);
-    }
-}
-
-.source-search__no-results-hint {
-    margin: var(--ks-spacing-2) auto 0;
-    max-width: 28rem;
-    font-size: var(--ks-font-size-sm);
-    line-height: var(--ks-line-height-base);
-    color: var(--ks-text-secondary);
 }
 
 .source-search__examples {

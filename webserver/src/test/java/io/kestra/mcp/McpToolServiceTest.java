@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpToolAnnotations;
+import io.kestra.core.models.AccessScope;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -44,7 +46,7 @@ class McpToolServiceTest {
         .toolName("tool-one")
         .title("Tool One")
         .toolDescription("First test tool")
-        .annotations(new McpToolTrigger.Annotations(true, false, false, true, false))
+        .annotations(new McpToolAnnotations(true, false, false, true, false))
         .build();
 
     private static final McpToolTrigger MCP_TRIGGER_TWO = McpToolTrigger.builder()
@@ -53,7 +55,7 @@ class McpToolServiceTest {
         .toolName("tool-two")
         .title("Tool Two")
         .toolDescription("Second test tool")
-        .annotations(new McpToolTrigger.Annotations(false, true, false, false, false))
+        .annotations(new McpToolAnnotations(false, true, false, false, false))
         .build();
 
     private static final McpToolTrigger DISABLED_MCP_TRIGGER = McpToolTrigger.builder()
@@ -62,7 +64,7 @@ class McpToolServiceTest {
         .toolName("disabled-tool")
         .title("Disabled Tool")
         .toolDescription("A disabled test tool")
-        .annotations(new McpToolTrigger.Annotations(true, false, false, true, false))
+        .annotations(new McpToolAnnotations(true, false, false, true, false))
         .disabled(true)
         .build();
 
@@ -83,7 +85,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).hasSize(1);
@@ -96,7 +98,7 @@ class McpToolServiceTest {
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         ToolAnnotations annotations = tools.getFirst().tool().annotations();
@@ -118,7 +120,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(scheduleTrigger))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).isEmpty();
@@ -130,7 +132,7 @@ class McpToolServiceTest {
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE, MCP_TRIGGER_TWO))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).hasSize(2);
@@ -145,8 +147,8 @@ class McpToolServiceTest {
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> firstCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
-        List<McpServerFeatures.AsyncToolSpecification> secondCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> firstCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
+        List<McpServerFeatures.AsyncToolSpecification> secondCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(firstCall).hasSize(1);
@@ -161,7 +163,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow2 = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_TWO))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).hasSize(2);
@@ -176,7 +178,7 @@ class McpToolServiceTest {
         flowRepository.delete(savedFlow);
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).isEmpty();
@@ -188,7 +190,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(DISABLED_MCP_TRIGGER))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).isEmpty();
@@ -200,7 +202,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of())));
         try {
             // When
-            List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+            List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
             // Then
             assertThat(tools).isEmpty();

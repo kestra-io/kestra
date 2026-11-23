@@ -12,11 +12,7 @@
          The resource id is a monospace code token, matching how ids read elsewhere in the copilot. -->
     <div v-else-if="message.type === 'CONTEXT' && message.context" class="copilot-msg copilot-context-notice" data-test="copilot-context-notice">
         <KsText size="small" class="copilot-context-notice-text">
-            <i18n-t
-                :keypath="message.context.action === 'added' ? 'ai.copilot.contextAdded' : 'ai.copilot.contextRemoved'"
-                scope="global"
-                tag="span"
-            >
+            <i18n-t :keypath="message.context.action === 'added' ? 'ai.copilot.contextAdded' : 'ai.copilot.contextRemoved'" tag="span" scope="global">
                 <template #type>{{ $t(message.context.noun) }}</template>
                 <template #id><code class="copilot-context-id">{{ message.context.id }}</code></template>
             </i18n-t>
@@ -33,7 +29,7 @@
 
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
         <div class="copilot-bubble copilot-bubble-assistant" data-test="copilot-assistant-text">
-            <KsMarkdown v-if="message.content" :content="message.content" />
+            <KsMarkdown v-if="message.content" :content="message.content" data-test="copilot-assistant-markdown" />
         </div>
     </div>
 
@@ -83,7 +79,13 @@
     </div>
 
     <div v-else-if="message.type === 'ARTEFACT_DRAFT' && message.draft" class="copilot-msg copilot-msg-assistant">
-        <CopilotArtefactDraft :draft="message.draft" />
+        <CopilotArtefactDraft
+            :draft="message.draft"
+            :dismissed="isDraftDismissed"
+            :applied="isDraftApplied"
+            @dismiss="emit('dismissDraft', $event)"
+            @applied="emit('draftApplied', $event)"
+        />
     </div>
 
     <!-- A past proposal, read-only in the transcript. The still-pending one is rendered by the
@@ -117,7 +119,24 @@
         isPending?: boolean
         /** True when this TOOL_CALL is still executing (no result yet) — drives the running spinner. */
         isRunning?: boolean
+        /** Draft ids the user already declined (CopilotChat.vue) — hides this ARTEFACT_DRAFT's actions. */
+        dismissedDraftIds?: Set<string>
+        /** Draft ids already applied (CopilotChat.vue) — hides this ARTEFACT_DRAFT's actions. */
+        appliedDraftIds?: Set<string>
     }>()
+
+    const emit = defineEmits<{
+        (e: "dismissDraft", draftId: string): void
+        (e: "draftApplied", draftId: string): void
+    }>()
+
+    const isDraftDismissed = computed(
+        () => Boolean(props.message.draft && props.dismissedDraftIds?.has(props.message.draft.draftId)),
+    )
+    const isDraftApplied = computed(
+        () => Boolean(props.message.draft && props.appliedDraftIds?.has(props.message.draft.draftId)),
+    )
+
 
     // The user prompt rendered literally, split on ``` fences only — full markdown would mangle
     // pasted code (a YAML `# comment` must not become a heading) (kestra-io/kestra-ee#10420).

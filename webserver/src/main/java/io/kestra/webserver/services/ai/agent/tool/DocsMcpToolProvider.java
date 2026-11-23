@@ -12,10 +12,12 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutor;
+import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
+@Requires(property = "kestra.ai.agent.docs-mcp-enabled", notEquals = "false")
 @Slf4j
 public class DocsMcpToolProvider {
     private final String url;
@@ -46,6 +48,9 @@ public class DocsMcpToolProvider {
                 .build();
             this.client = new DefaultMcpClient.Builder()
                 .transport(transport)
+                // The docs server does not speak 2026-07-28, so skip the server/discover round trip on connect.
+                .protocolVersion("2025-11-25")
+                .autoHealthCheck(false)
                 .build();
             this.tools = client.listTools().stream()
                 .collect(Collectors.toMap(spec -> spec, spec -> new McpToolExecutor(client)));

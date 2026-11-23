@@ -36,7 +36,7 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Purge all flow execution data for flows that ended more than one month ago.",
             code = """
-                id: purge_exections
+                id: purge_executions
                 namespace: system
 
                 tasks:
@@ -150,6 +150,7 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
             .executionsCount(purgeResult.getExecutionsCount())
             .taskOutputsCount(purgeResult.getTaskOutputsCount())
             .executionOutputsCount(purgeResult.getExecutionOutputsCount())
+            .checkpointsCount(purgeResult.getCheckpointsCount())
             .logsCount(purgeResult.getLogsCount())
             .storagesCount(purgeResult.getStoragesCount())
             .metricsCount(purgeResult.getMetricsCount())
@@ -173,6 +174,11 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
             title = "The count of deleted execution outputs"
         )
         private int executionOutputsCount;
+
+        @Schema(
+            title = "The count of deleted checkpoints"
+        )
+        private int checkpointsCount;
 
         @Schema(
             title = "The count of deleted logs"

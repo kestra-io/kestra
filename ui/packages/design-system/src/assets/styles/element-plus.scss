@@ -1,4 +1,3 @@
-@use "variables.scss" as global-var;
 @use "color-palette" as palette;
 
 @forward 'element-plus/theme-chalk/src/mixins/config.scss' with (
@@ -7,9 +6,6 @@
 
 // types
 $types: success, warning, error, info;
-
-
-$fill-color-base: #fafcff;
 
 @forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
     $font-family: (
@@ -337,6 +333,11 @@ $fill-color-base: #fafcff;
 
     .kel-message-box__container {
         align-items: flex-start;
+    }
+
+    .kel-message-box__message {
+        flex: 1;
+        min-width: 0;
     }
 
     .kel-message-box__message .ks-markdown > * {

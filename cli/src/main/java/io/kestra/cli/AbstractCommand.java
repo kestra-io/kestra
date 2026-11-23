@@ -101,7 +101,8 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
     /**
      * Specifies whether external plugins must be loaded.
-     * This method can be overridden by concrete commands.
+     * This method can be overridden by concrete commands. It is also evaluated before dependency
+     * injection, when the context properties are computed, so it must only rely on parsed options.
      *
      * @return {@code true} if external plugins must be loaded.
      */
@@ -172,7 +173,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                             .build();
                         healthEndpoint = managementEndpoint.resolve("./health");
                     } catch (URISyntaxException e) {
-                        e.printStackTrace();
+                        log.error("Failed to build the management or health endpoint URI", e);
                     }
                     log.info("Management server running at {}", managementEndpoint);
                     log.info("Health endpoint is available at {}", healthEndpoint);
@@ -219,7 +220,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
             try {
                 return yamlPropertySourceLoader.read("cli", new FileInputStream(this.config.toFile()));
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Failed to read the CLI configuration file '{}'", this.config, e);
             }
         }
 

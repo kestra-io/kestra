@@ -4,6 +4,7 @@ namespace: io.kestra.tests
 tasks:
   - id: 1_each
     type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: 1
     values: '[]'
     tasks:
       - id: 1-1

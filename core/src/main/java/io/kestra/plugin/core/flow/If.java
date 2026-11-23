@@ -87,33 +87,29 @@ public class If extends Task implements FlowableTask<If.Output> {
     @PluginProperty(dynamic = true)
     private String condition;
 
-    @Valid
     @PluginProperty
     @Schema(
         title = "List of tasks to execute if the condition is true"
     )
     @NotEmpty
-    private List<Task> then;
+    private List<@Valid Task> then;
 
-    @Valid
     @PluginProperty
     @Schema(
         title = "List of tasks to execute if the condition is false"
     )
     @JsonProperty("else")
-    private List<Task> _else;
+    private List<@Valid Task> _else;
 
-    @Valid
     @PluginProperty
     @Schema(
         title = "List of tasks to execute in case of errors of a child task"
     )
-    private List<Task> errors;
+    private List<@Valid Task> errors;
 
-    @Valid
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
+    protected List<@Valid Task> _finally;
 
     public List<Task> getFinally() {
         return this._finally;
@@ -195,7 +191,7 @@ public class If extends Task implements FlowableTask<If.Output> {
             .toList();
         if (ListUtils.isEmpty(childTasks)) {
             // no next task to run, we guess the state from the parent task
-            return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
+            return Optional.of(execution.computeFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
         }
 
         return FlowableUtils.resolveState(

@@ -1,8 +1,10 @@
 <template>
     <ElInput
+        ref="elInputRef"
         v-model="model"
         class="ks-search"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        :class="{'ks-search--borderless': borderless}"
+        v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         @change="emit('change', $event)"
     >
         <template #prefix>
@@ -17,22 +19,30 @@
 </template>
 
 <script setup lang="ts">
-    import {ElInput} from "element-plus"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {ref, type HTMLAttributes} from "vue"
+    import {ElInput, type InputProps} from "element-plus"
     import Magnify from "vue-material-design-icons/Magnify.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string>()
+    const elInputRef = ref<InstanceType<typeof ElInput>>()
 
-    const props = defineProps<{
-        placeholder?: string
-        disabled?: boolean
-        clearable?: boolean
-        readonly?: boolean
-        name?: string
-        id?: string
-    }>()
+    defineExpose({
+        focus: () => elInputRef.value?.focus(),
+        blur: () => elInputRef.value?.blur(),
+        select: () => elInputRef.value?.select(),
+    })
+
+    const model = defineModel<string>({default: ""})
+
+    type KsSearchProps = Omit<InputProps, "modelValue"> & {
+        /** Drop the border, shadow and background so the field sits flush in a container that draws them (the global search). */
+        borderless?: boolean
+    }
+
+    const props = defineProps<KsSearchProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsSearchProps>>()
 
     const emit = defineEmits<{
         change: [value: string | number]
@@ -43,14 +53,14 @@
         suffix?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props, ["borderless"])
 </script>
 
-<style lang="scss">
+<style>
     .ks-search {
         width: 100%;
 
-        .kel-input__wrapper {
+        & .kel-input__wrapper {
             height: 32px;
             gap: 8px;
             border-radius: 8px;
@@ -71,17 +81,28 @@
             }
         }
 
-        .kel-input__prefix,
-        .kel-input__suffix {
+        & .kel-input__prefix,
+        & .kel-input__suffix {
             display: inline-flex;
             align-items: center;
         }
 
-        .kel-input__inner {
+        & .kel-input__inner {
             font-size: var(--ks-font-size-sm);
         }
 
-        .ks-search__icon {
+        &.ks-search--borderless .kel-input__wrapper {
+            &, &:hover, &.is-focus, &.is-focus:hover {
+                border: 0;
+                box-shadow: none;
+            }
+
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            background-color: transparent;
+            border-radius: 0;
+        }
+
+        & .ks-search__icon {
             display: inline-flex;
             color: var(--ks-icon-default);
             font-size: var(--ks-font-size-sm);

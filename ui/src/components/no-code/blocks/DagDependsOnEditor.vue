@@ -1,6 +1,6 @@
 <template>
     <div class="dag-depends-on" data-test="dag-depends-on">
-        <SourceBranch class="dag-depends-on-icon" aria-hidden="true" />
+        <SourceBranch class="dag-depends-on-icon" />
         <span class="dag-depends-on-label">{{ $t("block_editor.depends_on_label") }}</span>
         <KsSelect
             :modelValue="dependsOn ?? []"
@@ -38,12 +38,15 @@
         (e: "update", dependsOn: string[]): void
     }>()
 
-    function onUpdate(value: string[]) {
+    function onUpdate(value: string[] | undefined) {
+        if (value === undefined) {
+            return
+        }
         emit("update", value)
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .dag-depends-on {
         display: flex;
         align-items: center;

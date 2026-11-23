@@ -8,6 +8,7 @@ import java.util.concurrent.CompletionStage;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.KeyedDispatchEvent;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -29,6 +30,10 @@ public abstract class AbstractKeyedDispatchQueue<T extends KeyedDispatchEvent> e
 
     @Override
     public final void emit(String routingKey, List<T> messages) throws QueueException {
+        if (messages.isEmpty()) {
+            return;
+        }
+
         this.doEmit(
             routingKey,
             messages.stream()

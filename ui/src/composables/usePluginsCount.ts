@@ -1,29 +1,60 @@
 import {ref, type Ref} from "vue"
-import axios from "axios"
 import {API_URL} from "../stores/api"
+import {publicFetchJson} from "../utils/publicApi"
 import {countUniquePluginElements, type Plugin} from "../utils/pluginUtils"
-// Build-time baseline for instances that cannot reach the public API at runtime.
-import {PLUGIN_CATALOG_COUNT} from "../utils/pluginCatalogCount"
 
 const PUBLIC_API_TIMEOUT_MS = 5000
+const CACHE_KEY = "plugins.catalogCount"
+const CACHE_TTL_MS = 2 * 60 * 60 * 1000
 
-const totalPlugins = ref(PLUGIN_CATALOG_COUNT)
-let pending: Promise<void> | null = null
+interface CachedCount {
+    count: number;
+    fetchedAt: number;
+}
 
-/**
- * Catalog-wide plugin element count as shown on kestra.io, rounded down to the
- * nearest hundred (e.g. 1800), fetched once from the public API.
- */
-export function usePluginsCount(): {totalPlugins: Ref<number>} {
-    pending ??= axios.get<Plugin[]>(`${API_URL}/v1/plugins/subgroups`, {timeout: PUBLIC_API_TIMEOUT_MS})
-        .then(({data}) => {
+const totalPlugins = ref<number>()
+let started = false
+
+function readCache(): CachedCount | undefined {
+    try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) ?? "null") as CachedCount | null
+        return typeof cached?.count === "number" && typeof cached.fetchedAt === "number" ? cached : undefined
+    } catch {
+        return undefined
+    }
+}
+
+function writeCache(count: number) {
+    try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({count, fetchedAt: Date.now()} satisfies CachedCount))
+    } catch {
+    }
+}
+
+function fetchCount() {
+    publicFetchJson<Plugin[]>(`${API_URL}/v1/plugins/subgroups`, {signal: AbortSignal.timeout(PUBLIC_API_TIMEOUT_MS)})
+        .then(data => {
             const rounded = Math.floor(countUniquePluginElements(data ?? []) / 100) * 100
             if (rounded > 0) {
                 totalPlugins.value = rounded
+                writeCache(rounded)
             }
         })
         .catch(err => {
             console.warn("Plugin catalog count unavailable", err)
         })
+}
+
+export function usePluginsCount(): {totalPlugins: Ref<number | undefined>} {
+    if (!started) {
+        started = true
+        const cached = readCache()
+        if (cached) {
+            totalPlugins.value = cached.count
+        }
+        if (!cached || Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+            fetchCount()
+        }
+    }
     return {totalPlugins}
 }

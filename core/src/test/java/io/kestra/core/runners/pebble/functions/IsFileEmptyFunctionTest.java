@@ -211,7 +211,7 @@ class IsFileEmptyFunctionTest {
     private URI createNsFile(boolean nsInAuthority, String value) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }

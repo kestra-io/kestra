@@ -1,22 +1,36 @@
 import {defineStore} from "pinia"
 import {ref, computed} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
-import type {QueryFilter} from "@kestra-io/kestra-sdk"
+import type {LogEntry, QueryFilter} from "@kestra-io/kestra-sdk"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
+import {handled} from "../utils/kestraHttp"
+import {latestRequest} from "../utils/latestRequest"
+
+/**
+ * A route query only whose `filters[...]` keys reach the backend as filters. Left open because
+ * callers merge a page's route query with their own keys and pass one bag (see `LogsWrapper.vue`).
+ */
+type FilterQuery = Record<string, unknown>
+
+/** A log search: the filter bag plus the paging keys read off it by name. */
+type LogSearchOptions = FilterQuery & {
+    page?: number;
+    size?: number;
+    sort?: string;
+}
 
 /** Splits a flat `{page, size, sort, "filters[field][OP]": value, ...}` options object
  * (as built by callers' `loadQuery()` route.query merges) into the SDK's declared
  * page/size/sort params plus a proper QueryFilter[] array. */
-function toSearchParams(options: Record<string, any>, cursor?: string) {
-    const {page, size, sort, ...filterKeys} = options
+function toSearchParams(options: LogSearchOptions, cursor?: string) {
     return {
-        page,
-        size,
-        sort: sort ? [sort] : undefined,
+        page: options.page,
+        size: options.size,
+        sort: options.sort ? [options.sort] : undefined,
         cursor,
-        filters: routeQueryToQueryFilters(filterKeys),
+        filters: routeQueryToQueryFilters(options),
     }
 }
 
@@ -45,23 +59,10 @@ export interface LogsDownloadResult {
     outcome: LogsDownloadOutcome;
 }
 
-export interface Log{
-    level: LevelKey;
-    namespace: string;
-    flowId: string;
-    executionId: string;
-    triggerId?: string;
-    taskId?: string;
-    thread: string;
-    taskRunId?: string;
-    index: number;
-    attemptNumber: number;
-    executionKind: "flow" | "playground";
-    timestamp: string;
-    message: string;
-}
+/** A log line as the UI holds it: the server fields, plus the display index the log views assign. */
+export type Log = LogEntry & {index?: number}
 
-export const useLogsStore = defineStore("logs", () => {
+function setupLogsStore() {
     const logs = ref<Log[]>()
     const total = ref(0)
     const paginationType = ref<"OFFSET" | "CURSOR">("OFFSET")
@@ -77,10 +78,10 @@ export const useLogsStore = defineStore("logs", () => {
     let currentCursor: string | undefined = undefined
     const hasPreviousPage = computed(() => cursorStack.value.length > 0)
 
-    let latestSearchId = 0
+    const startSearch = latestRequest()
 
     function applyResponse(response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>) {
-        logs.value = response.results as unknown as Log[]
+        logs.value = response.results
         total.value = response.total ?? 0
         paginationType.value = response.type ?? "OFFSET"
         nextCursor.value = response.nextCursor
@@ -88,10 +89,10 @@ export const useLogsStore = defineStore("logs", () => {
 
     /** Fresh load — resets the cursor back-stack. Used for the first page, filter changes, refresh
      * and mode transitions. Next/Previous navigation goes through the dedicated actions below. */
-    function findLogs(options: Record<string, any>, cursor?: string) {
-        const searchId = ++latestSearchId
+    function findLogs(options: LogSearchOptions, cursor?: string) {
+        const isLatest = startSearch()
         return LogsAPI.searchLogs(toSearchParams(options, cursor)).then(response => {
-            const isSuperseded = searchId !== latestSearchId
+            const isSuperseded = !isLatest()
             if (isSuperseded) return
 
             cursorStack.value = []
@@ -103,15 +104,15 @@ export const useLogsStore = defineStore("logs", () => {
     /** Advance one page using the current `nextCursor`. The backend leaves `nextCursor` null only on
      * an empty page, so the last page *with logs* still advertises a cursor; when that Next comes back
      * empty we keep the current rows and just drop the Next control instead of blanking the view. */
-    function loadNextPage(options: Record<string, any>) {
+    function loadNextPage(options: LogSearchOptions) {
         const cursor = nextCursor.value
         if (!cursor) return Promise.resolve()
-        const searchId = ++latestSearchId
+        const isLatest = startSearch()
         return LogsAPI.searchLogs(toSearchParams(options, cursor)).then(response => {
-            const isSuperseded = searchId !== latestSearchId
+            const isSuperseded = !isLatest()
             if (isSuperseded) return
 
-            const results = (response.results ?? []) as unknown as Log[]
+            const results = response.results ?? []
             if (results.length === 0) {
                 nextCursor.value = undefined
                 return
@@ -123,13 +124,13 @@ export const useLogsStore = defineStore("logs", () => {
     }
 
     /** Go back one page by re-fetching the previous page with the cursor that originally loaded it. */
-    function loadPreviousPage(options: Record<string, any>) {
+    function loadPreviousPage(options: LogSearchOptions) {
         if (cursorStack.value.length === 0) return Promise.resolve()
         const stack = [...cursorStack.value]
         const previousCursor = stack.pop()
-        const searchId = ++latestSearchId
+        const isLatest = startSearch()
         return LogsAPI.searchLogs(toSearchParams(options, previousCursor)).then(response => {
-            const isSuperseded = searchId !== latestSearchId
+            const isSuperseded = !isLatest()
             if (isSuperseded) return
 
             cursorStack.value = stack
@@ -145,7 +146,7 @@ export const useLogsStore = defineStore("logs", () => {
 
     /** Pages through the whole matching result set, so an export is no longer silently cut to
      *  the first page. `truncated` lets the caller warn when the safety ceiling kicked in. */
-    async function downloadLogs(options: Record<string, any>): Promise<LogsDownloadResult> {
+    async function downloadLogs(options: LogSearchOptions): Promise<LogsDownloadResult> {
         const size = options.size ?? DOWNLOAD_PAGE_SIZE
         const collected: Log[] = []
         let reportedTotal: number | undefined = undefined
@@ -158,13 +159,11 @@ export const useLogsStore = defineStore("logs", () => {
         for (;;) {
             let response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>
             try {
-                // This failure is reported by the caller, so opt out of the SDK's global error
-                // toast: otherwise a 500 raises a raw internal-error message alongside it.
-                response = await LogsAPI.searchLogs(
-                    toSearchParams({...options, page, size}, cursor),
-                    {showMessageOnError: false} as Parameters<typeof LogsAPI.searchLogs>[1],
-                )
-            } catch (error) {
+                response = await LogsAPI.searchLogs(toSearchParams({...options, page, size}, cursor))
+            } catch (error: unknown) {
+                // This failure is reported by the caller, so keep it out of the global error toast:
+                // otherwise a 500 raises a raw internal-error message alongside it.
+                handled(error)
                 // Deep offset paging can be refused outright rather than returning a short page:
                 // Elasticsearch caps `from + size` at `index.max_result_window` (10 000 by
                 // default), so page 11 fails. Keep the pages already collected and say the export
@@ -174,7 +173,7 @@ export const useLogsStore = defineStore("logs", () => {
                 break
             }
 
-            const results = (response.results ?? []) as unknown as Log[]
+            const results = response.results ?? []
             reportedTotal = response.total ?? reportedTotal
             collected.push(...results)
 
@@ -198,10 +197,7 @@ export const useLogsStore = defineStore("logs", () => {
         // whole change exists to stop producing.
         if (lines.length > 0) {
             const text = formatLogsAsText(lines.slice().reverse())
-            Utils.downloadUrl(
-                window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
-                logsDownloadFilename(new Date()),
-            )
+            Utils.downloadBlob(new Blob([text], {type: "text/plain"}), logsDownloadFilename(new Date()))
         }
 
         const matchedTotal = reportedTotal === undefined ? undefined : Math.max(reportedTotal, collected.length)
@@ -220,7 +216,7 @@ export const useLogsStore = defineStore("logs", () => {
 
     const LEVELS_ASC: LevelKey[] = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]
 
-    async function levelCounts(baseParams: Record<string, any>): Promise<Record<string, number>> {
+    async function levelCounts(baseParams: FilterQuery): Promise<Record<string, number>> {
         const baseFilters = routeQueryToQueryFilters(baseParams)
             .filter((f) => f.field !== "level")
 
@@ -253,4 +249,10 @@ export const useLogsStore = defineStore("logs", () => {
         downloadLogs,
         levelCounts,
     }
-})
+}
+
+export const useLogsStore = defineStore("logs", setupLogsStore)
+
+export function useScopedLogsStore(scope: string) {
+    return defineStore(`logs-${scope}`, setupLogsStore)()
+}

@@ -1,14 +1,19 @@
 package io.kestra.scheduler.internals;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.plugin.core.trigger.Schedule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,13 +27,14 @@ class TriggerFlowParserTest {
         .tenantId("main")
         .namespace("io.kestra.tests")
         .id("trigger-flow-parser")
+        .triggers(List.of(Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("* * * * *").build()))
         .build();
 
     @Test
     void shouldThrowWithTheReasonWhenBlockedByGovernance() throws FlowProcessingException {
         // Given
         FlowParsingService flowParsingService = mock(FlowParsingService.class);
-        when(flowParsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException("Blocked by governance policy: policy=deny-log"));
+        when(flowParsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException(Blocker.Reason.POLICY, "Blocked by governance policy: policy=deny-log", List.of(), null));
 
         // When / Then the block reaches the caller with its reason, so it can report it against the trigger
         assertThatThrownBy(() -> TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOGGER))
@@ -44,6 +50,19 @@ class TriggerFlowParserTest {
 
         // When / Then a non-governance failure keeps the flow as stored so existing triggers keep evaluating
         assertThat(TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOGGER)).isSameAs(flow);
+    }
+
+    @Test
+    void shouldThrowWithTheReasonWhenStoredFlowHasNoTriggersAndParsingFails() throws Exception {
+        // Given a flow 2.0 could not deserialize: kept as FlowWithException, without its trigger definitions
+        FlowWithSource stored = FlowWithException.from(flow, new FlowProcessingException("Invalid type: io.kestra.plugin.core.flow.ForEach"));
+        FlowParsingService flowParsingService = mock(FlowParsingService.class);
+        when(flowParsingService.parseForRuntime(stored)).thenThrow(new FlowProcessingException("Invalid type: io.kestra.plugin.core.flow.ForEach"));
+
+        // When / Then there is nothing to degrade to: the caller gets the reason to report against the trigger
+        assertThatThrownBy(() -> TriggerFlowParser.parseForTrigger(flowParsingService, stored, LOGGER))
+            .isInstanceOf(FlowProcessingException.class)
+            .hasMessage("Invalid type: io.kestra.plugin.core.flow.ForEach");
     }
 
     @Test

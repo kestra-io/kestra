@@ -5,6 +5,7 @@ import java.util.jar.Manifest;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.plugin.core.dashboard.data.Flows;
 import io.kestra.plugin.core.storage.Delete;
@@ -48,6 +49,27 @@ class PluginTest {
         // io.kestra.plugin.core.storage declares @PluginSubGroup(categories = CORE) with no title.
         assertThat(Plugin.titleFor(core, Delete.class)).isEqualTo("storage");
     }
+
+    @Test
+    void ofExposesAliasesOnPluginElementMetadata() {
+        RegisteredPlugin core = new PluginScanner(PluginTest.class.getClassLoader()).scan();
+        Plugin result = Plugin.of(core, null);
+
+        assertThat(result.getAliases()).isNotEmpty();
+
+        Plugin.PluginElementMetadata httpRequest = result.getTasks().stream()
+            .filter(t -> t.cls().equals("io.kestra.plugin.core.http.Request"))
+            .findFirst()
+            .orElseThrow();
+        assertThat(httpRequest.aliases()).containsExactly("io.kestra.plugin.fs.http.Request");
+
+        Plugin.PluginElementMetadata delete = result.getTasks().stream()
+            .filter(t -> t.cls().equals(Delete.class.getName()))
+            .findFirst()
+            .orElseThrow();
+        assertThat(delete.aliases()).isNull();
+    }
+
 
     private static RegisteredPlugin pluginWithTitle(String title) {
         return pluginWithTitleAndGroup(title, null);

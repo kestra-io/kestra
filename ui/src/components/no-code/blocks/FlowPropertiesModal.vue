@@ -6,6 +6,7 @@
         :showClose="false"
         :closeOnPressEscape="false"
         appendToBody
+        data-authoring-overlay
         @close="emit('close')"
     >
         <template #header>
@@ -38,7 +39,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .flow-properties-modal-header {
         display: flex;
         align-items: center;

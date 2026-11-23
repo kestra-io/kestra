@@ -7,8 +7,9 @@
         :enterable="false"
     >
         <ElIcon
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="{...filteredProps(), ...$attrs}"
             :size="resolvedSize"
+            :class="{'ks-icon--sized': resolvedSize !== undefined}"
             @click="emit('click', $event)"
         >
             <template v-if="$slots.default" #default>
@@ -18,8 +19,9 @@
     </KsTooltip>
     <ElIcon
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         :size="resolvedSize"
+        :class="{'ks-icon--sized': resolvedSize !== undefined}"
         @click="emit('click', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -29,8 +31,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {ElIcon} from "element-plus"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
+    import {ElIcon, type Placement} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -39,11 +42,11 @@
     const SIZE_TOKENS: readonly IconSizeToken[] = ["xs", "sm", "base", "lg", "xl"] as const
 
     const props = defineProps<{
-        size?: number | string | IconSizeToken
+        size?: number | IconSizeToken
         color?: string
         tooltip?: string
-        placement?: string
-    }>()
+        placement?: Placement
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]
@@ -63,3 +66,9 @@
         return s
     })
 </script>
+
+<style>
+    .ks-icon--sized {
+        --ks-material-icon-size: 1em;
+    }
+</style>

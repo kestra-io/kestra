@@ -25,6 +25,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "Flow Code",
         },
         uid: "code",
+        main: true,
         component: () => h(FlowFileEditorTab, {
             path: "Flow.yaml",
             name: "Flow.yaml",
@@ -36,9 +37,10 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(MouseRightClickIcon),
-            label: "No-code",
+            label: "No Code",
         },
         uid: "nocode",
+        main: true,
         component: markRaw(NoCode),
     },
     {
@@ -47,6 +49,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "Topology",
         },
         uid: "topology",
+        main: true,
         component: markRaw(LowCodeEditorWrapper),
     },
     {

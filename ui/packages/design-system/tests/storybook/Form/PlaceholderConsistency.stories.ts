@@ -83,4 +83,5 @@ export const AllControls: StoryObj = {
             })
         }
     },
+    parameters: {controls: {disable: true}},
 }

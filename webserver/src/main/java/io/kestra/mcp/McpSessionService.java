@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,6 +18,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.server.ServerInstance;
 
+import io.micronaut.core.annotation.Nullable;
 import io.modelcontextprotocol.spec.McpStreamableServerSession;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -24,12 +26,19 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tracks MCP sessions on this node and across the cluster.
+ * <p>
+ * A session belongs to the caller who initialized it. Every lookup made on behalf of a request goes
+ * through the caller carried by its {@link KestraMcpTransportContext}, and a session owned by someone
+ * else is reported as absent, so a caller cannot tell it apart from one that does not exist.
+ */
 @Slf4j
 @Singleton
 public class McpSessionService {
     private final McpSessionRepositoryInterface sessionRepository;
     private final BroadcastQueueInterface<McpSessionEvent> mcpSessionQueue;
-    private final Map<KestraMcpTransportContext, McpStreamableServerSession> streamableSessions = new ConcurrentHashMap<>();
+    private final Map<KestraMcpTransportContext, LocalSession> streamableSessions = new ConcurrentHashMap<>();
     private QueueSubscriber<McpSessionEvent> sessionSubscriber;
 
     static final Duration SESSION_PURGE_AGE = Duration.ofHours(48);
@@ -64,7 +73,7 @@ public class McpSessionService {
                     .sessionId(session.sessionId())
                     .build();
                 Optional.ofNullable(streamableSessions.remove(context))
-                    .ifPresent(McpStreamableServerSession::delete);
+                    .ifPresent(local -> local.session().delete());
             }
         });
     }
@@ -77,7 +86,7 @@ public class McpSessionService {
     }
 
     public Collection<McpStreamableServerSession> listMcpStreamableServerSession() {
-        return streamableSessions.values();
+        return streamableSessions.values().stream().map(LocalSession::session).toList();
     }
 
     public void clear() {
@@ -85,16 +94,19 @@ public class McpSessionService {
     }
 
     /**
-     * Returns true if the session exists in the repository (on any node).
+     * Returns true if the session exists in the repository (on any node) and belongs to the caller.
      */
     public boolean sessionExists(KestraMcpTransportContext context) {
-        return sessionRepository.find(
-            context.getTenantId(), context.getServerId(), context.getSessionId()
-        ).isPresent();
+        return findOwnedSession(context).isPresent();
     }
 
+    /**
+     * Returns the session held on this node, provided it belongs to the caller.
+     */
     Optional<McpStreamableServerSession> findMcpStreamableServerSession(KestraMcpTransportContext context) {
-        return Optional.ofNullable(streamableSessions.get(context));
+        return Optional.ofNullable(streamableSessions.get(context))
+            .filter(local -> isOwner(local.ownerId(), context))
+            .map(LocalSession::session);
     }
 
     /**
@@ -110,12 +122,13 @@ public class McpSessionService {
             context.getSessionId(), ServerInstance.INSTANCE_ID, context.getUserId(), false
         );
         sessionRepository.save(session);
-        streamableSessions.put(context, mcpStreamableServerSession);
+        streamableSessions.put(context, new LocalSession(mcpStreamableServerSession, context.getUserId()));
         emit(new McpSessionEvent(session, McpSessionEventType.CREATED));
     }
 
     /**
      * Takes over the SSE ownership of a session that is currently registered on another node.
+     * The caller must already have been checked as the session's owner, see {@link #sessionExists}.
      * <p>
      * Updates {@code sseNode} in the repository to point to this instance, registers the
      * supplied session locally, and broadcasts the change so the previous owning node can
@@ -132,7 +145,7 @@ public class McpSessionService {
             context.getSessionId(), ServerInstance.INSTANCE_ID, context.getUserId(), false
         );
         sessionRepository.save(updated);
-        streamableSessions.put(context, session);
+        streamableSessions.put(context, new LocalSession(session, context.getUserId()));
         emit(new McpSessionEvent(updated, McpSessionEventType.OWNERSHIP_CHANGED));
     }
 
@@ -152,14 +165,29 @@ public class McpSessionService {
      * (including the SSE-owning node) can clean up their local {@code streamableSessions} entry.
      *
      * @param context the transport context identifying the session to close
+     * @return false when no session owned by the caller matched, so nothing was closed
      */
-    public void close(KestraMcpTransportContext context) {
-        sessionRepository.find(context.getTenantId(), context.getServerId(), context.getSessionId())
-            .ifPresent(session ->
-            {
-                sessionRepository.delete(context.getTenantId(), context.getSessionId());
-                emit(new McpSessionEvent(session, McpSessionEventType.DELETED));
-            });
+    public boolean close(KestraMcpTransportContext context) {
+        Optional<McpSession> owned = findOwnedSession(context);
+        owned.ifPresent(session ->
+        {
+            sessionRepository.delete(context.getTenantId(), context.getServerId(), context.getSessionId());
+            emit(new McpSessionEvent(session, McpSessionEventType.DELETED));
+        });
+        return owned.isPresent();
+    }
+
+    private Optional<McpSession> findOwnedSession(KestraMcpTransportContext context) {
+        return sessionRepository.find(context.getTenantId(), context.getServerId(), context.getSessionId())
+            .filter(session -> isOwner(session.userId(), context));
+    }
+
+    /**
+     * An anonymous caller (on a public server) owns the sessions it opened anonymously; those are
+     * protected only by their server-generated id.
+     */
+    private static boolean isOwner(@Nullable String ownerId, KestraMcpTransportContext context) {
+        return Objects.equals(ownerId, context.getUserId());
     }
 
     private void emit(McpSessionEvent event) {
@@ -168,5 +196,8 @@ public class McpSessionService {
         } catch (QueueException e) {
             log.error("Failed to emit MCP session event {} for session {}: {}", event.type(), event.session().sessionId(), e.getMessage(), e);
         }
+    }
+
+    private record LocalSession(McpStreamableServerSession session, @Nullable String ownerId) {
     }
 }

@@ -3,13 +3,13 @@ import {crossSearchResultKey} from "./crossResourceSearch"
 
 export type SourceMatch = Required<ApiSourceMatch>
 export type SourceSearchResult = Required<Omit<ApiSourceSearchResult, "matches">> & {matches: SourceMatch[]}
-
 export interface SourceSearchSelectionGroup {
-    namespace: string;
-    id: string;
-    editable: boolean;
-    matches: {line: number; column: number}[];
+    namespace: string
+    id: string
+    editable: boolean
+    matches: {line: number; column: number}[]
 }
+
 
 export interface SelectionSummary {
     selectedFlowCount: number;
@@ -64,6 +64,7 @@ export function inlineReplacement(matched: string, context: ReplaceContext): str
     }
     try {
         const pattern = context.wholeWord ? `\\b(?:${context.query})\\b` : context.query
+        // nosemgrep: detect-non-literal-regexp -- regex mode runs the user's own pattern in their own browser, inside a try.
         return matched.replace(new RegExp(pattern, context.caseSensitive ? "" : "i"), context.replacement)
     } catch {
         return context.replacement
@@ -120,4 +121,20 @@ export function buildDiffHunks(sourceLines: string[], matches: SourceSearchDiffM
     }
 
     return lines
+}
+
+export function getSeparatorVariant(query: string): string | null {
+    if (query.includes("-") && query.includes("_")) {
+        return null
+    }
+
+    if (query.includes("-")) {
+        return query.replace(/-/g, "_")
+    }
+
+    if (query.includes("_")) {
+        return query.replace(/_/g, "-")
+    }
+
+    return null
 }

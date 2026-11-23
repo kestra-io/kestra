@@ -24,7 +24,7 @@ service KVMetadataService {
   rpc existsByNamespace(NamespaceRequest) returns (BooleanResponse);
 
   // Save a KV metadata entry
-  rpc save(OpaqueData) returns (OpaqueData);
+  rpc save(KVMetadataSaveRequest) returns (OpaqueData);
 
   // Soft-delete a KV metadata entry
   rpc deleteByName(KVMetadataRequest) returns (OpaqueData);
@@ -55,7 +55,7 @@ service NamespaceFileMetadataService {
   rpc existsByNamespace(NamespaceRequest) returns (BooleanResponse);
 
   // Save a namespace file metadata entry
-  rpc save(OpaqueData) returns (OpaqueData);
+  rpc save(NamespaceFileMetadataSaveRequest) returns (OpaqueData);
 }
 
 // Service for execution logs operations - provides execution log read to workers.
@@ -89,6 +89,24 @@ message KVMetadataRequest {
   string namespace = 3;
   // The KV metadata entry name
   string name = 4;
+}
+
+// Request to save a KV metadata entry
+message KVMetadataSaveRequest {
+  RequestOrResponseHeader header = 1;
+  // The serialized PersistedKvMetadata
+  bytes message = 2;
+  // The tenant ID
+  string tenant_id = 3;
+}
+
+// Request to save a namespace file metadata entry
+message NamespaceFileMetadataSaveRequest {
+  RequestOrResponseHeader header = 1;
+  // The serialized NamespaceFileMetadata
+  bytes message = 2;
+  // The tenant ID
+  string tenant_id = 3;
 }
 
 // Request to find a namespace file metadata entry by path, with optional version filter

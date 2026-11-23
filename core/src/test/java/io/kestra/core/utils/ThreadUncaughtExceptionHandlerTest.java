@@ -110,6 +110,11 @@ class ThreadUncaughtExceptionHandlerTest {
         }
 
         @Override
+        public EditionProvider.Edition getEdition() {
+            return EditionProvider.Edition.OSS;
+        }
+
+        @Override
         public PluginRegistry getPluginRegistry() {
             return null;
         }

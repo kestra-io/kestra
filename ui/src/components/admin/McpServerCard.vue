@@ -6,7 +6,7 @@
         :class="{'is-link': isLink}"
     >
         <div class="avatar">
-            <ServerNetworkOutline :size="24" />
+            <ServerNetworkOutline :size="24" class="glyph" />
         </div>
 
         <div class="details">
@@ -74,7 +74,7 @@
 
     import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue"
     import Lock from "vue-material-design-icons/Lock.vue"
-    import Delete from "vue-material-design-icons/DeleteOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
 
     import type {RouteLocationRaw} from "vue-router"
 
@@ -111,7 +111,7 @@
     const statusType = computed(() => (props.disabled ? "danger" : "success"))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .server-card {
         display: flex;
         align-items: center;
@@ -129,7 +129,7 @@
         transition: background 0.15s;
 
         &:hover {
-            background: var(--ks-bg-body);
+            background: var(--ks-bg-base);
         }
     }
 
@@ -143,19 +143,11 @@
         border: var(--ks-border-block-secondary);
         border-radius: var(--ks-radius-sm);
         color: var(--ks-icon-muted);
+        --ks-icon-glyph-size: var(--ks-icon-size-lg);
 
-        :deep(.material-design-icon),
-        :deep(.material-design-icon__svg) {
+        & .glyph {
             width: 24px;
             height: 24px;
-        }
-
-        :deep(.material-design-icon) {
-            display: inline-flex;
-        }
-
-        :deep(.material-design-icon__svg) {
-            position: static;
         }
     }
 

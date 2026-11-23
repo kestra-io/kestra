@@ -2,6 +2,7 @@ package io.kestra.plugin.core.namespace;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
@@ -122,8 +123,8 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
             .stream()
             .map(Rethrow.throwFunction(file ->
             {
-                try (InputStream is = runContext.storage().getFile(file.uri())) {
-                    URI uri = runContext.storage().putFile(is, renderedDestination + file.path());
+                try (InputStream is = namespace.getFileContent(file)) {
+                    URI uri = runContext.storage().putFile(is, Path.of(renderedDestination, file.path()).toString());
                     logger.debug(String.format("Downloaded %s", uri));
                     return new AbstractMap.SimpleEntry<>(toLogicalPath(file.filePath()), uri);
                 }

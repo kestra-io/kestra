@@ -58,6 +58,13 @@ public class NamespaceFileService {
      * @return the paginated list of {@link NamespaceFile}.
      */
     public ArrayListTotal<NamespaceFile> find(Pageable pageable, String tenantId, String namespace, List<QueryFilter> filters, boolean allowDeleted, FetchVersion fetchBehavior) {
+        return findMetadata(pageable, tenantId, namespace, filters, allowDeleted, fetchBehavior).map(NamespaceFile::fromMetadata);
+    }
+
+    /**
+     * Same as {@link #find} but keeps the stored metadata (size, dates, deletion flag) of each entry.
+     */
+    public ArrayListTotal<NamespaceFileMetadata> findMetadata(Pageable pageable, String tenantId, String namespace, List<QueryFilter> filters, boolean allowDeleted, FetchVersion fetchBehavior) {
         List<QueryFilter> allFilters = Stream.concat(
             Stream.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()),
             filters.stream()
@@ -69,7 +76,7 @@ public class NamespaceFileService {
             allFilters,
             allowDeleted,
             fetchBehavior
-        ).map(NamespaceFile::fromMetadata);
+        );
     }
 
     /**
@@ -130,20 +137,6 @@ public class NamespaceFileService {
                 QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(NamespaceFile.normalize(Path.of(path)).toString()).build()
             ), true, FetchVersion.ALL
         );
-    }
-
-    /**
-     * Finds namespace file metadata entries with pagination and filters.
-     * Used by the controller for deletion zombie-awareness checks.
-     *
-     * @param pageable the pagination parameters.
-     * @param tenantId the tenant ID.
-     * @param filters the query filters.
-     * @param allowDeleted whether to include deleted entries.
-     * @return the paginated list of {@link NamespaceFileMetadata}.
-     */
-    public ArrayListTotal<NamespaceFileMetadata> findMetadata(Pageable pageable, String tenantId, List<QueryFilter> filters, boolean allowDeleted) {
-        return getRepository().find(pageable, tenantId, filters, allowDeleted);
     }
 
     private NamespaceFileMetadataRepositoryInterface getRepository() {

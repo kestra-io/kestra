@@ -22,17 +22,39 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 @Schema(
-    title = "Display Execution data in a dashboard chart.",
-    description = "Execution data can be displayed in charts broken out by Namespace and filtered by State, for example."
+    title = "Display Trigger data in a dashboard chart.",
+    description = "Trigger data can be displayed in charts or tables listing the Namespace, Flow, and next execution date of each trigger, and filtered by whether the trigger is disabled, for example."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Display a chart with a Triggers per Namespace broken out by State.",
+            title = "Display a table with the next execution date of each enabled trigger.",
             full = true,
-            code = {
-                "id: executions_per_namespace_bars\n"
-            }
+            code = """
+                charts:
+                  - id: next_executions
+                    type: io.kestra.plugin.core.dashboard.chart.Table
+                    chartOptions:
+                      displayName: Next Executions
+                      pagination:
+                        enabled: true
+                    data:
+                      type: io.kestra.plugin.core.dashboard.data.Triggers
+                      where:
+                        - field: DISABLED
+                          type: EQUAL_TO
+                          value: false
+                      columns:
+                        namespace:
+                          field: NAMESPACE
+                          displayName: Namespace
+                        flowId:
+                          field: FLOW_ID
+                          displayName: Flow
+                        nextExec:
+                          field: NEXT_EXECUTION_DATE
+                          displayName: Next Execution Date
+                """
         )
     }
 )

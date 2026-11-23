@@ -1,0 +1,33 @@
+id: loop_outputs_basic
+namespace: sanitychecks.core
+labels:
+  tier: tier1
+description: |
+  Expose per-iteration child task outputs outside the loop using `outputs:` and `fetchType`.
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values:
+      - value1
+      - value2
+      - value3
+    fetchType: AUTO
+    outputs:
+      - id: from_return
+        type: STRING
+        value: "{{ outputs.return.value }}"
+      - id: from_return2
+        type: STRING
+        value: "{{ outputs.return2.value }}"
+    tasks:
+      - id: return
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ item.value }}"
+      - id: return2
+        type: io.kestra.plugin.core.debug.Return
+        format: hello
+
+  - id: read_loop_outputs
+    type: io.kestra.plugin.core.log.Log
+    message: "Loop merged outputs: {{ outputs.loop.outputs }}"

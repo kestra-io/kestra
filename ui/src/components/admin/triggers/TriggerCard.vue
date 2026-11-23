@@ -19,7 +19,7 @@
                             <KsMarkdown :content="trigger.description" />
                         </template>
                         <KsIcon class="info" :size="16">
-                            <InformationOutline />
+                            <Information />
                         </KsIcon>
                     </KsTooltip>
                 </div>
@@ -62,7 +62,7 @@
     import {computed} from "vue"
     import {KsMarkdown} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import Information from "vue-material-design-icons/Information.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
 
@@ -74,22 +74,22 @@
         fontSize: "var(--ks-font-size-xs)",
         lineHeight: "var(--ks-line-height-base)",
         padding: "0.625rem var(--ks-spacing-3)",
-        color: "var(--ks-content-primary)",
+        color: "var(--ks-text-primary)",
     }
 
     const pluginsStore = usePluginsStore()
     const descriptionParts = computed(() => (props.trigger.description ?? "").split(/(`[^`]+`)/g))
 </script>
 
-<style scoped lang="scss">
-    $card-min-height: 8.75rem;
-
+<style scoped>
     .trigger-card {
+        --trigger-card-min-height: 8.75rem;
+
         display: flex;
         flex-direction: column;
-        min-height: $card-min-height;
+        min-height: var(--trigger-card-min-height);
         content-visibility: auto;
-        contain-intrinsic-height: auto $card-min-height;
+        contain-intrinsic-height: auto var(--trigger-card-min-height);
         padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
         border: var(--ks-border-block-primary);
         border-radius: var(--ks-radius-base);
@@ -176,7 +176,7 @@
                         font-size: var(--ks-font-size-sm);
                         padding: var(--ks-spacing-px) var(--ks-spacing-1);
                         border-radius: var(--ks-radius-xs);
-                        background: var(--ks-tag-background);
+                        background: var(--ks-bg-tag);
                         color: var(--ks-text-primary);
                     }
                 }

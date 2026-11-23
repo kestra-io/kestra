@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import java.util.Optional;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -46,6 +47,29 @@ public class ConditionService {
      */
     public boolean isValid(AbstractTrigger trigger, Flow flow, RunContext runContext) {
         return !isNotValid(flow, runContext, trigger.getWhen());
+    }
+
+    /**
+     * Evaluates a trigger <code>when</code> and returns whether it is met, <b>without</b> swallowing a
+     * rendering failure the way {@link #isValid(AbstractTrigger, Flow, RunContext)} does. The caller is
+     * expected to surface the misconfiguration (e.g. by failing the triggered execution) rather than
+     * treating an unrenderable expression as a silent non-match.
+     *
+     * @throws IllegalVariableEvaluationException if the <code>when</code> cannot be rendered
+     */
+    public boolean isTriggerConditionMet(AbstractTrigger trigger, RunContext runContext) throws IllegalVariableEvaluationException {
+        return !TruthUtils.isFalsy(runContext.render(trigger.getWhen()));
+    }
+
+    /**
+     * Evaluates a single condition and returns whether it is met, <b>without</b> swallowing an
+     * evaluation failure the way {@link #isValid(Condition, FlowInterface, Execution, RunContext)} does.
+     * Used to surface an unrenderable <code>dependsOn</code> <code>when</code> instead of dropping it.
+     *
+     * @throws InternalException if the condition cannot be evaluated (e.g. an unrenderable <code>when</code>)
+     */
+    public boolean isConditionMet(Condition condition, FlowInterface flow, Execution execution, RunContext runContext) throws InternalException {
+        return condition.test(this.conditionContext(runContext, flow, execution));
     }
 
     /**

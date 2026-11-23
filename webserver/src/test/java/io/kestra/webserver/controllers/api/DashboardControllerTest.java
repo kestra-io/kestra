@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -21,6 +22,8 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.models.ChartFiltersOverrides;
@@ -57,12 +60,40 @@ class DashboardControllerTest {
     @Inject
     ExecutionRepositoryInterface executionRepository;
 
+    @Inject
+    TriggerStateStore triggerStateStore;
+
     @Test
-    void shouldExportAnAdHocPreviewChartToCsv() {
+    void shouldPreserveChartColumnOrderWhenExportingEmptyAndNonEmptyCsv() {
         var uuid = IdUtils.create();
         var fakeNamespace = "a-namespace_" + uuid;
         var logTimestamp = Instant.now();
         var fakeExecutionId = "an-execution-id" + uuid;
+
+        String chartYaml = """
+            id: table_logs_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Logs
+              columns:
+                chart_execution_id:
+                  field: EXECUTION_ID
+                chart_namespace:
+                  field: NAMESPACE
+              where:
+                - field: NAMESPACE
+                  type: EQUAL_TO
+                  value: "%s"
+                - field: EXECUTION_ID
+                  type: EQUAL_TO
+                  value: "%s"
+            """.formatted(fakeNamespace, fakeExecutionId);
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(Collections.emptyList()).build());
+        byte[] emptyCsvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/charts/export", previewRequest), Argument.of(byte[].class));
+        var emptyCsv = new String(emptyCsvBytes, StandardCharsets.UTF_8);
+        assertThat(emptyCsv).isEqualTo("chart_execution_id,chart_namespace\r\n");
+
         logRepository.save(
             LogEntry.builder()
                 .namespace(fakeNamespace)
@@ -77,27 +108,6 @@ class DashboardControllerTest {
                 .build()
         );
 
-        String chartYaml = """
-            id: table_logs_chart_id
-            type: io.kestra.plugin.core.dashboard.chart.Table
-            data:
-              type: io.kestra.plugin.core.dashboard.data.Logs
-              columns:
-                chart_namespace:
-                  field: NAMESPACE
-                chart_execution_id:
-                  field: EXECUTION_ID
-              where:
-                - field: NAMESPACE
-                  type: EQUAL_TO
-                  value: "%s"
-                - field: EXECUTION_ID
-                  type: EQUAL_TO
-                  value: "%s"
-            """.formatted(fakeNamespace, fakeExecutionId);
-
-        // Compute a dashboard, making sure the query is correct
-        var previewRequest = new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(Collections.emptyList()).build());
         PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
             PagedResults.class
@@ -110,7 +120,35 @@ class DashboardControllerTest {
         // export CSV
         byte[] csvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/charts/export", previewRequest), Argument.of(byte[].class));
         var csv = new String(csvBytes, StandardCharsets.UTF_8);
-        assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n%s,%s\r\n".formatted(fakeNamespace, fakeExecutionId));
+        assertThat(csv).isEqualTo("%s%s,%s\r\n".formatted(emptyCsv, fakeExecutionId, fakeNamespace));
+    }
+
+    @Test
+    void shouldReportTheDashboardFiltersALogsChartCannotApply() {
+        String chartYaml = """
+            id: table_logs_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Logs
+              columns:
+                chart_namespace:
+                  field: NAMESPACE
+            """;
+        var previewRequest = new DashboardController.PreviewRequest(
+            chartYaml, ChartFiltersOverrides.builder().filters(
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value("company").build(),
+                    QueryFilter.builder().field(QueryFilter.Field.STATE).operation(Op.IN).value(List.of("FAILED")).build()
+                )
+            ).build()
+        );
+
+        DashboardController.ChartData chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+            DashboardController.ChartData.class
+        );
+
+        assertThat(chartData.ignoredFilters()).containsExactly(QueryFilter.Field.STATE);
     }
 
     @Test
@@ -122,7 +160,7 @@ class DashboardControllerTest {
         );
         assertThat(defaultDashboard).isNotNull();
         assertThat(defaultDashboard.getId()).isEqualTo("_default");
-        assertThat(defaultDashboard.getCharts()).hasSize(10);
+        assertThat(defaultDashboard.getCharts()).hasSize(9);
 
         byte[] csvBytes = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH + "/_default/charts/logs_timeseries/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
@@ -130,6 +168,21 @@ class DashboardControllerTest {
         );
         var csv = new String(csvBytes, StandardCharsets.UTF_8);
         assertThat(csv).contains("date").contains("level").contains("total");
+    }
+
+    @Test
+    void shouldServeEveryChartOfDefaultDashboardAfterValidation() {
+        DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "/_default"),
+            DashboardController.DashboardResponse.class
+        );
+
+        for (var chart : defaultDashboard.getCharts()) {
+            var response = client.toBlocking().exchange(
+                POST(DASHBOARD_PATH + "/_default/charts/" + chart.getId() + "/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build())
+            );
+            assertThat(response.getStatus().getCode()).as(chart.getId()).isEqualTo(200);
+        }
     }
 
     @Test
@@ -208,6 +261,7 @@ class DashboardControllerTest {
                 )
             ).build()
         );
+
         PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
             PagedResults.class
@@ -215,6 +269,179 @@ class DashboardControllerTest {
         assertThat(chartData).isNotNull();
         assertThat(chartData.getTotal()).isEqualTo(1);
         assertThat(chartData.getResults().get(0).get("execution_id")).isEqualTo(idForLabelAC);
+    }
+
+    @Test
+    void shouldExcludeDisabledTriggersFromNextExecutionsChart() {
+        String namespace = TestsUtils.randomNamespace();
+
+        String enabledTriggerId = IdUtils.create();
+        triggerStateStore.save(
+            TriggerState.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId("flow")
+                .triggerId(enabledTriggerId)
+                .workerId("worker")
+                .nextEvaluationDate(Instant.now())
+                .disabled(false)
+                .build()
+        );
+
+        String disabledTriggerId = IdUtils.create();
+        triggerStateStore.save(
+            TriggerState.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId("flow")
+                .triggerId(disabledTriggerId)
+                .workerId("worker")
+                .nextEvaluationDate(Instant.now())
+                .disabled(true)
+                .build()
+        );
+
+        String chartYaml = """
+            id: table_next_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Triggers
+              columns:
+                trigger_id:
+                  field: TRIGGER_ID
+              where:
+                - field: NAMESPACE
+                  type: EQUAL_TO
+                  value: "%s"
+                - field: DISABLED
+                  type: EQUAL_TO
+                  value: false
+            """.formatted(namespace);
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, null);
+
+        PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+            PagedResults.class
+        );
+
+        assertThat(chartData).isNotNull();
+        assertThat(chartData.getTotal()).isEqualTo(1);
+        assertThat(chartData.getResults().get(0).get("trigger_id")).isEqualTo(enabledTriggerId);
+    }
+
+    @Test
+    void shouldSortRecentExecutionsOfDefaultDashboardByMostRecentStartDate() {
+        String namespace = TestsUtils.randomNamespace();
+        Instant now = Instant.now();
+        // saved out of order on purpose, so a result sorted by insertion cannot pass
+        for (var flowAndAge : List.of(Map.entry("middle", 2L), Map.entry("newest", 1L), Map.entry("oldest", 3L))) {
+            Instant startDate = now.minus(Duration.ofHours(flowAndAge.getValue()));
+            executionRepository.save(
+                Execution.builder()
+                    .tenantId(MAIN_TENANT)
+                    .id(IdUtils.create())
+                    .namespace(namespace)
+                    .flowId(flowAndAge.getKey())
+                    .state(State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, startDate), new State.History(State.Type.SUCCESS, startDate.plusSeconds(1)))))
+                    .build()
+            );
+        }
+
+        String csv = exportDefaultChart("recent_executions", namespace);
+
+        assertThat(csv.indexOf("newest")).isPositive().isLessThan(csv.indexOf("middle"));
+        assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("oldest"));
+    }
+
+    /**
+     * The Upcoming tab of the Executions table has no stored chart: the frontend builds this Triggers
+     * table and sends its YAML through the content-based routes, so the ordering it relies on is
+     * covered here rather than against a dashboard definition.
+     */
+    @Test
+    void shouldSortUpcomingTriggersBySoonestFirst() {
+        String namespace = TestsUtils.randomNamespace();
+        Instant now = Instant.now();
+        // saved out of order on purpose, so a result sorted by insertion cannot pass
+        for (var flowAndOffset : List.of(Map.entry("middle", 2L), Map.entry("last", 3L), Map.entry("soonest", 1L))) {
+            triggerStateStore.save(
+                TriggerState.builder()
+                    .tenantId(MAIN_TENANT)
+                    .namespace(namespace)
+                    .flowId(flowAndOffset.getKey())
+                    .triggerId(IdUtils.create())
+                    .workerId("worker")
+                    .nextEvaluationDate(now.plus(Duration.ofHours(flowAndOffset.getValue())))
+                    .disabled(false)
+                    .build()
+            );
+        }
+        triggerStateStore.save(
+            TriggerState.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId("disabled")
+                .triggerId(IdUtils.create())
+                .workerId("worker")
+                .nextEvaluationDate(now)
+                .disabled(true)
+                .build()
+        );
+
+        String csv = exportUpcomingChart(namespace);
+
+        assertThat(csv).doesNotContain("disabled");
+        assertThat(csv.indexOf("soonest")).isPositive().isLessThan(csv.indexOf("middle"));
+        assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("last"));
+    }
+
+    private String exportUpcomingChart(String namespace) {
+        String chartYaml = """
+            id: recent_executions__upcoming
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            chartOptions:
+              displayName: Executions
+              pagination:
+                enabled: true
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Triggers
+              columns:
+                namespace:
+                  field: NAMESPACE
+                flowId:
+                  field: FLOW_ID
+                triggerId:
+                  field: TRIGGER_ID
+                next_execution_date:
+                  field: NEXT_EXECUTION_DATE
+              where:
+                - field: DISABLED
+                  type: EQUAL_TO
+                  value: false
+              orderBy:
+                - column: next_execution_date
+                  order: ASC
+            """;
+        var globalFilter = ChartFiltersOverrides.builder().filters(
+            List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build())
+        ).build();
+        byte[] csv = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/export", new DashboardController.PreviewRequest(chartYaml, globalFilter)),
+            Argument.of(byte[].class)
+        );
+        return new String(csv, StandardCharsets.UTF_8);
+    }
+
+    private String exportDefaultChart(String chartId, String namespace) {
+        var filters = ChartFiltersOverrides.builder().filters(
+            List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build())
+        ).build();
+        byte[] csv = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/_default/charts/" + chartId + "/export", filters),
+            Argument.of(byte[].class)
+        );
+        return new String(csv, StandardCharsets.UTF_8);
     }
 
     @Test
@@ -246,6 +473,104 @@ class DashboardControllerTest {
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
         assertThat(httpClientResponseException.getMessage()).contains("catastrophic backtracking");
+    }
+
+    @Test
+    void shouldRejectCatastrophicRegexInGlobalFilters() {
+        var catastrophic = ChartFiltersOverrides.builder().filters(
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.REGEX)
+                    .value("(a+)+$")
+                    .build()
+            )
+        ).build();
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_id:
+                  field: ID
+            """;
+
+        HttpClientResponseException preview = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", new DashboardController.PreviewRequest(chartYaml, catastrophic)),
+                PagedResults.class
+            )
+        );
+        HttpClientResponseException export = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/_default/charts/logs_timeseries/export", catastrophic),
+                Argument.of(byte[].class)
+            )
+        );
+
+        assertThat(preview.getStatus().getCode()).isEqualTo(400);
+        assertThat(preview.getMessage()).contains("catastrophic backtracking");
+        assertThat(export.getStatus().getCode()).isEqualTo(400);
+    }
+
+    @Test
+    void shouldReturnValidationErrorWhenWhereFilterHasNoField() {
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_id:
+                  field: ID
+              where:
+                - labelKey: area
+                  type: EQUAL_TO
+                  value: frontend
+            """;
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, null);
+
+        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+                PagedResults.class
+            )
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
+        assertThat(httpClientResponseException.getResponse().getBody(String.class).orElseThrow()).contains("data.where[0].field: must not be null");
+    }
+
+    @Test
+    void shouldReturnValidationErrorWhenKpiNumeratorFilterHasNoField() {
+        String chartYaml = """
+            id: kpi_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.KPI
+            chartOptions:
+              displayName: KPI
+              numberType: PERCENTAGE
+            data:
+              type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
+              columns:
+                field: ID
+                agg: COUNT
+              numerator:
+                - labelKey: area
+                  type: EQUAL_TO
+                  value: frontend
+            """;
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, null);
+
+        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+                PagedResults.class
+            )
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
+        assertThat(httpClientResponseException.getResponse().getBody(String.class).orElseThrow()).contains("`data.numerator[0].field` is required.");
     }
 
     @Test

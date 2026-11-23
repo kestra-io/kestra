@@ -1,17 +1,17 @@
 <template>
     <KsButton
-        v-if="isFlowContext"
+        v-if="aiEnabled && isFlowContext"
         @click="fixWithAi"
         size="small"
     >
-        <AiIcon class="me-1" />
+        <AiIcon class="fix-with-ai-icon" />
         <span>{{ $t("fix_with_ai") }}</span>
     </KsButton>
 
     <KsMarkdown :content="detail" v-if="items.length === 0" />
 
     <ul v-else class="problem-errors">
-        <li v-for="(item, index) in items" :key="index" class="font-monospace">
+        <li v-for="(item, index) in items" :key="index" class="problem-error-item">
             <template v-if="fieldLabel(item)">
                 <!-- The JSON Pointer is kept as the tooltip: it is the machine locator, and the one a
                      jump-to-line feature would resolve against the submitted document. -->
@@ -23,7 +23,7 @@
 
     <footer v-if="traceId" class="problem-trace">
         <span>{{ $t("errors.trace id") }}</span>
-        <KsId :value="traceId" :shrink="false" />
+        <KsId :value="traceId" :shrink="false" data-test="error-toast-trace-id" />
     </footer>
 </template>
 
@@ -33,6 +33,7 @@
     import {useI18n} from "vue-i18n"
     import AiIcon from "vue-material-design-icons/Creation.vue"
     import {useMiscStore} from "override/stores/misc"
+    import {useAiEnabled} from "../composables/useAiEnabled"
     import type {ProblemFieldError} from "@kestra-io/kestra-sdk"
     import {problemFieldLabel, problemFieldMessage} from "../utils/problem"
 
@@ -54,6 +55,8 @@
     const route = useRoute()
     const {t, te} = useI18n()
     const miscStore = useMiscStore()
+
+    const aiEnabled = useAiEnabled()
 
     const isFlowContext = computed(() => {
         const routeName = String(route?.name ?? "")
@@ -82,14 +85,18 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .fix-with-ai-icon {
+        margin-inline-end: var(--ks-spacing-1);
+    }
+
     .problem-errors {
         margin: var(--ks-spacing-4) 0 0;
         padding: 0;
         list-style-type: none;
     }
 
-    .problem-errors li {
+    .problem-error-item {
         font-size: var(--ks-font-size-sm);
         margin-top: var(--ks-spacing-2);
     }
@@ -100,6 +107,6 @@
         gap: var(--ks-spacing-2);
         margin-top: var(--ks-spacing-4);
         font-size: var(--ks-font-size-sm);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

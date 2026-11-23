@@ -8,7 +8,7 @@
             @click="toggle(item.label)"
         >
             <span :style="swatchStyle(item.color)" />
-            {{ displayLabel(item.label) }} ({{ formatCount(item.count) }})
+            {{ item.displayName ?? categoryLabel(item.label) }} ({{ formatCount(item.count) }})
         </span>
 
         <KsTooltip v-if="hidden.length" placement="top">
@@ -21,12 +21,12 @@
                         @click="toggle(item.label)"
                     >
                         <span :style="swatchStyle(item.color)" />
-                        <span style="flex:1;">{{ displayLabel(item.label) }}</span>
+                        <span style="flex:1;">{{ item.displayName ?? categoryLabel(item.label) }}</span>
                         <span>{{ formatCount(item.count) }}</span>
                     </span>
                 </div>
             </template>
-            <span class="ellipsis" tabindex="0" aria-label="Show all statuses">⋯</span>
+            <span class="ellipsis" tabindex="0" :aria-label="$t('dashboards.show_all_statuses')">⋯</span>
         </KsTooltip>
 
         <span
@@ -36,7 +36,7 @@
             @click="toggle(durationLabel)"
         >
             <span class="line" />
-            {{ displayLabel(durationLabel) }}
+            {{ categoryLabel(durationLabel) }}
         </span>
     </div>
 </template>
@@ -44,12 +44,14 @@
 <script setup lang="ts">
     import {computed, ref} from "vue"
     import type {EChartsType} from "echarts/core"
-    import {KsTooltip} from "@kestra-io/design-system"
+    import {categoryLabel, KsTooltip} from "@kestra-io/design-system"
 
     interface ChartLegendItem {
         label: string;
         color: string;
         count: number;
+        displayName?: string;
+        rank?: number;
     }
 
     const props = withDefaults(defineProps<{
@@ -59,12 +61,14 @@
         center?: boolean;
         chart?: {getEchartsInstance: () => EChartsType | null} | null;
         formatValue?: (value: number) => string;
+        toggledOff?: Set<string>;
     }>(), {
         maxVisible: 5,
         durationLabel: undefined,
         center: false,
         chart: null,
         formatValue: undefined,
+        toggledOff: undefined,
     })
 
     const emit = defineEmits<{toggle: [name: string]}>()
@@ -72,31 +76,31 @@
     const aggregated = computed<ChartLegendItem[]>(() => {
         const byLabel = new Map<string, ChartLegendItem>()
         for (const item of props.items) {
-            const entry = byLabel.get(item.label) ?? {label: item.label, color: item.color, count: 0}
+            const entry = byLabel.get(item.label) ?? {...item, count: 0}
             entry.count += item.count || 0
             byLabel.set(item.label, entry)
         }
-        return [...byLabel.values()].sort((a, b) => b.count - a.count)
+        return [...byLabel.values()].sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER) || b.count - a.count)
     })
 
     const visible = computed(() => aggregated.value.slice(0, props.maxVisible))
     const hidden = computed(() => aggregated.value.slice(props.maxVisible))
 
-    const toggledOff = ref(new Set<string>())
+    const internalToggledOff = ref(new Set<string>())
+    const toggledOff = computed(() => props.toggledOff ?? internalToggledOff.value)
 
     function toggle(name: string) {
-        const next = new Set(toggledOff.value)
-        if (next.has(name)) next.delete(name)
-        else next.add(name)
-        toggledOff.value = next
+        if (!props.toggledOff) {
+            const next = new Set(internalToggledOff.value)
+            if (next.has(name)) next.delete(name)
+            else next.add(name)
+            internalToggledOff.value = next
+        }
         props.chart?.getEchartsInstance?.()?.dispatchAction({type: "legendToggleSelect", name})
         emit("toggle", name)
     }
 
     const formatCount = (count: number) => props.formatValue?.(count) ?? String(count)
-
-    const displayLabel = (label: string) =>
-        label.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 
     const swatchStyle = (color: string) => ({
         width: "10px",
@@ -108,7 +112,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .legend {
         display: flex;
         flex-wrap: wrap;
@@ -117,6 +121,7 @@
         margin-bottom: var(--ks-spacing-2);
         font-size: var(--ks-font-size-2xs);
         color: var(--ks-text-secondary);
+        font-variant-numeric: tabular-nums;
 
         &.center {
             justify-content: center;

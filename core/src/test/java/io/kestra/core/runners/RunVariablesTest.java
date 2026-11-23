@@ -7,13 +7,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jetbrains.annotations.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionMetadata;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
@@ -24,6 +27,7 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.BoolInput;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
@@ -34,7 +38,6 @@ import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -48,7 +51,45 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
+@Slf4j
 class RunVariablesTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RunVariablesTest.class);
+
+    @Test
+    void shouldResolveInputsFromRootExecutionForNestedLoops() {
+        var flow = GenericFlow.builder()
+            .id("flow")
+            .namespace("ns")
+            .revision(1)
+            .tenantId("tenant")
+            .inputs(List.of(StringInput.builder().id("main_value").type(Type.STRING).required(true).build()))
+            .build();
+
+        Execution rootExecution = Execution.newExecution(flow, null)
+            .withInputs(Map.of("main_value", "provided value"));
+        Execution firstLoopExecution = rootExecution.loopExecution(
+            TaskRun.builder().id("first-loop").taskId("first-loop").executionId(rootExecution.getId()).state(new State()).build(),
+            0,
+            null,
+            "first",
+            false
+        );
+        Execution nestedLoopExecution = firstLoopExecution.loopExecution(
+            TaskRun.builder().id("nested-loop").taskId("nested-loop").executionId(firstLoopExecution.getId()).state(new State()).build(),
+            0,
+            null,
+            "nested",
+            false
+        );
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .withExecution(nestedLoopExecution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat(variables).extractingByKey("inputs").isEqualTo(Map.of("main_value", "provided value"));
+    }
+
 
     @Inject
     VariableRenderer renderer;
@@ -61,17 +102,15 @@ class RunVariablesTest {
 
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
-        return new KVStoreService() {
+        KVStoreService kvStoreService = Mockito.mock(KVStoreService.class, Mockito.CALLS_REAL_METHODS);
+        Mockito.doAnswer(invocation -> new InternalKVStore(invocation.getArgument(0), invocation.getArgument(1), storageInterface, kvMetadataStateStore) {
             @Override
-            public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore) {
-                    @Override
-                    public Optional<KVValue> getValue(String key) {
-                        return Optional.of(new KVValue("value"));
-                    }
-                };
+            public Optional<KVValue> getValue(String key) {
+                return Optional.of(new KVValue("value"));
             }
-        };
+        }
+        ).when(kvStoreService).get(Mockito.any(), Mockito.any(), Mockito.any());
+        return kvStoreService;
     }
 
     @Test
@@ -261,6 +300,25 @@ class RunVariablesTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void shouldExposeAttemptNumberOfTheExecution() {
+        Execution execution = Execution.builder()
+            .id("exec-id")
+            .namespace("ns")
+            .flowId("flow")
+            .state(new State())
+            .build()
+            .withMetadata(ExecutionMetadata.builder().attemptNumber(2).build());
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat((Map<String, Object>) variables.get("execution"))
+            .containsEntry("attemptNumber", 2);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void shouldBuildTriggerContextGivenExecutionWithTrigger() {
         // Given
         ExecutionTrigger executionTrigger = ExecutionTrigger.builder()
@@ -425,7 +483,6 @@ class RunVariablesTest {
      * Dynamic top-level keys ({@code inputs}, {@code outputs}, {@code tasks}, etc.) are noted
      * as present but their children are not walked, since their structure varies per flow/execution.
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     void contextPathsShouldMatchExplicitRegistry() {
         String parentRunId = IdUtils.create();
@@ -456,7 +513,8 @@ class RunVariablesTest {
             .withState(State.Type.SUCCESS);
         LoopRun loopRun = new LoopRun(
             parentExecution, "loop-task", IdUtils.create(), 0, "loop-key", "loop-value",
-            List.of(new LoopRun.Parent(0, null, "v0"), new LoopRun.Parent(1, "pk", "v1"))
+            List.of(new LoopRun.Parent(0, null, "v0", false), new LoopRun.Parent(1, "pk", "v1", false)),
+            false
         );
 
         Execution execution = Execution.builder()
@@ -588,5 +646,42 @@ class RunVariablesTest {
 
         // Then
         assertThat(triggerVariables).doesNotContainKey("_context");
+    }
+
+    @Test
+    void shouldParseLoopAndParentValuesFollowingTheFlagOfTheirOwnLoop() {
+        // Given
+        Execution parentExecution = Execution.builder().id("parent-exec-id").namespace("ns").flowId("flow").build();
+        String json = "{\"fqn\":\"docker01\",\"user\":\"root\"}";
+        List<LoopRun.Parent> parents = List.of(new LoopRun.Parent(0, null, json, true), new LoopRun.Parent(1, null, json, false));
+
+        // When
+        Map<String, Object> parsedChild = RunVariables.of(new LoopRun(parentExecution, "loop", "taskrun", 2, null, json, parents, true), log);
+        Map<String, Object> rawChild = RunVariables.of(new LoopRun(parentExecution, "loop", "taskrun", 2, null, json, parents, false), log);
+
+        // Then
+        Map<String, Object> expected = Map.of("fqn", "docker01", "user", "root");
+        List<?> parsedParents = (List<?>) parsedChild.get("parents");
+        assertThat(parsedChild.get("value")).isEqualTo(expected);
+        assertThat(((Map<?, ?>) parsedParents.get(0)).get("value")).isEqualTo(expected);
+        assertThat(((Map<?, ?>) parsedParents.get(1)).get("value")).isEqualTo(json);
+        assertThat(((Map<?, ?>) parsedChild.get("parent")).get("value")).isEqualTo(json);
+        assertThat(rawChild.get("value")).isEqualTo(json);
+        assertThat(((Map<?, ?>) ((List<?>) rawChild.get("parents")).get(0)).get("value")).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldKeepLoopValueAsStringWhenItCannotBeParsed() {
+        // Given
+        Execution parentExecution = Execution.builder().id("parent-exec-id").namespace("ns").flowId("flow").build();
+        LoopRun.Parent parent = new LoopRun.Parent(0, null, "not json", true);
+        LoopRun loopRun = new LoopRun(parentExecution, "loop", "taskrun", 1, null, "{invalid", List.of(parent), true);
+
+        // When
+        Map<String, Object> variables = RunVariables.of(loopRun, LOGGER);
+
+        // Then
+        assertThat(variables.get("value")).isEqualTo("{invalid");
+        assertThat(((Map<?, ?>) variables.get("parent")).get("value")).isEqualTo("not json");
     }
 }

@@ -3,19 +3,27 @@ package io.kestra.mcp;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.webserver.services.ActorResolver;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.spec.HttpHeaders;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -31,34 +39,96 @@ public class McpServerHandlerTransport {
     private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(10);
 
     private final Map<HandlerKey, KestraFluxStreamableServerTransportProvider> handlers = new ConcurrentHashMap<>();
-    private final Map<HandlerKey, McpAsyncServer> servers = new ConcurrentHashMap<>();
+    private final Map<HandlerKey, ScopedServer> servers = new ConcurrentHashMap<>();
     private final McpErrorResponseMapper mcpErrorResponseMapper;
-    private final McpToolService mcpToolService;
+    private final Map<McpToolSource.Kind, McpToolSource> toolSources;
     private final McpServerCache mcpServerCache;
     private final McpSessionService mcpSessionService;
+    private final McpSessionFactory sessionFactory;
+    private final McpToolAccessControl accessControl;
+    private final ActorResolver actorResolver;
 
     @Inject
     public McpServerHandlerTransport(
         McpErrorResponseMapper mcpErrorResponseMapper,
-        McpToolService mcpToolService,
+        List<McpToolSource> toolSources,
         McpServerCache mcpServerCache,
-        McpSessionService mcpSessionService) {
+        McpSessionService mcpSessionService,
+        McpSessionFactory sessionFactory,
+        McpToolAccessControl accessControl,
+        ActorResolver actorResolver) {
         this.mcpErrorResponseMapper = mcpErrorResponseMapper;
-        this.mcpToolService = mcpToolService;
+        this.toolSources = toolSources.stream().collect(Collectors.toMap(McpToolSource::kind, Function.identity()));
         this.mcpServerCache = mcpServerCache;
         this.mcpSessionService = mcpSessionService;
+        this.sessionFactory = sessionFactory;
+        this.accessControl = accessControl;
+        this.actorResolver = actorResolver;
     }
 
+    /**
+     * Serves an MCP request to a server, responding 404 when the server does not exist or no tool source can
+     * serve it, and 503 when it is disabled. Must be called on the request thread, where the caller is resolved.
+     *
+     * @param tenantId the tenant the server belongs to, or {@code null} for a server that belongs to none
+     */
+    public Mono<? extends HttpResponse<?>> handle(
+        @Nullable String tenantId,
+        String serverId,
+        HttpRequest<String> request) {
+        Optional<McpServerCache.ResolvedServer> server = mcpServerCache.resolve(tenantId, serverId);
+        if (server.isEmpty()) {
+            return Mono.just(HttpResponse.notFound());
+        }
+        if (server.get().server().disabled()) {
+            return Mono.just(HttpResponse.status(HttpStatus.SERVICE_UNAVAILABLE));
+        }
+        if (!supports(server.get().toolSource())) {
+            log.warn("MCP server '{}' needs a {} tool source, but none is registered", serverId, server.get().toolSource());
+            return Mono.just(HttpResponse.notFound());
+        }
+
+        KestraMcpTransportContext context = sessionFactory.build(
+            tenantId, serverId, request.getHeaders().get(HttpHeaders.MCP_SESSION_ID), caller(request)
+        );
+        return getServerHandler(context).handleRequest(request, context);
+    }
+
+    private McpCaller caller(HttpRequest<?> request) {
+        return new McpCaller(
+            accessControl.callerId(request).orElse(null),
+            accessControl.callerName(request).orElse(null),
+            actorResolver.resolve()
+        );
+    }
+
+    /**
+     * The built tool list is part of what is cached here, so the key carries the caller's view alongside the
+     * server: callers whose tool source puts them in the same view share an instance.
+     */
     public KestraFluxStreamableServerTransportProvider getServerHandler(
         KestraMcpTransportContext kestraMcpTransportContext) {
-        return handlers.computeIfAbsent(HandlerKey.from(kestraMcpTransportContext), handlerKey ->
+        McpToolSource.Kind kind = mcpServerCache.resolve(kestraMcpTransportContext.getTenantId(), kestraMcpTransportContext.getServerId())
+            .map(McpServerCache.ResolvedServer::toolSource)
+            .orElse(McpToolSource.Kind.FLOWS);
+        McpToolSource toolSource = Optional.ofNullable(toolSources.get(kind))
+            .orElseThrow(() -> new IllegalStateException("No MCP tool source is registered for %s servers.".formatted(kind)));
+        McpToolView view = toolSource.view(kestraMcpTransportContext);
+        HandlerKey key = HandlerKey.from(kestraMcpTransportContext, view);
+
+        return handlers.computeIfAbsent(key, handlerKey ->
         {
             log.debug("Building server for handler transportContext: {}", kestraMcpTransportContext);
             KestraFluxStreamableServerTransportProvider transportProvider = new KestraFluxStreamableServerTransportProvider(
                 mcpErrorResponseMapper,
                 mcpSessionService
             );
-            servers.put(handlerKey, buildServer(handlerKey, transportProvider));
+            servers.put(
+                handlerKey,
+                new ScopedServer(
+                    buildServer(handlerKey, view, transportProvider), view, kind, handlerKey.tenantId(), handlerKey.serverId()
+                )
+            );
             return transportProvider;
         });
     }
@@ -73,24 +143,67 @@ public class McpServerHandlerTransport {
      */
     @PreDestroy
     public void close() {
-        Flux.fromIterable(Set.copyOf(handlers.keySet()))
-            .concatMap(key -> evictAndNotify(key.tenantId(), key.serverId()).onErrorComplete())
+        Flux.fromIterable(
+            handlers.keySet().stream().map(key -> new ServerRef(key.tenantId(), key.serverId())).distinct().toList()
+        )
+            .concatMap(server -> evictAndNotify(server.tenantId(), server.serverId()).onErrorComplete())
             .then()
             .block(SHUTDOWN_TIMEOUT);
     }
 
-    public Mono<Void> refreshTools(String tenantId, String serverId) {
-        HandlerKey key = new HandlerKey(tenantId, serverId);
-        McpAsyncServer server = servers.get(key);
-        if (server == null) {
+    /**
+     * Re-lists the tools of every instance built for this server, provided it is backed by the given kind of
+     * tool source, and notifies the sessions connected to it of what changed.
+     */
+    public Mono<Void> refreshTools(String tenantId, String serverId, McpToolSource.Kind toolSource) {
+        return Flux.fromIterable(keysFor(tenantId, serverId))
+            .concatMap(
+                key -> Optional.ofNullable(servers.get(key))
+                    .filter(scoped -> scoped.toolSource() == toolSource)
+                    .map(this::refreshTools)
+                    .orElseGet(Mono::empty)
+            )
+            .then();
+    }
+
+    public Mono<Void> evictAndNotify(String tenantId, String serverId) {
+        log.debug("Initiating graceful shutdown tenantId: {}, serverId: {} as the server is deleted or disabled", tenantId, serverId);
+
+        List<HandlerKey> keys = keysFor(tenantId, serverId);
+        if (keys.isEmpty()) {
+            log.debug("No server found for tenantId: {}, serverId: {}", tenantId, serverId);
             return Mono.empty();
         }
 
-        McpServer.ServerType serverType = mcpServerCache.get(tenantId, serverId)
-            .map(McpServer::serverType)
-            .orElse(McpServer.ServerType.PRIVATE);
+        return Flux.fromIterable(keys)
+            .concatMap(key ->
+            {
+                KestraFluxStreamableServerTransportProvider transport = handlers.remove(key);
+                ScopedServer scopedServer = servers.remove(key);
 
-        List<McpServerFeatures.AsyncToolSpecification> newSpecs = mcpToolService.listToolSpecsForServer(tenantId, serverId, serverType);
+                Mono<Void> transportClosed = Optional.ofNullable(transport)
+                    .map(KestraFluxStreamableServerTransportProvider::closeGracefully)
+                    .orElseGet(Mono::empty);
+
+                return transportClosed.then(
+                    Optional.ofNullable(scopedServer)
+                        .map(scoped -> scoped.server().closeGracefully())
+                        .orElseGet(Mono::empty)
+                );
+            })
+            .then();
+    }
+
+    @VisibleForTesting
+    public Flux<McpSchema.Tool> listToolsForServer(String tenantId, String serverId) {
+        return Flux.fromIterable(keysFor(tenantId, serverId))
+            .concatMap(key -> Optional.ofNullable(servers.get(key)).map(scoped -> scoped.server().listTools()).orElseGet(Flux::empty))
+            .distinct(McpSchema.Tool::name);
+    }
+
+    private Mono<Void> refreshTools(ScopedServer scopedServer) {
+        McpAsyncServer server = scopedServer.server();
+        List<McpServerFeatures.AsyncToolSpecification> newSpecs = scopedServer.view().tools();
         Set<String> newToolNames = newSpecs.stream()
             .map(spec -> spec.tool().name())
             .collect(Collectors.toSet());
@@ -104,37 +217,26 @@ public class McpServerHandlerTransport {
             .concatMap(server::addTool)
             .then();
 
-        log.debug("Sending notify tools list changed tenantId: {}, serverId: {}", tenantId, serverId);
+        log.debug("Sending notify tools list changed tenantId: {}, serverId: {}", scopedServer.tenantId(), scopedServer.serverId());
         return removeStale.then(upsertCurrent);
     }
 
-    public Mono<Void> evictAndNotify(String tenantId, String serverId) {
-        HandlerKey key = new HandlerKey(tenantId, serverId);
-        KestraFluxStreamableServerTransportProvider transport = handlers.remove(key);
-        McpAsyncServer asyncServer = servers.remove(key);
-
-        log.debug("Initiating graceful shutdown tenantId: {}, serverId: {} as the server is deleted or disabled", tenantId, serverId);
-        Mono<Void> transportClosed = Optional.ofNullable(transport).map(KestraFluxStreamableServerTransportProvider::closeGracefully).orElseGet(() ->
-        {
-            log.debug("No transport providers found for tenantId: {}, serverId: {}", tenantId, serverId);
-            return Mono.empty();
-        });
-
-        return transportClosed.then(Optional.ofNullable(asyncServer).map(McpAsyncServer::closeGracefully).orElseGet(() ->
-        {
-            log.debug("No server found for tenantId: {}, serverId: {}", tenantId, serverId);
-            return Mono.empty();
-        }));
+    private List<HandlerKey> keysFor(String tenantId, String serverId) {
+        return handlers.keySet().stream()
+            .filter(key -> Objects.equals(key.tenantId(), tenantId) && Objects.equals(key.serverId(), serverId))
+            .toList();
     }
 
-    @VisibleForTesting
-    public Flux<McpSchema.Tool> listToolsForServer(String tenantId, String serverId) {
-        McpAsyncServer server = servers.get(new HandlerKey(tenantId, serverId));
-        return server != null ? server.listTools() : Flux.empty();
+    /**
+     * @return whether a tool source is registered for this kind of server, i.e. whether it can be served
+     */
+    private boolean supports(McpToolSource.Kind kind) {
+        return toolSources.containsKey(kind);
     }
 
     private McpAsyncServer buildServer(
         HandlerKey handlerKey,
+        McpToolView view,
         KestraFluxStreamableServerTransportProvider serverTransport) {
         var mcpServerSpec = io.modelcontextprotocol.server.McpServer.async(serverTransport)
             .capabilities(
@@ -152,24 +254,32 @@ public class McpServerHandlerTransport {
             }
         });
 
-        McpServer.ServerType serverType = serverOpt.map(McpServer::serverType).orElse(McpServer.ServerType.PRIVATE);
-        return mcpServerSpec.tools(
-            this.mcpToolService.listToolSpecsForServer(
-                handlerKey.tenantId(),
-                handlerKey.serverId(),
-                serverType
-            )
-        ).build();
+        return mcpServerSpec.tools(view.tools()).build();
     }
 
     private record HandlerKey(
         String tenantId,
-        String serverId) {
-        public static HandlerKey from(KestraMcpTransportContext kestraMcpTransportContext) {
+        String serverId,
+        String viewKey) {
+        public static HandlerKey from(KestraMcpTransportContext kestraMcpTransportContext, McpToolView view) {
             return new HandlerKey(
                 kestraMcpTransportContext.getTenantId(),
-                kestraMcpTransportContext.getServerId()
+                kestraMcpTransportContext.getServerId(),
+                view.cacheKey()
             );
         }
+    }
+
+    private record ServerRef(
+        String tenantId,
+        String serverId) {
+    }
+
+    private record ScopedServer(
+        McpAsyncServer server,
+        McpToolView view,
+        McpToolSource.Kind toolSource,
+        String tenantId,
+        String serverId) {
     }
 }

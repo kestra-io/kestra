@@ -20,5 +20,10 @@
         "allowImportingTsExtensions": true,
         "rootDir": "./src"
     },
-    "include": ["src"]
+    "include": ["src"],
+    "exclude": ["src/**/*.test.ts", "src/**/*.stories.ts", "src/**/*.stories.tsx"],
+    "vueCompilerOptions": {
+        "checkUnknownProps": true,
+        "dataAttributes": ["data-*"]
+    }
 }

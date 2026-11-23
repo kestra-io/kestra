@@ -1,5 +1,5 @@
 id: request_no_options
-namespace: sanitycheck.plugin.core.http
+namespace: sanitychecks.core
 
 tasks:
   - id: request

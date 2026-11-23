@@ -25,11 +25,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.kestra.jdbc.repository.AbstractJdbcExecutionStatisticsRepository.DATE_FIELD;
-import static io.kestra.jdbc.repository.AbstractJdbcExecutionStatisticsRepository.FLOW_ID_FIELD;
-import static io.kestra.jdbc.repository.AbstractJdbcExecutionStatisticsRepository.NAMESPACE_FIELD;
-import static io.kestra.jdbc.repository.AbstractJdbcExecutionStatisticsRepository.bindableDate;
-import static io.kestra.jdbc.repository.AbstractJdbcExecutionStatisticsRepository.tenantCondition;
+import static io.kestra.jdbc.repository.AbstractJdbcExecutionStatisticsRepository.*;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.TENANT_ID_FIELD;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
@@ -58,7 +54,6 @@ public class ExecutionStatisticsCompactor {
     // be tuned.
     private static final int MAX_BATCHES_PER_TICK = 50;
 
-    private static final Field<String> STATE_FIELD = field("state", String.class);
     private static final Field<String> EXECUTION_ID_FIELD = field("execution_id", String.class);
 
     private final io.kestra.jdbc.AbstractJdbcRepository<ExecutionStatistic> jdbcRepository;

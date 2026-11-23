@@ -267,7 +267,7 @@
     onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown))
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .mobile-filter {
     position: relative;
     width: 100%;
@@ -284,7 +284,7 @@
     flex: 1;
     min-width: 0;
 
-    :deep(.kel-input__wrapper) {
+    & :deep(.kel-input__wrapper) {
         height: 32px;
         border-radius: var(--ks-radius-base);
     }
@@ -302,7 +302,7 @@
     background-color: var(--ks-btn-secondary-bg-default);
     box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
-    :deep(svg) {
+    & :deep(svg) {
         color: var(--ks-text-dim) !important;
         font-size: var(--ks-font-size-md);
     }
@@ -310,17 +310,19 @@
     &:hover {
         background-color: var(--ks-btn-secondary-bg-hover);
     }
+}
 
-    &--active {
-        background-color: var(--ks-btn-secondary-bg-active);
-        border-color: var(--ks-btn-secondary-border-active);
+.mobile-toggle--active {
+    background-color: var(--ks-btn-secondary-bg-active);
+    border-color: var(--ks-btn-secondary-border-active);
 
-        :deep(svg) {
-            color: var(--ks-text-link) !important;
-        }
+    & :deep(svg) {
+        color: var(--ks-text-link) !important;
     }
+}
 
-    .mobile-toggle-count {
+.mobile-toggle {
+    & .mobile-toggle-count {
         position: absolute;
         top: -6px;
         right: -6px;
@@ -373,12 +375,12 @@
     cursor: pointer;
     font-family: inherit;
 
-    .sheet-section-icon :deep(svg) {
+    & .sheet-section-icon :deep(svg) {
         color: var(--ks-icon-muted);
         font-size: var(--ks-font-size-md);
     }
 
-    .sheet-section-title {
+    & .sheet-section-title {
         flex: 1;
         text-align: left;
         font-size: var(--ks-font-size-sm);
@@ -386,16 +388,16 @@
         color: var(--ks-text-primary);
     }
 
-    .sheet-chevron {
-        :deep(svg) {
+    & .sheet-chevron {
+        & :deep(svg) {
             color: var(--ks-icon-muted);
             font-size: var(--ks-font-size-md);
             transition: transform 150ms ease;
         }
+    }
 
-        &--open :deep(svg) {
-            transform: rotate(180deg);
-        }
+    & .sheet-chevron--open :deep(svg) {
+        transform: rotate(180deg);
     }
 }
 
@@ -424,10 +426,10 @@
     &:last-child {
         border-bottom: none;
     }
+}
 
-    &--open {
-        background-color: var(--ks-bg-base);
-    }
+.field-row--open {
+    background-color: var(--ks-bg-base);
 }
 
 .field-row-header {
@@ -446,20 +448,20 @@
         opacity: 0.6;
     }
 
-    .field-row-label {
+    & .field-row-label {
         flex: 1;
         text-align: left;
         font-size: var(--ks-font-size-sm);
         color: var(--ks-text-primary);
     }
 
-    .field-chevron :deep(svg) {
+    & .field-chevron :deep(svg) {
         color: var(--ks-icon-muted);
         font-size: var(--ks-font-size-md);
         transition: transform 150ms ease;
     }
 
-    .field-chevron--open :deep(svg) {
+    & .field-chevron--open :deep(svg) {
         transform: rotate(180deg);
     }
 }
@@ -467,7 +469,7 @@
 .field-row-body {
     padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
 
-    :deep(.edit-popper) {
+    & :deep(.edit-popper) {
         background: none;
     }
 }

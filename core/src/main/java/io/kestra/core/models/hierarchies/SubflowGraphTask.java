@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
@@ -21,6 +23,7 @@ import lombok.Getter;
 public class SubflowGraphTask extends AbstractGraphTask {
     private final boolean disabled;
 
+    @JsonCreator
     public SubflowGraphTask(String uid, ExecutableTask<?> task, TaskRun taskRun, List<String> values, RelationType relationType, boolean disabled) {
         super(uid, (TaskInterface) task, taskRun, values, relationType);
         this.disabled = disabled;

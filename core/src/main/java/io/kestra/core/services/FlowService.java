@@ -28,6 +28,7 @@ import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
+import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -39,6 +40,8 @@ import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
+import io.kestra.core.models.validations.ViolationPaths;
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginSchemaBundleService;
@@ -47,6 +50,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.runners.AssetInputResolver;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
@@ -60,18 +64,21 @@ import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.ParseReport;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.utils.SecretUtils;
-import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.PausableTask;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -81,6 +88,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowService {
+    private static final String AUTO_INSTALL_NOTICE = ". The plugin is not installed yet and will be installed automatically when the flow is saved.";
     private static final Pattern PEBBLE_FUNCTION_PATTERN = Pattern.compile("\\b([a-zA-Z0-9_]+)\\s*\\(");
 
     @Inject
@@ -97,6 +105,9 @@ public class FlowService {
 
     @Inject
     private Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
+
+    @Inject
+    private AssetInputResolver assetInputResolver;
 
     @Inject
     private FlowTopologyService flowTopologyService;
@@ -152,24 +163,7 @@ public class FlowService {
      */
     public FlowWithSource create(GenericFlow flow) throws FlowProcessingException, QueueException {
         // FIXME validation is done both here and in the repo
-        Objects.requireNonNull(flow, "Cannot create null flow");
-        if (flow.getSource() == null || flow.getSource().isBlank()) {
-            throw new IllegalArgumentException("Cannot create flow with null or blank source");
-        }
-
-        // Strict parsing (unknown / duplicate properties) and constraint validation are both skipped
-        // for drafts: they are allowed to be saved invalid and will fail at execution time instead.
-        // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
-        // since the draft flag is not part of the YAML source.
-        if (!flow.isDraft()) {
-            // Best-effort: installed before validation so a save through any server-side path does
-            // not fail on a not-yet-installed plugin type; a failed install just leaves the
-            // pre-existing "Invalid type" validation error in place.
-            pluginAutoInstallService.installMissingPlugins(flow.getSource());
-            FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
-            modelValidator.validate(flowParsingService.parseForValidation(parsed));
-            throwOnCyclicDependency(parsed);
-        }
+        this.validateFlow(flow);
 
         FlowWithSource created = flowRepository.create(flow);
 
@@ -190,11 +184,26 @@ public class FlowService {
      */
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws FlowProcessingException, QueueException {
         // FIXME validation is done both here and in the repo
+        Objects.requireNonNull(previous, "Cannot update a flow with null previous");
+        this.validateFlow(flow);
+
+        FlowWithSource updated = flowRepository.update(flow, previous);
+
+        // impact downstream consumers: topology, scheduler and flow metastore
+        impactDownstreamConsumers(updated);
+
+        return updated;
+    }
+
+    /**
+     * Validates the given flow the way {@link #create(GenericFlow)} and {@link #update(GenericFlow, FlowInterface)} do,
+     * without writing it. A draft is only checked for a non-blank source. Missing plugins may be installed as a side effect.
+     */
+    public void validateFlow(GenericFlow flow) throws FlowProcessingException {
         Objects.requireNonNull(flow, "Cannot create null flow");
         if (flow.getSource() == null || flow.getSource().isBlank()) {
             throw new IllegalArgumentException("Cannot create flow with null or blank source");
         }
-        Objects.requireNonNull(previous, "Cannot update a flow with null previous");
 
         // Strict parsing (unknown / duplicate properties) and constraint validation are both skipped
         // for drafts: they are allowed to be saved invalid and will fail at execution time instead.
@@ -209,13 +218,6 @@ public class FlowService {
             modelValidator.validate(flowParsingService.parseForValidation(parsed));
             throwOnCyclicDependency(parsed);
         }
-
-        FlowWithSource updated = flowRepository.update(flow, previous);
-
-        // impact downstream consumers: topology, scheduler and flow metastore
-        impactDownstreamConsumers(updated);
-
-        return updated;
     }
 
     /**
@@ -291,20 +293,22 @@ public class FlowService {
     }
 
     private void recomputeTriggers(FlowWithSource flow) {
-        var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
+        var previous = findPreviousPublishedRevision(flow).orElse(null);
+
+        if (flow.isDeleted()) {
+            // The delete marker copies a draft's triggers, so use those of the last published revision.
+            var scheduled = previous != null && !previous.isDeleted() ? previous : flow;
+            ListUtils.emptyOnNull(scheduled.getTriggers()).forEach(
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
+            return;
+        }
 
         // If the previous revision was soft-deleted, the scheduler already dropped its
         // trigger state on TriggerDeleted. Re-creating the flow must emit TriggerCreated
         // so the state is rebuilt; treat it as if there was no previous.
         if (previous != null && previous.isDeleted()) {
             previous = null;
-        }
-
-        if (flow.isDeleted()) {
-            ListUtils.emptyOnNull(flow.getTriggers()).forEach(
-                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
-            );
-            return;
         }
 
         // A draft revision must stay invisible to the scheduler: it is never picked up implicitly.
@@ -318,27 +322,17 @@ public class FlowService {
 
         if (previous != null) {
             FlowService.findRemovedTrigger(flow, previous).forEach(
-                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger), flow.getRevision()))
             );
-
-            if (flow.isDeleted()) {
-                return;
-            }
         }
 
         if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
-            FlowService.findUpdatedTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-            FlowService.findNewTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
+            FlowService.findUpdatedTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
+            FlowService.findNewTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
             FlowService.findUnchangedTrigger(flow, previous)
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
@@ -348,14 +342,9 @@ public class FlowService {
             return;
         }
 
-        if (flow.getTriggers() != null) {
-            flow.getTriggers()
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-        }
+        ListUtils.emptyOnNull(flow.getTriggers()).forEach(
+            trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+        );
     }
 
     private void updateConcurrencyLimit(FlowWithSource flow) {
@@ -375,7 +364,7 @@ public class FlowService {
             return;
         }
 
-        var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
+        var previous = findPreviousPublishedRevision(flow).orElse(null);
 
         // If the previous revision was soft-deleted, its concurrency limit was already removed:
         // treat this as if there was no previous so a new concurrency limit is re-initialized.
@@ -386,6 +375,20 @@ public class FlowService {
         if (previous == null || previous.getConcurrency() == null) {
             initConcurrencyLimit(flow);
         }
+    }
+
+    /**
+     * Returns the closest revision before the given one that is not a draft, which is the revision the
+     * scheduler and the executor currently reflect, since a draft never impacts them.
+     */
+    protected Optional<Flow> findPreviousPublishedRevision(FlowInterface flow) {
+        for (int revision = flow.getRevision() - 1; revision >= 1; revision--) {
+            Optional<Flow> found = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(revision));
+            if (found.isEmpty() || !found.get().isDraft()) {
+                return found;
+            }
+        }
+        return Optional.empty();
     }
 
     private void removeConcurrencyLimit(FlowWithSource flow) {
@@ -400,6 +403,27 @@ public class FlowService {
 
     private void sendTriggerEvent(TriggerEvent event) {
         this.triggerEventQueue.send(event);
+    }
+
+    private boolean isAutoInstallable(String typeId) {
+        return pluginAutoInstallService.isEnabled() && pluginSchemaBundleService.containsType(typeId);
+    }
+
+    /** Parses strictly and scans only a rejected source for its problems, so a valid flow is parsed once. */
+    private TolerantParse parseTolerantly(String tenantId, String source) throws FlowProcessingException {
+        try {
+            return new TolerantParse(flowParsingService.parse(tenantId, source, true), null);
+        } catch (FlowProcessingException e) {
+            if (!(e.getCause() instanceof ConstraintViolationException)) {
+                throw e;
+            }
+            ParseReport report = YamlParser.scan(source, FlowWithSource.class, "Flow");
+            if (!report.hasProblems()) {
+                throw e;
+            }
+            Optional<String> recovered = report.recoveredSource();
+            return new TolerantParse(recovered.isPresent() ? flowParsingService.parse(tenantId, recovered.get(), false) : null, report);
+        }
     }
 
     private static String formatValidationError(String message) {
@@ -477,57 +501,89 @@ public class FlowService {
 
             try {
                 String source = flowSource.content();
-                FlowWithSource flow = flowParsingService.parse(tenantId, source, true);
+                TolerantParse parsed = parseTolerantly(tenantId, source);
+                FlowWithSource flow = parsed.flow();
+                ParseReport report = parsed.report();
+                List<String> relocationInfos = relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList();
+                constraintsBuilder.infos(relocationInfos);
 
-                Integer sentRevision = flow.getRevision();
-                if (sentRevision != null) {
-                    Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantId, flow.getNamespace(), flow.getId())).orElse(0);
-                    constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
+                if (flow == null) {
+                    ScanProblems problems = scanProblems(report, List.of());
+                    constraintsBuilder.infos(ListUtils.concat(relocationInfos, problems.installNotices()));
+                    constraintsBuilder.errors(problems.errors());
+                } else {
+                    Integer sentRevision = flow.getRevision();
+                    if (sentRevision != null) {
+                        Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantId, flow.getNamespace(), flow.getId())).orElse(0);
+                        constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
+                    }
+
+                    FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow);
+                    constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
+                    constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
+                    constraintsBuilder.flow(flow.getId());
+                    constraintsBuilder.namespace(flow.getNamespace());
+
+                    if (report == null) {
+                        modelValidator.validate(parsedFlow);
+                        throwOnCyclicDependency(parsedFlow);
+                    } else {
+                        List<ValidationError> violations = modelValidator.isValid(parsedFlow).stream()
+                            .flatMap(e -> e.getConstraintViolations().stream())
+                            .flatMap(v -> report.locate(v).stream())
+                            .toList();
+                        ScanProblems problems = scanProblems(report, violations);
+                        constraintsBuilder.infos(ListUtils.concat(relocationInfos, problems.installNotices()));
+                        if (problems.errors().isEmpty()) {
+                            throwOnCyclicDependency(parsedFlow);
+                        } else {
+                            constraintsBuilder.errors(problems.errors());
+                        }
+                    }
                 }
-
-                FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow);
-                constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
-                constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
-                constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
-                constraintsBuilder.flow(flow.getId());
-                constraintsBuilder.namespace(flow.getNamespace());
-
-                modelValidator.validate(parsedFlow);
-                throwOnCyclicDependency(parsedFlow);
             } catch (ConstraintViolationException e) {
-                String friendlyMessage = formatValidationError(e.getMessage());
-                constraintsBuilder.constraints(friendlyMessage);
+                constraintsBuilder.errors(ValidationError.ofException(e));
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
-                    String friendlyMessage = formatValidationError(cve.getMessage());
                     // A missing plugin type is only recoverable when auto-install is on AND the type
                     // exists in the schema bundle: it is then a simple notice (installed on save); a
                     // type unknown to the bundle is a genuine error.
-                    if (
-                        pluginAutoInstallService.isEnabled()
-                            && cve instanceof InvalidTypeConstraintViolationException invalidType
-                            && pluginSchemaBundleService.containsType(invalidType.getTypeId())
-                    ) {
-                        constraintsBuilder.infos(List.of(friendlyMessage + ". The plugin is not installed yet and will be installed automatically when the flow is saved."));
+                    if (cve instanceof InvalidTypeConstraintViolationException invalidType && isAutoInstallable(invalidType.getTypeId())) {
+                        constraintsBuilder.infos(List.of(formatValidationError(cve.getMessage()) + AUTO_INSTALL_NOTICE));
                     } else {
-                        constraintsBuilder.constraints(friendlyMessage);
+                        constraintsBuilder.errors(ValidationError.ofException(cve));
                     }
                 } else {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    constraintsBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
+                    constraintsBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + cause.getMessage())));
                 }
             } catch (RuntimeException e) {
                 // In case of any error, we add a validation violation so the error is displayed in the UI.
                 // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
                 // in dev like incompatible plugin versions.
                 log.error("Unable to validate the flow", e);
-                constraintsBuilder.constraints("Unable to validate the flow: " + e.getMessage());
+                constraintsBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + e.getMessage())));
             }
 
             constraints.add(constraintsBuilder.build());
         });
 
         return constraints;
+    }
+
+    /** Splits the scan's problems into errors and notices, auto-installable plugin types being only notices. */
+    private ScanProblems scanProblems(ParseReport report, List<ValidationError> violations) {
+        List<ValidationError> errors = new ArrayList<>(report.errors());
+        List<String> installNotices = new ArrayList<>();
+        for (ParseReport.InvalidType invalidType : report.invalidTypes()) {
+            if (isAutoInstallable(invalidType.typeId())) {
+                installNotices.add(formatValidationError(invalidType.error().detail()) + AUTO_INSTALL_NOTICE);
+            } else {
+                errors.add(invalidType.error());
+            }
+        }
+        errors.addAll(violations);
+        return new ScanProblems(errors, installNotices);
     }
 
     public FlowWithSource importFlow(String tenantId, String source) throws FlowProcessingException {
@@ -622,11 +678,22 @@ public class FlowService {
             }
         });
 
+        flow.resolvableInputs().stream()
+            .filter(AssetInput.class::isInstance)
+            .map(AssetInput.class::cast)
+            .forEach(input -> {
+                List<String> ids = input.staticDefaultIds();
+                List<String> unknown = ids.isEmpty() ? List.of() : assetInputResolver.unknownIds(tenantId, flow.getNamespace(), input, ids);
+                if (!unknown.isEmpty()) {
+                    warnings.add("The default of input '%s' refers to assets that do not exist, do not match its filters, or that the flow cannot reach: %s. This is expected if they are created after the flow is saved.".formatted(input.getId(), String.join(", ", unknown)));
+                }
+            });
+
         // add warning for runnable properties (timeout, workerSelector, taskCache) when used not in a runnable
         flow.allTasksWithChilds().forEach(task ->
         {
             if (!(task instanceof RunnableTask<?>)) {
-                if (task.getTimeout() != null && !(task instanceof Pause)) {
+                if (task.getTimeout() != null && !(task instanceof PausableTask)) {
                     warnings.add("The task '" + task.getId() + "' cannot use the 'timeout' property as it's only relevant for runnable tasks.");
                 }
                 if (task.getTaskCache() != null) {
@@ -1003,6 +1070,16 @@ public class FlowService {
         return !f.uidWithoutRevision().equals(FlowId.uidWithoutRevision(execution));
     }
 
+    /**
+     * Finds the namespace whose access restrictions prevent the Flow triggers of {@code listening} from receiving
+     * the given execution. Always empty in OSS, as namespace restrictions are an EE feature.
+     *
+     * @return the closest blocking namespace, or empty when the execution is not blocked.
+     */
+    public Optional<String> findNamespaceBlockingFlowTrigger(Flow listening, Execution execution) {
+        return Optional.empty();
+    }
+
     private static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(previous.getTriggers())
             .stream()
@@ -1081,12 +1158,22 @@ public class FlowService {
      * @throws IllegalStateException if the requested flow is not executable.
      */
     public Flow getFlowIfExecutableOrThrow(final String tenant, final String namespace, final String id, final Optional<Integer> revision) {
-        // When no revision is specified we resolve to the latest non-draft revision: drafts are
+        if (revision.isPresent()) {
+            // For a specific revision, check if the flow has not been deleted: the deletion will only occur on the last revision.
+            Optional<Flow> latest = flowRepository.findByIdWithoutAcl(tenant, namespace, id, Optional.empty());
+            if (latest.isEmpty() || latest.get().isDeleted()) {
+                throw new NoSuchElementException("Requested Flow is not found.");
+            }
+        }
+
+        // When no revision is specified, we resolve to the latest non-draft revision: drafts are
         // only executable when the caller passes the revision explicitly.
         Optional<Flow> optional = revision.isPresent()
             ? flowRepository.findByIdWithoutAcl(tenant, namespace, id, revision)
             : flowRepository.findByIdForExecutionWithoutAcl(tenant, namespace, id);
-        if (optional.isEmpty()) {
+        // A delete appends a revision flagged deleted, so the tombstone is reachable only through
+        // an explicit revision; the no-revision lookup above already filters it out.
+        if (optional.isEmpty() || optional.get().isDeleted()) {
             throw new NoSuchElementException("Requested Flow is not found.");
         }
 
@@ -1152,5 +1239,11 @@ public class FlowService {
 
     private IllegalStateException noRepositoryException() {
         return new IllegalStateException("No repository found. Make sure the `kestra.repository.type` property is set.");
+    }
+
+    private record TolerantParse(@Nullable FlowWithSource flow, @Nullable ParseReport report) {
+    }
+
+    private record ScanProblems(List<ValidationError> errors, List<String> installNotices) {
     }
 }

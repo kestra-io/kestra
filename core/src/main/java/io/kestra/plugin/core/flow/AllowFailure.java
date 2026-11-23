@@ -52,8 +52,8 @@ import lombok.experimental.SuperBuilder;
                         - 'exit 1'
 
                   - id: last
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         ),
         @Example(
@@ -70,14 +70,14 @@ import lombok.experimental.SuperBuilder;
                       - id: fail_silently
                         type: io.kestra.plugin.scripts.shell.Commands
                         taskRunner:
-                        type: io.kestra.plugin.core.runner.Process
+                          type: io.kestra.plugin.core.runner.Process
                         commands:
                           - exit 1
 
                   - id: print_to_console
                     type: io.kestra.plugin.scripts.shell.Commands
                     taskRunner:
-                    type: io.kestra.plugin.core.runner.Process
+                      type: io.kestra.plugin.core.runner.Process
                     commands:
                       - echo "this will run since previous failure was allowed ✅"
                 """

@@ -3,12 +3,14 @@
         <KsSearch
             v-model="search"
             :placeholder="$t(`dependency.search.placeholders.${assetView ? 'asset' : 'default'}`)"
+            class="control"
             clearable
         />
 
         <KsSelect
             v-model="namespace"
             :placeholder="$t('dependency.search.namespace.select')"
+            class="control"
             clearable
             filterable
         >
@@ -45,7 +47,7 @@
     const flow = defineModel<boolean>("flow", {required: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     section#filtering {
         position: sticky;
         top: 0;
@@ -54,7 +56,9 @@
         background-color: var(--ks-bg-input);
         border-bottom: 1px solid var(--ks-border-default);
 
-        :deep(.kel-input__wrapper), :deep(.kel-select__wrapper) {
+        --ks-select-font-size: var(--ks-font-size-sm);
+
+        & .control {
             margin-bottom: var(--ks-spacing-2);
             font-size: var(--ks-font-size-sm);
         }

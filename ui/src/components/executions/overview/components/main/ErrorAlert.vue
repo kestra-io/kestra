@@ -1,17 +1,17 @@
 <template>
     <div class="error-wrapper">
-        <KsAlert id="error" type="error" :closable="false" @click="expanded = !expanded">
+        <KsAlert id="error" type="error" :closable="false" fill>
             <template #title>
-                <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}</span>
+                <span class="title">{{ $t('execution_failed') }}</span>
             </template>
 
-            <div v-if="logs.length">
+            <div v-if="logs.length" class="body">
                 <p v-if="!expanded" class="error-preview">
-                    {{ $t('last error was') }}: {{ stripBackticks(logs.at(-1)?.message ?? '') }}
+                    {{ $t('last error was') }}: {{ stripBackticks(linkTagsAsText(logs.at(-1)?.message ?? '')) }}
                 </p>
 
                 <div v-else class="logs">
-                    <div v-for="(log, index) in logs.slice(0, MAX_PREVIEW_LOGS)" :key="index">
+                    <div v-for="(log, index) in logs.slice(-MAX_PREVIEW_LOGS)" :key="index">
                         <LogLine
                             :level="log.level"
                             :log="{...log, message: stripBackticks(log.message ?? '')}"
@@ -20,14 +20,21 @@
                     </div>
                     <div v-if="logs.length >= MAX_PREVIEW_LOGS" class="link">
                         <router-link :to @click.stop>
-                            <KsButton>{{ $t("errorLogs") }}</KsButton>
+                            <KsButton class="errors-button">{{ $t("errorLogs") }}</KsButton>
                         </router-link>
                     </div>
                 </div>
             </div>
         </KsAlert>
 
-        <button class="expand-btn" @click="expanded = !expanded">
+        <button
+            v-if="logs.length"
+            class="expand-btn"
+            data-test="error-alert-toggle"
+            :aria-label="expanded ? $t('collapse') : $t('expand')"
+            :aria-expanded="expanded"
+            @click="expanded = !expanded"
+        >
             <ChevronUp v-if="expanded" />
             <ChevronDown v-else />
         </button>
@@ -42,11 +49,13 @@
 
     import {Execution, useExecutionsStore} from "../../../../../stores/executions"
     import {Log} from "../../../../../stores/logs"
+    import {handledIf} from "../../../../../utils/kestraHttp"
     import LogLine from "../../../../logs/LogLine.vue"
+    import {stripBackticks} from "../../../../../utils/logs"
+    import {linkTagsAsText} from "../../../../logs/linkify"
 
     const MAX_PREVIEW_LOGS = 4
     const EXCLUDED_METAS: (keyof Log)[] = ["namespace", "flowId", "executionId"]
-    const BACKTICKS_REGEX = /`([^`]*)`/g
 
     const props = defineProps<{execution: Execution}>()
 
@@ -65,36 +74,35 @@
         },
         query: {
             "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
-            "filters[kind][IN]": props.execution.kind,
         },
-    }
-
-    function stripBackticks(message: string): string {
-        return message.replace(BACKTICKS_REGEX, "$1")
     }
 
     onMounted(async () => {
         try {
+            // Only the last MAX_PREVIEW_LOGS errors are ever shown, so ask the server
+            // for just those (newest first) instead of the full error log list.
             const response = await store.loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {
-                    "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
-                    "filters[kind][IN]": props.execution.kind,
-                },
-                showMessageOnError: false,
+                filters: [
+                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+                ],
+                size: MAX_PREVIEW_LOGS,
+                sort: ["timestamp:desc"],
             })
 
-            if (response.length) logs.value = response as any
-        } catch {
-            // User may not have ACCESS_LOGS permission — silently skip
+            if (response.length) logs.value = [...response].reverse()
+        } catch (e: unknown) {
+            // The user may lack ACCESS_LOGS; anything else is left to the global toast.
+            handledIf(e, [403, 404])
         }
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .error-wrapper {
         position: relative;
+        min-width: 0;
     }
 
     .expand-btn {
@@ -121,63 +129,47 @@
         margin: 0;
         color: var(--ks-text-error);
         font-size: var(--ks-font-size-sm);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     #error {
+        min-width: 0;
         overflow: hidden;
-        cursor: pointer;
 
-        :deep(.kel-alert__content) {
-            min-width: 0;
-            width: 100%;
-            gap: 0;
+        & .title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: var(--ks-spacing-7);
+            font-size: var(--kel-alert-title-font-size);
+            line-height: 1.5;
+            color: var(--ks-text-error);
+        }
 
-            .kel-alert__title > div,
-            .kel-alert__title > span {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: var(--kel-alert-title-font-size);
-                line-height: 1.5;
-                color: var(--ks-text-error);
+        & .body {
+            padding-right: var(--ks-spacing-7);
+            color: var(--ks-text-primary);
+        }
+
+        & .logs {
+            --ks-button-link-color: var(--ks-text-error);
+            padding-top: var(--ks-spacing-5);
+
+            & > div {
+                width: 100%;
             }
 
-            .kel-alert__description {
-                min-width: 0;
-                overflow: hidden;
-                color: var(--ks-text-primary);
-
-                .logs {
-                    padding-top: var(--ks-spacing-5);
-
-                    > div {
-                        width: 100%;
-                    }
-
-                    .line .header {
-                        display: flex;
-                        flex-wrap: wrap;
-                        margin-bottom: var(--ks-spacing-2);
-
-                        span {
-                            margin-left: 0;
-                        }
-                    }
-
-                    .kel-button {
-                        color: var(--ks-text-error);
-                    }
-
-                    .link {
-                        padding: var(--ks-spacing-4) 0 var(--ks-spacing-2);
-                        border-top: 1px solid var(--ks-border-default);
-                        text-align: right;
-                    }
-                }
+            .link {
+                padding: var(--ks-spacing-4) 0 var(--ks-spacing-2);
+                border-top: 1px solid var(--ks-border-default);
+                text-align: right;
             }
+        }
+
+        & .errors-button {
+            color: var(--ks-text-error);
         }
     }
 </style>

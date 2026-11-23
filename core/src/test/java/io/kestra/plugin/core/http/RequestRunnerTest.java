@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.http;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -26,7 +25,6 @@ public class RequestRunnerTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
-    @Disabled("The remote page didn't work anymore")
     @Test
     @ExecuteFlow("sanity-checks/request-basicauth.yaml")
     void requestBasicAuth(Execution execution) {

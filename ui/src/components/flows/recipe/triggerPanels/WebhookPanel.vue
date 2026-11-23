@@ -2,7 +2,7 @@
     <KsForm class="webhook-panel" labelPosition="top" @submit.prevent>
         <KsFormItem :label="$t('recipe.webhook.key_label')">
             <KsInput
-                v-model="recipe.webhookKey"
+                v-model="webhookKey"
                 class="key-input"
                 :placeholder="$t('recipe.webhook.key_placeholder')"
                 data-test="recipe-webhook-key"
@@ -28,30 +28,36 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import type {RecipeState} from "../../../../composables/useFlowRecipe"
     import * as Utils from "../../../../utils/utils"
+    import {useToast} from "../../../../utils/toast"
     import {webhookUrl} from "../../../../utils/webhook"
     import {DEFAULT_WEBHOOK_KEY} from "../../../../utils/recipeToYaml"
 
     const props = defineProps<{
-        recipe: RecipeState
         systemNamespace: string
         flowId: string
     }>()
 
+    const webhookKey = defineModel<string>("webhookKey", {required: true})
+
+    const {t} = useI18n()
+    const toast = useToast()
+
     const endpointUrl = computed(() => webhookUrl({
         namespace: props.systemNamespace,
         id: props.flowId,
-        key: props.recipe.webhookKey || DEFAULT_WEBHOOK_KEY,
+        key: webhookKey.value || DEFAULT_WEBHOOK_KEY,
     }))
 
-    const copyUrl = () => {
-        Utils.copy(endpointUrl.value)
+    const copyUrl = async () => {
+        await Utils.copy(endpointUrl.value)
+        toast.success(t("copied"))
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .webhook-panel {
         display: flex;
         flex-direction: column;

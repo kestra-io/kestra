@@ -1,0 +1,90 @@
+import {describe, test, expect} from "vitest"
+import {mount} from "@vue/test-utils"
+import KestraDesignSystem from "../../../index"
+import KsThemePicker from "./KsThemePicker.vue"
+import source from "./KsThemePicker.vue?raw"
+import themeTokens from "../../../../tests/storybook/Basic/Color-variables.json"
+
+const globalConfig = {plugins: [KestraDesignSystem]}
+
+const OPTIONS = [
+    {value: "dark-2", label: "Dark 2.0", preview: "dark-2" as const},
+    {value: "dark", label: "Dark 1.0", preview: "dark" as const},
+    {value: "light", label: "Light", preview: "light" as const},
+    {value: "sync", label: "Sync with system", preview: "sync" as const},
+]
+
+describe("KsThemePicker", () => {
+    test("renders one radio per option inside a radiogroup", () => {
+        const wrapper = mount(KsThemePicker, {
+            props: {modelValue: "light", options: OPTIONS},
+            global: globalConfig,
+        })
+        expect(wrapper.find("[role='radiogroup']").exists()).toBe(true)
+        expect(wrapper.findAll("[role='radio']")).toHaveLength(4)
+    })
+
+    test("marks only the selected option as checked", () => {
+        const wrapper = mount(KsThemePicker, {
+            props: {modelValue: "dark", options: OPTIONS},
+            global: globalConfig,
+        })
+        const checked = wrapper.findAll("[role='radio']").map((radio) => radio.attributes("aria-checked"))
+        expect(checked).toEqual(["false", "true", "false", "false"])
+    })
+
+    test("draws two overlaid previews for the sync option and one for the others", () => {
+        const wrapper = mount(KsThemePicker, {
+            props: {modelValue: "light", options: OPTIONS},
+            global: globalConfig,
+        })
+        const previews = wrapper.findAll(".theme-picker__preview")
+        expect(previews[0].findAll(".theme-window")).toHaveLength(1)
+        expect(previews[3].findAll(".theme-window")).toHaveLength(2)
+    })
+
+    test("draws the preview slot instead of the built-in miniature", () => {
+        const wrapper = mount(KsThemePicker, {
+            props: {options: [{value: "ocean", label: "Ocean"}]},
+            slots: {preview: "<span class=\"custom-preview\">{{ params.option.value }}</span>"},
+            global: globalConfig,
+        })
+        const preview = wrapper.find(".theme-picker__preview")
+        expect(preview.find(".custom-preview").text()).toBe("ocean")
+        expect(preview.find(".theme-window").exists()).toBe(false)
+    })
+
+    test("rings only a slot preview, since the built-in miniature shows its selection on its own frame", () => {
+        const builtIn = mount(KsThemePicker, {
+            props: {modelValue: "light", options: OPTIONS},
+            global: globalConfig,
+        })
+        expect(builtIn.find(".theme-picker__preview--custom").exists()).toBe(false)
+
+        const custom = mount(KsThemePicker, {
+            props: {modelValue: "ocean", options: [{value: "ocean", label: "Ocean"}]},
+            slots: {preview: "<span />"},
+            global: globalConfig,
+        })
+        expect(custom.find(".theme-picker__option--selected .theme-picker__preview--custom").exists()).toBe(true)
+    })
+
+        test("emits the chosen value", async () => {
+        const wrapper = mount(KsThemePicker, {
+            props: {modelValue: "light", options: OPTIONS},
+            global: globalConfig,
+        })
+        await wrapper.findAll("[role='radio']")[1].trigger("click")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["dark"])
+    })
+
+    test("paints each preview from the palette, so it keeps its colours whatever theme the page is in", () => {
+        const previews = source.match(/\.theme-picker__window--(?:light|dark|dark-2) \{[^}]*\}/g) ?? []
+        expect(previews).toHaveLength(3)
+        for (const preview of previews) {
+            const values = [...preview.matchAll(/--tp-[a-z]+:\s*var\((--ks-[\w-]+)\);/g)].map(([, name]) => name)
+            expect(values).toHaveLength(6)
+            expect(values.filter((name) => themeTokens.includes(name) || !/^--ks-(?:white|black|[a-z-]+-\d+)$/.test(name))).toEqual([])
+        }
+    })
+})

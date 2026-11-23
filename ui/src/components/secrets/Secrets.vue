@@ -1,6 +1,6 @@
 <template>
     <Navbar :title="routeInfo.title">
-        <template #actions v-if="miscStore.configs?.secretsEnabled">
+        <template #actions v-if="secretsEnabled">
             <ul>
                 <li>
                     <KsButton :icon="Plus" type="primary" @click="addSecretModalVisible = true">
@@ -10,9 +10,9 @@
             </ul>
         </template>
     </Navbar>
-    <section :class="miscStore.configs?.secretsEnabled === undefined ? 'd-flex flex-column fill-height container' : 'full-container'">
-        <div v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
-            <div class="oss-secrets-block d-flex flex-column gap-4">
+    <section :class="secretsEnabled === undefined ? 'secrets-oss-layout fill-height container' : 'full-container'">
+        <div v-if="secretsEnabled === undefined" class="secrets-oss-content">
+            <div class="oss-secrets-block">
                 <SecretsTable
                     v-if="hasData !== false"
                     v-show="hasData === true"
@@ -24,17 +24,17 @@
                     @has-data="hasData = $event"
                 />
                 <div v-if="hasData === false" class="oss-secrets-hint">
-                    <h6 class="fw-bold mb-1">
+                    <h6 class="oss-secrets-hint-title">
                         {{ $t('demos.secrets.add_env.intro') }}
                     </h6>
-                    <ul class="mb-0">
+                    <ul class="oss-secrets-hint-list">
                         <li v-html="$t('demos.secrets.add_env.first')" />
                         <li v-html="$t('demos.secrets.add_env.second')" />
                         <li v-html="$t('demos.secrets.add_env.third')" />
                     </ul>
                 </div>
             </div>
-            <div class="secrets-divider my-4" />
+            <div class="secrets-divider" />
             <Empty type="secrets" demoCta :title="$t('demos.secrets.title')">
                 <template #description>
                     {{ $t('demos.secrets.message') }}
@@ -50,7 +50,7 @@
         >
             <template #empty>
                 <Empty type="secrets">
-                    <template v-if="miscStore.configs?.secretsEnabled" #button>
+                    <template v-if="secretsEnabled" #button>
                         <KsButton :icon="Plus" type="primary" @click="addSecretModalVisible = true">
                             {{ $t('secret.add') }}
                         </KsButton>
@@ -72,11 +72,18 @@
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useSystemNamespace} from "../../composables/useSystemNamespace"
     import {useMiscStore} from "override/stores/misc"
+    import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 
     useRestoreUrl()
 
     const miscStore = useMiscStore()
     const systemNamespace = useSystemNamespace()
+
+    // secretsEnabled is an EE-only field: it isn't part of the OSS OpenAPI spec, so it's not on
+    // the generated SDK type. undefined means OSS (unrestricted); a boolean means EE is reporting
+    // whether the secrets backend is actually configured.
+    type ConfigsWithSecrets = MiscControllerConfiguration & {secretsEnabled?: boolean}
+    const secretsEnabled = computed(() => (miscStore.configs as ConfigsWithSecrets | undefined)?.secretsEnabled)
 
     const props = defineProps({
         namespace: {
@@ -94,8 +101,25 @@
     useRouteContext(routeInfo)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .secrets-oss-layout {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .secrets-oss-content {
+        display: flex;
+        flex-direction: column;
+        text-align: start;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+    }
+
     .oss-secrets-block {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-5);
         padding: 0;
     }
 
@@ -109,13 +133,17 @@
         }
     }
 
-    .secrets-divider {
-        border-top: 1px solid var(--ks-border-default);
+    .oss-secrets-hint-title {
+        font-weight: var(--ks-font-weight-bold);
+        margin-bottom: var(--ks-spacing-1);
     }
 
-    .ee-tag-wrap {
-        :deep(.enterprise-tag) {
-            margin: 0 0 0.5rem 0;
-        }
+    .oss-secrets-hint-list {
+        margin-bottom: 0;
+    }
+
+    .secrets-divider {
+        margin-block: var(--ks-spacing-5);
+        border-top: 1px solid var(--ks-border-default);
     }
 </style>

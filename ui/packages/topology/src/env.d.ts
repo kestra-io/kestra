@@ -5,5 +5,4 @@ declare module "vue-material-design-icons/*.vue" {
 }
 
 declare module "*.css" {}
-declare module "*.scss" {}
 

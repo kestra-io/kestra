@@ -1,0 +1,32 @@
+id: loop_simple_list
+namespace: sanitychecks.core
+labels:
+  tier: tier1
+description: |
+  Iterate over an in-memory list with `Loop`. Each iteration exposes the current value via `item.value`
+  and the zero-based index via `item.index`. The loop surfaces a typed `outputs:` block per iteration so
+  the downstream `read_outputs` task can read the full collected list.
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values:
+      - apple
+      - banana
+      - cherry
+    fetchType: AUTO
+    outputs:
+      - id: label
+        type: STRING
+        value: "{{ outputs.return.value }}"
+      - id: index
+        type: INT
+        value: "{{ item.index }}"
+    tasks:
+      - id: return
+        type: io.kestra.plugin.core.debug.Return
+        format: "Index {{ item.index }} -> {{ item.value }}"
+
+  - id: read_outputs
+    type: io.kestra.plugin.core.log.Log
+    message: "Collected: {{ outputs.loop.outputs }}"

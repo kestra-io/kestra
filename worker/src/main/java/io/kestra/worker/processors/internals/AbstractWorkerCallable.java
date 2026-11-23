@@ -28,6 +28,9 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
     /** The state to report once interrupted, or {@code null} if not interrupted (or interrupted without marking, e.g. on timeout). */
     volatile State.Type killedState = null;
 
+    /** Set by every kill, including a timeout kill, which carries no state to record in {@link #killedState}. */
+    private volatile boolean killRequested = false;
+
     Logger logger;
 
     @Getter
@@ -47,7 +50,8 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
 
     private final ClassLoader classLoader;
 
-    private Thread currentThread;
+    /** Written by the thread running the job, read by the worker thread killing it. */
+    private volatile Thread currentThread;
 
     AbstractWorkerCallable(RunContext runContext, String type, String uid, ClassLoader classLoader) {
         this.logger = runContext.logger();
@@ -70,9 +74,9 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
 
         try {
             // Guard against a kill received before currentThread was recorded:
-            // interrupt() was a no-op, so honor the killedState flag here.
-            if (this.killedState != null) {
-                return this.killedState;
+            // interrupt() was a no-op, so honor the flag here.
+            if (this.killRequested) {
+                return this.killedState != null ? this.killedState : FAILED;
             }
             return doCall();
         } catch (Throwable e) {
@@ -116,7 +120,12 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
      * instead of the one {@link #doCall()} would otherwise produce.
      */
     public void kill(State.Type state) {
-        this.killedState = state;
+        this.killRequested = true;
+        // A timeout kill passes null and only interrupts; writing it would clear a concurrent real kill
+        // and make a KILLED job report FAILED.
+        if (state != null) {
+            this.killedState = state;
+        }
 
         // When we arrive here, the thread run() method may be ended but the thread "in the stopping process".
         // So we don't interrupt if the shutdownLatch is 0 as this means the run() method is done or if the thread is no more alive.

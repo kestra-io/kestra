@@ -6,20 +6,23 @@ import {createRouter, createMemoryHistory} from "vue-router"
 
 import "../src/assets/styles/index.scss"
 
-import KestraDesignSystem from "../src/index"
+import KestraDesignSystem, {registerDesignSystemI18n} from "../src/index"
 
 const router = createRouter({
     history: createMemoryHistory(),
     routes: [{path: "/", component: {template: "<div/>"}}],
 })
 
+const i18n = createI18n({legacy: false, locale: "en"})
+
 setup((app) => {
-    app.use(createI18n({legacy: false, locale: "en"}))
+    app.use(i18n)
     app.use(KestraDesignSystem)
     app.use(router)
 })
 
 const preview: Preview = {
+    beforeAll: () => registerDesignSystemI18n(i18n),
     decorators: [
         /*
          * Adds/removes the `dark` class on <html>.
@@ -44,7 +47,7 @@ const preview: Preview = {
          * is handled entirely by the Element Plus CSS variables in
          * storybook.css, which automatically switches with the theme.
          */
-        backgrounds: {disable: true},
+        backgrounds: {disabled: true},
         controls: {
             matchers: {
                 color: /[Cc]olor$/,

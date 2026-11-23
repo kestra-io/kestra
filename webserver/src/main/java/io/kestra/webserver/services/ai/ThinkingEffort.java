@@ -10,6 +10,8 @@ import io.kestra.core.utils.Enums;
  * Gemini {@code thinkingLevel}).
  */
 public enum ThinkingEffort {
+    /** Turns reasoning off explicitly; reasoning models apply their own default effort when none is sent. */
+    NONE,
     LOW,
     MEDIUM,
     HIGH;

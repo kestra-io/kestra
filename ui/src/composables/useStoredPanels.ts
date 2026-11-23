@@ -1,8 +1,10 @@
-import {useStorage} from "@vueuse/core"
+import {useEventListener, useStorage} from "@vueuse/core"
 import {EditorElement, Panel, Tab} from "../utils/multiPanelTypes"
 import {ref} from "vue"
 
-interface PreSerializedPanel {
+export const STORED_PANELS_RELOAD_EVENT = "kestra-stored-panels-reload"
+
+export interface PreSerializedPanel {
     tabs: string[];
     activeTab: string | undefined;
     size: number;
@@ -44,33 +46,41 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
         return JSON.stringify(preSerializePanelsFn(v))
     }
 
+    function read(v?: string | null) {
+        if(!v) return []
+        const rawPanels: PreSerializedPanel[] = JSON.parse(v)
+        const convertedPanels = rawPanels
+            .map((p):Panel => {
+                const tabsConverted = deserializeTabTags(p.tabs)
+                const activeTab = tabsConverted.find((t) => t.uid === p.activeTab) ?? tabsConverted[0]
+                return {
+                    activeTab,
+                    tabs: tabsConverted,
+                    size: p.size,
+                }
+            })
+            .filter((p) => p.tabs.length)
+
+        return convertedPanels
+    }
+
     const panels = key ? useStorage<Panel[]>(
         key,
         initialPanels,
         undefined,
         {
-            serializer: {
-                write,
-                read(v?: string) {
-                    if(!v) return []
-                    const rawPanels: PreSerializedPanel[] = JSON.parse(v)
-                    const convertedPanels = rawPanels
-                        .filter((p) => p.tabs.length)
-                        .map((p):Panel => {
-                            const tabsConverted = deserializeTabTags(p.tabs)
-                            const activeTab = tabsConverted.find((t) => t.uid === p.activeTab) ?? tabsConverted[0]
-                            return {
-                                activeTab,
-                                tabs: tabsConverted,
-                                size: p.size,
-                            }
-                        })
-
-                    return convertedPanels
-                },
-            },
+            listenToStorageChanges: false,
+            serializer: {write, read},
         },
     ) : ref(initialPanels)
+
+    if (key) {
+        useEventListener(window, STORED_PANELS_RELOAD_EVENT, (event: Event) => {
+            if (event instanceof CustomEvent && event.detail === key) {
+                panels.value = read(localStorage.getItem(key))
+            }
+        })
+    }
 
     function saveState(altKey: string | undefined) {
         if (altKey) {

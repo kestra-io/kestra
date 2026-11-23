@@ -39,7 +39,8 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
 
     @Override
     public Optional<TaskOutput> findById(String tenantId, String taskRunId) {
-        var condition = TASK_RUN_ID_FIELD.eq(taskRunId);
+        // the key of a task output is its task run id, so this hits the primary key instead of scanning the table
+        var condition = KEY_FIELD.eq(taskRunId);
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->

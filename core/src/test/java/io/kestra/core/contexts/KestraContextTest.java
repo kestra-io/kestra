@@ -4,6 +4,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.utils.EditionProvider;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
@@ -14,6 +16,11 @@ class KestraContextTest {
 
     @Inject
     KestraContext context;
+
+    @Test
+    void shouldGetEdition() {
+        assertThat(context.getEdition()).isEqualTo(EditionProvider.Edition.OSS);
+    }
 
     @Test
     void shouldGetWorkerMaxNumThreads() throws InterruptedException {

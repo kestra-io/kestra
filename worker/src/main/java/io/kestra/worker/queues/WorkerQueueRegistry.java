@@ -35,22 +35,11 @@ public class WorkerQueueRegistry {
     }
 
     /**
-     * Output queues (task results, trigger results, logs, metrics) are sized this many times the job buffer,
+     * Output queues (task results, trigger results, logs, metrics) are sized this many times the thread count,
      * giving result producers headroom to absorb a transient controller slowdown before they back-pressure.
-     * Decoupled from the job buffer so tuning it never shifts the controller's reservation figure.
+     * Decoupled from the job buffer so shrinking it never throttles result reporting.
      */
     private static final int OUTPUT_QUEUE_CAPACITY_FACTOR = 4;
-
-    /**
-     * Computes the in-memory job buffer size for a worker with the given thread count.
-     * The worker's total maximum in-flight capacity is
-     * {@code workerThreads + bufferSize(workerThreads)}, which the controller uses for reservation math.
-     * Shared with {@code AbstractWorker}, which advertises the same figure before the queue exists, so the
-     * two must derive it identically.
-     */
-    public static int bufferSize(int workerThreads) {
-        return workerThreads;
-    }
 
     /**
      * Retrieves an existing {@code WorkerQueue} for the given {@code WorkerContext} and type, or creates a new one if it does not exist.
@@ -67,13 +56,10 @@ public class WorkerQueueRegistry {
         QueueKey key = new QueueKey(context.workerId(), type);
         return (WorkerQueue<T>) queues.computeIfAbsent(key, unused ->
         {
-            // The WorkerJob queue keeps the bufferSize() figure AbstractWorker advertises to the controller;
-            // output queues get OUTPUT_QUEUE_CAPACITY_FACTOR x that, decoupled so tuning them never shifts
-            // the controller's reservation.
-            int baseBuffer = bufferSize(context.workerThreads());
+            // One slot per thread whatever the job buffer size: the fetcher bounds its permits by the buffer, and a zero buffer still needs a slot to hand each job to a consumer.
             int queueCapacity = WorkerJob.class.equals(type)
-                ? baseBuffer
-                : baseBuffer * OUTPUT_QUEUE_CAPACITY_FACTOR;
+                ? context.workerThreads()
+                : context.workerThreads() * OUTPUT_QUEUE_CAPACITY_FACTOR;
             String queueName = type.getSimpleName().toLowerCase();
             return new MonitoredWorkerQueue<T>(
                 metricRegistry,

@@ -31,6 +31,11 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
         this.jdbcRepository = jdbcRepository;
     }
 
+    @Override
+    protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
+        return super.defaultFilter(tenantId, allowDeleted).and(aclCondition(QueryFilter.Resource.NAMESPACE_FILE_METADATA));
+    }
+
     private static Condition lastCondition(boolean isLast) {
         return field("last").eq(isLast);
     }

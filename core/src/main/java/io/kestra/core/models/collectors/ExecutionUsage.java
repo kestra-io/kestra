@@ -1,6 +1,7 @@
 package io.kestra.core.models.collectors;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
@@ -28,6 +29,7 @@ public class ExecutionUsage {
                     tenantId,
                     null,
                     null,
+                    Collections.emptyList(),
                     from.toInstant(),
                     to.toInstant(),
                     DateUtils.GroupType.DAY

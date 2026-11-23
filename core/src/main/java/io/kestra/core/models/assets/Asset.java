@@ -6,16 +6,27 @@ import java.util.*;
 import org.apache.commons.lang3.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.kestra.core.models.FieldCondition;
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
+import io.kestra.core.models.flows.FlowAction;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -25,17 +36,46 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
+    /**
+     * Metadata keys Kestra owns, under the prefix already reserved for system labels. Flat: the
+     * repositories address {@link #metadata} one level deep.
+     */
+    public static final String SYSTEM_METADATA_PREFIX = Label.SYSTEM_PREFIX;
+
+    public static final String STATUS_METADATA_KEY = SYSTEM_METADATA_PREFIX + "status";
+
+    public static final String TTL_METADATA_KEY = SYSTEM_METADATA_PREFIX + "ttl";
+
+    public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
+
+    public static final Set<String> CONDITION_FIELDS = Set.of("namespace", "id", "type", "displayName", "description", "status", "ttl", "owner");
+
+    public static final String METADATA_PREFIX = "metadata.";
+
+    /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
+    public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
+
+    public static final String ID_PATTERN = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*";
+
+    private static final String FULL_ID_PATTERN = "^[a-zA-Z0-9/][a-zA-Z0-9._:/-]*";
+
+    /** The audit log detail id embeds the asset id, so the asset id has to stay this short. */
+    public static final int ID_MAX_LENGTH = 150;
+
+    /** The id an asset was given, when {@link #normalizeId(String)} changed it. */
+    public static final String FULL_ID_METADATA_KEY = SYSTEM_METADATA_PREFIX + "fullId";
+
     @Hidden
     @TenantId
     protected String tenantId;
 
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
+    @Pattern(regexp = NamespaceInterface.ID_PATTERN)
     @Size(min = 1, max = 150)
     protected String namespace;
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*")
-    @Size(min = 1, max = 150)
+    @Pattern(regexp = ID_PATTERN)
+    @Size(min = 1, max = ID_MAX_LENGTH)
     protected String id;
 
     @NotBlank
@@ -46,6 +86,28 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String description;
 
     protected Map<String, Object> metadata;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Size(max = 100)
+    @Schema(
+        title = "The day-2 actions offered on this asset, each backing onto a flow.",
+        description = "Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. " +
+            "When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. " +
+            "When it is omitted, the stored actions are kept. " +
+            "It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API."
+    )
+    private List<@Valid FlowAction> assetActions;
+
+    @Nullable
+    @Valid
+    @Schema(title = "The asset this one is part of.", description = "At most one parent. Parent depth is limited by the service layer, not by this model.")
+    private AssetRelationRef partOf;
+
+    @Nullable
+    @Size(max = 50)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(title = "Assets related to this one.", description = "Declaration only: turned into RELATED relations when the asset is written, and not persisted on the asset by the platform.")
+    private List<@Valid AssetRelationRef> related;
 
     @Nullable
     @Hidden
@@ -71,11 +133,14 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;
-        this.id = id;
+        this.id = normalizeId(id);
         this.type = type;
         this.displayName = displayName;
         this.description = description;
         this.metadata = Optional.ofNullable(metadata).map(HashMap::new).orElse(new HashMap<>());
+        if (!Objects.equals(id, this.id)) {
+            this.metadata.put(FULL_ID_METADATA_KEY, id);
+        }
         Instant now = Instant.now();
         this.created = Optional.ofNullable(created).orElse(now);
         this.updated = Optional.ofNullable(updated).orElse(now);
@@ -86,27 +151,98 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
      * Merges this asset over {@code previousAsset}, which is {@code null} on creation.
      *
      * @param previousAsset the stored asset this one is merged over, or {@code null} when creating.
-     * @param allowTypeChange whether the incoming type wins over the stored one; either falls back to the other
-     *                        when null, so creation (no previous asset) keeps the incoming type either way.
+     * @param namespaceDeclared whether the source explicitly declared the namespace field (present, even as
+     *        an explicit {@code null}) rather than omitting it — {@code true} lets this namespace (including
+     *        {@code null}, clearing it to Global) win over the stored one; {@code false} means it was omitted,
+     *        so the previous namespace is kept.
      * @return this asset, merged.
      */
-    public <T extends Asset> T toUpdated(T previousAsset, boolean allowTypeChange) {
+    public <T extends Asset> T toUpdated(T previousAsset, boolean namespaceDeclared) {
         this.created = Optional.ofNullable(previousAsset).map(Asset::getCreated).or(() -> Optional.ofNullable(this.created)).orElseGet(Instant::now);
         this.updated = Instant.now();
 
         String previousType = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(null);
-        this.type = allowTypeChange
-            ? ObjectUtils.firstNonNull(this.type, previousType)
+        // External is a placeholder for "referenced but never declared", never a real user-chosen type: a
+        // real declared type always wins over it, regardless of write order.
+        this.type = (this.type != null && !External.ASSET_TYPE.equals(this.type))
+            ? this.type
             : ObjectUtils.firstNonNull(previousType, this.type);
-        // The namespace of an existing asset is immutable, as AssetsController.updateAsset already enforces
-        this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
+
+        this.namespace = namespaceDeclared
+            ? this.namespace
+            : Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
+
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
-        this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null
-            ? this.metadata
-            : MapUtils.mergeWithNullableValues(previousAsset.getMetadata(), Optional.ofNullable(this.metadata).orElse(Collections.emptyMap()));
+        Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(Collections.emptyMap());
+        Map<String, Object> previousMetadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null);
+        Map<String, Object> mergedMetadata = previousMetadata == null
+            ? new HashMap<>(incomingMetadata)
+            : MapUtils.mergeWithNullableValues(previousMetadata, incomingMetadata);
+        incomingMetadata.forEach((key, value) ->
+        {
+            if (value == null) {
+                mergedMetadata.remove(key);
+            }
+        });
+        this.metadata = mergedMetadata;
+
+        this.assetActions = this.assetActions != null
+            ? this.assetActions
+            : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
+
+        this.partOf = Optional.ofNullable(this.partOf).or(() -> Optional.ofNullable(previousAsset).map(Asset::getPartOf)).orElse(null);
 
         return (T) this;
+    }
+
+    /** Convenience for callers with no raw-source presence information: a non-null namespace is treated as declared. */
+    public <T extends Asset> T toUpdated(T previousAsset) {
+        return toUpdated(previousAsset, this.namespace != null);
+    }
+
+    @JsonProperty("status")
+    public String getStatus() {
+        return reserved(STATUS_METADATA_KEY);
+    }
+
+    /** An empty value is meaningful: it is how "no expiry" is stored, and differs from an absent key. */
+    @JsonProperty("ttl")
+    @Pattern(regexp = TTL_FORMAT, message = "must be a UTC instant with millis (yyyy-MM-dd'T'HH:mm:ss.SSS'Z'), or empty for no expiry")
+    public String getTtl() {
+        return reserved(TTL_METADATA_KEY);
+    }
+
+    @JsonProperty("owner")
+    public String getOwner() {
+        return reserved(OWNER_METADATA_KEY);
+    }
+
+    public void setStatus(String status) {
+        reserve(STATUS_METADATA_KEY, status);
+    }
+
+    public void setTtl(String ttl) {
+        reserve(TTL_METADATA_KEY, ttl);
+    }
+
+    public void setOwner(String owner) {
+        reserve(OWNER_METADATA_KEY, owner);
+    }
+
+    private String reserved(String key) {
+        return Optional.ofNullable(metadata).map(m -> m.get(key)).map(Object::toString).orElse(null);
+    }
+
+    private void reserve(String key, String value) {
+        if (value == null) {
+            return;
+        }
+        // Bound after construction, so a subtype built through the no-args constructor has no map yet.
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+        metadata.put(key, value);
     }
 
     @Override
@@ -126,13 +262,47 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         metadata.put(name, value);
     }
 
+    @JsonProperty("partOf")
+    public void setPartOf(AssetRelationRef partOf) {
+        this.partOf = partOf;
+    }
+
+    @JsonProperty("related")
+    public void setRelated(List<AssetRelationRef> related) {
+        this.related = related;
+    }
+
     @Override
     public String uid() {
         return Asset.uid(tenantId, id);
     }
 
     public static String uid(String tenantId, String id) {
-        return IdUtils.fromParts(tenantId, id);
+        return IdUtils.fromParts(tenantId, normalizeId(id));
+    }
+
+    /**
+     * The id an asset is stored and looked up by. Reverse proxies refuse or decode a slash in a URL path, so slashes
+     * become colons: those at either end are dropped, and a run of slashes with the colons around it becomes one
+     * colon, which leaves the colons of an id without slashes alone, such as the empty fields of an ARN. An id still
+     * longer than {@link #ID_MAX_LENGTH} keeps its beginning and ends with a hash of the whole id, so that it fits,
+     * stays readable and is the same wherever it is computed. A normalized id is left as it is, so the function can be
+     * applied to an id whatever its origin.
+     */
+    public static String normalizeId(String id) {
+        if (id == null) {
+            return null;
+        }
+        String converted = id.contains("/") ? id.replaceAll("^/+|/+$", "").replaceAll(":?/+:?", ":") : id;
+        if (converted.length() <= ID_MAX_LENGTH) {
+            return converted;
+        }
+        String hash = IdUtils.from(converted);
+        int end = ID_MAX_LENGTH - hash.length() - 1;
+        if (Character.isHighSurrogate(converted.charAt(end - 1))) {
+            end--;
+        }
+        return converted.substring(0, end) + ":" + hash;
     }
 
     public Asset withTenantId(String tenantId) {
@@ -142,6 +312,38 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withNamespace(String namespace) {
         this.namespace = namespace;
+        return this;
+    }
+
+    @AssertTrue(message = "the full id must match \"" + FULL_ID_PATTERN + "\"")
+    @JsonIgnore
+    public boolean isFullIdMatchingThePattern() {
+        Object fullId = metadata == null ? null : metadata.get(FULL_ID_METADATA_KEY);
+        return fullId == null || fullId.toString().matches(FULL_ID_PATTERN);
+    }
+
+    @AssertTrue(message = "a condition field must be an asset field or metadata.<key>")
+    @JsonIgnore
+    public boolean isEveryConditionFieldReadable() {
+        return ListUtils.emptyOnNull(assetActions).stream()
+            .flatMap(action -> ListUtils.emptyOnNull(action.when()).stream())
+            .map(FieldCondition::field)
+            .allMatch(field -> field == null || CONDITION_FIELDS.contains(field)
+                || (field.startsWith(METADATA_PREFIX) && field.length() > METADATA_PREFIX.length()));
+    }
+
+    public Asset withAssetActions(List<FlowAction> assetActions) {
+        this.assetActions = assetActions;
+        return this;
+    }
+
+    public Asset withPartOf(AssetRelationRef partOf) {
+        this.partOf = partOf;
+        return this;
+    }
+
+    public Asset withRelated(List<AssetRelationRef> related) {
+        this.related = related;
         return this;
     }
 }

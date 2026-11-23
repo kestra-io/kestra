@@ -1,5 +1,5 @@
 <template>
-    <div id="buttons">
+    <div v-if="canList" id="buttons" data-test="prev-next">
         <KsButton
             :icon="ChevronLeft"
             :disabled="!results.previous"
@@ -10,7 +10,7 @@
 
         <KsButton :disabled="!results.next" @click="navigate('next')">
             {{ $t("next_execution") }}
-            <KsIcon class="ms-1">
+            <KsIcon class="next-icon">
                 <ChevronRight />
             </KsIcon>
         </KsButton>
@@ -18,11 +18,12 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue"
+    import {computed, onMounted, ref} from "vue"
 
     import {useRouter} from "vue-router"
     const router = useRouter()
 
+    import type {ApiLightExecution} from "@kestra-io/kestra-sdk"
     import {
         Execution,
         useExecutionsStore,
@@ -30,16 +31,23 @@
     const store = useExecutionsStore()
 
     import {createLink} from "../../utils/links"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../../../../models/resource"
+    import action from "../../../../../models/action"
 
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
     const props = defineProps<{ execution: Execution }>()
 
+    const authStore = useAuthStore()
+    const canList = computed(() => !authStore.user || authStore.user.hasAnyAction(resource.EXECUTION, action.LIST))
+
+    // The search endpoint returns light executions; only the routing fields are read here.
     const results = ref<{
-        previous: Execution | null;
+        previous: ApiLightExecution | null;
         current: Execution;
-        next: Execution | null;
+        next: ApiLightExecution | null;
     }>({
         previous: null,
         current: props.execution,
@@ -82,11 +90,13 @@
     }
 
     onMounted(async () => {
-        await loadExecutions()
+        if (canList.value) {
+            await loadExecutions()
+        }
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 #buttons {
     display: flex;
@@ -96,6 +106,10 @@
 
     .kel-button {
         font-size: var(--ks-font-size-sm);
+    }
+
+    .next-icon {
+        margin-inline-start: var(--ks-spacing-1);
     }
 }
 </style>

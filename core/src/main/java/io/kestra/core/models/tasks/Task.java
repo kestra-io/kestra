@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -17,12 +18,10 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
-import io.kestra.plugin.core.flow.WorkingDirectory;
+import io.kestra.plugin.core.flow.Subflow;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -38,7 +37,14 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @Plugin
 abstract public class Task implements TaskInterface {
-    @Size(max = 256, message = "Task id must be at most 256 characters")
+    /**
+     * Maximum length of a task id. Enforced for flow-authored tasks by the {@code @Size} constraint
+     * below, and used to truncate runtime-generated task ids (e.g. dbt node ids) before they are
+     * persisted as {@code task_id} in the logs/metrics stores.
+     */
+    public static final int ID_MAX_LENGTH = 256;
+
+    @Size(max = ID_MAX_LENGTH, message = "Task id must be at most " + ID_MAX_LENGTH + " characters")
     protected String id;
 
     protected String type;
@@ -67,7 +73,7 @@ abstract public class Task implements TaskInterface {
     @Valid
     @PluginProperty(hidden = true, group = "execution")
     @Schema(description = "Routing requirements (tags + fallback) for this task.")
-    private WorkerSelector workerSelector;
+    private FlowWorkerSelector workerSelector;
 
     @PluginProperty(hidden = true, group = "advanced")
     @Schema(
@@ -98,9 +104,12 @@ abstract public class Task implements TaskInterface {
     @Valid
     private Cache taskCache;
 
-    @PluginProperty(hidden = true, group = "advanced")
+    @PluginProperty(group = "advanced")
     @Valid
     @Nullable
+    @Schema(
+        description = "Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition."
+    )
     private AssetsDeclaration assets;
 
     public Optional<Task> findById(String id) {
@@ -165,7 +174,13 @@ abstract public class Task implements TaskInterface {
 
     @JsonIgnore
     public boolean isSendToWorkerTask() {
-        return !(this instanceof FlowableTask) || this instanceof WorkingDirectory;
+        return !(this instanceof FlowableTask);
+    }
+
+    // a flowable's own retry is spent on its failed children or, with RETRY_FLOWABLE, restarts it before it can stay FAILED
+    @JsonIgnore
+    public boolean shouldRetryOnFailure() {
+        return this instanceof RunnableTask || this instanceof Subflow;
     }
 
 }

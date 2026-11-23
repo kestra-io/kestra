@@ -46,6 +46,7 @@
                                 <KsCheckbox
                                     v-if="replaceMode"
                                     class="result-group-checkbox"
+                                    data-test="source-search-group-checkbox"
                                     :modelValue="isGroupChecked(group)"
                                     :indeterminate="isGroupIndeterminate(group)"
                                     :disabled="!group.editable"
@@ -53,7 +54,7 @@
                                         ? $t('source_search.select_all_in_flow', {namespace: group.namespace, id: group.id})
                                         : $t('source_search.cannot_select_read_only', {namespace: group.namespace, id: group.id})"
                                     @click.stop
-                                    @update:modelValue="(checked: boolean) => emit('toggle-flow', {namespace: group.namespace, id: group.id, checked})"
+                                    @update:modelValue="(checked: boolean | undefined) => checked !== undefined && emit('toggle-flow', {namespace: group.namespace, id: group.id, checked})"
                                 />
                                 <span class="result-group-title">
                                     <span class="result-group-namespace">{{ group.namespace }} /</span>
@@ -111,7 +112,7 @@
                                     :disabled="!group.editable"
                                     :aria-label="$t('source_search.select_match', {line: match.line})"
                                     @click.stop
-                                    @update:modelValue="(checked: boolean) => emit('toggle-match', {namespace: group.namespace, id: group.id, line: match.line, column: match.column, checked})"
+                                    @update:modelValue="(checked: boolean | undefined) => checked !== undefined && emit('toggle-match', {namespace: group.namespace, id: group.id, line: match.line, column: match.column, checked})"
                                 />
                                 <span class="result-match-lineno">{{ match.line }}</span>
                                 <KsTag v-if="secretKey(match.snippet)" size="small" class="result-match-secret">
@@ -121,7 +122,7 @@
                                     secret('{{ secretKey(match.snippet) }}')
                                 </KsTag>
                                 <div v-else class="result-match-snippet">
-                                    <code v-html="renderSnippet(match.snippet)" />
+                                    <code><template v-for="(part, index) in snippetParts(match.snippet)" :key="index"><mark v-if="part.kind === 'match'">{{ part.old }}</mark><template v-else-if="part.kind === 'replace'"><del class="result-match-old">{{ part.old }}</del><template v-if="part.next"><span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">{{ part.next }}</ins></template></template><template v-else>{{ part.old }}</template></template></code>
                                 </div>
                                 <KsButton
                                     v-if="replaceContext && group.editable && !secretKey(match.snippet)"
@@ -189,10 +190,8 @@
                     aria-busy="true"
                 >
                     <Loading class="spin" />
-                    <i18n-t keypath="source_search.searching_namespace" tag="span">
-                        <template #namespace>
-                            <code>{{ namespaceState.namespace }}</code>
-                        </template>
+                    <i18n-t keypath="source_search.searching_namespace" tag="span" scope="global">
+                        <template #namespace><code>{{ namespaceState.namespace }}</code></template>
                     </i18n-t>
                 </div>
 
@@ -203,10 +202,8 @@
                 >
                     <span class="type-fail-icon"><AlertCircleOutline /></span>
                     <span class="type-fail-text">
-                        <i18n-t keypath="source_search.namespace_search_failed" tag="span">
-                            <template #namespace>
-                                <code>{{ namespaceState.namespace }}</code>
-                            </template>
+                        <i18n-t keypath="source_search.namespace_search_failed" tag="span" scope="global">
+                            <template #namespace><code>{{ namespaceState.namespace }}</code></template>
                         </i18n-t>
                         <span>{{ namespaceState.errorMessage || $t('source_search.namespace_search_failed_detail') }}</span>
                     </span>
@@ -248,7 +245,8 @@
                                 @keydown.enter="emit('select', {type: 'kv', namespace: group.namespace, key: entry.key})"
                             >
                                 <span class="result-row-icon"><DatabaseOutline /></span>
-                                <span class="result-key" v-html="renderTermHighlighted(entry.key)" />
+                                <!-- KV matches on query terms server-side, so highlight per term or a legitimate row renders unmarked. -->
+                                <span class="result-key"><template v-for="(segment, index) in buildTermHighlightSegments(entry.key, query, caseSensitive)" :key="index"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></template></span>
                                 <span v-if="entry.updateDate" class="result-row-meta">
                                     <KsDateAgo :date="entry.updateDate" />
                                 </span>
@@ -292,7 +290,7 @@
                                     <template #icon>
                                         <Lock />
                                     </template>
-                                    <span v-html="renderHighlighted(entry.key)" />
+                                    <span><template v-for="(segment, index) in buildHighlightSegments(entry.key, query, caseSensitive)" :key="index"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></template></span>
                                 </KsTag>
                             </div>
                         </div>
@@ -306,7 +304,6 @@
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, type Component} from "vue"
     import {useRoute} from "vue-router"
-    import _escape from "lodash/escape"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -325,8 +322,8 @@
     import {
         SEARCH_RESOURCE_TYPES,
         buildPathSegments,
-        buildHighlightHtml,
-        buildTermHighlightHtml,
+        buildHighlightSegments,
+        buildTermHighlightSegments,
         crossSearchResultKey,
         type CrossSearchSelection,
         type SearchResourceType,
@@ -450,15 +447,6 @@
         return crossSearchResultKey(selection)
     }
 
-    function renderHighlighted(text: string) {
-        return buildHighlightHtml(text, props.query, props.caseSensitive)
-    }
-
-    // KV matches on query terms server-side, so highlight per term or a legitimate row renders unmarked.
-    function renderTermHighlighted(text: string) {
-        return buildTermHighlightHtml(text, props.query, props.caseSensitive)
-    }
-
     watch(
         () => [props.flowsResults, props.filesNamespaces, props.kvGroups, props.secretsGroups],
         () => {
@@ -512,26 +500,24 @@
         return snippet.replaceAll("[mark]", "").replaceAll("[/mark]", "")
     }
 
-    function renderSnippet(snippet: string) {
+    type SnippetPart =
+        | {kind: "text" | "match"; old: string}
+        | {kind: "replace"; old: string; next: string}
+
+    function snippetParts(snippet: string): SnippetPart[] {
         return snippet
             .split(/(\[mark\][\s\S]*?\[\/mark\])/)
-            .map((part) => {
+            .map((part): SnippetPart => {
                 const marked = part.match(/^\[mark\]([\s\S]*)\[\/mark\]$/)
                 if (!marked) {
-                    return _escape(part)
+                    return {kind: "text", old: part}
                 }
                 const old = marked[1]
                 if (!props.replaceContext) {
-                    return `<mark>${_escape(old)}</mark>`
+                    return {kind: "match", old}
                 }
-                const next = inlineReplacement(old, props.replaceContext)
-                const removed = `<del class="result-match-old">${_escape(old)}</del>`
-                if (next === "") {
-                    return removed
-                }
-                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${_escape(next)}</ins>`
+                return {kind: "replace", old, next: inlineReplacement(old, props.replaceContext)}
             })
-            .join("")
     }
 
     function collapseAll() {
@@ -550,7 +536,7 @@
     defineExpose({collapseAll, expandAll})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search-results {
     height: 100%;
     overflow-y: auto;
@@ -806,14 +792,14 @@
         overflow-wrap: anywhere;
         color: var(--ks-text-dim);
 
-        :deep(mark) {
+        & mark {
             background-color: var(--ks-status-background-warning);
             color: var(--ks-text-primary);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-old) {
+        & .result-match-old {
             background-color: var(--ks-status-background-failed);
             color: var(--ks-text-error);
             text-decoration: line-through;
@@ -821,14 +807,14 @@
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-new) {
+        & .result-match-new {
             background-color: var(--ks-status-background-success);
             color: var(--ks-text-success);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-arrow) {
+        & .result-match-arrow {
             color: var(--ks-text-muted);
         }
     }
@@ -863,7 +849,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
-    :deep(mark) {
+    & mark {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -880,7 +866,7 @@
     color: var(--ks-text-primary);
     max-width: 100%;
 
-    :deep(mark) {
+    & mark {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

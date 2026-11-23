@@ -1,7 +1,7 @@
 <template>
     <KsSelect
         :modelValue="value"
-        @update:model-value="emit('update:modelValue', $event)"
+        @update:model-value="(level) => level !== undefined && emit('update:modelValue', level)"
         filterable
         :fit="fit"
         :placeholder="$t('revisions')"

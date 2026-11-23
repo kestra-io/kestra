@@ -1,6 +1,6 @@
 <template>
     <ElUpload
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as UploadProps)"
         @change="emit('change', $event, [])"
         @exceed="emit('exceed', $event, [])"
     >
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElUpload} from "element-plus"
+    import {ElUpload, type UploadFile, type UploadFiles, type UploadProps, type UploadUserFile} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -27,7 +27,7 @@
         limit?: number
         action?: string
         showFileList?: boolean
-        fileList?: any[]
+        fileList?: UploadUserFile[]
     }>(), {
         accept: undefined,
         autoUpload: undefined,
@@ -38,8 +38,8 @@
     })
 
     const emit = defineEmits<{
-        change: [file: any, fileList: any[]]
-        exceed: [files: any[], fileList: any[]]
+        change: [file: UploadFile, fileList: UploadFiles]
+        exceed: [files: File[], fileList: UploadUserFile[]]
     }>()
 
     defineSlots<{
@@ -53,20 +53,23 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/upload';
+</style>
 
+<style>
     .kel-upload {
         &:focus {
-            // Prevent purple color from propagating to child text nodes
+            /* Prevent purple color from propagating to child text nodes */
             color: inherit;
 
-            .kel-upload-dragger {
+            & .kel-upload-dragger {
                 border-color: var(--ks-border-focus);
             }
         }
     }
 
     .kel-upload-dragger {
-        background-color: var(--ks-bg-input);
+        padding: var(--ks-upload-dragger-padding, var(--kel-upload-dragger-padding-vertical) var(--kel-upload-dragger-padding-horizontal));
+        background-color: var(--ks-upload-dragger-bg, var(--ks-bg-input));
         border-color: var(--ks-border-default);
         border-radius: var(--ks-radius-base);
 
@@ -75,7 +78,8 @@
         }
 
         &.is-dragover {
-            background-color: var(--ks-bg-hover);
+            padding: var(--ks-upload-dragger-padding, calc(var(--kel-upload-dragger-padding-vertical) - 1px) calc(var(--kel-upload-dragger-padding-horizontal) - 1px));
+            background-color: var(--ks-upload-dragger-bg, var(--ks-bg-hover));
             border-color: var(--ks-border-focus);
             border-width: 2px;
         }

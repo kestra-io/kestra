@@ -112,6 +112,8 @@ public class StandAloneCommand extends AbstractServerCommand {
             tenantIdSelectorService.get().createTenant(tenantId);
         }
 
+        super.call();
+
         if (flowPath != null) {
             try {
                 localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
@@ -119,8 +121,6 @@ public class StandAloneCommand extends AbstractServerCommand {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
-
-        super.call();
 
         try (StandAloneRunner standAloneRunner = standAloneRunnerProvider.get()) {
 

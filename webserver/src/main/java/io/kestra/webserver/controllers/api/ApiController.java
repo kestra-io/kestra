@@ -31,7 +31,7 @@ public class ApiController {
             "  <link rel=\"shortcut icon\" type=\"image/png\" href=\"/static/favicon.png\" />\n" +
             "  <meta name='viewport' content='width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes'/>\n" +
             "  <link href=\"https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap\" rel=\"stylesheet\">\n" +
-            "  <script src='https://unpkg.com/rapidoc/dist/rapidoc-min.js'></script>\n" +
+            "  <script type=\"module\" src=\"" + getBasePath() + "/ui/vendor/rapidoc-min.js\"></script>\n" +
             "</head>\n" +
             "<body>\n" +
             "  <rapi-doc " +
@@ -47,7 +47,7 @@ public class ApiController {
             "    schema-style=\"table\"\n" +
             "    regular-font='Ubuntu'\n" +
             "  >\n" +
-            "    <img src=\"" + getBasePath() + "/static/logo.svg\" slot=\"nav-logo\" alt=\"logo\" />\n" +
+            "    <img src=\"" + getBasePath() + "/static/logo-white.svg\" slot=\"nav-logo\" alt=\"logo\" />\n" +
             "\n" +
             "  </rapi-doc>\n" +
             "  <script>\n" +

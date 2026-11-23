@@ -36,7 +36,7 @@
     const SLACK_URL = "https://kestra.io/slack"
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .copilot-help {
         display: flex;
         flex-direction: column;
@@ -58,7 +58,7 @@
             border-radius: var(--ks-radius-base);
             overflow: hidden;
 
-            > :not(:first-child) {
+            & > :not(:first-child) {
                 border-top: var(--ks-border-block-primary);
             }
         }

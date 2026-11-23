@@ -7,7 +7,9 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -18,17 +20,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.assets.AssetEmitContext;
 import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.TriggerAssetsDeclaration;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
@@ -38,6 +46,7 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -55,6 +64,10 @@ public class DefaultRunContext extends RunContext {
     /** The only variables that can hold an {@link EncryptedString}, so the only ones worth walking on read. */
     private static final Set<String> SECRET_BEARING_VARIABLES = Set.of("inputs", "outputs", "trigger");
 
+    // Prefix kept when shortening an over-long dynamic-taskrun id; leaves room for "-" + a 5-digit hash
+    // suffix so the result stays within Task.ID_MAX_LENGTH (250 + 1 + 5 = 256) while staying collision-safe.
+    private static final int TASK_ID_TRUNCATED_PREFIX_LENGTH = 250;
+
     // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;
     private VariableRenderer variableRenderer;
@@ -67,11 +80,12 @@ public class DefaultRunContext extends RunContext {
     private Validator validator;
     private LocalPath localPath;
     private SDK sdk;
+    private Checkpoints checkpoints;
 
     private Map<String, Object> variables;
     private boolean decryptVariables = true;
     private Map<String, Object> decryptedVariables;
-    private List<AbstractMetricEntry<?>> metrics = new ArrayList<>(4); // init to 4 to save memory as tasks usually produce few metrics if any
+    private final List<AbstractMetricEntry<?>> metrics = new ArrayList<>(4); // init to 4 to save memory as tasks usually produce few metrics if any
     private RunContextLogger logger;
     private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>(0); // init to 0 to save memory: this is used by only one task
     private String triggerExecutionId;
@@ -85,6 +99,7 @@ public class DefaultRunContext extends RunContext {
     private AbstractTrigger trigger;
 
     private volatile AssetEmitter assetEmitter;
+    private AssetEmitContext assetEmitContext;
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
@@ -207,6 +222,7 @@ public class DefaultRunContext extends RunContext {
             this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
             this.assetManagerFactory = applicationContext.getBean(AssetManagerFactory.class);
             this.sdk = applicationContext.getBean(RunContextSDKFactory.class).create(applicationContext, this);
+            this.checkpoints = applicationContext.getBean(RunContextCheckpointsFactory.class).create(this);
         }
     }
 
@@ -226,6 +242,14 @@ public class DefaultRunContext extends RunContext {
         if (!ListUtils.isEmpty(secretOutputs)) {
             secretOutputs.forEach(logger::usedSecret);
         }
+    }
+
+    boolean hasSecrets() {
+        return logger.hasSecrets();
+    }
+
+    String maskSecrets(final String data) {
+        return logger.maskSecrets(data);
     }
 
     /**
@@ -251,6 +275,24 @@ public class DefaultRunContext extends RunContext {
         this.task = task;
     }
 
+    void setAssetEmitContext(final AssetEmitContext assetEmitContext) {
+        this.assetEmitContext = assetEmitContext;
+    }
+
+    /**
+     * Returns an emitter for the assets declared under the task's {@code assets}, sent on behalf of its task run in the given state.
+     * Only the worker writes declared assets, so unlike {@link #assets()} this is not on {@link RunContext}.
+     */
+    public AssetEmitter assets(Declared declared) {
+        return assetManagerFactory.declared(this, assetEmitContext, declared.state(), declared.endDate(), declared.alreadyUsed());
+    }
+
+    public void finishAssets(State.Type state, AssetEmit used) {
+        if (assetEmitContext != null) {
+            assetManagerFactory.finish(this, assetEmitContext, state, used);
+        }
+    }
+
     void setTrigger(final AbstractTrigger trigger) {
         this.trigger = trigger;
     }
@@ -269,6 +311,7 @@ public class DefaultRunContext extends RunContext {
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretOutputs = this.secretOutputs;
         runContext.decryptVariables = this.decryptVariables;
+        runContext.assetEmitContext = this.assetEmitContext;
         if (isInitialized.get()) {
             //Inject all services
             runContext.init(applicationContext);
@@ -300,6 +343,14 @@ public class DefaultRunContext extends RunContext {
         return variableRenderer.renderTyped(inline, getVariables());
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object renderTyped(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return variableRenderer.renderTyped(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
+    }
+
     @Override
     public <T> RunContextProperty<T> render(Property<T> inline) {
         return new RunContextProperty<>(inline, this);
@@ -309,7 +360,6 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
@@ -326,7 +376,6 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings("unchecked")
     public List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
@@ -343,7 +392,6 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings("unchecked")
     public Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
@@ -354,7 +402,6 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
@@ -365,7 +412,6 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
@@ -511,7 +557,7 @@ public class DefaultRunContext extends RunContext {
 
     private Map<String, Object> decryptVariables(Map<String, Object> variables) {
         if (secretKey.isPresent()) {
-            final Secret secret = new Secret(secretKey, logger);
+            final Secret secret = new Secret(secretKey, logger, logger::usedSecret);
             return secret.decrypt(variables);
         }
         return variables;
@@ -549,7 +595,7 @@ public class DefaultRunContext extends RunContext {
 
     @Override
     public void dynamicWorkerResult(List<WorkerTaskResult> workerTaskResults) {
-        dynamicWorkerTaskResult.addAll(workerTaskResults);
+        workerTaskResults.forEach(result -> dynamicWorkerTaskResult.add(boundTaskId(result)));
     }
 
     @Override
@@ -559,11 +605,40 @@ public class DefaultRunContext extends RunContext {
 
     @Override
     public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
-        this.dynamicWorkerTaskResult.add(workerTaskResult);
+        WorkerTaskResult bounded = boundTaskId(workerTaskResult);
+        this.dynamicWorkerTaskResult.add(bounded);
 
-        if (logs != null && !logs.isEmpty() && workerTaskResult.getTaskRun() != null) {
-            this.logger.emitDynamicTaskRunLogs(workerTaskResult.getTaskRun(), logs);
+        if (logs != null && !logs.isEmpty() && bounded.getTaskRun() != null) {
+            this.logger.emitDynamicTaskRunLogs(bounded.getTaskRun(), logs);
         }
+    }
+
+    /**
+     * Bounds a dynamic taskrun's task id to {@link Task#ID_MAX_LENGTH} at the single point where plugins hand
+     * dynamic taskruns to the framework. Dynamic taskruns (only dbt produces them) carry a runtime-generated
+     * task id that can exceed the fixed-width {@code task_id} DB column; bounding it here keeps every downstream
+     * consumer — the emitted logs and the persisted taskrun alike — within the column, and logs once at debug
+     * naming the full id so the truncation is not silent (this is expected behaviour, not a problem).
+     * <p>
+     * An execution holds many task ids, so a plain front-truncation could collapse two long ids sharing a
+     * prefix into one; a stable short hash of the full id is appended to keep distinct taskruns distinct.
+     */
+    private WorkerTaskResult boundTaskId(WorkerTaskResult workerTaskResult) {
+        TaskRun taskRun = workerTaskResult.getTaskRun();
+        if (taskRun == null || taskRun.getTaskId() == null || taskRun.getTaskId().length() <= Task.ID_MAX_LENGTH) {
+            return workerTaskResult;
+        }
+
+        String fullTaskId = taskRun.getTaskId();
+        String suffix = String.format("%05d", Math.floorMod(fullTaskId.hashCode(), 100_000));
+        String boundedTaskId = fullTaskId.substring(0, TASK_ID_TRUNCATED_PREFIX_LENGTH) + "-" + suffix;
+
+        this.logger.logger().debug(
+            "Task id '{}' exceeds {} characters and was truncated to '{}' for storage.",
+            fullTaskId, Task.ID_MAX_LENGTH, boundedTaskId
+        );
+
+        return workerTaskResult.withTaskRun(taskRun.toBuilder().taskId(boundedTaskId).build());
     }
 
     /**
@@ -662,17 +737,39 @@ public class DefaultRunContext extends RunContext {
         if (this.assetEmitter == null) {
             synchronized (this) {
                 if (this.assetEmitter == null) {
-                    this.assetEmitter = assetManagerFactory.of(
-                        Optional.ofNullable(task).map(Task::getAssets)
-                            .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
-                            .flatMap(throwFunction(assets -> render(assets.getEnableAuto()).as(Boolean.class)))
-                            .orElse(false)
+                    this.assetEmitter = new DynamicTaskRunAssetEmitter(
+                        assetManagerFactory.of(
+                            this,
+                            assetEmitContext,
+                            Optional.ofNullable(task).map(Task::getAssets).map(AssetsDeclaration::getEnableAuto)
+                                .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets).map(TriggerAssetsDeclaration::getEnableAuto))
+                                .flatMap(throwFunction(enableAuto -> render(enableAuto).as(Boolean.class)))
+                                .orElse(false)
+                        ),
+                        Optional.ofNullable(assetEmitContext).map(AssetEmitContext::taskRunId).orElse(null)
                     );
                 }
             }
         }
 
         return this.assetEmitter;
+    }
+
+    /**
+     * Sends what the task emitted on behalf of the dynamic task runs it registered, with those task runs as the executor receives them.
+     * Called once the attempt ends with a result, since the dynamic task runs only reach the executor with it.
+     */
+    public void emitAssetsOfDynamicTaskRuns() {
+        if (this.assetEmitter instanceof DynamicTaskRunAssetEmitter emitter) {
+            emitter.send(this.dynamicWorkerTaskResult, logger());
+        }
+    }
+
+    /**
+     * @return the emitter of this run context, empty when nothing asked for one, so nothing was emitted
+     */
+    public Optional<AssetEmitter> assetsIfCreated() {
+        return Optional.ofNullable(this.assetEmitter);
     }
 
     @Override
@@ -688,6 +785,11 @@ public class DefaultRunContext extends RunContext {
     @Override
     public SDK sdk() {
         return this.sdk;
+    }
+
+    @Override
+    public Checkpoints checkpoints() {
+        return this.checkpoints;
     }
 
     @SuppressWarnings("unchecked")
@@ -779,6 +881,81 @@ public class DefaultRunContext extends RunContext {
             context.task = task;
             context.trigger = trigger;
             return context;
+        }
+    }
+
+    /**
+     * @param alreadyUsed the ids of the assets whose usage this task run already recorded, which are only linked and written again
+     */
+    public record Declared(State.Type state, @Nullable Instant endDate, Set<String> alreadyUsed) {
+    }
+
+    /**
+     * Holds the emits made on behalf of dynamic task runs until {@link #emitAssetsOfDynamicTaskRuns()}, so they never name a task run the executor may never receive.
+     */
+    private static final class DynamicTaskRunAssetEmitter implements AssetEmitter {
+        private final AssetEmitter delegate;
+        @Nullable
+        private final String taskRunId;
+        private final List<Map.Entry<String, AssetEmit>> held = new CopyOnWriteArrayList<>();
+
+        private DynamicTaskRunAssetEmitter(AssetEmitter delegate, @Nullable String taskRunId) {
+            this.delegate = delegate;
+            this.taskRunId = taskRunId;
+        }
+
+        @Override
+        public void emit(AssetEmit assetEmit) throws QueueException {
+            delegate.emit(assetEmit);
+        }
+
+        @Override
+        public void emitFor(TaskRun dynamicTaskRun, AssetEmit assetEmit) {
+            if (taskRunId != null && !taskRunId.equals(dynamicTaskRun.getParentTaskRunId())) {
+                throw new IllegalArgumentException(
+                    "Cannot emit assets on behalf of task run '%s': it is not a dynamic task run of the emitting task run.".formatted(dynamicTaskRun.getId())
+                );
+            }
+            held.add(Map.entry(dynamicTaskRun.getId(), assetEmit));
+        }
+
+        @Override
+        public List<AssetEmit> emitted() {
+            return delegate.emitted();
+        }
+
+        @Override
+        public List<String> failures() {
+            return delegate.failures();
+        }
+
+        @Override
+        public List<String> lockRefusals() {
+            return delegate.lockRefusals();
+        }
+
+        private void send(List<WorkerTaskResult> registered, Logger logger) {
+            Map<String, TaskRun> registeredById = new HashMap<>();
+            registered.stream().map(WorkerTaskResult::getTaskRun).filter(Objects::nonNull).forEach(taskRun -> registeredById.put(taskRun.getId(), taskRun));
+            try {
+                for (Map.Entry<String, AssetEmit> emit : held) {
+                    TaskRun dynamicTaskRun = registeredById.get(emit.getKey());
+                    if (dynamicTaskRun == null) {
+                        logger.warn("The assets emitted on behalf of task run '{}' are dropped because the task never registered it as a dynamic task run.", emit.getKey());
+                        continue;
+                    }
+                    try {
+                        delegate.emitFor(dynamicTaskRun, emit.getValue());
+                    } catch (UnsupportedOperationException e) {
+                        logger.debug("Asset emission is not supported in this edition, the assets of the dynamic task runs are skipped.");
+                        return;
+                    } catch (Exception e) {
+                        logger.warn("Unable to send the assets emitted on behalf of task run '{}'.", emit.getKey(), e);
+                    }
+                }
+            } finally {
+                held.clear();
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 jackson:
-  serialization:
-    writeDatesAsTimestamps: false
-    writeDurationsAsTimestamps: false
+  date-time-features:
+    WRITE_DATES_AS_TIMESTAMPS: false
+    WRITE_DURATIONS_AS_TIMESTAMPS: false
   serialization-inclusion: non_null
 
 micronaut:
@@ -39,6 +39,11 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
+
+  executor:
+    execution-delay-loop-periodicity-ms: 250
+    monitor-sla-loop-periodicity-ms: 250
+    multiple-condition-purge-loop-periodicity-ms: 1000
 
   variables:
     globals:
@@ -86,6 +91,9 @@ kestra:
     http:
       denied-list:
         - http://dangerous-url.com
+        - http://169.254.169.254
+        - http://kestra_internal_db
+        - 10.0.0.0/8
 
   grpc:
     maxRetryAttempts: 1

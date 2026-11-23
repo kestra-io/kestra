@@ -1,8 +1,6 @@
-import {computed} from "vue"
-import moment from "moment"
-import {copyToClipboard} from "@kestra-io/design-system"
-import {useMiscStore} from "override/stores/misc"
+import {copyToClipboard, dateUtils, dayjs, fileUtils, type Dayjs} from "@kestra-io/design-system"
 
+import {storageKeys} from "./constants"
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 export function uid() {
@@ -11,15 +9,9 @@ export function uid() {
         Date.now().toString(16).slice(4)
 }
 
-/**
- * Checks whether a value is a supported file URI.
- *
- * @param value Value to validate.
- * @returns `true` if the value is a string with a supported file prefix.
- */
+/** Checks whether a value is a supported file URI. */
 export function isFile(value: unknown): boolean {
-    const PREFIXES = ["kestra:///", "file://", "nsfile://"]
-    return typeof value === "string" && PREFIXES.some(p => value.startsWith(p))
+    return fileUtils.isFileUri(value)
 }
 
 /**
@@ -33,10 +25,16 @@ export function isIon(value: unknown): boolean {
     return isFile(value) && typeof value === "string" && value.toLowerCase().endsWith(".ion")
 }
 
-export function flatten(object: Record<string, any>) {
-    return Object.assign({}, ...function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any>[] {
+export function flatten<T = unknown>(object: Record<string, T>) {
+    const result: Record<string, unknown> = {}
+
+    // Accumulate into one object: the previous `concat(...keys.map())` and
+    // `Object.assign({}, ...leaves)` spread one argument per key, which threw RangeError
+    // above ~100k leaves and left the outputs table unrenderable (kestra-io/kestra#19316).
+    function collectLeaves(child: Record<string, unknown> | null, path: string[]): void {
         if (child === null) {
-            return [{[path.join(".")]: null}]
+            result[path.join(".")] = null
+            return
         }
 
         const keys = Object.keys(child)
@@ -44,18 +42,24 @@ export function flatten(object: Record<string, any>) {
         // An empty container has no leaves, so recursing dropped the key entirely. The `path`
         // guard keeps a top-level `{}` flattening to `{}` rather than gaining a blank key.
         if (path.length > 0 && keys.length === 0) {
-            return [{[path.join(".")]: child}]
+            result[path.join(".")] = child
+            return
         }
 
-        return ([] as Record<string, any>[]).concat(...keys
-            .map(key => typeof child[key] === "object" ?
-                _flatten(child[key], path.concat([key])) :
-                [{[path.concat([key]).join(".")]: child[key]}],
-            ))
-    }(object))
+        for (const key of keys) {
+            if (typeof child[key] === "object") {
+                collectLeaves(child[key] as Record<string, unknown> | null, path.concat([key]))
+            } else {
+                result[path.concat([key]).join(".")] = child[key]
+            }
+        }
+    }
+
+    collectLeaves(object as Record<string, unknown>, [])
+    return result
 }
 
-export function executionVars(data: Record<string, any>) {
+export function executionVars<T = unknown>(data: Record<string, T>) {
     if (data === undefined) {
         return []
     }
@@ -65,11 +69,11 @@ export function executionVars(data: Record<string, any>) {
     return Object.keys(flat).map(key => {
         const rawValue = flat[key]
         if (key === "variables.executionId") {
-            return {key, value: rawValue, subflow: true}
+            return {key, value: rawValue as string | object | boolean | number, subflow: true}
         }
 
         if (typeof rawValue === "string" && rawValue.match(/\d{4}-\d{2}-\d{2}/)) {
-            const date = moment(rawValue, moment.ISO_8601)
+            const date = dateUtils.parseIso(rawValue)
             if (date.isValid()) {
                 return {key, value: rawValue, date: true}
             }
@@ -79,9 +83,153 @@ export function executionVars(data: Record<string, any>) {
             return {key, value: number(rawValue)}
         }
 
-        return {key, value: rawValue}
+        return {key, value: rawValue as string | object | boolean | number}
 
     })
+}
+
+const DISPLAY_MAX_CHARS = 256 * 1024
+const DISPLAY_MAX_LINES = 200
+// Monaco costs per line, so one pathological line is as slow as a whole large document:
+// a 2.5 MiB string value pretty-prints to a single line and blocked for ~1 s under the other caps.
+export const DISPLAY_MAX_LINE_CHARS = 2000
+
+/** Stand-in when a value is `""`; plain text would otherwise leave an empty cell. */
+export const EMPTY_STRING_DISPLAY = "\"\""
+
+/**
+ * Clip text to what a value viewer can render without wedging the main thread: a few MiB of
+ * output values blocked it for seconds (kestra-io/kestra#19316). Compare lengths to detect a clip.
+ */
+export function capForDisplay(text: string): string {
+    const capped = text.slice(0, DISPLAY_MAX_CHARS)
+
+    let cut = -1
+    for (let line = 0; line < DISPLAY_MAX_LINES; line++) {
+        const next = capped.indexOf("\n", cut + 1)
+        if (next === -1) {
+            return clipLines(capped)
+        }
+        cut = next
+    }
+    return clipLines(capped.slice(0, cut))
+}
+
+function clipLines(text: string): string {
+    if (text.length <= DISPLAY_MAX_LINE_CHARS) {
+        return text
+    }
+    return text
+        .split("\n")
+        .map(line => line.length > DISPLAY_MAX_LINE_CHARS ? line.slice(0, DISPLAY_MAX_LINE_CHARS) : line)
+        .join("\n")
+}
+
+export const PREVIEW_MAX_ENTRIES = 100
+export const PREVIEW_MAX_NODES = 1000
+export const PREVIEW_MAX_CHARS = 32 * 1024
+export const PREVIEW_MAX_STRING_CHARS = 500
+
+// What a scalar and an entry's punctuation and indent cost, charged against the character budget.
+const SCALAR_PREVIEW_CHARS = 8
+const ENTRY_PREVIEW_CHARS = 4
+const INDENT_PREVIEW_CHARS = 2
+
+export interface BoundedValue {
+    value: unknown;
+    truncated: boolean;
+}
+
+/**
+ * Shrink a parsed value to a preview that stays valid JSON: clipping the serialized text instead
+ * cuts mid-token and Monaco then reports the preview as a syntax error (kestra-io/kestra#19316).
+ * Omitted entries are named by an `…` marker carrying how many were dropped.
+ */
+export function boundForDisplay(value: unknown): BoundedValue {
+    let nodes = PREVIEW_MAX_NODES
+    let chars = PREVIEW_MAX_CHARS
+    let truncated = false
+
+    // Keys count too: one long enough key is the single-line document Monaco chokes on.
+    function clip(text: string): string {
+        const kept = text.length <= PREVIEW_MAX_STRING_CHARS
+            ? text
+            : `${text.slice(0, PREVIEW_MAX_STRING_CHARS)}…`
+        if (kept !== text) {
+            truncated = true
+        }
+        chars -= kept.length
+        return kept
+    }
+
+    function hasRoom(taken: number, total: number): boolean {
+        return taken < total && taken < PREVIEW_MAX_ENTRIES && nodes > 0 && chars > 0
+    }
+
+    // An entry costs its own punctuation plus the indent its depth earns it, which is what stops a
+    // deeply nested value: the indent alone is megabytes long before any leaf is reached.
+    function entryCost(depth: number): number {
+        return ENTRY_PREVIEW_CHARS + depth * INDENT_PREVIEW_CHARS
+    }
+
+    function bound(node: unknown, depth: number): unknown {
+        if (typeof node === "string") {
+            return clip(node)
+        }
+
+        if (node === null || typeof node !== "object") {
+            chars -= SCALAR_PREVIEW_CHARS
+            return node
+        }
+
+        // The container's own closing line is indented too, which is half the cost at depth.
+        chars -= depth * INDENT_PREVIEW_CHARS
+
+        if (Array.isArray(node)) {
+            const bounded: unknown[] = []
+            while (hasRoom(bounded.length, node.length)) {
+                nodes--
+                chars -= entryCost(depth)
+                bounded.push(bound(node[bounded.length], depth + 1))
+            }
+            if (bounded.length < node.length) {
+                truncated = true
+                bounded.push(`… ${node.length - bounded.length}`)
+            }
+            return bounded
+        }
+
+        const keys = Object.keys(node)
+        const bounded: Record<string, unknown> = {}
+        let index = 0
+        let shown = 0
+        while (index < keys.length && hasRoom(shown, keys.length)) {
+            nodes--
+            chars -= entryCost(depth)
+            const key = keys[index]
+            index++
+            const clipped = clip(key)
+            // Two keys clipped to the same text would have the second overwrite the first, showing
+            // fewer entries than the value has; drop it instead so the `…` count stays honest.
+            if (clipped in bounded) {
+                continue
+            }
+            bounded[clipped] = bound((node as Record<string, unknown>)[key], depth + 1)
+            shown++
+        }
+        if (shown < keys.length) {
+            truncated = true
+            bounded["…"] = keys.length - shown
+        }
+        return bounded
+    }
+
+    return {value: bound(value, 1), truncated}
+}
+
+/** Size of `text` on the wire: a character count understates a multi-byte value. */
+export function humanTextSize(text: string): string {
+    return humanFileSize(new TextEncoder().encode(text).length)
 }
 
 /**
@@ -125,23 +273,34 @@ export function number(n: number) {
 }
 
 export function hexToRgba(hex: string, opacity: number) {
-    let c: any
     if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-        c = hex.substring(1).split("")
-        if (c.length === 3) {
-            c = [c[0], c[0], c[1], c[1], c[2], c[2]]
+        let chars = hex.substring(1).split("")
+        if (chars.length === 3) {
+            chars = [chars[0], chars[0], chars[1], chars[1], chars[2], chars[2]]
         }
-        c = "0x" + c.join("")
-        return "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + "," + (opacity || 1) + ")"
+        const num = Number("0x" + chars.join(""))
+        return "rgba(" + [(num >> 16) & 255, (num >> 8) & 255, num & 255].join(",") + "," + (opacity || 1) + ")"
     }
     throw new Error("Bad Hex")
+}
+
+/** Offer text as a file, so a value too large to render whole is still obtainable in full. */
+export function downloadText(text: string, filename: string): void {
+    downloadBlob(new Blob([text], {type: filename.endsWith(".json") ? "application/json" : "text/plain"}), filename)
+}
+
+/** Offer a blob as a file and release its object URL once the browser has taken it. */
+export function downloadBlob(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob)
+    downloadUrl(url, filename)
+    // Revoking in the same tick as the click cancels the download in some browsers.
+    setTimeout(() => window.URL.revokeObjectURL(url), 0)
 }
 
 export function downloadUrl(url: string, filename: string) {
     const link = document.createElement("a")
     link.href = url
     link.setAttribute("download", filename)
-    link.setAttribute("target", "_blank")
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -174,16 +333,7 @@ export function extractFileNameFromContentDisposition(header: string | null | un
 }
 
 export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedTheme) {
-    // default theme
-    if (theme === undefined) {
-        if (localStorage.getItem("theme")) {
-            theme = localStorage.getItem("theme") as SelectedTheme
-        } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            theme = "dark"
-        } else {
-            theme = "light"
-        }
-    }
+    theme ??= getSelectedTheme()
 
     const disableTransitions = document.createElement("style")
     disableTransitions.appendChild(document.createTextNode("*,*::before,*::after{transition:none !important}"))
@@ -211,7 +361,7 @@ export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedT
 
     miscStore.theme = theme
 
-    localStorage.setItem("theme", theme)
+    localStorage.setItem(storageKeys.THEME, theme)
 
     void document.body.offsetHeight
     requestAnimationFrame(() => disableTransitions.remove())
@@ -220,7 +370,7 @@ export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedT
 export type SelectedTheme = "syncWithSystem" | "dark" | "dark-2" | "light"
 
 export function getSelectedTheme(): SelectedTheme {
-    return (localStorage.getItem("theme") as SelectedTheme | null) ?? "syncWithSystem"
+    return (localStorage.getItem(storageKeys.THEME) as SelectedTheme | null) ?? "syncWithSystem"
 }
 
 export function getTheme(): "light" | "dark" {
@@ -234,7 +384,7 @@ export function getTheme(): "light" | "dark" {
 }
 
 export function getLang() {
-    return localStorage.getItem("lang") || "en"
+    return localStorage.getItem(storageKeys.LANG) || "en"
 }
 
 /**
@@ -249,7 +399,7 @@ export function splitFirst(str: string, separator: string) {
     return str.split(separator).slice(1).join(separator)
 }
 
-export function asArray(objOrArray: any | any[]) {
+export function asArray<T = unknown>(objOrArray: T | T[] | undefined): T[] {
     if (objOrArray === undefined) {
         return []
     }
@@ -261,11 +411,11 @@ export async function copy(text: string) {
     await copyToClipboard(text)
 }
 
-export function toFormData(obj: FormData | Record<string, any>) {
+export function toFormData(obj: FormData | Record<string, unknown>) {
     if (!(obj instanceof FormData)) {
         const formData = new FormData()
         for (const key in obj) {
-            formData.append(key, obj[key])
+            formData.append(key, obj[key] as string | Blob)
         }
         return formData
     }
@@ -277,25 +427,29 @@ export interface DateGrouping {
     unit: "month" | "week" | "day" | "hour" | "minute";
 }
 
-export function getDateGrouping(startDate: moment.MomentInput, endDate: moment.MomentInput, timeRange: string | undefined): DateGrouping {
+export function getDateGrouping(startDate: Dayjs | string | undefined, endDate: Dayjs | string | undefined, timeRange: string | undefined): DateGrouping {
     if ((!startDate || !endDate) && timeRange === undefined) {
-        return {format: "yyyy-MM-DD", unit: "day"}
+        return {format: "YYYY-MM-DD", unit: "day"}
     }
 
     const duration = timeRange === undefined
-        ? moment.duration(moment(endDate).diff(moment(startDate)))
-        : moment.duration(timeRange)
+        ? dayjs.duration(dayjs(endDate).diff(dayjs(startDate)))
+        : dayjs.duration(timeRange)
 
-    if (duration.asDays() > 365) {
-        return {format: "yyyy-MM", unit: "month"}
-    } else if (duration.asDays() > 180) {
-        return {format: "yyyy-'W'ww", unit: "week"}
-    } else if (duration.asDays() > 1) {
-        return {format: "yyyy-MM-DD", unit: "day"}
-    } else if (duration.asHours() > 1) {
-        return {format: "yyyy-MM-DD HH:00", unit: "hour"}
+    // Mirrors DateUtils.groupByType, which compares whole days and hours, so labels match the API buckets.
+    const days = Math.floor(duration.asDays())
+    const hours = Math.floor(duration.asHours())
+
+    if (days > 365) {
+        return {format: "YYYY-MM", unit: "month"}
+    } else if (days > 180) {
+        return {format: "GGGG-[W]WW", unit: "week"}
+    } else if (days > 1) {
+        return {format: "YYYY-MM-DD", unit: "day"}
+    } else if (hours > 6) {
+        return {format: "YYYY-MM-DD HH:00", unit: "hour"}
     } else {
-        return {format: "yyyy-MM-DD HH:mm", unit: "minute"}
+        return {format: "YYYY-MM-DD HH:mm", unit: "minute"}
     }
 }
 
@@ -312,47 +466,46 @@ export function getParentNamespaces(namespace: string): string[] {
     return parents
 }
 
-export const useTheme = () => {
-    const miscStore = useMiscStore()
-    return computed<"light" | "dark">(() => {
-        void miscStore.theme
-        return getTheme()
-    })
+function isRefNode(value: unknown): value is {$ref: string} {
+    return typeof value === "object" && value !== null && "$ref" in value && typeof value.$ref === "string" && value.$ref !== ""
 }
 
-export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {
+export function resolve$ref<T = unknown>(fullSchema: object, obj: T): T {
     if (obj === undefined || obj === null) {
         return obj
     }
-    if (obj.$ref) {
-        return getValueAtJsonPath(fullSchema, obj.$ref)
+    if (isRefNode(obj)) {
+        return getValueAtJsonPath(fullSchema, obj.$ref) as T
     }
     return obj
 }
 
-export function getValueAtJsonPath(fullSchema: Record<string, any>, path: string): any {
+export function getValueAtJsonPath<T = unknown>(fullSchema: object, path: string): T {
     if (!fullSchema || !path || typeof path !== "string") {
-        return undefined
+        return undefined as T
     }
 
     const keys = path.replace(/^#\//, "").split("/")
-    let current = fullSchema
+    let current: unknown = fullSchema
 
     for (const key of keys) {
-        if (current && key in current) {
-            current = resolve$ref(fullSchema, current[key])
+        if (current && typeof current === "object" && key in current) {
+            const next = (current as Record<string, unknown>)[key]
+            current = next && typeof next === "object"
+                ? resolve$ref(fullSchema, next)
+                : next
         } else {
-            return undefined
+            return undefined as T
         }
     }
 
-    return current
+    return current as T
 }
 
-export function deepEqual(x: any, y: any): boolean {
+export function deepEqual(x: unknown, y: unknown): boolean {
     const ok = Object.keys, tx = typeof x, ty = typeof y
     return x && y && tx === "object" && tx === ty ? (
         ok(x).length === ok(y).length &&
-        ok(x).every(key => deepEqual(x[key], y[key]))
+        ok(x).every(key => deepEqual((x as Record<string, unknown>)[key], (y as Record<string, unknown>)[key]))
     ) : (x === y)
 }

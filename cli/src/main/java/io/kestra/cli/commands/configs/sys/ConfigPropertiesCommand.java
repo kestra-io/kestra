@@ -4,7 +4,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -19,7 +18,7 @@ import picocli.CommandLine;
     description = { "Display current configuration properties." }
 )
 @Slf4j
-public class ConfigPropertiesCommand extends AbstractCommand implements NoDatabaseCommandInterface {
+public class ConfigPropertiesCommand extends AbstractConfigCommand implements NoDatabaseCommandInterface {
     /**
      * Micronaut's {@code env} endpoint masks every property value unless a custom
      * {@code EnvironmentEndpointFilter} bean unmasks some of them, which Kestra registers none of

@@ -29,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * The {@link PluginDeserializer} uses the {@link PluginRegistry} to found the plugin class corresponding to
  * a plugin type.
+ * <p>
+ * Jackson 3 counterpart: {@link Jackson3PluginDeserializer}.
  */
 @Slf4j
 public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
@@ -38,19 +40,33 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
 
     private volatile PluginRegistry pluginRegistry;
 
+    private final Class<?> baseType;
+
     /**
      * Creates a new {@link PluginDeserializer} instance.
      */
     public PluginDeserializer() {
+        this(Plugin.class);
+    }
+
+    /**
+     * Creates a new {@link PluginDeserializer} instance.
+     *
+     * @param baseType The type every resolved plugin class must be assignable to.
+     */
+    public PluginDeserializer(final Class<?> baseType) {
+        this.baseType = baseType;
     }
 
     /**
      * Creates a new {@link PluginDeserializer} instance.
      *
      * @param pluginRegistry The {@link PluginRegistry}.
+     * @param baseType The type every resolved plugin class must be assignable to.
      */
-    PluginDeserializer(final PluginRegistry pluginRegistry) {
+    PluginDeserializer(final PluginRegistry pluginRegistry, final Class<?> baseType) {
         this.pluginRegistry = pluginRegistry;
+        this.baseType = baseType;
     }
 
     /**
@@ -73,8 +89,10 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
                 // By default, if no plugin-registry is configured retrieve
                 // the one configured from the static Kestra's context.
                 pluginRegistry = KestraContext.getContext().getPluginRegistry();
-            } catch (IllegalStateException | NoSuchBeanException ignore) {
+            } catch (IllegalStateException | NoSuchBeanException | NullPointerException ignore) {
                 // This error can only happen if the KestraContext is not initialized (i.e. in unit tests).
+                // NullPointerException included because a KestraContext.Initializer left behind by a closed
+                // context has a null application context, so getPluginRegistry() throws that instead.
                 log.error("No plugin registry was initialized. Use default implementation.");
                 pluginRegistry = DefaultPluginRegistry.getOrCreate();
             }
@@ -105,6 +123,12 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
         if (pluginType == null) {
             String type = Optional.ofNullable(identifier).orElse("<null>");
             throwInvalidTypeException(context, type);
+        } else if (!baseType.isAssignableFrom(pluginType)) {
+            throw context.invalidTypeIdException(
+                context.constructType(baseType),
+                identifier,
+                "Plugin type '" + identifier + "' is not a " + baseType.getSimpleName()
+            );
         } else if (Plugin.class.isAssignableFrom(pluginType)) {
             log.trace(
                 "Read plugin for: {}",
@@ -159,6 +183,18 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
         String type = Optional.ofNullable(node.get(TYPE)).map(JsonNode::textValue).orElse(null);
         String version = Optional.ofNullable(node.get(VERSION)).map(JsonNode::asText).orElse(null);
 
+        return rawIdentifier(type, version, isVersioningSupported);
+    }
+
+    /**
+     * Builds the plugin registry identifier from an already-extracted type and version.
+     *
+     * @param type                 The plugin type, may be {@code null} or empty.
+     * @param version              The plugin version, may be {@code null} or empty.
+     * @param isVersioningSupported Whether the registry resolves versioned identifiers.
+     * @return The raw identifier, or {@code null} if no type was provided.
+     */
+    static String rawIdentifier(final String type, final String version, final boolean isVersioningSupported) {
         if (type == null || type.isEmpty()) {
             return null;
         }

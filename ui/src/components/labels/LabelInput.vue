@@ -15,7 +15,7 @@
         <div
             class="label-input-item"
             v-for="(label, index) in locals"
-            :key="index"
+            :key="rowKey(label)"
         >
             <div class="label-input-row">
                 <KsInput
@@ -46,6 +46,7 @@
 
 <script setup lang="ts">
     import {ref, onMounted, watch} from "vue"
+    import {rowKey} from "@kestra-io/design-system"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Minus from "vue-material-design-icons/Minus.vue"
     import {isValidLabelKey} from "../../utils/executionLabels"
@@ -124,7 +125,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .label-input {
         display: flex;
         flex-direction: column;

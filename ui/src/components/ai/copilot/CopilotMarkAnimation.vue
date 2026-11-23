@@ -6,6 +6,7 @@
          "working". -->
     <span class="copilot-mark" :class="`copilot-mark-${phase}`" aria-hidden="true">
         <!-- The three dots (brand tints, purple → pink). -->
+        <!-- design-system-disable-start: brand artwork, the colours are the asset rather than a themed surface -->
         <svg class="copilot-mark-dots" viewBox="0 0 44 16" width="30" height="11" fill="none" focusable="false">
             <circle class="copilot-mark-dot copilot-mark-dot-1" cx="8" cy="8" r="6" fill="#A950FF" />
             <circle class="copilot-mark-dot copilot-mark-dot-2" cx="22" cy="8" r="6" fill="#CD88FF" />
@@ -22,6 +23,7 @@
             <path fill="#CD88FF" d="M187.035 91.683C190.615 95.2633 190.615 101.068 187.035 104.648L172.317 119.366C168.737 122.946 162.932 122.946 159.352 119.366L144.635 104.648C141.054 101.068 141.054 95.2633 144.635 91.683L159.352 76.9657C162.932 73.3854 168.737 73.3854 172.317 76.9657L187.035 91.683Z" />
             <path fill="#F62E76" d="M146.483 188.339C154.482 196.338 154.482 209.306 146.483 217.305C138.485 225.303 125.516 225.303 117.517 217.305C109.519 209.306 109.519 196.338 117.517 188.339C125.516 180.34 138.485 180.34 146.483 188.339Z" />
         </svg>
+        <!-- design-system-disable-end -->
     </span>
 </template>
 

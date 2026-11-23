@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -13,8 +14,10 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import io.kestra.core.contexts.configuration.DashboardsConfiguration;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.ChartMetadata;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -26,6 +29,7 @@ import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.ChartRows;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.YamlParser;
@@ -39,12 +43,15 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.TimeLineSearch;
+import io.kestra.webserver.models.api.Pagination;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,8 +60,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -94,6 +99,9 @@ public class DashboardController {
     private ChartDataService chartDataService;
 
     @Inject
+    private DashboardsConfiguration dashboardsConfiguration;
+
+    @Inject
     protected TenantService tenantService;
 
     @Inject
@@ -113,10 +121,8 @@ public class DashboardController {
     @Get
     @Operation(tags = { "Dashboards" }, summary = "Search for dashboards")
     public PagedResults<DashboardResponse> searchDashboards(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(description = "The filter query") @Nullable @QueryValue String q,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort) throws ConstraintViolationException {
+        @Valid @RequestBean Pagination paging,
+        @Parameter(description = "The filter query") @Nullable @QueryValue String q) throws ConstraintViolationException {
         return PagedResults.of(new ArrayListTotal<>(List.of(), 0));
     }
 
@@ -140,6 +146,7 @@ public class DashboardController {
     protected FetchChartDataQuery buildDashboardChardDataQuery(String id, String chartId, ChartFiltersOverrides globalFilter) {
         String tenantId = tenantService.resolveTenant();
         List<QueryFilter> filters = globalFilter.getFilters();
+        QueryFilter.validateRegexFilters(filters);
 
         filters = formatLabelsFilters(filters);
 
@@ -172,11 +179,12 @@ public class DashboardController {
         if (chart == null) {
             return null;
         }
+        modelValidator.validate(chart);
         var pageNumber = globalFilter.getPageNumber();
         var pageSize = globalFilter.getPageSize();
         var pageable = pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null;
 
-        return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable);
+        return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable, dashboardsConfiguration.resolveQueryTimeout(dashboard.getQueryTimeout()));
     }
 
     private List<QueryFilter> formatLabelsFilters(List<QueryFilter> filters) {
@@ -198,7 +206,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "charts/preview")
     @Operation(tags = { "Dashboards" }, summary = "Preview a chart data")
-    public PagedResults<Map<String, Object>> previewChart(
+    public ChartData previewChart(
         @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest) throws IOException {
         var fetchChartDataQuery = buildChartPreviewDataQuery(previewRequest);
         return fetchChartData(fetchChartDataQuery);
@@ -211,6 +219,7 @@ public class DashboardController {
         ChartFiltersOverrides globalFilter = previewRequest.globalFilter();
 
         List<QueryFilter> filters = globalFilter != null ? globalFilter.getFilters() : null;
+        QueryFilter.validateRegexFilters(filters);
 
         filters = formatLabelsFilters(filters);
 
@@ -234,15 +243,15 @@ public class DashboardController {
             pageable = PageableUtils.from(globalFilter.getPageNumber(), globalFilter.getPageSize());
         }
 
-        return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable);
+        return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable, dashboardsConfiguration.resolveQueryTimeout(null));
     }
 
     protected record FetchChartDataQuery(Chart<?> chart, List<QueryFilter> filters, ZonedDateTime startDate,
-        ZonedDateTime endDate, String tenantId, Pageable pageable) {
+        ZonedDateTime endDate, String tenantId, Pageable pageable, Duration queryTimeout) {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    protected PagedResults<Map<String, Object>> fetchChartData(FetchChartDataQuery fetchChartDataQuery) throws IOException {
+    protected ChartData fetchChartData(FetchChartDataQuery fetchChartDataQuery) throws IOException {
         var chart = fetchChartDataQuery.chart();
         var filters = fetchChartDataQuery.filters();
         var startDate = fetchChartDataQuery.startDate();
@@ -253,15 +262,17 @@ public class DashboardController {
         if (chart instanceof DataChart dataChart) {
             DataFilter<?, ?> dataChartDatas = dataChart.getData();
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
+            dataChartDatas.setQueryTimeout(fetchChartDataQuery.queryTimeout());
 
             // StartDate & EndDate are only set in the globalFilter for JDBC
             // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
-            return PagedResults.of(this.chartDataService.generate(tenantId, dataChart, startDate, endDate, pageable));
+            return ChartData.of(this.chartDataService.generate(tenantId, dataChart, startDate, endDate, pageable), dataChartDatas.ignoredGlobalFilterFields(filters));
         } else if (chart instanceof DataChartKPI dataChartKPI) {
             DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
+            dataChartDatas.setQueryTimeout(fetchChartDataQuery.queryTimeout());
 
-            return PagedResults.of(new ArrayListTotal<>(this.chartDataService.generateKPI(tenantId, dataChartKPI, startDate, endDate), 1));
+            return ChartData.of(new ArrayListTotal<>(this.chartDataService.generateKPI(tenantId, dataChartKPI, startDate, endDate), 1), dataChartDatas.ignoredGlobalFilterFields(filters));
         } else if (chart instanceof Markdown markdownChart) {
             if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
                 Optional<Flow> optionalFlow = flowRepository.findById(tenantId, flowDescription.getNamespace(), flowDescription.getFlowId());
@@ -271,7 +282,7 @@ public class DashboardController {
                         "description", flow.getDescription() != null ? flow.getDescription() : ""
                     );
 
-                    return PagedResults.of(new ArrayListTotal<>(List.of(descriptionMap), 1));
+                    return ChartData.of(new ArrayListTotal<>(List.of(descriptionMap), 1), List.of());
                 } else {
                     throw new IllegalArgumentException("Flow not found");
                 }
@@ -284,7 +295,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = { "Dashboards" }, summary = "Export a dashboard chart data")
-    public HttpResponse<byte[]> exportDashboardChart(
+    public HttpResponse<StreamedFile> exportDashboardChart(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
         @Parameter(description = "The export format") @QueryValue(defaultValue = "CSV") ExportFormat format,
@@ -296,20 +307,20 @@ public class DashboardController {
         assertExportable(fetchChartDataQuery.chart());
         var fetchedData = fetchChartData(fetchChartDataQuery);
 
-        return export(fetchedData.getResults(), "%s_%s_export".formatted(id, chartId), format);
+        return export(fetchChartDataQuery.chart(), fetchedData.results(), "%s_%s_export".formatted(id, chartId), format);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "charts/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = { "Dashboards" }, summary = "Export a chart data")
-    public HttpResponse<byte[]> exportChart(
+    public HttpResponse<StreamedFile> exportChart(
         @Parameter(description = "The export format") @QueryValue(defaultValue = "CSV") ExportFormat format,
         @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest) throws IOException {
         var fetchChartDataQuery = buildChartPreviewDataQuery(previewRequest);
         assertExportable(fetchChartDataQuery.chart());
         var fetchedData = fetchChartData(fetchChartDataQuery);
 
-        return export(fetchedData.getResults(), "%s_%s_export".formatted("default-dashboard", fetchChartDataQuery.chart().getId()), format);
+        return export(fetchChartDataQuery.chart(), fetchedData.results(), "%s_%s_export".formatted("default-dashboard", fetchChartDataQuery.chart().getId()), format);
     }
 
     private void assertExportable(Chart<?> chart) {
@@ -318,23 +329,42 @@ public class DashboardController {
         }
     }
 
-    private HttpResponse<byte[]> export(List<Map<String, Object>> rows, String filename, ExportFormat format) throws IOException {
+    private HttpResponse<StreamedFile> export(Chart<?> chart, List<Map<String, Object>> rows, String filename, ExportFormat format) throws IOException {
         var byteArrayOutputStream = new ByteArrayOutputStream();
 
         if (format == ExportFormat.ION) {
             FileSerde.writeAll(byteArrayOutputStream, Flux.fromIterable(rows)).block();
         } else {
             var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
-            CSVUtils.toCSV(outputStreamWriter, rows);
+            if (chart instanceof DataChart<?, ?> dataChart) {
+                CSVUtils.toCSV(outputStreamWriter, rows, List.copyOf(dataChart.getData().getColumns().keySet()));
+            } else {
+                CSVUtils.toCSV(outputStreamWriter, rows);
+            }
         }
 
+        byte[] content = byteArrayOutputStream.toByteArray();
         var fullFilename = "%s.%s".formatted(filename, format.name().toLowerCase());
-        return HttpResponse.ok(byteArrayOutputStream.toByteArray()).header("Content-Disposition", "attachment; filename=\"%s\"".formatted(fullFilename));
+        StreamedFile streamedFile = new StreamedFile(new ByteArrayInputStream(content), MediaType.APPLICATION_OCTET_STREAM_TYPE, System.currentTimeMillis(), content.length)
+            .attach(fullFilename);
+        return HttpResponse.ok(streamedFile).header(HttpHeaders.CACHE_CONTROL, "no-cache");
     }
 
     public record PreviewRequest(
         @Parameter(description = "The chart") @NotBlank String chart,
         @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Nullable ChartFiltersOverrides globalFilter) {
+    }
+
+    /**
+     * A page of chart rows.
+     *
+     * @param ignoredFilters the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     * @param metadata what the data source tells about the rows (execution they come from, truncation), when it reads an execution output
+     */
+    public record ChartData(@NotNull List<Map<String, Object>> results, @NotNull Long total, List<QueryFilter.Field> ignoredFilters, @Nullable ChartMetadata metadata) {
+        static ChartData of(ArrayListTotal<Map<String, Object>> rows, List<QueryFilter.Field> ignoredFilters) {
+            return new ChartData(rows, rows.getTotal(), ignoredFilters, rows instanceof ChartRows chartRows ? chartRows.getMetadata() : null);
+        }
     }
 
     @Getter
@@ -349,6 +379,7 @@ public class DashboardController {
         private final String title;
         private final String description;
         private final TimeWindow timeWindow;
+        private final Duration queryTimeout;
         private final List<Chart<?>> charts;
         @NotNull
         private final boolean deleted;
@@ -362,6 +393,7 @@ public class DashboardController {
             this.title = dashboard.getTitle();
             this.description = dashboard.getDescription();
             this.timeWindow = dashboard.getTimeWindow();
+            this.queryTimeout = dashboard.getQueryTimeout();
             this.charts = dashboard.getCharts();
             this.deleted = dashboard.isDeleted();
             this.created = dashboard.getCreated();
@@ -370,13 +402,14 @@ public class DashboardController {
         }
 
         @JsonCreator
-        public DashboardResponse(String tenantId, String id, String title, String description, TimeWindow timeWindow, List<Chart<?>> charts, boolean deleted, Instant created, Instant updated,
-            String sourceCode) {
+        public DashboardResponse(String tenantId, String id, String title, String description, TimeWindow timeWindow, Duration queryTimeout, List<Chart<?>> charts, boolean deleted,
+            Instant created, Instant updated, String sourceCode) {
             this.tenantId = tenantId;
             this.id = id;
             this.title = title;
             this.description = description;
             this.timeWindow = timeWindow;
+            this.queryTimeout = queryTimeout;
             this.charts = charts;
             this.deleted = deleted;
             this.created = created;

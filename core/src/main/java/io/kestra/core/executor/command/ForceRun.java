@@ -2,6 +2,7 @@ package io.kestra.core.executor.command;
 
 import java.time.Instant;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 
@@ -13,7 +14,8 @@ public record ForceRun(String tenantId,
     String executionId,
     Instant timestamp,
     EventId eventId,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @Nullable Actor actor) implements ExecutionCommand {
 
     public static ForceRun from(Execution execution) {
         return new ForceRun(
@@ -23,11 +25,16 @@ public record ForceRun(String tenantId,
             execution.getId(),
             Instant.now(),
             EventId.create(),
+            null,
             null
         );
     }
 
     public ForceRun withOperationId(String operationId) {
-        return new ForceRun(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId);
+        return new ForceRun(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId, actor);
+    }
+
+    public ForceRun withActor(Actor actor) {
+        return new ForceRun(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId, actor);
     }
 }

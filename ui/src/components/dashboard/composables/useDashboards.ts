@@ -1,4 +1,4 @@
-import {onMounted, onBeforeUnmount, computed, ref} from "vue"
+import {onMounted, onBeforeUnmount, computed, inject, ref, type InjectionKey} from "vue"
 
 import {useRoute} from "vue-router"
 
@@ -8,11 +8,26 @@ import {useI18n} from "vue-i18n"
 
 import {decodeSearchParams} from "@kestra-io/design-system"
 
-import {Chart} from "../types.ts"
+import {Chart, type ChartResults} from "../types.ts"
 import {chartLoadQueue} from "./chartLoadQueue"
-import {ChartFiltersOverrides, QueryFilter} from "@kestra-io/kestra-sdk"
+import {ChartFiltersOverrides, type ChartMetadata, QueryFilter, QueryFilterField} from "@kestra-io/kestra-sdk"
 
 
+
+/** Provided by the dashboard layout, so it can warn which dashboard filters a chart's data source left out. */
+export const IGNORED_FILTERS_INJECTION_KEY = Symbol("dashboard-ignored-filters") as InjectionKey<(chartId: string, fields: QueryFilterField[]) => void>
+
+/** What a chart reports to the dashboard layout, to show on its card: what the data source tells about its rows, or why it has none. */
+export interface ChartNotice {
+    metadata?: ChartMetadata | null;
+    warning?: string;
+}
+
+/** Provided by the dashboard layout, so it can show on a chart's card the notice that chart's data source came with. */
+export const CHART_NOTICE_INJECTION_KEY = Symbol("dashboard-chart-notice") as InjectionKey<(chartId: string, notice: ChartNotice) => void>
+
+/** Lets a host that already holds a chart's rows (an app block) answer `useChartGenerator` without calling the dashboard API. */
+export const CHART_RESULTS_KEY: InjectionKey<(chartId: string, pagination?: {pageNumber: number; pageSize: number}) => ChartResults | undefined> = Symbol("chartResults")
 
 export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI"
 
@@ -33,7 +48,10 @@ export const isExportableChart = (type: string): boolean => !isMarkdownChart(typ
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id
 
 /** `data` is undefined when the chart went away before its request answered, or when the request 404ed. */
-export const getPropertyValue = (data: Record<string, any> | undefined, property: "value" | "description"): string | undefined => data?.results?.[0]?.[property]
+export const getPropertyValue = (data: ChartResults | undefined, property: "value" | "description"): string | undefined => {
+    const value = data?.results?.[0]?.[property]
+    return value == null ? undefined : String(value)
+}
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false
 
@@ -47,11 +65,15 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     const route = useRoute()
 
     const dashboardStore = useDashboardStore()
+    const providedResults = inject(CHART_RESULTS_KEY, undefined)
 
     const {t} = useI18n({useScope: "global"})
     const EMPTY_TEXT = t("dashboards.empty")
 
-    const data = ref()
+    const reportIgnoredFilters = inject(IGNORED_FILTERS_INJECTION_KEY, undefined)
+    const reportNotice = inject(CHART_NOTICE_INJECTION_KEY, undefined)
+
+    const data = ref<ChartResults>()
     const loading = ref(false)
     let isMounted = true
     onBeforeUnmount(() => {
@@ -62,6 +84,11 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [])
         const allFilters = (appendFilters?.length ? [...filters, ...appendFilters] : filters)
         const parameters: ChartFiltersOverrides = {...pagination, filters: (allFilters ?? {})}
+
+        if (providedResults) {
+            data.value = providedResults(props.chart.id, pagination)
+            return data.value
+        }
 
         loading.value = true
         try {
@@ -88,6 +115,8 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
 
             if (!isMounted) return
             data.value = result
+            reportIgnoredFilters?.(props.chart.id, data.value?.ignoredFilters ?? [])
+            reportNotice?.(props.chart.id, {metadata: data.value?.metadata, warning: data.value?.warning})
             return data.value
         } finally {
             loading.value = false

@@ -23,6 +23,7 @@
             fitHeight
             :data="filteredTools"
             :total="filteredTools.length"
+            :pageSizeOptions="[filteredTools.length || 1]"
             :loading="loading"
             :rowKey="rowKey"
             :noDataText="$t('mcp.tools.no_tools')"
@@ -130,8 +131,8 @@
 
     import {useMcpStore, type McpTool, type McpToolAnnotations} from "../../../../stores/mcp"
 
-    import {useMcpToolsFilter} from "../../../filter/configurations"
-    import {type ColumnConfig, useTableColumns} from "../../../../composables/useTableColumns"
+    import {useMcpToolsFilter} from "../../../filter/configurations/mcpToolsFilter"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useToolFlowCreation} from "../useToolFlowCreation"
 
     import {KsButton, KsDataTable, KsFilter as KSFilter, KsId, KsTableColumn, KsTag, decodeSearchParams} from "@kestra-io/design-system"
@@ -294,7 +295,7 @@
     watch(() => route.params.id, load)
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .mcp-tools {
         display: flex;
         flex-direction: column;

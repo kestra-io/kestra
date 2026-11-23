@@ -33,7 +33,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .playground-log{
         display: flex;
         flex-direction: column;

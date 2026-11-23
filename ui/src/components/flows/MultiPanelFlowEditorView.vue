@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue"
+    import {computed, markRaw, onMounted, onUnmounted, provide, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import * as Utils from "../../utils/utils"
     import {usePlaygroundStore} from "../../stores/playground"
@@ -45,9 +45,10 @@
     import {useNoCodePanelsFull} from "./useNoCodePanels"
     import {useFlowStore} from "../../stores/flow"
     import {usePluginsStore} from "../../stores/plugins"
-    import {trackTabOpen} from "../../utils/tabTracking"
+    import {useTabTracking} from "../../composables/useTabTracking"
     import {Panel, Tab} from "../../utils/multiPanelTypes"
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue"
+    import {OPEN_EDITOR_TAB_INJECTION_KEY} from "../no-code/injectionKeys"
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.uid)
@@ -58,6 +59,7 @@
 
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
+    const {trackTabOpen} = useTabTracking()
 
     const alwaysSaveKey = computed(() => `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`)
     const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value)
@@ -71,6 +73,14 @@
     const route = useRoute()
     const router = useRouter()
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
+
+    provide(OPEN_EDITOR_TAB_INJECTION_KEY, (uid: string) => {
+        if (editorView.value?.openTabs.includes(uid)) {
+            editorView.value?.focusTab(uid)
+        } else {
+            editorView.value?.setTabValue(uid)
+        }
+    })
 
     onMounted(async () => {
         if(route.query.ai === "open"){
@@ -207,7 +217,7 @@
     }, {immediate: true})
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .flow-editor-shell {
         position: relative;
         height: 100%;

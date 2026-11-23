@@ -12,9 +12,9 @@
             :data-test="`copilot-context-${pill.part}`"
             @close="emit('remove', pill.part)"
         >
-            <i18n-t :keypath="pill.keypath" scope="global" tag="span">
+            <i18n-t :keypath="pill.keypath" tag="span" scope="global">
                 <template #[pill.slot]>
-                    <KsId :value="pill.value" :shrink="false" />
+                    <KsId :value="pill.value" :shrink="false" data-test="copilot-context-id" />
                 </template>
             </i18n-t>
         </KsTag>
@@ -31,9 +31,9 @@
 
     interface Pill {
         part: ContextPart
+        value: string
         keypath: string
         slot: string
-        value: string
     }
 
     // One pill per present field — the resource first, then its namespace (deduped for a namespace
@@ -44,7 +44,10 @@
         if (!parts.includes("namespace")) parts.push("namespace")
         return parts
             .filter((part): part is ContextPart => Boolean(scope[part]))
-            .map((part) => ({part, ...CONTEXT_PART_I18N[part], value: scope[part] as string}))
+            .map((part) => {
+                const {keypath, slot} = CONTEXT_PART_I18N[part]
+                return {part, value: scope[part] as string, keypath, slot}
+            })
     })
 </script>
 

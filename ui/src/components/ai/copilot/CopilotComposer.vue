@@ -1,5 +1,5 @@
 <template>
-    <div class="copilot-composer">
+    <div class="copilot-composer" :class="{'copilot-composer--locked': !!disabledReason}">
         <!-- While dictating, the live waveform replaces the textarea. -->
         <div v-if="isListening" ref="wavesContainer" class="copilot-voice" data-test="copilot-voice">
             <span
@@ -21,14 +21,29 @@
             class="copilot-textarea"
             :rows="rows ?? 1"
             :placeholder="placeholder ?? $t('ai.copilot.placeholder')"
-            :disabled="disabled"
+            :disabled="isDisabled"
+            :aria-describedby="describedBy"
             data-test="copilot-composer-input"
             @keydown="onKeydown"
             @input="autosize"
         />
 
         <div class="copilot-composer-actions">
-            <KsDropdown trigger="click" data-test="copilot-mode-selector">
+            <KsButton
+                v-if="disabledReason"
+                size="small"
+                class="copilot-mode-trigger"
+                disabled
+                :aria-describedby="describedBy"
+                data-test="copilot-mode-selector"
+            >
+                <span class="copilot-mode-item">
+                    <component :is="currentMode?.icon" :size="16" />
+                    {{ currentMode?.label }}
+                    <ChevronDown class="copilot-mode-chevron" />
+                </span>
+            </KsButton>
+            <KsDropdown v-else trigger="click" data-test="copilot-mode-selector">
                 <KsButton size="small" class="copilot-mode-trigger">
                     <span class="copilot-mode-item">
                         <component :is="currentMode?.icon" :size="16" />
@@ -41,6 +56,7 @@
                         <KsDropdownItem
                             v-for="option in modeOptions"
                             :key="option.value"
+                            data-test="copilot-mode-option"
                             :class="{'copilot-mode-item--active': option.value === mode}"
                             @click="emit('update:mode', option.value)"
                         >
@@ -94,20 +110,54 @@
                         v-if="speechSupported"
                         text
                         :icon="Microphone"
-                        :disabled="disabled"
+                        :disabled="isDisabled"
+                        :aria-describedby="describedBy"
                         :aria-label="$t('ai.copilot.voice.start')"
                         data-test="copilot-mic"
                         @click="toggleVoiceInput"
                     />
+                    <KsTooltip v-if="usageLabel" :persistent="false">
+                        <template #content>
+                            <span>{{ usageTooltip }}</span>
+                        </template>
+                        <KsTag
+                            :type="usage?.exceeded ? 'danger' : (usage?.warning ? 'warning' : 'info')"
+                            data-test="copilot-usage"
+                        >
+                            {{ usageLabel }}
+                        </KsTag>
+                    </KsTooltip>
                     <KsButton
+                        v-if="streaming"
                         circle
                         type="primary"
-                        :icon="ArrowUp"
-                        :disabled="!canSubmit"
-                        :aria-label="$t('ai.copilot.send')"
-                        data-test="copilot-send"
-                        @click="submit"
+                        :icon="Stop"
+                        :aria-label="$t('ai.copilot.stop')"
+                        data-test="copilot-stop"
+                        @click="emit('stop')"
                     />
+                    <KsTooltip v-else trigger="manual" :visible="sendTipVisible" :disabled="!disabledReason" :content="disabledReason">
+                        <span
+                            class="copilot-send-wrapper"
+                            :tabindex="disabledReason ? 0 : undefined"
+                            data-test="copilot-send-wrapper"
+                            @mouseenter="sendHovered = true"
+                            @mouseleave="sendHovered = false"
+                            @focus="sendFocused = true"
+                            @blur="sendFocused = false"
+                        >
+                            <KsButton
+                                circle
+                                type="primary"
+                                :icon="ArrowUp"
+                                :disabled="!canSubmit"
+                                :aria-describedby="describedBy"
+                                :aria-label="usage?.exceeded ? usageTooltip : $t('ai.copilot.send')"
+                                data-test="copilot-send"
+                                @click="submit"
+                            />
+                        </span>
+                    </KsTooltip>
                 </template>
             </div>
         </div>
@@ -118,6 +168,7 @@
     import {ref, computed, nextTick, watch, onMounted, onBeforeUnmount, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
+    import Stop from "vue-material-design-icons/Stop.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Microphone from "vue-material-design-icons/Microphone.vue"
     import Check from "vue-material-design-icons/Check.vue"
@@ -127,12 +178,20 @@
     import ChatQuestionOutline from "vue-material-design-icons/ChatQuestionOutline.vue"
     import Wrench from "vue-material-design-icons/Wrench.vue"
     import MapOutline from "vue-material-design-icons/MapOutline.vue"
+    import {dateUtils} from "@kestra-io/design-system"
     import type {AgentMode, AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
+    import type {AiUsageStatus} from "./useAiUsage"
 
     const props = defineProps<{
         mode: AgentMode
         /** Disables input while a turn is streaming or awaiting confirmation. */
         disabled?: boolean
+        /** Disables every control for a lasting reason (no AI provider); shown as the Send tooltip. */
+        disabledReason?: string
+        /** Id of the notice that explains why the controls are disabled, for `aria-describedby`. */
+        describedBy?: string
+        /** Replaces send with stop while a turn is streaming. */
+        streaming?: boolean
         /** Overrides the placeholder (e.g. the descriptive helper text in the empty state). */
         placeholder?: string
         /** Initial visible rows (empty state uses more so the helper text wraps); collapses on input. */
@@ -141,10 +200,13 @@
         providers?: AiControllerAiProviderResponse[]
         /** Currently selected provider id (v-model:provider). */
         provider?: string
+        /** This provider's standing against its spend ceiling; absent or disabled shows nothing. */
+        usage?: AiUsageStatus
     }>()
 
     const emit = defineEmits<{
         (e: "submit", prompt: string): void
+        (e: "stop"): void
         (e: "update:mode", mode: AgentMode): void
         (e: "update:provider", provider: string): void
     }>()
@@ -170,13 +232,39 @@
         return (list.find((p) => p.id === props.provider) ?? list[0])?.displayName
     })
 
-    const canSubmit = computed(() => !props.disabled && draft.value.trim().length > 0)
+    const isDisabled = computed(() => props.disabled || !!props.disabledReason)
+
+    const sendHovered = ref(false)
+    const sendFocused = ref(false)
+    const sendTipVisible = computed(() => !!props.disabledReason && (sendHovered.value || sendFocused.value))
+
+    const usageLabel = computed(() =>
+        props.usage?.enabled ? t("ai.copilot.usage.remaining", {percent: props.usage.remainingPercent}) : undefined,
+    )
+
+    const usageTooltip = computed(() => {
+        if (props.usage?.exceeded) {
+            const availableAt = props.usage.availableAt
+            return availableAt
+                ? t("ai.copilot.usage.exceededUntil", {when: dateUtils.dateFilter(availableAt)})
+                : t("ai.copilot.usage.exceeded")
+        }
+        if (props.usage?.warning) return t("ai.copilot.usage.warning")
+        return t("ai.copilot.usage.help")
+    })
+
+    const canSubmit = computed(() =>
+        !isDisabled.value && !props.usage?.exceeded && draft.value.trim().length > 0,
+    )
 
     // Grow the textarea with its content, up to the CSS max-height (then it scrolls).
     function autosize(): void {
         const el = textareaEl.value
         if (!el) return
         el.style.height = "auto"
+        // A composer that is mounted but not laid out yet (dock still opening) measures zero and would
+        // collapse the box - leave the rows-based height, the observer below re-runs once it has one.
+        if (el.scrollHeight === 0) return
         el.style.height = `${el.scrollHeight}px`
     }
 
@@ -196,6 +284,31 @@
     // Keep the height in sync when the draft is cleared (e.g. after submit).
     watch(draft, () => nextTick(autosize))
 
+    /*
+        `input` and the draft watcher only cover text that arrives once the composer is on screen. A
+        seeded prompt ("Fix with AI", the editor shortcut) is already in the model by the time the
+        composer mounts - the chat swaps from the empty state to the footer composer, or the dock opens
+        on a rehydrated thread - so the box stayed one row tall around a multiline prompt. Size it on
+        mount, and again whenever the box gets a new width: a narrower dock rewraps the draft onto more
+        lines, and a mount inside a panel that is not laid out yet first measures a width of zero.
+    */
+    let lastWidth = 0
+    const resizeObserver = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? 0
+        if (width === lastWidth) return
+        lastWidth = width
+        autosize()
+    })
+
+    // Re-runs whenever the textarea is (re)created too - dictation swaps it out for the waveform.
+    watch(textareaEl, (el, previous) => {
+        if (previous) resizeObserver.unobserve(previous)
+        if (!el) return
+        lastWidth = el.clientWidth
+        autosize()
+        resizeObserver.observe(el)
+    }, {flush: "post"})
+
     // Enter submits; Shift+Enter inserts a newline.
     function onKeydown(event: KeyboardEvent): void {
         if (event.key === "Enter" && !event.shiftKey) {
@@ -210,7 +323,7 @@
     // Transcript captured before this dictation started, so interim results append cleanly.
     const baseDraft = ref("")
     const draftBeforeListening = ref("")
-    let recognition: any = null
+    let recognition: SpeechRecognition | null = null
 
     // Waveform visualizer.
     const wavesContainer = ref<HTMLElement | null>(null)
@@ -237,7 +350,7 @@
             volumeBuffer.value = Array(barCount).fill(0)
 
             stream = await navigator.mediaDevices.getUserMedia({audio: true})
-            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+            audioContext = new (window.AudioContext || window.webkitAudioContext)()
             analyser = audioContext.createAnalyser()
             analyser.fftSize = 256
             analyser.smoothingTimeConstant = 0.3
@@ -325,18 +438,18 @@
     }
 
     // If the composer gets disabled mid-dictation (turn started), bail out of voice.
-    watch(() => props.disabled, (value) => {
+    watch(isDisabled, (value) => {
         if (value && isListening.value) cancelVoice()
     })
 
     onMounted(() => {
-        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
         if (!SR) return
         speechSupported.value = true
         recognition = new SR()
         recognition.continuous = true
         recognition.interimResults = true
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
             let interim = ""
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const result = event.results[i]
@@ -357,6 +470,7 @@
             // ignore
         }
         stopAudioAnalysis()
+        resizeObserver.disconnect()
     })
 </script>
 
@@ -386,6 +500,18 @@
         color: var(--ks-text-primary);
         font: inherit;
         line-height: 1.5;
+    }
+
+    .copilot-composer--locked {
+        background: var(--ks-bg-inactive);
+        box-shadow: none;
+    }
+
+    .copilot-composer--locked .copilot-textarea,
+    .copilot-composer--locked .copilot-textarea::placeholder,
+    .copilot-composer--locked .copilot-mode-trigger {
+        color: var(--ks-text-inactive);
+        cursor: not-allowed;
     }
 
     .copilot-textarea::placeholder {
@@ -423,6 +549,11 @@
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
+    }
+
+    .copilot-send-wrapper {
+        display: inline-flex;
+        border-radius: 50%;
     }
 
     /* Figma mode control: a subtle bg-tag pill (label + chevron), not a solid button. */

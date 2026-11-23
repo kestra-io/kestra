@@ -1,0 +1,46 @@
+id: replay-handler-scope
+namespace: io.kestra.tests
+
+tasks:
+  - id: before
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ execution.id }}"
+
+  - id: upstream
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: upstream_inner
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ execution.id }}"
+    finally:
+      - id: upstream_finally
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ execution.id }}"
+
+  - id: guarded
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: boom
+        type: io.kestra.plugin.core.execution.Fail
+    errors:
+      - id: guarded_error
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ execution.id }}"
+    finally:
+      - id: guarded_finally
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ execution.id }}"
+
+  - id: after
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ execution.id }}"
+
+errors:
+  - id: on_error
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ execution.id }}"
+
+finally:
+  - id: fin
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ execution.id }}"

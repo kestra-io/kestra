@@ -15,7 +15,10 @@
             v-for="(row, index) in rows"
             :key="row.path"
             class="json-tree__row"
-            :class="{'json-tree__row--selected': row.path === selectedPath}"
+            :class="{
+                'json-tree__row--selected': row.path === selectedPath,
+                'json-tree__row--file': row.file,
+            }"
             :style="{'--depth': row.depth}"
             @click="$emit('select', row.path, row.value)"
         >
@@ -37,10 +40,15 @@
                 <span class="json-tree__key">"{{ row.label }}"</span>
                 <span class="json-tree__colon">:</span>
 
-                <span v-if="!row.isExpandable" class="json-tree__value" :class="`json-tree__value--${row.type}`">
+                <KsFileTag v-if="row.file" :uri="row.file.uri" :name="row.file.name" />
+                <span v-else-if="!row.isExpandable" class="json-tree__value" :class="`json-tree__value--${row.type}`">
                     {{ row.display }}
                 </span>
-                <span v-else-if="!row.isExpanded" class="json-tree__preview">
+                <span
+                    v-else-if="!row.isExpanded"
+                    class="json-tree__preview"
+                    @click="toggle(row.path)"
+                >
                     {{ row.display }}
                 </span>
             </span>
@@ -53,6 +61,8 @@
     import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import KsFileTag from "./KsFileTag.vue"
+    import {isFileUri} from "../../utils/file"
 
     const {t} = useI18n({useScope: "global"})
 
@@ -76,6 +86,8 @@
         display: string;
         isExpandable: boolean;
         isExpanded: boolean;
+        /** Set when the leaf is a storage URI, so the row shows a file symbol instead of the URI. */
+        file?: {uri: string; name?: string};
     }
 
     function isValidVariable(key: string): boolean {
@@ -147,7 +159,8 @@
     }
 
     function buildRows(value: unknown, path: string, depth: number, rows: TreeRow[]) {
-        const entries: [string, unknown][] = Array.isArray(value)
+        const isArray = Array.isArray(value)
+        const entries: [string, unknown][] = isArray
             ? value.map((item, index) => [String(index), item])
             : Object.entries(value as Record<string, unknown>)
 
@@ -165,6 +178,8 @@
                 display: expandable ? collapsedPreview(child) : leafDisplay(child),
                 isExpandable: expandable,
                 isExpanded: rowExpanded,
+                // An array index is no name, so those rows fall back to the URI's own segment.
+                file: isFileUri(child) ? {uri: child, name: isArray ? undefined : key} : undefined,
             })
 
             if (rowExpanded) {
@@ -191,90 +206,94 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .json-tree {
     font-family: var(--ks-font-family-mono);
     font-size: var(--ks-font-size-sm);
     line-height: 1.6;
     padding: var(--ks-spacing-2) 0;
+}
 
-    &__row {
-        display: flex;
-        align-items: flex-start;
-        cursor: pointer;
+.json-tree__row {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
 
-        &:hover {
-            background-color: var(--ks-border-default);
-        }
-
-        &--selected {
-            background-color: var(--ks-border-default);
-        }
+    &:hover {
+        background-color: var(--ks-border-default);
     }
+}
 
-    &__gutter {
-        flex: 0 0 auto;
-        width: 2.5rem;
-        padding-right: var(--ks-spacing-3);
-        text-align: right;
-        color: var(--ks-text-secondary);
-        user-select: none;
-    }
+.json-tree__row--selected {
+    background-color: var(--ks-border-default);
+}
 
-    &__content {
-        display: flex;
-        align-items: center;
-        min-width: 0;
-        padding-left: calc(var(--depth) * var(--ks-spacing-4));
-    }
+.json-tree__row--file + .json-tree__row--file {
+    margin-top: var(--ks-spacing-2);
+}
 
-    &__caret {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1rem;
-        height: 1rem;
-        padding: 0;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        color: var(--ks-text-secondary);
-    }
+.json-tree__gutter {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    padding-right: var(--ks-spacing-3);
+    text-align: right;
+    color: var(--ks-text-secondary);
+    user-select: none;
+}
 
-    &__caret-spacer {
-        display: inline-block;
-        width: 1rem;
-    }
+.json-tree__content {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding-left: calc(var(--depth) * var(--ks-spacing-4));
+}
 
-    &__key {
-        color: var(--ks-text-primary);
-    }
+.json-tree__caret {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--ks-text-secondary);
+}
 
-    &__colon {
-        color: var(--ks-text-secondary);
-        margin-right: var(--ks-spacing-2);
-    }
+.json-tree__caret-spacer {
+    display: inline-block;
+    width: 1rem;
+}
 
-    &__preview {
-        color: var(--ks-text-secondary);
-    }
+.json-tree__key {
+    color: var(--ks-text-primary);
+}
 
-    &__value {
-        word-break: break-word;
+.json-tree__colon {
+    color: var(--ks-text-secondary);
+    margin-right: var(--ks-spacing-2);
+}
 
-        &--string {
-            color: var(--ks-text-success);
-        }
+.json-tree__preview {
+    color: var(--ks-text-secondary);
+}
 
-        &--number,
-        &--boolean {
-            color: var(--ks-text-info);
-        }
+.json-tree__value {
+    word-break: break-word;
+}
 
-        &--null {
-            color: var(--ks-text-secondary);
-            font-style: italic;
-        }
-    }
+.json-tree__value--string {
+    color: var(--ks-text-success);
+}
+
+.json-tree__value--number,
+.json-tree__value--boolean {
+    color: var(--ks-text-info);
+}
+
+.json-tree__value--null {
+    color: var(--ks-text-secondary);
+    font-style: italic;
 }
 </style>

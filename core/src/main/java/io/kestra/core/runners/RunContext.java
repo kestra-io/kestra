@@ -53,6 +53,8 @@ public abstract class RunContext implements PropertyContext {
 
     public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;
 
+    public abstract Object renderTyped(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+
     public abstract String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
     public abstract <T> RunContextProperty<T> render(Property<T> inline);
@@ -239,7 +241,7 @@ public abstract class RunContext implements PropertyContext {
 
     /**
      * Clone this run context for a specific plugin.
-     * 
+     *
      * @return a new run context with the plugin configuration of the given plugin.
      */
     public abstract RunContext cloneForPlugin(Plugin plugin);
@@ -260,4 +262,6 @@ public abstract class RunContext implements PropertyContext {
      * This is available only for flowable tasks as they are called multiple times, and for retried tasks (attempt > 1)
      */
     public abstract Map<String, Object> currentOutput();
+
+    public abstract Checkpoints checkpoints();
 }

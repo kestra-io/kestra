@@ -1,8 +1,11 @@
 package io.kestra.worker.fetchers;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -11,10 +14,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.event.Level;
+
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import com.google.common.base.Throwables;
 import com.google.protobuf.ByteString;
 
 import io.kestra.controller.GrpcChannelManager;
 import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.grpc.JobSync;
 import io.kestra.controller.grpc.WorkerConnectionInfo;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.controller.grpc.WorkerJobPayload;
@@ -22,13 +30,20 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.worker.WorkerMetadataChangeHandler;
 import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.WorkerJobStreamConfig;
 import io.kestra.worker.WorkerLoop;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
@@ -96,6 +111,8 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private final GrpcConfiguration grpcConfiguration;
     private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
     private final List<WorkerMetadataChangeHandler> metadataChangeHandlers;
+    private final WorkerJobStreamConfig jobStreamConfig;
+    private final MetricRegistry metricRegistry;
 
     private WorkerQueue<WorkerJob> workerJobQueue;
     private WorkerContext workerContext;
@@ -132,6 +149,51 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      * sit when permits aren't changing.
      */
     private final Queue<String> pendingCompletions = new ConcurrentLinkedQueue<>();
+
+    /**
+     * UIDs of jobs received from the controller and not yet completed, queued or running. Keyed by UID rather
+     * than counted so that a completion for a job this fetcher never received cannot release a permit.
+     */
+    private final Set<String> inFlightJobs = ConcurrentHashMap.newKeySet();
+
+    /**
+     * UIDs of jobs received from the controller whose terminal result the controller has not accepted yet, reported to
+     * it as the jobs this worker holds. A job stays here after it ends, while its result is still on its way, so that
+     * the controller never resubmits a job whose result is in flight.
+     */
+    private final Set<String> heldJobs = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Generation of the current stream, increased each time a stream is opened.
+     */
+    private final AtomicLong streamGeneration = new AtomicLong();
+
+    /**
+     * {@code nanoTime} at which the jobs held were last reported on the current stream.
+     */
+    private volatile long lastSyncSentNanos;
+
+    /**
+     * {@code nanoTime} at which the controller last acknowledged a sync of the current stream, or at which the
+     * stream was opened.
+     */
+    private volatile long lastSyncAckNanos;
+
+    /**
+     * Whether the controller of the current stream has acknowledged a sync. Until then, a missing acknowledgement may
+     * only mean that this controller predates job stream syncs, so it is not taken as a sign of a dead stream.
+     */
+    private volatile boolean syncAcknowledged = false;
+
+    /**
+     * Whether the current stream was cancelled for going unacknowledged and waits for its error callback.
+     */
+    private volatile boolean streamDropRequested = false;
+
+    /**
+     * Why the previous stream was lost, recorded on the reconnection metric when the next stream opens.
+     */
+    private volatile ReconnectReason reconnectReason;
 
     /**
      * Latch to detect when stream completes.
@@ -174,6 +236,8 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      *        {@link WorkerBroadcastEvent.MetadataChangeEvent} received from the controller
      *        and on stream (re-)connection. Typically one handler per cached metastore;
      *        may be empty on workers that do not participate in metastore caching.
+     * @param jobStreamConfig how the worker syncs the jobs it holds with the controller.
+     * @param metricRegistry the metric registry.
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
@@ -182,7 +246,9 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         final ExecutionKilledManager executionKilledManager,
         @Nullable @Named(WORKER_LOCAL_CLUSTER_EVENTS) final BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
         final List<WorkerMetadataChangeHandler> metadataChangeHandlers,
-        final GrpcConfiguration grpcConfiguration) {
+        final GrpcConfiguration grpcConfiguration,
+        final WorkerJobStreamConfig jobStreamConfig,
+        final MetricRegistry metricRegistry) {
         super(WorkerJobFetcher.class.getSimpleName());
         this.workerQueueRegistry = workerQueueRegistry;
         this.workerControllerServiceStub = workerControllerServiceStub;
@@ -191,6 +257,8 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         this.grpcConfiguration = grpcConfiguration;
         this.clusterEventQueue = clusterEventQueue;
         this.metadataChangeHandlers = metadataChangeHandlers;
+        this.jobStreamConfig = jobStreamConfig;
+        this.metricRegistry = metricRegistry;
     }
 
     /**
@@ -284,6 +352,35 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
         // Check if capacity has changed and send permit update if needed
         sendPermitUpdateIfNeeded();
+
+        syncHeldJobs();
+    }
+
+    /**
+     * Drops the stream when the controller has stopped acknowledging the jobs reported on it, and otherwise reports
+     * them again once the interval has elapsed.
+     */
+    private void syncHeldJobs() {
+        ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+        if (observer == null || streamDropRequested) {
+            return;
+        }
+
+        long now = System.nanoTime();
+        if (syncAcknowledged && now - lastSyncAckNanos > jobStreamConfig.syncTimeout().toNanos()) {
+            log.warn(
+                "The controller has not acknowledged the jobs held by this worker for {}: the job stream no longer delivers, reconnecting.",
+                jobStreamConfig.syncTimeout()
+            );
+            streamDropRequested = true;
+            reconnectReason = ReconnectReason.SYNC_UNACKNOWLEDGED;
+            observer.cancel("The controller stopped acknowledging the jobs held by the worker", null);
+            return;
+        }
+
+        if (now - lastSyncSentNanos >= jobStreamConfig.syncInterval().toNanos()) {
+            sendPermits(observer, calculatePermits(), true);
+        }
     }
 
     /**
@@ -293,6 +390,12 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         // Reset state for new connection
         lastSentPermits.set(-1);
         connectionConfirmed = false;
+        streamDropRequested = false;
+        syncAcknowledged = false;
+        lastSyncAckNanos = System.nanoTime();
+        if (streamGeneration.getAndIncrement() > 0) {
+            countReconnection();
+        }
         streamCompleted = new CountDownLatch(1);
 
         ClientResponseObserver<WorkerJobRequest, WorkerJobResponse> responseObserver = new ClientResponseObserver<>() {
@@ -318,6 +421,9 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                     log.warn("Stream error: {}", t.getMessage());
                 }
                 requestObserverRef.set(null);
+                if (reconnectReason == null) {
+                    reconnectReason = ReconnectReason.STREAM_ERROR;
+                }
                 scheduleReconnectBackoff();
                 streamCompleted.countDown();
             }
@@ -326,6 +432,9 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             public void onCompleted() {
                 log.trace("Stream completed by server");
                 requestObserverRef.set(null);
+                if (reconnectReason == null) {
+                    reconnectReason = ReconnectReason.STREAM_COMPLETED;
+                }
                 streamCompleted.countDown();
             }
         };
@@ -345,6 +454,16 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         }
     }
 
+    private void countReconnection() {
+        ReconnectReason reason = reconnectReason == null ? ReconnectReason.STREAM_ERROR : reconnectReason;
+        reconnectReason = null;
+        metricRegistry.counter(
+            MetricRegistry.METRIC_WORKER_STREAM_RECONNECT_COUNT,
+            MetricRegistry.METRIC_WORKER_STREAM_RECONNECT_COUNT_DESCRIPTION,
+            metricRegistry.workerGroupTags(workerContext.workerGroupId(), MetricRegistry.TAG_REASON, reason.tag())
+        ).increment();
+    }
+
     /**
      * Sends the initial request with connection info and initial permits.
      */
@@ -356,7 +475,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         // Advertise the worker's true maximum in-flight capacity: threads currently
         // executing plus jobs pending in the buffer. Controller bases its reservation
         // math (guaranteedCapacity / sharedCapacity) on this value.
-        int maxConcurrency = workerContext.workerThreads() + workerJobQueue.capacity();
+        int maxConcurrency = maxConcurrency();
 
         WorkerJobRequest.Builder requestBuilder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
@@ -367,9 +486,12 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                     .setWorkerGroupId(workerGroupId)
                     .setMaxConcurrency(maxConcurrency)
                     .setMaxInboundMessageSize(grpcConfiguration.maxInboundMessageSize())
+                    .setStreamGeneration(streamGeneration.get())
                     .build()
             );
         addPendingCompletions(requestBuilder);
+        requestBuilder.setSync(jobSync());
+        lastSyncSentNanos = System.nanoTime();
 
         doSend(requestStream, requestBuilder.build());
         // NOTE: the backoff is NOT reset here. Enqueuing the initial request does not prove the
@@ -386,11 +508,12 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         connectionConfirmed = true;
         resetBackoff();
         log.info(
-            "Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
+            "Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}, streamGeneration={}",
             workerContext.workerId(),
             workerContext.workerGroupId(),
-            workerContext.workerThreads() + workerJobQueue.capacity(),
-            calculatePermits()
+            maxConcurrency(),
+            calculatePermits(),
+            streamGeneration.get()
         );
         for (WorkerMetadataChangeHandler handler : metadataChangeHandlers) {
             try {
@@ -421,6 +544,11 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             return;
         }
 
+        if (response.getSyncAck() != 0 && response.getSyncAck() == streamGeneration.get()) {
+            lastSyncAckNanos = System.nanoTime();
+            syncAcknowledged = true;
+        }
+
         // Process broadcast events (kill commands, cluster events, metadata changes)
         for (ByteString eventData : response.getEventsList()) {
             try {
@@ -439,12 +567,17 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
                 log.debug("Received job: {}", jobId);
 
+                inFlightJobs.add(job.uid());
+                heldJobs.add(job.uid());
                 // Put job in local queue (blocking if full - provides local backpressure)
                 workerJobQueue.put(job);
                 receivedJobs++;
 
             } catch (Exception e) {
                 log.error("Error processing job payload: {}", e.getMessage(), e);
+                inFlightJobs.add(payload.getJobId());
+                heldJobs.add(payload.getJobId());
+                Thread.ofVirtual().name("undecodable-job-" + payload.getJobId()).start(() -> failUndecodableJob(payload, e));
             }
         }
 
@@ -453,6 +586,39 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         if (receivedJobs > 0) {
             sendPermitsForReceivedJobs(observer, calculatePermits(), receivedJobs);
         }
+    }
+
+    /**
+     * Fails a task the worker cannot decode, typically because its plugin is not installed here, so that the
+     * execution ends instead of waiting forever for a result, and releases the slot the controller reserved for it.
+     */
+    private void failUndecodableJob(WorkerJobPayload payload, Exception error) {
+        try {
+            UndecodableJob job = MessageFormats.JSON.fromByteString(payload.getJobData(), UndecodableJob.class);
+            if (job != null && job.taskRun() != null && (job.type() == null || WorkerTask.TYPE.equals(job.type()))) {
+                LogEntry logEntry = LogEntry.of(job.taskRun(), job.executionKind()).toBuilder()
+                    .level(Level.ERROR)
+                    .message(undecodableTaskMessage(error))
+                    .timestamp(Instant.now())
+                    .thread(Thread.currentThread().getName())
+                    .build();
+                workerQueueRegistry.getOrCreate(workerContext, LogEntry.class).put(logEntry);
+                workerQueueRegistry.getOrCreate(workerContext, WorkerTaskResult.class).put(new WorkerTaskResult(job.taskRun().fail()));
+            }
+        } catch (Exception e) {
+            log.error("Unable to fail the job '{}' that could not be decoded: {}", payload.getJobId(), e.getMessage(), e);
+        } finally {
+            onJobCompleted(payload.getJobId());
+        }
+    }
+
+    private String undecodableTaskMessage(Exception error) {
+        return Throwables.getCausalChain(error).stream()
+            .filter(InvalidTypeIdException.class::isInstance)
+            .map(InvalidTypeIdException.class::cast)
+            .findFirst()
+            .map(e -> "The task cannot run on worker '%s' because the plugin type '%s' is not installed on it.".formatted(workerContext.workerId(), e.getTypeId()))
+            .orElseGet(() -> "The task cannot run on worker '%s' because it could not be decoded: %s".formatted(workerContext.workerId(), Throwables.getRootCause(error).getMessage()));
     }
 
     /**
@@ -515,14 +681,22 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     }
 
     /**
-     * Calculates the number of permits to request based on local queue remaining capacity.
+     * Calculates the number of permits to request: the jobs the worker can still take on, threads plus job buffer
+     * minus the jobs in flight, never more than the local queue can hold so that receiving them never blocks.
      * <p>
      * Reports zero while intake is paused (maintenance / cordon) so every outgoing request — the
      * initial request on (re)connect, periodic updates and completion piggy-backs — advertises no
      * capacity and the controller stops dispatching. In-flight jobs still drain normally.
      */
     private int calculatePermits() {
-        return fetchingPaused.get() ? 0 : workerJobQueue.remainingCapacity();
+        if (fetchingPaused.get()) {
+            return 0;
+        }
+        return Math.max(0, Math.min(maxConcurrency() - inFlightJobs.size(), workerJobQueue.remainingCapacity()));
+    }
+
+    private int maxConcurrency() {
+        return workerContext.workerThreads() + workerContext.jobBufferSize();
     }
 
     /**
@@ -562,6 +736,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         if (jobId == null || jobId.isEmpty()) {
             return;
         }
+        inFlightJobs.remove(jobId);
         pendingCompletions.offer(jobId);
 
         // lastSentPermits is reset to -1 before a new stream's observer is published and only
@@ -570,6 +745,20 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         if (observer != null && lastSentPermits.get() >= 0) {
             sendPermits(observer, calculatePermits());
         }
+    }
+
+    /**
+     * Releases a job once the controller has accepted its terminal result: from then on its running entry is gone, so
+     * the job no longer has to be reported as held.
+     */
+    public void onTerminalResultAccepted(String jobId) {
+        if (jobId != null) {
+            heldJobs.remove(jobId);
+        }
+    }
+
+    private JobSync jobSync() {
+        return JobSync.newBuilder().addAllHeldJobIds(heldJobs).build();
     }
 
     /**
@@ -590,10 +779,18 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      * Sends permits to the controller and updates the last sent value.
      */
     private void sendPermits(ClientCallStreamObserver<WorkerJobRequest> observer, int permits) {
+        sendPermits(observer, permits, false);
+    }
+
+    private void sendPermits(ClientCallStreamObserver<WorkerJobRequest> observer, int permits, boolean withSync) {
         WorkerJobRequest.Builder builder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
             .setPermits(permits);
         int completions = addPendingCompletions(builder);
+        if (withSync) {
+            builder.setSync(jobSync());
+            lastSyncSentNanos = System.nanoTime();
+        }
 
         try {
             doSend(observer, builder.build());
@@ -658,5 +855,24 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                 log.debug("Error cancelling stream: {}", e.getMessage());
             }
         }
+    }
+
+    private enum ReconnectReason {
+        STREAM_ERROR("stream_error"),
+        STREAM_COMPLETED("stream_completed"),
+        SYNC_UNACKNOWLEDGED("sync_unacknowledged");
+
+        private final String tag;
+
+        ReconnectReason(String tag) {
+            this.tag = tag;
+        }
+
+        String tag() {
+            return tag;
+        }
+    }
+
+    private record UndecodableJob(String type, TaskRun taskRun, ExecutionKind executionKind) {
     }
 }

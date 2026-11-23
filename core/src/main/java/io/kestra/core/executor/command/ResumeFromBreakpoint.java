@@ -3,6 +3,7 @@ package io.kestra.core.executor.command;
 import java.time.Instant;
 import java.util.Optional;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 
@@ -15,7 +16,8 @@ public record ResumeFromBreakpoint(String tenantId,
     Instant timestamp,
     EventId eventId,
     Optional<String> breakpoints,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @Nullable Actor actor) implements ExecutionCommand {
     public static ResumeFromBreakpoint from(Execution execution, Optional<String> breakpoints) {
         return new ResumeFromBreakpoint(
             execution.getTenantId(),
@@ -25,11 +27,16 @@ public record ResumeFromBreakpoint(String tenantId,
             Instant.now(),
             EventId.create(),
             breakpoints,
+            null,
             null
         );
     }
 
     public ResumeFromBreakpoint withOperationId(String operationId) {
-        return new ResumeFromBreakpoint(tenantId, namespace, flowId, executionId, timestamp, eventId, breakpoints, operationId);
+        return new ResumeFromBreakpoint(tenantId, namespace, flowId, executionId, timestamp, eventId, breakpoints, operationId, actor);
+    }
+
+    public ResumeFromBreakpoint withActor(Actor actor) {
+        return new ResumeFromBreakpoint(tenantId, namespace, flowId, executionId, timestamp, eventId, breakpoints, operationId, actor);
     }
 }

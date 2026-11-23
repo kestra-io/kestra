@@ -100,6 +100,22 @@ class SwitchTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/switch-defaults-only.yaml" }, tenantId = "switchdefaultsonly")
+    void switchDefaultsOnly() throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
+        Execution execution = runnerUtils.runOne(
+            "switchdefaultsonly",
+            "io.kestra.tests",
+            "switch-defaults-only",
+            null,
+            (f, e) -> ImmutableMap.of("string", "ANYTHING")
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("default");
+        assertThat((Boolean) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("parent-seq").getFirst()).get("defaults")).isTrue();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/switch-impossible.yaml" }, tenantId = "switchimpossible")
     void switchImpossible() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
@@ -125,5 +141,13 @@ class SwitchTest {
         // we check that OOMCRM_EB_DD_000 and OOMCRM_EB_DD_001 have been processed once across all sub-executions
         assertThat(subExecutions.stream().flatMap(e -> e.getTaskRunList().stream()).filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_000")).count()).isEqualTo(1);
         assertThat(subExecutions.stream().flatMap(e -> e.getTaskRunList().stream()).filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_001")).count()).isEqualTo(1);
+    }
+
+    @Test
+    @ExecuteFlow(value = "flows/valids/switch-with-only-disabled-tasks.yaml", tenantId = "switchwithonlydisabledtasks", timeout = "PT20S")
+    void shouldSucceedWhenCaseTasksAreAllDisabled(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("switch").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

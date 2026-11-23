@@ -51,8 +51,3 @@
 
 
 </script>
-<style scoped lang="scss">
-    :deep(.editor-container) {
-        min-height: 65px !important;
-    }
-</style>

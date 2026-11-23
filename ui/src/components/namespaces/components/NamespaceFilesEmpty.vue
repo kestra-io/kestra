@@ -30,7 +30,7 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .namespace-files-empty {
         width: 100%;
         height: 100%;

@@ -1,8 +1,8 @@
 package io.kestra.core.models.triggers.multipleflows;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -17,7 +17,10 @@ import io.kestra.core.runners.TransactionContext;
 public interface MultipleConditionStateStore {
     Optional<MultipleConditionWindow> get(FlowId flow, String conditionId);
 
-    List<MultipleConditionWindow> expired(String tenantId);
+    /**
+     * Delete every condition window that ended before {@code now}, across all tenants.
+     */
+    void purgeExpired(Instant now);
 
     Execution process(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs, BiFunction<TransactionContext, MultipleConditionWindow, Execution> consumer);
 

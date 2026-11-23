@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,6 +26,9 @@ import io.micronaut.http.annotation.Error;
 import io.micronaut.http.server.exceptions.NotAllowedException;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ElementKind;
+import jakarta.validation.Path;
+import tools.jackson.core.JacksonException;
 
 /**
  * Translates every exception reaching the HTTP layer into an RFC 9457 problem document.
@@ -60,12 +64,12 @@ public class ErrorController {
     /** Bean validation: one {@code errors} entry per violated constraint. */
     @Error(global = true)
     public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ConstraintViolationException e) {
-        return this.problems.response(
-            request,
-            e,
-            ProblemTypes.VALIDATION_FAILED,
-            ProblemError.ofViolations(e.getConstraintViolations())
-        );
+        List<ProblemError> errors = ProblemError.ofViolations(e.getConstraintViolations());
+        // The default message of a method-level validation starts with the controller method and parameter names.
+        String detail = isMethodValidation(e)
+            ? errors.stream().map(error -> error.path() + ": " + error.detail()).collect(Collectors.joining(", "))
+            : e.getMessage();
+        return this.problems.response(request, e, ProblemTypes.VALIDATION_FAILED, detail, errors);
     }
 
     /** Bulk endpoints: one {@code errors} entry per rejected item. */
@@ -91,12 +95,37 @@ public class ErrorController {
      */
     @Error(global = true)
     public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ConversionErrorException e) {
-        Throwable cause = e.getConversionError().getCause();
+        return jacksonBodyError(request, e, e.getConversionError().getCause());
+    }
 
+    /**
+     * Some Jackson 3 body-binding failures — e.g. a plain JSON string posted where an object DTO is expected —
+     * reach here directly rather than wrapped in a {@link ConversionErrorException} as their Jackson 2
+     * equivalent is. Handled the same way: never echo the raw message, which names the internal DTO class.
+     */
+    @Error(global = true)
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, JacksonException e) {
+        return jacksonBodyError(request, e, e);
+    }
+
+    private HttpResponse<ProblemDetail> jacksonBodyError(HttpRequest<?> request, Throwable reported, Throwable cause) {
         if (cause instanceof InvalidTypeIdException invalidTypeId) {
             return this.problems.response(
                 request,
-                e,
+                reported,
+                ProblemTypes.INVALID_PLUGIN_TYPE,
+                List.of(ProblemError.of(
+                    "Unknown type '%s'.".formatted(invalidTypeId.getTypeId()),
+                    null,
+                    pathOf(invalidTypeId)
+                ))
+            );
+        }
+
+        if (cause instanceof tools.jackson.databind.exc.InvalidTypeIdException invalidTypeId) {
+            return this.problems.response(
+                request,
+                reported,
                 ProblemTypes.INVALID_PLUGIN_TYPE,
                 List.of(ProblemError.of(
                     "Unknown type '%s'.".formatted(invalidTypeId.getTypeId()),
@@ -110,13 +139,23 @@ public class ErrorController {
             String path = pathOf(mappingException);
             return this.problems.responseWithoutMessage(
                 request,
-                e,
+                reported,
                 ProblemTypes.INVALID_JSON,
                 path.isEmpty() ? List.of() : List.of(ProblemError.of(null, null, path))
             );
         }
 
-        return this.problems.responseWithoutMessage(request, e);
+        if (cause instanceof JacksonException jacksonException) {
+            String path = pathOf(jacksonException);
+            return this.problems.responseWithoutMessage(
+                request,
+                reported,
+                ProblemTypes.INVALID_JSON,
+                path.isEmpty() ? List.of() : List.of(ProblemError.of(null, null, path))
+            );
+        }
+
+        return this.problems.responseWithoutMessage(request, reported);
     }
 
     /** A request that matched no route at all, and so carries no exception. */
@@ -134,6 +173,28 @@ public class ErrorController {
             .stream()
             .map(reference -> reference.getFieldName() != null
                 ? reference.getFieldName()
+                : "[" + reference.getIndex() + "]")
+            .collect(Collectors.joining("."))
+            .replace(".[", "[");
+    }
+
+    private static boolean isMethodValidation(final ConstraintViolationException e) {
+        return !e.getConstraintViolations().isEmpty() && e.getConstraintViolations().stream().allMatch(violation -> {
+            Iterator<Path.Node> nodes = violation.getPropertyPath().iterator();
+            if (!nodes.hasNext()) {
+                return false;
+            }
+            ElementKind kind = nodes.next().getKind();
+            return ElementKind.METHOD == kind || ElementKind.CONSTRUCTOR == kind;
+        });
+    }
+
+    /** Jackson 3 equivalent of {@link #pathOf(JsonMappingException)}, for exceptions Micronaut's body binder throws. */
+    private static String pathOf(final JacksonException e) {
+        return e.getPath()
+            .stream()
+            .map(reference -> reference.getPropertyName() != null
+                ? reference.getPropertyName()
                 : "[" + reference.getIndex() + "]")
             .collect(Collectors.joining("."))
             .replace(".[", "[");

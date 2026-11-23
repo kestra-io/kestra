@@ -23,12 +23,12 @@
 
     onMounted(async () => {
         if (!pluginsData.value?.length) {
-            await pluginsStore.listWithSubgroup({includeDeprecated: false})
+            await pluginsStore.listWithSubgroup()
         }
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-list-wrapper {
         height: 100%;
         display: flex;

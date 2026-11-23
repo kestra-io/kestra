@@ -5,30 +5,44 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
+import org.eclipse.aether.ConfigurationProperties;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.MultiRuntimeException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.Proxy;
+import org.eclipse.aether.repository.ProxySelector;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.VersionRangeRequest;
 import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
+import org.eclipse.aether.resolution.VersionResolutionException;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
+import org.eclipse.aether.transfer.MetadataNotFoundException;
 import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
+import org.eclipse.aether.util.repository.DefaultProxySelector;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.configuration.PluginsConfiguration;
 import io.kestra.core.utils.Version;
@@ -48,23 +62,31 @@ import lombok.extern.slf4j.Slf4j;
 public class MavenPluginDownloader implements Closeable {
     private static final String DEFAULT_LOCAL_REPOSITORY_PREFIX = "kestra-plugins-m2-repository";
     private static final String DEFAULT_REPOSITORY_TYPE = "default";
-    private static final String HTTP_PROXY_HOST = System.getProperty("http.proxyHost");
-    private static final String HTTP_PROXY_PORT = System.getProperty("http.proxyPort");
-    private static final String HTTPS_PROXY_HOST = System.getProperty("https.proxyHost");
-    private static final String HTTPS_PROXY_PORT = System.getProperty("https.proxyPort");
+    // Maven waits 30 minutes for the next byte by default, and an interrupt cannot end that wait, so a stalled download would hold its thread and the artifact lock.
+    private static final Duration DEFAULT_READ_TIMEOUT = Duration.ofMinutes(2);
+    private static final String LOCK_WAIT_SECONDS = "aether.syncContext.named.time";
+    private static final long DEFAULT_LOCK_WAIT_SECONDS = 30;
 
     public static final String LATEST = "latest";
 
     private final List<MavenPluginRepositoryConfig> repositoryConfigs;
     private final RepositorySystem system;
     private final RepositorySystemSession session;
+    private final ProxySelector proxySelector;
 
     @Inject
     public MavenPluginDownloader(List<MavenPluginRepositoryConfig> repositoryConfigs,
         @Nullable PluginsConfiguration pluginsConfiguration) {
+        this(repositoryConfigs, pluginsConfiguration, System.getProperties());
+    }
+
+    MavenPluginDownloader(List<MavenPluginRepositoryConfig> repositoryConfigs,
+        @Nullable PluginsConfiguration pluginsConfiguration,
+        Properties systemProperties) {
         this.repositoryConfigs = repositoryConfigs;
         this.system = new RepositorySystemSupplier().get();
-        this.session = repositorySystemSession(system, pluginsConfiguration != null ? pluginsConfiguration.localRepositoryPath() : null);
+        this.session = repositorySystemSession(system, pluginsConfiguration != null ? pluginsConfiguration : new PluginsConfiguration(null, null));
+        this.proxySelector = proxySelector(systemProperties);
     }
 
     /**
@@ -92,6 +114,10 @@ public class MavenPluginDownloader implements Closeable {
             request.setRepositories(buildRemoteRepositories(this.repositoryConfigs));
 
             VersionRangeResult result = system.resolveVersionRange(session, request);
+            result.getExceptions().stream()
+                .filter(e -> !isNotFound(e))
+                .findFirst()
+                .ifPresent(e -> log.warn("Failed to list the versions of '{}' from at least one Maven repository, so the list may be incomplete.", dependency, e));
             return result.getVersions().stream().map(Object::toString).toList();
         } catch (VersionRangeResolutionException e) {
             log.debug("Failed to resolve all versions for '{}'", dependency);
@@ -135,9 +161,17 @@ public class MavenPluginDownloader implements Closeable {
     }
 
     private PluginArtifact doResolve(List<RemoteRepository> repositories, String dependency, RepositorySystemSession session) {
-        PluginArtifact result = resolveArtifact(repositories, dependency, session);
+        PluginArtifact result = resolveArtifact(repositories, dependency, new DefaultArtifact(dependency).isSnapshot() ? alwaysUpdated(session) : session);
         log.debug("Resolved Plugin '{}' with '{}'", dependency, result.uri());
         return result;
+    }
+
+    /** A snapshot is republished in place: check the remote on every resolution, not once a day and per (server-long) session. */
+    private static RepositorySystemSession alwaysUpdated(RepositorySystemSession session) {
+        DefaultRepositorySystemSession copy = new DefaultRepositorySystemSession(session);
+        copy.setUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
+        copy.setConfigProperty("aether.updateCheckManager.sessionState", "bypass");
+        return copy;
     }
 
     /** Returns the base session or a shallow copy with the given listener attached. */
@@ -173,7 +207,7 @@ public class MavenPluginDownloader implements Closeable {
             .toList();
     }
 
-    private static List<RemoteRepository> buildRemoteRepositories(List<MavenPluginRepositoryConfig> repositoryConfigs) {
+    private List<RemoteRepository> buildRemoteRepositories(List<MavenPluginRepositoryConfig> repositoryConfigs) {
         return repositoryConfigs
             .stream()
             .map(repositoryConfig ->
@@ -191,23 +225,52 @@ public class MavenPluginDownloader implements Closeable {
                     build.setAuthentication(authenticationBuilder.build());
                 }
 
-                // Honor JDK proxy settings
-                if (repositoryConfig.url().startsWith("http") && HTTP_PROXY_HOST != null) {
-                    Proxy proxy = new Proxy(Proxy.TYPE_HTTP, HTTP_PROXY_HOST, HTTP_PROXY_PORT != null ? Integer.parseInt(HTTP_PROXY_PORT) : 80);
-                    build.setProxy(proxy);
-                }
-                if (repositoryConfig.url().startsWith("https") && HTTPS_PROXY_HOST != null) {
-                    Proxy proxy = new Proxy(Proxy.TYPE_HTTPS, HTTPS_PROXY_HOST, HTTPS_PROXY_PORT != null ? Integer.parseInt(HTTPS_PROXY_PORT) : 443);
-                    build.setProxy(proxy);
-                }
-
-                return build.build();
+                RemoteRepository repository = build.build();
+                return build.setProxy(proxySelector.getProxy(repository)).build();
             })
             .toList();
     }
 
-    private RepositorySystemSession repositorySystemSession(RepositorySystem system, String localRepositoryPath) {
+    // The proxy type selects the repositories a proxy serves; the transport always reaches the proxy itself over plain HTTP.
+    private static ProxySelector proxySelector(Properties systemProperties) {
+        String nonProxyHosts = systemProperties.getProperty("http.nonProxyHosts");
+        DefaultProxySelector selector = new DefaultProxySelector();
+        proxy(systemProperties, Proxy.TYPE_HTTP, 80).ifPresent(proxy -> selector.add(proxy, nonProxyHosts));
+        proxy(systemProperties, Proxy.TYPE_HTTPS, 443).ifPresent(proxy -> selector.add(proxy, nonProxyHosts));
+        return selector;
+    }
+
+    private static Optional<Proxy> proxy(Properties systemProperties, String scheme, int defaultPort) {
+        String host = systemProperties.getProperty(scheme + ".proxyHost");
+        if (host == null) {
+            return Optional.empty();
+        }
+
+        String user = systemProperties.getProperty(scheme + ".proxyUser");
+        Authentication authentication = user == null ? null : new AuthenticationBuilder()
+            .addUsername(user)
+            .addPassword(systemProperties.getProperty(scheme + ".proxyPassword", ""))
+            .build();
+
+        return Optional.of(new Proxy(scheme, host, port(systemProperties.getProperty(scheme + ".proxyPort"), defaultPort), authentication));
+    }
+
+    private static int port(@Nullable String port, int defaultPort) {
+        try {
+            return Integer.parseInt(port);
+        } catch (NumberFormatException e) {
+            return defaultPort;
+        }
+    }
+
+    private RepositorySystemSession repositorySystemSession(RepositorySystem system, PluginsConfiguration configuration) {
         DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+        Duration readTimeout = Optional.ofNullable(configuration.readTimeout()).orElse(DEFAULT_READ_TIMEOUT);
+        session.setConfigProperty(ConfigurationProperties.REQUEST_TIMEOUT, Math.toIntExact(readTimeout.toMillis()));
+        // A retry of a stalled download waits for its read timeout to release the artifact lock instead of failing on it.
+        session.setConfigProperty(LOCK_WAIT_SECONDS, readTimeout.toSeconds() + DEFAULT_LOCK_WAIT_SECONDS);
+
+        String localRepositoryPath = configuration.localRepositoryPath();
 
         if (localRepositoryPath == null) {
             try {
@@ -238,6 +301,13 @@ public class MavenPluginDownloader implements Closeable {
         try {
             DefaultArtifact artifact = new DefaultArtifact(dependency);
             VersionRangeResult version = system.resolveVersionRange(session, new VersionRangeRequest(artifact, repositories, null));
+            if (version.getHighestVersion() == null) {
+                // A repository holding the artifact but no version in the range records no exception at all.
+                if (version.getExceptions().stream().allMatch(MavenPluginDownloader::isNotFound)) {
+                    throw withCauses(new InvalidException(dependency, "No version matching plugin artifact `%s` was found in the configured Maven repositories (%s).".formatted(dependency, repositoryIds(repositories))), version.getExceptions());
+                }
+                throw withCauses(resolutionFailed(dependency), version.getExceptions());
+            }
 
             final String highestVersion = version.getHighestVersion().toString();
             ArtifactRequest artifactRequest = new ArtifactRequest(
@@ -256,9 +326,50 @@ public class MavenPluginDownloader implements Closeable {
                 highestVersion.endsWith("-SNAPSHOT") ? highestVersion : result.getArtifact().getVersion(),
                 result.getArtifact().getPath().toUri()
             );
-        } catch (VersionRangeResolutionException | ArtifactResolutionException e) {
-            throw new KestraRuntimeException("Failed to resolve dependency: '" + dependency + "'", e);
+        } catch (ArtifactResolutionException e) {
+            List<Exception> exceptions = e.getResults().stream().flatMap(result -> result.getExceptions().stream()).toList();
+            if (isAbsentFromEveryRepository(exceptions)) {
+                throw new InvalidException(dependency, "Plugin artifact `%s` was not found in any of the configured Maven repositories (%s).".formatted(dependency, repositoryIds(repositories)), e);
+            }
+            throw withCauses(resolutionFailed(dependency), List.of(e));
+        } catch (VersionRangeResolutionException e) {
+            // The Maven version range resolver only throws when the version constraint cannot be parsed.
+            throw new InvalidException(dependency, "Plugin artifact `%s` has an invalid version or version range.".formatted(dependency), e);
         }
+    }
+
+    /**
+     * True only when every repository answered that the artifact does not exist: a repository that could not be
+     * reached or refused the credentials leaves the artifact's existence unknown, which is a server-side failure.
+     */
+    private static boolean isAbsentFromEveryRepository(final List<Exception> exceptions) {
+        List<Exception> causes = exceptions.stream()
+            .flatMap(e -> e instanceof VersionResolutionException versionException ? versionException.getResult().getExceptions().stream() : Stream.of(e))
+            .toList();
+        return !causes.isEmpty() && causes.stream().allMatch(MavenPluginDownloader::isNotFound);
+    }
+
+    private static boolean isNotFound(final Exception exception) {
+        return exception instanceof ArtifactNotFoundException || exception instanceof MetadataNotFoundException;
+    }
+
+    // Names repositories by id only, since a configured URL may embed credentials.
+    private static String repositoryIds(final List<RemoteRepository> repositories) {
+        return repositories.isEmpty()
+            ? "none"
+            : repositories.stream().map(RemoteRepository::getId).distinct().collect(Collectors.joining(", "));
+    }
+
+    private static KestraRuntimeException resolutionFailed(final String dependency) {
+        return new KestraRuntimeException("Failed to resolve plugin artifact `%s`. Check that the configured Maven repositories are reachable and that their credentials are valid.".formatted(dependency));
+    }
+
+    private static <T extends RuntimeException> T withCauses(final T exception, final List<Exception> causes) {
+        if (!causes.isEmpty()) {
+            exception.initCause(causes.getFirst());
+            causes.stream().skip(1).forEach(exception::addSuppressed);
+        }
+        return exception;
     }
 
     /**

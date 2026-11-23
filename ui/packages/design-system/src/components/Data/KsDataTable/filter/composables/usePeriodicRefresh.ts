@@ -1,17 +1,20 @@
 import {ref, computed, onUnmounted, watch} from "vue"
 import {useRoute} from "vue-router"
+import {useI18n} from "vue-i18n"
 
 const getAutoRefreshEnabledKey = (routeName: string) => `autoRefreshEnabled_${routeName}`
 
 export {getAutoRefreshEnabledKey}
 
-export function usePeriodicRefresh() {
+const enabledRef = ref(false)
+
+export function usePeriodicRefresh(refreshCallback?: () => void) {
     const route = useRoute()
-    const enabledRef = ref(false)
+    const {t} = useI18n()
     const refreshInterval = ref<number | null>(null)
 
     const enabledKey = computed(() => getAutoRefreshEnabledKey(String(route.name)))
-    const tooltip = computed(() => `Auto refresh every ${intervalSeconds.value} seconds`)
+    const tooltip = computed(() => t("filter.auto_refresh_tooltip", {seconds: intervalSeconds.value}))
     const intervalSeconds = computed(() => parseInt(localStorage.getItem("autoRefreshInterval") ?? "10"))
 
     watch(enabledKey, () => {
@@ -26,16 +29,17 @@ export function usePeriodicRefresh() {
         },
     })
 
-    const toggleRefresh = (enabled: boolean, callback: () => void) => {
-        if (refreshInterval.value) clearInterval(refreshInterval.value)
-        refreshInterval.value = enabled ? window.setInterval(callback, intervalSeconds.value * 1000) : null
-    }
+    if (refreshCallback) {
+        watch(isEnabled, (enabled) => {
+            if (refreshInterval.value) clearInterval(refreshInterval.value)
+            refreshInterval.value = enabled ? window.setInterval(refreshCallback, intervalSeconds.value * 1000) : null
+        }, {immediate: true})
 
-    onUnmounted(() => refreshInterval.value && clearInterval(refreshInterval.value))
+        onUnmounted(() => refreshInterval.value && clearInterval(refreshInterval.value))
+    }
 
     return {
         isEnabled,
         tooltip,
-        toggleRefresh,
     }
 }

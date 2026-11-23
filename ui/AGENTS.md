@@ -257,7 +257,9 @@ Rules:
 
 ### Types
 
-**A prop the component does not declare is a type error.** `vueCompilerOptions.checkUnknownProps` is on, with `data-*` and `aria-*` accepted everywhere. When vue-tsc rejects a prop, it is either dead (remove it) or forwarded through `$attrs` without a type (type it, as in "When extending the design system"). A library component missing a prop it forwards gets a typed re-export, like `DynamicScroller` below.
+**A prop or event the component does not declare is a type error.** `@vue/content-mapper` always reports both, with `data-*` and `aria-*` accepted everywhere and native `click`/`keydown` typed for every component in the design system's `utils/nativeListeners.ts`. When `tsc` rejects a prop, it is either dead (remove it) or forwarded through `$attrs` without a type (type it, as in "When extending the design system"). A library component missing a prop it forwards gets a typed re-export, like `DynamicScroller` below.
+
+**Keep `v-model`; fit the bound state to the child's model type.** When the model type rejects a binding (`undefined` from a cleared field, a wider union), widen the parent's ref (`ref<number | undefined>(0)`, read with `?? 0`) instead of splitting it into `:modelValue` + `@update:modelValue` with a conversion. Only a wrapper's binding to the Element Plus component it wraps stays split, since widening the wrapper's model would break every caller's `v-model` (`KsCheckbox`).
 
 **Import `DynamicScroller` from `src/utils/virtualScroller.ts`**, not from `vue-virtual-scroller`. `no-restricted-imports` rejects the direct import. Its 3.0.5 types (the latest) leave out what it forwards to `RecycleScroller` (`buffer`, `prerender`, `emitUpdate`, `updateInterval`, HTML attributes), and the re-export adds them.
 

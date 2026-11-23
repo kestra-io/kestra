@@ -3198,7 +3198,7 @@
       "undo": "Desfazer",
       "upstream_outputs": "Outputs upstream",
       "open_in_tabs": "Abrir em abas",
-      "open_mode_hint": "As tasks abrem em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
+      "open_mode_hint": "Este editor abre em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
     },
     "blocks": "Blocos",
     "move_panel_to_bottom": "Mover painel para baixo",

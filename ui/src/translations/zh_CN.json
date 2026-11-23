@@ -3198,7 +3198,7 @@
       "undo": "撤消",
       "upstream_outputs": "上游 output",
       "open_in_tabs": "在新标签页中打开",
-      "open_mode_hint": "任务默认在模态框中打开。您可以在{settings}中将选项卡设为默认。"
+      "open_mode_hint": "此编辑器默认在模态框中打开。你可以在 {settings} 中将选项卡设为默认。"
     },
     "blocks": "区块",
     "move_panel_to_bottom": "将面板移到底部",

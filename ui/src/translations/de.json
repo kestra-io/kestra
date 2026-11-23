@@ -3198,7 +3198,7 @@
       "undo": "Rückgängig",
       "upstream_outputs": "Upstream-Outputs",
       "open_in_tabs": "In Tabs öffnen",
-      "open_mode_hint": "Tasks werden standardmäßig in einem Modal geöffnet. Unter {settings} kannst du Tabs als Standard festlegen."
+      "open_mode_hint": "Dieser Editor wird standardmäßig in einem Modal geöffnet. Du kannst Tabs in den {settings} als Standard festlegen."
     },
     "blocks": "Blöcke",
     "move_panel_to_bottom": "Panel nach unten verschieben",

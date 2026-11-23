@@ -1,5 +1,12 @@
 {
   "fr": {
+    "support_links": {
+      "slack_title": "Slack de la communauté",
+      "slack_description": "Échangez avec d'autres utilisateurs et l'équipe Kestra",
+      "github_description": "Ajoutez une étoile à notre projet open source",
+      "help_center_title": "Centre d'aide",
+      "help_center_description": "Contactez le support pour obtenir de l'aide sur votre compte Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra a été mis à niveau vers la version {version} et cela peut inclure des changements majeurs qui nécessitent des mises à jour de vos Flows.",
       "cta": "Voir les modifications"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Outputs du flow",
     "eval": {
+      "failed": "Impossible d'évaluer l'expression",
       "title": "Expression de débogage",
       "preview": "Aperçu",
       "expression": "Expression"
@@ -2145,6 +2153,7 @@
     "custom value": "Valeur personnalisée",
     "chart": "Graphique",
     "no_code": {
+      "unknown_schema": "Schéma inconnu",
       "toggle_pebble": "Basculer l'éditeur Pebble",
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins",
       "adding": "+ Ajouter un {what}",

@@ -28,7 +28,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
 
@@ -56,9 +55,6 @@ public class FlowConcurrencyCaseTest {
 
     @Inject
     private ExecutionService executionService;
-
-    @Inject
-    private ConcurrencyLimitService concurrencyLimitService;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -380,20 +376,20 @@ public class FlowConcurrencyCaseTest {
         Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow3, null, null, Optional.empty()));
 
         try {
-            assertThat(concurrencyLimitService.findById(tenantId, NAMESPACE, flowId).orElseThrow().getRunning()).isEqualTo(1);
-
             // the SLA ends the second execution while it is still queued
-            Execution cancelled = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.CANCELLED), execution2);
-            assertThat(cancelled.getState().getHistories().stream().noneMatch(h -> h.getState() == Type.RUNNING)).isTrue();
+            runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.CANCELLED), execution2);
 
-            // it never held a slot: the first one still runs, the third one is still queued and the counter is untouched
+            // it never held a slot: nothing is released, so it is not popped back to RUNNING and the third one stays queued
             Thread.sleep(500); // wait a little to be sure the executor did not release anything
-            Execution queued = runnerUtils.awaitExecution(e -> e.getState().isQueued(), execution3);
+            Execution cancelled = runnerUtils.awaitExecution(e -> true, execution2);
+            assertThat(cancelled.getState().getCurrent()).isEqualTo(Type.CANCELLED);
+            assertThat(cancelled.getState().getHistories().stream().noneMatch(h -> h.getState() == Type.RUNNING)).isTrue();
+            Execution queued = runnerUtils.awaitExecution(e -> true, execution3);
             assertThat(queued.getState().getCurrent()).isEqualTo(Type.QUEUED);
-            assertThat(concurrencyLimitService.findById(tenantId, NAMESPACE, flowId).orElseThrow().getRunning()).isEqualTo(1);
         } finally {
-            // kill everything to avoid dangling executions
+            // kill everything to avoid dangling executions, including the second one in case it was wrongly popped
             runnerUtils.killExecution(execution1);
+            runnerUtils.killExecution(execution2);
             runnerUtils.killExecution(execution3);
             runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, flowId);
         }

@@ -92,7 +92,7 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
 
         loading.value = true
         try {
-            const result = await chartLoadQueue.enqueue(() => {
+            const result = await chartLoadQueue.enqueue((): Promise<ChartResults | undefined> => {
                 // the component may have been unmounted while waiting for a load slot
                 if (!isMounted) return Promise.resolve(undefined)
 

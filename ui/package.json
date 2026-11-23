@@ -24,7 +24,7 @@
         "generate:sdk": "node scripts/ensure-sdk.mjs --check-spec",
         "preview": "vite preview",
         "precheck:types": "node scripts/ensure-sdk.mjs",
-        "check:types": "node node_modules/typescript/bin/tsc -p packages/design-system/tsconfig.app.json --runExternalCode && echo \"design-system compiled\" \\\n && node node_modules/typescript/bin/tsc -p tsconfig.app.json --runExternalCode && echo \"app checked\" \\\n && node node_modules/typescript/bin/tsc -p tsconfig.test.json --runExternalCode && echo \"test checked\"",
+        "check:types": "node scripts/check-types.mjs \"-p packages/design-system/tsconfig.app.json\" \"-p tsconfig.app.json\" \"-p tsconfig.test.json\"",
         "test:lint": "oxlint src packages tests && eslint && stylelint \"{src,packages,tests}/**/*.{vue,scss}\"",
         "check:dep-split": "node scripts/dependency-split/check.mjs",
         "check:ts-any": "node scripts/explicit-any/baseline.mjs src packages tests",

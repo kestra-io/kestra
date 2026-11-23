@@ -13,8 +13,9 @@
 {{- $type = $name }}
 {{- end }}
 {{- end }}
+{{- $isWorkerGroup := and (eq $type "worker") (ne $name "worker") }}
 {{- $resourceName := printf "%s-%s" (include "kestra.fullname" $) $name }}
-{{- if and (eq $type "worker") (ne $name "worker") }}
+{{- if $isWorkerGroup }}
 {{- $resourceName = printf "%s-workergroup-%s" (include "kestra.fullname" $) $name }}
 {{- end }}
 {{- $dind := false }}
@@ -53,6 +54,11 @@ spec:
     matchLabels:
       {{- include "kestra.selectorLabels" $ | nindent 6 }}
       app.kubernetes.io/component: {{ $type }}
+      {{- if $isWorkerGroup }}
+      {{- /* own label per worker group: otherwise all worker groups share one selector, and Kubernetes won't
+             autoscale (HPA/KEDA) a workload whose pods are also selected by another autoscaled workload */}}
+      kestra.io/worker-group: {{ $name | quote }}
+      {{- end }}
   {{- if eq $kind "Deployment" }}
   {{- with (default $common.strategy $content.strategy) }}
   strategy:
@@ -73,6 +79,9 @@ spec:
       labels:
         {{- include "kestra.selectorLabels" $ | nindent 8 }}
         app.kubernetes.io/component: {{ $type }}
+        {{- if $isWorkerGroup }}
+        kestra.io/worker-group: {{ $name | quote }}
+        {{- end }}
         {{- with $common.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

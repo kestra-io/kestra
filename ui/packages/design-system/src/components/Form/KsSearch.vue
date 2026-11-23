@@ -42,7 +42,7 @@
         borderless?: boolean
     }
 
-    const props = defineProps<KsSearchProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsSearchProps>>()
+    const props = defineProps<KsSearchProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsSearchProps> & {onInput?: (value: string) => void})>()
 
     const emit = defineEmits<{
         change: [value: string | number]

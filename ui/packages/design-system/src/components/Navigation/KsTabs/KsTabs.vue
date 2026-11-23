@@ -34,7 +34,7 @@
         hideDisabledArrows?: boolean
     }
 
-    const props = defineProps<KsTabsProps & /* @vue-ignore */ Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue">>()
+    const props = defineProps<KsTabsProps & /* @vue-ignore */ (Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue"> & {onTabChange?: (name: TabPaneName) => void})>()
 
     defineSlots<{
         default?(): unknown

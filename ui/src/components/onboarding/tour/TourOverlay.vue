@@ -158,6 +158,7 @@
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
     import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf, workingLabelKey} from "./tourScenes"
     import {scrimClipPath, type Hole} from "./tourScrim"
+    import {TourQueryMode} from "./tourVariant"
     import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
     import {useMiscStore} from "override/stores/misc"
@@ -186,15 +187,15 @@
 
     const consumeStartQuery = async () => {
         const mode = route.query.tour
-        if (mode !== "start" && mode !== "auto") {
+        if (mode !== TourQueryMode.START && mode !== TourQueryMode.AUTO) {
             return false
         }
         const query = {...route.query}
         delete query.tour
         await router.replace({name: route.name ?? undefined, params: route.params, query})
-        if (mode === "auto") {
+        if (mode === TourQueryMode.AUTO) {
             syncTourScope()
-            if (tourStore.state.status !== "not_started" || tourStore.isDismissed) {
+            if (!tourStore.canAutoStart) {
                 return false
             }
         }
@@ -216,7 +217,7 @@
             return false
         }
         syncTourScope()
-        if (tourStore.state.status !== "not_started" || tourStore.isDismissed) {
+        if (!tourStore.canAutoStart) {
             return false
         }
         try {

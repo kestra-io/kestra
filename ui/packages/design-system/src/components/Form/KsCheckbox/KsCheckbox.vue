@@ -1,6 +1,7 @@
 <template>
     <ElCheckbox
-        v-model="model"
+        :modelValue="model"
+        @update:modelValue="(value: CheckboxValueType) => (model = value as T)"
         v-bind="({...filteredProps(), ...$attrs} as CheckboxProps)"
         @change="emit('change', $event as T)"
     >

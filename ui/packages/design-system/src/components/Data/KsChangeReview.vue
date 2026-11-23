@@ -98,7 +98,7 @@
         tabs: KsChangeReviewTab[]
     }>(), {meta: () => [], segments: () => []})
 
-    const tab = defineModel<string>("tab", {required: true})
+    const tab = defineModel<string | undefined>("tab", {required: true})
     const filter = defineModel<string>("filter", {default: KS_CHANGE_REVIEW_ALL})
 
     const KS_CHANGE_REVIEW_TONES: Record<KsChangeReviewTone, {color: string}> = {

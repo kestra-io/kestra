@@ -1,8 +1,12 @@
 <template>
     <div ref="root" class="execution-summary">
-        <MobileSummary v-if="isMobile" :execution />
+        <MobileSummary v-if="isMobile" :execution>
+            <slot />
+            <ExecutionProgress :execution />
+        </MobileSummary>
         <KsCard v-else shadow="always" :bodyStyle="BODY_STYLE" class="card">
             <Banner :execution />
+            <ExecutionProgress :execution />
         </KsCard>
     </div>
 </template>
@@ -14,6 +18,7 @@
     import {useIsMobile} from "../../../composables/useIsMobile"
     import Banner from "./Banner.vue"
     import MobileSummary from "../overview/components/MobileSummary.vue"
+    import ExecutionProgress from "../ExecutionProgress.vue"
 
     const BODY_STYLE = {padding: "0", height: "100%"}
 

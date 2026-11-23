@@ -134,25 +134,22 @@ export const Queued: Story = {
     args: { state: "QUEUED" },
 };
 
-/** A progressing execution: the progress bar is shown above the (empty) Gantt. */
+/** A progressing execution. */
 export const Running: Story = {
     args: { state: "RUNNING" },
     play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
         const canvas = within(canvasElement);
-        await waitFor(() => expect(canvas.getByRole("progressbar")).toBeInTheDocument());
+        await waitFor(() => expect(canvas.getByText("Running")).toBeInTheDocument());
     },
 };
 
 /**
- * PAUSED satisfies State.isRunning() but is not progressing, so the progress bar must stay hidden —
- * otherwise an execution paused on a manual approval climbs to the bar's cap while nothing advances.
+ * PAUSED satisfies State.isRunning() but is not progressing.
  */
 export const Paused: Story = {
     args: { state: "PAUSED" },
     play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
         const canvas = within(canvasElement);
-        // Wait for the status badge so the absence below is a real absence, not an unrendered Gantt.
         await waitFor(() => expect(canvas.getByText("Paused")).toBeInTheDocument());
-        expect(canvas.queryByRole("progressbar")).toBeNull();
     },
 };

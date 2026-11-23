@@ -1,25 +1,20 @@
 <template>
     <div v-if="execution" class="wrapper">
-        <MobileSummary v-if="isMobile" :execution>
+        <ExecutionSummaryCard class="overview-summary" :execution>
             <FailedTaskCard v-if="failedTaskRun" :execution />
             <ErrorAlert v-else-if="isFailed" :execution />
             <PausedAlert v-if="execution.state.current === State.PAUSED" :execution />
-        </MobileSummary>
-        <template v-else>
-            <KsCard class="banner" shadow="always" :bodyStyle="{height: '100%', padding: '0'}">
-                <Banner :execution />
-            </KsCard>
-            <div id="alerts">
-                <ErrorAlert
-                    v-if="isFailed"
-                    :execution
-                />
-                <PausedAlert
-                    v-if="execution.state.current === State.PAUSED"
-                    :execution
-                />
-            </div>
-        </template>
+        </ExecutionSummaryCard>
+        <div v-if="!isMobile" id="alerts">
+            <ErrorAlert
+                v-if="isFailed"
+                :execution
+            />
+            <PausedAlert
+                v-if="execution.state.current === State.PAUSED"
+                :execution
+            />
+        </div>
         <div v-if="isMobile && failedTaskRun" class="topology-heading">
             <span>{{ $t("topology") }}</span>
             <KsButton link type="primary" data-test="jump-to-first-failure" @click="jumpToFirstFailure">
@@ -54,9 +49,8 @@
 
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
-    import Banner from "../components/Banner.vue"
+    import ExecutionSummaryCard from "../components/ExecutionSummaryCard.vue"
     import FailedTaskCard from "./components/FailedTaskCard.vue"
-    import MobileSummary from "./components/MobileSummary.vue"
     import ErrorAlert from "./components/main/ErrorAlert.vue"
     import PausedAlert from "./components/main/PausedAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
@@ -102,12 +96,8 @@
         min-width: 0;
     }
 
-    .banner {
-        flex-shrink: 0;
-        width: 100%;
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
+    .overview-summary {
+        padding-bottom: 0;
     }
 
     #alerts {

@@ -43,7 +43,7 @@ describe("useRevealRouteLine", () => {
     it("selects and centers the requested line once the editor is ready", async () => {
         const editor = fakeEditor(20)
         const {editorRef} = setup(undefined)
-        editorRef.value = editor
+        editorRef.value = editor as unknown as monaco.editor.IStandaloneCodeEditor
         await nextTick()
 
         expect(editor.setSelection).toHaveBeenCalledWith({startLineNumber: 8, startColumn: 1, endLineNumber: 8, endColumn: 20})

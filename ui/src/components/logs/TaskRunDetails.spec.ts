@@ -73,7 +73,9 @@ vi.mock("vue-virtual-scroller", async () => {
     }
 })
 
+import {taskRunOutputs} from "@kestra-io/kestra-sdk/outputs"
 import TaskRunDetails from "./TaskRunDetails.vue"
+import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
 
 const i18n = createI18n({legacy: false, globalInjection: true, locale: "en", messages: {en: {}}})
 
@@ -119,6 +121,7 @@ describe("TaskRunDetails log loading across executions", () => {
     let openedStreams: string[]
 
     afterEach(() => {
+        vi.mocked(taskRunOutputs).mockReset().mockResolvedValue({})
         vi.useRealTimers()
     })
 
@@ -358,6 +361,34 @@ describe("TaskRunDetails log loading across executions", () => {
 
         expect(scrollerMocks.scrollToItemCalls).toContainEqual({taskRunId: "tr-failed", index: 1})
 
+        wrapper.unmount()
+    })
+
+    it("should keep refreshing the loop progress after the execution failed while iterations are still running", async () => {
+        let loopOutputs = {iterationCount: 4, runningIterations: 2, terminatedIterations: {FAILED: 1, SUCCESS: 1}}
+        vi.mocked(taskRunOutputs).mockImplementation(() => Promise.resolve(loopOutputs))
+        store.executions.execution = {
+            ...execution("exec-1", "FAILED"),
+            taskRunList: [{id: "tr-loop", taskId: "loop", state: {current: "FAILED"}, attempts: [{state: {current: "FAILED"}}]}],
+        } as never
+        const wrapper = mount(TaskRunDetails, {
+            props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: [{id: "loop", type: "io.kestra.plugin.core.flow.Loop"}]}},
+            global: {plugins: [i18n, KestraDesignSystem, memoryRouter(), createPinia()], stubs: {TaskIcon: true}},
+        })
+        await flushPromises()
+        expect(wrapper.findComponent(TaskRunLoopProgress).text()).toContain("50.0%")
+
+        loopOutputs = {iterationCount: 4, runningIterations: 1, terminatedIterations: {FAILED: 1, SUCCESS: 2}}
+        await vi.advanceTimersByTimeAsync(10_000)
+        expect(wrapper.findComponent(TaskRunLoopProgress).text()).toContain("75.0%")
+
+        loopOutputs = {iterationCount: 4, runningIterations: 0, terminatedIterations: {FAILED: 1, SUCCESS: 3}}
+        await vi.advanceTimersByTimeAsync(10_000)
+        expect(wrapper.findComponent(TaskRunLoopProgress).text()).toContain("100.0%")
+
+        const calls = vi.mocked(taskRunOutputs).mock.calls.length
+        await vi.advanceTimersByTimeAsync(60_000)
+        expect(vi.mocked(taskRunOutputs).mock.calls.length).toBe(calls)
         wrapper.unmount()
     })
 })

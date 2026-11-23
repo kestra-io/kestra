@@ -318,6 +318,7 @@
     import TaskRunDetails from "./TaskRunDetails.vue"
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
     import {loopIterationsRoute} from "../../utils/executionUtils"
+    import {LOOP_OUTPUTS_REFRESH_MS} from "../executions/gantt/ganttTree"
 
     const {t} = useI18n()
 
@@ -430,6 +431,7 @@
     const logsExecutionId = ref<string | undefined>(undefined)
     const logsCloseTimeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
     const retryTimers = new Set<ReturnType<typeof setTimeout>>()
+    const loopRefreshTimerByTaskRunId = new Map<string, ReturnType<typeof setTimeout>>()
     const flow = ref<FlowForExecution | undefined>(undefined)
     const logsBuffer = ref<LogEntry[]>([])
     const shownSubflowsIds = ref<{subflowExecutionId: string; taskRunIndex: number}[]>([])
@@ -755,6 +757,10 @@
             }
 
             // Closed here so the `!logsSSE.value` guards below cannot read a stream still following the previous execution as "already covered" (kestra-io/kestra#14018).
+            if (oldExecution && oldExecution.id !== newExecution.id) {
+                clearLoopRefreshTimers()
+            }
+
             if (logsExecutionId.value !== undefined && logsExecutionId.value !== newExecution.id) {
                 closeLogsSSE()
                 rawLogs.value = []
@@ -856,6 +862,7 @@
         closeTargetExecutionSSE()
         clearTimeout(timeout.value)
         retryTimers.forEach((handle) => clearTimeout(handle))
+        clearLoopRefreshTimers()
     })
 
     function retryShortly(callback: () => void) {
@@ -878,9 +885,25 @@
                 return
             }
             loopOutputsByTaskRunId.value[taskRunId] = outputs
+            refreshLoopStatusWhileIterationsRun(taskRunId, outputs)
         } catch {
             // ignore fetch errors
         }
+    }
+
+    // Once the Loop task run is terminated the execution follow stream may have ended, while iterations already started still report their result.
+    function refreshLoopStatusWhileIterationsRun(taskRunId: string, outputs: LoopOutputs) {
+        const loopState = taskRunById.value[taskRunId]?.state.current
+        if (disposed || loopRefreshTimerByTaskRunId.has(taskRunId) || !loopState || !State.isTerminated(loopState) || !outputs.runningIterations) return
+        loopRefreshTimerByTaskRunId.set(taskRunId, setTimeout(() => {
+            loopRefreshTimerByTaskRunId.delete(taskRunId)
+            updateLoopStatus(taskRunId)
+        }, LOOP_OUTPUTS_REFRESH_MS / 2))
+    }
+
+    function clearLoopRefreshTimers() {
+        loopRefreshTimerByTaskRunId.forEach((handle) => clearTimeout(handle))
+        loopRefreshTimerByTaskRunId.clear()
     }
 
     async function resolveSubflowExecutionId(executionId: string, taskRunId: string) {

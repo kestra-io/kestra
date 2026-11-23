@@ -1123,11 +1123,14 @@
         return `${taskRunId}-${attemptNumber}`
     }
 
+    const MAX_SCROLL_ATTEMPTS = 5
+    const SCROLL_BOTTOM_TOLERANCE_PX = 5
+
     function scrollScrollerToEnd(uid: string, targetIndex: number, attempt = 0) {
         if (disposed) return
         const scroller = logsScrollerRefs.value[uid]
         if (!scroller) {
-            if (attempt < 5) {
+            if (attempt < MAX_SCROLL_ATTEMPTS) {
                 requestAnimationFrame(() => scrollScrollerToEnd(uid, targetIndex, attempt + 1))
             }
             return
@@ -1140,13 +1143,13 @@
             el.scrollTop = el.scrollHeight
         }
 
-        if (attempt < 5) {
+        if (attempt < MAX_SCROLL_ATTEMPTS) {
             requestAnimationFrame(() => {
                 const currentEl = scroller.$el
                 const isAtBottom =
                     currentEl &&
                     currentEl.scrollHeight > currentEl.clientHeight &&
-                    currentEl.scrollTop >= currentEl.scrollHeight - currentEl.clientHeight - 5
+                    currentEl.scrollTop >= currentEl.scrollHeight - currentEl.clientHeight - SCROLL_BOTTOM_TOLERANCE_PX
                 if (!isAtBottom) {
                     scrollScrollerToEnd(uid, targetIndex, attempt + 1)
                 }

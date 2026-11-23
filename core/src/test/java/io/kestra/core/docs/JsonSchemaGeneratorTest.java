@@ -720,7 +720,6 @@ class JsonSchemaGeneratorTest {
         assertThat(definitions.size(), is(14));
     }
 
-    @SuppressWarnings("unchecked")
     private static Map<String, Object> definitionOf(Map<String, Map<String, Object>> definitions, Class<?> cls) {
         return definitions.entrySet().stream()
             .filter(entry -> entry.getKey().startsWith(cls.getName()))
@@ -729,6 +728,7 @@ class JsonSchemaGeneratorTest {
             .orElseThrow();
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Map<String, Object>> properties(Map<String, Object> generate) {
         return (Map<String, Map<String, Object>>) generate.get("properties");
     }

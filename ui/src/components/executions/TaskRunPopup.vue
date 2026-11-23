@@ -62,7 +62,6 @@
                             :execution="execution"
                             :taskRun="currentTaskRun"
                             :attemptIndex="attemptIndex"
-                            @follow="emit('follow', $event)"
                         />
                     </span>
                     <span class="popup-action">
@@ -72,7 +71,6 @@
                             :execution="execution"
                             :taskRun="currentTaskRunWithExecution"
                             :attemptIndex="attemptIndex"
-                            @follow="emit('follow', $event)"
                         />
                     </span>
                     <span class="popup-action">

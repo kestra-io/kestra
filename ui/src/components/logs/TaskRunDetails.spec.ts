@@ -3,7 +3,7 @@ import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 import {nextTick, reactive} from "vue"
-import KestraDesignSystem from "@kestra-io/design-system"
+import KestraDesignSystem, {KsExecutionStatus} from "@kestra-io/design-system"
 import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 const store = vi.hoisted(() => ({
@@ -315,6 +315,24 @@ describe("TaskRunDetails log loading across executions", () => {
         expect(store.executions.reusedLogsOf).toHaveBeenCalledWith("exec-2", {value: "INFO", direction: "min"})
         expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{INFO: ["0/0"]}])
         expect(wrapper.find("[data-test=\"task-run-reused\"]").text()).toBe("reused_task_run.label")
+    })
+
+    it("should repeat the task status in the attempt row only when the task ran more than once", async () => {
+        store.executions.loadLogs.mockResolvedValue([
+            {level: "INFO", taskRunId: "tr-once", attemptNumber: 0, message: "once"},
+            {level: "INFO", taskRunId: "tr-retried", attemptNumber: 1, message: "retried"},
+        ])
+        store.executions.execution = {
+            ...execution("exec-1", "SUCCESS"),
+            taskRunList: [
+                {id: "tr-once", taskId: "once", state: {current: "SUCCESS"}, attempts: [{state: {current: "SUCCESS"}}]},
+                {id: "tr-retried", taskId: "retried", state: {current: "SUCCESS"}, attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}]},
+            ],
+        } as ReturnType<typeof execution>
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        expect(wrapper.findAllComponents(KsExecutionStatus)).toHaveLength(3)
     })
 
     it("should scroll failed task logs to the bottom when subsequent task runs exist", async () => {

@@ -42,7 +42,7 @@ The following dependencies are required to build Kestra locally:
 
 Thanks to the Kestra community, if using VSCode, you can also start development on either the frontend or backend with a bootstrapped docker container without the need to manually set up the environment.
 
-Check out the [README](../develop/README.md) for set-up instructions and the associated [Dockerfile](../develop/Dockerfile) in the respository to get started.
+Check out the [README](../.devcontainer/README.md) for set-up instructions and the associated [Dockerfile](../.devcontainer/Dockerfile) in the respository to get started.
 
 To start contributing:
 - [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the repository
@@ -66,9 +66,9 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
   - Configure the following environment variables:
     - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.
     - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on startup.
-  - See the screenshot below for an example: ![Intellij IDEA Configuration ](./.github/assets/run-app.png)
+  - See the screenshot below for an example: ![Intellij IDEA Configuration ](./assets/run-app.png)
   - If you encounter **JavaScript memory heap out** error during startup, configure `NODE_OPTIONS` environment variable with some large value.
-      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](./.github/assets/node_option_env_var.png)
+      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](./assets/node_option_env_var.png)
 - The server starts by default on port 8080 and is reachable on `http://localhost:8080`
 
 If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:

@@ -1,5 +1,12 @@
 {
   "ru": {
+    "support_links": {
+      "slack_title": "Сообщество в Slack",
+      "slack_description": "Обсуждайте темы с другими пользователями и командой Kestra",
+      "github_description": "Поставьте звезду нашему open-source-проекту",
+      "help_center_title": "Центр помощи",
+      "help_center_description": "Обратитесь в поддержку за помощью с учетной записью Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra был обновлен до версии {version} и может включать критические изменения, требующие обновления ваших Flow.",
       "cta": "Посмотреть изменения"
@@ -562,6 +569,7 @@
     "output": "Вывод",
     "flow_outputs": "Выходы Flow",
     "eval": {
+      "failed": "Не удалось вычислить выражение",
       "title": "Отладка выражения",
       "preview": "Предварительный просмотр",
       "expression": "Выражение"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Эта Task была повторена",
+      "task-details": "Сведения о {task}",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
       "graph-orientation": "Ориентация графика",
       "zoom-in": "Увеличить",
@@ -1580,7 +1589,7 @@
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
-            "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места.",
+            "color_mode_shortcut": "Совет: нажмите {ctrl}+{shift}+{key}, чтобы переключать темы из любого места.",
             "logs_font_size": "Размер шрифта, используемый в Log Viewer и терминалах.",
             "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",
@@ -1790,7 +1799,12 @@
           },
           "flow_generated": {
             "title": "Это flow",
-            "body": "flow написан на YAML с двумя tasks:<ol><li><code>fetch_orders</code> для загрузки заказов</li><li><code>summarize</code> для расчета выручки на Python</li></ol>Tasks выполняются последовательно, в том порядке, в котором они определены.",
+            "body": "flow написан на YAML с двумя tasks:",
+            "tasks": {
+              "fetch_orders": "{task} для загрузки заказов",
+              "summarize": "{task} для расчета выручки на Python"
+            },
+            "after_tasks": "Tasks выполняются последовательно, в том порядке, в котором они определены.",
             "next": "Сохранить и выполнить"
           },
           "first_execution": {
@@ -2139,6 +2153,7 @@
     "custom value": "Пользовательское значение",
     "chart": "График",
     "no_code": {
+      "unknown_schema": "Неизвестная схема",
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",

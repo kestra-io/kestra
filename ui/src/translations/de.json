@@ -1,5 +1,12 @@
 {
   "de": {
+    "support_links": {
+      "slack_title": "Community-Slack",
+      "slack_description": "Tausche dich mit anderen Nutzern und dem Kestra-Team aus",
+      "github_description": "Gib unserem Open-Source-Projekt einen Stern",
+      "help_center_title": "Hilfe-Center",
+      "help_center_description": "Wende dich an den Support, um Hilfe zu deinem Enterprise-Konto zu erhalten"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra wurde auf {version} aktualisiert und kann Breaking Changes enthalten, die Updates deiner Flows erfordern.",
       "cta": "Siehe, was sich geändert hat"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Flow-Outputs",
     "eval": {
+      "failed": "Der Ausdruck konnte nicht ausgewertet werden",
       "title": "Debug-Ausdruck",
       "preview": "Vorschau",
       "expression": "Ausdruck"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Dieser Task wurde wiederholt",
+      "task-details": "Details zu {task}",
       "artifacts": "keine Artifacts | {count} Artifact | {count} Artifacts",
       "graph-orientation": "Graph-Ausrichtung",
       "zoom-in": "Vergrößern",
@@ -1580,7 +1589,7 @@
           },
           "descriptions": {
             "color_mode": "Wähle dein bevorzugtes Theme für die Oberfläche.",
-            "color_mode_shortcut": "Tipp: Drücke <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um von überall zwischen den Themes zu wechseln.",
+            "color_mode_shortcut": "Tipp: Drücke {ctrl}+{shift}+{key}, um von überall zwischen den Themes zu wechseln.",
             "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird.",
             "editor_font_family": "Monospace-Schriftart, die im YAML-Editor verwendet wird.",
             "editor_font_size": "Schriftgröße, die in den YAML- und No-Code-Editoren verwendet wird.",
@@ -1790,7 +1799,12 @@
           },
           "flow_generated": {
             "title": "Das ist ein Flow",
-            "body": "Der Flow ist in YAML mit zwei Tasks geschrieben:<ol><li><code>fetch_orders</code> zum Herunterladen der Bestellungen</li><li><code>summarize</code> zur Berechnung des Umsatzes in Python</li></ol>Tasks werden nacheinander ausgeführt, in der Reihenfolge, in der sie definiert sind.",
+            "body": "Der Flow ist in YAML mit zwei Tasks geschrieben:",
+            "tasks": {
+              "fetch_orders": "{task} zum Herunterladen der Bestellungen",
+              "summarize": "{task} zur Berechnung des Umsatzes in Python"
+            },
+            "after_tasks": "Tasks werden nacheinander ausgeführt, in der Reihenfolge, in der sie definiert sind.",
             "next": "Speichern und ausführen"
           },
           "first_execution": {
@@ -2139,6 +2153,7 @@
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "no_code": {
+      "unknown_schema": "Unbekanntes Schema",
       "toggle_pebble": "Pebble-Editor umschalten",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",
       "adding": "+ {what} hinzufügen",

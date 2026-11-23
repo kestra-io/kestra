@@ -8,15 +8,15 @@ import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "..
 
 const {markerTrigger, onDidChangeMarkers, getModelMarkers, markerDispose} = vi.hoisted(() => {
     let markerCallback: ((uris: {toString(): string}[]) => void) | null = null
-    const markerDispose = vi.fn()
+    const dispose = vi.fn()
     return {
         markerTrigger: (uris: {toString(): string}[]) => markerCallback?.(uris),
         onDidChangeMarkers: vi.fn((cb: (uris: {toString(): string}[]) => void) => {
             markerCallback = cb
-            return {dispose: markerDispose}
+            return {dispose}
         }),
         getModelMarkers: vi.fn(() => [] as unknown[]),
-        markerDispose,
+        markerDispose: dispose,
     }
 })
 

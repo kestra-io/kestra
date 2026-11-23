@@ -1,5 +1,12 @@
 {
   "en": {
+    "support_links": {
+      "slack_title": "Community Slack",
+      "slack_description": "Discuss topics with other users and the Kestra team",
+      "github_description": "Give our open-source project a star",
+      "help_center_title": "Help Center",
+      "help_center_description": "Contact support for help with your Enterprise account"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra was upgraded to {version} and it may include breaking changes that require updates to your flows.",
       "cta": "See what changed"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "Failed to evaluate expression",
       "title": "Debug Expression",
       "preview": "Preview",
       "expression": "Expression"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "This task was retried",
+      "task-details": "Details for {task}",
       "artifacts": "no artifacts | {count} artifact | {count} artifacts",
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
@@ -1580,7 +1589,7 @@
           },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
-            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
+            "color_mode_shortcut": "Tip: press {ctrl}+{shift}+{key} to cycle themes from anywhere.",
             "logs_font_size": "Font size used in log viewers and terminals.",
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",
@@ -1790,7 +1799,12 @@
           },
           "flow_generated": {
             "title": "This is a flow",
-            "body": "The flow is written in YAML with two tasks:<ol><li><code>fetch_orders</code> to download the orders</li><li><code>summarize</code> to compute the revenue in Python</li></ol>Tasks are executed sequentially, in the order in which they are defined.",
+            "body": "The flow is written in YAML with two tasks:",
+            "tasks": {
+              "fetch_orders": "{task} to download the orders",
+              "summarize": "{task} to compute the revenue in Python"
+            },
+            "after_tasks": "Tasks are executed sequentially, in the order in which they are defined.",
             "next": "Save and execute"
           },
           "first_execution": {
@@ -2139,6 +2153,7 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
+      "unknown_schema": "Unknown Schema",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",

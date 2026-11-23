@@ -15,7 +15,13 @@
             </i18n-t>
         </template>
         <KsForm :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
-            <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" :submitAttempted="submitAttempted" />
+            <InputsForm
+                :initialInputs="inputsList"
+                :execution="execution"
+                v-model="inputs"
+                :submitAttempted="submitAttempted"
+                @clear-validation="onClearValidation"
+            />
         </KsForm>
         <template #footer>
             <KsButton :icon="Play" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
@@ -78,6 +84,10 @@
     })
 
     const needInputs = computed(() => inputsList.value?.length > 0)
+
+    function onClearValidation(fieldId: string) {
+        form.value?.clearValidate(fieldId)
+    }
 
     function click() {
         if (needInputs.value) {

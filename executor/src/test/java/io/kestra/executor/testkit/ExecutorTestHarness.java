@@ -629,6 +629,13 @@ public final class ExecutorTestHarness {
         return emittedSince(from);
     }
 
+    public List<Trace.Emission> tickSlaMonitors(Instant now) {
+        clock.set(now);
+        int from = journal.size();
+        loops.get(1).run();
+        return emittedSince(from);
+    }
+
     public Trace run(Execution execution, ScriptedWorker worker) {
         return run(List.of(execution), worker);
     }

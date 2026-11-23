@@ -151,6 +151,18 @@ describe("KsDataTable", () => {
         expect(typeof wrapper.vm.waitTableRender).toBe("function")
     })
 
+    test("locks the expand arrow on rows expandableRow rejects", () => {
+        const wrapper = i18nMount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, rowKey: "id", forceExpandedRowKeys: ["flow-003"], expandableRow: (row: {status: string}) => row.status !== "RUNNING"},
+        })
+
+        const rowClassName = wrapper.findComponent(KsTable).props("rowClassName") as (arg: {row: unknown; rowIndex: number}) => string
+
+        expect(rowClassName({row: SAMPLE_DATA[0], rowIndex: 0})).toBe("")
+        expect(rowClassName({row: SAMPLE_DATA[1], rowIndex: 1})).toBe("ks-row-not-expandable")
+        expect(rowClassName({row: SAMPLE_DATA[2], rowIndex: 2})).toBe("ks-row-force-expanded")
+    })
+
     test("emits page-changed on page change", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},

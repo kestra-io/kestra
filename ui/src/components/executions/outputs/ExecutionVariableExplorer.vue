@@ -153,7 +153,7 @@
             </KsCollapse>
         </div>
 
-        <KsSplitter v-else layout="horizontal">
+        <KsSplitter v-else layout="horizontal" class="variable-explorer__splitter">
             <!-- Left + Center: searchable list and tree/raw viewer as a single unified block -->
             <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--main">
                 <KsSplitter layout="horizontal" class="variable-explorer__inner-splitter">
@@ -727,8 +727,8 @@
     padding: var(--ks-spacing-4) var(--ks-spacing-4) 0;
 }
 
-:deep(.kel-splitter),
-:deep(.kel-splitter-panel) {
+.variable-explorer__splitter,
+.variable-explorer__inner-splitter {
     height: 100%;
     min-height: 0;
 }

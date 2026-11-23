@@ -50,10 +50,7 @@ public class JsonSchemaCache {
         registerClassForType(SchemaType.DASHBOARD, Dashboard.class);
     }
 
-    /**
-     * Returns the schema of a type, compacted by {@link JsonSchemaCompactor}: its consumers have to resolve {@code $ref}.
-     * The same instance is returned until the plugin registry changes.
-     */
+    /** Returns the schema compacted by {@link JsonSchemaCompactor}, so a consumer must resolve {@code $ref}; the same instance until the registry changes. */
     public Map<String, Object> getSchemaForType(final SchemaType type,
         final boolean arrayOf) {
         invalidateIfPluginRegistryChanged();

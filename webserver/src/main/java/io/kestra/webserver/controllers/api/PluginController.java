@@ -124,8 +124,7 @@ public class PluginController {
         @Parameter(description = "Whether to merge the pre-baked plugin schema bundle for un-installed types") @Nullable
         @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
         @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
-        // Revalidated on every use via ETag, so the editor never validates against a stale schema after a plugin
-        // is added or removed (#12102); the merged tag also changes with the bundle.
+        // Revalidated via ETag on every use, so an added or removed plugin is never masked by a cached schema (#12102).
         final boolean mergeCatalog = Boolean.TRUE.equals(includeCatalog) && isCatalogMergeAllowed();
         final String etag = schemaETag(mergeCatalog ? "schema-catalog-" + pluginSchemaBundleService.fingerprint() : "schema", type, arrayOf);
         if (etag.equals(ifNoneMatch)) {

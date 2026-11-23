@@ -420,7 +420,6 @@ class PluginControllerTest {
         Map<String, Object> local = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow"), Argument.mapOf(String.class, Object.class));
         Map<String, Object> merged = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow?includeCatalog=true"), Argument.mapOf(String.class, Object.class));
 
-        // One schema shape for every consumer: the no-code editors inline the shared-* definitions back in the browser.
         assertThat(flowTasksItems(local)).containsOnlyKeys("$ref");
         assertThat((String) flowTasksItems(local).get("$ref")).startsWith("#/definitions/shared-subtypes");
         assertThat(flowTasksItems(merged)).isEqualTo(flowTasksItems(local));

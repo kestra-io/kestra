@@ -20,10 +20,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import io.kestra.core.serializers.JacksonMapper;
 
-/**
- * Shrinks a generated Draft-7 schema by replacing repeated subtrees with a {@code $ref} to one {@code shared-*} definition.
- * The result validates identically for a consumer that resolves {@code $ref}; the UI undoes it with {@code inflateCompactSchema} for the no-code editors.
- */
+/** Replaces repeated subtrees with a {@code $ref} to one {@code shared-*} definition, which the UI's {@code inflateCompactSchema} undoes. */
 public final class JsonSchemaCompactor {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
@@ -46,10 +43,7 @@ public final class JsonSchemaCompactor {
         return MAPPER.convertValue(root, MAP_TYPE);
     }
 
-    /**
-     * Moves every property schema that occurs more than once, such as the ones each task inherits, to one {@code shared-property-<name>} definition.
-     * Safe to run again on a schema that gained definitions since: property schemas that are already a {@code $ref} are left alone.
-     */
+    /** Safe to run again on a schema that gained definitions since, as a property already behind a {@code $ref} is left alone. */
     public static void sharePropertySchemas(ObjectNode schema) {
         if (!(schema.get("definitions") instanceof ObjectNode definitions)) {
             return;
@@ -162,10 +156,7 @@ public final class JsonSchemaCompactor {
         node.forEach(child -> replaceSubtypeLists(child, refBySubtypes, hoisted));
     }
 
-    /**
-     * An {@code anyOf} holding nothing but one branch per subtype: either a bare {@code $ref}, or {@code allOf: [$ref, annotation]}
-     * where every branch repeats the same annotation, which is what the generator emits for a property typed as a single subtype.
-     */
+    /** One branch per subtype, either a bare {@code $ref} or the generator's {@code allOf: [$ref, annotation]} for a single-subtype property. */
     private record SubtypeSite(ArrayNode subtypes, ObjectNode annotation) {
         static SubtypeSite of(JsonNode node) {
             if (!(node instanceof ObjectNode object) || object.size() != 1 || !(object.get("anyOf") instanceof ArrayNode anyOf) || anyOf.isEmpty()) {
@@ -199,7 +190,6 @@ public final class JsonSchemaCompactor {
         }
     }
 
-    /** Returns {@code markdown} without the examples section {@link JsonSchemaGenerator} appends to a type's description. */
     public static String withoutExamples(String markdown) {
         int heading = markdown.indexOf(JsonSchemaGenerator.EXAMPLES_HEADING);
         return heading < 0 ? markdown : markdown.substring(0, heading).stripTrailing();

@@ -12,10 +12,7 @@ function sharedRef(value: unknown, prefix = SHARED): string | undefined {
     return typeof ref === "string" && ref.startsWith(prefix) && Object.keys(value).length === 1 ? ref : undefined
 }
 
-/**
- * Undoes the backend's `JsonSchemaCompactor` in place, for the no-code editors, which read a schema without resolving `$ref`.
- * Shared content is linked by reference, not copied back: the result holds one object per shared schema and must be treated as read-only.
- */
+/** Undoes the backend's `JsonSchemaCompactor` in place, linking each shared schema by reference: treat the result as read-only. */
 export function inflateCompactSchema<T extends {definitions?: Record<string, unknown>}>(schema: T): T {
     const definitions = schema.definitions
     if (!definitions) return schema

@@ -68,7 +68,7 @@ public class PluginSchemaBundleService {
 
     private final String resolvedBundleUrl;
 
-    // Weak keys compare by identity: a schema regenerated after a plugin change is a new map, so its stale entry is never hit again and gets collected.
+    // Weak keys compare by identity, so a schema regenerated after a plugin change gets a fresh merge and the old one is collected.
     private final Cache<Map<String, Object>, Map<String, Object>> mergedSchemas = Caffeine.newBuilder().weakKeys().build();
 
     private volatile Bundle bundle;

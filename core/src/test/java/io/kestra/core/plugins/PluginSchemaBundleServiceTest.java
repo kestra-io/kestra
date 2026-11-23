@@ -305,7 +305,6 @@ class PluginSchemaBundleServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldMergeOnceWhenTheSameLocalSchemaIsRequestedAgain() throws IOException {
-        // Given
         Files.writeString(tempDir.resolve("plugins-schema.json"), """
             {
               "definitions": {
@@ -322,10 +321,9 @@ class PluginSchemaBundleServiceTest {
         Map<String, Object> localSchema = JacksonMapper.ofJson().readValue(localJson, Map.class);
         Map<String, Object> regeneratedSchema = JacksonMapper.ofJson().readValue(localJson, Map.class);
 
-        // When
         Map<String, Object> first = service.mergeWithBundle(SchemaType.TASK, localSchema);
 
-        // Then: an equal schema regenerated after a plugin change must not be served the previous merge
+        // An equal schema regenerated after a plugin change must not be served the previous merge.
         assertThat(service.mergeWithBundle(SchemaType.TASK, localSchema)).isSameAs(first);
         assertThat(service.mergeWithBundle(SchemaType.TASK, regeneratedSchema)).isEqualTo(first).isNotSameAs(first);
     }

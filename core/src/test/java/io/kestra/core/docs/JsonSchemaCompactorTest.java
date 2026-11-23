@@ -15,7 +15,7 @@ class JsonSchemaCompactorTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldShareOnlyRepeatedPropertySchemasWhenCompacting() throws Exception {
-        // Given: `retry` repeats, `timeout` shares a name but not a schema, `id` is too small to be worth a $ref
+        // `retry` repeats, `timeout` shares a name but not a schema, `id` is too small to be worth a $ref
         Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
             {
               "definitions": {
@@ -33,10 +33,8 @@ class JsonSchemaCompactorTest {
             }
             """.formatted(LONG_DOC), Map.class);
 
-        // When
         Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
 
-        // Then
         Map<String, Object> definitions = (Map<String, Object>) compact.get("definitions");
         assertThat(definitions).containsOnlyKeys("a.First", "a.Second", "shared-property-retry");
         assertThat(definitions.get("shared-property-retry")).isEqualTo(Map.of("type", "object", "title", LONG_DOC));
@@ -51,7 +49,7 @@ class JsonSchemaCompactorTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldReferenceOneSubtypeListWhenSitesRepeatItBareOrPerBranchAnnotated() throws Exception {
-        // Given: no definition holds the list, `single` repeats its annotation on every branch, `mixed` does not
+        // no definition holds the list, `single` repeats its annotation on every branch, `mixed` does not
         Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
             {
               "definitions": {
@@ -71,10 +69,8 @@ class JsonSchemaCompactorTest {
             }
             """.formatted("x".repeat(80)), Map.class);
 
-        // When
         Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
 
-        // Then
         Map<String, Object> definitions = (Map<String, Object>) compact.get("definitions");
         Map<String, Object> ref = Map.of("$ref", "#/definitions/shared-subtypes");
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) ((Map<String, Object>) definitions.get("a.Flow")).get("properties");
@@ -89,7 +85,7 @@ class JsonSchemaCompactorTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldAliasTheDefinitionHoldingASubtypeListAndLeaveDirectReferencesToItAlone() throws Exception {
-        // Given: `a.Task` holds the list `tasks` repeats, and `cases` references that definition itself
+        // `a.Task` holds the list `tasks` repeats, and `cases` references that definition itself
         Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
             {
               "definitions": {
@@ -102,10 +98,9 @@ class JsonSchemaCompactorTest {
             }
             """, Map.class);
 
-        // When
         Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
 
-        // Then: only a shared-* key marks a list the compactor moved, which is what the UI inlines back for the no-code editors
+        // Only a shared-* key marks a list the compactor moved, so a direct reference must stay one.
         Map<String, Object> definitions = (Map<String, Object>) compact.get("definitions");
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) ((Map<String, Object>) definitions.get("a.Flow")).get("properties");
         assertThat(definitions.get("shared-subtypes")).isEqualTo(Map.of("$ref", "#/definitions/a.Task"));
@@ -126,7 +121,7 @@ class JsonSchemaCompactorTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldDropTheExamplesSectionButKeepTheDescriptionBeforeIt() throws Exception {
-        // Given: one description with prose before its examples, one made of examples only
+        // one description with prose before its examples, one made of examples only
         Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
             {
               "definitions": {
@@ -136,10 +131,8 @@ class JsonSchemaCompactorTest {
             }
             """, Map.class);
 
-        // When
         Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
 
-        // Then
         Map<String, Object> definitions = (Map<String, Object>) compact.get("definitions");
         assertThat(definitions.get("a.Log")).isEqualTo(Map.of("type", "object", "markdownDescription", "Emit a log."));
         assertThat(definitions.get("a.Bare")).isEqualTo(Map.of("type", "object", "title", "Bare"));
@@ -148,7 +141,7 @@ class JsonSchemaCompactorTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldLeaveLiteralValuesAloneWhenTheyLookLikeASchema() throws Exception {
-        // Given: two defaults that are data, each holding a `properties` key with a repeated, large value
+        // two defaults that are data, each holding a `properties` key with a repeated, large value
         Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
             {
               "definitions": {
@@ -158,10 +151,8 @@ class JsonSchemaCompactorTest {
             }
             """.formatted(LONG_DOC), Map.class);
 
-        // When
         Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
 
-        // Then
         assertThat(compact).isEqualTo(schema);
     }
 }

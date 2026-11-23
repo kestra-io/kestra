@@ -470,8 +470,8 @@ public class AgentOrchestrator {
         }
         String raw = req.arguments();
         String received = raw.length() <= MAX_MALFORMED_ARGUMENTS_CHARS ? raw : raw.substring(0, MAX_MALFORMED_ARGUMENTS_CHARS) + "…";
-        return "Invalid tool arguments, so the call was not executed: " + ChatMessageAdaptor.malformedArgumentsReason(raw)
-            + ". Received: " + received + " Reissue the call with valid JSON arguments.";
+        return "Invalid tool arguments, so the call was not executed: %s. Received: %s Reissue the call with valid JSON arguments."
+            .formatted(ChatMessageAdaptor.malformedArgumentsReason(raw), received);
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {

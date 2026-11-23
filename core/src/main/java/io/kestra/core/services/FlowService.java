@@ -78,6 +78,28 @@ public class FlowService {
      * @return The created {@link FlowWithSource}.
      */
     public FlowWithSource create(GenericFlow flow, final boolean strictValidation) throws FlowProcessingException {
+        this.validateFlow(flow, strictValidation);
+
+        return repository().create(flow);
+    }
+
+    /**
+     * Validates the given flow the way {@link #create(GenericFlow, boolean)} does, without writing it.
+     *
+     * @param strictValidation Specifies whether to reject unknown and duplicated properties.
+     */
+    public void validateFlow(GenericFlow flow, final boolean strictValidation) throws FlowProcessingException {
+        this.validateFlow(flow, strictValidation, true);
+    }
+
+    /**
+     * Validates the given flow without writing it.
+     *
+     * @param strictValidation Specifies whether to reject unknown and duplicated properties.
+     * @param checkPluginDefaultsRefs Specifies whether to reject a {@code pluginDefaultsRef} that resolves to no plugin-defaults.
+     *                                {@link #create(GenericFlow, boolean)} checks it, {@code FlowRepositoryInterface#update} does not.
+     */
+    public void validateFlow(GenericFlow flow, final boolean strictValidation, final boolean checkPluginDefaultsRefs) throws FlowProcessingException {
         Objects.requireNonNull(flow, "Cannot create null flow");
         if (flow.getSource() == null || flow.getSource().isBlank()) {
             throw new IllegalArgumentException("Cannot create flow with null or blank source");
@@ -91,9 +113,9 @@ public class FlowService {
         // properties that might be injecting through default values.
         FlowWithSource withDefaults = pluginDefaultService.injectAllDefaults(parsed, false);
         modelValidator.validate(withDefaults);
-        validatePluginDefaultsRefs(withDefaults);
-
-        return repository().create(flow);
+        if (checkPluginDefaultsRefs) {
+            validatePluginDefaultsRefs(withDefaults);
+        }
     }
 
     /**

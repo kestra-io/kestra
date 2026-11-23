@@ -42,8 +42,7 @@
             <div class="date-field">
                 <label class="form-label">{{ $t("filter.start_date") }}</label>
                 <KsDatePicker
-                    :modelValue="local.startDateValue"
-                    @update:modelValue="(date) => (local.startDateValue = date ?? null)"
+                    v-model="local.startDateValue"
                     type="datetime"
                     :disabledDate="isAfterEndDate"
                     :placeholder="$t('filter.select_start_date')"
@@ -52,8 +51,7 @@
             <div class="date-field">
                 <label class="form-label">{{ $t("filter.end_date") }}</label>
                 <KsDatePicker
-                    :modelValue="local.endDateValue"
-                    @update:modelValue="(date) => (local.endDateValue = date ?? null)"
+                    v-model="local.endDateValue"
                     type="datetime"
                     :defaultTime="endDateDefaultTime"
                     :disabledDate="isBeforeStartDate"
@@ -123,8 +121,8 @@
 
     const local = reactive({
         value: modelValue.value,
-        endDateValue: endDateValue.value ?? null,
-        startDateValue: startDateValue.value ?? null,
+        endDateValue: endDateValue.value,
+        startDateValue: startDateValue.value,
         timeRangeMode: timeRangeMode.value ?? "predefined",
         dateFilterMode: dateFilterMode.value ?? props.filterKey?.dateFilterOptions?.[0]?.value ?? "",
     })
@@ -142,8 +140,8 @@
     watchEffect(() => {
         emit("update:modelValue", local.value)
         emit("update:timeRangeMode", local.timeRangeMode)
-        emit("update:endDateValue", local.endDateValue)
-        emit("update:startDateValue", local.startDateValue)
+        emit("update:endDateValue", local.endDateValue ?? null)
+        emit("update:startDateValue", local.startDateValue ?? null)
         emit("update:dateFilterMode", local.dateFilterMode)
     })
 </script>

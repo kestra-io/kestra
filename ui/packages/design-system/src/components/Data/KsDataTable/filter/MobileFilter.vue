@@ -57,8 +57,7 @@
 
                 <div v-show="sectionExpanded" class="sheet-section-body">
                     <KsSegmented
-                        :modelValue="tab"
-                        @update:modelValue="(value) => (tab = String(value ?? TAB_ALL))"
+                        v-model="tab"
                         :options="tabOptions"
                         block
                         class="sheet-tabs"
@@ -167,7 +166,7 @@
 
     const open = ref(false)
     const sectionExpanded = ref(true)
-    const tab = ref(TAB_ALL)
+    const tab = ref<string | number | boolean | undefined>(TAB_ALL)
     const expandedKey = ref<string | null>(null)
     const editTarget = ref<AppliedFilter | null>(null)
 

@@ -44,7 +44,7 @@
             </KsText>
         </div>
 
-        <KsTabs :modelValue="tab" type="box" @update:modelValue="(name) => (tab = name ?? tab)">
+        <KsTabs v-model="tab" type="box">
             <KsTabPane v-for="item in tabs" :key="item.name" :name="item.name">
                 <template #label>
                     <span class="ks-change-review__tab">
@@ -98,7 +98,7 @@
         tabs: KsChangeReviewTab[]
     }>(), {meta: () => [], segments: () => []})
 
-    const tab = defineModel<string>("tab", {required: true})
+    const tab = defineModel<string | undefined>("tab", {required: true})
     const filter = defineModel<string>("filter", {default: KS_CHANGE_REVIEW_ALL})
 
     const KS_CHANGE_REVIEW_TONES: Record<KsChangeReviewTone, {color: string}> = {

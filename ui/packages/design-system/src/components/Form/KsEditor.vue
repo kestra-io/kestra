@@ -44,8 +44,7 @@
                         <KsDatePicker
                             ref="datePicker"
                             type="datetime"
-                            :modelValue="selectedDate"
-                            @update:modelValue="(date) => (selectedDate = date ?? selectedDate)"
+                            v-model="selectedDate"
                             :teleported="false"
                             :defaultValue="nowMoment.toDate()"
                             @change="datePickerCallback"

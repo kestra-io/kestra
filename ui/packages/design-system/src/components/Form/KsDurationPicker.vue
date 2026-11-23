@@ -7,8 +7,7 @@
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-days"
-                    :modelValue="days"
-                    @update:modelValue="(value) => (days = value ?? 0)"
+                    v-model="days"
                     :disabled="disabled"
                     :min="0"
                     @change="updateDuration"
@@ -20,8 +19,7 @@
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-hours"
-                    :modelValue="hours"
-                    @update:modelValue="(value) => (hours = value ?? 0)"
+                    v-model="hours"
                     :disabled="disabled"
                     :min="0"
                     @change="updateDuration"
@@ -33,8 +31,7 @@
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-minutes"
-                    :modelValue="minutes"
-                    @update:modelValue="(value) => (minutes = value ?? 0)"
+                    v-model="minutes"
                     :disabled="disabled"
                     :min="0"
                     @change="updateDuration"
@@ -46,8 +43,7 @@
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-seconds"
-                    :modelValue="seconds"
-                    @update:modelValue="(value) => (seconds = value ?? 0)"
+                    v-model="seconds"
                     :disabled="disabled"
                     :min="0"
                     @change="updateDuration"
@@ -80,22 +76,22 @@
         "update:modelValue": [value: string | null]
     }>()
 
-    const days = ref(0)
-    const hours = ref(0)
-    const minutes = ref(0)
-    const seconds = ref(0)
+    const days = ref<number | undefined>(0)
+    const hours = ref<number | undefined>(0)
+    const minutes = ref<number | undefined>(0)
+    const seconds = ref<number | undefined>(0)
     const customDuration = ref("")
     const durationIssue = ref<string | null>(null)
 
     const serializeDuration = (): string | null => {
         let duration = "P"
-        if (days.value > 0) duration += `${days.value}D`
+        if ((days.value ?? 0) > 0) duration += `${days.value}D`
 
-        if (hours.value > 0 || minutes.value > 0 || seconds.value > 0) {
+        if ((hours.value ?? 0) > 0 || (minutes.value ?? 0) > 0 || (seconds.value ?? 0) > 0) {
             duration += "T"
-            if (hours.value > 0) duration += `${hours.value}H`
-            if (minutes.value > 0) duration += `${minutes.value}M`
-            if (seconds.value > 0) duration += `${seconds.value}S`
+            if ((hours.value ?? 0) > 0) duration += `${hours.value}H`
+            if ((minutes.value ?? 0) > 0) duration += `${minutes.value}M`
+            if ((seconds.value ?? 0) > 0) duration += `${seconds.value}S`
         }
 
         return duration === "P" ? null : duration

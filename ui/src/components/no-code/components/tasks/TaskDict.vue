@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, nextTick, onBeforeUnmount} from "vue"
-    import {rowKey, debounce} from "@kestra-io/design-system"
+    import {rowKey, debounce, isDeepEqual} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {Delete} from "../../utils/icons"
 
@@ -115,20 +115,17 @@
     const currentValue = ref<[string, unknown][]>([])
     const keyInputRefs: Record<number, InstanceType<typeof InputText>> = {}
 
-    const localEdit = ref(false)
+    let lastEmitted: Record<string, unknown> | undefined
 
+    // Rebuilding on the echo of an emitted value would drop the unfinished rows it leaves out.
     watch(
         () => props.modelValue,
         (newValue) => {
-            if(localEdit.value) {
+            if(lastEmitted !== undefined && isDeepEqual(newValue, lastEmitted)) {
                 return
             }
-            localEdit.value = false
-            if(newValue === undefined || newValue === null) {
-                currentValue.value = []
-                return
-            }
-            currentValue.value = Object.entries(newValue ?? {})
+            lastEmitted = undefined
+            currentValue.value = newValue === undefined || newValue === null ? [] : Object.entries(newValue)
         },
         {
             immediate: true,
@@ -148,8 +145,8 @@
         if(duplicatedKeys.value?.length > 0) {
             return
         }
-        localEdit.value = true
-        emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)))
+        lastEmitted = Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined))
+        emit("update:modelValue", lastEmitted)
     }, 200)
 
     // A debounced update still pending when the panel closes would be dropped, losing the user's last edit

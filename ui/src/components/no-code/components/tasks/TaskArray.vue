@@ -236,7 +236,7 @@
     })
 
     // TaskObject hides required markers on an undefined model, so a blank object item starts as {}.
-    const emptyObjectItem = computed(() => props.schema.items?.$ref || props.schema.items?.type === "object" ? {} : undefined)
+    const emptyObjectItem = computed(() => props.schema.items?.$ref || (props.schema.items?.type === "object" && props.schema.items.properties) ? {} : undefined)
 
     const items = ref<unknown[]>([])
     const localEdit = ref(false)

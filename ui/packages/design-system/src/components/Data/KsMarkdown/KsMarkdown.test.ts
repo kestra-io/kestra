@@ -23,6 +23,18 @@ describe("KsMarkdown", () => {
         expect(compact.find(".ks-markdown--compact").exists()).toBe(true)
     })
 
+    test("stacks table rows instead of rendering a KsTable in reference mode", () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {reference: true, content: "| Property | Description |\n|---|---|\n| `id` | The flow id. |\n| `namespace` | Its namespace. |"},
+        })
+
+        expect(wrapper.findComponent(KsTable).exists()).toBe(false)
+        expect(wrapper.findAll(".row").map((row) => row.findAll(".cell").map((cell) => cell.text()))).toEqual([
+            ["id", "The flow id."],
+            ["namespace", "Its namespace."],
+        ])
+    })
+
     test("adds a hidden anchor link to each heading", () => {
         const wrapper = i18nMount(KsMarkdown, {props: {content: "# My Title"}})
         const anchor = wrapper.find("h1#my-title a.anchor")

@@ -19,6 +19,7 @@
                 v-if="executionLogs.length > 0"
                 class="attempt-wrapper"
                 shadow="never"
+                :bodyStyle="{padding: '0'}"
                 data-test="execution-logs"
             >
                 <LogLine
@@ -42,6 +43,7 @@
         >
             <DynamicScrollerItem
                 v-if="uniqueTaskRunDisplayFilter(asTaskRun(currentTaskRun))"
+                class="run"
                 :item="asTaskRun(currentTaskRun)"
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
@@ -50,7 +52,7 @@
                     class="attempt-wrapper"
                     shadow="never"
                     :class="{'attempt-wrapper--transparent': hideTaskHeader, 'fullscreen-attempt': fullHeight}"
-                    :bodyStyle="fullHeight ? FULLSCREEN_CARD_BODY_STYLE : undefined"
+                    :bodyStyle="fullHeight ? FULLSCREEN_CARD_BODY_STYLE : {padding: '0'}"
                 >
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
@@ -111,6 +113,7 @@
                     >
                         <template #default="{item, active}">
                             <DynamicScrollerItem
+                                class="entry"
                                 :item="item"
                                 :active="active"
                                 :data-index="item.index"
@@ -134,7 +137,7 @@
                                         @click="toggleGroup(currentTaskRunIndex, item)"
                                     >
                                         <KsIcon class="log-group-chevron" :class="{collapsed: !isGroupExpanded(currentTaskRunIndex, item)}">
-                                            <ChevronDown />
+                                            <ChevronDown class="chevron" />
                                         </KsIcon>
                                         <span class="log-group-count">×{{ item.members.length }}</span>
                                         <span class="log-group-label">{{ isGroupExpanded(currentTaskRunIndex, item) ? $t("collapse") : $t("similar lines") }}</span>
@@ -293,7 +296,7 @@
     import {State, levelToRequestParams, type LevelFilterValue, type Scheduled, groupBy, throttle, dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes, storageKeys} from "../../utils/constants"
-    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "../../utils/virtualScroller"
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import type {Log} from "../../stores/logs"
@@ -411,6 +414,7 @@
         flexDirection: "column",
         flex: "1",
         minHeight: "0",
+        padding: "0",
     }
 
     // Reactive state
@@ -1348,7 +1352,7 @@
         background: var(--ks-bg-hover);
     }
 
-    & :deep(.material-design-icon) {
+    & .chevron {
         display: inline-flex;
         align-items: center;
         line-height: 0;
@@ -1378,15 +1382,11 @@
 }
 
 .log-wrapper {
-  & :deep(
-    > .vue-recycle-scroller__item-wrapper
-      > .vue-recycle-scroller__item-view
-      > div
-  ) {
+  & .run {
     padding-bottom: 1rem;
   }
 
-  & :deep(.line) {
+  & .line {
     padding-left: 0;
   }
 
@@ -1409,10 +1409,6 @@
       .line {
         border-top: none;
       }
-    }
-
-    & :deep(.kel-card__body) {
-      padding: 0;
     }
 
     .attempt-wrapper & {
@@ -1445,7 +1441,7 @@
     transition: max-height 0.2s ease-out;
     max-height: 300px;
 
-    & :deep(.vue-recycle-scroller__item-view > div) {
+    & .entry {
       min-height: 2rem;
     }
 
@@ -1454,7 +1450,7 @@
       max-height: calc(100dvh - 250px);
     }
 
-    & :deep(.line) {
+    & .line {
       padding: var(--ks-spacing-1) var(--ks-spacing-3);
 
       &.cursor {

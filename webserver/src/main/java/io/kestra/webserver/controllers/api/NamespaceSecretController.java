@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import io.kestra.core.secret.SecretService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.models.api.secret.ApiSecretMeta;
+import io.kestra.webserver.services.SecretListingService;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
@@ -24,13 +24,13 @@ public class NamespaceSecretController<META extends ApiSecretMeta> {
     protected TenantService tenantService;
 
     @Inject
-    protected SecretService<String> secretService;
+    protected SecretListingService<String> secretListingService;
 
     @Get(uri = "{namespace}/inherited-secrets")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Namespaces" }, summary = "List inherited secrets")
     public HttpResponse<Map<String, Set<String>>> getInheritedSecrets(
         @Parameter(description = "The namespace id") @PathVariable String namespace) throws IllegalArgumentException, IOException {
-        return HttpResponse.ok(secretService.inheritedSecrets(tenantService.resolveTenant(), namespace));
+        return HttpResponse.ok(secretListingService.listInheritedSecretKeys(tenantService.resolveTenant(), namespace));
     }
 }

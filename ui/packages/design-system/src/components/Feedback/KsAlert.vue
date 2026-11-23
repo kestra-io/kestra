@@ -1,5 +1,5 @@
 <template>
-    <ElAlert :class="{'is-banner': banner}" v-bind="{...filteredProps(), ...$attrs}">
+    <ElAlert :class="{'is-banner': banner, 'is-fill': fill}" v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -45,13 +45,16 @@
         showIcon?: boolean
         center?: boolean
         banner?: boolean
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
+        /** Stretch the content across the row with no gap under the title, and clip a description that would widen the alert. */
+        fill?: boolean
+    } & /* @vue-ignore */ (NativeAttributes<HTMLAttributes> & {onClose?: (event: MouseEvent) => void})>(), {
         closable: false,
         showIcon: true,
         banner: false,
+        fill: false,
     })
 
-    const filteredProps = useFilteredProps(props, ["banner"])
+    const filteredProps = useFilteredProps(props, ["banner", "fill"])
 
     // Element Plus renders an untyped alert as info. KsAlert.test.ts checks these tokens exist.
     const alertType = computed(() => props.type ?? "info")
@@ -112,6 +115,19 @@
                 justify-content: space-between;
                 flex-wrap: wrap;
                 gap: var(--ks-spacing-2) var(--ks-spacing-4);
+            }
+        }
+
+        &.is-fill {
+            & .kel-alert__content {
+                flex: 1;
+                min-width: 0;
+                gap: 0;
+            }
+
+            & .kel-alert__description {
+                min-width: 0;
+                overflow: hidden;
             }
         }
 

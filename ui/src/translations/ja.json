@@ -1,5 +1,12 @@
 {
   "ja": {
+    "support_links": {
+      "slack_title": "コミュニティSlack",
+      "slack_description": "他のユーザーやKestraチームと話し合う",
+      "github_description": "オープンソースプロジェクトにスターを付ける",
+      "help_center_title": "ヘルプセンター",
+      "help_center_description": "Enterpriseアカウントについてサポートに問い合わせる"
+    },
     "versionUpgradeNotice": {
       "message": "Kestraが{version}にアップグレードされました。これには、Flowの更新が必要となる破壊的変更が含まれている可能性があります。",
       "cta": "変更点を確認"
@@ -292,6 +299,16 @@
     "last execution status": "最後の実行ステータス",
     "jump to": "移動",
     "jump to...": "ジャンプ先...",
+    "global_search": {
+      "open_flow": "flowを開く",
+      "flow_executions": "flowの実行",
+      "move": "移動",
+      "menu": "メニュー",
+      "sources": "メニュー + flows + namespaces",
+      "sources_flows": "メニュー + Flow",
+      "sources_namespaces": "メニュー + namespace",
+      "search_failed": "flows または namespaces を読み込めませんでした"
+    },
     "contextBar": {
       "ai": "エーアイ",
       "news": "ニュース",
@@ -552,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "フロー出力",
     "eval": {
+      "failed": "式を評価できませんでした",
       "title": "デバッグ式",
       "preview": "プレビュー",
       "expression": "式"
@@ -573,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "このTaskはリトライされました",
+      "task-details": "{task} の詳細",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",
       "graph-orientation": "グラフの向き",
       "zoom-in": "ズームイン",
@@ -647,6 +666,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "未開始"
+      },
+      "diff": {
+        "added": "追加",
+        "removed": "削除",
+        "changed": "変更",
+        "renamed": "名前変更",
+        "moved": "移動"
+      }
+    },
+    "flow_change_review": {
+      "graph": "グラフ",
+      "yaml": "YAML",
+      "unchanged": "{count} 件は変更なし",
+      "graph_error": "グラフを描画できませんでした。変更を確認するには YAML タブを開いてください。",
+      "status": {
+        "added": "追加",
+        "removed": "削除",
+        "changed": "変更",
+        "renamed": "名前変更",
+        "moved": "移動"
       }
     },
     "show task logs": "Task Logsを表示",
@@ -1550,7 +1589,7 @@
           },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
-            "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
+            "color_mode_shortcut": "ヒント: {ctrl}+{shift}+{key} を押すとどこからでもテーマを切り替えられます。",
             "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。",
             "editor_font_family": "YAMLエディタで使用される等幅フォント。",
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
@@ -1760,7 +1799,12 @@
           },
           "flow_generated": {
             "title": "これは flow です",
-            "body": "このflowはYAMLで記述されており、2つのtasksがあります。<ol><li><code>fetch_orders</code>: 注文をダウンロードする</li><li><code>summarize</code>: Pythonで収益を計算する</li></ol>Tasksは、定義された順序で順次実行されます。",
+            "body": "このflowはYAMLで記述されており、2つのtasksがあります。",
+            "tasks": {
+              "fetch_orders": "{task}: 注文をダウンロードする",
+              "summarize": "{task}: Pythonで収益を計算する"
+            },
+            "after_tasks": "Tasksは、定義された順序で順次実行されます。",
             "next": "保存して実行"
           },
           "first_execution": {
@@ -2109,6 +2153,7 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
+      "unknown_schema": "不明なスキーマ",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",
@@ -2551,6 +2596,7 @@
           "generic": "問題が発生しました。もう一度お試しください。"
         },
         "emptyHelper": "この flow の編集、テストの生成、関連ファイルのスキャフォールド、またはその仕組みの説明ができます。",
+        "emptyHelperNoFlow": "Flowを作成または編集したり、テストを生成したり、関連ファイルを足場にしたり、Kestraの仕組みを説明したりできます。",
         "suggestions": {
           "errorHandling": "エラー処理を追加",
           "unitTest": "ユニットテストを作成",
@@ -2616,7 +2662,8 @@
           "applied": "適用済み",
           "previewBanner": "AI による変更案を確認中です。適用または却下するまでエディターは読み取り専用になります。",
           "applyTitle": "flow を適用",
-          "applyConfirm": "{namespace}.{id} をレビュー用のドラフトリビジョンとして保存しますか？作成されるか、既に存在する場合は新しいドラフトリビジョンが追加されます。ドラフトは公開されるまで trigger や subflow から参照されません。",
+          "applyDraftTitle": "適用するとドラフトリビジョンが保存されます。",
+          "applyDraftHint": "まだ何も本番には反映されません。公開するまで、trigger と subflow はドラフトを無視します。",
           "applyConfirmDashboard": "ダッシュボード {id} を適用しますか？作成されます。既に存在する場合は上書きされます。",
           "applyError": "flowの適用に失敗しました。もう一度お試しください。",
           "applyErrorDashboard": "ダッシュボードを適用できませんでした。もう一度お試しください。",

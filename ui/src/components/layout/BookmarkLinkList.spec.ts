@@ -74,8 +74,8 @@ describe("BookmarkLinkList", () => {
             {label: "Settings", path: "/settings"},
         ]
 
-        const wrapper = mountList(pages)
-        const links = wrapper.findAll(".bookmark-anchor")
+        const list = mountList(pages)
+        const links = list.findAll(".bookmark-anchor")
 
         expect(links).toHaveLength(2)
         expect(links[0].attributes("href")).toBe("/overview")
@@ -83,18 +83,18 @@ describe("BookmarkLinkList", () => {
     })
 
     test("uses the label as the title when a label exists", () => {
-        const wrapper = mountList([
+        const list = mountList([
             {label: "My Dashboard", path: "/dashboard"},
         ])
 
-        expect(wrapper.find(".bookmark-anchor").attributes("title"))
+        expect(list.find(".bookmark-anchor").attributes("title"))
             .toBe("My Dashboard")
     })
 
     test("falls back to the path when the label is missing", () => {
-        const wrapper = mountList([{path: "/reports"}])
+        const list = mountList([{path: "/reports"}])
 
-        expect(wrapper.find(".bookmark-anchor").attributes("title"))
+        expect(list.find(".bookmark-anchor").attributes("title"))
             .toBe("/reports")
     })
 })

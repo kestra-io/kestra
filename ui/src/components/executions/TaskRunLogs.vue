@@ -1,15 +1,16 @@
 <template>
     <div class="task-run-logs" data-test="task-run-logs">
         <Collapse>
-            <KsFormItem>
+            <KsFormItem class="filter">
                 <SearchField
                     :router="false"
                     class="search"
                     @search="logFilter = $event"
                 />
             </KsFormItem>
-            <KsFormItem>
+            <KsFormItem class="filter">
                 <LogLevelSelector
+                    class="level"
                     :value="logLevel"
                     @update:model-value="logLevel = toLevelKey($event)"
                 />
@@ -60,5 +61,27 @@
 <style scoped>
     .search {
         margin-inline-end: var(--ks-spacing-2);
+    }
+
+    @media only screen and (min-width: 768px) {
+        .task-run-logs .filter {
+            margin-right: 5px;
+        }
+
+        .task-run-logs .search,
+        .task-run-logs .level {
+            width: 200px;
+        }
+    }
+
+    @media only screen and (max-width: 767px) {
+        .task-run-logs .filter {
+            display: block;
+            margin-right: 0;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
     }
 </style>

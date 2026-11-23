@@ -1765,6 +1765,7 @@ export type MiscControllerConfiguration = {
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
     isPluginEndpointsEnabled?: boolean;
+    isMcpServerEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -4649,10 +4650,6 @@ export type SearchBlueprintsData = {
     };
     query?: {
         /**
-         * The sort of current page
-         */
-        sort?: string | null;
-        /**
          * The current page
          */
         page?: number;
@@ -4660,6 +4657,10 @@ export type SearchBlueprintsData = {
          * The current page size
          */
         size?: number;
+        /**
+         * The sort of current page
+         */
+        sort?: Array<string> | null;
         /**
          * A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected.
          */
@@ -5075,13 +5076,13 @@ export type SearchDashboardsData = {
          */
         size?: number;
         /**
-         * The filter query
-         */
-        q?: string | null;
-        /**
          * The sort of current page
          */
         sort?: Array<string> | null;
+        /**
+         * The filter query
+         */
+        q?: string | null;
     };
     url: '/api/v1/{tenant}/dashboards';
 };

@@ -155,10 +155,7 @@
         return selected ? [selected] : []
     })
 
-    const modelValue = defineModel({
-        type: String,
-        default: "",
-    })
+    const modelValue = defineModel<string | undefined>({default: ""})
 
     const props = defineProps<{
         blockSchemaPath: string,
@@ -166,22 +163,11 @@
 </script>
 
 <style scoped>
-    :deep(div.task-icon) {
+    div.task-icon {
         display: inline-block;
         width: var(--ks-font-size-lg);
         height: var(--ks-font-size-lg);
         margin-right: 1rem;
-    }
-
-    :deep(.kel-input__prefix-inner) {
-        .task-icon {
-            top: 0;
-            margin-right: 0;
-        }
-    }
-
-    :deep(.kel-select__suffix) {
-        display: flex !important;
     }
 
     .kel-select-dropdown__item {
@@ -195,7 +181,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        & :deep(.task-icon) {
+        & .task-icon {
             width: 2rem;
             height: 2rem;
         }

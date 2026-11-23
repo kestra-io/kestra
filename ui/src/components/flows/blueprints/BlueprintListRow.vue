@@ -139,7 +139,7 @@
         align-items: center;
         gap: var(--ks-spacing-2);
 
-        & :deep(.task-icon) {
+        & .task-icon {
             width: 1.5rem;
             height: 1.5rem;
         }

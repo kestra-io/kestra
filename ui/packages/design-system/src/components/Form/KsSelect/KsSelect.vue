@@ -77,7 +77,7 @@
         singleLineTags?: boolean
     }
 
-    const props = withDefaults(defineProps<KsSelectProps & /* @vue-ignore */ Omit<NativeAttributes<SelectPropsPublic & HTMLAttributes>, keyof KsSelectProps>>(), {
+    const props = withDefaults(defineProps<KsSelectProps & /* @vue-ignore */ (Omit<NativeAttributes<SelectPropsPublic & HTMLAttributes>, keyof KsSelectProps> & {onVisibleChange?: (visible: boolean) => void})>(), {
         placeholder: undefined,
         size: undefined,
         clearable: undefined,
@@ -279,13 +279,14 @@
         }
 
         & .kel-select__wrapper {
-            background-color: var(--ks-bg-input);
-            min-height: 30px;
-            font-size: var(--ks-font-size-xs);
+            background-color: var(--ks-select-bg, var(--ks-bg-input));
+            border: var(--ks-select-border, none);
+            min-height: var(--ks-select-height, 30px);
+            font-size: var(--ks-select-font-size, var(--ks-font-size-xs));
             box-shadow: inset 0 0 0 1px var(--ks-border-strong), 0 1px 2px var(--ks-shadow-element);
 
             &:not(.is-disabled):hover {
-                background-color: var(--ks-bg-hover);
+                background-color: var(--ks-select-hover-bg, var(--ks-bg-hover));
             }
 
             &.is-disabled {
@@ -298,6 +299,21 @@
                 }
             }
         }
+    }
+
+    .kel-select:not(.kel-select--small, .kel-select--large) .kel-select__wrapper {
+        padding: var(--ks-select-padding, 4px 12px);
+        gap: var(--ks-select-gap, 6px);
+    }
+
+    .kel-select--small .kel-select__wrapper {
+        padding: var(--ks-select-padding, 2px 8px);
+        gap: var(--ks-select-gap, 4px);
+    }
+
+    .kel-select--large .kel-select__wrapper {
+        padding: var(--ks-select-padding, 8px 16px);
+        gap: var(--ks-select-gap, 6px);
     }
 
     @media (pointer: coarse) {

@@ -154,21 +154,31 @@
                     </KsButton>
                     <template #dropdown>
                         <KsDropdownMenu>
-                            <KsDropdownItem v-if="canChangeLabels" :icon="LabelMultiple" :disabled="bulkActionDisabled(action.CHANGE_LABELS)" :title="bulkActionTooltip(action.CHANGE_LABELS)" @click=" isOpenLabelsModal = !isOpenLabelsModal">
-                                {{ $t("Set labels") }}
-                            </KsDropdownItem>
-                            <KsDropdownItem v-if="canResume" :icon="Play" :disabled="bulkActionDisabled(action.RESUME)" :title="bulkActionTooltip(action.RESUME)" @click="resumeExecutions()">
-                                {{ $t("resume") }}
-                            </KsDropdownItem>
-                            <KsDropdownItem v-if="canPause" :icon="Pause" :disabled="bulkActionDisabled(action.PAUSE)" :title="bulkActionTooltip(action.PAUSE)" @click="pauseExecutions()">
-                                {{ $t("pause") }}
-                            </KsDropdownItem>
-                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" :disabled="bulkActionDisabled(action.UNQUEUE)" :title="bulkActionTooltip(action.UNQUEUE)" @click="unqueueDialogVisible = true">
-                                {{ $t("unqueue") }}
-                            </KsDropdownItem>
-                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" :disabled="bulkActionDisabled(action.FORCE_RUN)" :title="bulkActionTooltip(action.FORCE_RUN)" @click="forceRunExecutions()">
-                                {{ $t("force run") }}
-                            </KsDropdownItem>
+                            <KsTooltip v-if="canChangeLabels" :content="bulkActionTooltip(action.CHANGE_LABELS)" :disabled="!bulkActionTooltip(action.CHANGE_LABELS)">
+                                <KsDropdownItem :icon="LabelMultiple" :disabled="bulkActionDisabled(action.CHANGE_LABELS)" @click="isOpenLabelsModal = !isOpenLabelsModal">
+                                    {{ $t("Set labels") }}
+                                </KsDropdownItem>
+                            </KsTooltip>
+                            <KsTooltip v-if="canResume" :content="bulkActionTooltip(action.RESUME)" :disabled="!bulkActionTooltip(action.RESUME)">
+                                <KsDropdownItem :icon="Play" :disabled="bulkActionDisabled(action.RESUME)" @click="resumeExecutions()">
+                                    {{ $t("resume") }}
+                                </KsDropdownItem>
+                            </KsTooltip>
+                            <KsTooltip v-if="canPause" :content="bulkActionTooltip(action.PAUSE)" :disabled="!bulkActionTooltip(action.PAUSE)">
+                                <KsDropdownItem :icon="Pause" :disabled="bulkActionDisabled(action.PAUSE)" @click="pauseExecutions()">
+                                    {{ $t("pause") }}
+                                </KsDropdownItem>
+                            </KsTooltip>
+                            <KsTooltip v-if="canUnqueue" :content="bulkActionTooltip(action.UNQUEUE)" :disabled="!bulkActionTooltip(action.UNQUEUE)">
+                                <KsDropdownItem :icon="QueueFirstInLastOut" :disabled="bulkActionDisabled(action.UNQUEUE)" @click="unqueueDialogVisible = true">
+                                    {{ $t("unqueue") }}
+                                </KsDropdownItem>
+                            </KsTooltip>
+                            <KsTooltip v-if="canForceRun" :content="bulkActionTooltip(action.FORCE_RUN)" :disabled="!bulkActionTooltip(action.FORCE_RUN)">
+                                <KsDropdownItem :icon="RunFast" :disabled="bulkActionDisabled(action.FORCE_RUN)" @click="forceRunExecutions()">
+                                    {{ $t("force run") }}
+                                </KsDropdownItem>
+                            </KsTooltip>
                         </KsDropdownMenu>
                     </template>
                 </KsDropdown>
@@ -486,7 +496,9 @@
     import Play from "vue-material-design-icons/Play.vue"
     import BottomActionBar from "../layout/BottomActionBar.vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {KsMessageBox, KsTooltip, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
+    import {KsFormItem, KsMessageBox, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
+    import {useExecutionDeletionDialog} from "./composables/useExecutionDeletionDialog"
+    import {bulkActionRules, isExecutionTerminated} from "./bulkActionEligibility"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -512,11 +524,8 @@
 
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {useExecutionDeletionDialog} from "./composables/useExecutionDeletionDialog"
-    import {bulkActionRules, isExecutionTerminated} from "./bulkActionEligibility"
 
     const {loadInit} = useRestoreUrl()
-    const {confirmExecutionDeletion} = useExecutionDeletionDialog()
     import Sections from "../dashboard/sections/Sections.vue"
     import type {Chart} from "../dashboard/types"
     import ExecutionsTimeline from "./timeline/ExecutionsTimeline.vue"
@@ -905,9 +914,7 @@
         return (executionsStore.executions ?? []).filter(e => ids.has(e.id))
     })
 
-    const toggleAllUnselected = () => {
-        dataTable.value?.toggleAllUnselected()
-    }
+    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
 
     const displayButtons = computed(() => {
@@ -957,8 +964,6 @@
     const canResume = computed(() => {
         return isAllowedOnExecutions(action.RESUME)
     })
-
-    const isTerminated = isExecutionTerminated
 
     const bulkActionDisabled = (executionAction: string) => {
         if (queryBulkAction.value) {
@@ -1238,23 +1243,21 @@
     }
 
 
+    const {confirmExecutionDeletion} = useExecutionDeletionDialog()
+
     const deleteExecutions = async () => {
+        const count = bulkActionCount.value
         const nonTerminatedCount = queryBulkAction.value
             ? 0
-            : selectedExecutions.value.filter(execution => !isTerminated(execution)).length
-        const messageHtml = t("bulk delete", {executionCount: bulkActionCount.value})
-        const options = await confirmExecutionDeletion(messageHtml, {
+            : selectedExecutions.value.filter(execution => !isExecutionTerminated(execution)).length
+        const options = await confirmExecutionDeletion(t("bulk delete", {"executionCount": count}), {
             offerNonTerminated: true,
             nonTerminatedCount,
             total: selectedExecutions.value.length,
         })
         if (!options) return
 
-        actionOptions.value.includeNonTerminated = options.includeNonTerminated
-        actionOptions.value.deleteLogs = options.deleteLogs
-        actionOptions.value.deleteMetrics = options.deleteMetrics
-        actionOptions.value.deleteStorage = options.deleteStorage
-
+        Object.assign(actionOptions.value, options)
         genericConfirmCallback(
             "queryDeleteExecution",
             "bulkDeleteExecution",
@@ -1371,4 +1374,3 @@
     --ks-id-color: var(--ks-text-link);
 }
 </style>
-

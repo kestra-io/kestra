@@ -55,5 +55,3 @@ export const bulkActionRules: Record<string, BulkActionRule> = {
         tooltipKey: "bulk action ineligible not terminated",
     },
 }
-
-

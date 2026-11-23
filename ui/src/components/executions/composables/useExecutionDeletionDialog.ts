@@ -25,12 +25,7 @@ export function useExecutionDeletionDialog() {
         messageHtml: string,
         {offerNonTerminated = false, nonTerminatedCount = 0, total = 0}: ConfirmExecutionDeletionConfig = {},
     ): Promise<ExecutionDeletionOptions | undefined> {
-        const options = reactive<ExecutionDeletionOptions>({
-            deleteLogs: true,
-            deleteMetrics: true,
-            deleteStorage: true,
-            includeNonTerminated: false,
-        })
+        const options = reactive<ExecutionDeletionOptions>({deleteLogs: true, deleteMetrics: true, deleteStorage: true, includeNonTerminated: false})
         const checkbox = (key: DeletedData, label: string) => h(KsCheckbox, {
             modelValue: options[key],
             label: t(label),
@@ -47,17 +42,14 @@ export function useExecutionDeletionDialog() {
                     "onUpdate:modelValue": (val: unknown) => (options.includeNonTerminated = Boolean(val)),
                 }),
             }) : null,
-            requiresConsent ? h(KsAlert, {
+            requiresConsent || (offerNonTerminated && options.includeNonTerminated) ? h(KsAlert, {
                 title: t("execution-warn-title"),
-                description: `${t("execution-warn-non-terminated-count", {count: nonTerminatedCount, total: total || nonTerminatedCount})} ${t("execution-warn-deleting-still-running")}`,
+                description: requiresConsent
+                    ? `${t("execution-warn-non-terminated-count", {count: nonTerminatedCount, total: total || nonTerminatedCount})} ${t("execution-warn-deleting-still-running")}`
+                    : t("execution-warn-deleting-still-running"),
                 type: "warning",
                 closable: false,
-            }) : (offerNonTerminated && options.includeNonTerminated ? h(KsAlert, {
-                title: t("execution-warn-title"),
-                description: t("execution-warn-deleting-still-running"),
-                type: "warning",
-                closable: false,
-            }) : null),
+            }) : null,
             checkbox("deleteLogs", "execution_deletion.logs"),
             checkbox("deleteMetrics", "execution_deletion.metrics"),
             checkbox("deleteStorage", "execution_deletion.storage"),
@@ -80,4 +72,3 @@ export function useExecutionDeletionDialog() {
 
     return {confirmExecutionDeletion}
 }
-

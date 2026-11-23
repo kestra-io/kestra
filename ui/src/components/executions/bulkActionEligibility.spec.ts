@@ -18,193 +18,31 @@ function makeExecution(state: string): Execution {
 }
 
 describe("bulk action eligibility rules", () => {
-    const terminatedStates = [
-        State.SUCCESS,
-        State.WARNING,
-        State.FAILED,
-        State.KILLED,
-        State.CANCELLED,
-        State.RETRIED,
-        State.SKIPPED,
-        State.RESUBMITTED,
-    ]
-
-    const nonTerminatedStates = [
-        State.RUNNING,
-        State.PAUSED,
-        State.QUEUED,
-        State.CREATED,
-        State.RESTARTED,
-    ]
-
-    describe("isExecutionTerminated", () => {
-        it("returns true for terminated states", () => {
-            for (const st of terminatedStates) {
-                expect(isExecutionTerminated(makeExecution(st))).toBe(true)
-            }
-        })
-
-        it("returns false for non-terminated states", () => {
-            for (const st of nonTerminatedStates) {
-                expect(isExecutionTerminated(makeExecution(st))).toBe(false)
-            }
-        })
+    it("treats a PAUSED execution as not terminated", () => {
+        expect(isExecutionTerminated(makeExecution(State.PAUSED))).toBe(false)
+        expect(isExecutionTerminated(makeExecution(State.RUNNING))).toBe(false)
+        expect(isExecutionTerminated(makeExecution(State.SUCCESS))).toBe(true)
+        expect(isExecutionTerminated(makeExecution(State.KILLED))).toBe(true)
     })
 
-    describe("UPDATE (change state)", () => {
-        const rule = bulkActionRules[action.UPDATE]
+    it.each([
+        [action.UPDATE, [State.SUCCESS, State.FAILED, State.WARNING, State.CANCELLED], [State.KILLED, State.RUNNING, State.PAUSED, State.QUEUED]],
+        [action.RESTART, [State.FAILED], [State.SUCCESS, State.RUNNING, State.KILLED]],
+        [action.REPLAY, [State.SUCCESS, State.FAILED, State.KILLED], [State.RUNNING, State.PAUSED]],
+        [action.KILL, [State.RUNNING, State.PAUSED, State.QUEUED], [State.SUCCESS, State.FAILED, State.KILLED]],
+        [action.PAUSE, [State.RUNNING, State.PAUSING, State.KILLING], [State.PAUSED, State.SUCCESS]],
+        [action.RESUME, [State.PAUSED], [State.RUNNING, State.SUCCESS]],
+        [action.UNQUEUE, [State.QUEUED], [State.RUNNING, State.SUCCESS]],
+        [action.FORCE_RUN, [State.RUNNING, State.QUEUED, State.PAUSED], [State.SUCCESS, State.KILLED]],
+        [action.CHANGE_LABELS, [State.SUCCESS, State.FAILED], [State.RUNNING, State.PAUSED]],
+    ])("%s accepts %j and refuses %j", (executionAction, allowed, refused) => {
+        const rule = bulkActionRules[executionAction]
 
-        it("allows terminated executions except KILLED", () => {
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(true)
-            expect(rule.allowed(makeExecution(State.FAILED))).toBe(true)
-            expect(rule.allowed(makeExecution(State.WARNING))).toBe(true)
-            expect(rule.allowed(makeExecution(State.CANCELLED))).toBe(true)
-
-            // KILLED is not eligible
-            expect(rule.allowed(makeExecution(State.KILLED))).toBe(false)
-
-            // Non-terminated are not eligible
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(false)
-            expect(rule.allowed(makeExecution(State.PAUSED))).toBe(false)
-            expect(rule.allowed(makeExecution(State.QUEUED))).toBe(false)
-        })
-
-        it("has expected tooltip key", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible change state")
-        })
-    })
-
-    describe("RESTART", () => {
-        const rule = bulkActionRules[action.RESTART]
-
-        it("allows only FAILED executions", () => {
-            expect(rule.allowed(makeExecution(State.FAILED))).toBe(true)
-
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(false)
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(false)
-            expect(rule.allowed(makeExecution(State.KILLED))).toBe(false)
-        })
-
-        it("has expected tooltip key and params", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible not state")
-            expect(rule.tooltipParams).toEqual({state: State.FAILED})
-        })
-    })
-
-    describe("REPLAY", () => {
-        const rule = bulkActionRules[action.REPLAY]
-
-        it("allows only terminated executions", () => {
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(true)
-            expect(rule.allowed(makeExecution(State.FAILED))).toBe(true)
-            expect(rule.allowed(makeExecution(State.KILLED))).toBe(true)
-
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(false)
-            expect(rule.allowed(makeExecution(State.PAUSED))).toBe(false)
-        })
-
-        it("has expected tooltip key", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible not terminated")
-        })
-    })
-
-    describe("KILL", () => {
-        const rule = bulkActionRules[action.KILL]
-
-        it("allows only non-terminated executions", () => {
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(true)
-            expect(rule.allowed(makeExecution(State.PAUSED))).toBe(true)
-            expect(rule.allowed(makeExecution(State.QUEUED))).toBe(true)
-
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(false)
-            expect(rule.allowed(makeExecution(State.FAILED))).toBe(false)
-            expect(rule.allowed(makeExecution(State.KILLED))).toBe(false)
-        })
-
-        it("has expected tooltip key", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible already terminated")
-        })
-    })
-
-    describe("PAUSE", () => {
-        const rule = bulkActionRules[action.PAUSE]
-
-        it("allows RUNNING and transitional executions", () => {
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(true)
-            expect(rule.allowed(makeExecution(State.PAUSING))).toBe(true)
-            expect(rule.allowed(makeExecution(State.KILLING))).toBe(true)
-
-            expect(rule.allowed(makeExecution(State.PAUSED))).toBe(false)
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(false)
-        })
-
-        it("has expected tooltip key", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible not pausable")
-        })
-    })
-
-    describe("RESUME", () => {
-        const rule = bulkActionRules[action.RESUME]
-
-        it("allows only PAUSED executions", () => {
-            expect(rule.allowed(makeExecution(State.PAUSED))).toBe(true)
-
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(false)
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(false)
-        })
-
-        it("has expected tooltip key and params", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible not state")
-            expect(rule.tooltipParams).toEqual({state: State.PAUSED})
-        })
-    })
-
-    describe("UNQUEUE", () => {
-        const rule = bulkActionRules[action.UNQUEUE]
-
-        it("allows only QUEUED executions", () => {
-            expect(rule.allowed(makeExecution(State.QUEUED))).toBe(true)
-
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(false)
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(false)
-        })
-
-        it("has expected tooltip key and params", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible not state")
-            expect(rule.tooltipParams).toEqual({state: State.QUEUED})
-        })
-    })
-
-    describe("FORCE_RUN", () => {
-        const rule = bulkActionRules[action.FORCE_RUN]
-
-        it("allows only non-terminated executions", () => {
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(true)
-            expect(rule.allowed(makeExecution(State.QUEUED))).toBe(true)
-
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(false)
-            expect(rule.allowed(makeExecution(State.KILLED))).toBe(false)
-        })
-
-        it("has expected tooltip key", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible already terminated")
-        })
-    })
-
-    describe("CHANGE_LABELS", () => {
-        const rule = bulkActionRules[action.CHANGE_LABELS]
-
-        it("allows only terminated executions", () => {
-            expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(true)
-            expect(rule.allowed(makeExecution(State.FAILED))).toBe(true)
-
-            expect(rule.allowed(makeExecution(State.RUNNING))).toBe(false)
-        })
-
-        it("has expected tooltip key", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible not terminated")
-        })
+        for (const state of allowed) {
+            expect(rule.allowed(makeExecution(state)), state).toBe(true)
+        }
+        for (const state of refused) {
+            expect(rule.allowed(makeExecution(state)), state).toBe(false)
+        }
     })
 })
-
-

@@ -114,8 +114,8 @@ export const BulkActionEligibility: Story = {
     },
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement)
-        const runningRow = canvas.getByText("Running", {exact: true}).closest<HTMLTableRowElement>("tr")
-        const failedRow = canvas.getByText("Failed", {exact: true}).closest<HTMLTableRowElement>("tr")
+        const runningRow = (await canvas.findByText("Running", {exact: true})).closest<HTMLTableRowElement>("tr")
+        const failedRow = (await canvas.findByText("Failed", {exact: true})).closest<HTMLTableRowElement>("tr")
 
         if (!runningRow || !failedRow) {
             throw new Error("Expected execution rows were not rendered")
@@ -127,6 +127,8 @@ export const BulkActionEligibility: Story = {
 
         const restart = await canvas.findByRole("button", {name: "Restart"})
         await expect(restart).toBeDisabled()
+        await userEvent.hover(restart)
+        await waitFor(() => expect(within(document.body).getByText("1 of 2 selected executions are not in FAILED state.")).toBeVisible())
 
         await userEvent.click(runningCheckbox)
         await waitFor(() => expect(restart).toBeEnabled())
@@ -159,4 +161,3 @@ export const FlowExecutionsTab: Story = {
         expect((await canvas.findAllByText("company.team")).length).toBeGreaterThan(0)
     },
 }
-

@@ -1,0 +1,30 @@
+id: loop-dynamic-concurrency
+namespace: io.kestra.tests
+
+inputs:
+  - id: concurrency
+    type: INT
+    defaults: 2
+
+tasks:
+  - id: limit
+    type: io.kestra.plugin.core.debug.Return
+    format: "3"
+  - id: outer
+    type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: "{{ inputs.concurrency }}"
+    values: [1, 2, 3]
+    tasks:
+      - id: from_output
+        type: io.kestra.plugin.core.flow.Loop
+        concurrencyLimit: "{{ outputs.limit.value }}"
+        values: ["a", "b", "c", "d"]
+        tasks:
+          - id: from_item
+            type: io.kestra.plugin.core.flow.Loop
+            concurrencyLimit: "{{ item.parent.value }}"
+            values: ["x", "y"]
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.debug.Return
+                format: "{{ item.parent.value }} - {{ item.value }}"

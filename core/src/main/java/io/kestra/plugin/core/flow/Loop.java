@@ -35,7 +35,6 @@ import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -217,7 +216,6 @@ public class Loop extends AbstractBranch<Loop.Output> {
     )
     private Object values;
 
-    @PositiveOrZero
     @NotNull
     @Builder.Default
     @Schema(
@@ -230,8 +228,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
             A `concurrencyLimit` greater than 1 allows up to the specified number of task groups to run in parallel.
             """
     )
-    @PluginProperty
-    private Integer concurrencyLimit = 0;
+    private Property<Integer> concurrencyLimit = Property.ofValue(0);
 
     @Builder.Default
     @Schema(
@@ -415,10 +412,11 @@ public class Loop extends AbstractBranch<Loop.Output> {
      * @return a {@link UriInit} holding totalCount, active limit, first batch of values, and next byte offset
      */
     public UriInit initFromUri(RunContext runContext, String valuesUri) throws IOException, IllegalVariableEvaluationException {
-        int rawLimit = this.concurrencyLimit == 0 ? Integer.MAX_VALUE : this.concurrencyLimit;
+        int concurrencyLimit = renderConcurrencyLimit(runContext);
+        int rawLimit = concurrencyLimit == 0 ? Integer.MAX_VALUE : concurrencyLimit;
         var init = FlowableUtils.readAndCountLoopValuesFromUri(runContext, valuesUri, rawLimit);
         int size = init.totalCount();
-        int limit = Math.min(this.concurrencyLimit == 0 ? size : this.concurrencyLimit, size);
+        int limit = Math.min(concurrencyLimit == 0 ? size : concurrencyLimit, size);
         return new UriInit(size, limit, init.values(), init.nextOffset());
     }
 
@@ -432,8 +430,17 @@ public class Loop extends AbstractBranch<Loop.Output> {
     public ValuesInit initFromValues(RunContext runContext) throws IllegalVariableEvaluationException {
         var either = FlowableUtils.resolveValues(runContext, this.values);
         int size = either.isLeft() ? either.getLeft().size() : either.getRight().size();
-        int limit = this.concurrencyLimit == 0 ? size : Math.min(this.concurrencyLimit, size);
+        int concurrencyLimit = renderConcurrencyLimit(runContext);
+        int limit = concurrencyLimit == 0 ? size : Math.min(concurrencyLimit, size);
         return new ValuesInit(size, limit, either);
+    }
+
+    private int renderConcurrencyLimit(RunContext runContext) throws IllegalVariableEvaluationException {
+        int concurrencyLimit = runContext.render(this.concurrencyLimit).skipCache().as(Integer.class).orElse(0);
+        if (concurrencyLimit < 0) {
+            throw new IllegalVariableEvaluationException("The `concurrencyLimit` of the Loop task must be greater than or equal to 0, but was %d.".formatted(concurrencyLimit));
+        }
+        return concurrencyLimit;
     }
 
     /** Holds initialization data computed from a URI-backed ION file. */

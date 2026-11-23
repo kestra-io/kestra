@@ -424,7 +424,7 @@
     })
 
     const namespace = computed({
-        get: () => route.query?.namespace as [],
+        get: () => route.query?.namespace as string | undefined,
         set: (val) => onNamespaceChange(val),
     })
 

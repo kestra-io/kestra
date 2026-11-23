@@ -153,7 +153,7 @@
                 <KsSwitch
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'BOOL'"
-                    :modelValue="inputsValues[input.id] as string | number | boolean | undefined"
+                    :modelValue="inputsValues[input.id] as boolean | undefined"
                     @update:model-value="(val) => { inputsValues[input.id] = val; onChangeBool(input); }"
                     class="boolean-inputs"
                 />
@@ -405,7 +405,7 @@
 
     type PrefillInput = Pick<InputMetaData, "id"> & {type?: InputType | string}
 
-    const modelValue = defineModel<Record<string, unknown>>()
+    const modelValue = defineModel<Record<string, unknown>>({default: () => ({})})
 
     const props = withDefaults(defineProps<{
         executeClicked?: boolean;
@@ -441,6 +441,7 @@
         "validation": [payload: ValidationEventPayload];
         "update:onRecap": [value: boolean];
         "ready": [];
+        "clearValidation": [fieldId: string];
     }>()
 
     const executionsStore = useExecutionsStore()
@@ -624,6 +625,9 @@
         input.isDefault = false
         modelValue.value = {...inputsValues}
         emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
+        if (!inputError(input.id)) {
+            emit("clearValidation", input.id)
+        }
     }
 
     function onSubmit(): void {

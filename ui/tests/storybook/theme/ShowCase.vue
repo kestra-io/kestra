@@ -246,7 +246,7 @@
 
     const input = ref("")
     const curDate = ref(new Date())
-    const value1 = ref(false)
+    const value1 = ref<string | number | boolean>(false)
 
     const alertTypes = ["success", "info", "warning", "error"] as const
     const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
@@ -331,7 +331,7 @@
         link: string
     }
 
-    const state1 = ref("")
+    const state1 = ref<string | number>("")
 
     const restaurants = ref<RestaurantItem[]>([])
     const querySearch = (queryString: string, cb: (results: RestaurantItem[]) => void) => {

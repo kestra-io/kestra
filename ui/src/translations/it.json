@@ -800,7 +800,8 @@
       "dialog_title": "Limiti di Concorrenza",
       "warning": "La modifica del contatore in esecuzione potrebbe corrompere la concurrency, quindi le esecuzioni potrebbero superare il limite consentito.",
       "queued": "In coda",
-      "save_error": "Impossibile aggiornare il limite di Concurrency, il valore precedente è stato mantenuto."
+      "save_error": "Impossibile aggiornare il limite di Concurrency, il valore precedente è stato mantenuto.",
+      "invalid_running_count": "Inserisci un numero intero tra 0 e {max}."
     },
     "flowConcurrency": {
       "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",

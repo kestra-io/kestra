@@ -132,6 +132,7 @@
                 >
                     <template #default="{item, active}">
                         <DynamicScrollerItem
+                            class="entry"
                             :item="asLog(item)"
                             :active="active"
                             :data-index="asLog(item).index"
@@ -725,7 +726,7 @@
       padding: .5rem;
     }
 
-    & :deep(.vue-recycle-scroller__item-view > div) {
+    & .entry {
       min-height: 2rem;
     }
   }
@@ -772,9 +773,7 @@
   }
 
   .logs-toolbar {
-    & :deep(.kel-button) {
-        margin: 0;
-    }
+    --ks-button-adjacent-margin: 0;
   }
 
   .logs-toolbar__text-btn {

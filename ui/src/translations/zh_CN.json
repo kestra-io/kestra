@@ -1,5 +1,12 @@
 {
   "zh_CN": {
+    "support_links": {
+      "slack_title": "社区 Slack",
+      "slack_description": "与其他用户和 Kestra 团队交流",
+      "github_description": "为我们的开源项目点星",
+      "help_center_title": "帮助中心",
+      "help_center_description": "联系支持团队获取企业版账户帮助"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra 已升级到 {version}，可能包含需要更新 Flow 的重大更改。",
       "cta": "查看更改"
@@ -562,6 +569,7 @@
     "output": "输出",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "无法计算表达式",
       "title": "调试表达式",
       "preview": "预览",
       "expression": "表达式"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "此 task 已重试",
+      "task-details": "{task} 的详细信息",
       "artifacts": "无 artifact | {count} 个 artifact | {count} 个 artifacts",
       "graph-orientation": "图表方向",
       "zoom-in": "放大",
@@ -1580,7 +1589,7 @@
           },
           "descriptions": {
             "color_mode": "选择您偏好的界面主题。",
-            "color_mode_shortcut": "提示：在任意位置按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> 即可循环切换主题。",
+            "color_mode_shortcut": "提示：在任意位置按 {ctrl}+{shift}+{key} 即可循环切换主题。",
             "logs_font_size": "日志查看器和终端中使用的字体大小。",
             "editor_font_family": "YAML编辑器中使用的等宽字体。",
             "editor_font_size": "YAML和无代码编辑器中使用的字体大小。",
@@ -1790,7 +1799,12 @@
           },
           "flow_generated": {
             "title": "这是一个 flow",
-            "body": "此 flow 以 YAML 编写，包含两个 task：<ol><li><code>fetch_orders</code> 用于下载订单</li><li><code>summarize</code> 用于在 Python 中计算收入</li></ol>task 按照定义的顺序依次执行。",
+            "body": "此 flow 以 YAML 编写，包含两个 task：",
+            "tasks": {
+              "fetch_orders": "{task} 用于下载订单",
+              "summarize": "{task} 用于在 Python 中计算收入"
+            },
+            "after_tasks": "task 按照定义的顺序依次执行。",
             "next": "保存并执行"
           },
           "first_execution": {
@@ -2139,6 +2153,7 @@
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
+      "unknown_schema": "未知架构",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",

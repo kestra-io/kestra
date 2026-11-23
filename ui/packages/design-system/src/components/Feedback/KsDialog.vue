@@ -100,8 +100,8 @@
         }
 
         & .kel-form-item__label {
-            font-size: var(--ks-font-size-md);
-            font-weight: var(--ks-font-weight-semibold);
+            font-size: var(--ks-form-item-label-font-size, var(--ks-font-size-md));
+            font-weight: var(--ks-form-item-label-font-weight, var(--ks-font-weight-semibold));
         }
 
         & .kel-dialog__header {

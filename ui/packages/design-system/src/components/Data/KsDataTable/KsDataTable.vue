@@ -37,7 +37,6 @@
                     ref="tableRef"
                     v-bind="$attrs"
                     :tableLayout="tableLayout"
-                    fixed
                     :data
                     :rowKey
                     :expandRowKeys="composedExpandRowKeys"
@@ -146,6 +145,8 @@
         sortKeyMapper?: (key: string) => string
         selectionMapper?: (element: T) => M
         forceExpandedRowKeys?: string[]
+        /** Rows for which this returns false keep no expand arrow. */
+        expandableRow?: (row: T) => boolean
         noPaginationGutter?: boolean
         noGutter?: boolean
         noFirstColumnGutter?: boolean
@@ -154,7 +155,7 @@
         mobileColumns?: KsDataTableMobileColumns
     }
 
-    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<T> & HTMLAttributes>, keyof KsDataTableProps | "emptyText">>(), {
+    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<T> & {flushExpand?: boolean} & HTMLAttributes>, keyof KsDataTableProps | "emptyText">>(), {
         data: () => [],
         total: 0,
         currentPage: 1,
@@ -171,6 +172,7 @@
         sortKeyMapper: undefined,
         selectionMapper: undefined,
         forceExpandedRowKeys: () => [],
+        expandableRow: undefined,
         noPaginationGutter: false,
         noGutter: false,
         noFirstColumnGutter: false,
@@ -249,13 +251,13 @@
         const forced = new Set(props.forceExpandedRowKeys ?? [])
         const userClass = (attrs.rowClassName ?? attrs["row-class-name"]) as string | ((data: {row: T; rowIndex: number}) => string) | undefined
 
-        if (!forced.size && !userClass) return undefined
+        if (!forced.size && !userClass && !props.expandableRow) return undefined
 
         return (arg: {row: T; rowIndex: number}) => {
             const base = typeof userClass === "function" ? userClass(arg) : (userClass ?? "")
-            if (!forced.size) return base
-            const key = getRowKey(arg.row)
-            return [base, forced.has(String(key)) ? "ks-row-force-expanded" : ""].filter(Boolean).join(" ")
+            const isForced = forced.size > 0 && forced.has(String(getRowKey(arg.row)))
+            const isLocked = props.expandableRow !== undefined && !props.expandableRow(arg.row)
+            return [base, isForced ? "ks-row-force-expanded" : "", isLocked ? "ks-row-not-expandable" : ""].filter(Boolean).join(" ")
         }
     })
 
@@ -598,6 +600,8 @@
 
         & .kel-pagination {
             display: flex;
+            flex-wrap: var(--ks-data-table-pagination-wrap, nowrap);
+            row-gap: var(--ks-spacing-2);
             padding-inline: var(--ks-data-table-gutter);
 
             & .kel-pagination__sizes {
@@ -658,6 +662,8 @@
     .ks-data-table-content {
         position: relative;
         height: 100%;
+        border-block: var(--ks-data-table-content-border, none);
+        padding-block: var(--ks-data-table-content-padding-block, 0);
 
         &.no-selection-gutter:not(.ks-data-table-content--cards) {
             & .kel-table th.kel-table__cell:first-child > .cell,
@@ -708,6 +714,14 @@
         & .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
             visibility: hidden;
             pointer-events: none;
+        }
+
+        & .kel-table tr.ks-row-not-expandable .kel-table__expand-icon {
+            pointer-events: none;
+
+            & .kel-icon {
+                display: none;
+            }
         }
     }
 
@@ -849,7 +863,7 @@
 
 <style scoped>
     .ks-data-table-wrapper :deep(.pagination) {
-        margin-block: var(--ks-spacing-4);
+        margin-block: var(--ks-spacing-4) var(--ks-data-table-pagination-margin-bottom, var(--ks-spacing-4));
     }
 </style>
 

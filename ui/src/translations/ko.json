@@ -1,5 +1,12 @@
 {
   "ko": {
+    "support_links": {
+      "slack_title": "커뮤니티 Slack",
+      "slack_description": "다른 사용자 및 Kestra 팀과 토론하세요",
+      "github_description": "오픈 소스 프로젝트에 별을 눌러 주세요",
+      "help_center_title": "도움말 센터",
+      "help_center_description": "Enterprise 계정에 대한 도움이 필요하면 지원팀에 문의하세요"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra가 {version}으로 업그레이드되었습니다. 이 버전에는 Flow 업데이트가 필요한 변경 사항이 포함될 수 있습니다.",
       "cta": "변경 사항 확인"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "표현식을 평가하지 못했습니다",
       "title": "디버그 표현식",
       "preview": "미리보기",
       "expression": "표현식"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "이 Task는 재시도되었습니다.",
+      "task-details": "{task} 세부 정보",
       "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
       "graph-orientation": "그래프 방향",
       "zoom-in": "확대",
@@ -1580,7 +1589,7 @@
           },
           "descriptions": {
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
-            "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요.",
+            "color_mode_shortcut": "팁: 어디서나 {ctrl}+{shift}+{key}을 눌러 테마를 전환하세요.",
             "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기.",
             "editor_font_family": "YAML 편집기에서 사용되는 모노스페이스 글꼴.",
             "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",
@@ -1790,7 +1799,12 @@
           },
           "flow_generated": {
             "title": "이것은 flow입니다",
-            "body": "flow는 YAML로 작성되었으며, 두 개의 task를 포함합니다:<ol><li><code>fetch_orders</code>: 주문을 다운로드합니다.</li><li><code>summarize</code>: Python에서 수익을 계산합니다.</li></ol>task는 정의된 순서대로 순차적으로 실행됩니다.",
+            "body": "flow는 YAML로 작성되었으며, 두 개의 task를 포함합니다:",
+            "tasks": {
+              "fetch_orders": "{task}: 주문을 다운로드합니다.",
+              "summarize": "{task}: Python에서 수익을 계산합니다."
+            },
+            "after_tasks": "task는 정의된 순서대로 순차적으로 실행됩니다.",
             "next": "저장 및 실행"
           },
           "first_execution": {
@@ -2139,6 +2153,7 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "no_code": {
+      "unknown_schema": "알 수 없는 스키마",
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",

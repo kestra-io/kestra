@@ -155,7 +155,7 @@
         transition: opacity 0.15s ease;
     }
 
-    :deep(.news-date) {
+    .news-date {
         font-size: var(--ks-font-size-2xs);
         font-weight: 400;
         color: var(--ks-text-secondary);

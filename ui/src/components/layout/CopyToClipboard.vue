@@ -6,7 +6,7 @@
             placement="left"
             :autoClose="2000"
         >
-            <KsButton :icon="ContentCopy" type="default" :link @click="copyText" :aria-label="$t('copy_to_clipboard')" :class="{'copy-icon-button': !label}">
+            <KsButton :icon="ContentCopy" type="default" :link @click="copyText" :aria-label="$t('copy_to_clipboard')" :class="{'copy-icon-button': !label, borderless}">
                 <template v-if="label" #default>{{ label }}</template>
             </KsButton>
         </KsTooltip>
@@ -19,7 +19,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import * as Utils from "../../utils/utils"
 
-    const props = defineProps<{ text: string; label?: string, link?: boolean }>()
+    const props = defineProps<{ text: string; label?: string, link?: boolean, borderless?: boolean }>()
 
     const copyText = () => Utils.copy(props.text)
 </script>
@@ -32,6 +32,11 @@
     top: 0.5rem;
     right: 0.5rem;
     display: inline-flex;
+
+    & .borderless {
+        border: none;
+        background: none;
+    }
 }
 
 .copy-icon-button {

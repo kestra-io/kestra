@@ -129,10 +129,6 @@
     .ion-table-preview {
         table-layout: fixed;
         width: 100%;
-
-        & :deep(.kel-table__body-wrapper) {
-            overflow-x: auto;
-        }
     }
 
     .cell-wrapper {
@@ -160,17 +156,5 @@
     .expand-button {
         margin-top: 4px;
         font-size: var(--ks-font-size-xs);
-    }
-
-    :deep(.ks-editor) {
-        .editor-container {
-            box-shadow: none;
-            background-color: transparent !important;
-            padding: 0;
-
-            .monaco-editor, .monaco-editor-background {
-                background-color: transparent;
-            }
-        }
     }
 </style>

@@ -1,5 +1,12 @@
 {
   "hi": {
+    "support_links": {
+      "slack_title": "कम्युनिटी Slack",
+      "slack_description": "अन्य उपयोगकर्ताओं और Kestra टीम के साथ चर्चा करें",
+      "github_description": "हमारे ओपन-सोर्स प्रोजेक्ट को स्टार दें",
+      "help_center_title": "सहायता केंद्र",
+      "help_center_description": "अपने Enterprise खाते में मदद के लिए सहायता टीम से संपर्क करें"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra को {version} में अपग्रेड किया गया था और इसमें ऐसे ब्रेकिंग बदलाव शामिल हो सकते हैं जिनके लिए आपके Flows में अपडेट की आवश्यकता होती है।",
       "cta": "देखें क्या बदला"
@@ -562,6 +569,7 @@
     "output": "आउटपुट",
     "flow_outputs": "फ्लो Outputs",
     "eval": {
+      "failed": "एक्सप्रेशन का मूल्यांकन नहीं हो सका",
       "title": "डिबग अभिव्यक्ति",
       "preview": "पूर्वावलोकन",
       "expression": "अभिव्यक्ति"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
+      "task-details": "{task} का विवरण",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
       "graph-orientation": "ग्राफ़ अभिविन्यास",
       "zoom-in": "ज़ूम इन करें",
@@ -1580,7 +1589,7 @@
           },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
-            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> दबाएं।",
+            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए {ctrl}+{shift}+{key} दबाएं।",
             "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।",
             "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
@@ -1790,7 +1799,12 @@
           },
           "flow_generated": {
             "title": "यह एक flow है",
-            "body": "flow YAML में दो tasks के साथ लिखा गया है:<ol><li><code>fetch_orders</code> ऑर्डरों को डाउनलोड करने के लिए</li><li><code>summarize</code> Python में राजस्व की गणना करने के लिए</li></ol>Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
+            "body": "flow YAML में दो tasks के साथ लिखा गया है:",
+            "tasks": {
+              "fetch_orders": "{task} ऑर्डरों को डाउनलोड करने के लिए",
+              "summarize": "{task} Python में राजस्व की गणना करने के लिए"
+            },
+            "after_tasks": "Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
             "next": "सहेजें और निष्पादित करें"
           },
           "first_execution": {
@@ -2139,6 +2153,7 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
+      "unknown_schema": "अज्ञात स्कीमा",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",

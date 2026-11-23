@@ -36,6 +36,15 @@ message WorkerJobRequest {
 
   // Worker connection info - only required in the first message of the stream
   optional WorkerConnectionInfo connectionInfo = 4;
+
+  // Jobs the worker holds, sent on the first message of the stream and then periodically.
+  // The controller resubmits the jobs it recorded for this worker on an earlier stream that are missing from it.
+  optional JobSync sync = 5;
+}
+
+// Jobs received by the worker whose terminal result the controller has not accepted yet.
+message JobSync {
+  repeated string held_job_ids = 1;
 }
 
 // Worker connection information sent in the first request
@@ -51,6 +60,9 @@ message WorkerConnectionInfo {
 
   // Worker's gRPC max inbound message size (bytes).
   int32 max_inbound_message_size = 4;
+
+  // Number of this stream, increased by the worker on each new stream; 0 for a worker that does not number them.
+  int64 stream_generation = 5;
 }
 
 // Controller -> Worker: Jobs to be executed
@@ -62,6 +74,9 @@ message WorkerJobResponse {
 
   // Serialized WorkerBroadcastEvent (JSON format) — carries ExecutionKilled, ClusterEvent, etc.
   repeated bytes events = 3;
+
+  // Stream generation of the sync this response acknowledges; 0 when it acknowledges none.
+  int64 sync_ack = 4;
 }
 
 // Individual job payload

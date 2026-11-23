@@ -1,5 +1,12 @@
 {
   "ja": {
+    "support_links": {
+      "slack_title": "コミュニティSlack",
+      "slack_description": "他のユーザーやKestraチームと話し合う",
+      "github_description": "オープンソースプロジェクトにスターを付ける",
+      "help_center_title": "ヘルプセンター",
+      "help_center_description": "Enterpriseアカウントについてサポートに問い合わせる"
+    },
     "versionUpgradeNotice": {
       "message": "Kestraが{version}にアップグレードされました。これには、Flowの更新が必要となる破壊的変更が含まれている可能性があります。",
       "cta": "変更点を確認"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "フロー出力",
     "eval": {
+      "failed": "式を評価できませんでした",
       "title": "デバッグ式",
       "preview": "プレビュー",
       "expression": "式"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "このTaskはリトライされました",
+      "task-details": "{task} の詳細",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",
       "graph-orientation": "グラフの向き",
       "zoom-in": "ズームイン",
@@ -2144,6 +2153,7 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
+      "unknown_schema": "不明なスキーマ",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",

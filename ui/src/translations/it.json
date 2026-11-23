@@ -1,5 +1,12 @@
 {
   "it": {
+    "support_links": {
+      "slack_title": "Slack della community",
+      "slack_description": "Discuti con altri utenti e con il team di Kestra",
+      "github_description": "Metti una stella al nostro progetto open source",
+      "help_center_title": "Centro assistenza",
+      "help_center_description": "Contatta il supporto per ricevere aiuto con il tuo account Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra è stato aggiornato alla versione {version} e potrebbe includere modifiche che richiedono aggiornamenti ai tuoi Flow.",
       "cta": "Vedi cosa è cambiato"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Output del Flow",
     "eval": {
+      "failed": "Impossibile valutare l'espressione",
       "title": "Espressione di Debug",
       "preview": "Anteprima",
       "expression": "Espressione"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Questo Task è stato ritentato",
+      "task-details": "Dettagli di {task}",
       "artifacts": "nessun artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientamento del grafico",
       "zoom-in": "Zoom avanti",
@@ -2144,6 +2153,7 @@
     "custom value": "Valore personalizzato",
     "chart": "Grafico",
     "no_code": {
+      "unknown_schema": "Schema sconosciuto",
       "toggle_pebble": "Attiva/disattiva editor Pebble",
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition",
       "adding": "+ Aggiungi un {what}",

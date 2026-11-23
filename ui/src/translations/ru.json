@@ -1,5 +1,12 @@
 {
   "ru": {
+    "support_links": {
+      "slack_title": "Сообщество в Slack",
+      "slack_description": "Обсуждайте темы с другими пользователями и командой Kestra",
+      "github_description": "Поставьте звезду нашему open-source-проекту",
+      "help_center_title": "Центр помощи",
+      "help_center_description": "Обратитесь в поддержку за помощью с учетной записью Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra был обновлен до версии {version} и может включать критические изменения, требующие обновления ваших Flow.",
       "cta": "Посмотреть изменения"
@@ -562,6 +569,7 @@
     "output": "Вывод",
     "flow_outputs": "Выходы Flow",
     "eval": {
+      "failed": "Не удалось вычислить выражение",
       "title": "Отладка выражения",
       "preview": "Предварительный просмотр",
       "expression": "Выражение"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Эта Task была повторена",
+      "task-details": "Сведения о {task}",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
       "graph-orientation": "Ориентация графика",
       "zoom-in": "Увеличить",
@@ -2144,6 +2153,7 @@
     "custom value": "Пользовательское значение",
     "chart": "График",
     "no_code": {
+      "unknown_schema": "Неизвестная схема",
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",

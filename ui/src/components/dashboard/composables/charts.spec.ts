@@ -7,7 +7,7 @@ vi.mock("override/stores/misc", () => ({
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {buildFullQuery, chartDrillDownTarget, registerDrillDown} from "./chartDrillDown"
 import type {ColorByValue} from "../types"
-import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, CATEGORICAL_SLOTS, byCategoryRank, categoryDisplayName, chartCategoryColors, fillTimeBucketLabels, rankStackedBars, toEchartsParams} from "./charts"
+import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, CATEGORICAL_SLOTS, byCategoryRank, categoryDisplayName, chartCategoryColors, fillTimeBucketLabels, formatNumber, rankStackedBars, toEchartsParams} from "./charts"
 
 // @ts-expect-error - plain .mjs module shared with the token linters
 import {knownTokens} from "../../../../scripts/tokens/knownTokens.mjs"
@@ -529,5 +529,22 @@ describe("categoryDisplayName", () => {
 
         expect(categoryDisplayName("500", parsed)).toBe("Server error")
         expect(["500", "200"].sort(byCategoryRank(parsed))).toEqual(["500", "200"])
+    })
+})
+
+describe("formatNumber", () => {
+    it.each([
+        [1234, "1,234"],
+        [1234567.891, "1,234,567.89"],
+        [3, "3"],
+        [1.5, "1.5"],
+        [101.78234, "101.78"],
+        [0.004, "0.004"],
+        [0.004123, "0.0041"],
+        [0.0123, "0.012"],
+        [-0.004, "-0.004"],
+        [0, "0"],
+    ])("shows %s as %s", (value, expected) => {
+        expect(formatNumber(value)).toBe(expected)
     })
 })

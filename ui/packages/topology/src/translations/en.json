@@ -3,6 +3,7 @@
         "retried": "This task was retried",
         "artifacts": "no artifacts | {count} artifact | {count} artifacts",
         "graph-orientation": "Graph orientation",
+        "task-details": "Details for {task}",
         "zoom-in": "Zoom in",
         "zoom-out": "Zoom out",
         "zoom-reset": "Reset zoom",

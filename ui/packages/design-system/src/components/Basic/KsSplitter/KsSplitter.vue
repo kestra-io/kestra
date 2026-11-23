@@ -14,7 +14,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<SplitterProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof SplitterProps>>()
+    const props = defineProps<SplitterProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof SplitterProps> & {onResizeEnd?: (index: number, sizes: number[]) => void})>()
 
     const filteredProps = usePassedProps(props)
 

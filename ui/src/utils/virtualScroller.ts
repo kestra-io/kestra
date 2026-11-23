@@ -4,7 +4,10 @@ import type {RecycleScroller} from "vue-virtual-scroller"
 import type {HTMLAttributes} from "vue"
 import type {NativeAttributes} from "@kestra-io/design-system"
 
-type UndeclaredForwardedProps = Pick<NonNullable<Parameters<typeof RecycleScroller<unknown>>[0]>, "buffer" | "prerender" | "emitUpdate" | "updateInterval"> & NativeAttributes<HTMLAttributes>
+type UndeclaredForwardedProps = Pick<NonNullable<Parameters<typeof RecycleScroller<unknown>>[0]>, "buffer" | "prerender" | "emitUpdate" | "updateInterval"> & NativeAttributes<HTMLAttributes> & {
+    onUpdate?: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => void
+    onScrollEnd?: () => void
+}
 type Rest<TItem> = Parameters<typeof UntypedDynamicScroller<TItem>> extends [unknown, ...infer R] ? R : never
 
 export const DynamicScroller = UntypedDynamicScroller as <TItem>(

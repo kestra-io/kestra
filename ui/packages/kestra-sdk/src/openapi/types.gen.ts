@@ -1765,6 +1765,7 @@ export type MiscControllerConfiguration = {
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
     isPluginEndpointsEnabled?: boolean;
+    isMcpServerEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {

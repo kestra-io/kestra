@@ -19,7 +19,6 @@ import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Delay-store contract driven by a fixed anchor so the store cannot fall back on the system clock. */
 @MicronautTest(transactional = false)
 public abstract class ExecutionDelayStateStoreContract {
 
@@ -28,7 +27,6 @@ public abstract class ExecutionDelayStateStoreContract {
 
     private static final Instant DRAIN = ANCHOR.plusSeconds(3601);
 
-    // Prefix so leftovers from a crashed run are still recognized as ours and cleared.
     protected static final String OWNED_EXECUTION_ID_PREFIX = "delay-contract-";
 
     // TimeZone.setDefault is process-wide, so the zone is taken and given back under one lock.

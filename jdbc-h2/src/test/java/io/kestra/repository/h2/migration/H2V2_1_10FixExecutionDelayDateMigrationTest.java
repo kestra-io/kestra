@@ -25,17 +25,14 @@ class H2V2_1_10FixExecutionDelayDateMigrationTest {
     private static final Field<Object> KEY = DSL.field(DSL.quotedName("key"));
     private static final Field<Object> VALUE = DSL.field(DSL.quotedName("value"));
 
-    /** Read as text so the assertions cannot be perturbed by a client-side timezone conversion. */
     private static final Field<String> DATE = DSL.field("CAST(\"date\" AS VARCHAR)", String.class);
 
     private static final String LEGACY_KEY = "fix-execution-delay-date-legacy";
     private static final String CURRENT_KEY = "fix-execution-delay-date-current";
 
-    /** 3 fractional digits, so LEFT(value, 26) leaves the 'Z' in place. */
     private static final String LEGACY_VALUE = """
         {"taskRunId":"migration","executionId":"migration","date":"2031-01-15T10:00:00.000Z","state":"RUNNING","delayType":"RESUME_FLOW"}""";
 
-    /** Current JdbcMapper format: 6 fractional digits. */
     private static final String CURRENT_VALUE = """
         {"taskRunId":"migration","executionId":"migration","date":"2031-01-15T10:00:00.123456Z","state":"RUNNING","delayType":"RESUME_FLOW"}""";
 

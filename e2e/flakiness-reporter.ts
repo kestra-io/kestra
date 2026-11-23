@@ -1,5 +1,5 @@
 import {appendFileSync, mkdirSync, writeFileSync} from "node:fs"
-import {dirname, resolve} from "node:path"
+import {dirname, relative, resolve, sep} from "node:path"
 import {fileURLToPath} from "node:url"
 import type {FullConfig, FullResult, Reporter, Suite, TestCase} from "@playwright/test/reporter"
 
@@ -23,10 +23,10 @@ type Report = {
 
 const DEFAULT_REPORT_DIRECTORY = resolve(dirname(fileURLToPath(import.meta.url)), "playwright-report")
 
-function summarize(test: TestCase, outcome: Outcome): TestSummary {
+function summarize(test: TestCase, outcome: Outcome, rootDir: string): TestSummary {
     return {
         title: test.titlePath().filter(Boolean).join(" › "),
-        file: test.location.file,
+        file: relative(rootDir, test.location.file).split(sep).join("/"),
         line: test.location.line,
         outcome,
         attempts: test.results.map((result) => ({
@@ -91,24 +91,28 @@ function renderMarkdown(report: Report): string {
 
 export default class FlakinessReporter implements Reporter {
     private suite?: Suite
+    private rootDir?: string
     private readonly reportDirectory: string
 
     constructor(options: {outputDirectory?: string} = {}) {
         this.reportDirectory = options.outputDirectory ? resolve(options.outputDirectory) : DEFAULT_REPORT_DIRECTORY
     }
 
-    onBegin(_config: FullConfig, suite: Suite): void {
+    onBegin(config: FullConfig, suite: Suite): void {
+        this.rootDir = config.rootDir
         this.suite = suite
     }
 
     onEnd(result: FullResult): void {
-        if (!this.suite) {
+        const suite = this.suite
+        const rootDir = this.rootDir
+        if (!suite || !rootDir) {
             return
         }
 
-        const tests = this.suite.allTests()
-        const flakyTests = tests.filter((test) => test.outcome() === "flaky").map((test) => summarize(test, "flaky"))
-        const unexpectedTests = tests.filter((test) => test.outcome() === "unexpected").map((test) => summarize(test, "unexpected"))
+        const tests = suite.allTests()
+        const flakyTests = tests.filter((test) => test.outcome() === "flaky").map((test) => summarize(test, "flaky", rootDir))
+        const unexpectedTests = tests.filter((test) => test.outcome() === "unexpected").map((test) => summarize(test, "unexpected", rootDir))
         const skippedTests = tests.filter((test) => test.outcome() === "skipped").length
         const executedTests = tests.length - skippedTests
         const retryAttempts = tests.reduce((total, test) => total + test.results.filter((attempt) => attempt.retry > 0).length, 0)

@@ -1,12 +1,12 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import {expect} from "storybook/test"
 import KsCollapse from "./KsCollapse.vue"
 import KsCollapseItem from "./KsCollapseItem.vue"
 
 const meta: Meta<typeof KsCollapse> = {
     title: "Components/Data/KsCollapse",
-    component: KsCollapse,
+    component: KsCollapse as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         accordion: {control: "boolean"},

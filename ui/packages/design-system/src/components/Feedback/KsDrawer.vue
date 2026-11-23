@@ -10,7 +10,6 @@
         v-bind="{...filteredProps(), ...$attrs}"
         :class="{'full-screen': fullScreen && !resizable}"
         @resize-end="onResizeEnd"
-        @before-close="emit('before-close', $event)"
     >
         <slot />
         <template v-if="$slots.header || props.title" #header>
@@ -53,10 +52,6 @@
         resizable: false,
         dirty: false,
     })
-
-    const emit = defineEmits<{
-        "before-close": [done: () => void]
-    }>()
 
     defineSlots<{
         default?(): unknown

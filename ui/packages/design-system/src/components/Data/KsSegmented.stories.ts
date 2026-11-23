@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import {expect} from "storybook/test"
 import Account from "vue-material-design-icons/Account.vue"
 import AccountGroup from "vue-material-design-icons/AccountGroup.vue"
@@ -8,7 +8,7 @@ import KsSegmented from "./KsSegmented.vue"
 
 const meta: Meta<typeof KsSegmented> = {
     title: "Components/Data/KsSegmented",
-    component: KsSegmented,
+    component: KsSegmented as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         disabled: {control: "boolean"},

@@ -47,7 +47,7 @@
         banner?: boolean
         /** Stretch the content across the row with no gap under the title, and clip a description that would widen the alert. */
         fill?: boolean
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
+    } & /* @vue-ignore */ (NativeAttributes<HTMLAttributes> & {onClose?: (event: MouseEvent) => void})>(), {
         closable: false,
         showIcon: true,
         banner: false,

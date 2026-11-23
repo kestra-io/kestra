@@ -24,7 +24,7 @@ import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 import {Optional} from "../utils/utils"
 import * as ExecutionUtils from "../utils/executionUtils"
-import {routeQueryToQueryFilters} from "../utils/queryFilters"
+import {routeQueryToExecutionQueryFilters, routeQueryToQueryFilters} from "../utils/queryFilters"
 import {scopedExecutionId} from "../utils/loopScope"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
@@ -242,7 +242,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryRestartExecution = (options: FilterQuery) => {
-        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
+        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToExecutionQueryFilters(options)})
     }
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
@@ -250,7 +250,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryResumeExecution = (options: FilterQuery) => {
-        return ExecutionsAPI.resumeExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
+        return ExecutionsAPI.resumeExecutionsByQuery({filters: routeQueryToExecutionQueryFilters(options)})
     }
 
     const bulkReplayExecution = (options: { executionsId: string[]; latestRevision?: boolean }) => {
@@ -262,11 +262,11 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryReplayExecution = (options: FilterQuery & { latestRevision?: boolean }) => {
-        return ExecutionsAPI.replayExecutionsByQuery({filters: routeQueryToQueryFilters(options), latestRevision: options.latestRevision})
+        return ExecutionsAPI.replayExecutionsByQuery({filters: routeQueryToExecutionQueryFilters(options), latestRevision: options.latestRevision})
     }
 
     const queryChangeExecutionStatus = (options: FilterQuery & { newStatus: StateType }) => {
-        return ExecutionsAPI.updateExecutionsStatusByQuery({filters: routeQueryToQueryFilters(options), newStatus: options.newStatus})
+        return ExecutionsAPI.updateExecutionsStatusByQuery({filters: routeQueryToExecutionQueryFilters(options), newStatus: options.newStatus})
     }
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }): Promise<Execution> => {
@@ -330,7 +330,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryKill = (options: FilterQuery) => {
-        return ExecutionsAPI.killExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
+        return ExecutionsAPI.killExecutionsByQuery({filters: routeQueryToExecutionQueryFilters(options)})
     }
 
     /** Multipart with file inputs, so it stays on the raw client. Never set Content-Type: the browser adds the boundary. */
@@ -406,7 +406,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryPauseExecution = (options: FilterQuery) => {
-        return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
+        return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToExecutionQueryFilters(options)})
     }
 
     const startExecutionLoad = latestRequest()
@@ -429,7 +429,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             page: options.page,
             size: options.size,
             sort: options.sort ? [options.sort] : undefined,
-            filters: routeQueryToQueryFilters(options),
+            filters: routeQueryToExecutionQueryFilters(options),
         }
     }
 
@@ -535,7 +535,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const queryDeleteExecution = (options: FilterQuery & DeleteExecutionOptions) => {
         return ExecutionsAPI.deleteExecutionsByQuery({
-            filters: routeQueryToQueryFilters(options),
+            filters: routeQueryToExecutionQueryFilters(options),
             includeNonTerminated: options.includeNonTerminated,
             deleteLogs: options.deleteLogs,
             deleteMetrics: options.deleteMetrics,
@@ -764,7 +764,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const querySetLabels = (options: { data: Label[]; params: FilterQuery }) => {
-        return ExecutionsAPI.setLabelsOnTerminatedExecutionsByQuery({filters: routeQueryToQueryFilters(options.params), body: options.data})
+        return ExecutionsAPI.setLabelsOnTerminatedExecutionsByQuery({filters: routeQueryToExecutionQueryFilters(options.params), body: options.data})
     }
 
     const bulkSetLabels = (options: { executionsId: string[]; executionLabels: Label[] }) => {
@@ -781,7 +781,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const queryUnqueueExecution = (options: FilterQuery & { newStatus: StateType }) => {
         return ExecutionsAPI.unqueueExecutionsByQuery({
-            filters: routeQueryToQueryFilters(options),
+            filters: routeQueryToExecutionQueryFilters(options),
             newState: options.newStatus,
         })
     }
@@ -795,7 +795,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryForceRunExecution = (options: FilterQuery) => {
-        return ExecutionsAPI.forceRunExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
+        return ExecutionsAPI.forceRunExecutionsByQuery({filters: routeQueryToExecutionQueryFilters(options)})
     }
 
     const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store: boolean }) => {
@@ -1016,7 +1016,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const exportExecutionsAsCSV = async (params: FilterQuery) => {
-        const data = await ExecutionsAPI.exportExecutions({filters: routeQueryToQueryFilters(params)}, {headers: {Accept: "text/csv"}, parseAs: "text"})
+        const data = await ExecutionsAPI.exportExecutions({filters: routeQueryToExecutionQueryFilters(params)}, {headers: {Accept: "text/csv"}, parseAs: "text"})
         Utils.downloadBlob(new Blob([data as unknown as string]), "executions.csv")
     }
 

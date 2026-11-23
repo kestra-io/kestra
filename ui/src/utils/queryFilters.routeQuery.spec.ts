@@ -3,7 +3,7 @@ import {parseQuery, stringifyQuery} from "vue-router"
 import {Comparators, encodeFilterGroupsToQuery, keyOfComparator} from "@kestra-io/design-system"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {createConfigureClient, type ConfigurableFetchClient} from "../../packages/hey-api-plugin/src/runtime"
-import {routeQueryToQueryFilters} from "./queryFilters"
+import {routeQueryToExecutionQueryFilters, routeQueryToQueryFilters} from "./queryFilters"
 
 const serializeQuery = (query: Record<string, unknown>) => {
     let config: Parameters<ConfigurableFetchClient["setConfig"]>[0] = {}
@@ -721,5 +721,35 @@ describe("routeQueryToQueryFilters", () => {
 
     it("ignores non-filters keys", () => {
         expect(routeQueryToQueryFilters({page: "1", size: "25", sort: "id:asc"})).toEqual([])
+    })
+})
+
+describe("routeQueryToExecutionQueryFilters", () => {
+    it.each([
+        ["EQUALS", "NORMAL"],
+        ["IN", ["NORMAL"]],
+    ])("drops a lone NORMAL kind filter (%s), since normal runs are stored without a kind", (operation, value) => {
+        expect(routeQueryToExecutionQueryFilters({
+            [`filters[kind][${operation}]`]: value,
+            "filters[namespace][EQUALS]": "io.kestra",
+        })).toEqual([
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+        ])
+    })
+
+    it("keeps NORMAL when another kind is selected with it", () => {
+        expect(routeQueryToExecutionQueryFilters({"filters[kind][IN]": ["NORMAL", "PLAYGROUND"]})).toEqual([
+            {field: "kind", operation: "IN", value: ["NORMAL", "PLAYGROUND"]},
+        ])
+    })
+
+    it("keeps NORMAL when a kind filter also sits in a logical group", () => {
+        const query = {
+            "filters[kind][EQUALS]": "NORMAL",
+            "filters[or][0][kind][EQUALS]": "PLAYGROUND",
+            "filters[or][1][namespace][EQUALS]": "io.kestra",
+        }
+
+        expect(routeQueryToExecutionQueryFilters(query)).toEqual(routeQueryToQueryFilters(query))
     })
 })

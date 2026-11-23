@@ -145,6 +145,33 @@ export const routeQueryToQueryFilters = (query: Record<string, unknown>): QueryF
     return root.build()
 }
 
+const isKindLeaf = (filter: QueryFilter): boolean => filter.field === "kind"
+
+const countKindLeaves = (filters: QueryFilter[]): number =>
+    filters.reduce((count, filter) => count + (filter.children ? countKindLeaves(filter.children) : Number(isKindLeaf(filter))), 0)
+
+const selectsNormalKindOnly = (filter: QueryFilter): boolean => {
+    const values = [filter.value].flat()
+    return isKindLeaf(filter)
+        && (filter.operation === "EQUALS" || filter.operation === "IN")
+        && values.length > 0
+        && values.every(value => value === "NORMAL")
+}
+
+/**
+ * Drops a top-level kind filter selecting NORMAL alone from an execution or log search: normal runs are stored with no
+ * kind, which only the backend's no-kind-filter default matches (kestra-io/kestra#21536).
+ */
+export const withoutNormalOnlyKindFilter = (filters: QueryFilter[]): QueryFilter[] => {
+    const normalOnly = filters.filter(selectsNormalKindOnly)
+    return normalOnly.length > 0 && normalOnly.length === countKindLeaves(filters)
+        ? filters.filter(filter => !normalOnly.includes(filter))
+        : filters
+}
+
+export const routeQueryToExecutionQueryFilters = (query: Record<string, unknown>): QueryFilter[] =>
+    withoutNormalOnlyKindFilter(routeQueryToQueryFilters(query))
+
 /**
  * Keeps only the top-level `filters[...]` params of a route query that sit on one of `fields`.
  *

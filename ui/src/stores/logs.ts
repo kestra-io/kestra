@@ -2,7 +2,7 @@ import {defineStore} from "pinia"
 import {ref, computed} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import type {LogEntry, QueryFilter} from "@kestra-io/kestra-sdk"
-import {routeQueryToQueryFilters} from "../utils/queryFilters"
+import {routeQueryToExecutionQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
 import {handled} from "../utils/kestraHttp"
@@ -30,7 +30,7 @@ function toSearchParams(options: LogSearchOptions, cursor?: string) {
         size: options.size,
         sort: options.sort ? [options.sort] : undefined,
         cursor,
-        filters: routeQueryToQueryFilters(options),
+        filters: routeQueryToExecutionQueryFilters(options),
     }
 }
 
@@ -217,7 +217,7 @@ function setupLogsStore() {
     const LEVELS_ASC: LevelKey[] = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]
 
     async function levelCounts(baseParams: FilterQuery): Promise<Record<string, number>> {
-        const baseFilters = routeQueryToQueryFilters(baseParams)
+        const baseFilters = routeQueryToExecutionQueryFilters(baseParams)
             .filter((f) => f.field !== "level")
 
         const cumulative = await Promise.all(LEVELS_ASC.map((logLevel) => {

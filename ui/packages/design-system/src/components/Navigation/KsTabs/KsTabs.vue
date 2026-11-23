@@ -34,7 +34,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<KsTabsProps & {modelValue?: T} & /* @vue-ignore */ Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue">>()
+    const props = defineProps<KsTabsProps & {modelValue?: T} & /* @vue-ignore */ (Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue"> & {onTabChange?: (name: TabPaneName) => void})>()
 
     const emit = defineEmits<{
         "update:modelValue": [name: T]

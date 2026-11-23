@@ -38,7 +38,13 @@
         flushExpand?: boolean
     }
 
-    const props = defineProps<KsTableProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsTableProps>>()
+    type CellListener = (row: T, column: TableColumnCtx<T & TableRow>, cell: HTMLTableCellElement, event: Event) => void
+
+    const props = defineProps<KsTableProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsTableProps> & {
+        onCellClick?: CellListener
+        onCellMouseEnter?: CellListener
+        onCellMouseLeave?: CellListener
+    })>()
 
     const emit = defineEmits<{
         selectionChange: [selection: T[]]

@@ -4,13 +4,14 @@
             :modelValue="(props.modelValue as DatePickerPropsPublic['modelValue'])"
             v-bind="({...filteredProps(), ...pickerAttrs()} as DatePickerPropsPublic)"
             @update:modelValue="(value: T) => emit('update:modelValue', value)"
-            @change="emit('change', $event)"
+            @change="(value: DatePickerPropsPublic['modelValue']) => emit('change', value as T)"
         />
     </span>
 </template>
 
 <script setup lang="ts" generic="T">
-    import {ElDatePicker, type DatePickerPropsPublic, type ElTooltipContentProps} from "element-plus"
+    import {type DatePickerPropsPublic, type ElTooltipContentProps} from "element-plus"
+    import {ElDatePicker} from "../../utils/elementPlusListeners"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {useInputAttrs} from "../../composables/useInputAttrs"
     import type {NativeAttributes} from "../../utils/nativeAttributes"

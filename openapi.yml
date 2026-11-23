@@ -8095,7 +8095,7 @@ components:
         namespace:
           maxLength: 150
           minLength: 1
-          pattern: "^[a-z0-9][a-z0-9._-]*"
+          pattern: "^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)*"
           type: string
         revision:
           minimum: 1
@@ -8328,7 +8328,7 @@ components:
         namespace:
           maxLength: 150
           minLength: 1
-          pattern: "^[a-z0-9][a-z0-9._-]*"
+          pattern: "^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)*"
           type: string
         id:
           maxLength: 150
@@ -9129,7 +9129,7 @@ components:
           namespace:
             maxLength: 150
             minLength: 1
-            pattern: "^[a-z0-9][a-z0-9._-]*"
+            pattern: "^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)*"
             type: string
           revision:
             minimum: 1
@@ -9254,7 +9254,7 @@ components:
           namespace:
             maxLength: 150
             minLength: 1
-            pattern: "^[a-z0-9][a-z0-9._-]*"
+            pattern: "^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)*"
             type: string
           revision:
             minimum: 1
@@ -9510,7 +9510,7 @@ components:
           namespace:
             maxLength: 150
             minLength: 1
-            pattern: "^[a-z0-9][a-z0-9._-]*"
+            pattern: "^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)*"
             type: string
           revision:
             minimum: 1
@@ -9930,7 +9930,7 @@ components:
       type: object
       properties:
         id:
-          pattern: "^[a-z0-9][a-z0-9._-]*"
+          pattern: "^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)*"
           type: string
     Output:
       required:

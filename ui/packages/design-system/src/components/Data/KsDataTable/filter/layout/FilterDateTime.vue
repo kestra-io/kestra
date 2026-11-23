@@ -1,10 +1,10 @@
 <template>
-    <div class="p-3">
+    <div class="filter-date-time">
         <KsDatePicker
             :modelValue="dateValue"
             type="datetime"
             :placeholder="`Select ${label.toLowerCase()}`"
-            @update:model-value="$emit('update:dateValue', $event)"
+            @update:model-value="$emit('update:dateValue', $event ?? null)"
         />
     </div>
 </template>
@@ -19,3 +19,9 @@
         "update:dateValue": [value: Date | null];
     }>()
 </script>
+
+<style scoped>
+    .filter-date-time {
+        padding: var(--ks-spacing-4);
+    }
+</style>

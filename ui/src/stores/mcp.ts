@@ -40,7 +40,11 @@ export const useMcpStore = defineStore("mcp", () => {
 
     const update = async (id: string, payload: McpServerPayload): Promise<McpServer> => {
         const {id: _payloadId, ...rest} = payload
-        return McpAPI.updateMcp({id, ...rest}) as Promise<McpServer>
+        const updated = await McpAPI.updateMcp({id, ...rest}) as McpServer
+        if (server.value?.id === id) {
+            server.value = updated
+        }
+        return updated
     }
 
     const remove = async (id: string): Promise<void> => {

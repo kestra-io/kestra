@@ -3,6 +3,7 @@ package io.kestra.webserver.filter;
 import java.util.Objects;
 
 import io.kestra.webserver.configuration.SecurityHeadersConfiguration;
+import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
@@ -21,14 +22,12 @@ import io.micronaut.http.filter.ServerFilterPhase;
  * <p>
  * Runs at {@link ServerFilterPhase#FIRST}, i.e. as the outermost filter, so its response processing happens
  * <em>last</em> on the way out — after every other filter, including ones that replace the response object
- * wholesale (e.g. {@link io.kestra.webserver.controllers.api.StaticFilter} rebuilding the {@code index.html}
- * response) or short-circuit the chain early with an error response (e.g. an authentication or CSRF filter
+ * wholesale or short-circuit the chain early with an error response (e.g. an authentication or CSRF filter
  * returning 401/403 without proceeding). Any other phase would let such responses skip this filter entirely.
  * Each configured, non-blank header is only set when it is not already present, so a controller or another
  * filter can still override it. HSTS is emitted only on secure (HTTPS) requests, since it is meaningless — and
- * potentially harmful — over plain HTTP. Note this only detects TLS terminated on this server directly; behind a
- * TLS-terminating reverse proxy, configure the proxy to also set HSTS, since the request reaches this server as
- * plain HTTP.
+ * potentially harmful — over plain HTTP; {@link RequestUtils#isSecure} also recognizes a TLS-terminating reverse
+ * proxy that forwards the request as plain HTTP, via its {@code Forwarded}/{@code X-Forwarded-Proto} header.
  */
 @Requires(property = "kestra.webserver.security-headers.enabled", notEquals = "false", defaultValue = "true")
 @ServerFilter("/**")
@@ -72,7 +71,7 @@ public class SecurityHeadersFilter implements Ordered {
         setIfAbsent(response, contentSecurityPolicyHeaderName, contentSecurityPolicy);
 
         // HSTS is only meaningful over HTTPS; never advertise it on plain HTTP.
-        if (request.isSecure()) {
+        if (RequestUtils.isSecure(request)) {
             setIfAbsent(response, STRICT_TRANSPORT_SECURITY, strictTransportSecurity);
         }
     }

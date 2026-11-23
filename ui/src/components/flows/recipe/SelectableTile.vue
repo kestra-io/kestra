@@ -53,7 +53,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .selectable-tile {
         display: flex;
         flex-direction: column;

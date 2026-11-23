@@ -3,6 +3,7 @@
 
 # Scripts
 *.bat       text eol=crlf
+gradlew.bat -text
 *.sh        text eol=lf
 
 # Gradle wrapper

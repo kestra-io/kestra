@@ -23,7 +23,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.KVStoreService;
+import io.kestra.core.services.KVService;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
@@ -58,7 +58,7 @@ public class PurgeKVTest {
     FlowRepositoryInterface flowRepositoryInterface;
 
     @Inject
-    KVStoreService kvStoreService;
+    KVService kvService;
 
     @Inject
     ModelValidator modelValidator;
@@ -122,6 +122,21 @@ public class PurgeKVTest {
     }
 
     @Test
+    void should_not_find_sibling_namespace_sharing_prefix_with_child() throws IllegalVariableEvaluationException {
+        addNamespaces();
+        addNamespace(PARENT_NAMESPACE + "2");
+
+        PurgeKV purgeKV = PurgeKV.builder()
+            .type(PurgeKV.class.getName())
+            .namespaces(Property.ofValue(List.of(PARENT_NAMESPACE)))
+            .includeChildNamespaces(Property.ofValue(true))
+            .build();
+        List<String> namespaces = purgeKV.findNamespaces(runContextFactory.of(NAMESPACE));
+
+        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE, CHILD_NAMESPACE);
+    }
+
+    @Test
     void should_find_parent_namespace_even_if_no_flows() throws IllegalVariableEvaluationException {
         addNamespace(CHILD_NAMESPACE);
 
@@ -154,11 +169,11 @@ public class PurgeKVTest {
 
         RunContext runContext = runContextFactory.of(namespace1);
         KVStore kvStore1 = runContext.namespaceKv(namespace1);
-        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
+        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
         kvStore1.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
 
         KVStore kvStore2 = runContext.namespaceKv(namespace2);
-        kvStore2.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
+        kvStore2.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
         kvStore2.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
         kvStore2.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", (Duration) null), "unused"));
         kvStore2.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
@@ -184,7 +199,7 @@ public class PurgeKVTest {
 
         RunContext runContext = runContextFactory.of(namespace);
         KVStore kvStore1 = runContext.namespaceKv(namespace);
-        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
+        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
         kvStore1.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
         kvStore1.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", (Duration) null), "unused"));
         kvStore1.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
@@ -209,9 +224,9 @@ public class PurgeKVTest {
 
         RunContext runContext = runContextFactory.of(namespace);
         KVStore kvStore1 = runContext.namespaceKv(namespace);
-        kvStore1.put("key_1", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
-        kvStore1.put("key_2", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
-        kvStore1.put("not_found", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
+        kvStore1.put("key_1", new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
+        kvStore1.put("key_2", new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
+        kvStore1.put("not_found", new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
 
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
@@ -220,7 +235,7 @@ public class PurgeKVTest {
         Output output = purgeKV.run(runContext);
 
         assertThat(output.getSize()).isEqualTo(2L);
-        List<KVEntry> kvEntries = kvStoreService.listAll(MAIN_TENANT, namespace);
+        List<KVEntry> kvEntries = kvService.listAll(MAIN_TENANT, namespace);
         assertThat(kvEntries.size()).isEqualTo(1);
         assertThat(kvEntries.getFirst().key()).isEqualTo("not_found");
     }
@@ -238,7 +253,7 @@ public class PurgeKVTest {
         String changedDescription = "Another description";
         kvStore.put("my-key", new KVValueAndMetadata(new KVMetadata(changedDescription, Instant.now().plus(Duration.ofMinutes(5))), "some value"));
 
-        List<KVEntry> kvs = kvStoreService.list(Pageable.UNPAGED, MAIN_TENANT, namespace, Collections.emptyList(), true, true, FetchVersion.ALL);
+        List<KVEntry> kvs = kvService.list(Pageable.UNPAGED, MAIN_TENANT, namespace, Collections.emptyList(), true, true, FetchVersion.ALL);
         assertThat(kvs.size()).isEqualTo(2);
 
         PurgeKV purgeKV = PurgeKV.builder()
@@ -249,7 +264,7 @@ public class PurgeKVTest {
 
         assertThat(run.getSize()).isEqualTo(1L);
 
-        kvs = kvStoreService.list(Pageable.UNPAGED, MAIN_TENANT, namespace, Collections.emptyList(), true, true, FetchVersion.ALL);
+        kvs = kvService.list(Pageable.UNPAGED, MAIN_TENANT, namespace, Collections.emptyList(), true, true, FetchVersion.ALL);
         assertThat(kvs.size()).isEqualTo(1);
         assertThat(kvs.getFirst().description()).isEqualTo(changedDescription);
     }
@@ -268,7 +283,7 @@ public class PurgeKVTest {
         String thirdDescription = "Yet another description";
         kvStore.put("my-key", new KVValueAndMetadata(new KVMetadata(thirdDescription, Instant.now().plus(Duration.ofMinutes(5))), "some value"));
 
-        List<KVEntry> kvs = kvStoreService.list(Pageable.UNPAGED, MAIN_TENANT, namespace, Collections.emptyList(), true, true, FetchVersion.ALL);
+        List<KVEntry> kvs = kvService.list(Pageable.UNPAGED, MAIN_TENANT, namespace, Collections.emptyList(), true, true, FetchVersion.ALL);
         assertThat(kvs.size()).isEqualTo(3);
 
         PurgeKV purgeKV = PurgeKV.builder()
@@ -279,7 +294,7 @@ public class PurgeKVTest {
 
         assertThat(run.getSize()).isEqualTo(1L);
 
-        kvs = kvStoreService.list(Pageable.UNPAGED, MAIN_TENANT, namespace, Collections.emptyList(), true, true, FetchVersion.ALL);
+        kvs = kvService.list(Pageable.UNPAGED, MAIN_TENANT, namespace, Collections.emptyList(), true, true, FetchVersion.ALL);
         assertThat(kvs.size()).isEqualTo(2);
         assertThat(kvs.stream().map(KVEntry::description)).containsExactlyInAnyOrder(secondDescription, thirdDescription);
     }

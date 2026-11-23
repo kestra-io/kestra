@@ -8,7 +8,9 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.http.HttpRequest;
@@ -115,15 +117,88 @@ class QueryFilterFormatBinderTest {
     }
 
     @Test
-    void testGetQueryFiltersWithInvalidFilterPattern() {
+    void shouldRejectFieldNotSupportedByResource() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.SEVERITY).operation(QueryFilter.Op.EQUALS).value("HIGH").build()
+        );
+
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.EXECUTION)
+        );
+    }
+
+    @Test
+    void shouldRejectOperationNotSupportedByField() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.GREATER_THAN).value("a").build()
+        );
+
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.EXECUTION)
+        );
+    }
+
+    @Test
+    void shouldAcceptTimeRangeAtAnyDepthSinceControllersRewriteIt() {
+        QueryFilter timeRange = QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value("PT24H").build();
+        QueryFilter namespace = QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("ns").build();
+        List<QueryFilter> filters = List.of(
+            timeRange,
+            QueryFilter.builder().logical(QueryFilter.Logical.OR).children(List.of(timeRange, namespace)).build(),
+            QueryFilter.builder().logical(QueryFilter.Logical.AND).children(List.of(timeRange)).build()
+        );
+
+        assertDoesNotThrow(() -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.EXECUTION));
+    }
+
+    @Test
+    void shouldAcceptStartAndEndDateOnTriggersSinceTheControllerRewritesThem() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.START_DATE).operation(QueryFilter.Op.GREATER_THAN).value("2025-01-01T00:00:00Z").build(),
+            QueryFilter.builder().field(QueryFilter.Field.END_DATE).operation(QueryFilter.Op.LESS_THAN).value("2025-02-01T00:00:00Z").build()
+        );
+
+        assertDoesNotThrow(() -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.TRIGGER));
+        assertThrows(InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.NAMESPACE));
+    }
+
+    @Test
+    void shouldRejectUnsupportedFieldNextToTimeRange() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value("PT24H").build(),
+            QueryFilter.builder().field(QueryFilter.Field.SEVERITY).operation(QueryFilter.Op.EQUALS).value("HIGH").build()
+        );
+
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.EXECUTION)
+        );
+    }
+
+    @Test
+    void shouldRejectMalformedFilterKey() {
         // GIVEN
         Map<String, List<String>> queryParams = Map.of(
             "filters[invalid]", List.of("test-value")
         );
+        // WHEN / THEN
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams)
+        );
+    }
+
+    @Test
+    void shouldRejectUnknownOperator() {
+        // GIVEN
+        Map<String, List<String>> queryParams = Map.of(
+            "filters[namespace][BOGUS_OP]", List.of("test-namespace")
+        );
         // WHEN
-        List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
-        // THEN
-        assertEquals(0, filters.size(), "Invalid filters should be ignored");
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams)
+        );
+        // THEN — the offending token is named, and the internal enum class name is not leaked
+        assertTrue(ex.getMessage().contains("BOGUS_OP"), "Expected the offending token, got: " + ex.getMessage());
+        assertFalse(ex.getMessage().contains("io.kestra"), "Internal class name leaked: " + ex.getMessage());
     }
 
     @Test
@@ -233,8 +308,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — parser throws on the 4th descent; no SQL is generated
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, 3, Integer.MAX_VALUE)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, 3, Integer.MAX_VALUE)
         );
         assertTrue(
             ex.getMessage().contains("depth"),
@@ -252,8 +327,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — width check throws; the OR node would have 21 children
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
         );
         assertTrue(
             ex.getMessage().contains("width"),
@@ -274,8 +349,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — root produces 21 sibling leaves, exceeding the width cap
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
         );
         assertTrue(
             ex.getMessage().contains("width"),
@@ -305,6 +380,20 @@ class QueryFilterFormatBinderTest {
         assertEquals(2, or.children().size());
         assertTrue(or.children().stream().allMatch(QueryFilter::isLeaf));
         assertTrue(or.children().stream().allMatch(c -> c.field() == QueryFilter.Field.LABELS));
+    }
+
+    @Test
+    void shouldKeepAllValuesOfARepeatedNestedKey() {
+        // GIVEN — the UI repeats the parameter when an IN filter holds several values for the same output id
+        Map<String, List<String>> queryParams = Map.of("filters[searchableData][IN][orderIds]", List.of("ORD-1", "ORD-2"));
+
+        // WHEN
+        List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
+
+        // THEN
+        assertEquals(1, filters.size());
+        assertEquals(QueryFilter.Field.SEARCHABLE_DATA, filters.getFirst().field());
+        assertEquals(Map.of("orderIds", "ORD-1,ORD-2"), filters.getFirst().value());
     }
 
     @Test
@@ -356,5 +445,42 @@ class QueryFilterFormatBinderTest {
         assertEquals(1, filters.size());
         assertEquals(QueryFilter.Logical.OR, filters.getFirst().logical());
         assertEquals(2, filters.getFirst().children().size());
+    }
+
+    @Test
+    void shouldRoundTripNestedFiltersSerializedByTheTestUtils() {
+        // GIVEN — the nested OR/AND tree that controller tests feed through QueryFilterTestUtils
+        QueryFilter nested = QueryFilter.builder()
+            .logical(QueryFilter.Logical.OR)
+            .children(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.test")
+                        .build(),
+                    QueryFilter.builder()
+                        .logical(QueryFilter.Logical.AND)
+                        .children(
+                            List.of(
+                                QueryFilter.builder()
+                                    .field(QueryFilter.Field.ID).operation(QueryFilter.Op.EQUALS).value("io.kestra.test")
+                                    .build(),
+                                QueryFilter.builder()
+                                    .field(QueryFilter.Field.RESOURCES).operation(QueryFilter.Op.IN).value(List.of("NAMESPACE"))
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
+            .build();
+
+        // WHEN
+        Map<String, List<String>> queryParams = QueryFilterTestUtils.toQueryParams(List.of(nested))
+            .entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> List.of(e.getValue())));
+        List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
+
+        // THEN — the tree survives the URL round-trip unchanged
+        assertEquals(List.of(nested), filters);
     }
 }

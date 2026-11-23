@@ -1,10 +1,10 @@
 package io.kestra.plugin.core.trigger;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -154,7 +154,7 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
         title = "Behavioural hints that inform AI agents how to invoke this tool safely.",
         description = "These annotations follow the MCP tool annotation specification and help AI agents reason about side effects, idempotency, and safety before calling the tool."
     )
-    private Annotations annotations = new Annotations(false, true, true, false, false);
+    private McpToolAnnotations annotations = McpToolAnnotations.DESTRUCTIVE;
 
     @PluginProperty
     @NotNull
@@ -191,47 +191,13 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
                 )
             )
             .build();
-        List<Label> labels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
-        labels.add(new Label(Label.CORRELATION_ID, execution.getId()));
-        labels.addAll(additionalLabels);
-        return execution.withLabels(labels);
+        // the flow's own labels come from the Create command, which builds from the flow processed for runtime
+        return execution.withLabels(LabelService.withCorrelationId(additionalLabels, execution.getId()));
     }
 
     public static class Output extends HashMap<String, Object> implements io.kestra.core.models.tasks.Output {
         public Output(Map<String, Object> map) {
             super(map);
         }
-    }
-
-    /**
-     * Tool behaviour hints following the MCP annotation specification.
-     * These flags inform AI agents about the side effects and safety characteristics of this tool.
-     */
-    @Schema(description = "Tool behaviour hints following the MCP annotation specification.")
-    public record Annotations(
-        @Schema(
-            title = "Whether this tool is read-only.",
-            description = "Set to `true` if the tool does not modify any state or produce side effects. When `true`, `destructive` and `idempotent` are not meaningful."
-        ) boolean readOnly,
-
-        @Schema(
-            title = "Whether this tool may interact with external entities beyond its closed domain.",
-            description = "Set to `true` if the tool reaches external systems such as third-party APIs, databases, or file systems outside the Kestra environment."
-        ) boolean openWorld,
-
-        @Schema(
-            title = "Whether this tool may perform destructive updates.",
-            description = "Only meaningful when `readOnly` is `false`. Set to `false` for tools whose effects can be safely undone or are non-destructive (e.g., creating a record). Default is `true`."
-        ) boolean destructive,
-
-        @Schema(
-            title = "Whether calling this tool repeatedly with the same arguments has the same effect as calling it once.",
-            description = "Only meaningful when `readOnly` is `false`. Set to `true` for tools whose repeated invocation produces no additional side effects beyond the first call."
-        ) boolean idempotent,
-
-        @Schema(
-            title = "Whether the tool result should be returned directly to the user without further AI processing.",
-            description = "When `true`, the AI agent forwards the raw tool output to the user rather than interpreting or summarising it."
-        ) boolean returnDirect) {
     }
 }

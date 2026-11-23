@@ -1,0 +1,423 @@
+package io.kestra.core.models.assets;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.serializers.JacksonMapper;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class AssetTest {
+    private static final String LONG_ID = "/subscriptions/0b9a2e4c-1f3d-4a5b-9c8d-7e6f5a4b3c2d/resourceGroups/" + "rg".repeat(45)
+        + "/providers/Microsoft.Compute/virtualMachines/vm-1";
+
+    @Test
+    void shouldDeserializeAssetWithoutTypeAsExternal() throws JsonProcessingException {
+        Asset asset = JacksonMapper.ofYaml().readValue(
+            """
+                id: my-asset
+                metadata:
+                    owner: infra-team""",
+            Asset.class
+        );
+
+        assertThat(asset).isInstanceOf(External.class);
+        assertThat(asset.getType()).isEqualTo(External.ASSET_TYPE);
+        assertThat(asset.getId()).isEqualTo("my-asset");
+        assertThat(asset.getMetadata()).containsEntry("owner", "infra-team");
+    }
+
+    @Test
+    void shouldReplaceTypeWhenANewOneIsDeclared() {
+        // Given
+        Custom previous = Custom.builder()
+            .namespace("io.kestra")
+            .id("my-asset")
+            .type("VM")
+            .metadata(Map.of("provider", "aws"))
+            .build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getType()).isEqualTo("EC2");
+        assertThat(updated.getMetadata()).containsEntry("provider", "aws");
+    }
+
+    @Test
+    void shouldKeepPreviousTypeWhenDeclaredAsExternal() {
+        // Given an asset that already has a real type, re-referenced by id alone (deserialized as External)
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("Custom").build();
+        External incoming = External.builder().id("my-asset").build();
+
+        // When
+        Asset updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getType()).isEqualTo("Custom");
+    }
+
+    @Test
+    void shouldFallBackToPreviousTypeWhenIncomingTypeIsNull() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getType()).isEqualTo("EC2");
+    }
+
+    @Test
+    void shouldKeepCreationDateWhenUpdating() {
+        // Given
+        Instant createdAt = Instant.now().minus(3, ChronoUnit.DAYS);
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").created(createdAt).updated(createdAt).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getCreated()).isEqualTo(createdAt);
+        assertThat(updated.getUpdated()).isAfter(createdAt);
+    }
+
+    @Test
+    void shouldKeepIncomingTypeWhenThereIsNoPreviousAsset() {
+        // Given
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+
+        // When creating, there is no previous asset to supply a type either way
+        Custom created = incoming.toUpdated(null);
+
+        // Then
+        assertThat(created.getType()).isEqualTo("EC2");
+    }
+
+    @Test
+    void shouldKeepPreviousNamespaceWhenNotDeclared() {
+        // Given an existing asset referenced by its id alone, so deserialized as External
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        External incoming = External.builder().id("my-asset").build();
+
+        // When
+        Asset updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra");
+    }
+
+    @Test
+    void shouldKeepPreviousNamespaceWhenNotDeclaredEvenIfIncomingIsNonNull() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra");
+    }
+
+    @Test
+    void shouldUseDeclaredNamespaceOverPrevious() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, true);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra.other");
+    }
+
+    @Test
+    void shouldUseDeclaredNamespaceOverPreviousViaConvenienceOverload() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra.other");
+    }
+
+    @Test
+    void shouldClearNamespaceWhenExplicitlyDeclaredNull() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace(null).id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, true);
+
+        // Then
+        assertThat(updated.getNamespace()).isNull();
+    }
+
+    @Test
+    void shouldDeleteAMetadataKeyWithAnExplicitNullOnCreation() {
+        // Given
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("keep", "value");
+        metadata.put("drop", null);
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").metadata(metadata).build();
+
+        // When
+        Custom created = incoming.toUpdated(null);
+
+        // Then
+        assertThat(created.getMetadata()).containsEntry("keep", "value");
+        assertThat(created.getMetadata()).doesNotContainKey("drop");
+    }
+
+    @Test
+    void shouldKeepAMetadataKeySetToAnEmptyString() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of(Asset.TTL_METADATA_KEY, "2026-01-01T00:00:00.000Z")).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of(Asset.TTL_METADATA_KEY, "")).build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getMetadata()).containsEntry(Asset.TTL_METADATA_KEY, "");
+    }
+
+    @Test
+    void shouldNotDeleteANestedMetadataKeyWithANull() {
+        // Given
+        Map<String, Object> nested = new HashMap<>();
+        nested.put("x", null);
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of("m", Map.of("x", 1, "y", 2))).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of("m", nested)).build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getMetadata()).extracting("m").isEqualTo(Map.of("x", 1, "y", 2));
+    }
+
+    @Test
+    void shouldReadTheSystemPropertiesDeclaredAtRootLevel() throws JsonProcessingException {
+        Asset asset = JacksonMapper.ofYaml().readValue(
+            """
+                id: my-asset
+                type: EC2
+                status: active
+                ttl: "2026-01-01T00:00:00.000Z"
+                owner: "user:alice"
+                """,
+            Asset.class
+        );
+
+        assertThat(asset.getStatus()).isEqualTo("active");
+        assertThat(asset.getTtl()).isEqualTo("2026-01-01T00:00:00.000Z");
+        assertThat(asset.getOwner()).isEqualTo("user:alice");
+        assertThat(asset.getMetadata()).containsEntry(Asset.STATUS_METADATA_KEY, "active");
+        assertThat(asset.getMetadata()).doesNotContainKey("status");
+    }
+
+    @Test
+    void shouldSerialiseTheSystemPropertiesAtRootLevel() throws JsonProcessingException {
+        Custom asset = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        asset.setStatus("active");
+        asset.setOwner("user:alice");
+
+        Map<String, Object> json = JacksonMapper.ofJson().readValue(
+            JacksonMapper.ofJson().writeValueAsString(asset),
+            new TypeReference<>() {
+            }
+        );
+
+        assertThat(json).containsEntry("status", "active");
+        assertThat(json).containsEntry("owner", "user:alice");
+    }
+
+    @Test
+    void shouldTellAnEmptyTtlApartFromAnAbsentOne() {
+        // An empty value means "no expiry" and must be stored; a null one leaves the lease untouched.
+        Custom noExpiry = Custom.builder().namespace("io.kestra").id("a").type("EC2").build();
+        noExpiry.setTtl("");
+        Custom untouched = Custom.builder().namespace("io.kestra").id("b").type("EC2").build();
+        untouched.setTtl(null);
+
+        assertThat(noExpiry.getMetadata()).containsEntry(Asset.TTL_METADATA_KEY, "");
+        assertThat(untouched.getMetadata()).doesNotContainKey(Asset.TTL_METADATA_KEY);
+    }
+
+    @Test
+    void shouldWriteASystemPropertyOnAnAssetBuiltWithoutACreator() {
+        Custom asset = new Custom();
+        asset.setStatus("active");
+
+        assertThat(asset.getStatus()).isEqualTo("active");
+    }
+
+    @Test
+    void shouldReadPartOfAndRelatedAsPropertiesNotMetadata() throws Exception {
+        String yaml = """
+            id: web-1
+            type: io.kestra.core.models.assets.External
+            partOf:
+              id: my-deployment
+            related:
+              - id: db-1
+                role: primary
+            metadata:
+              size: medium
+            """;
+
+        Asset asset = JacksonMapper.ofYaml().readValue(yaml, Asset.class);
+
+        assertThat(asset.getPartOf()).isEqualTo(new AssetRelationRef("my-deployment", null, null));
+        assertThat(asset.getRelated()).containsExactly(new AssetRelationRef("db-1", null, "primary"));
+        assertThat(asset.getMetadata()).containsOnlyKeys("size");
+    }
+
+    @Test
+    void shouldKeepPreviousPartOfWhenIncomingIsNull() {
+        Asset previous = External.builder().id("web-1").build().withPartOf(new AssetRelationRef("dep-1", null, null));
+        Asset incoming = External.builder().id("web-1").build();
+
+        incoming.toUpdated(previous, false);
+
+        assertThat(incoming.getPartOf()).isEqualTo(new AssetRelationRef("dep-1", null, null));
+    }
+
+    @Test
+    void shouldNotSerializeEmptyRelated() throws Exception {
+        Asset asset = External.builder().id("web-1").build().withRelated(List.of());
+
+        String json = JacksonMapper.ofJson().writeValueAsString(asset);
+
+        assertThat(json).doesNotContain("related");
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "//compute.googleapis.com/projects/p/zones/z/instances/vm-1, compute.googleapis.com:projects:p:zones:z:instances:vm-1",
+            "/subscriptions/s/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm-1, subscriptions:s:resourceGroups:rg:providers:Microsoft.Compute:virtualMachines:vm-1",
+            "arn:aws:iam::123456789012:role/app-team/deploy, arn:aws:iam::123456789012:role:app-team:deploy",
+            "https://example.com/orders/, https:example.com:orders",
+            "jdbc:postgresql://pg:5432/orders, jdbc:postgresql:pg:5432:orders"
+        }
+    )
+    void shouldTurnEachRunOfSlashesIntoASingleColon(String id, String normalized) {
+        assertThat(Asset.normalizeId(id)).isEqualTo(normalized);
+    }
+
+    @Test
+    void shouldShortenTheIdTheSameWayEveryTimeWhenItIsLongerThanTheLimit() {
+        String normalized = Asset.normalizeId(LONG_ID);
+
+        assertThat(LONG_ID).hasSizeGreaterThan(Asset.ID_MAX_LENGTH);
+        assertThat(normalized)
+            .hasSizeLessThanOrEqualTo(Asset.ID_MAX_LENGTH)
+            .startsWith("subscriptions:0b9a2e4c-1f3d-4a5b-9c8d-7e6f5a4b3c2d:resourceGroups:rgrg")
+            .isEqualTo(Asset.normalizeId(LONG_ID));
+        assertThat(Asset.normalizeId(normalized)).isEqualTo(normalized);
+        assertThat(Asset.normalizeId(LONG_ID.replace("vm-1", "vm-2"))).isNotEqualTo(normalized);
+    }
+
+    @Test
+    void shouldShortenAnIdToTheSameIdWhetherItsSlashesWereAlreadyTurnedIntoColonsOrNot() {
+        String converted = LONG_ID.substring(1).replace("/", ":");
+
+        assertThat(Asset.normalizeId(converted)).isEqualTo(Asset.normalizeId(LONG_ID));
+    }
+
+    @Test
+    void shouldNotCutACharacterInHalfWhenTheIdIsShortened() {
+        String id = "a".repeat(126) + "\uD83D\uDE00" + "b".repeat(30);
+
+        String normalized = Asset.normalizeId(id);
+        String kept = normalized.substring(0, normalized.lastIndexOf(':'));
+
+        assertThat(kept).startsWith("a".repeat(126));
+        assertThat(Character.isHighSurrogate(kept.charAt(kept.length() - 1))).isFalse();
+        assertThat(normalized).hasSizeLessThanOrEqualTo(Asset.ID_MAX_LENGTH);
+    }
+
+    @Test
+    void shouldNormalizeTheIdOfAnAssetReadFromYaml() throws JsonProcessingException {
+        Asset withSlashes = JacksonMapper.ofYaml().readValue("id: //compute.googleapis.com/projects/p/zones/z/instances/vm-1", Asset.class);
+        Asset longOne = JacksonMapper.ofYaml().readValue("id: " + LONG_ID, Asset.class);
+
+        assertThat(withSlashes.getId()).isEqualTo("compute.googleapis.com:projects:p:zones:z:instances:vm-1");
+        assertThat(withSlashes.getMetadata()).containsEntry(Asset.FULL_ID_METADATA_KEY, "//compute.googleapis.com/projects/p/zones/z/instances/vm-1");
+        assertThat(longOne.getId()).isEqualTo(Asset.normalizeId(LONG_ID));
+        assertThat(longOne.getMetadata()).containsEntry(Asset.FULL_ID_METADATA_KEY, LONG_ID);
+    }
+
+    @Test
+    void shouldLeaveTheIdAsItIsWhenItHasNoSlashAndIsWithinTheLimit() {
+        String id = "x".repeat(Asset.ID_MAX_LENGTH);
+        String arn = "arn:aws:s3:::orders-bucket";
+
+        assertThat(Asset.normalizeId(id)).isSameAs(id);
+        assertThat(Asset.normalizeId(arn)).isSameAs(arn);
+        assertThat(Asset.normalizeId(null)).isNull();
+    }
+
+    @Test
+    void shouldKeepTheFullIdInTheMetadataWhenTheIdIsChanged() {
+        Asset shortened = External.builder().id(LONG_ID).build();
+        Asset withSlashes = External.builder().id("arn:aws:iam::123456789012:role/deploy").build();
+        Asset unchanged = External.builder().id("vm-1").build();
+
+        assertThat(shortened.getId()).isEqualTo(Asset.normalizeId(LONG_ID));
+        assertThat(shortened.getMetadata()).containsEntry(Asset.FULL_ID_METADATA_KEY, LONG_ID);
+        assertThat(shortened.uid()).isEqualTo(Asset.uid(null, LONG_ID));
+        assertThat(withSlashes.getId()).isEqualTo("arn:aws:iam::123456789012:role:deploy");
+        assertThat(withSlashes.getMetadata()).containsEntry(Asset.FULL_ID_METADATA_KEY, "arn:aws:iam::123456789012:role/deploy");
+        assertThat(unchanged.getMetadata()).doesNotContainKey(Asset.FULL_ID_METADATA_KEY);
+    }
+
+    @Test
+    void shouldPointReferencesAndIdentifiersToTheNormalizedIdGivenALongId() {
+        String normalized = Asset.normalizeId(LONG_ID);
+
+        assertThat(new AssetRelationRef(LONG_ID, null, null).id()).isEqualTo(normalized);
+        assertThat(new AssetIdentifier("tenant", null, LONG_ID, null).id()).isEqualTo(normalized);
+        assertThat(new AssetIdentifier("tenant", null, LONG_ID, null).uid()).isEqualTo(Asset.uid("tenant", LONG_ID));
+    }
+
+    @Test
+    void shouldKeepTheIdAsGivenOnAnIdentifierWhoseIdIsNormalized() throws JsonProcessingException {
+        AssetIdentifier withSlashes = JacksonMapper.ofYaml().readValue("id: //compute.googleapis.com/projects/p/zones/z/instances/vm-1", AssetIdentifier.class);
+        AssetIdentifier unchanged = JacksonMapper.ofYaml().readValue("id: vm-1", AssetIdentifier.class);
+        AssetIdentifier sent = withSlashes.withTenantId("tenant");
+        AssetIdentifier received = JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(sent), AssetIdentifier.class);
+
+        assertThat(withSlashes.id()).isEqualTo("compute.googleapis.com:projects:p:zones:z:instances:vm-1");
+        assertThat(withSlashes.fullId()).isEqualTo("//compute.googleapis.com/projects/p/zones/z/instances/vm-1");
+        assertThat(unchanged.fullId()).isNull();
+        assertThat(received).isEqualTo(sent);
+    }
+}

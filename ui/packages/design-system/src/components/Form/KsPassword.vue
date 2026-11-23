@@ -1,11 +1,12 @@
 <template>
-    <div class="ks-password w-100">
+    <div class="ks-password">
         <KsInput
             v-model="model"
             :class="hidden || disabled ? 'ks-password--masked' : ''"
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="({...filteredProps(), ...$attrs} as KsInputProps)"
             @change="emit('change', $event)"
             autosize
+            resize="none"
             type="textarea"
         >
             <template v-if="$slots.prepend" #prepend>
@@ -18,17 +19,20 @@
                 <slot />
             </template>
         </KsInput>
-        <KsButton class="hide" link v-if="!disabled && model" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
+        <KsButton class="hide" link v-if="!disabled && model" :aria-label="hidden ? $t('ks_password.show') : $t('ks_password.hide')" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
     </div>
 </template>
 
 <script setup lang="ts">
     import {ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import type KsInputComponent from "./KsInput.vue"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue"
 
     defineOptions({inheritAttrs: false})
+
+    type KsInputProps = InstanceType<typeof KsInputComponent>["$props"]
 
     const model = defineModel<string | number>()
 
@@ -63,7 +67,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     @font-face {
         font-family: 'DiscFont';
         src: url('../../assets/fonts/obscure-disc.woff2') format('woff2');
@@ -71,8 +75,9 @@
 
     .ks-password {
         position: relative;
+        width: 100%;
 
-        .hide {
+        & .hide {
             top: 5px;
             right: 5px;
             position: absolute;

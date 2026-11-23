@@ -1,13 +1,19 @@
 package io.kestra.worker.senders;
 
+import java.time.Instant;
+
 import org.slf4j.event.Level;
 
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.worker.models.WorkerTriggerResult;
+import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.GrpcWorkerIOSender.SendStrategy;
 
@@ -24,6 +30,9 @@ import jakarta.inject.Singleton;
 @Factory
 public class GrpcWorkerIOSenderFactory {
 
+    private static final String RESULT_TOO_LARGE_MESSAGE = "Failed to send the task result to the worker controller: its serialized size exceeds the maximum inbound gRPC message size configured on the controller. "
+        + "The task run is failed and its outputs are dropped. Reduce the size of the task outputs, or increase 'kestra.grpc.max-inbound-message-size' on the worker controller.";
+
     /**
      * Creates a sender for {@link WorkerTaskResult} events (sent per-item).
      * <p>
@@ -33,7 +42,9 @@ public class GrpcWorkerIOSenderFactory {
     @Singleton
     public GrpcWorkerIOSender<WorkerTaskResult> taskResultSender(
         final WorkerControllerServiceStub controllerServiceStub,
-        final WorkerQueueRegistry workerQueueRegistry) {
+        final WorkerQueueRegistry workerQueueRegistry,
+        final LogEntryEmitter logEntryEmitter,
+        final WorkerJobFetcher workerJobFetcher) {
         return new GrpcWorkerIOSender<>(
             workerQueueRegistry,
             "TaskResultWorkerIOSender",
@@ -42,12 +53,19 @@ public class GrpcWorkerIOSenderFactory {
             controllerServiceStub::sendWorkerTaskResults,
             result ->
             {
-                Logs.logTaskRun(result.getTaskRun(), Level.ERROR, "Failed to send result. Cause: outputs exceeds maximum size.");
-                return result.withTaskRun(result.getTaskRun().fail()).withOutputs(null);
+                Logs.logTaskRun(result.getTaskRun(), Level.ERROR, RESULT_TOO_LARGE_MESSAGE);
+                logEntryEmitter.emits(taskRunLogEntry(result.getTaskRun(), RESULT_TOO_LARGE_MESSAGE));
+                return result.withTaskRun(result.getTaskRun().withStateAndAttempt(State.Type.FAILED)).withOutputs(null);
             },
             // Task results must survive a transient network partition: re-queue and redrive rather than
             // drop, otherwise a completed task is left stuck RUNNING because its result is lost.
-            true
+            true,
+            result ->
+            {
+                if (result.getTaskRun().getState().isTerminated()) {
+                    workerJobFetcher.onTerminalResultAccepted(result.getTaskRun().getId());
+                }
+            }
         );
     }
 
@@ -57,7 +75,8 @@ public class GrpcWorkerIOSenderFactory {
     @Singleton
     public GrpcWorkerIOSender<WorkerTriggerResult> triggerResultSender(
         final WorkerControllerServiceStub controllerServiceStub,
-        final WorkerQueueRegistry workerQueueRegistry) {
+        final WorkerQueueRegistry workerQueueRegistry,
+        final WorkerJobFetcher workerJobFetcher) {
         return new GrpcWorkerIOSender<>(
             workerQueueRegistry,
             "TriggerResultWorkerIOSender",
@@ -66,7 +85,13 @@ public class GrpcWorkerIOSenderFactory {
             controllerServiceStub::sendWorkerTriggerResults,
             null,
             // Trigger results are terminal work output — re-queue on a transient network partition, like task results.
-            true
+            true,
+            result ->
+            {
+                if (result.isTerminal()) {
+                    workerJobFetcher.onTerminalResultAccepted(result.id().uid());
+                }
+            }
         );
     }
 
@@ -85,7 +110,8 @@ public class GrpcWorkerIOSenderFactory {
             controllerServiceStub::sendWorkerLogEntries,
             null,
             // Logs are best-effort and high-volume: re-queuing could back-pressure the worker, so drop on failure.
-            false
+            false,
+            null
         );
     }
 
@@ -104,7 +130,19 @@ public class GrpcWorkerIOSenderFactory {
             controllerServiceStub::sendWorkerMetricEntries,
             null,
             // Metrics are best-effort and high-volume: drop on failure rather than back-pressure the worker.
-            false
+            false,
+            null
         );
+    }
+
+    private static LogEntry taskRunLogEntry(final TaskRun taskRun, final String message) {
+        int lastAttemptIndex = Math.max(0, taskRun.attemptNumber() - 1);
+        return LogEntry.of(taskRun, null).toBuilder()
+            .level(Level.ERROR)
+            .attemptNumber(lastAttemptIndex)
+            .message(message)
+            .timestamp(Instant.now())
+            .thread(Thread.currentThread().getName())
+            .build();
     }
 }

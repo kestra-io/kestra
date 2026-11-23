@@ -20,6 +20,18 @@ public class InvalidException extends KestraRuntimeException {
     }
 
     /**
+     * Creates a new {@link InvalidException} instance.
+     *
+     * @param invalid the invalid entity.
+     * @param message the error message.
+     * @param cause the underlying failure, kept for diagnosis but not shown to the caller.
+     */
+    public InvalidException(final Object invalid, final String message, final Throwable cause) {
+        super(message, cause);
+        this.invalid = invalid;
+    }
+
+    /**
      * Gets the invalid objects.
      *
      * @return the invalid object.

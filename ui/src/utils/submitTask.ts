@@ -1,18 +1,21 @@
-import _cloneDeep from "lodash/cloneDeep"
+import {cloneDeep, dayjs} from "@kestra-io/design-system"
 import {useExecutionsStore, type Execution} from "../stores/executions"
-import {Router, type useRoute} from "vue-router"
+import {Router, type LocationQueryRaw, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
 import {flattenInputs} from "./inputs"
-import {EXECUTION_TAB_ROUTES} from "../components/executions/executionTabs"
+import {DEFAULT_EXECUTION_TAB, EXECUTION_TAB_ROUTES} from "../components/executions/executionTabs"
 import {resolveDefaultTab} from "./routeTabs"
 
-export const normalizeInputValues = (
-    submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } },
-    inputsList: {id:string, type?: string}[] | undefined,
-    values: Record<string, any>,
-): Record<string, any> | undefined => {
+import {storageKeys} from "./constants"
 
-    let inputValuesCloned = _cloneDeep(values)
+export type ExecutionInputValues = Record<string, unknown>
+
+export const normalizeInputValues = (
+    inputsList: {id:string, type?: string}[] | undefined,
+    values: ExecutionInputValues,
+): ExecutionInputValues | undefined => {
+
+    let inputValuesCloned = cloneDeep(values)
 
     for (const input of inputsList || []) {
         if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === null || inputValuesCloned[input.id] === "") {
@@ -24,18 +27,18 @@ export const normalizeInputValues = (
         return undefined
     }
 
-    const normalized: Record<string, any> = {}
+    const normalized: ExecutionInputValues = {}
 
     for (let input of inputsList || []) {
         const inputName = input.id
         const inputValue = inputValuesCloned[inputName]
         if (inputValue !== undefined) {
             if (input.type === "DATETIME" && inputValue) {
-                normalized[inputName] = submitor.$moment(inputValue).toISOString()
+                normalized[inputName] = dayjs(inputValue as string | number | Date).toISOString()
             } else if (input.type === "DATE" && inputValue) {
-                normalized[inputName] = submitor.$moment(inputValue).format("YYYY-MM-DD")
+                normalized[inputName] = dayjs(inputValue as string | number | Date).format("YYYY-MM-DD")
             } else if (input.type === "TIME") {
-                normalized[inputName] = submitor.$moment(inputValue).format("hh:mm:ss")
+                normalized[inputName] = dayjs(inputValue as string | number | Date).format("HH:mm:ss")
             } else {
                 normalized[inputName] = inputValue
             }
@@ -50,35 +53,33 @@ export const normalizeInputValues = (
 // normalizeInputValues() directly since triggerExecution() now builds its own FormData via
 // ExecutionsAPI.createExecution()'s multipart body serializer.
 export const inputsToFormData = (
-    submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } },
     inputsList: {id:string, type?: string}[] | undefined,
-    values: Record<string, any>,
+    values: ExecutionInputValues,
 ) => {
-    const normalized = normalizeInputValues(submitor, inputsList, values)
+    const normalized = normalizeInputValues(inputsList, values)
     if (!normalized) {
         return undefined
     }
 
     const formData = new FormData()
     for (const [key, value] of Object.entries(normalized)) {
-        formData.append(key, value)
+        formData.append(key, value as string | Blob)
     }
     return formData
 }
 
 export const executeTask = (
-    submitor: { 
-        $router: Router, 
-        $route: ReturnType<typeof useRoute>, 
-        $toast: () => { success: (message: string) => void }, 
-        $t: (key: string, params?: Record<string, any>) => string, 
-        $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } 
-    }, 
-    flow: Flow, 
-    values: Record<string, any>,
-    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
+    submitor: {
+        $router: Router,
+        $route: ReturnType<typeof useRoute>,
+        $toast: () => { success: (message: string) => void },
+        $t: (key: string, params?: Record<string, unknown>) => string,
+    },
+    flow: Flow,
+    values: ExecutionInputValues,
+    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: LocationQueryRaw; nextStep?: boolean },
 ): Promise<Execution> => {
-    const formData = normalizeInputValues(submitor, flattenInputs(flow.inputs), values)
+    const formData = normalizeInputValues(flattenInputs(flow.inputs), values)
     const executionsStore = useExecutionsStore()
 
     return executionsStore
@@ -90,7 +91,7 @@ export const executeTask = (
         .then(response => {
             executionsStore.execution = response
             if (options.redirect) {
-                const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, localStorage.getItem("executeDefaultTab"), "gantt")
+                const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, localStorage.getItem(storageKeys.EXECUTION_DEFAULT_TAB), DEFAULT_EXECUTION_TAB)
                 if (options.newTab) {
                     const resolved = submitor.$router.resolve({
                         name: `executions/update/${tab}`,

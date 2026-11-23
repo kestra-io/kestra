@@ -19,13 +19,10 @@
         </KsAlert>
 
         <div v-else-if="loading" class="trigger-list">
-            <KsSkeleton v-for="i in 4" :key="i" height="3rem" />
+            <KsSkeleton v-for="i in 4" :key="i" />
         </div>
 
-        <KsEmpty
-            v-else-if="filteredTriggers.length === 0"
-            :title="$t('recipe.other.no_results')"
-        />
+        <KsNoData v-else-if="filteredTriggers.length === 0" :description="$t('recipe.other.no_results')" />
 
         <div v-else class="trigger-list" role="radiogroup" :aria-label="$t('recipe.other.search_label')" data-test="recipe-trigger-list">
             <SelectableTile
@@ -95,7 +92,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .other-panel {
         display: flex;
         flex-direction: column;

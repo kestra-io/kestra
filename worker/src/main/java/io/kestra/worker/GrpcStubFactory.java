@@ -5,6 +5,7 @@ import java.time.Duration;
 import io.kestra.controller.GrpcChannelManager;
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.grpc.*;
+import io.kestra.controller.grpc.CheckpointServiceGrpc.CheckpointServiceBlockingStub;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc.ConnectControllerServiceBlockingStub;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc.KVMetadataServiceBlockingStub;
 import io.kestra.controller.grpc.LivenessControllerServiceGrpc.LivenessControllerServiceBlockingStub;
@@ -70,8 +71,38 @@ public class GrpcStubFactory {
 
     @Bean
     @Singleton
+    public CheckpointServiceBlockingStub checkpointServiceBlockingStub(GrpcChannelManager manager) {
+        return CheckpointServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public KVStoreServiceGrpc.KVStoreServiceStub kvStoreServiceStub(GrpcChannelManager manager) {
+        return KVStoreServiceGrpc.newStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public KVStoreServiceGrpc.KVStoreServiceBlockingStub kvStoreServiceBlockingStub(GrpcChannelManager manager) {
+        return KVStoreServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
     public NamespaceFileMetadataServiceBlockingStub namespaceFileMetadataServiceBlockingStub(GrpcChannelManager manager) {
         return NamespaceFileMetadataServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public NamespaceFileContentServiceGrpc.NamespaceFileContentServiceStub namespaceFileContentServiceStub(GrpcChannelManager manager) {
+        return NamespaceFileContentServiceGrpc.newStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public NamespaceFileContentServiceGrpc.NamespaceFileContentServiceBlockingStub namespaceFileContentServiceBlockingStub(GrpcChannelManager manager) {
+        return NamespaceFileContentServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }
 
     @Bean

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import io.kestra.controller.RequiresControllerServer;
 import io.kestra.controller.grpc.BooleanResponse;
 import io.kestra.controller.grpc.KVMetadataRequest;
+import io.kestra.controller.grpc.KVMetadataSaveRequest;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc;
 import io.kestra.controller.grpc.NamespaceRequest;
 import io.kestra.controller.grpc.OpaqueData;
@@ -37,12 +38,15 @@ public class GrpcKVMetadataControllerService extends KVMetadataServiceGrpc.KVMet
 
     private final KVMetadataStateStore kvMetadataStateStore;
     private final WorkerInfo workerInfo;
+    private final WorkerTenantAccessGuard workerTenantAccessGuard;
 
     @Inject
     public GrpcKVMetadataControllerService(final KVMetadataStateStore kvMetadataStateStore,
-        final WorkerInfo workerInfo) {
+        final WorkerInfo workerInfo,
+        final WorkerTenantAccessGuard workerTenantAccessGuard) {
         this.kvMetadataStateStore = kvMetadataStateStore;
         this.workerInfo = workerInfo;
+        this.workerTenantAccessGuard = workerTenantAccessGuard;
     }
 
     @Override
@@ -117,11 +121,16 @@ public class GrpcKVMetadataControllerService extends KVMetadataServiceGrpc.KVMet
     }
 
     @Override
-    public void save(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
+    public void save(KVMetadataSaveRequest request, StreamObserver<OpaqueData> responseObserver) {
         try {
             log.trace("Received save request");
 
             PersistedKvMetadata item = MESSAGE_FORMAT.fromByteString(request.getMessage(), PersistedKvMetadata.class);
+            if (request.getTenantId().isEmpty()) {
+                workerTenantAccessGuard.checkUndeclaredTenant(request.getHeader(), item.getTenantId());
+            } else {
+                item = item.toBuilder().tenantId(request.getTenantId()).build();
+            }
 
             PersistedKvMetadata result = kvMetadataStateStore.save(item);
 

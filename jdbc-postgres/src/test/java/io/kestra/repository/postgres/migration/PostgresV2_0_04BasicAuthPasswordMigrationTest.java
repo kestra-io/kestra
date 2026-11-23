@@ -1,0 +1,6 @@
+package io.kestra.repository.postgres.migration;
+
+import io.kestra.jdbc.migration.AbstractV2_0_04BasicAuthPasswordMigrationTest;
+
+class PostgresV2_0_04BasicAuthPasswordMigrationTest extends AbstractV2_0_04BasicAuthPasswordMigrationTest {
+}

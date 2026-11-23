@@ -4,22 +4,22 @@
             ref="formRef"
             :model="form"
             labelPosition="top"
-            @submit.prevent="onSubmit"
+            @submit.prevent="save"
         >
             <KsFormItem
-                :label="t('mcp.server_id')"
+                :label="$t('mcp.server_id')"
                 prop="id"
                 required
                 labelPosition="left"
-                class="id-row"
+                class="field"
+                inline
                 :rules="idRules"
             >
                 <KsInput
                     v-model="form.id"
-                    :placeholder="t('mcp.id_placeholder')"
+                    :placeholder="$t('mcp.id_placeholder')"
                     :disabled="idDisabled"
                     class="mono id-input"
-                    @change="autoSubmit"
                 >
                     <template
                         v-if="idDisabled"
@@ -30,38 +30,40 @@
                 </KsInput>
             </KsFormItem>
 
-            <KsFormItem :label="t('description')">
+            <KsFormItem class="field" :label="$t('description')">
                 <KsInput
                     v-model="form.description"
                     type="textarea"
                     :rows="2"
-                    :placeholder="t('description')"
+                    resize="none"
+                    thinScrollbar
+                    :placeholder="$t('description')"
                     :disabled="readOnly"
-                    @change="autoSubmit"
                 />
             </KsFormItem>
 
-            <KsFormItem :label="t('mcp.instructions')">
+            <KsFormItem class="field" :label="$t('mcp.instructions')">
                 <KsInput
                     v-model="form.instructions"
                     type="textarea"
                     :rows="3"
-                    :placeholder="t('mcp.instructions')"
+                    resize="none"
+                    thinScrollbar
+                    :placeholder="$t('mcp.instructions')"
                     class="mono"
                     :disabled="readOnly"
-                    @change="autoSubmit"
                 />
             </KsFormItem>
 
             <KsFormItem
-                :label="t('mcp.private_server')"
+                :label="$t('mcp.private_server')"
                 labelPosition="left"
-                class="spread-row"
+                class="field spread-row"
+                inline
             >
                 <KsSwitch
                     v-model="privateServer"
                     :disabled="readOnly"
-                    @change="autoSubmit"
                 />
             </KsFormItem>
 
@@ -71,30 +73,29 @@
                 :closable="false"
                 class="type-hint"
             >
-                {{ t("mcp.public_hint") }}
+                {{ $t("mcp.public_hint") }}
             </KsAlert>
 
-            <KsFormItem v-if="isPrivate">
+            <KsFormItem v-if="isPrivate" class="field">
                 <KsRadioCardGroup
                     v-model="form.authType"
                     :options="authOptions"
-                    :ariaLabel="t('mcp.auth_type')"
-                    @change="autoSubmit"
+                    :ariaLabel="$t('mcp.auth_type')"
                 />
             </KsFormItem>
 
             <KsFormItem
                 v-if="isOAuth"
-                :label="t('mcp.oauth_provider')"
+                class="field"
+                :label="$t('mcp.oauth_provider')"
                 prop="oauthProvider"
                 :rules="oauthProviderRules"
             >
                 <KsSelect
                     v-model="form.oauthProvider"
-                    :placeholder="t('mcp.oauth_provider_placeholder')"
+                    :placeholder="$t('mcp.oauth_provider_placeholder')"
                     :disabled="readOnly"
                     class="full-width"
-                    @change="autoSubmit"
                 >
                     <KsOption
                         v-for="provider in oauthProviders"
@@ -107,7 +108,8 @@
 
             <KsFormItem
                 v-if="isOAuth"
-                :label="t('mcp.scopes_supported')"
+                class="field"
+                :label="$t('mcp.scopes_supported')"
             >
                 <KsSelect
                     v-model="form.oauthScopesSupported"
@@ -115,41 +117,58 @@
                     filterable
                     allowCreate
                     defaultFirstOption
-                    :placeholder="t('mcp.scopes_supported_placeholder')"
+                    :placeholder="$t('mcp.scopes_supported_placeholder')"
                     :disabled="readOnly"
                     class="full-width"
-                    @change="autoSubmit"
                 />
                 <div class="field-hint">
-                    {{ t("mcp.scopes_supported_hint") }}
+                    {{ $t("mcp.scopes_supported_hint") }}
                 </div>
             </KsFormItem>
 
             <KsFormItem
-                :label="t('enabled')"
+                :label="$t('enabled')"
                 labelPosition="left"
-                class="spread-row"
+                class="field spread-row"
+                inline
             >
                 <KsSwitch
                     v-model="enabled"
                     :disabled="readOnly"
-                    @change="autoSubmit"
                 />
             </KsFormItem>
+
+            <div
+                v-if="canSave"
+                class="form-actions"
+            >
+                <KsButton @click="cancel">
+                    {{ $t("cancel") }}
+                </KsButton>
+                <KsButton
+                    type="primary"
+                    :disabled="submitting"
+                    @click="save"
+                >
+                    {{ isUpdate ? $t("save") : $t("create") }}
+                </KsButton>
+            </div>
         </KsForm>
     </div>
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref, watch} from "vue"
+    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
 
     import {useMcpStore, type McpServerPayload} from "../../../../stores/mcp"
+    import {useHelpers} from "../useHelpers"
     import {useMiscStore} from "override/stores/misc"
     import {useAuthStore} from "override/stores/auth"
 
     import {useToast} from "../../../../utils/toast"
+    import {useUnsavedChangesStore} from "../../../../stores/unsavedChanges"
 
     import Lock from "vue-material-design-icons/Lock.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
@@ -165,6 +184,7 @@
     const mcpStore = useMcpStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
+    const {listRoute} = useHelpers()
 
     const DEFAULT_OAUTH_SCOPES = ["openid", "profile", "email"]
 
@@ -191,6 +211,17 @@
 
     const formRef = ref<FormInstance>()
     const form = ref<McpForm>(defaultForm())
+    const savedForm = ref(JSON.stringify(form.value))
+    const unsavedChangesStore = useUnsavedChangesStore()
+    const markSaved = () => savedForm.value = JSON.stringify(form.value)
+
+    watch(() => JSON.stringify(form.value) !== savedForm.value, (dirty) => {
+        unsavedChangesStore.unsavedChange = dirty
+    })
+
+    onBeforeUnmount(() => {
+        unsavedChangesStore.unsavedChange = false
+    })
     const submitting = ref(false)
 
     const isOss = computed(() => miscStore.configs?.edition === "OSS")
@@ -287,8 +318,8 @@
         }
     }
 
-    const create = async (): Promise<void> => {
-        if (!formRef.value || submitting.value) {
+    const save = async (): Promise<void> => {
+        if (readOnly.value || !formRef.value || submitting.value) {
             return
         }
 
@@ -299,57 +330,30 @@
 
             submitting.value = true
             try {
-                const created = await mcpStore.create(buildPayload())
-                toast.saved(created.id)
-                router.push({
-                    name: "admin/mcp-servers/update",
-                    params: {id: created.id, tab: "edit", tenant: route.params.tenant},
-                })
-            } catch (e) {
-                submitting.value = false
-                console.error("Failed to create MCP server", e)
-            }
-        }).catch(() => {})
-    }
-
-    const autoSubmit = (): void => {
-        if (isUpdate.value) {
-            autoSave()
-            return
-        }
-
-        if (readOnly.value || !form.value.id) {
-            return
-        }
-
-        create()
-    }
-
-    const autoSave = (): void => {
-        if (!isUpdate.value || readOnly.value || !formRef.value) {
-            return
-        }
-
-        formRef.value.validate(async (valid) => {
-            if (!valid) {
-                return
-            }
-
-            try {
-                await mcpStore.update(form.value.id, buildPayload())
-                toast.saved(form.value.id)
+                if (isUpdate.value) {
+                    await mcpStore.update(form.value.id, buildPayload())
+                    markSaved()
+                    toast.saved(form.value.id)
+                } else {
+                    const created = await mcpStore.create(buildPayload())
+                    markSaved()
+                    toast.saved(created.id)
+                    router.push({
+                        name: "admin/mcp-servers/update",
+                        params: {id: created.id, tab: "edit", tenant: route.params.tenant},
+                    })
+                }
             } catch (e) {
                 console.error("Failed to save MCP server", e)
+            } finally {
+                submitting.value = false
             }
         }).catch(() => {})
     }
 
-    const onSubmit = (): void => {
-        if (isUpdate.value) {
-            autoSave()
-        } else {
-            create()
-        }
+    const cancel = (): void => {
+        markSaved()
+        router.push(listRoute.value)
     }
 
     onMounted(() => {
@@ -372,16 +376,19 @@
                     oauthScopesSupported: server.oauthScopesSupported ?? [],
                     disabled: server.disabled,
                 }
+                markSaved()
             } else if (!isUpdate.value) {
                 form.value = defaultForm()
+                markSaved()
             }
         },
         {immediate: true},
     )
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .mcp-edit {
+        --ks-form-item-label-font-weight: var(--ks-font-weight-semibold);
         max-width: 653px;
         border: 1px solid var(--ks-border-default);
         border-radius: 8px;
@@ -392,57 +399,25 @@
         margin-inline: auto;
     }
 
-    .mono :deep(input),
-    .mono :deep(textarea) {
+    .mono {
         font-family: var(--ks-font-family-mono);
     }
 
-    .mcp-edit :deep(textarea) {
-        resize: none;
-    }
-
-    .mcp-edit :deep(textarea)::-webkit-scrollbar {
-        width: 0.5rem;
-    }
-
-    .mcp-edit :deep(textarea)::-webkit-scrollbar-thumb {
-        background-color: var(--ks-scrollbar-content);
-        background-clip: padding-box;
-        border: 2px solid transparent;
-        border-radius: 999px;
-    }
-
-    :deep(.kel-form-item__label) {
-        font-weight: var(--ks-font-weight-semibold);
-    }
-
-    .mcp-edit :deep(.kel-form-item:not(:first-child)) {
+    .field:not(:first-child) {
         border-top: 1px solid var(--ks-border-subtle);
         padding-top: var(--ks-spacing-4);
     }
 
-    .id-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .id-row :deep(.kel-form-item__content) {
-        flex: 0 0 auto;
-    }
-
-    .spread-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .spread-row :deep(.kel-form-item__content) {
-        flex: 0 0 auto;
-    }
-
     .spread-row:last-child {
         margin-bottom: 0;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-2);
+        border-top: 1px solid var(--ks-border-subtle);
+        padding-top: var(--ks-spacing-4);
     }
 
     .id-input {

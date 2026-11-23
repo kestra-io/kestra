@@ -1,45 +1,14 @@
-// The kotlp binary is a mandatory embedded resource: it is a single Actually Portable Executable
-// covering Linux/macOS/BSD on amd64 and arm64, pinned by the 'kotlpVersion' Gradle property.
-def kotlpBinary = file('src/main/resources/kotlp/kotlp')
-def kotlpVersionMarker = file('src/main/resources/kotlp/kotlp.version')
-
-tasks.register('downloadKotlp') {
-    group = "build"
-    description = "Downloads the kotlp release binary into src/main/resources so it is embedded in the jar."
-    def version = kotlpVersion
-    inputs.property('kotlpVersion', version)
-    outputs.files(kotlpBinary, kotlpVersionMarker)
-    onlyIf { !(kotlpBinary.exists() && kotlpVersionMarker.exists() && kotlpVersionMarker.text.trim() == version) }
-    doLast {
-        def url = "https://github.com/kestra-io/kotlp/releases/download/v${version}/kotlp"
-        kotlpBinary.parentFile.mkdirs()
-        try {
-            def connection = URI.create(url).toURL().openConnection()
-            connection.connectTimeout = 30_000
-            connection.readTimeout = 300_000
-            if (connection.responseCode != 200) {
-                throw new GradleException("Cannot download the kotlp binary from '%s': HTTP %d.".formatted(url, connection.responseCode))
-            }
-            connection.inputStream.withStream { input ->
-                kotlpBinary.withOutputStream { output -> input.transferTo(output) }
-            }
-            kotlpVersionMarker.text = version
-        } catch (IOException e) {
-            kotlpBinary.delete()
-            kotlpVersionMarker.delete()
-            throw new GradleException("Cannot download the kotlp binary from '%s': %s.".formatted(url, e.getMessage()), e)
-        }
-    }
-}
-processResources.dependsOn downloadKotlp
-tasks.matching { it.name == 'sourcesJar' }.configureEach { dependsOn 'downloadKotlp' }
-
 dependencies {
     // Kestra
     implementation project(':core')
     annotationProcessor project(':processor')
 
     implementation 'io.micronaut:micronaut-context'
+
+    // The kotlp binary ships as a resource inside this artifact — a single Actually Portable
+    // Executable covering Linux/macOS/BSD on amd64 and arm64 — and is read off the classpath by
+    // KotlpUtils. Version is pinned by the platform BOM.
+    implementation 'io.kestra:kotlp'
 
     implementation ('com.github.docker-java:docker-java') {
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-netty'

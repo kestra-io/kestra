@@ -8,8 +8,10 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.DescriptionDisplayMode;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 
@@ -23,6 +25,52 @@ class SelectInputTest {
 
     @Inject
     RunContextFactory runContextFactory;
+
+    @Test
+    void shouldKeepDescriptionDisplayModeWhenRenderingExpression() {
+        // Given
+        RunContext runContext = runContextFactory.of(Map.of("values", List.of("V1", "V2")));
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .description("A description")
+            .descriptionDisplayMode(DescriptionDisplayMode.TOOLTIP)
+            .expression("{{ values }}")
+            .build();
+        // When
+        Input<?> renderInput = RenderableInput.mayRenderInput(input, s ->
+        {
+            try {
+                return runContext.renderTyped(s);
+            } catch (IllegalVariableEvaluationException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        // Then
+        assertThat(renderInput.getDescriptionDisplayMode()).isEqualTo(DescriptionDisplayMode.TOOLTIP);
+    }
+
+    @Test
+    void shouldKeepPrefillWhenRenderingExpression() {
+        RunContext runContext = runContextFactory.of(Map.of("values", List.of("V1", "V2")));
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .prefill(Property.ofValue("V1"))
+            .expression("{{ values }}")
+            .build();
+
+        Input<?> renderInput = RenderableInput.mayRenderInput(input, s ->
+        {
+            try {
+                return runContext.renderTyped(s);
+            } catch (IllegalVariableEvaluationException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertThat(renderInput.getPrefill()).isEqualTo(Property.ofValue("V1"));
+    }
 
     @Test
     void shouldRenderInputGivenExpressionReturningStrings() {
@@ -169,6 +217,31 @@ class SelectInputTest {
         // label does not
         assertThatThrownBy(() -> input.validate("Prod"))
             .hasMessageContaining("[123, 456]");
+    }
+
+    @Test
+    void validateRejectsOutOfListValueForOptionalInput() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .values(List.of(new ValueOption("a", "a"), new ValueOption("b", "b"), new ValueOption("c", "c")))
+            .required(false)
+            .build();
+
+        assertThatThrownBy(() -> input.validate("zzz"))
+            .hasMessageContaining("[a, b, c]");
+    }
+
+    @Test
+    void validateAcceptsAnyValueWhenValuesComeFromAnUnrenderedExpression() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .expression("{{ values }}")
+            .required(false)
+            .build();
+
+        input.validate("789");
     }
 
     @Test

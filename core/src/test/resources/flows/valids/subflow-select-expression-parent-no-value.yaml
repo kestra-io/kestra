@@ -1,0 +1,10 @@
+id: subflow-select-expression-parent-no-value
+namespace: io.kestra.tests
+
+tasks:
+  - id: launch
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: subflow-select-expression-child
+    wait: true
+    transmitFailed: true

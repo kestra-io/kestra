@@ -34,7 +34,7 @@ class PostgresV2_0_21LocksLockedUntilMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_21LocksLockedUntilMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach

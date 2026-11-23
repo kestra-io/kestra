@@ -1,10 +1,10 @@
-import {nextTick} from "vue"
-import _isEqual from "lodash/isEqual"
-import type {RouteLocationNormalized} from "vue-router"
+import {type App, nextTick} from "vue"
+import {isDeepEqual} from "@kestra-io/design-system"
+import type {RouteLocationNormalized, Router} from "vue-router"
 import {useApiStore} from "../stores/api"
 import {routeSection} from "./analytics/activation"
 
-interface PageInfo {
+export interface PageInfo {
     origin: string
     path: string
     fullPath: string
@@ -30,11 +30,11 @@ export const pageFromRoute = (route: RouteLocationNormalized): PageInfo => {
     }
 }
 
-export default (_app: any, router: any) => {
+export default (_app: App, router: Router) => {
     const apiStore = useApiStore()
     router.afterEach((to: RouteLocationNormalized, from: RouteLocationNormalized) => {
         nextTick().then(() => {
-            if (_isEqual(from, to)) {
+            if (isDeepEqual(from, to)) {
                 return
             }
             const currentOrigin = window.location.origin

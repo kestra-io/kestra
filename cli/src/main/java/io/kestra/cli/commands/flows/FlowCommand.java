@@ -2,6 +2,7 @@ package io.kestra.cli.commands.flows;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.Kestra;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ import picocli.CommandLine;
     }
 )
 @Slf4j
-public class FlowCommand extends AbstractCommand {
+public class FlowCommand extends AbstractCommand implements NoDatabaseCommandInterface {
     @SneakyThrows
     @Override
     public Integer call() throws Exception {

@@ -1,17 +1,19 @@
-const maybeText = (allowSeparators: boolean) => "(?:\"[^\"]*\")|(?:'[^']*')|(?:(?:(?!\\}\\})" + (allowSeparators ? "[\\S\\n ]" : "[^~+,:\\n ]") + ")*)"
-const pebbleStart = "\\{\\{[\\n ]*"
-const fieldWithoutDotCapture = "([^()}:~+.\\n '\"]*)(?![^()}\\n ])"
-const dotAccessedFieldWithParentCapture = "([^()}:~+\\n '\"]*)\\." + fieldWithoutDotCapture
-const maybeTextFollowedBySeparator = "(?:" + maybeText(true) + "[\\n ]*(?:(?:[~+]+)|(?:\\}\\}[\\n ]*" + pebbleStart + "))[\\n ]*)*"
-const paramKey = "[^\\n ()~+},:=]+"
-const paramValue = "(?:(?:(?:\"[^\"]*\"?)|(?:'[^']*'?)|[^,)}]))*"
+const pebbleStart = "(?:\\{\\{|\\{%)[\\n ]*"
+const fieldWithoutDotCapture = "([^()}:%~+.\\n '\"]*)(?![^()}%\\n ])"
+const dotAccessedFieldWithParentCapture = "([^()}:%~+\\n '\"]*)\\." + fieldWithoutDotCapture
+const skippedTermToken = "(?:\"[^\"]*\")|(?:'[^']*')|[^\"'~+}%]|(?:\\}(?!\\}))|(?:%(?!\\}))"
+const statementKeywords = "(?:\\b(?:if|for\\s+\\w+\\s+in|set\\s+\\w+\\s*=|elseif|else|not|and|or)\\b)"
+const termSeparator = "[~+=!<>]|" + statementKeywords + "|(?:(?:\\}\\}|%\\})[\\n ]*(?:\\{\\{|\\{%))"
+const maybeTextFollowedBySeparator = "(?:(?:" + skippedTermToken + ")*(?:" + termSeparator + "))*[\\n ]*"
+const paramKey = "[^\\n ()~+},:=%]+"
+const paramValue = "(?:(?:\"[^\"]*\")|(?:'[^']*')|[^,)}\"'])*(?:\"[^\"]*|'[^']*)?"
 const maybeParams = "(" +
     "(?:[\\n ]*" + paramKey + "[\\n ]*=[\\n ]*" + paramValue + "(?:[\\n ]*,[\\n ]*)?)+)?" +
-    "([^\\n ()~+},:=]*)?"
-const functionWithMaybeParams = "([^\\n()},:~ ]+)\\(" + maybeParams
+    "([^\\n ()~+},:=%]*)?"
+const functionWithMaybeParams = "([^\\n()},:~% ]+)\\(" + maybeParams
 
 export default {
-    beforeSeparator: (additionalSeparators: string[] = []) => `([^\\}:\\n ${additionalSeparators.join("")}]*)`,
+    beforeSeparator: (additionalSeparators: string[] = []) => `([^\\}:%\\n ${additionalSeparators.join("")}]*)`,
     /** [fullMatch, dotForbiddenField] */
     capturePebbleVarRoot: `${pebbleStart}${maybeTextFollowedBySeparator}${fieldWithoutDotCapture}`,
     /** [fullMatch, parentFieldMaybeIncludingDots, childField] */

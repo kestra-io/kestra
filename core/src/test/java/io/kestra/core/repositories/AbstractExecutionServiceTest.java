@@ -7,24 +7,30 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionMetadata;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.searchable.SearchableData;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
 
+import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
@@ -43,6 +49,44 @@ public abstract class AbstractExecutionServiceTest {
 
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    SearchableDataRepositoryInterface searchableDataRepository;
+
+    @Test
+    void shouldCopyTheSearchableDataOfAReplayedExecution() throws Exception {
+        String tenantId = TestsUtils.randomTenant();
+        Flow flow = Flow.builder()
+            .namespace("io.kestra.test")
+            .id("replay-searchable")
+            .tenantId(tenantId)
+            .revision(1)
+            .build();
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenantId)
+            .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .flowRevision(flow.getRevision())
+            .metadata(ExecutionMetadata.builder().originalCreatedDate(Instant.now()).build())
+            .build();
+        searchableDataRepository.saveBatch(List.of(
+            new SearchableData(tenantId, execution.getId(), "orderId", 0, "ORD-1"),
+            new SearchableData(tenantId, execution.getId(), "orderIds", 0, "ORD-2"),
+            new SearchableData(tenantId, execution.getId(), "orderIds", 1, "ORD-3")
+        ));
+
+        Execution replayed = executionService.replay(execution, flow, null, null, Optional.empty());
+
+        assertThat(searchableDataRepository.findByExecutionId(tenantId, replayed.getId(), Pageable.from(1, 10)))
+            .containsExactly(
+                new SearchableData(tenantId, replayed.getId(), "orderId", 0, "ORD-1"),
+                new SearchableData(tenantId, replayed.getId(), "orderIds", 0, "ORD-2"),
+                new SearchableData(tenantId, replayed.getId(), "orderIds", 1, "ORD-3")
+            );
+        assertThat(searchableDataRepository.findByExecutionId(tenantId, execution.getId(), Pageable.from(1, 10))).hasSize(3);
+    }
 
     @Test
     void purge() throws Exception {
@@ -141,5 +185,43 @@ public abstract class AbstractExecutionServiceTest {
         );
 
         assertThat(purge.getExecutionsCount()).isZero();
+    }
+
+    @Test
+    void purgeShouldPurgeSearchableOutputs() throws Exception {
+        String tenantId = TestsUtils.randomTenant();
+        State state = new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS);
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenantId)
+            .state(state)
+            .flowId("abc")
+            .namespace("io.kestra.test")
+            .flowRevision(1)
+            .build();
+        executionRepository.save(execution);
+        searchableDataRepository.save(new SearchableData(tenantId, execution.getId(), "first", "value"));
+        searchableDataRepository.save(new SearchableData(tenantId, execution.getId(), "second", "value"));
+
+        assertThat(searchableDataRepository.findById(tenantId, execution.getId(), "first")).isPresent();
+
+        ExecutionService.PurgeResult purge = executionService.purge(
+            true,
+            true,
+            true,
+            true,
+            tenantId,
+            "io.kestra.test",
+            "abc",
+            null,
+            ZonedDateTime.now(),
+            null,
+            100
+        );
+
+        assertThat(purge.getExecutionsCount()).isEqualTo(1);
+        assertThat(purge.getSearchableOutputsCount()).isEqualTo(2);
+        assertThat(searchableDataRepository.findById(tenantId, execution.getId(), "first")).isEmpty();
+        assertThat(searchableDataRepository.findById(tenantId, execution.getId(), "second")).isEmpty();
     }
 }

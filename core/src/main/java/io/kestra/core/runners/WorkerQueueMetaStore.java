@@ -37,6 +37,11 @@ public interface WorkerQueueMetaStore {
     Set<String> listAllWorkerQueueIds();
 
     /**
+     * Returns the set of tenants linked to the Queue ID
+     */
+    Set<String> listAllowedTenantsForQueueId(String queueId);
+
+    /**
      * Resolves the Worker Queue ids matching {@code requiredTags} under the given
      * {@code match} strategy, ordered best-first.
      *
@@ -62,6 +67,11 @@ public interface WorkerQueueMetaStore {
 
         @Override
         public Set<String> listAllWorkerQueueIds() {
+            return Set.of();
+        }
+
+        @Override
+        public Set<String> listAllowedTenantsForQueueId(String queueId) {
             return Set.of();
         }
 

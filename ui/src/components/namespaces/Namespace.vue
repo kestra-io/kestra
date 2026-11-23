@@ -1,10 +1,10 @@
 <template>
-    <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb">
+    <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb" :titleSiblings="details.titleSiblings">
         <template #actions>
             <Actions />
         </template>
     </TopNavBar>
-    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace vertical />
+    <Tabs :key="namespace ? 'update' : 'create'" :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace vertical />
 </template>
 
 <script setup lang="ts">
@@ -18,7 +18,11 @@
     import TopNavBar from "../layout/TopNavBar.vue"
     import Actions from "override/components/namespaces/Actions.vue"
     import {useMiscStore} from "override/stores/misc"
+    import {provideNamespacePageState} from "override/composables/namespacePageState"
     import Tabs from "../Tabs.vue"
+    import {defaultTimeRange} from "../executions/timeRangeWiden"
+
+    provideNamespacePageState()
     const {tabs} = useTabs()
     const {details} = useHelpers()
 
@@ -34,18 +38,21 @@
     const namespacesStore = useNamespacesStore()
     const activeTabName = useActiveTab()
 
-    watch(namespace, (newID) => {
-        if (newID) {
-            namespacesStore.load(newID)
-        }
-    })
+    // The route guard loads the namespace into the store before this page mounts (see its route
+    // record), so this only fetches what the store does not already hold.
+    const loadNamespace = () => {
+        if (!namespace.value || namespacesStore.namespace?.id === namespace.value) return
+        namespacesStore.load(namespace.value)
+    }
 
-    watch(activeTabName, (newTab) => {
-        if (newTab === "overview" || newTab === "executions") {
+    watch(namespace, loadNamespace)
+
+    watch([activeTabName, namespace], ([newTab]) => {
+        if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
 
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+                const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
                 const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION}
                 router.replace({name: route.name, params: route.params, query: newQuery})
             }
@@ -56,8 +63,6 @@
         const main = document.querySelector("main")
         if(main) main.scrollTop = 0
 
-        if (namespace.value) {
-            namespacesStore.load(namespace.value)
-        }
+        loadNamespace()
     })
 </script>

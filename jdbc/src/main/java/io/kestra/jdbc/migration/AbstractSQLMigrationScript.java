@@ -118,8 +118,8 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
      * </ul>
      *
      * <p>
-     * Also available as a static method for classes that extend
-     * {@link io.kestra.core.migration.AbstractV2_0_01UpgradeMigration} instead of this class.
+     * Also available as a static method for classes that implement
+     * {@link io.kestra.core.migration.MigrationScript} directly instead of extending this class.
      *
      * @param dataSource the data source to obtain a connection from
      * @param resourcePath classpath resource path to the SQL file (e.g.

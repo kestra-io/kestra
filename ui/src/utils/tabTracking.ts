@@ -1,10 +1,9 @@
 import {useApiStore} from "../stores/api"
-import {usePluginsStore} from "../stores/plugins"
-import {useBlueprintsStore} from "../stores/blueprints"
 import {useMiscStore} from "override/stores/misc"
 import {Tab} from "./multiPanelTypes"
+import {storageKeys} from "./constants"
 
-interface TrackedTab extends Tab {
+export interface TrackedTab extends Tab {
     potential?: boolean
     fromPanel?: boolean
 }
@@ -50,39 +49,19 @@ export function getTabType(tab: TrackedTab): string {
     }
 }
 
-export function getTabMetadata(tab: TrackedTab): Record<string, any> {
-    const metadata: Record<string, any> = {}
-    const value = tab.uid
-
-    if (value === "doc") {
-        const pluginsStore = usePluginsStore()
-        if (pluginsStore.editorPlugin?.cls) {
-            metadata.documentation_page = pluginsStore.editorPlugin.cls
-        }
-    }
-
-    if (value === "blueprints") {
-        const blueprintsStore = useBlueprintsStore()
-        if (blueprintsStore.blueprint?.id) {
-            metadata.blueprint_name = blueprintsStore.blueprint.id
-        }
-    }
-
-    if (value.startsWith("nocode-")) {
-        try {
-            const tabData = JSON.parse(value.substring(12))
-            if (tabData.taskType) {
-                metadata.task_type = tabData.taskType
-            }
-        } catch {
-            // Ignore parsing errors
-        }
-    }
-
-    return metadata
+export interface TrackingEventMetadata extends AuthoringActionMetadata {
+    blueprint_name?: string
+    documentation_page?: string
+    file_name?: string
 }
 
-function sendTrackingEvent(eventData: any) {
+interface TrackingEventData {
+    action?: string
+    tab_type?: string
+    metadata?: TrackingEventMetadata
+}
+
+function sendTrackingEvent(eventData: TrackingEventData) {
     try {
         const apiStore = useApiStore()
         const miscStore = useMiscStore()
@@ -95,7 +74,7 @@ function sendTrackingEvent(eventData: any) {
         const sendingData = {
             ...eventData,
             iid: miscStore.configs?.uuid,
-            uid: localStorage.getItem("uid"),
+            uid: localStorage.getItem(storageKeys.UID),
             date: new Date().toISOString(),
         }
 
@@ -127,20 +106,12 @@ function sendTrackingEvent(eventData: any) {
     }
 }
 
-function makeEvent(action: string, tab_type: string, metadata?: Record<string, any>) {
+export function makeEvent(action: string, tab_type: string, metadata?: TrackingEventMetadata) {
     sendTrackingEvent({
         action,
         tab_type,
         metadata: metadata ?? {},
     })
-}
-
-export function trackTabOpen(tab: TrackedTab) {
-    makeEvent("open", getTabType(tab), getTabMetadata(tab))
-}
-
-export function trackTabClose(tab: TrackedTab) {
-    makeEvent("close", getTabType(tab), getTabMetadata(tab))
 }
 
 export function trackBlueprintSelection(blueprintId: string) {
@@ -153,4 +124,21 @@ export function trackPluginDocumentationView(pluginClass: string) {
 
 export function trackFileOpen(fileName: string) {
     makeEvent("files_open", "files_browser", {file_name: fileName})
+}
+
+export type AuthoringAction = "task_added" | "task_edited" | "task_deleted" | "task_moved" | "task_duplicated"
+export type AuthoringSurface = "no_code" | "topology"
+
+export interface AuthoringActionMetadata {
+    task_type?: string
+    position?: "before" | "after"
+}
+
+/** Distinguishes "opened this surface" (trackTabOpen) from "actually built a flow with it". */
+export function trackAuthoringAction(
+    action: AuthoringAction,
+    surface: AuthoringSurface,
+    metadata?: AuthoringActionMetadata,
+) {
+    makeEvent(action, surface, metadata ?? {})
 }

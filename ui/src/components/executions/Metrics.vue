@@ -24,10 +24,11 @@
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
     import MetricsTable from "./MetricsTable.vue"
     import {Execution} from "../../stores/executions"
+    import type {ExecutionTaskRun} from "./executionTaskRun"
 
     const props = defineProps<{
         embed?: boolean;
-        taskRun: Record<string, any>;
+        taskRun: ExecutionTaskRun;
         execution: Execution;
     }>()
 

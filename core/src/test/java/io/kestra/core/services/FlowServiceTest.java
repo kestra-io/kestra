@@ -4,10 +4,12 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -20,13 +22,19 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.pebble.PebbleExpressionService;
+import io.kestra.core.runners.pebble.PebbleFunction;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.scheduler.events.TriggerCreated;
+import io.kestra.core.scheduler.events.TriggerDeleted;
+import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
@@ -35,12 +43,14 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
 
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -63,6 +73,8 @@ class FlowServiceTest {
     private TriggerEventQueue triggerEventQueue;
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+    @Inject
+    private FlowMetaStoreInterface flowMetaStore;
 
     private static FlowWithSource create(String flowId, String taskId, Integer revision) {
         return create(null, TEST_NAMESPACE, flowId, taskId, revision);
@@ -104,7 +116,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of()));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null));
     }
 
     @Test
@@ -123,7 +135,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of()));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null));
     }
 
     @Test
@@ -147,7 +159,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("pluginDefaults");
+        assertThat(results.getFirst().getErrors()).extracting(ValidationError::toLine).anyMatch(line -> line.contains("pluginDefaults"));
     }
 
     @Test
@@ -222,20 +234,20 @@ class FlowServiceTest {
     void importFlow_ShouldEmitTriggerCreatedEventForNewTriggerInSyncedFlow() throws FlowProcessingException, QueueException {
         reset(triggerEventQueue);
 
-    String source = """
-        id: import_with_trigger
-        namespace: some.namespace
-        triggers:
-          - id: daily
-            type: io.kestra.plugin.core.trigger.Schedule
-            cron: "0 6 * * *"
-        tasks:
-          - id: task
-            type: io.kestra.plugin.core.log.Log
-            message: Hello""";
+        String source = """
+            id: import_with_trigger
+            namespace: some.namespace
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 6 * * *"
+            tasks:
+              - id: task
+                type: io.kestra.plugin.core.log.Log
+                message: Hello""";
 
-    flowService.importFlow("my-tenant", source);
-    verify(triggerEventQueue).send(any());
+        flowService.importFlow("my-tenant", source);
+        verify(triggerEventQueue).send(any());
 
     }
 
@@ -266,6 +278,153 @@ class FlowServiceTest {
         FlowWithSource flow = create("findByIdTest", "test", 1);
         FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
         assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent()).isTrue();
+    }
+
+    @Test
+    void shouldLocateAMissingPropertyOfANestedTaskByJsonPointer() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: seq
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: first
+                    type: io.kestra.plugin.core.log.Log
+                    message: ok
+                  - id: second
+                    type: io.kestra.plugin.core.log.Log
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer, ValidationError::detail)
+            .containsExactly(tuple("/tasks/0/tasks/1/message", "must not be null"));
+    }
+
+    @Test
+    void shouldLocateAnUnknownPropertyByJsonPointer() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: ok
+                unknownProp: nope
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactly("/tasks/0/unknownProp");
+    }
+
+    @Test
+    void shouldReportUnknownAndMissingPropertiesTogether() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+              - id: nested
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: silent
+                    type: io.kestra.plugin.core.log.Log
+                    shade: dark
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/tasks/0/shade", "/tasks/1/tasks/0/message", "/triggers/0/cron");
+    }
+
+    @Test
+    void shouldReportEveryProblemAroundAnInvalidTypeAtItsSourcePosition() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+              - id: ghost
+                type: io.kestra.plugin.core.log.Nope
+                shade: dark
+              - id: silent
+                type: io.kestra.plugin.core.log.Log
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/type", "/tasks/2/message", "/triggers/0/cron");
+    }
+
+    @Test
+    void shouldKeepUnknownPropertiesWhenAnotherParseErrorFollows() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            disabled: maybe
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/disabled");
+    }
+
+    @Test
+    void shouldReportAYamlSyntaxErrorAsAnError() {
+        String source = """
+            id: test
+            namespace: [io.kestra.unittest
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors()).singleElement()
+            .extracting(ValidationError::detail).asString().startsWith("YAML parsing error");
+    }
+
+    @Test
+    void shouldLocateAnInvalidTypeOnItsTypeProperty() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.debug.UnknownTask
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .singleElement()
+            .isEqualTo(new ValidationError("Invalid type: io.kestra.plugin.core.debug.UnknownTask", "/tasks/0/type", "tasks[0].type"));
     }
 
     @Test
@@ -619,6 +778,259 @@ class FlowServiceTest {
 
         // check that the flow has been sent to the queue 2x
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void shouldRejectSubflowCycleAcrossTwoFlows() throws FlowProcessingException, QueueException {
+        // Given flow B, which Subflow-calls a not-yet-created flow A (#18491/#18492: two flows calling
+        // each other via Subflow save fine today and recurse without bound)
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+            .build();
+
+        // When saving flow A closes the A -> B -> A cycle, then it must be rejected rather than silently
+        // creating an execution loop
+        assertThatThrownBy(() -> flowService.create(GenericFlow.of(flowA)))
+            .isInstanceOf(jakarta.validation.ConstraintViolationException.class)
+            .hasMessageContaining("Cyclic flow dependency detected");
+    }
+
+    @Test
+    void shouldRejectFlowTriggerCycleAcrossTwoFlows() throws FlowProcessingException, QueueException {
+        // Given flow B, whose Flow trigger unconditionally dependsOn a not-yet-created flow A (the exact
+        // shape reported in #18492)
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
+            .build();
+
+        // When saving flow A closes the A -> B -> A cycle via Flow triggers
+        assertThatThrownBy(() -> flowService.create(GenericFlow.of(flowA)))
+            .isInstanceOf(jakarta.validation.ConstraintViolationException.class)
+            .hasMessageContaining("Cyclic flow dependency detected");
+    }
+
+    @Test
+    void shouldNotRejectTemplatedSubflowEdgeEvenWhenItWouldOtherwiseCloseACycle() throws FlowProcessingException, QueueException {
+        // Given flow B, which unconditionally Subflow-calls flow A
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        // When flow A's Subflow call back to B is templated — unresolvable without executing the flow —
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace("{{ inputs.ns }}").flowId("{{ inputs.id }}").build()))
+            .build();
+
+        // Then it must not be rejected as a cycle
+        flowService.create(GenericFlow.of(flowA));
+        assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
+    }
+
+    @Test
+    void shouldNotRejectConditionalFlowTriggerEdgeEvenWhenItWouldOtherwiseCloseACycle() throws FlowProcessingException, QueueException {
+        // Given flow B, whose Flow trigger unconditionally dependsOn flow A
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        // When flow A's Flow trigger back to B carries a 'when' — a cycle that may be intentional and
+        // terminating, which this static check cannot decide either way —
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .when("{{ trigger.outputs.state == 'SUCCESS' }}")
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
+            .build();
+
+        // Then it must not be rejected as a cycle here — kestra.execution.depth.max-depth bounds it instead
+        flowService.create(GenericFlow.of(flowA));
+        assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
+    }
+
+    @Test
+    void shouldNotRejectCycleWhenTheDependsOnEntryItselfIsConditional() throws FlowProcessingException, QueueException {
+        // Given flow B, whose Flow trigger unconditionally dependsOn flow A
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        // When flow A's trigger has no 'when' of its own, but the dependsOn entry naming B does —
+        // conditional at the entry level rather than the trigger level, the other place this can hide
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(
+                            List.of(
+                                io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+                                    .namespace(TEST_NAMESPACE)
+                                    .flowId(flowBId)
+                                    .when(Property.ofExpression("{{ trigger.outputs.state == 'SUCCESS' }}"))
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
+            .build();
+
+        // Then it must not be rejected as a cycle here — kestra.execution.depth.max-depth bounds it instead
+        flowService.create(GenericFlow.of(flowA));
+        assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
+    }
+
+    @Test
+    void shouldNotConsiderDraftFlowEdgesWhenCheckingForCycles() throws FlowProcessingException, QueueException {
+        // Given flow B saved as a DRAFT, whose Flow trigger unconditionally dependsOn a not-yet-created
+        // flow A. Drafts skip the cycle check on their own save (like every other validation), but their
+        // edges must also not count when a LATER, unrelated flow is checked: the metastore cache holds
+        // B's draft shape, not its actually-active one — the same distinction
+        // DefaultFlowMetaStore.findById() already draws for a cached draft head.
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        String draftBSource = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: t
+                type: io.kestra.plugin.core.log.Log
+                message: b
+            triggers:
+              - id: on_a
+                type: io.kestra.plugin.core.trigger.Flow
+                dependsOn:
+                  - namespace: %s
+                    flowId: %s
+            """.formatted(flowBId, TEST_NAMESPACE, TEST_NAMESPACE, flowAId);
+        flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, draftBSource));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        // When flow A's Flow trigger unconditionally dependsOn B — which would close a cycle if B's
+        // draft edge counted
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
+            .build();
+
+        // Then it must not be rejected — B is still a draft, so its edges do not count yet
+        flowService.create(GenericFlow.of(flowA));
+        assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
     }
 
     @Test
@@ -1099,6 +1511,28 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldEmitTriggerCreatedWhenCreatingFlowWithWebhookTrigger() throws FlowProcessingException, QueueException {
+        // Given — a trigger the scheduler does not evaluate, which still needs a state to be listed
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(Webhook.builder().id("webhook").type(Webhook.class.getName()).key("a-key").build()))
+            .build();
+        reset(triggerEventQueue);
+
+        // When
+        flowService.create(GenericFlow.of(flow));
+
+        // Then
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(TriggerCreated.class);
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("webhook");
+    }
+
+    @Test
     void shouldNotEmitTriggerEventWhenCreatingDraftFlowWithScheduleTrigger() throws FlowProcessingException, QueueException {
         // A draft revision must be invisible to the scheduler: it is never picked up implicitly.
         // Creating a flow as a draft with a Schedule trigger must NOT emit any trigger lifecycle
@@ -1175,6 +1609,99 @@ class FlowServiceTest {
             flowRepository.findByIdWithSource(published.getTenantId(), published.getNamespace(), published.getId())
                 .ifPresent(f -> flowRepository.delete(f));
         }
+    }
+
+    @Test
+    void shouldEmitTriggerCreatedWhenPublishingDraftThatAddedTrigger() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String withoutTrigger = flowSource(flowId, false, "", "");
+
+        List<TriggerEvent> events = publishAfterDraft(flowId, withoutTrigger, scheduleSource(flowId, true, "0 0 * * *"), scheduleSource(flowId, false, "0 0 * * *"));
+
+        assertThat(events).singleElement().isInstanceOf(TriggerCreated.class);
+    }
+
+    @Test
+    void shouldEmitTriggerDeletedWhenPublishingDraftThatRemovedTrigger() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+
+        List<TriggerEvent> events = publishAfterDraft(flowId, scheduleSource(flowId, false, "0 0 * * *"), flowSource(flowId, true, "", ""), flowSource(flowId, false, "", ""));
+
+        assertThat(events).singleElement().isInstanceOfSatisfying(TriggerDeleted.class, deleted -> assertThat(deleted.revision()).isEqualTo(3));
+    }
+
+    @Test
+    void shouldEmitTriggerUpdatedWhenPublishingDraftThatChangedCron() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+
+        List<TriggerEvent> events = publishAfterDraft(flowId, scheduleSource(flowId, false, "0 0 1 * *"), scheduleSource(flowId, true, "0 * * * *"), scheduleSource(flowId, false, "0 * * * *"));
+
+        assertThat(events).singleElement().isInstanceOf(TriggerUpdated.class);
+    }
+
+    @Test
+    void shouldInitConcurrencyLimitWhenPublishingDraftThatAddedConcurrency() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String concurrency = "concurrency:\n  limit: 1\n";
+
+        publishAfterDraft(flowId, flowSource(flowId, false, "", ""), flowSource(flowId, true, concurrency, ""), flowSource(flowId, false, concurrency, ""));
+
+        assertThat(concurrencyLimitRepository.findById(TenantService.MAIN_TENANT, TEST_NAMESPACE, flowId)).isPresent();
+    }
+
+    @Test
+    void shouldEmitTriggerDeletedForPublishedTriggersWhenDeletingFlowWhoseLastRevisionIsDraft() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        FlowWithSource published = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, scheduleSource(flowId, false, "0 0 * * *")));
+        FlowWithSource draft = flowService.update(GenericFlow.fromYaml(TenantService.MAIN_TENANT, flowSource(flowId, true, "", "")), published);
+        reset(triggerEventQueue);
+
+        flowService.delete(draft);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOfSatisfying(TriggerDeleted.class, deleted -> assertThat(deleted.revision()).isGreaterThan(draft.getRevision()));
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
+    }
+
+    private List<TriggerEvent> publishAfterDraft(String flowId, String publishedSource, String draftSource, String publishSource) throws FlowProcessingException, QueueException {
+        FlowWithSource published = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, publishedSource));
+        try {
+            FlowWithSource draft = flowService.update(GenericFlow.fromYaml(TenantService.MAIN_TENANT, draftSource), published);
+            reset(triggerEventQueue);
+
+            flowService.update(GenericFlow.fromYaml(TenantService.MAIN_TENANT, publishSource), draft);
+
+            var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+            verify(triggerEventQueue, atLeast(0)).send(captor.capture());
+            return captor.getAllValues();
+        } finally {
+            flowRepository.findByIdWithSource(TenantService.MAIN_TENANT, TEST_NAMESPACE, flowId)
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    private static String scheduleSource(String flowId, boolean draft, String cron) {
+        return flowSource(flowId, draft, "", """
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "%s"
+            """.formatted(cron));
+    }
+
+    private static String flowSource(String flowId, boolean draft, String concurrency, String triggers) {
+        return """
+            id: %s
+            namespace: %s
+            %s
+            %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            %s
+            """.formatted(flowId, TEST_NAMESPACE, draft ? "draft: true" : "", concurrency, triggers);
     }
 
     @MockBean
@@ -1313,6 +1840,107 @@ class FlowServiceTest {
         } finally {
             flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
                 .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldRejectExecutingADeletedFlowRevisionWhenRevisionIsExplicit() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource created = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+        FlowWithSource deleted = flowService.delete(created);
+
+        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
+            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision())
+        ))
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Requested Flow is not found.");
+    }
+
+    @Test
+    void shouldRejectExecutingADeletedFlowWhenRevisionIsMinuOne() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource created = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+        FlowWithSource deleted = flowService.delete(created);
+
+        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
+            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision() - 1)
+        ))
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Requested Flow is not found.");
+    }
+
+    @Test
+    void shouldAllowExecutingADraftRevisionWhenRevisionIsExplicit() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            Flow executable = flowService.getFlowIfExecutableOrThrow(
+                saved.getTenantId(), saved.getNamespace(), saved.getId(), Optional.of(saved.getRevision())
+            );
+
+            assertThat(executable.isDraft()).isTrue();
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldWarnOnDeprecatedPebbleFunction() throws IllegalAccessException {
+        PebbleFunction deprecatedFunc = new PebbleFunction("oldFunc", List.of(), true, "newFunc");
+        PebbleExpressionService mockPebbleService = mock(PebbleExpressionService.class);
+        when(mockPebbleService.functions()).thenReturn(List.of(deprecatedFunc));
+        PebbleExpressionService original = (PebbleExpressionService) org.apache.commons.lang3.reflect.FieldUtils.readDeclaredField(flowService, "pebbleExpressionService", true);
+        try {
+            org.apache.commons.lang3.reflect.FieldUtils.writeDeclaredField(flowService, "pebbleExpressionService", mockPebbleService, true);
+            String flowId = IdUtils.create();
+            String source = """
+                id: %s
+                namespace: %s
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ oldFunc() }}"
+                """.formatted(flowId, TEST_NAMESPACE);
+            FlowWithSource flow = FlowWithSource.of(Flow.builder().id(flowId).namespace(TEST_NAMESPACE).build(), source);
+            List<String> warnings = flowService.warnings(flow, TenantService.MAIN_TENANT);
+            assertThat(warnings).contains("Pebble function 'oldFunc' is deprecated. Use 'newFunc' instead.");
+        } finally {
+            FieldUtils.writeDeclaredField(
+                flowService,
+                "pebbleExpressionService",
+                original,
+                true
+            );
         }
     }
 }

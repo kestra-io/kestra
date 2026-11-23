@@ -28,7 +28,11 @@ import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.hibernate.validator.constraints.time.DurationMin;
+
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -56,11 +60,12 @@ import lombok.experimental.SuperBuilder;
                 tasks:
                   - id: loop
                     type: io.kestra.plugin.core.flow.LoopUntil
-                    condition: "{{ outputs.return.value == '4' }}"
+                    condition: "{{ outputs.return.values.result == '4' }}"
                     tasks:
                       - id: return
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ outputs.loop.iterationCount }}"
+                        type: io.kestra.plugin.core.output.OutputValues
+                        values:
+                          result: "{{ outputs.loop.iterationCount }}"
                 """
         )
     },
@@ -87,6 +92,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
     )
     @Builder.Default
     @PluginProperty
+    @Valid
     private CheckFrequency checkFrequency = CheckFrequency.builder().build();
 
     @Override
@@ -118,7 +124,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
 
     public Instant nextExecutionDate(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!this.reachedMaximums(runContext, execution, parentTaskRun, false)) {
-            String continueLoop = runContext.render(this.condition).skipCache().as(String.class).orElse(null);
+            String continueLoop = runContext.render(this.condition).as(String.class).orElse(null);
             if (!TruthUtils.isTruthy(continueLoop)) {
                 return Instant.now().plus(runContext.render(this.getCheckFrequency().getInterval()).as(Duration.class).orElseThrow());
             }
@@ -139,7 +145,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
             .orElse(0);
 
         Optional<Integer> maxIterations = runContext.render(this.getCheckFrequency().getMaxIterations()).as(Integer.class);
-        if (maxIterations.isPresent() && iterationCount > maxIterations.get()) {
+        if (maxIterations.isPresent() && iterationCount >= maxIterations.get()) {
             if (printLog) {
                 logger.warn("Max iterations reached");
             }
@@ -247,19 +253,19 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
             title = "Maximum count of iterations",
             description = "If not set, defines an unlimited number of iterations."
         )
-        private Property<Integer> maxIterations;
+        private Property<@Positive Integer> maxIterations;
 
         @Schema(
             title = "Maximum duration of the task",
             description = "If not set, defines an unlimited maximum duration of iterations."
         )
-        private Property<Duration> maxDuration;
+        private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> maxDuration;
 
         @Schema(
             title = "Interval between each iteration"
         )
         @NotNull
         @Builder.Default
-        private Property<Duration> interval = Property.ofValue(Duration.ofMinutes(1));
+        private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> interval = Property.ofValue(Duration.ofMinutes(1));
     }
 }

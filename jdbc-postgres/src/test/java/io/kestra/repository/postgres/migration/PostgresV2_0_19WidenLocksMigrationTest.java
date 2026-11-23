@@ -18,10 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * PostgreSQL-specific integration test for {@link V2_0_19WidenLocksColumnsMigration}. Unlike H2,
- * Postgres widens {@code locks.key}/{@code locks.id} with an in-place {@code ALTER COLUMN ... TYPE},
- * so this test proves that an EXISTING row survives the in-place widen, that the widened column
- * accepts an asset-sized id, and that re-running the migration is safe (idempotent).
+ * PostgreSQL-specific integration test for the {@code locks} table's key/id width, created
+ * directly at their final size by {@link V2_0_01SchemaMigration}'s CREATE TABLE. Proves an
+ * existing row survives a rerun of the migration, that the column accepts an asset-sized id, and
+ * that re-running the migration is safe (idempotent).
  */
 @MicronautTest(transactional = false)
 @Execution(ExecutionMode.SAME_THREAD)
@@ -38,7 +38,7 @@ class PostgresV2_0_19WidenLocksMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_19WidenLocksColumnsMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach
@@ -52,7 +52,7 @@ class PostgresV2_0_19WidenLocksMigrationTest {
     }
 
     @Test
-    void existingRowSurvivesInPlaceWiden() throws Exception {
+    void existingRowSurvivesRerunOfTheMigration() throws Exception {
         insertLock(SEED_KEY, "{\"category\":\"lease\",\"id\":\"widen-seed-1\",\"owner\":\"o\"}");
 
         migration.migrate();

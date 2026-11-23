@@ -9,10 +9,13 @@
 import type {Ref} from "vue"
 import {
     type AppliedFilter,
+    type FilterConfiguration,
     type LogicalOperator,
     isWrapperGroup,
 } from "../utils/filterTypes"
+import {createAppliedFilter} from "../utils/filterChipFactory"
 import {
+    allFilters,
     findLeafById,
     findLeafContaining,
     type useFilterGroups,
@@ -25,6 +28,7 @@ type Dismissed = ReturnType<typeof useDismissedKeys>
 type PreApplied = ReturnType<typeof usePreAppliedFilters>
 
 interface UseFilterActionsOptions {
+    configuration: FilterConfiguration;
     tree: Tree;
     dismissed: Dismissed;
     preApplied: PreApplied;
@@ -36,6 +40,7 @@ interface UseFilterActionsOptions {
 }
 
 export function useFilterActions({
+    configuration,
     tree,
     dismissed,
     preApplied,
@@ -58,6 +63,18 @@ export function useFilterActions({
         return isWrapperGroup(lastTop)
             ? lastTop.children[lastTop.children.length - 1]?.id
             : lastTop.id
+    }
+
+    const isLocked = (key: string) => configuration.keys?.find(k => k.key === key)?.removable === false
+
+    const restoreClearedValues = () => {
+        const presentKeys = new Set(allFilters(tree.groups.value).map(f => f.key))
+        const cleared = (configuration.keys ?? [])
+            .filter(key => key.clearedValue !== undefined && !presentKeys.has(key.key))
+            .map(key => createAppliedFilter(key.key, key, key.comparators[0], key.clearedValue!, key.clearedValue!, "cleared"))
+        const targetLeafId = resolveTargetLeafId()
+        if (cleared.length === 0 || !targetLeafId) return
+        tree.updateLeaf(targetLeafId, leaf => ({...leaf, filters: [...leaf.filters, ...cleared]}))
     }
 
     const addFilter = (filter: AppliedFilter, groupId?: string) => {
@@ -84,13 +101,14 @@ export function useFilterActions({
         const enclosing = findLeafContaining(tree.groups.value, filterId)
         if (!enclosing) return
         const found = enclosing.filters.find(f => f?.id === filterId)
-        if (!found) return
+        if (!found || isLocked(found.key)) return
         tree.updateLeaf(enclosing.id, leaf => ({
             ...leaf,
             filters: leaf.filters.filter(f => f?.id !== filterId),
         }))
         dismissed.dismissDefaultVisibleKey(found.key)
         preApplied.clearPreAppliedKey(found.key)
+        restoreClearedValues()
         updateRoute(false)
     }
 
@@ -135,6 +153,7 @@ export function useFilterActions({
     const removeGroup = (groupId: string) => {
         if (tree.groups.value.length <= 1) return
         tree.removeGroup(groupId)
+        restoreClearedValues()
         updateRoute(false)
     }
 
@@ -142,6 +161,7 @@ export function useFilterActions({
         dismissed.dismissAllDefaultVisibleKeys()
         preApplied.clearPreApplied()
         tree.clearTree()
+        restoreClearedValues()
         searchQuery.value = ""
         updateRoute(true)
     }

@@ -26,12 +26,12 @@ import org.slf4j.Logger;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.InternalServerErrorException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.NameParser;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -49,6 +49,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -145,6 +146,26 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
                       Kestra.outputs(data)""",
             full = true
         ),
+        @Example(
+            title = "Give a Shell command an in-memory scratch directory limited to 512 MB.",
+            code = """
+                id: tmpfs_scratch_directory
+                namespace: company.team
+
+                tasks:
+                  - id: shell
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    containerImage: ubuntu
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                      memory:
+                        memory: "1GB"
+                      tmpfs:
+                        /scratch: "rw,size=512m"
+                    commands:
+                      - dd if=/dev/zero of=/scratch/data.bin bs=1M count=100""",
+            full = true
+        ),
     }
 )
 public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
@@ -152,6 +173,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     private static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
+    // Matches the wording of Docker Engine; other engines may word it differently and then surface their original exception.
+    private static final String MISSING_BIND_SOURCE_MESSAGE = "bind source path does not exist";
     private static final List<String> DOCKER_SOCKET_ERROR_MESSAGES = List.of(
         "docker.sock",
         "no such file or directory",
@@ -202,6 +225,14 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     protected List<String> extraHosts;
 
     @Schema(
+        title = "DNS servers to use for the container.",
+        description = "List of DNS server IP addresses (IPv4 or IPv6). Overrides the Docker daemon default for this container. " +
+            "Docker may ignore this setting in some network modes, such as `host`; user-defined networks use Docker's embedded DNS resolver, which forwards external queries to these servers."
+    )
+    @PluginProperty(dynamic = true)
+    protected List<String> dns;
+
+    @Schema(
         title = "Docker network mode to use e.g. `host`, `none`, etc."
     )
     @PluginProperty(dynamic = true)
@@ -238,6 +269,27 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     )
     @PluginProperty(dynamic = true)
     protected List<String> volumes;
+
+    @Schema(
+        title = "In-memory (tmpfs) mounts.",
+        description = """
+            Map of an absolute container path to its mount options, the same as the `--tmpfs` option of the docker run CLI command,
+            for example `/scratch: "rw,size=512m"`. Supported options are `size` (bytes with an optional k, m or g suffix, or a percentage),
+            `mode` (octal), `uid`, `gid`, `nr_inodes` and `nr_blocks` (non-negative integers, the last two with an optional k, m or g suffix),
+            `mpol` (`default`, `prefer`, `bind`, `interleave` or `local`), and the standard mount flags such as `ro`, `rw`, `exec` and `noexec`.
+            `mpol` needs a NUMA-enabled kernel, so the container fails to start with it on Docker Desktop.
+            Docker mounts tmpfs with `noexec`, `nosuid` and `nodev` by default, so add `exec` to run scripts or binaries from the mount.
+
+            The content lives in memory and is discarded when the container stops. Its size counts toward the container memory limit
+            (`memory.memory`), so always set `size`: without it, the mount can grow up to half of the host memory.
+            tmpfs mounts are only available on Linux Docker engines, which includes Docker Desktop.
+
+            This does not keep `inputFiles` and `outputFiles` in memory with the default `VOLUME` file handling strategy,
+            since Docker cannot copy files into or out of a tmpfs mount. With `VOLUME`, when the task has files to copy, a tmpfs mount at,
+            inside or above the working directory is rejected; with `MOUNT`, only one exactly at the working directory is rejected.
+            To keep them in memory, see `fileHandlingStrategy`."""
+    )
+    private Property<Map<String, String>> tmpfs;
 
     @Schema(
         title = "The pull policy for a container image.",
@@ -291,7 +343,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         description = """
             How to handle local files (input files, output files, namespace files, ...).
             By default, we create a volume and copy the file into the volume bind path.
-            Configuring it to `MOUNT` will mount the working directory instead."""
+            Configuring it to `MOUNT` will mount the working directory instead.
+            When the worker runs in a container, bind-mount `kestra.tasks.tmp-dir.path` from the Docker host at the same path
+            (`/tmp/kestra-wd:/tmp/kestra-wd` in the Kestra docker-compose file). To keep task files in memory, make that host directory a tmpfs."""
     )
     @NotNull
     @Builder.Default
@@ -348,6 +402,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .user(dockerOptions.getUser())
             .entryPoint(dockerOptions.getEntryPoint())
             .extraHosts(dockerOptions.getExtraHosts())
+            .dns(dockerOptions.getDns())
             .networkMode(dockerOptions.getNetworkMode())
             .volumes(dockerOptions.getVolumes())
             .pullPolicy(dockerOptions.getPullPolicy())
@@ -423,6 +478,14 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             try {
                 // pull image only if we will create a new container
                 if (containerId == null) {
+                    var rTmpfs = runContext.render(this.tmpfs).asMap(String.class, String.class, additionalVars);
+                    var validatedTmpfs = rTmpfs.isEmpty() ? Map.<String, String> of() : Tmpfs.mounts(
+                        rTmpfs,
+                        windowsToUnixPath(taskCommands.getWorkingDirectory().toString()),
+                        strategy,
+                        needVolume
+                    );
+
                     var renderedPolicy = runContext.render(this.getPullPolicy()).as(PullPolicy.class).orElseThrow();
                     if (!PullPolicy.NEVER.equals(renderedPolicy)) {
                         pullImage(dockerClient, image, renderedPolicy, logger);
@@ -432,8 +495,19 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     checkKilled("Execution was killed during image pull.");
 
                     // create container
-                    CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars);
-                    CreateContainerResponse exec = container.exec();
+                    CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars, validatedTmpfs);
+                    String mountSource = FileHandlingStrategy.MOUNT.equals(strategy) && taskCommands.getWorkingDirectory() != null
+                        ? windowsToUnixPath(taskCommands.getWorkingDirectory().toString())
+                        : null;
+                    CreateContainerResponse exec;
+                    try {
+                        exec = container.exec();
+                    } catch (DockerException e) {
+                        if (isMissingBindSource(e, mountSource)) {
+                            throw new IllegalStateException(missingMountSourceMessage(mountSource), e);
+                        }
+                        throw e;
+                    }
                     containerId = exec.getId();
                     containerIdRef.set(containerId);
 
@@ -513,7 +587,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                         logger.debug(
                             "Starting command with container id {} [{}]",
                             containerId,
-                            String.join(" ", renderedCommands)
+                            TaskLogLineMatcher.redactEncryptedOutputs(String.join(" ", renderedCommands))
                         );
                     }
                 } else {
@@ -622,11 +696,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 Await.await().forever().until(ended::get);
 
                 if (exitCode != 0) {
+                    TaskException failure = new TaskException(exitCode, defaultLogConsumer);
+                    if (isContainerOomKilled(dockerClient, runContainerId, logger)) {
+                        failure = new TaskException(
+                            "A process in container '%s' was killed by the out-of-memory killer (exit code %d). Increase the Docker task runner memory.memory limit (or the host's available memory), or reduce the task's memory usage."
+                                .formatted(runContainerId, exitCode),
+                            exitCode,
+                            defaultLogConsumer
+                        );
+                    }
+
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                         downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled);
                     }
 
-                    throw new TaskException(exitCode, defaultLogConsumer);
+                    throw failure;
                 } else if (logger.isDebugEnabled()) {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
@@ -651,6 +735,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 );
             }
             throw e;
+        }
+    }
+
+    static boolean isContainerOomKilled(InspectContainerResponse container) {
+        return container != null
+            && container.getState() != null
+            && Boolean.TRUE.equals(container.getState().getOOMKilled());
+    }
+
+    private boolean isContainerOomKilled(DockerClient dockerClient, String containerId, Logger logger) {
+        try {
+            return isContainerOomKilled(dockerClient.inspectContainerCmd(containerId).exec());
+        } catch (RuntimeException e) {
+            logger.debug("Unable to inspect container '{}' for OOM termination; preserving the original exit-code failure.", containerId, e);
+            return false;
         }
     }
 
@@ -714,6 +813,42 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
 
         return false;
+    }
+
+    // A structured bind mount, unlike a legacy bind, makes the daemon reject a missing source instead of silently creating an empty directory.
+    static Mount workingDirectoryMount(final String path) {
+        return new Mount()
+            .withType(MountType.BIND)
+            .withSource(path)
+            .withTarget(path)
+            .withReadOnly(false);
+    }
+
+    static boolean isMissingBindSource(final Throwable throwable, @Nullable final String source) {
+        if (source == null) {
+            return false;
+        }
+
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        Throwable current = throwable;
+
+        while (current != null && visited.add(current)) {
+            String message = current.getMessage();
+            if (message != null && message.contains(MISSING_BIND_SOURCE_MESSAGE) && message.contains(source)) {
+                return true;
+            }
+
+            current = current.getCause();
+        }
+
+        return false;
+    }
+
+    private static String missingMountSourceMessage(final String source) {
+        return ("Unable to create the Docker container because the MOUNT working directory '%s' does not exist on the Docker daemon host. "
+            + "The MOUNT file handling strategy requires the Docker daemon to access the worker task temporary directory at the same absolute path. "
+            + "When Kestra runs in a container, bind-mount 'kestra.tasks.tmp-dir.path' from the Docker host at that same path, for example '/tmp/kestra-wd:/tmp/kestra-wd'. "
+            + "If the Docker daemon cannot access the worker filesystem, use the VOLUME file handling strategy instead.").formatted(source);
     }
 
     private static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
@@ -834,8 +969,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return DockerService.client(dockerClientConfig);
     }
 
-    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars)
-        throws IllegalVariableEvaluationException, IOException {
+    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars,
+        Map<String, String> validatedTmpfs) throws IllegalVariableEvaluationException, IOException {
         boolean volumesEnabled = runContext.<Boolean> pluginConfiguration(VOLUME_ENABLED_CONFIG).orElse(false);
 
         Path workingDirectory = taskCommands.getWorkingDirectory();
@@ -873,27 +1008,30 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             );
         }
 
-        List<Bind> binds = new ArrayList<>();
+        if (this.getDns() != null) {
+            String[] dnsServers = runContext.render(this.getDns(), additionalVars)
+                .stream()
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toArray(String[]::new);
+            if (dnsServers.length > 0) {
+                hostConfig.withDns(dnsServers);
+            }
+        }
+
         if (FileHandlingStrategy.MOUNT.equals(runContext.render(this.fileHandlingStrategy).as(FileHandlingStrategy.class).orElse(null)) && workingDirectory != null) {
-            String bindPath = windowsToUnixPath(workingDirectory.toString());
-            binds.add(
-                new Bind(
-                    bindPath,
-                    new Volume(bindPath),
-                    AccessMode.rw
-                )
-            );
+            hostConfig.withMounts(List.of(workingDirectoryMount(windowsToUnixPath(workingDirectory.toString()))));
         }
         if (volumesEnabled && this.getVolumes() != null) {
-            binds.addAll(
+            hostConfig.withBinds(
                 runContext.render(this.getVolumes())
                     .stream()
                     .map(Bind::parse)
                     .toList()
             );
         }
-        if (!binds.isEmpty()) {
-            hostConfig.withBinds(binds);
+        if (!validatedTmpfs.isEmpty()) {
+            hostConfig.withTmpFs(validatedTmpfs);
         }
 
         if (this.getDeviceRequests() != null) {
@@ -980,23 +1118,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .longValue();
     }
 
-    private String getImageNameWithoutTag(String fullImageName) {
-        if (fullImageName == null || fullImageName.isEmpty()) {
-            return fullImageName;
-        }
-
-        int lastColonIndex = fullImageName.lastIndexOf(':');
-        int firstSlashIndex = fullImageName.indexOf('/');
-        if (lastColonIndex > -1 && (firstSlashIndex == -1 || lastColonIndex > firstSlashIndex)) {
-            return fullImageName.substring(0, lastColonIndex);
-        } else {
-            return fullImageName; // No tag found or the colon is part of the registry host
-        }
-    }
-
     private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) {
-        var imageNameWithoutTag = getImageNameWithoutTag(image);
-        var parsedTagFromImage = NameParser.parseRepositoryTag(image);
+        var reference = DockerService.parseImageReference(image);
 
         if (policy.equals(PullPolicy.IF_NOT_PRESENT)) {
             try {
@@ -1009,7 +1132,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
         // and prevent errors with Podman trying to pull "image:tag:tag"
-        try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
+        try (var pull = dockerClient.pullImageCmd(reference.repos)) {
             RetryUtils.<Boolean, InternalServerErrorException> of(
                 Exponential.builder()
                     .delayFactor(2.0)
@@ -1022,15 +1145,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     throwable.getCause() instanceof ConnectionClosedException,
                 () ->
                 {
-                    var tag = !parsedTagFromImage.tag.isEmpty() ? parsedTagFromImage.tag : "latest";
-                    var repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
                     pull
-                        .withTag(tag)
+                        .withTag(reference.tag)
                         .exec(new PullImageResultCallback())
                         .awaitCompletion();
 
                     if (logger.isTraceEnabled()) {
-                        logger.trace("Image pulled [{}:{}]", repository, tag);
+                        logger.trace("Image pulled [{}:{}]", reference.repos, reference.tag);
                     }
 
                     return true;

@@ -1,5 +1,6 @@
 package io.kestra.core.utils;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +25,7 @@ import io.kestra.plugin.core.log.Log;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 class GraphUtilsTest {
     private static final int CHAIN_LONGER_THAN_A_RECURSIVE_WALK_CAN_FOLLOW = 2000;
@@ -133,7 +135,86 @@ class GraphUtilsTest {
             .doesNotContain("root.task_0");
     }
 
+    @Test
+    void shouldKeepTaskNodeWhenTaskRunMovedIntoAFlowable() throws Exception {
+        Flow flow = YamlParser.parse(
+            """
+                id: replay-moved-task
+                namespace: io.kestra.tests
+                tasks:
+                  - id: seq
+                    type: io.kestra.plugin.core.flow.Sequential
+                    tasks:
+                      - id: standalone
+                        type: io.kestra.plugin.core.log.Log
+                        message: hello
+                      - id: boom
+                        type: io.kestra.plugin.core.log.Log
+                        message: hello
+                """,
+            Flow.class
+        );
+        String executionId = IdUtils.create();
+        TaskRun seq = taskRun(executionId, flow, "seq", null);
+        TaskRun standalone = taskRun(executionId, flow, "standalone", null);
+        TaskRun boom = taskRun(executionId, flow, "boom", seq.getId());
+
+        Execution execution = Execution.newExecution(flow, List.of())
+            .toBuilder()
+            .id(executionId)
+            .taskRunList(List.of(seq, standalone, boom))
+            .build();
+
+        GraphCluster graph = GraphUtils.of(flow, execution);
+
+        assertThat(GraphUtils.hasTaskRun(graph, boom.getId())).isTrue();
+        assertThat(GraphUtils.hasTaskRun(graph, standalone.getId())).isFalse();
+    }
+
+    @Test
+    void shouldNotHangWhenADagTaskRunBelongsToAnotherParent() throws Exception {
+        Flow flow = YamlParser.parse(
+            """
+                id: replay-moved-dag-task
+                namespace: io.kestra.tests
+                tasks:
+                  - id: d
+                    type: io.kestra.plugin.core.flow.Dag
+                    tasks:
+                      - task:
+                          id: a
+                          type: io.kestra.plugin.core.log.Log
+                          message: hello
+                      - task:
+                          id: x
+                          type: io.kestra.plugin.core.log.Log
+                          message: hello
+                        dependsOn: [a]
+                """,
+            Flow.class
+        );
+        String executionId = IdUtils.create();
+        TaskRun d = taskRun(executionId, flow, "d", null);
+        TaskRun a = taskRun(executionId, flow, "a", d.getId());
+        TaskRun x = taskRun(executionId, flow, "x", null);
+
+        Execution execution = Execution.newExecution(flow, List.of())
+            .toBuilder()
+            .id(executionId)
+            .taskRunList(List.of(d, a, x))
+            .build();
+
+        assertTimeoutPreemptively(
+            Duration.ofSeconds(5),
+            () -> GraphUtils.of(flow, execution)
+        );
+    }
+
     private TaskRun taskRun(String executionId, Flow flow, String taskId) {
+        return taskRun(executionId, flow, taskId, null);
+    }
+
+    private TaskRun taskRun(String executionId, Flow flow, String taskId, String parentTaskRunId) {
         return TaskRun.builder()
             .id(IdUtils.create())
             .executionId(executionId)
@@ -141,6 +222,7 @@ class GraphUtilsTest {
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .taskId(taskId)
+            .parentTaskRunId(parentTaskRunId)
             .state(new State())
             .build();
     }

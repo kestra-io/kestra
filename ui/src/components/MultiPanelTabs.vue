@@ -1,5 +1,5 @@
 <template>
-    <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
+    <KsSplitter ref="splitter" class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <div v-if="!panels.length" class="empty-panels">
             <KsNoData
                 :icon="ViewArrayOutline"
@@ -16,7 +16,12 @@
                 @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
                 @dragleave.prevent="panelDragLeave"
                 @drop.prevent="(e:DragEvent) => panelDrop(e, panelIndex)"
-                :class="{'panel-dragover': panel.dragover, 'panel-maximized': maximizedPanelIndex === panelIndex}"
+                :class="{
+                    'panel-dragover': panel.dragover,
+                    'panel-maximized': maximizedPanelIndex === panelIndex,
+                    'panel-maximized--left-sliver': maximizedPanelIndex === panelIndex && !!leftNeighbor,
+                    'panel-maximized--right-sliver': maximizedPanelIndex === panelIndex && !!rightNeighbor,
+                }"
             >
                 <template v-if="maximizedPanelIndex === panelIndex">
                     <button
@@ -56,7 +61,6 @@
                         class="editor-tabs"
                         role="tablist"
                         @dragover.prevent="dragover"
-                        @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
                         @drop="drop"
                         @wheel.passive="onWheelTabScroll"
                         :data-panel-index="panelIndex"
@@ -86,11 +90,12 @@
                             >
                                 <component :is="tab.button.icon" class="tab-icon" />
                                 <span class="tab-title">{{ tab.button.label }}</span>
-                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
+                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" data-test="tab-dirty" />
                                 <CloseIcon
                                     @click.stop="destroyTab(panelIndex, tab)"
                                     class="tab-icon close-icon"
                                     :title="$t('close')"
+                                    data-test="tab-close"
                                 />
                             </button>
                             <div v-else class="potential-container">
@@ -115,7 +120,10 @@
                             v-if="panel.tabs.filter(t => !t.potential).length > 1"
                             @click="splitPanel(panelIndex)"
                             class="split_right"
-                            title="Split panel"
+                            :disabled="!canAddPanel"
+                            :title="canAddPanel ? $t('multi_panel_editor.split_panel') : $t('multi_panel_editor.split_panel_no_room')"
+                            :aria-label="$t('multi_panel_editor.split_panel')"
+                            data-test="panel-split"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -128,7 +136,7 @@
                         </button>
 
                         <KsDropdown trigger="click" placement="bottom-end">
-                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" :aria-label="$t('panel actions')" />
+                            <KsButton :icon="DotsVertical" link class="tab-icon panel-actions-button" :aria-label="$t('panel actions')" />
                             <template #dropdown>
                                 <KsDropdownMenu>
                                     <KsDropdownItem
@@ -222,10 +230,11 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount} from "vue"
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount, useTemplateRef, type Component} from "vue"
 
     import {VISIBLE_PANELS_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
+    import {useElementSize} from "@vueuse/core"
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -239,29 +248,18 @@
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
     import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
 
-    import {trackTabOpen, trackTabClose} from "../utils/tabTracking"
+    import {useTabTracking} from "../composables/useTabTracking"
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
 
     const {showKeyShortcuts} = useKeyShortcuts()
+    const {trackTabOpen, trackTabClose} = useTabTracking()
 
-    function throttle(callback: () => void, limit: number): () => void {
-        let waiting = false
-        return function () {
-            if (!waiting) {
-                callback()
-                waiting = true
-                setTimeout(function () {
-                    waiting = false
-                }, limit)
-            }
-        }
-    }
+    const ComponentCache = new Map<string, Component>()
 
-    const ComponentCache = new Map<string, any>()
-
-    const createUniqueComponent = (component: any, key: string) => {
-        if(ComponentCache.has(key)){
-            return ComponentCache.get(key)
+    const createUniqueComponent = (component: Component, key: string) => {
+        const cached = ComponentCache.get(key)
+        if(cached){
+            return cached
         }
         const uniqueComponent = markRaw(
             defineComponent({
@@ -301,7 +299,7 @@
         removeTab: [tab: string]
     }>()
 
-    const maximizedPanelIndex = ref<number | null>(null)
+    const maximizedPanelIndex = defineModel<number | null>("maximizedPanelIndex", {default: null})
 
     provide(PANEL_MAXIMIZED_INJECTION_KEY, computed(() => maximizedPanelIndex.value !== null))
 
@@ -326,6 +324,17 @@
     function toggleMaximize(panelIndex: number) {
         maximizedPanelIndex.value = maximizedPanelIndex.value === panelIndex ? null : panelIndex
     }
+
+    watch(() => panels.value.map(p => p.activeTab?.uid), (uids, previous) => {
+        for (const uid of uids) {
+            if (!uid || previous?.includes(uid)) continue
+            const panelIndex = uids.indexOf(uid)
+            if (maximizedPanelIndex.value != null && maximizedPanelIndex.value !== panelIndex) {
+                maximizedPanelIndex.value = null
+            }
+            nextTick(() => ensureActiveTabVisible(panelIndex, uid))
+        }
+    })
 
     watch(() => panels.value.length, (length) => {
         if (maximizedPanelIndex.value != null && maximizedPanelIndex.value >= length) {
@@ -363,7 +372,8 @@
     const showDropZones = computed(() =>
         realDragging.value &&
         movedTabInfo.value &&
-        !draggingPanel.value,
+        !draggingPanel.value &&
+        canAddPanel.value,
     )
 
     function onResize(_index: number, sizes: number[]) {
@@ -537,6 +547,16 @@
 
     const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length))
 
+    const MIN_PANEL_WIDTH = 360
+    const {width: splitterWidth} = useElementSize(useTemplateRef("splitter"))
+
+    const canAddPanel = computed(() => {
+        const sizes = panels.value.map(p => p.size)
+        const total = sizes.reduce((a, b) => a + b, 0)
+        const smallest = Math.min(defaultSize.value, ...sizes)
+        return smallest * splitterWidth.value / (total + defaultSize.value) >= MIN_PANEL_WIDTH
+    })
+
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return
 
@@ -615,6 +635,7 @@
     }, {deep: true})
 
     function splitPanel(panelIndex: number){
+        if(!canAddPanel.value) return
         const panel = panels.value[panelIndex]
         const newPanel = {
             tabs: [panel.activeTab],
@@ -716,11 +737,11 @@
     }
 
     function ensureActiveTabVisible(panelIndex: number, tabId: string){
-        const container = tabContainerRefs.value[panelIndex]
+        const container = tabContainerRefs.value.find(r => r.dataset.panelIndex === panelIndex.toString())
         if(!container){
             return
         }
-        const safeId = (globalThis as any).CSS?.escape ? (globalThis as any).CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
+        const safeId = globalThis.CSS?.escape ? globalThis.CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
         const el = container.querySelector(`.editor-tab[data-tab-id="${safeId}"]`) as HTMLElement | null
         if(!el){
             return
@@ -738,7 +759,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .panel-maximized {
         position: relative;
         background: var(--ks-bg-base);
@@ -804,12 +825,20 @@
         position: relative;
         z-index: 1;
         height: calc(100% - var(--ks-spacing-5));
-        margin-left: calc(2vw + var(--ks-spacing-4));
-        margin-right: calc(2vw + var(--ks-spacing-4));
         background: var(--ks-bg-surface);
         border-left: 1px solid var(--ks-border-default);
         border-right: 1px solid var(--ks-border-default);
-        box-shadow: var(--ks-shadow-md);
+        box-shadow: var(--ks-shadow-base);
+    }
+
+    .panel-maximized--left-sliver .editor-tabs-container,
+    .panel-maximized--left-sliver .content-panel {
+        margin-left: calc(2vw + var(--ks-spacing-4));
+    }
+
+    .panel-maximized--right-sliver .editor-tabs-container,
+    .panel-maximized--right-sliver .content-panel {
+        margin-right: calc(2vw + var(--ks-spacing-4));
     }
 
     .panel-maximized .editor-tabs-container {
@@ -846,8 +875,12 @@
                 height: 16px;
                 width: 16px;
             }
-            &:hover {
+            &:hover:not(:disabled) {
                 color: var(--ks-text-primary);
+            }
+            &:disabled {
+                color: var(--ks-icon-inactive);
+                cursor: not-allowed;
             }
         }
         .buttons-container{
@@ -873,10 +906,10 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.1);
-        z-index: 100;
+        background-color: color-mix(in srgb, var(--ks-border-focus) 10%, transparent);
+        z-index: var(--ks-z-sticky);
         &.dragover{
-            background-color: rgba(0, 0, 0, 0.3);
+            background-color: color-mix(in srgb, var(--ks-border-focus) 30%, transparent);
         }
     }
 
@@ -898,6 +931,10 @@
 
     .tab-icon{
         color: var(--ks-icon-muted);
+    }
+
+    .panel-actions-button {
+        margin-inline-end: var(--ks-spacing-2);
     }
 
     .small-text {
@@ -982,24 +1019,10 @@
         pointer-events: none;
     }
 
-    .default-theme{
-        :deep(.kel-splitter-panel) {
-            background-color: var(--ks-bg-surface);
-            display: grid;
-            grid-template-rows: auto 1fr;
-        }
-
-        :deep(.kel-splitter__splitter){
-            border-left-color: var(--ks-border-default);
-            background-color: var(--ks-bg-surface);
-            &:before, &:after{
-                background-color: var(--ks-text-secondary);
-            }
-        }
-
-        :deep(.kel-splitter-bar) {
-            z-index: 0;
-        }
+    .default-theme {
+        --ks-splitter-panel-bg: var(--ks-bg-surface);
+        --ks-splitter-panel-display: grid;
+        --ks-splitter-panel-rows: auto 1fr;
     }
 
     .content-panel{
@@ -1035,7 +1058,7 @@
         right: 0;
         bottom: 0;
         pointer-events: none;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         display: flex;
         justify-content: space-between;
     }
@@ -1046,9 +1069,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: rgba(30, 30, 30, 0.5);
+        background-color: color-mix(in srgb, var(--ks-border-focus) 15%, transparent);
         transition: all 0.2s ease;
-        border: 2px dashed var(--ks-border-default, #444);
+        border: 2px dashed var(--ks-border-default);
         border-radius: 4px;
         margin: 8px;
         pointer-events: auto;
@@ -1057,8 +1080,8 @@
 
     .new-panel-drop-zone:hover,
     .new-panel-drop-zone.panel-dragover {
-        background-color: rgba(40, 40, 40, 0.8);
-        border-color: var(--ks-border-focus, #888);
+        background-color: color-mix(in srgb, var(--ks-border-focus) 35%, transparent);
+        border-color: var(--ks-border-focus);
     }
 
     .left-drop-zone {

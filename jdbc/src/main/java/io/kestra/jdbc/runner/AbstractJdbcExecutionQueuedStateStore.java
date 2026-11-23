@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
@@ -14,6 +15,8 @@ import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
+import io.micronaut.core.annotation.Nullable;
 
 public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbcRepository implements ExecutionQueuedStateStore {
     protected io.kestra.jdbc.AbstractJdbcRepository<ExecutionQueued> jdbcRepository;
@@ -26,6 +29,33 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
     public void save(TransactionContext txContext, ExecutionQueued executionQueued) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(executionQueued);
         this.jdbcRepository.persist(executionQueued, txContext.unwrap(JdbcTransactionContext.class).getDslContext(), fields);
+    }
+
+    @Override
+    public int count(TransactionContext txContext, String tenantId, String namespace, String flowId) {
+        var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
+        return dslContext
+            .fetchCount(
+                this.jdbcRepository.getTable(),
+                buildTenantCondition(tenantId)
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(flowId))
+            );
+    }
+
+    @Override
+    public int count(String tenantId, @Nullable String namespace, @Nullable String flowId) {
+        var condition = buildTenantCondition(tenantId);
+        if (flowId != null) {
+            condition = condition.and(field("namespace").eq(namespace)).and(field("flow_id").eq(flowId));
+        } else if (namespace != null) {
+            condition = condition.and(field("namespace", String.class).eq(namespace).or(field("namespace", String.class).startsWith(namespace + ".")));
+        }
+
+        Condition scope = condition;
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL.using(configuration).fetchCount(this.jdbcRepository.getTable(), scope));
     }
 
     @Override
@@ -49,9 +79,7 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
         }
     }
 
-    /**
-     * This method should only be used for administration purpose via a command
-     */
+    @Override
     public List<ExecutionQueued> getAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -60,7 +88,8 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
-                    .from(this.jdbcRepository.getTable());
+                    .from(this.jdbcRepository.getTable())
+                    .orderBy(field("date").asc());
 
                 return this.jdbcRepository.fetch(select);
             });

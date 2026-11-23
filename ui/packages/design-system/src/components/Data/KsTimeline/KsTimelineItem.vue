@@ -1,5 +1,5 @@
 <template>
-    <ElTimelineItem v-bind="{...filteredProps(), ...$attrs} as any">
+    <ElTimelineItem v-bind="({...filteredProps(), ...$attrs} as TimelineItemProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -10,7 +10,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTimelineItem} from "element-plus"
+    import {ElTimelineItem, type TimelineItemProps} from "element-plus"
+    import type {Component} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -19,7 +20,7 @@
         timestamp?: string;
         color?: string;
         type?: string;
-        icon?: any;
+        icon?: string | Component;
         size?: "normal" | "large";
         hideTimestamp?: boolean;
         placement?: "top" | "bottom";
@@ -35,9 +36,11 @@
 </script>
 
 <style lang="scss">
-@use "../../../assets/styles/el-ns";
-@use "element-plus/theme-chalk/src/timeline-item";
+    @use "../../../assets/styles/el-ns";
+    @use "element-plus/theme-chalk/src/timeline-item";
+</style>
 
+<style>
 .kel-timeline-item__node.is-hollow {
     background-color: var(--ks-bg-base);
 }

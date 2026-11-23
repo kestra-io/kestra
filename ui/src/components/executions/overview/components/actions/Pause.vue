@@ -10,7 +10,13 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('pause title', {id: escape(execution.id)})" />
+            <span>
+                <i18n-t keypath="pause title" tag="span" scope="global">
+                    <template #id><code>{{ execution.id }}</code></template>
+                </i18n-t>
+                <br>
+                {{ $t("pause note") }}
+            </span>
         </template>
         <template #footer>
             <KsButton :icon="Pause" type="primary" @click="pause()" nativeType="submit">
@@ -21,7 +27,6 @@
 </template>
 
 <script setup lang="ts">
-    import escape from "lodash/escape"
     import Pause from "vue-material-design-icons/Pause.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {useExecutionsStore} from "../../../../../stores/executions"

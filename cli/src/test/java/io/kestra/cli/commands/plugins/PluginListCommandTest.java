@@ -1,9 +1,7 @@
 package io.kestra.cli.commands.plugins;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -12,6 +10,8 @@ import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+
+import io.kestra.cli.ConsoleCapture;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -38,14 +38,11 @@ class PluginListCommandTest {
             new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/" + PLUGIN_TEMPLATE_TEST))
         );
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
-
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString() };
-            PicocliRunner.call(PluginListCommand.class, ctx, args);
+            String out = ConsoleCapture.run(() -> PicocliRunner.call(PluginListCommand.class, ctx, args)).out();
 
-            assertThat(out.toString()).contains("io.kestra.plugin.templates.Example");
+            assertThat(out).contains("io.kestra.plugin.templates.Example");
         }
     }
 }

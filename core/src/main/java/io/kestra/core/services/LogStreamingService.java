@@ -1,15 +1,22 @@
 package io.kestra.core.services;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.FollowLogEvent;
+import io.kestra.core.utils.Either;
+import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
 
 import io.micronaut.http.sse.Event;
@@ -18,6 +25,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 /**
@@ -49,8 +57,16 @@ public class LogStreamingService {
     void startQueueConsumer() {
         this.queueSubscriber = logQueue.subscriber();
         this.queueSubscriber.pause();
-        this.queueSubscriber.subscribe(either ->
-        {
+        this.queueSubscriber.subscribe(this::dispatch);
+    }
+
+    /**
+     * Dispatch a log event to all the subscribers of its execution.
+     * This method never throws: the queue subscriber is shared by all subscribers and treats any escaping
+     * exception as fatal, so a delivery failure to a single SSE stream would shut down the whole server.
+     */
+    private void dispatch(Either<FollowLogEvent, DeserializationException> either) {
+        try {
             if (either.isRight()) {
                 log.error("Unable to deserialize log: {}", either.getRight().getMessage());
                 return;
@@ -70,17 +86,64 @@ public class LogStreamingService {
             Map<String, Pair<FluxSink<Event<FollowLogEvent>>, List<QueryFilter>>> executionSubscribers = subscribers.get(current.executionId());
 
             if (executionSubscribers != null && !executionSubscribers.isEmpty()) {
-                executionSubscribers.values().forEach(pair ->
-                {
-                    var sink = pair.getLeft();
-                    var filters = pair.getRight();
-
-                    if (followLogEventMatcher.matches(current, filters)) {
-                        sink.next(Event.of(current).id("progress"));
-                    }
-                });
+                executionSubscribers.forEach((subscriberId, pair) -> deliver(current, subscriberId, pair.getLeft(), pair.getRight()));
             }
-        });
+        } catch (Exception e) {
+            log.error("Unable to dispatch the log event to its subscribers", e);
+        }
+    }
+
+    /**
+     * Deliver a log event to a single subscriber.
+     * This method never throws so a stale or broken SSE stream cannot prevent delivery to the other subscribers.
+     */
+    private void deliver(FollowLogEvent current, String subscriberId, FluxSink<Event<FollowLogEvent>> sink, List<QueryFilter> filters) {
+        if (sink.isCancelled()) {
+            // the SSE stream is already closed: drop the stale subscriber instead of writing to it
+            unregisterSubscriber(current.executionId(), subscriberId);
+            return;
+        }
+
+        try {
+            if (followLogEventMatcher.matches(current, filters)) {
+                sink.next(Event.of(current).id("progress"));
+            }
+        } catch (Exception e) {
+            log.error("Error sending log update to the subscriber '{}'", subscriberId, e);
+            failSilently(sink, e);
+            unregisterSubscriber(current.executionId(), subscriberId);
+        }
+    }
+
+    /**
+     * Fail the sink, ignoring any error raised by an already terminated one.
+     */
+    private void failSilently(FluxSink<Event<FollowLogEvent>> sink, Exception cause) {
+        try {
+            sink.error(cause);
+        } catch (Exception e) {
+            log.debug("Unable to fail an already terminated sink", e);
+        }
+    }
+
+    /**
+     * Stream the given past logs of an execution, then its live logs matching {@code filters}.
+     * The caller must call {@link #unregisterSubscriber(String, String)} with the same ids once the stream ends.
+     */
+    public Flux<Event<FollowLogEvent>> follow(String executionId, String subscriberId, Flux<LogEntry> history, List<QueryFilter> filters) {
+        Set<Long> pastKeys = ConcurrentHashMap.newKeySet();
+
+        Flux<Event<FollowLogEvent>> past = history
+            .map(FollowLogEvent::from)
+            .doOnNext(event -> pastKeys.add(logKey(event)))
+            .map(event -> Event.of(event).id("progress"));
+        // resuming the log queue replays the logs emitted while it was paused, so some were already sent as past logs
+        Flux<Event<FollowLogEvent>> live = Flux.<Event<FollowLogEvent>> create(sink -> registerSubscriber(executionId, subscriberId, sink, filters), FluxSink.OverflowStrategy.BUFFER)
+            .filter(event -> !pastKeys.contains(logKey(event.getData())));
+
+        // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
+        return Flux.concat(past, live)
+            .startWith(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
     }
 
     /**
@@ -129,5 +192,11 @@ public class LogStreamingService {
         if (queueSubscriber != null) {
             queueSubscriber.close();
         }
+    }
+
+    private static long logKey(FollowLogEvent event) {
+        // repositories store timestamps with different precisions, so a log read back may lose its sub-millisecond part
+        Instant timestamp = event.timestamp() == null ? null : event.timestamp().truncatedTo(ChronoUnit.MILLIS);
+        return Hashing.hashToLong(String.join("\u0000", event.taskRunId(), String.valueOf(event.attemptNumber()), String.valueOf(timestamp), event.message()));
     }
 }

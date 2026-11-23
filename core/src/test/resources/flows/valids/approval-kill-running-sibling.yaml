@@ -1,0 +1,12 @@
+id: approval-kill-running-sibling
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: approval
+        type: io.kestra.plugin.core.flow.Approval
+      - id: sleep
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT30S

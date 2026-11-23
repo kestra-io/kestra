@@ -27,20 +27,19 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodeController;
-import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.vnodes.VNodeController;
+import io.kestra.core.vnodes.internals.DefaultVNodesAssigner;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
@@ -49,7 +48,7 @@ import io.kestra.scheduler.stores.CachedTriggerStateStore;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
-import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
+import io.kestra.scheduler.utils.InMemoryVNodesAssignmentChannel;
 import io.kestra.scheduler.utils.InMemoryTriggerEventQueue;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
@@ -65,6 +64,12 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 class DefaultSchedulerTest {
 
     private static final SchedulerConfiguration SCHEDULER_CONFIGURATION = new SchedulerConfiguration(16, Duration.ofSeconds(5), 100);
+
+    // The injected publisher would run ServiceLivenessManager on this thread, where its state write
+    // contends with the heartbeat for the whole 30s H2 lock timeout; no assertion reads those events.
+    private static final ApplicationEventPublisher<ServiceStateChangeEvent> NOOP_EVENT_PUBLISHER = event ->
+    {
+    };
 
     @Inject
     MetricRegistry metricRegistry;
@@ -88,9 +93,6 @@ class DefaultSchedulerTest {
     ExecutorsUtils executorsUtils;
 
     @Inject
-    ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
-
-    @Inject
     private LockService lockService;
 
     // Stores
@@ -99,10 +101,10 @@ class DefaultSchedulerTest {
     private FlowMetaStore flowMetaStore;
 
     // Queues
-    private SchedulerEventQueue schedulerEventQueue;
     private TriggerEventQueue triggerEventQueue;
 
     // Others
+    private InMemoryVNodesAssignmentChannel vNodesAssignmentChannel;
     private DefaultVNodesAssigner vNodesAssigner;
     private VNodeController vNodeController;
     private TriggerSchedulingLoopFactory triggerSchedulingLoopFactory;
@@ -117,11 +119,11 @@ class DefaultSchedulerTest {
         this.serviceLivenessStore = new InMemoryServiceLivenessStore();
 
         // Queues
-        this.schedulerEventQueue = new InMemorySchedulerEventQueue();
         this.triggerEventQueue = new InMemoryTriggerEventQueue(SCHEDULER_CONFIGURATION.vnodes());
 
         // Others
-        this.vNodesAssigner = new DefaultVNodesAssigner(this.schedulerEventQueue);
+        this.vNodesAssignmentChannel = new InMemoryVNodesAssignmentChannel();
+        this.vNodesAssigner = new DefaultVNodesAssigner(this.vNodesAssignmentChannel);
         this.vNodesAssigner.start();
 
         this.vNodeController = createVNodeController();
@@ -133,7 +135,6 @@ class DefaultSchedulerTest {
     @AfterEach
     void afterEach() throws IOException {
         this.vNodeController.close();
-        this.schedulerEventQueue.close();
         this.triggerEventQueue.close();
         this.vNodesAssigner.stop();
     }
@@ -247,6 +248,66 @@ class DefaultSchedulerTest {
         }
     }
 
+    @Test
+    void shouldRestoreVNodesAssignmentsOnSchedulingLoopsWhenExitingMaintenanceMode() {
+        // GIVEN
+        try (DefaultScheduler scheduler = createDefaultScheduler();) {
+            scheduler.start(2);
+            serviceLivenessStore.put(scheduler);
+            vNodeController.checkServicesAndRebalanceVNodes();
+
+            // WHEN
+            maintenanceService.setMaintenanceMode(true);
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
+                assertThat(scheduler.schedulingLoops()).hasSize(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
+            });
+            maintenanceService.setMaintenanceMode(false);
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
+                assertThat(scheduler.schedulingLoops()).hasSize(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
+            });
+
+            // THEN
+            Set<Integer> loopAssignments = scheduler.schedulingLoops()
+                .stream()
+                .flatMap(loop -> loop.assignments().stream())
+                .collect(Collectors.toSet());
+            assertThat(loopAssignments).isNotEmpty();
+            assertThat(loopAssignments).isEqualTo(scheduler.currentVNodesAssignment());
+        }
+    }
+
+    @Test
+    void shouldAssignAllVNodesToSchedulingLoopsWhenMaxThreadsIsGreaterThanAssignedVNodes() {
+        // GIVEN
+        try (DefaultScheduler scheduler1 = createDefaultScheduler();
+            DefaultScheduler scheduler2 = createDefaultScheduler();
+            DefaultScheduler scheduler3 = createDefaultScheduler();) {
+            scheduler1.start(8);
+            scheduler2.start(8);
+            scheduler3.start(8);
+            serviceLivenessStore.put(scheduler1);
+            serviceLivenessStore.put(scheduler2);
+            serviceLivenessStore.put(scheduler3);
+
+            // WHEN
+            vNodeController.checkServicesAndRebalanceVNodes();
+
+            // THEN
+            List.of(scheduler1, scheduler2, scheduler3).forEach(scheduler ->
+            {
+                Set<Integer> loopAssignments = scheduler.schedulingLoops()
+                    .stream()
+                    .flatMap(loop -> loop.assignments().stream())
+                    .collect(Collectors.toSet());
+                assertThat(loopAssignments).isEqualTo(scheduler.currentVNodesAssignment());
+            });
+        }
+    }
+
     private TriggerScheduler newTriggerScheduler() {
         return new TriggerScheduler(
             triggerStateStore,
@@ -268,7 +329,7 @@ class DefaultSchedulerTest {
             triggerSchedulingLoopFactory,
             vNodesAssigner,
             executorsUtils,
-            eventPublisher,
+            NOOP_EVENT_PUBLISHER,
             triggerEventQueue,
             triggerStateStore,
             metricRegistry,
@@ -281,8 +342,9 @@ class DefaultSchedulerTest {
         return new VNodeController(
             lockService,
             serviceLivenessStore,
-            schedulerEventQueue,
-            SCHEDULER_CONFIGURATION
+            vNodesAssignmentChannel,
+            SCHEDULER_CONFIGURATION.vnodes(),
+            SCHEDULER_CONFIGURATION.vnodesRebalanceTimeout()
         );
     }
 
@@ -294,7 +356,8 @@ class DefaultSchedulerTest {
             runContextFactory,
             conditionService,
             Mockito.mock(BroadcastQueueInterface.class),
-            Mockito.mock(AsyncOperationService.class)
+            Mockito.mock(AsyncOperationService.class),
+            Fixtures.passThroughFlowParsingService()
         );
     }
 

@@ -20,6 +20,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.repository.CaseInsensitiveSearch;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
@@ -32,6 +33,7 @@ import jakarta.inject.Inject;
 
 @SuppressWarnings("this-escape")
 @Requires(condition = MysqlRepository.MysqlCondition.class)
+@Requires(property = "kestra.server-type", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
 
@@ -57,7 +59,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
             Field<String> f = DSL.field(fieldName, String.class);
             // COALESCE ensures NULL fields evaluate to false rather than NULL,
             // so NOT(...LIKE...) works correctly for nullable columns like execution_id.
-            likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).like(pattern, '\\'));
+            likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).collate(CaseInsensitiveSearch.MYSQL_COLLATION).like(pattern, '\\'));
         }
 
         String booleanQuery = Arrays.stream(query.split("\\p{IsPunct}|\\s+"))
@@ -105,14 +107,10 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
         ).otherwise(DSL.field("WEEK({0}, 3)", Integer.class, timestampField));
     }
 
-    // We need to create H2 repositories for the queue as it uses an H2Repository named 'queue',
-    // we may find a way to only create this one at some point as here we create unnecessary beans.
     static class MysqlCondition implements io.micronaut.context.condition.Condition {
         @Override
         public boolean matches(ConditionContext context) {
-            boolean isRepository = ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "mysql".equals(it)).orElse(false);
-            boolean isQueue = ((Optional<String>) context.get("kestra.queue.type", String.class)).map(it -> "mysql".equals(it)).orElse(false);
-            return isRepository || isQueue;
+            return ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "mysql".equals(it)).orElse(false);
         }
     }
 }

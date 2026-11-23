@@ -11,22 +11,31 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.checkpoint.Checkpoint;
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Gauge;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
 import io.kestra.core.models.tasks.runners.otlp.OtlpRecord;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.log.Log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import jakarta.inject.Inject;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -61,6 +70,87 @@ class TaskLogLineMatcherTest {
         assertThat(event.getFormattedMessage()).isEqualTo("hello from kotlp");
         assertThat(event.getLevel()).isEqualTo(Level.INFO);
         assertThat(originalTimestamp(event)).isEqualTo(Instant.ofEpochSecond(0, TIME_UNIX_NANO));
+    }
+
+    @Test
+    void shouldReturnOutputsWhenOtlpLogBodyIsMarker() throws IOException {
+        var runContext = runContext();
+        var listAppender = appender(runContext);
+
+        Optional<TaskLogMatch> match = matcher.matches(
+            framed(logRecord(
+                "{\"severityNumber\":9,\"body\":{\"stringValue\":\"::{\\\"outputs\\\":{\\\"myKey\\\":\\\"myValue\\\"}}::\"}}," +
+                    "{\"severityNumber\":9,\"body\":{\"stringValue\":\"plain line\"}}"
+            )),
+            runContext.logger(),
+            runContext,
+            FALLBACK_INSTANT
+        );
+
+        assertThat(match).isPresent();
+        assertThat(match.get().outputs()).containsEntry("myKey", "myValue");
+        assertThat(listAppender.list).extracting(ILoggingEvent::getFormattedMessage).containsExactly("plain line");
+    }
+
+    @Test
+    void shouldSaveCheckpointsWhenLineContainsCheckpoints() throws IOException {
+        var runContext = taskRunContext();
+
+        Optional<TaskLogMatch> match = matcher.matches(
+            "::{\"checkpoints\":{\"loop\":\"3\",\"cursor\":\"abc\"}}::",
+            runContext.logger(),
+            runContext,
+            FALLBACK_INSTANT
+        );
+
+        assertThat(match).isPresent();
+        assertThat(match.get().checkpoints()).containsEntry("loop", "3").containsEntry("cursor", "abc");
+        assertThat(runContext.checkpoints().get("loop")).contains("3");
+        assertThat(runContext.checkpoints().list()).extracting(Checkpoint::key).containsExactlyInAnyOrder("loop", "cursor");
+    }
+
+    @Test
+    void shouldEmitMarkerMetricsOnceWhenOtlpLogBodyIsMarker() throws IOException {
+        var runContext = runContext();
+
+        matcher.matches(
+            framed(logRecord("{\"body\":{\"stringValue\":\"::{\\\"metrics\\\":[{\\\"name\\\":\\\"rows\\\",\\\"type\\\":\\\"counter\\\",\\\"value\\\":5}]}::\"}}")),
+            runContext.logger(),
+            runContext,
+            FALLBACK_INSTANT
+        );
+
+        assertThat(runContext.metrics()).singleElement().satisfies(metric -> {
+            assertThat(metric.getName()).isEqualTo("rows");
+            assertThat(metric.getValue()).isEqualTo(5d);
+        });
+    }
+
+    @Test
+    void shouldLogBodyAsTextWhenOtlpLogBodyIsMalformedMarker() throws IOException {
+        var runContext = runContext();
+        var listAppender = appender(runContext);
+
+        Optional<TaskLogMatch> match = matcher.matches(
+            framed(logRecord("{\"severityNumber\":9,\"body\":{\"stringValue\":\"::{not json}::\"}}")),
+            runContext.logger(),
+            runContext,
+            FALLBACK_INSTANT
+        );
+
+        assertThat(match.orElseThrow().outputs()).isEmpty();
+        assertThat(listAppender.list).extracting(ILoggingEvent::getFormattedMessage).containsExactly("::{not json}::");
+    }
+
+    @Test
+    void shouldLogMarkerAsTextWhenParsingBareNdjson() throws IOException {
+        var runContext = runContext();
+        var listAppender = appender(runContext);
+        String line = logRecord("{\"severityNumber\":9,\"body\":{\"stringValue\":\"::{\\\"outputs\\\":{\\\"myKey\\\":\\\"myValue\\\"}}::\"}}");
+
+        matcher.parseOtlp(new ByteArrayInputStream(line.getBytes(StandardCharsets.UTF_8)), runContext.logger(), runContext, FALLBACK_INSTANT);
+
+        assertThat(listAppender.list).extracting(ILoggingEvent::getFormattedMessage).containsExactly("::{\"outputs\":{\"myKey\":\"myValue\"}}::");
     }
 
     @Test
@@ -430,6 +520,24 @@ class TaskLogLineMatcherTest {
     }
 
     @Test
+    void shouldRedactEncryptedOutputsFrameWhenEmbeddedInACommand() {
+        String command = "set -e\necho '::{\"encryptedOutputs\":{\"encrypted\":my secret value}}::'";
+
+        String redacted = TaskLogLineMatcher.redactEncryptedOutputs(command);
+
+        assertThat(redacted).isEqualTo("set -e\necho '******'");
+    }
+
+    @Test
+    void shouldNotRedactPlainOutputsFrame() {
+        String command = "::{\"outputs\":{\"a\":\"b\"}}::";
+
+        String redacted = TaskLogLineMatcher.redactEncryptedOutputs(command);
+
+        assertThat(redacted).isEqualTo(command);
+    }
+
+    @Test
     void shouldProcessOutputsAndOtlpWhenFramedLineContainsBoth() throws IOException {
         var runContext = runContext();
         var listAppender = appender(runContext);
@@ -445,6 +553,19 @@ class TaskLogLineMatcherTest {
         assertThat(match.get().outputs()).containsEntry("key", "value");
         assertThat(listAppender.list).hasSize(1);
         assertThat(listAppender.list.getFirst().getFormattedMessage()).isEqualTo("combined");
+    }
+
+    private RunContext taskRunContext() {
+        Task task = Log.builder().id("task").type(Log.class.getName()).message("message").build();
+        TaskRun taskRun = TaskRun.builder().id(IdUtils.create()).taskId("task").flowId("flow").namespace("namespace").executionId(IdUtils.create())
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+        Flow flow = Flow.builder().id("flow").namespace("namespace").tenantId(MAIN_TENANT).revision(1).tasks(List.of(task)).build();
+        Execution execution = Execution.builder().id(taskRun.getExecutionId()).flowId("flow").namespace("namespace").tenantId(MAIN_TENANT)
+            .taskRunList(List.of(taskRun))
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+        return runContextFactory.initializer().forExecutor((DefaultRunContext) runContextFactory.of(flow, task, execution, taskRun));
     }
 
     private RunContext runContext() {

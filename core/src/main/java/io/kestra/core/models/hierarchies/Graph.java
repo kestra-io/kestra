@@ -1,8 +1,10 @@
 package io.kestra.core.models.hierarchies;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.graph.ElementOrder;
 import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
 
@@ -15,7 +17,9 @@ public class Graph<T, V> {
     private final MutableValueGraph<T, V> graph;
 
     public Graph() {
-        graph = ValueGraphBuilder.directed().build();
+        graph = ValueGraphBuilder.directed()
+            .incidentEdgeOrder(ElementOrder.stable())
+            .build();
     }
 
     public Graph<T, V> addNode(T node) {
@@ -57,7 +61,7 @@ public class Graph<T, V> {
         return this.graph.edges()
             .stream()
             .map(ts -> new Edge<>(ts.nodeU(), ts.nodeV(), this.graph.edgeValue(ts).get()))
-            .collect(Collectors.toSet());
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public void removeNode(T node) {

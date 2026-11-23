@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 
@@ -17,6 +18,9 @@ import jakarta.validation.constraints.NotNull;
  * Excludes internal scheduler fields ({@code tenantId}, {@code vnode}, {@code lastEventId}). The
  * scheduler's {@code type} is exposed as {@code kind} to not clash with the trigger definition's
  * {@code type} (the plugin class) when both are merged by API consumers.
+ * <p>
+ * {@code disabled} is the runtime disable alone; a consumer deciding whether a trigger will fire has
+ * to read {@code sourceDisabled} as well, which mirrors the flow definition's own flag.
  */
 public record ApiTriggerState(
     @NotNull String namespace,
@@ -28,11 +32,13 @@ public record ApiTriggerState(
     Backfill backfill,
     List<State.Type> stopAfter,
     boolean disabled,
+    boolean sourceDisabled,
     boolean locked,
     String workerId,
     Instant lastTriggeredDate,
     String executionId,
-    TriggerType kind) {
+    TriggerType kind,
+    Blocker blockedBy) {
     public static ApiTriggerState from(TriggerState state) {
         return new ApiTriggerState(
             state.getNamespace(),
@@ -44,11 +50,13 @@ public record ApiTriggerState(
             state.getBackfill(),
             state.getStopAfter(),
             state.isDisabled(),
+            state.isSourceDisabled(),
             state.isLocked(),
             state.getWorkerId(),
             truncate(state.getLastTriggeredDate()),
             state.getExecutionId(),
-            state.getType()
+            state.getType(),
+            state.getBlockedBy()
         );
     }
 

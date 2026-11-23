@@ -1,0 +1,32 @@
+id: loop_json_objects
+namespace: sanitychecks.core
+labels:
+  tier: tier1
+description: |
+  Iterate over a list of objects. Loop coalesces non-string values to JSON strings, so addressing
+  fields requires `fromJson(item.value).field` rather than `item.value.field` directly. The same
+  parsed fields feed the loop-level `outputs:` block, so the downstream `read_outputs` task sees a
+  typed list of `{user_id, email}` records.
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values:
+      - { id: 101, email: "a@example.com" }
+      - { id: 102, email: "b@example.com" }
+    fetchType: AUTO
+    outputs:
+      - id: user_id
+        type: INT
+        value: "{{ fromJson(item.value).id }}"
+      - id: email
+        type: STRING
+        value: "{{ fromJson(item.value).email }}"
+    tasks:
+      - id: log_user
+        type: io.kestra.plugin.core.log.Log
+        message: "User {{ fromJson(item.value).id }} -> {{ fromJson(item.value).email }}"
+
+  - id: read_outputs
+    type: io.kestra.plugin.core.log.Log
+    message: "Users: {{ outputs.loop.outputs }}"

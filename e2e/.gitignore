@@ -1,0 +1,6 @@
+node_modules
+playwright-report
+test-results
+.auth/
+.env
+data/application-secrets.yml

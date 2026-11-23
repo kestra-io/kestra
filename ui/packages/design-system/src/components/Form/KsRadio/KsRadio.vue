@@ -1,7 +1,7 @@
 <template>
     <ElRadio
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as RadioProps)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElRadio} from "element-plus"
+    import {ElRadio, type RadioProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -25,7 +25,7 @@
     }>()
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: string | number | boolean | undefined]
     }>()
 
     defineSlots<{
@@ -38,14 +38,19 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/radio';
+</style>
 
+<style>
     .kel-radio {
-        .kel-radio__inner::after {
-            width: 6px;
-            height: 6px;
+        --kel-radio-input-width: var(--ks-radio-size, 14px);
+        --kel-radio-input-height: var(--ks-radio-size, 14px);
+
+        & .kel-radio__inner::after {
+            width: var(--ks-radio-dot-size, 6px);
+            height: var(--ks-radio-dot-size, 6px);
         }
 
-        .kel-radio__input.is-checked + .kel-radio__label {
+        & .kel-radio__input.is-checked + .kel-radio__label {
             color: var(--kel-radio-text-color);
         }
     }

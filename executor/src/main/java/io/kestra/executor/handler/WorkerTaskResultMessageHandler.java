@@ -54,10 +54,9 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
     public Optional<ExecutorContext> handle(WorkerTaskResult message) {
         EvaluationType evaluationType = killSwitchService.evaluate(message.getTaskRun());
         if (evaluationType != EvaluationType.PASS) {
-            var execution = executionStateStore.findById(message.getTaskRun().getExecutionId());
+            var execution = executionStateStore.findByIdWithoutAcl(message.getTaskRun().getExecutionId());
             if (execution != null && evaluationType.isKillSwitched(execution)) {
-                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
-                return Optional.empty();
+                return killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
             }
         }
 
@@ -74,7 +73,7 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
                     // process worker task result
                     executorService.addWorkerTaskResult(
                         current,
-                        () -> flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution)),
+                        () -> flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution)),
                         message
                     );
                     // join worker result

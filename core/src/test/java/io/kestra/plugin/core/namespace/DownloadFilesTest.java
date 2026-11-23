@@ -51,4 +51,49 @@ public class DownloadFilesTest {
         assertThat(output.getFiles().get("/a/b/test1.txt")).isNotNull();
 
     }
+
+    @Test
+    void shouldDownloadNestedDotfileNamespaceFile() throws Exception {
+        String namespaceId = "io.kestra." + IdUtils.create();
+        DownloadFiles downloadFiles = DownloadFiles.builder()
+            .id(DownloadFiles.class.getSimpleName())
+            .type(DownloadFiles.class.getName())
+            .files(List.of(".env"))
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
+            .build();
+
+        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, Map.of("namespace", namespaceId));
+        final Namespace namespace = runContext.storage().namespace(namespaceId);
+
+        namespace.putFile(Path.of("/a/b/.env"), new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)));
+
+        DownloadFiles.Output output = downloadFiles.run(runContext);
+
+        assertThat(output.getFiles().size()).isEqualTo(1);
+        assertThat(output.getFiles().get("/a/b/.env")).isNotNull();
+
+    }
+
+    @Test
+    void shouldStoreFilesInsideTheDestinationFolder() throws Exception {
+        var namespaceId = "io.kestra." + IdUtils.create();
+        var downloadFiles = DownloadFiles.builder()
+            .id(DownloadFiles.class.getSimpleName())
+            .type(DownloadFiles.class.getName())
+            .files(List.of("**"))
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
+            .destination(Property.ofValue("downloaded"))
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, Map.of("namespace", namespaceId));
+        var namespace = runContext.storage().namespace(namespaceId);
+
+        namespace.putFile(Path.of("/a/b/test1.txt"), new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)));
+        namespace.putFile(Path.of("/main.py"), new ByteArrayInputStream("2".getBytes(StandardCharsets.UTF_8)));
+
+        var output = downloadFiles.run(runContext);
+
+        assertThat(output.getFiles().get("/a/b/test1.txt").getPath()).endsWith("/downloaded/a/b/test1.txt");
+        assertThat(output.getFiles().get("/main.py").getPath()).endsWith("/downloaded/main.py");
+    }
 }

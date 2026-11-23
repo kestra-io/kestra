@@ -17,7 +17,7 @@
     import {GraphChart} from "echarts/charts"
 
     import KsEchart from "./KsEchart.vue"
-    import {deepMerge, ChartRenderer} from "./ksChartUtils"
+    import {deepMerge, ChartRenderer} from "../../utils/chart"
 
     use([GraphChart])
 

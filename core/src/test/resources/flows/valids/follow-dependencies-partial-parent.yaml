@@ -1,0 +1,13 @@
+id: follow-dependencies-partial-parent
+namespace: io.kestra.tests
+
+# The subflow terminates, then the pause keeps this execution alive: a dependency
+# graph that is only partially terminated.
+tasks:
+  - id: subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: follow-dependencies-partial-child
+
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause

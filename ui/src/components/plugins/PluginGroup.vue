@@ -25,7 +25,7 @@
                         :iconCls="sub.subGroup"
                         :icons="allIcons"
                         :loadIcon="pluginsStore.loadIcon"
-                        :title="sub.title"
+                        :title="enrichmentStore.getEnrichment(sub)?.title ?? sub.title"
                         :description="sub.description"
                         :categories="sub.categories"
                         :taskCount="elementCountFor(sub)"
@@ -66,7 +66,7 @@
                         @click="openBlueprint(bp.id)"
                     >
                         <template #footer-content>
-                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
+                            <BlueprintIconStack :clses="blueprintTaskTypes(bp.includedTasks)" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
                         </template>
                     </PluginCard>
                 </div>
@@ -82,6 +82,10 @@
         <div v-else class="plugin-group__state">
             <KsSkeleton animated :rows="6" />
         </div>
+
+        <template v-if="groupPlugin && !groupPlugin.subGroup && catalogExtension.versions" #versions>
+            <component :is="catalogExtension.versions" :plugin="groupPlugin" />
+        </template>
     </PluginLayout>
 </template>
 
@@ -89,7 +93,7 @@
     import {ref, computed, onMounted, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import axios from "axios"
+    import {publicFetchJson} from "../../utils/publicApi"
     import {KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
     import PluginLayout from "./PluginLayout.vue"
@@ -97,8 +101,10 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {useMiscStore} from "override/stores/misc"
-    import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {usePluginCatalogExtension} from "override/components/plugins/pluginCatalogExtension"
+    import {extractPluginElements, isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import useRouteContext from "../../composables/useRouteContext"
+    import {blueprintTaskTypes} from "../../composables/useBlueprintPlugins"
     import {API_URL} from "../../stores/api"
 
     type Blueprint = {
@@ -114,6 +120,7 @@
     const route = useRoute()
     const router = useRouter()
     const {t} = useI18n()
+    const catalogExtension = usePluginCatalogExtension()
 
     const groupBlueprints = ref<Blueprint[]>([])
 
@@ -137,7 +144,7 @@
     const childSubGroups = computed<Plugin[]>(() => {
         const g = groupPlugin.value
         if (!g || g.subGroup) return []
-        return (pluginsStore.plugins ?? []).filter(p => p.name === g.name && p.subGroup)
+        return pluginsStore.latestPlugins.filter(p => p.name === g.name && p.subGroup && elementCountFor(p) > 0)
     })
 
     const isShowingSubGroups = computed<boolean>(() => childSubGroups.value.length > 0)
@@ -158,7 +165,7 @@
         return out.sort((a, b) => shortClassName(a.cls).localeCompare(shortClassName(b.cls)))
     })
 
-    const headerTitle = computed<string>(() => groupPlugin.value?.title ?? "")
+    const headerTitle = computed<string>(() => enrichmentStore.getEnrichment(groupPlugin.value)?.title ?? groupPlugin.value?.title ?? "")
 
     const headerIconCls = computed<string | undefined>(() => {
         const g = groupPlugin.value
@@ -197,14 +204,14 @@
         ]
         if (parentGroup.value?.title) {
             crumbs.push({
-                label: parentGroup.value.title,
+                label: enrichmentStore.getEnrichment(parentGroup.value)?.title ?? parentGroup.value.title,
                 link: {name: "plugins/group", params: {name: parentGroup.value.name}},
             })
         }
         return crumbs
     })
 
-    const title = computed(() => groupPlugin.value?.title ?? t("plugins.names"))
+    const title = computed(() => headerTitle.value || (route.params.name as string))
 
     const routeInfo = computed(() => ({title: title.value, breadcrumb: breadcrumb.value}))
     useRouteContext(routeInfo)
@@ -215,13 +222,7 @@
     }
 
     function elementCountFor(plugin: Plugin): number {
-        let count = 0
-        for (const [key, value] of Object.entries(plugin)) {
-            if (isEntryAPluginElementPredicate(key, value)) {
-                count += value.filter(el => !el?.deprecated).length
-            }
-        }
-        return count
+        return Object.values(extractPluginElements(plugin)).flat().length
     }
 
     function blueprintCountFor(plugin: Plugin): number {
@@ -256,10 +257,9 @@
         if (!cls) return
 
         try {
-            const response = await axios.get<Blueprint[]>(
+            groupBlueprints.value = await publicFetchJson<Blueprint[]>(
                 `${API_URL}/v1/blueprints/plugin/${cls}/version/latest`,
-            )
-            groupBlueprints.value = response.data ?? []
+            ) ?? []
         } catch (err) {
             console.warn("Failed to load blueprints for group", cls, err)
             groupBlueprints.value = []
@@ -275,7 +275,7 @@
     }
 
     watch(
-        () => groupPlugin.value,
+        groupPlugin,
         (g) => {
             if (g) loadGroupBlueprints()
         },
@@ -290,31 +290,31 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-group {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-3);
+    }
 
-        &__title {
-            margin: 0;
-            font-size: var(--ks-font-size-sm);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-        }
+    .plugin-group__title {
+        margin: 0;
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
 
-        &__grid {
-            display: grid;
-            gap: var(--ks-spacing-3);
-            grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
-        }
+    .plugin-group__grid {
+        display: grid;
+        gap: var(--ks-spacing-3);
+        grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
+    }
 
-        &--blueprints {
-            margin-top: var(--ks-spacing-6);
-        }
+    .plugin-group--blueprints {
+        margin-top: var(--ks-spacing-6);
+    }
 
-        &__state {
-            padding: var(--ks-spacing-6) 0;
-        }
+    .plugin-group__state {
+        padding: var(--ks-spacing-6) 0;
     }
 </style>

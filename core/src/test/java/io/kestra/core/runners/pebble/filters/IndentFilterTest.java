@@ -11,6 +11,7 @@ import io.kestra.core.runners.VariableRenderer;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class IndentFilterTest {
@@ -77,4 +78,23 @@ class IndentFilterTest {
         assertThat(render).isEqualTo("first line\n\t\tsecond line");
     }
 
+    @Test
+    void indentRejectsExcessiveAmount() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'x' | indent(2000000000) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("cannot exceed");
+    }
+
+    @Test
+    void indentWithIntegerVariable() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render("{{ \"first line\nsecond line\" | indent(spaces) }}", Map.of("spaces", Integer.valueOf(2)));
+        assertThat(render).isEqualTo("first line\n  second line");
+    }
+
+    @Test
+    void indentRejectsNonNumberAmount() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'x' | indent('invalid') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("expects an integer as argument 'amount'");
+    }
 }

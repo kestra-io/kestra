@@ -8,7 +8,7 @@
                 :label="$t('settings.blocks.configuration.fields.default_namespace')"
                 :description="$t('settings.blocks.configuration.descriptions.default_namespace')"
             >
-                <NamespaceSelect fit :value="settings.defaultNamespace" @update:model-value="onNamespace" />
+                <NamespaceSelect fit :modelValue="settings.defaultNamespace ?? undefined" @update:model-value="onNamespace" />
             </SettingRow>
 
             <SettingRow
@@ -33,6 +33,15 @@
             >
                 <KsSelect fit :modelValue="settings.editorType" @update:model-value="onEditorType">
                     <KsOption v-for="item in editorTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.configuration.fields.topology_orientation')"
+                :description="$t('settings.blocks.configuration.descriptions.topology_orientation')"
+            >
+                <KsSelect fit :modelValue="settings.topologyOrientation" @update:model-value="onTopologyOrientation">
+                    <KsOption v-for="item in topologyOrientationOptions" :key="item.value" :label="item.label" :value="item.value" />
                 </KsSelect>
             </SettingRow>
 
@@ -100,6 +109,51 @@
                     @change="onEditorPlayground"
                 />
             </SettingRow>
+
+            <SettingRow
+                stacked
+                :label="$t('settings.blocks.configuration.fields.flow_template')"
+                :description="$t('settings.blocks.configuration.descriptions.flow_template')"
+            >
+                <div class="flow-template">
+                    <KsEditor
+                        v-bind="editorBindings"
+                        v-model="settings.flowTemplate"
+                        lang="yaml"
+                        :options="{fullHeight: false, lineNumbers: true}"
+                        :navbar="false"
+                        class="flow-template-editor"
+                        data-test="flow-template-editor"
+                        @focusout="onFlowTemplate"
+                    />
+
+                    <div class="flow-template-footer">
+                        <KsAlert
+                            v-if="flowTemplateError"
+                            type="warning"
+                            :closable="false"
+                            class="flow-template-error"
+                            data-test="flow-template-error"
+                        >
+                            {{ $t(`settings.blocks.configuration.flow_template_error.${flowTemplateError.errorCode}`) }}
+                            <template v-if="flowTemplateError.parseMessage">
+                                <br>
+                                <KsText class="flow-template-error-detail">{{ flowTemplateError.parseMessage }}</KsText>
+                            </template>
+                        </KsAlert>
+
+                        <KsButton
+                            link
+                            class="flow-template-reset"
+                            :disabled="!settings.flowTemplate.trim()"
+                            data-test="flow-template-reset"
+                            @click="onFlowTemplateReset"
+                        >
+                            {{ $t("settings.blocks.configuration.flow_template_reset") }}
+                        </KsButton>
+                    </div>
+                </div>
+            </SettingRow>
         </Block>
 
         <Block :heading="$t('settings.blocks.theme.label')">
@@ -108,10 +162,14 @@
                 :label="$t('settings.blocks.theme.fields.color_mode')"
             >
                 <template #description>
-                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode')" /><br>
-                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
+                    <span>{{ $t("settings.blocks.theme.descriptions.color_mode") }}</span><br>
+                    <i18n-t keypath="settings.blocks.theme.descriptions.color_mode_shortcut" tag="span" scope="global">
+                        <template #ctrl><kbd class="shortcut-key">Ctrl</kbd></template>
+                        <template #shift><kbd class="shortcut-key">Shift</kbd></template>
+                        <template #key><kbd class="shortcut-key">L</kbd></template>
+                    </i18n-t>
                 </template>
-                <ThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
+                <KsThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
             </SettingRow>
 
             <SettingRow
@@ -153,6 +211,24 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_dark_theme')"
+                :description="$t('settings.blocks.theme.descriptions.editor_dark_theme')"
+            >
+                <KsSelect fit data-test="editor-dark-theme" :modelValue="editorDarkTheme ?? MATCH_APP_THEME" @update:model-value="onEditorDarkTheme">
+                    <KsOption v-for="item in editorThemeOptions('dark')" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_light_theme')"
+                :description="$t('settings.blocks.theme.descriptions.editor_light_theme')"
+            >
+                <KsSelect fit data-test="editor-light-theme" :modelValue="editorLightTheme ?? MATCH_APP_THEME" @update:model-value="onEditorLightTheme">
+                    <KsOption v-for="item in editorThemeOptions('light')" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')"
                 :description="$t('settings.blocks.theme.descriptions.editor_folding_stratgy')"
             >
@@ -171,6 +247,17 @@
                     :aria-label="$t('settings.blocks.theme.fields.editor_hover_description')"
                     :modelValue="settings.hoverTextEditor"
                     @change="onHover"
+                />
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_pebble_hover')"
+                :description="$t('settings.blocks.theme.descriptions.editor_pebble_hover')"
+            >
+                <KsSwitch
+                    :aria-label="$t('settings.blocks.theme.fields.editor_pebble_hover')"
+                    :modelValue="settings.pebbleHover"
+                    @change="onPebbleHover"
                 />
             </SettingRow>
 
@@ -253,18 +340,23 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
+    import {computed, reactive, ref, watch, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
-    import moment from "moment-timezone"
+    import {dateUtils, dayjs, editorFontFamily} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useToast} from "../../utils/toast"
     import {date as dateFilter} from "../../utils/filters"
     import * as Utils from "../../utils/utils"
     import type {SelectedTheme} from "../../utils/utils"
-    import {logDisplayTypes, storageKeys, executeFlowBehaviours, taskEditDefaultModes} from "../../utils/constants"
+    import {logDisplayTypes, storageKeys, executeFlowBehaviours, taskEditDefaultModes, topologyOrientations} from "../../utils/constants"
+    import {DEFAULT_EXECUTION_TAB} from "../executions/executionTabs"
     import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
     import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
+    import {editorDarkTheme, editorLightTheme} from "../../composables/useTheme"
+    import {themes, type ThemeKind} from "@kestra-io/plumage"
     import {defaultNamespace} from "../../composables/useNamespaces"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {validateFlowTemplate, type FlowTemplateValidation} from "../../utils/newFlowTemplate"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../stores/layout"
     import {useLeftMenu} from "override/components/useLeftMenu"
@@ -275,7 +367,7 @@
     import Wrapper from "./components/Wrapper.vue"
     import Block from "./components/block/Block.vue"
     import SettingRow from "./components/block/SettingRow.vue"
-    import ThemePicker, {type ThemeOption} from "./components/block/ThemePicker.vue"
+    import {KsThemePicker, type ThemeOption} from "@kestra-io/design-system"
     import SidebarCustomizeModal from "../layout/SidebarCustomizeModal.vue"
     import {KsButton} from "@kestra-io/design-system"
 
@@ -285,25 +377,30 @@
     const CONFIG = "settings.blocks.configuration"
     const THEME = "settings.blocks.theme"
     const LOCALE = "settings.blocks.localization"
+    const MATCH_APP_THEME = "app"
 
     const SETTING_TOASTS = {
-        defaultNamespace: [`${CONFIG}.fields.default_namespace`, `${CONFIG}.descriptions.default_namespace`],
-        defaultLogLevel: [`${CONFIG}.fields.log_level`, `${CONFIG}.descriptions.log_level`],
-        logDisplay: [`${CONFIG}.fields.log_display`, `${CONFIG}.descriptions.log_display`],
+        [storageKeys.DEFAULT_NAMESPACE]: [`${CONFIG}.fields.default_namespace`, `${CONFIG}.descriptions.default_namespace`],
+        [storageKeys.DEFAULT_LOG_LEVEL]: [`${CONFIG}.fields.log_level`, `${CONFIG}.descriptions.log_level`],
+        [storageKeys.LOG_DISPLAY]: [`${CONFIG}.fields.log_display`, `${CONFIG}.descriptions.log_display`],
         [storageKeys.EDITOR_VIEW_TYPE]: [`${CONFIG}.fields.editor_type`, `${CONFIG}.descriptions.editor_type`],
         [storageKeys.TASK_EDIT_DEFAULT_MODE]: [`${CONFIG}.fields.task_edit_default_mode`, `${CONFIG}.descriptions.task_edit_default_mode`],
         [storageKeys.EXECUTE_FLOW_BEHAVIOUR]: [`${CONFIG}.fields.execute_flow`, `${CONFIG}.descriptions.execute_flow`],
-        executeDefaultTab: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
-        flowDefaultTab: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
-        triggersDefaultTab: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
+        [storageKeys.EXECUTION_DEFAULT_TAB]: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
+        [storageKeys.FLOW_DEFAULT_TAB]: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
+        [storageKeys.TRIGGERS_DEFAULT_TAB]: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
         [storageKeys.AUTO_REFRESH_INTERVAL]: [`${CONFIG}.fields.auto_refresh_interval`, `${CONFIG}.descriptions.auto_refresh_interval`],
-        editorPlayground: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
+        [storageKeys.EDITOR_PLAYGROUND]: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
+        [storageKeys.FLOW_TEMPLATE]: [`${CONFIG}.fields.flow_template`, `${CONFIG}.descriptions.flow_template`],
         [APP_FONT_SIZE_KEY]: [`${THEME}.fields.app_font_size`, `${THEME}.descriptions.app_font_size`],
-        logsFontSize: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
-        editorFontFamily: [`${THEME}.fields.editor_font_family`, `${THEME}.descriptions.editor_font_family`],
-        editorFontSize: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
-        autofoldTextEditor: [`${THEME}.fields.editor_folding_stratgy`, `${THEME}.descriptions.editor_folding_stratgy`],
-        hoverTextEditor: [`${THEME}.fields.editor_hover_description`, `${THEME}.descriptions.editor_hover_description`],
+        [storageKeys.LOGS_FONT_SIZE]: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
+        [storageKeys.EDITOR_FONT_FAMILY]: [`${THEME}.fields.editor_font_family`, `${THEME}.descriptions.editor_font_family`],
+        [storageKeys.EDITOR_FONT_SIZE]: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
+        [storageKeys.EDITOR_DARK_THEME]: [`${THEME}.fields.editor_dark_theme`, `${THEME}.descriptions.editor_dark_theme`],
+        [storageKeys.EDITOR_LIGHT_THEME]: [`${THEME}.fields.editor_light_theme`, `${THEME}.descriptions.editor_light_theme`],
+        [storageKeys.AUTOFOLD_TEXT_EDITOR]: [`${THEME}.fields.editor_folding_stratgy`, `${THEME}.descriptions.editor_folding_stratgy`],
+        [storageKeys.HOVER_TEXT_EDITOR]: [`${THEME}.fields.editor_hover_description`, `${THEME}.descriptions.editor_hover_description`],
+        [storageKeys.PEBBLE_HOVER]: [`${THEME}.fields.editor_pebble_hover`, `${THEME}.descriptions.editor_pebble_hover`],
         [storageKeys.TIMEZONE_STORAGE_KEY]: [`${LOCALE}.fields.time_zone`, `${LOCALE}.descriptions.time_zone`],
         [storageKeys.DATE_FORMAT_STORAGE_KEY]: [`${LOCALE}.fields.date_format`, `${LOCALE}.descriptions.date_format`],
     }
@@ -316,55 +413,58 @@
     const layoutStore = useLayoutStore()
     const {menu} = useLeftMenu()
     const showSidebarCustomize = ref(false)
+    const editorBindings = useEditorBindings()
+    const flowTemplateError = ref<FlowTemplateValidation | undefined>()
 
     const routeInfo = computed(() => ({title: t("settings.label")}))
     useRouteContext(routeInfo)
 
     const settings = reactive({
         defaultNamespace: defaultNamespace(),
-        defaultLogLevel: localStorage.getItem("defaultLogLevel") || "INFO",
-        logDisplay: localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT,
+        defaultLogLevel: localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO",
+        logDisplay: localStorage.getItem(storageKeys.LOG_DISPLAY) || logDisplayTypes.DEFAULT,
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
+        topologyOrientation: localStorage.getItem(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION) || topologyOrientations.VERTICAL,
         taskEditDefaultMode: localStorage.getItem(storageKeys.TASK_EDIT_DEFAULT_MODE) || taskEditDefaultModes.MODAL,
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
-        executeDefaultTab: localStorage.getItem("executeDefaultTab") || "gantt",
-        flowDefaultTab: localStorage.getItem("flowDefaultTab") || "edit",
-        triggersDefaultTab: localStorage.getItem("triggersDefaultTab") || "add",
+        executeDefaultTab: localStorage.getItem(storageKeys.EXECUTION_DEFAULT_TAB) || DEFAULT_EXECUTION_TAB,
+        flowDefaultTab: localStorage.getItem(storageKeys.FLOW_DEFAULT_TAB) || "edit",
+        triggersDefaultTab: localStorage.getItem(storageKeys.TRIGGERS_DEFAULT_TAB) || "add",
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
         appFontSize: appFontSizeMode.value,
-        editorFontFamily: localStorage.getItem("editorFontFamily") || "'JetBrains Mono', monospace",
-        autofoldTextEditor: localStorage.getItem("autofoldTextEditor") === "true",
-        hoverTextEditor: localStorage.getItem("hoverTextEditor") === "true",
+        editorFontFamily: editorFontFamily(),
+        autofoldTextEditor: localStorage.getItem(storageKeys.AUTOFOLD_TEXT_EDITOR) === "true",
+        hoverTextEditor: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
+        pebbleHover: localStorage.getItem(storageKeys.PEBBLE_HOVER) !== "false",
         lang: Utils.getLang(),
-        timezone: localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess(),
+        timezone: dateUtils.currentTimezone(),
         dateFormat: localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll",
-        editorPlayground: localStorage.getItem("editorPlayground") !== "false",
+        editorPlayground: localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false",
         envName: layoutStore.envName || miscStore.configs?.environment?.name,
         envColor: layoutStore.envColor || miscStore.configs?.environment?.color,
+        flowTemplate: localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "",
     })
 
     const isEnvNameFromConfig = computed(() =>
         !layoutStore.envName && !!miscStore.configs?.environment?.name,
     )
 
-    const zonesWithOffset = moment.tz.names().map((zone) => {
-        const timezoneMoment = moment.tz(zone)
-        return {
-            zone,
-            offset: timezoneMoment.utcOffset(),
-            formattedOffset: timezoneMoment.format("Z"),
-        }
-    }).sort((a, b) => a.offset - b.offset)
+    const zonesWithOffset = dateUtils.timezonesWithOffset(settings.timezone)
 
-    const now = moment()
-    const localeKey = moment.locale()
+    const now = dayjs()
+    const localeKey = dateUtils.currentLocale()
 
     const formatDate = (format: string) => dateFilter(now.toISOString(), format)
 
     const editorTypeOptions = computed(() => [
         {label: t("no_code.labels.yaml"), value: "YAML"},
         {label: t("no_code.labels.no_code"), value: "NO_CODE"},
+    ])
+
+    const topologyOrientationOptions = computed(() => [
+        {label: t("settings.blocks.configuration.topology_orientation_options.vertical"), value: topologyOrientations.VERTICAL},
+        {label: t("settings.blocks.configuration.topology_orientation_options.horizontal"), value: topologyOrientations.HORIZONTAL},
     ])
 
     const taskEditDefaultModeOptions = computed(() => [
@@ -390,6 +490,13 @@
         {value: "medium", label: t("settings.blocks.theme.app_font_size_options.medium")},
         {value: "large", label: t("settings.blocks.theme.app_font_size_options.large")},
     ])
+
+    function editorThemeOptions(kind: ThemeKind) {
+        return [
+            {value: MATCH_APP_THEME, label: t(`${THEME}.editor_theme_options.match_app`)},
+            ...themes.filter((theme) => theme.kind === kind).map((theme) => ({value: theme.name, label: theme.displayName})),
+        ]
+    }
 
     const autoRefreshOptions = computed(() => AUTO_REFRESH_INTERVALS.map((seconds) => ({value: seconds, label: `${seconds}`})))
 
@@ -510,9 +617,9 @@
 
     function onNamespace(value: string | string[] | undefined) {
         const namespace = (Array.isArray(value) ? value[0] : value) ?? ""
-        const previous = localStorage.getItem("defaultNamespace") || ""
+        const previous = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE) || ""
         settings.defaultNamespace = namespace
-        persist("defaultNamespace", namespace)
+        persist(storageKeys.DEFAULT_NAMESPACE, namespace)
 
         if (previous !== namespace) {
             clearNamespaceFilters()
@@ -521,45 +628,95 @@
 
     function onLogLevel(value: string) {
         settings.defaultLogLevel = value
-        persist("defaultLogLevel", value)
+        persist(storageKeys.DEFAULT_LOG_LEVEL, value)
     }
 
-    function onLogDisplay(value: string) {
+    function onLogDisplay(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.logDisplay = value
-        persist("logDisplay", value)
+        persist(storageKeys.LOG_DISPLAY, value)
     }
 
-    function onEditorType(value: string) {
+    function onEditorType(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.editorType = value
         persist(storageKeys.EDITOR_VIEW_TYPE, value)
     }
 
-    function onTaskEditDefaultMode(value: string) {
+    function onTopologyOrientation(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
+        settings.topologyOrientation = value
+        persist(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION, value)
+    }
+
+    function onTaskEditDefaultMode(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.taskEditDefaultMode = value
         persist(storageKeys.TASK_EDIT_DEFAULT_MODE, value)
     }
 
-    function onExecuteFlowBehaviour(value: string) {
+    function onExecuteFlowBehaviour(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.executeFlowBehaviour = value
         persist(storageKeys.EXECUTE_FLOW_BEHAVIOUR, value)
     }
 
-    function onExecuteDefaultTab(value: string) {
+    function onExecuteDefaultTab(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.executeDefaultTab = value
-        persist("executeDefaultTab", value)
+        persist(storageKeys.EXECUTION_DEFAULT_TAB, value)
     }
 
-    function onFlowDefaultTab(value: string) {
+    function onFlowDefaultTab(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.flowDefaultTab = value
-        persist("flowDefaultTab", value)
+        persist(storageKeys.FLOW_DEFAULT_TAB, value)
     }
 
-    function onTriggersDefaultTab(value: string) {
+    function onTriggersDefaultTab(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.triggersDefaultTab = value
-        persist("triggersDefaultTab", value)
+        persist(storageKeys.TRIGGERS_DEFAULT_TAB, value)
     }
 
-    function onAutoRefreshInterval(value: number) {
+    function onFlowTemplate(value?: string) {
+        const template = value ?? settings.flowTemplate
+        if (template === (localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "")) {
+            return
+        }
+
+        settings.flowTemplate = template
+        const validation = validateFlowTemplate(template)
+        flowTemplateError.value = validation.errorCode ? validation : undefined
+        persist(storageKeys.FLOW_TEMPLATE, template)
+    }
+
+    function onFlowTemplateReset() {
+        settings.flowTemplate = ""
+        flowTemplateError.value = undefined
+        persist(storageKeys.FLOW_TEMPLATE, "")
+    }
+
+    function onAutoRefreshInterval(value: number | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.autoRefreshInterval = value
         persist(storageKeys.AUTO_REFRESH_INTERVAL, value)
     }
@@ -571,7 +728,10 @@
         notifySaved(`${THEME}.fields.color_mode`, undefined, t(`${THEME}.confirmations.color_mode`, {mode}))
     }
 
-    function onAppFontSize(value: AppFontSizeMode) {
+    function onAppFontSize(value: AppFontSizeMode | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.appFontSize = value
         appFontSizeMode.value = value
         applyFontScale(value)
@@ -579,34 +739,60 @@
         notifySaved(meta?.[0], meta?.[1])
     }
 
-    function onLogsFontSize(value: number) {
+    function onLogsFontSize(value: number | undefined) {
+        if (value === undefined) {
+            return
+        }
         logsFontSizeOverride.value = value
-        persist("logsFontSize", value)
+        persist(storageKeys.LOGS_FONT_SIZE, value)
     }
 
-    function onFontFamily(value: string) {
+    function onFontFamily(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.editorFontFamily = value
-        persist("editorFontFamily", value)
+        persist(storageKeys.EDITOR_FONT_FAMILY, value)
     }
 
-    function onFontSize(value: number) {
+    function onEditorDarkTheme(value: string | undefined) {
+        editorDarkTheme.value = value && value !== MATCH_APP_THEME ? value : null
+        const meta = SETTING_TOASTS[storageKeys.EDITOR_DARK_THEME]
+        notifySaved(meta?.[0], meta?.[1])
+    }
+
+    function onEditorLightTheme(value: string | undefined) {
+        editorLightTheme.value = value && value !== MATCH_APP_THEME ? value : null
+        const meta = SETTING_TOASTS[storageKeys.EDITOR_LIGHT_THEME]
+        notifySaved(meta?.[0], meta?.[1])
+    }
+
+    function onFontSize(value: number | undefined) {
+        if (value === undefined) {
+            return
+        }
         editorFontSizeOverride.value = value
-        persist("editorFontSize", value)
+        persist(storageKeys.EDITOR_FONT_SIZE, value)
     }
 
     function onAutofold(value: boolean | string | number) {
         settings.autofoldTextEditor = Boolean(value)
-        persist("autofoldTextEditor", settings.autofoldTextEditor)
+        persist(storageKeys.AUTOFOLD_TEXT_EDITOR, settings.autofoldTextEditor)
     }
 
     function onHover(value: boolean | string | number) {
         settings.hoverTextEditor = Boolean(value)
-        persist("hoverTextEditor", settings.hoverTextEditor)
+        persist(storageKeys.HOVER_TEXT_EDITOR, settings.hoverTextEditor)
+    }
+
+    function onPebbleHover(value: boolean | string | number) {
+        settings.pebbleHover = Boolean(value)
+        persist(storageKeys.PEBBLE_HOVER, settings.pebbleHover)
     }
 
     function onEditorPlayground(value: boolean | string | number) {
         settings.editorPlayground = Boolean(value)
-        persist("editorPlayground", settings.editorPlayground)
+        persist(storageKeys.EDITOR_PLAYGROUND, settings.editorPlayground)
     }
 
     function onEnvName() {
@@ -620,41 +806,38 @@
         notifySaved(`${THEME}.fields.environment_color`)
     }
 
-    function onLang(value: string) {
+    function onLang(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         const previous = settings.lang
         settings.lang = value
-        persist("lang", value)
+        persist(storageKeys.LANG, value)
 
         if (value !== previous) {
             document.location.assign(document.location.href)
         }
     }
 
-    function onTimezone(value: string) {
+    function onTimezone(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.timezone = value
         persist(storageKeys.TIMEZONE_STORAGE_KEY, value)
     }
 
-    function onDateFormat(value: string) {
+    function onDateFormat(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.dateFormat = value
         persist(storageKeys.DATE_FORMAT_STORAGE_KEY, value)
     }
 
-    function updateThemeBasedOnSystem() {
-        if (settings.theme === "syncWithSystem") {
-            Utils.switchTheme(miscStore, "syncWithSystem")
-        }
-    }
-
-    let mediaQuery: MediaQueryList | undefined
-
     onMounted(() => {
-        mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-        mediaQuery.addEventListener("change", updateThemeBasedOnSystem)
-    })
-
-    onBeforeUnmount(() => {
-        mediaQuery?.removeEventListener("change", updateThemeBasedOnSystem)
+        const validation = validateFlowTemplate(settings.flowTemplate)
+        flowTemplateError.value = validation.errorCode ? validation : undefined
     })
 
     watch(() => miscStore.theme, () => {
@@ -662,8 +845,43 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
-:deep(kbd) {
+<style scoped>
+.flow-template {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+    width: 100%;
+}
+
+.flow-template-editor {
+    min-height: 12rem;
+    border: var(--ks-border-width-thin) solid var(--ks-border-default);
+    border-radius: var(--ks-radius-base);
+    overflow: hidden;
+}
+
+.flow-template-footer {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ks-spacing-2);
+}
+
+.flow-template-error {
+    margin: 0;
+}
+
+.flow-template-error-detail {
+    display: block;
+    font-family: var(--ks-font-family-mono, monospace);
+    font-size: var(--ks-font-size-sm);
+    word-break: break-word;
+}
+
+.flow-template-reset {
+    margin-left: auto;
+}
+
+.shortcut-key {
     display: inline-block;
     padding: 0.1em 0.4em;
     border: 1px solid var(--ks-border-default);

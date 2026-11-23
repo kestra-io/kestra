@@ -7,11 +7,14 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.*;
 
 import io.kestra.core.async.AsyncOperation;
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
+
+import jakarta.annotation.Nullable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
@@ -22,7 +25,9 @@ import io.kestra.core.utils.IdUtils;
         @JsonSubTypes.Type(value = ChangeTaskRunState.class, name = "CHANGE_TASK_RUN_STATE"),
         @JsonSubTypes.Type(value = ForceRun.class, name = "FORCE_RUN"),
         @JsonSubTypes.Type(value = Pause.class, name = "PAUSE"),
+        @JsonSubTypes.Type(value = Reschedule.class, name = "RESCHEDULE"),
         @JsonSubTypes.Type(value = Restart.class, name = "RESTART"),
+        @JsonSubTypes.Type(value = RestartWorkingDirectory.class, name = "RESTART_WORKING_DIRECTORY"),
         @JsonSubTypes.Type(value = Resume.class, name = "RESUME"),
         @JsonSubTypes.Type(value = ResumeFromBreakpoint.class, name = "RESUME_FROM_BREAKPOINT"),
         @JsonSubTypes.Type(value = Unqueue.class, name = "UNQUEUE"),
@@ -65,6 +70,14 @@ public interface ExecutionCommand extends HasUID, DispatchEvent, AsyncOperation 
      * @return the event identifier.
      */
     EventId eventId();
+
+    /**
+     * @return who the command was sent on behalf of, or {@code null} when the system sent it.
+     */
+    @Nullable
+    default Actor actor() {
+        return null;
+    }
 
     /**
      * @return the event type

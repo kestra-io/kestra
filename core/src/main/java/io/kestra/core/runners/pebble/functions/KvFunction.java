@@ -1,6 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +59,7 @@ public class KvFunction implements KestraFunction {
         try {
             if (namespace == null) {
                 namespace = flowNamespace;
-                value = getValueWithInheritance(flowNamespace, key, flowTenantId);
+                value = kvStoreService.get().findValueWithInheritance(flowTenantId, flowNamespace, key);
             } else {
                 // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
                 value = kvStoreService.get().get(flowTenantId, namespace, flowNamespace).getValue(key);
@@ -79,20 +78,6 @@ public class KvFunction implements KestraFunction {
         }
 
         return value.map(KVValue::value).orElse(null);
-    }
-
-    private Optional<KVValue> getValueWithInheritance(String flowNamespace, String key, String tenantId)
-        throws IOException, ResourceExpiredException {
-        Optional<KVValue> value = Optional.empty();
-        String inheritedNamespace = flowNamespace;
-        while (value.isEmpty()) {
-            value = kvStoreService.get().get(tenantId, inheritedNamespace, flowNamespace).getValue(key);
-            if (!inheritedNamespace.contains(".")) {
-                return value;
-            }
-            inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));
-        }
-        return value;
     }
 
     protected String getKey(Map<String, Object> args, PebbleTemplate self, int lineNumber) {

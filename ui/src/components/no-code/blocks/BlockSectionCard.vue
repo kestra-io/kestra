@@ -50,7 +50,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-section {
         container-type: inline-size;
         background: var(--ks-bg-surface);

@@ -7,7 +7,7 @@
                 <NavBarAction :icon="TextBoxSearch" :to="{name: 'flows/search'}" :label="$t('source search')" />
 
                 <template #primary>
-                    <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
+                    <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="file-input">
                     <NavBarAction
                         v-if="canCreate"
                         type="primary"
@@ -20,7 +20,7 @@
             </NavBarActions>
         </template>
     </TopNavBar>
-    <section :class="{'full-container': fitHeightResolved}">
+    <section class="flows" :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -28,22 +28,24 @@
             :total="flowStore.total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'id', order: 'ascending'}"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            :defaultSort="defaultSort"
+            @page-changed="onPageChanged"
             @ready="ready = true"
-            @row-dblclick="onRowDoubleClick"
+            @row-click="onRowClick"
+            :mobileColumns="mobileColumns"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
+            :rowStyle="{cursor: 'pointer'}"
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
             :no-data-text="$t('no_results.flows')"
             class="flows-table"
-            :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+            :rowKey="(row: Flow) => `${row.namespace}-${row.id}`"
             :fitHeight="fitHeightResolved"
         >
             <template #top>
                 <KSFilter
-                    :configuration="flowFilter"
+                    :configuration="filterConfiguration ?? flowFilter"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -64,7 +66,7 @@
                 <KsButton v-if="canRead" :icon="Download" @click="exportFlows()">
                     {{ $t("export") }}
                 </KsButton>
-                <KsButton v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                <KsButton v-if="canDelete" @click="deleteFlows" :icon="Delete">
                     {{ $t("delete") }}
                 </KsButton>
                 <KsButton
@@ -104,11 +106,11 @@
                                     id: scope.row.id,
                                 },
                             }"
-                            class="me-1"
+                            class="flow-link"
                         >
                             <BreakableText :value="scope.row.id" />
                         </router-link>
-                        <KsTag size="small" v-if="scope.row.draft" class="me-1" plain>
+                        <KsTag size="small" v-if="scope.row.draft" class="draft-tag" plain>
                             <CircleOpacity />
                             {{ $t('draft') }}
                         </KsTag>
@@ -133,7 +135,11 @@
                     :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <Labels :labels="scope.row.labels" @click.prevent.stop />
+                        <Labels
+                            :labels="filterHiddenLabels(scope.row.labels, miscStore.configs?.hiddenLabelsPrefixes, route.query)"
+                            :max="3"
+                            @click.prevent.stop
+                        />
                     </template>
                 </KsTableColumn>
 
@@ -162,17 +168,17 @@
                     <template #default="scope">
                         <div @click.prevent.stop>
                             <router-link
-                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row as Flow)"
                                 :to="{
                                     name: 'executions/update',
                                     params: {
                                         namespace: scope.row.namespace,
                                         flowId: scope.row.id,
-                                        id: getLastExecution(scope.row).id
+                                        id: getLastExecution(scope.row as Flow)!.id
                                     }
                                 }"
                             >
-                                <KsDateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
+                                <KsDateAgo :date="getLastExecution(scope.row as Flow)?.startDate" inverted />
                             </router-link>
                         </div>
                     </template>
@@ -186,8 +192,8 @@
                     <template #default="scope">
                         <div
                             @click.prevent.stop
-                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
-                            class="d-flex justify-content-between align-items-center"
+                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row as Flow)"
+                            class="execution-status-row"
                         >
                             <router-link
                                 :to="{
@@ -195,31 +201,34 @@
                                     params: {
                                         namespace: scope.row.namespace,
                                         flowId: scope.row.id,
-                                        id: getLastExecution(scope.row).id
+                                        id: getLastExecution(scope.row as Flow)!.id
                                     }
                                 }"
                             >
-                                <KsExecutionStatus :status="getLastExecution(scope.row).status" size="small" />
+                                <KsExecutionStatus :status="getLastExecution(scope.row as Flow)!.status" size="small" :dot="isMobile" />
                             </router-link>
                         </div>
                     </template>
                 </KsTableColumn>
 
                 <KsTableColumn
-                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
+                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION) && canViewCharts"
                     prop="state"
                     :label="$t('execution statistics')"
                     className="row-graph"
                 >
                     <template #default="scope">
-                        <TimeSeries
-                            :chart="mappedChart(scope.row.id, scope.row.namespace)"
-                            :filters="chartFilters()"
-                            showDefault
-                            short
-                            :flow="scope.row.id"
-                            :namespace="scope.row.namespace"
-                        />
+                        <div :ref="(el) => observeChartBlock(el, chartKey(scope.row as Flow))" class="row-graph-cell">
+                            <TimeSeries
+                                v-if="activatedCharts.has(chartKey(scope.row as Flow))"
+                                :chart="mappedChart(scope.row.id, scope.row.namespace)"
+                                :filters="chartFilters()"
+                                showDefault
+                                short
+                                :flow="scope.row.id"
+                                :namespace="scope.row.namespace"
+                            />
+                        </div>
                     </template>
                 </KsTableColumn>
 
@@ -229,7 +238,7 @@
                     className="row-action"
                 >
                     <template #default="scope">
-                        <TriggerAvatar :flow="scope.row" />
+                        <TriggerAvatar :flow="(scope.row as Flow)" />
                     </template>
                 </KsTableColumn>
 
@@ -260,13 +269,13 @@
 
             </template>
 
-            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
+            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')" fixed="right">
                 <template #default="scope">
                     <div class="flow-actions-cell">
                         <KsIconButton
-                            v-if="canExecute(scope.row)"
-                            :tooltip="t('execute')"
-                            @click="openExecuteModal(scope.row)"
+                            v-if="canExecute(scope.row as Flow)"
+                            :tooltip="$t('execute')"
+                            @click="openExecuteModal(scope.row as Flow)"
                         >
                             <Play />
                         </KsIconButton>
@@ -283,7 +292,9 @@
             large
         >
             <template #header>
-                <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span" scope="global">
+                    <template #id><code>{{ selectedFlow.id }}</code></template>
+                </i18n-t>
             </template>
             <FlowRun
                 v-if="executionsStore.flow"
@@ -301,12 +312,15 @@
 
 <script setup lang="ts">
     import {ref, computed, useTemplateRef, watch} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {useIsMobile} from "../../composables/useIsMobile"
+    import {usePageSize} from "../../composables/usePageSize"
+    import {isPlainRowActivation} from "../../utils/rowNavigation"
+    import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import _merge from "lodash/merge"
     import BreakableText from "../BreakableText"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-    import {useFlowFilter} from "../filter/configurations"
+    import {filterHiddenLabels} from "../../utils/labels"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+    import {useFlowFilter} from "../filter/configurations/flowFilter"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
     const {loadInit} = useRestoreUrl()
@@ -314,7 +328,7 @@
     import Plus from "vue-material-design-icons/Plus.vue"
     import Upload from "vue-material-design-icons/Upload.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
 
@@ -324,15 +338,16 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue"
     import Play from "vue-material-design-icons/Play.vue"
 
-    import {KsExecutionStatus, KsIconButton} from "@kestra-io/design-system"
+    import {KsExecutionStatus, KsIconButton, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import TriggerAvatar from "./TriggerAvatar.vue"
 
     import FlowRun from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, type FilterConfiguration} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
+    import {useLazyChartBlocks} from "../dashboard/composables/useLazyChartBlocks"
     import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
@@ -344,14 +359,17 @@
     import {useFlowStore} from "../../stores/flow"
     import {useApiStore} from "../../stores/api"
     import {useAuthStore} from "override/stores/auth"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns, type ColumnConfig} from "../../composables/useTableColumns"
+    import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
-    import {QueryFilter} from "@kestra-io/kestra-sdk"
+    import type {ExecutionControllerLastExecutionResponse, Flow, QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
+    import {defaultTimeRange} from "../executions/timeRangeWiden"
+
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -360,6 +378,7 @@
         id?: string | null;
         defaultScopeFilter?: boolean,
         embed?: boolean;
+        filterConfiguration?: FilterConfiguration;
     }>(), {
         topbar: true,
         fitHeight: undefined,
@@ -367,6 +386,7 @@
         id: undefined,
         defaultScopeFilter: false,
         embed: false,
+        filterConfiguration: undefined,
     })
 
     const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
@@ -385,8 +405,10 @@
 
     const flowFilter = useFlowFilter()
 
+    const isMobile = useIsMobile()
+
     const lastExecutionByFlowReady = ref(false)
-    const latestExecutions = ref<any[]>([])
+    const latestExecutions = ref<ExecutionControllerLastExecutionResponse[]>([])
     const file = ref<HTMLInputElement | null>(null)
 
     const optionalColumns = ref<ColumnConfig[]>([
@@ -456,6 +478,17 @@
         initialVisibleColumns: [],
     })
 
+    const mobileColumns = computed(() => {
+        const shown = (prop: string) => displayColumns.value.includes(prop) ? prop : undefined
+        return {
+            leading: shown("state.current"),
+            title: "id",
+            meta: ["namespace"].filter(shown),
+            metaAside: shown("state.startDate"),
+            actions: "action",
+        }
+    })
+
     watch(extensionColumnsVisible, visible => {
         if (visible && flowStore.flows?.length) {
             loadExtensionData(flowStore.flows)
@@ -463,13 +496,14 @@
     })
 
     const user = computed(() => authStore.user)
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value)
     const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
     const routeNamespace = computed(() => route.query.namespace as string | undefined)
     const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value))
     const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
-    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
+    const canExecute = (flow: Flow) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
@@ -483,17 +517,17 @@
         if (!loadInit.value) return
         await flowStore
             .findFlows(
-                loadQuery({
+                deepMerge({
                     size,
                     page,
                     sort: sort ?? String(route.query.sort ?? "id:asc"),
-                }),
+                }, loadQuery()),
             )
-            .then((data: any) => {
+            .then((data) => {
                 if (user.value?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.LIST)) {
                     executionsStore.loadLatestExecutions({
-                        flowFilters: data.results.map((flow: any) => ({id: flow.id, namespace: flow.namespace})),
-                    }).then((latestExecs: any) => {
+                        flowFilters: data.results.map((flow) => ({id: flow.id, namespace: flow.namespace})),
+                    }).then((latestExecs) => {
                         latestExecutions.value = latestExecs
                         lastExecutionByFlowReady.value = true
                     })
@@ -502,10 +536,14 @@
             })
     }
 
-    const onRowDoubleClick = (item: any) => router.push({
-        name: route.name?.toString().replace("/list", "/update"),
-        params: {...item, tenant: route.params.tenant},
-    })
+    const onRowClick = (item: Flow, column: {type?: string} | null | undefined, event: Event) => {
+        if (!isPlainRowActivation(column, event)) return
+
+        router.push({
+            name: "flows/update",
+            params: {namespace: item.namespace, id: item.id, tenant: route.params.tenant},
+        })
+    }
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
@@ -513,7 +551,13 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "id", order: "ascending"})
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
@@ -584,9 +628,9 @@
 
     const showRunModal = ref(false)
     const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
-    const selectedFlow = ref<any | null>(null)
+    const selectedFlow = ref<Flow | null>(null)
 
-    async function openExecuteModal(flow: any) {
+    async function openExecuteModal(flow: Flow) {
         apiStore.posthogEvents({
             type: "FLOW_EXECUTION",
             action: "open_modal",
@@ -607,26 +651,26 @@
         toast.success(t("execution_started"))
     }
 
-    function getLastExecution(row: any) {
+    function getLastExecution(row: Flow) {
         if (!latestExecutions.value || !row) return null
         return latestExecutions.value.find(
-            (e: any) => e.flowId === row.id && e.namespace === row.namespace,
+            (e) => e.flowId === row.id && e.namespace === row.namespace,
         ) ?? null
     }
 
-    function loadQuery(base?: any) {
-        const {page: _p, size: _s, sort: _so, ...queryFilter} = route.query as Record<string, any>
+    function loadQuery(): LocationQuery {
+        const {page: _p, size: _s, sort: _so, ...queryFilter}: LocationQuery = route.query
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = route.params.id || props.namespace
         }
-        return _merge(base, queryFilter)
+        return queryFilter
     }
 
     function refresh() {
         dataTable.value?.reload()
     }
 
-    function rowClasses(row: any) {
+    function rowClasses(row: {row: Flow}) {
         if (!row || !row.row) return ""
         const classes = []
         if (row.row.disabled) classes.push("disabled")
@@ -634,10 +678,16 @@
         return classes.join(" ")
     }
 
+    // One chart per row means one preview request per row on arrival. Rows only load once their cell
+    // nears the viewport, and are never recycled: remounting would re-issue the request we are saving.
+    const {activatedCharts, observeChartBlock} = useLazyChartBlocks(() => false)
+
+    const chartKey = (row: {id: string; namespace: string}) => `${row.namespace}/${row.id}`
+
     function mappedChart(id: string, namespace: string) {
         let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION))
         MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id)
-        MAPPED_CHARTS.data.where = MAPPED_CHARTS.data.where.map((condition: any) => ({
+        MAPPED_CHARTS.data.where = MAPPED_CHARTS.data.where.map((condition: {field: string; type: string; value: string}) => ({
             ...condition,
             value: condition.value.replace("${namespace}", namespace).replace("${flow_id}", id),
         }))
@@ -645,7 +695,7 @@
     }
 
     function chartFilters(): QueryFilter[] {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+        const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,
@@ -669,24 +719,19 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .full-container {
     min-height: 0;
     display: flex;
     flex-direction: column;
 
-    > * {
+    & > * {
         flex: 1;
     }
 }
 
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
-}
-
-:deep(nav .dropdown-menu) {
-    display: flex;
-    width: 20rem;
 }
 
 .flow-id {
@@ -696,16 +741,30 @@
     gap: 0.25rem;
 }
 
+.file-input {
+    display: none;
+}
+
+.flow-link {
+    margin-inline-end: var(--ks-spacing-1);
+}
+
+.draft-tag {
+    margin-inline-end: var(--ks-spacing-1);
+}
+
+.execution-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .flows-table .kel-table__cell {
     vertical-align: middle;
 }
 
-:deep(.flows-table) .kel-table__row {
-    cursor: pointer;
-}
-
-:deep(.flows-table) th.row-action .cell {
-    padding-right: var(--ks-spacing-4);
+.flows {
+    --ks-table-action-header-padding-right: var(--ks-spacing-4);
 }
 
 .header-actions-list {

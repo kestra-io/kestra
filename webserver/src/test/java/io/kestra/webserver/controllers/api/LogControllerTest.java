@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,6 +28,7 @@ import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -116,6 +119,38 @@ class LogControllerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
+    @Test
+    void searchLogsWithUnknownSortFieldReturns422() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(GET("/api/v1/" + tenant + "/logs/search?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @Test
+    void searchLogsSortsByTimestamp() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+
+        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search?sort=timestamp:desc"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(logs.getTotal()).isEqualTo(1L);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void searchLogsByExecution() {
@@ -139,6 +174,45 @@ class LogControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldPaginateLogsFromExecutionWhenPageAndSizeAreSet() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        LogEntry log1 = logEntry(tenant, Level.INFO, Instant.now().minusSeconds(3));
+        logRepository.save(log1);
+        logRepository.save(log1.toBuilder().message("second").timestamp(Instant.now().minusSeconds(2)).build());
+        logRepository.save(log1.toBuilder().message("third").timestamp(Instant.now().minusSeconds(1)).build());
+
+        List<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + log1.getExecutionId() + "?page=2&size=2"),
+            Argument.of(List.class, LogEntry.class)
+        );
+
+        assertThat(logs).hasSize(1);
+        assertThat(logs.getFirst().getMessage()).isEqualTo("third");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldSortPaginatedLogsFromExecution() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        LogEntry log1 = logEntry(tenant, Level.INFO, Instant.now().minusSeconds(3));
+        logRepository.save(log1);
+        logRepository.save(log1.toBuilder().message("second").timestamp(Instant.now().minusSeconds(2)).build());
+        logRepository.save(log1.toBuilder().message("third").timestamp(Instant.now().minusSeconds(1)).build());
+
+        List<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + log1.getExecutionId() + "?size=2&sort=timestamp:desc"),
+            Argument.of(List.class, LogEntry.class)
+        );
+
+        assertThat(logs).hasSize(2);
+        assertThat(logs.getFirst().getMessage()).isEqualTo("third");
+        assertThat(logs.get(1).getMessage()).isEqualTo("second");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void shouldDefaultToNormalKindAndAllowKindFilter() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);
@@ -147,15 +221,7 @@ class LogControllerTest {
             .build();
         logRepository.save(playgroundLog);
 
-        // Execution-scoped endpoint defaults to NORMAL kind only, so a playground log is hidden...
         List<LogEntry> logs = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId()),
-            Argument.of(List.class, LogEntry.class)
-        );
-        assertThat(logs).isEmpty();
-
-        // ...unless the caller explicitly asks for that kind.
-        logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId() + "?filters[kind][EQUALS]=PLAYGROUND"),
             Argument.of(List.class, LogEntry.class)
         );
@@ -220,6 +286,64 @@ class LogControllerTest {
         );
         assertThat(logs).contains("john doe");
         assertThat(logs).contains("another message");
+    }
+
+    @Test
+    void shouldDownloadEveryLineInOrderWhenLogsSpanSeveralFetches() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String executionId = IdUtils.create();
+        seedExecution(tenant, executionId);
+        // more lines than one database fetch
+        Instant start = Instant.now().truncatedTo(ChronoUnit.MILLIS).minus(1, ChronoUnit.HOURS);
+        List<LogEntry> logs = IntStream.range(0, 250)
+            .mapToObj(
+                i -> logEntry(tenant, Level.INFO, start.plusMillis(i)).toBuilder()
+                    .executionId(executionId)
+                    .message("line " + i)
+                    .build()
+            )
+            .toList();
+        logs.forEach(logRepository::save);
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/" + tenant + "/logs/" + executionId + "/download"),
+            String.class
+        );
+
+        assertThat(response.getBody()).contains(
+            logs.stream().map(LogEntry::toPrettyString).collect(Collectors.joining("\n"))
+        );
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("private, max-age=86400");
+        assertThat(response.getHeaders().get(HttpHeaders.CONTENT_TYPE)).isEqualTo("text/plain");
+        assertThat(response.getHeaders().get(HttpHeaders.CONTENT_DISPOSITION))
+            .isEqualTo("attachment; filename=\"" + executionId + ".log\"; filename*=utf-8''" + executionId + ".log");
+    }
+
+    @Test
+    void shouldDownloadAnEmptyUncachedFileWhileTheExecutionIsRunningWithoutLogs() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String executionId = IdUtils.create();
+        executionRepository.save(
+            Execution.builder()
+                .id(executionId)
+                .namespace("io.kestra.unittest")
+                .tenantId(tenant)
+                .flowId("full")
+                .flowRevision(1)
+                .state(new State().withState(State.Type.RUNNING))
+                .build()
+        );
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/" + tenant + "/logs/" + executionId + "/download"),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getBody().orElse("")).isEmpty();
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
     }
 
     @SuppressWarnings("unchecked")

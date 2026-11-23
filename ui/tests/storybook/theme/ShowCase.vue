@@ -1,142 +1,141 @@
 <template>
-    <div class="p-4" style="text-align: center;">
-        <div class="mb-4">
-            <el-button size="large" @click="toast">
+    <div style="text-align: center;">
+        <div>
+            <ElButton size="large" @click="toast">
                 El Message
-            </el-button>
+            </ElButton>
         </div>
 
-        <div class="my-2 flex flex-wrap items-center justify-center text-center">
-            <div class="mb-4">
-                <el-button>Default</el-button>
-                <el-button type="primary">
+        <div>
+            <div>
+                <ElButton>Default</ElButton>
+                <ElButton type="primary">
                     Primary
-                </el-button>
-                <el-button type="success">
+                </ElButton>
+                <ElButton type="success">
                     Success
-                </el-button>
-                <el-button type="info">
+                </ElButton>
+                <ElButton type="info">
                     Info
-                </el-button>
-                <el-button type="warning">
+                </ElButton>
+                <ElButton type="warning">
                     Warning
-                </el-button>
-                <el-button type="danger">
+                </ElButton>
+                <ElButton type="danger">
                     Danger
-                </el-button>
-            </div>
-
-            <div class="mb-4">
-                <el-button plain>
-                    Plain
-                </el-button>
-                <el-button type="primary" plain>
-                    Primary
-                </el-button>
-                <el-button type="success" plain>
-                    Success
-                </el-button>
-                <el-button type="info" plain>
-                    Info
-                </el-button>
-                <el-button type="warning" plain>
-                    Warning
-                </el-button>
-                <el-button type="danger" plain>
-                    Danger
-                </el-button>
-            </div>
-
-            <div class="mb-4">
-                <el-button round>
-                    Round
-                </el-button>
-                <el-button type="primary" round>
-                    Primary
-                </el-button>
-                <el-button type="success" round>
-                    Success
-                </el-button>
-                <el-button type="info" round>
-                    Info
-                </el-button>
-                <el-button type="warning" round>
-                    Warning
-                </el-button>
-                <el-button type="danger" round>
-                    Danger
-                </el-button>
+                </ElButton>
             </div>
 
             <div>
-                <el-button :icon="Search" circle />
-                <el-button type="primary" :icon="Edit" circle />
-                <el-button type="success" :icon="Check" circle />
-                <el-button type="info" :icon="Message" circle />
-                <el-button type="warning" :icon="Star" circle />
-                <el-button type="danger" :icon="Delete" circle />
+                <ElButton plain>
+                    Plain
+                </ElButton>
+                <ElButton type="primary" plain>
+                    Primary
+                </ElButton>
+                <ElButton type="success" plain>
+                    Success
+                </ElButton>
+                <ElButton type="info" plain>
+                    Info
+                </ElButton>
+                <ElButton type="warning" plain>
+                    Warning
+                </ElButton>
+                <ElButton type="danger" plain>
+                    Danger
+                </ElButton>
+            </div>
+
+            <div>
+                <ElButton round>
+                    Round
+                </ElButton>
+                <ElButton type="primary" round>
+                    Primary
+                </ElButton>
+                <ElButton type="success" round>
+                    Success
+                </ElButton>
+                <ElButton type="info" round>
+                    Info
+                </ElButton>
+                <ElButton type="warning" round>
+                    Warning
+                </ElButton>
+                <ElButton type="danger" round>
+                    Danger
+                </ElButton>
+            </div>
+
+            <div>
+                <ElButton :icon="Search" circle />
+                <ElButton type="primary" :icon="Edit" circle />
+                <ElButton type="success" :icon="Check" circle />
+                <ElButton type="info" :icon="Message" circle />
+                <ElButton type="warning" :icon="Star" circle />
+                <ElButton type="danger" :icon="Delete" circle />
             </div>
         </div>
 
         <div style="display: flex;gap:1rem;justify-content: center;align-items: center; margin: 1rem;">
-            <el-alert
-                v-for="type in ['Success', 'Info', 'Warning', 'Error']"
+            <ElAlert
+                v-for="type in alertTypes"
                 :key="type"
-                :type="type.toLowerCase()"
-                :title="`${type} Alert`"
+                :type="type"
+                :title="`${capitalize(type)} Alert`"
             />
         </div>
 
         <div style="display: flex;gap:1rem;justify-content: center;align-items: center; margin: 1rem;">
-            <el-alert
-                v-for="type in ['Success', 'Info', 'Warning', 'Error']"
+            <ElAlert
+                v-for="type in alertTypes"
                 :key="type"
-                :type="type.toLowerCase()"
-                :title="`Dark ${type} Alert`"
+                :type="type"
+                :title="`Dark ${capitalize(type)} Alert`"
                 effect="dark"
             />
         </div>
 
         <div>
             <span>Light</span>&nbsp;
-            <el-tag v-for="t of ['success', 'warning', 'danger', 'info']" :key="t" :type="t" class="m-1">
+            <ElTag v-for="t of ['success', 'warning', 'danger', 'info']" :key="t" :type="t">
                 {{ t }}
-            </el-tag>
+            </ElTag>
         </div>
         <div>
             <span>Dark</span>&nbsp;
-            <el-tag v-for="t of ['success', 'warning', 'danger', 'info']" :key="t" :type="t" effect="dark" class="m-1">
+            <ElTag v-for="t of ['success', 'warning', 'danger', 'info']" :key="t" :type="t" effect="dark">
                 {{ t }}
-            </el-tag>
+            </ElTag>
         </div>
 
         <div>
-            <el-switch v-model="value1" />
-            <el-switch
+            <ElSwitch v-model="value1" />
+            <ElSwitch
                 v-model="value1"
-                class="m-2"
-                style="--ep-switch-on-color: black; --ep-switch-off-color: gray;"
+                style="--ep-switch-on-color: black; --ep-switch-off-color: gray; margin: .5rem"
             />
         </div>
 
-        <div class="my-2">
-            <el-input v-model="input" class="m-2" style="width: 200px" />
-            <el-date-picker
+        <div>
+            <ElInput v-model="input" style="width: 200px; margin: .5rem" />
+            <ElDatePicker
                 v-model="curDate"
-                class="m-2"
+                style="margin: .5rem"
                 type="date"
                 placeholder="Pick a day"
             />
         </div>
 
-        <el-table :data="tableData" style="width: 100%">
-            <el-table-column prop="date" label="Date" width="180" />
-            <el-table-column prop="name" label="Name" width="180" />
-            <el-table-column prop="address" label="Address" />
-        </el-table>
+        <ElTable :data="tableData" style="width: 100%">
+            <ElTableColumn prop="date" label="Date" width="180" />
+            <ElTableColumn prop="name" label="Name" width="180" />
+            <ElTableColumn prop="address" label="Address" />
+        </ElTable>
         <div style="margin:1rem; display:flex; gap: 1rem; justify-content: center; align-items: center;">
             Single Select
-            <el-select
+            <ElSelect
                 v-model="valueSelect"
                 placeholder="Select"
                 size="large"
@@ -148,16 +147,16 @@
                     :label="item.label"
                     :value="item.value"
                 />
-            </el-select>
-            <el-select v-model="valueSelect" placeholder="Select" style="width: 240px">
+            </ElSelect>
+            <ElSelect v-model="valueSelect" placeholder="Select" style="width: 240px">
                 <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
                 />
-            </el-select>
-            <el-select
+            </ElSelect>
+            <ElSelect
                 v-model="valueSelect"
                 placeholder="Select"
                 size="small"
@@ -169,11 +168,11 @@
                     :label="item.label"
                     :value="item.value"
                 />
-            </el-select>
+            </ElSelect>
         </div>
         <div style="margin:1rem; display:flex; gap: 1rem; justify-content: center; align-items: center;">
             Multiple Select
-            <el-select
+            <ElSelect
                 v-model="valueMultiple"
                 multiple
                 placeholder="Select"
@@ -185,19 +184,19 @@
                     :label="item.label"
                     :value="item.value"
                 />
-            </el-select>
+            </ElSelect>
         </div>
 
         <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="(tab) => { if(tab.name) tabChanged({name:tab.name}) }" />
         <div>
-            <div class="sub-title my-2 text-sm text-gray-600">
+            <div class="sub-title">
                 list suggestions when activated
             </div>
-            <el-autocomplete
+            <ElAutocomplete
                 v-model="state1"
                 :fetchSuggestions="querySearch"
                 clearable
-                class="inline-input w-50"
+                class="inline-input"
                 placeholder="Please Input"
             />
         </div>
@@ -224,6 +223,18 @@
 <script setup lang="ts">
     import {onMounted, ref} from "vue"
     import {KsMessage} from "@kestra-io/design-system"
+    import {
+        ElAlert,
+        ElAutocomplete,
+        ElButton,
+        ElDatePicker,
+        ElInput,
+        ElSelect,
+        ElSwitch,
+        ElTable,
+        ElTableColumn,
+        ElTag,
+    } from "element-plus"
     import Search from "vue-material-design-icons/SearchWeb.vue"
     import Edit from "vue-material-design-icons/Pencil.vue"
     import Check from "vue-material-design-icons/Check.vue"
@@ -236,6 +247,9 @@
     const input = ref("")
     const curDate = ref(new Date())
     const value1 = ref(false)
+
+    const alertTypes = ["success", "info", "warning", "error"] as const
+    const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
 
 
     function toast() {
@@ -320,7 +334,7 @@
     const state1 = ref("")
 
     const restaurants = ref<RestaurantItem[]>([])
-    const querySearch = (queryString: string, cb: any) => {
+    const querySearch = (queryString: string, cb: (results: RestaurantItem[]) => void) => {
         const results = queryString
             ? restaurants.value.filter(createFilter(queryString))
             : restaurants.value

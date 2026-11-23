@@ -1,5 +1,7 @@
 package io.kestra.jdbc;
 
+import java.util.Locale;
+
 import org.jooq.impl.DSL;
 
 import io.kestra.core.services.BackendVersionProvider;
@@ -33,11 +35,11 @@ public class JdbcVersionProviderFactory {
 
     @Singleton
     @Named("jdbcQueueVersionProvider")
-    @Requires(property = "kestra.queue.type", pattern = "mysql|postgres|h2|memory")
+    @Requires(property = "kestra.queue.type", pattern = "(?i)mysql|postgres|h2|memory")
     public BackendVersionProvider jdbcQueueVersionProvider(
         JooqDSLContextWrapper dslContextWrapper,
         Environment environment) {
-        String type = environment.getProperty("kestra.queue.type", String.class).orElse("jdbc");
+        String type = environment.getProperty("kestra.queue.type", String.class).map(value -> value.toLowerCase(Locale.ROOT)).orElse("jdbc");
         return new JdbcVersionProvider(dslContextWrapper, type, BackendVersionProvider.Category.QUEUE);
     }
 

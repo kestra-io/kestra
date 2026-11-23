@@ -1,17 +1,20 @@
 import {computed, watch, type Ref} from "vue"
-import {useRoute, useRouter} from "vue-router"
+import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
 import {
     clearFilterQueryParams,
     encodeFilterGroupsToQuery,
+    filterQuerySignature,
     findUnrenderableFilterKeys,
     getUniqueFilters,
+    isFilterQueryKey,
     isValidFilter,
     keyOfComparator,
+    parseFilterKey,
     parseFiltersFromString,
     serializeFiltersToString,
     validStructureSignature,
 } from "../utils/helpers"
-import {SEARCH_QUERY_KEY} from "../utils/constants"
+import {END_DATE_FIELD, SEARCH_QUERY_KEY, START_DATE_FIELD} from "../utils/constants"
 import {
     type AppliedFilter,
     type FilterConfiguration,
@@ -69,7 +72,7 @@ export function useRouteSync({
         return cleanedLeaf.filters.length > 0 ? [cleanedLeaf] : []
     }
 
-    const writeSearchQueryParam = (query: Record<string, any>) => {
+    const writeSearchQueryParam = (query: LocationQueryRaw) => {
         const trimmed = searchQuery.value?.trim()
         delete query.q
         delete query.search
@@ -79,7 +82,12 @@ export function useRouteSync({
 
     const updateRoute = (shouldResetPage = false) => {
         const query = {...route.query}
-        clearFilterQueryParams(query)
+        const ownFields = new Set([START_DATE_FIELD, END_DATE_FIELD, ...(configuration.keys ?? []).map(({key}) => key)])
+        for (const key of Object.keys(query)) {
+            const parsed = parseFilterKey(key)
+            const ownedByPage = parsed !== null && parsed.chain.length === 0 && !ownFields.has(parsed.field)
+            if (isFilterQueryKey(key) && !ownedByPage) delete query[key]
+        }
 
         const validUnits = tree.groups.value.flatMap(sanitizeUnitAndUnwrapSingleChild)
         Object.assign(query, encodeFilterGroupsToQuery(validUnits, keyOfComparator, tree.topLogical.value))
@@ -149,7 +157,7 @@ export function useRouteSync({
         tree.replaceTree(finalGroups, parsedTop)
     }
 
-    watch(() => route.query, initializeFromRoute, {deep: true, immediate: false})
+    watch(() => filterQuerySignature(route.query), initializeFromRoute)
     watch(searchQuery, () => updateRoute(searchQuery.value.trim() !== ""))
     initializeFromRoute()
 

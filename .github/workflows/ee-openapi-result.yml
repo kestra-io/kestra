@@ -23,6 +23,8 @@ jobs:
           GENERATE_OUTCOME: ${{ github.event.client_payload.generate_outcome }}
           CHANGED:          ${{ github.event.client_payload.changed }}
           EE_BRANCH:        ${{ github.event.client_payload.ee_branch }}
+          # client-sdk branch EE diffed against, e.g. next/v2.1 (main when an older EE run sends none)
+          CLIENT_SDK_REF:   ${{ github.event.client_payload.client_sdk_ref || 'main' }}
           DIFF:             ${{ github.event.client_payload.diff }}
           FAILURE_LOG:      ${{ github.event.client_payload.failure_log }}
         shell: bash
@@ -39,7 +41,7 @@ jobs:
           elif [ "$CHANGED" = "true" ]; then
             {
               echo "body<<BODY_EOF"
-              echo "Spec generated with EE branch \`$EE_BRANCH\`. Diff vs [client-sdk](https://github.com/kestra-io/client-sdk/blob/main/kestra-ee.yml):"
+              echo "Spec generated with EE branch \`$EE_BRANCH\`. Diff vs [client-sdk \`$CLIENT_SDK_REF\`](https://github.com/kestra-io/client-sdk/blob/$CLIENT_SDK_REF/kestra-ee.yml):"
               echo '```diff'
               echo "$DIFF"
               echo '```'

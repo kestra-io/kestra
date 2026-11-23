@@ -1,0 +1,221 @@
+import {beforeEach, describe, expect, test, vi} from "vitest"
+import {h} from "vue"
+import {flushPromises} from "@vue/test-utils"
+import {createPinia, setActivePinia} from "pinia"
+import ChangeExecutionStatus from "./ChangeExecutionStatus.vue"
+import {useExecutionsStore, type Execution} from "../../stores/executions"
+import {i18nMount} from "../../../tests/unit/i18nMount"
+
+const isAllowedMock = vi.fn().mockReturnValue(true)
+
+const {toastSuccess, toastError} = vi.hoisted(() => ({
+    toastSuccess: vi.fn(),
+    toastError: vi.fn(),
+}))
+
+vi.mock("override/stores/auth", () => ({
+    useAuthStore: () => ({user: {isAllowed: (...args: unknown[]) => isAllowedMock(...args)}}),
+}))
+
+vi.mock("../../utils/toast", () => ({
+    useToast: () => ({success: toastSuccess, error: toastError}),
+}))
+
+const messages = {
+    "change state": "Change state",
+    "actual state": "Actual state",
+    "select a state": "Select a state",
+    "close": "Close",
+    "are you sure change state": "Are you sure?",
+    "cancel": "Cancel",
+    "yes": "Yes",
+}
+
+const globalConfig = {
+    stubs: {
+        KsPopover: {
+            props: ["visible", "disabled"],
+            emits: ["update:visible"],
+            template: `
+                <div>
+                    <div data-test="reference" @click="!disabled && $emit('update:visible', true)">
+                        <slot name="reference" />
+                    </div>
+                    <div v-if="visible" data-test="body"><slot /></div>
+                </div>
+            `,
+        },
+        KsButton: {template: "<button v-bind=\"$attrs\"><slot /></button>"},
+        KsIconButton: {template: "<button v-bind=\"$attrs\"><slot /></button>"},
+        KsSelect: {
+            props: ["modelValue"],
+            template: "<div><slot name=\"label\" :value=\"modelValue\" /><slot /></div>",
+        },
+        KsOption: {
+            props: ["value", "label"],
+            template: "<div data-test=\"option\" :data-value=\"value\"><slot /></div>",
+        },
+        KsExecutionStatus: {
+            props: ["status"],
+            template: "<span><slot name=\"title\">{{ status }}</slot></span>",
+        },
+    },
+}
+
+function buildExecution(state: string): Execution {
+    return {
+        id: "execution-id",
+        originalId: "execution-id",
+        namespace: "io.kestra.tests",
+        flowId: "flow",
+        flowRevision: 1,
+        metadata: {
+            originalCreatedDate: "2026-01-01T00:00:00Z",
+            attemptNumber: 1,
+        },
+        state: {
+            current: state as Execution["state"]["current"],
+            histories: [],
+            getStartDate: "2026-01-01T00:00:00Z",
+            getEndDate: "",
+            getDuration: "PT1S",
+        },
+    } as Execution
+}
+
+function mountChangeExecutionStatus(state: string) {
+    return i18nMount(ChangeExecutionStatus, {
+        messages,
+        props: {execution: buildExecution(state)},
+        slots: {
+            trigger: (scope: {visible: boolean; enabled: boolean}) => h(
+                "button",
+                {"data-test": "trigger", disabled: !scope.enabled},
+                String(scope.enabled),
+            ),
+        },
+        global: globalConfig,
+    })
+}
+
+async function openAndConfirm(wrapper: ReturnType<typeof mountChangeExecutionStatus>) {
+    await wrapper.get("[data-test=\"trigger\"]").trigger("click")
+    const confirm = wrapper.findAll("button").find((button) => button.text() === "Yes")
+    expect(confirm).toBeDefined()
+    await confirm!.trigger("click")
+    await flushPromises()
+}
+
+const RUNNING_FAMILY_STATES = ["SUBMITTED", "CREATED", "RUNNING", "KILLING", "PAUSED", "BREAKPOINT"]
+const FALSE_AFFORDANCE_STATES = ["KILLED", "RESTARTED", "QUEUED", "RETRYING"]
+const CHANGEABLE_STATES = ["FAILED", "WARNING", "SUCCESS", "CANCELLED", "RETRIED", "SKIPPED"]
+
+describe("ChangeExecutionStatus", () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        isAllowedMock.mockReturnValue(true)
+        toastSuccess.mockClear()
+        toastError.mockClear()
+    })
+
+    test.each(RUNNING_FAMILY_STATES)(
+        "disables the change-state affordance and blocks the popover for a running-family state (%s)",
+        async (state) => {
+            const wrapper = mountChangeExecutionStatus(state)
+
+            const trigger = wrapper.get("[data-test=\"trigger\"]")
+            expect(trigger.text()).toBe("false")
+            expect(trigger.attributes("disabled")).toBeDefined()
+
+            await trigger.trigger("click")
+            expect(wrapper.find("[data-test=\"body\"]").exists()).toBe(false)
+        },
+    )
+
+    test.each(FALSE_AFFORDANCE_STATES)(
+        "no longer offers a state change for a terminated-but-not-changeable state (%s)",
+        async (state) => {
+            const wrapper = mountChangeExecutionStatus(state)
+
+            const trigger = wrapper.get("[data-test=\"trigger\"]")
+            expect(trigger.text()).toBe("false")
+
+            await trigger.trigger("click")
+            expect(wrapper.find("[data-test=\"body\"]").exists()).toBe(false)
+        },
+    )
+
+    test.each(CHANGEABLE_STATES.map((state) => ({state})))(
+        "enables the change-state affordance for a changeable state with permission ($state)",
+        async ({state}) => {
+            const wrapper = mountChangeExecutionStatus(state)
+
+            const trigger = wrapper.get("[data-test=\"trigger\"]")
+            expect(trigger.text()).toBe("true")
+            expect(trigger.attributes("disabled")).toBeUndefined()
+
+            await trigger.trigger("click")
+
+            expect(wrapper.find("[data-test=\"body\"]").exists()).toBe(true)
+
+            const offeredStates = wrapper
+                .findAll("[data-test=\"option\"]")
+                .map((option) => option.attributes("data-value"))
+
+            expect(offeredStates).not.toContain(state)
+            expect(offeredStates).not.toContain("RUNNING")
+        },
+    )
+
+    test("disables the change-state affordance for a changeable state without permission", async () => {
+        isAllowedMock.mockReturnValue(false)
+        const wrapper = mountChangeExecutionStatus("FAILED")
+
+        const trigger = wrapper.get("[data-test=\"trigger\"]")
+        expect(trigger.text()).toBe("false")
+
+        await trigger.trigger("click")
+        expect(wrapper.find("[data-test=\"body\"]").exists()).toBe(false)
+    })
+
+    test("shouldReportChangeStateFailureWhenRequestRejects", async () => {
+        const wrapper = mountChangeExecutionStatus("FAILED")
+        const store = useExecutionsStore()
+        vi.spyOn(store, "changeExecutionStatus").mockRejectedValue(new Error("boom"))
+        const followExecution = vi.spyOn(store, "followExecution").mockImplementation(() => undefined)
+
+        await openAndConfirm(wrapper)
+
+        expect(toastError).toHaveBeenCalledOnce()
+        expect(toastSuccess).not.toHaveBeenCalled()
+        expect(followExecution).toHaveBeenCalled()
+    })
+
+    test("shouldLeaveErrorReportingToGlobalToastWhenFailureIsAlreadyReported", async () => {
+        const wrapper = mountChangeExecutionStatus("FAILED")
+        const store = useExecutionsStore()
+        vi.spyOn(store, "changeExecutionStatus").mockRejectedValue(Object.assign(new Error("conflict"), {
+            status: 409,
+            response: {data: {title: "Conflict"}},
+        }))
+        vi.spyOn(store, "followExecution").mockImplementation(() => undefined)
+
+        await openAndConfirm(wrapper)
+
+        expect(toastError).not.toHaveBeenCalled()
+        expect(toastSuccess).not.toHaveBeenCalled()
+    })
+
+    test("shouldToastSuccessWhenChangeStateSucceeds", async () => {
+        const wrapper = mountChangeExecutionStatus("FAILED")
+        const store = useExecutionsStore()
+        vi.spyOn(store, "changeExecutionStatus").mockResolvedValue(buildExecution("SUCCESS"))
+        vi.spyOn(store, "waitForStateChange").mockResolvedValue(buildExecution("SUCCESS"))
+        vi.spyOn(store, "followExecution").mockImplementation(() => undefined)
+
+        await openAndConfirm(wrapper)
+
+        expect(toastSuccess).toHaveBeenCalledOnce()
+        expect(toastError).not.toHaveBeenCalled()
+    })
+})

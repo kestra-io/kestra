@@ -19,6 +19,7 @@ import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.WorkerQueues;
 
@@ -37,6 +38,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_MAX_CONCURRENCY_DESCRIPTION = "Maximum number of in-flight jobs the worker can hold (threads currently executing + jobs pending in the buffer)";
     public static final String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
     public static final String METRIC_WORKER_RUNNING_COUNT_DESCRIPTION = "The number of tasks currently running inside the Worker";
+    public static final String METRIC_WORKER_ABANDONED_COUNT = "worker.abandoned.count";
+    public static final String METRIC_WORKER_ABANDONED_COUNT_DESCRIPTION = "The number of jobs the Worker stopped waiting for that are still holding a Worker thread";
     public static final String METRIC_WORKER_PENDING_COUNT = "worker.pending.count";
     public static final String METRIC_WORKER_PENDING_COUNT_DESCRIPTION = "The number of tasks currently pending for a runnable thread inside the Worker";
     public static final String METRIC_WORKER_QUEUED_DURATION = "worker.queued.duration";
@@ -49,6 +52,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_ENDED_COUNT_DESCRIPTION = "The total number of tasks ended by the Worker";
     public static final String METRIC_WORKER_TASKS_RATE = "worker.tasks.rate";
     public static final String METRIC_WORKER_TASKS_RATE_DESCRIPTION = "The smoothed rate of tasks completed by the Worker, in tasks per second";
+    public static final String METRIC_WORKER_TASKS_RUNNING_COUNT = "worker.tasks.running.count";
+    public static final String METRIC_WORKER_TASKS_RUNNING_COUNT_DESCRIPTION = "The number of tasks currently evaluating inside the Worker";
     public static final String METRIC_WORKER_ENDED_DURATION = "worker.ended.duration";
     public static final String METRIC_WORKER_ENDED_DURATION_DESCRIPTION = "Task run duration inside the Worker";
     public static final String METRIC_WORKER_TRIGGER_DURATION = "worker.trigger.duration";
@@ -65,6 +70,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_TRIGGER_EXECUTION_COUNT_DESCRIPTION = "The total number of triggers evaluated by the Worker";
     public static final String METRIC_WORKER_KILLED_COUNT = "worker.killed.count";
     public static final String METRIC_WORKER_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Worker";
+    public static final String METRIC_WORKER_STREAM_RECONNECT_COUNT = "worker.stream.reconnect.count";
+    public static final String METRIC_WORKER_STREAM_RECONNECT_COUNT_DESCRIPTION = "The total number of times the Worker opened a new job stream to the controller after losing the previous one";
 
     // Controller (WorkerJobDispatcher) metrics
     public static final String METRIC_CONTROLLER_WORKER_ACTIVE = "controller.worker.active";
@@ -85,6 +92,8 @@ public class MetricRegistry {
     public static final String METRIC_CONTROLLER_JOB_KILLED_TOTAL_DESCRIPTION = "The total number of jobs skipped because the execution was killed";
     public static final String METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL = "controller.job.dispatch.failed.total";
     public static final String METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION = "The total number of job dispatch failures";
+    public static final String METRIC_CONTROLLER_JOB_RESUBMITTED_TOTAL = "controller.job.resubmitted.total";
+    public static final String METRIC_CONTROLLER_JOB_RESUBMITTED_TOTAL_DESCRIPTION = "The total number of jobs resubmitted because the worker they were sent to never received them";
     public static final String METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL = "controller.worker.registered.total";
     public static final String METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL_DESCRIPTION = "The total number of (worker, worker queue) subscription registrations; a worker subscribed to N queues bumps this counter N times";
     public static final String METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL = "controller.worker.unregistered.total";
@@ -125,15 +134,17 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_KILLED_COUNT = "executor.killed.count";
     public static final String METRIC_EXECUTOR_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
     public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT = "executor.sla.expired.count";
-    public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION that took longer than the SLA) evaluated by the Executor";
+    public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION or AVG_DURATION that took longer than the SLA) evaluated by the Executor";
     public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT = "executor.sla.violation.count";
-    public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION that took longer than the SLA) evaluated by the Executor";
+    public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION = "The total number of SLA violations evaluated by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT = "executor.execution.delay.created.count";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT_DESCRIPTION = "The total number of execution delays created by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT = "executor.execution.delay.ended.count";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION = "The total number of execution delays ended (resumed) by the Executor";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT = "executor.worker.job.resubmit.count";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION = "The total number of worker jobs resubmitted to the Worker by the Executor";
+    public static final String METRIC_EXECUTOR_WORKER_JOB_ORPHAN_COUNT = "executor.worker.job.orphan.count";
+    public static final String METRIC_EXECUTOR_WORKER_JOB_ORPHAN_COUNT_DESCRIPTION = "The total number of running worker jobs reclaimed by the Executor from a worker that left the cluster";
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT = "executor.execution.queued.count";
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";
@@ -144,6 +155,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION_DESCRIPTION = "SLA monitor loop duration inside the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION = "executor.loop.delay.duration";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION_DESCRIPTION = "Execution delay loop duration inside the Executor";
+    public static final String METRIC_EXECUTOR_MULTIPLE_CONDITION_PURGE_LOOP_DURATION = "executor.loop.multiple-condition-purge.duration";
+    public static final String METRIC_EXECUTOR_MULTIPLE_CONDITION_PURGE_LOOP_DURATION_DESCRIPTION = "Multiple condition window purge loop duration inside the Executor";
     public static final String METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT = "executor.quota.exceeded.total";
     public static final String METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION = "The total number of exceeded quotas evaluated by the Executor";
 
@@ -195,6 +208,8 @@ public class MetricRegistry {
     public static final String METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL_DESCRIPTION = "The total number of execution resumed from a breakpoint from the API.";
     public static final String METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL = "webserver.execution.forcerun.total";
     public static final String METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL_DESCRIPTION = "The total number of execution force run from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL = "webserver.execution.reschedule.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL_DESCRIPTION = "The total number of execution rescheduled from the API.";
     public static final String METRIC_WEBSERVER_EXECUTION_KILL_TOTAL = "webserver.execution.kill.total";
     public static final String METRIC_WEBSERVER_EXECUTION_KILL_TOTAL_DESCRIPTION = "The total number of execution kill from the API.";
     public static final String METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL = "webserver.execution.changestatus.total";
@@ -212,7 +227,7 @@ public class MetricRegistry {
     public static final String METRIC_MAINTENANCE_EXIT_COUNT_DESCRIPTION = "The total number of times maintenance mode was exited";
 
     public static final String METRIC_JDBC_QUERY_DURATION = "jdbc.query.duration";
-    public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries";
+    public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries, including row fetch, tagged with sanitized SQL (IN-lists collapsed, identifiers and sort columns redacted). Only queries above the 'kestra.jdbc.metrics.query-duration-threshold-ms' threshold (default 10ms) are monitored";
 
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION = "jdbc.execution-statistics.compactor.duration";
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION_DESCRIPTION = "Duration of a single execution statistics compaction run";
@@ -238,6 +253,28 @@ public class MetricRegistry {
     public static final String METRIC_SSE_CONNECTIONS_OPENED_TOTAL = "sse.connections.opened.total";
     public static final String METRIC_SSE_CONNECTIONS_OPENED_TOTAL_DESCRIPTION = "The total number of Server-Sent Events (SSE) follow connections opened";
 
+    // AI Copilot usage metrics
+    public static final String METRIC_AI_MODEL_CALL_TOTAL = "ai.model.call.total";
+    public static final String METRIC_AI_MODEL_CALL_TOTAL_DESCRIPTION = "The total number of AI model calls the Copilot made";
+    public static final String METRIC_AI_TOKEN_PROMPT_TOTAL = "ai.token.prompt.total";
+    public static final String METRIC_AI_TOKEN_PROMPT_TOTAL_DESCRIPTION = "The total number of prompt tokens the Copilot consumed, inclusive of the cached share";
+    public static final String METRIC_AI_TOKEN_PROMPT_CACHED_TOTAL = "ai.token.prompt.cached.total";
+    public static final String METRIC_AI_TOKEN_PROMPT_CACHED_TOTAL_DESCRIPTION = "The cached share of the prompt tokens the Copilot consumed, which bills at a fraction of the cold rate";
+    public static final String METRIC_AI_TOKEN_COMPLETION_TOTAL = "ai.token.completion.total";
+    public static final String METRIC_AI_TOKEN_COMPLETION_TOTAL_DESCRIPTION = "The total number of generated tokens produced for the Copilot, excluding thinking tokens";
+    public static final String METRIC_AI_TOKEN_THOUGHT_TOTAL = "ai.token.thought.total";
+    public static final String METRIC_AI_TOKEN_THOUGHT_TOTAL_DESCRIPTION = "The total number of thinking tokens produced for the Copilot, which bill at the output rate";
+    public static final String METRIC_AI_USAGE_RECORD_FAILED_TOTAL = "ai.usage.record.failed.total";
+    public static final String METRIC_AI_USAGE_RECORD_FAILED_TOTAL_DESCRIPTION = "The total number of AI model calls whose usage could not be stored, and which therefore undercount spend";
+    public static final String METRIC_AI_USAGE_REFUSED_TOTAL = "ai.usage.refused.total";
+    public static final String METRIC_AI_USAGE_REFUSED_TOTAL_DESCRIPTION = "The total number of Copilot turns stopped because an AI provider reached its usage limit";
+    public static final String METRIC_AI_USAGE_WEIGHT = "ai.usage.weight";
+    public static final String METRIC_AI_USAGE_WEIGHT_DESCRIPTION = "Weighted tokens spent installation-wide against an AI provider's ceiling in the current window";
+    public static final String METRIC_AI_USAGE_WEIGHT_LIMIT = "ai.usage.weight.limit";
+    public static final String METRIC_AI_USAGE_WEIGHT_LIMIT_DESCRIPTION = "The installation-wide ceiling, in weighted tokens, an AI provider is held to per window";
+    public static final String METRIC_AI_USAGE_REMAINING_RATIO = "ai.usage.remaining.ratio";
+    public static final String METRIC_AI_USAGE_REMAINING_RATIO_DESCRIPTION = "Share of an AI provider's allowance left on its tightest axis, as last observed";
+
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
     public static final String TAG_FLOW_ID = "flow_id";
@@ -246,8 +283,12 @@ public class MetricRegistry {
     public static final String TAG_ATTEMPT_COUNT = "attempt_count";
     public static final String TAG_WORKER_GROUP = "worker_group";
     public static final String TAG_WORKER_QUEUE = "worker_queue";
+    public static final String TAG_REASON = "reason";
     public static final String TAG_QUEUE_NAME = "queue_name";
     public static final String TAG_SSE_TYPE = "sse_type";
+    public static final String TAG_AI_PROVIDER_ID = "ai_provider_id";
+    public static final String TAG_AI_MODEL = "ai_model";
+    public static final String TAG_AI_USAGE_AXIS = "ai_usage_axis";
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
@@ -557,13 +598,23 @@ public class MetricRegistry {
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }
 
-    public String[] tags(TriggerEvaluationResult evaluationResult, TriggerId triggerId) {
+    /**
+     * Return tags for a trigger evaluation, tagged like the execution it produces.
+     *
+     * @param evaluationResult the evaluation result, carrying the trigger's own labels
+     * @param triggerId the evaluated trigger
+     * @param flowLabels the labels of the flow owning the trigger, which the evaluation result does not carry
+     * @return tags to apply to metrics
+     */
+    public String[] tags(TriggerEvaluationResult evaluationResult, TriggerId triggerId, @Nullable List<Label> flowLabels) {
         var baseTags = new String[] {
             TAG_FLOW_ID, triggerId.getFlowId(),
             TAG_NAMESPACE_ID, triggerId.getNamespace(),
             TAG_STATE, evaluationResult.stateType().name(),
         };
-        var labelTags = getLabelTags(evaluationResult.labels() != null ? evaluationResult.labels() : List.of());
+        // trigger labels first: getLabelTags keeps the first match, which is how the trigger overrides the
+        // flow on the execution these metrics describe (there, flow labels come first and dedup keeps the last)
+        var labelTags = getLabelTags(ListUtils.emptyOnNull(ListUtils.concat(evaluationResult.labels(), flowLabels)));
         var tenantTag = getTenantTag(triggerId.getTenantId());
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }

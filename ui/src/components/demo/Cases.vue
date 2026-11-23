@@ -3,10 +3,10 @@
     <Empty
         type="cases"
         demoCta
-        :title="t(`demos.cases.title`)"
+        :title="$t(`demos.cases.title`)"
     >
         <template #description>
-            {{ t(`demos.cases.message`) }}
+            {{ $t(`demos.cases.message`) }}
         </template>
     </Empty>
 </template>

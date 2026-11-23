@@ -11,6 +11,7 @@ import io.kestra.core.runners.VariableRenderer;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class NindentFilterTest {
@@ -77,4 +78,23 @@ class NindentFilterTest {
         assertThat(render).isEqualTo("\n\t\tfirst line\n\t\tsecond line");
     }
 
+    @Test
+    void nindentRejectsExcessiveAmount() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'x' | nindent(2000000000) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("cannot exceed");
+    }
+
+    @Test
+    void nindentWithIntegerVariable() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render("{{ \"first line\nsecond line\" | nindent(spaces) }}", Map.of("spaces", Integer.valueOf(2)));
+        assertThat(render).isEqualTo("\n  first line\n  second line");
+    }
+
+    @Test
+    void nindentRejectsNonNumberAmount() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'x' | nindent('invalid') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("expects an integer as argument 'amount'");
+    }
 }

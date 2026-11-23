@@ -9,7 +9,7 @@
                 :class="{disabled: !canGoBack}"
                 :aria-label="$t('common.back')"
             >
-                <ChevronLeft class="back-icon" aria-hidden="true" />
+                <ChevronLeft class="back-icon" />
             </KsButton>
         </template>
         <template #header>
@@ -17,7 +17,7 @@
                 :to="{
                     name: 'docs/view',
                     params:{
-                        path:docPath
+                        path:docsRoutePath
                     }
                 }"
                 target="_blank"
@@ -34,22 +34,25 @@
                 </div>
                 <DocsLayout>
                     <template #content>
+                        <!-- A new page gets new components: embedded ones like ChildCard load their data once, when they mount. -->
                         <KsMarkdown
+                            :key="renderedDocPath"
                             class="markdown"
+                            lead
                             :content="markdownContent"
                             :components="markdownComponents"
                         />
                     </template>
                 </DocsLayout>
             </template>
-            <KsMarkdown v-else :content="OFFLINE_MD" class="m-3" />
+            <KsMarkdown v-else :content="OFFLINE_MD" class="offline-markdown" />
         </div>
     </ContextInfoContent>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, computed, onUnmounted, onMounted} from "vue"
-    import {useDocStore} from "../../stores/doc"
+    import {ref, watch, computed, onUnmounted, provide} from "vue"
+    import {useDocStore, type DocMetadata} from "../../stores/doc"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import DocsLayout from "./DocsLayout.vue"
@@ -59,7 +62,7 @@
     import ContextDocsSearch from "./ContextDocsSearch.vue"
     import ContextInfoContent from "../ContextInfoContent.vue"
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue"
-    import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
+    import {DOC_PATH_INJECTION_KEY, removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
@@ -79,10 +82,15 @@
     import HomePageButtons from "../content/HomePageButtons.vue"
     import HomePageHeader from "../content/HomePageHeader.vue"
     import ProseImg from "../content/ProseImg.vue"
+    import ApiDoc from "../content/ApiDoc.vue"
+    import ApiDocee from "../content/ApiDocee.vue"
 
     const markdownComponents = {
         a: ContextDocsLink,
         img: ProseImg,
+        ApiDoc: ApiDoc,
+        ApiDocEE: ApiDocee,
+        ApiDocee: ApiDocee,
         BigChildCards: BigChildCards,
         CardLogos: CardLogos,
         ChildCard: ContextChildCard,
@@ -105,10 +113,13 @@
     const docHistory = ref<string[]>([])
     const currentHistoryIndex = ref(-1)
     const markdownContent = ref<string>("")
+    const renderedDocPath = ref("docs")
 
     const pageMetadata = computed(() => docStore.pageMetadata)
     const isHomepage = computed(() => pageMetadata.value?.isHomepage === true)
     const docPath = computed(() => docStore.docPath)
+    provide(DOC_PATH_INJECTION_KEY, computed(() => renderedDocPath.value))
+    const docsRoutePath = computed(() => docPath.value?.replace(/^docs(\/|$)/, ""))
 
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),
@@ -137,7 +148,7 @@
         docStore.docPath = docHistory.value[currentHistoryIndex.value]
     }
 
-    async function setDocPageFromResponse(response: {metadata?: any, content:string}) {
+    async function setDocPageFromResponse(path: string, response: {metadata?: DocMetadata, content: string}) {
         docStore.pageMetadata = response.metadata
         let content = response.content
         if (!("canShare" in navigator)) {
@@ -148,54 +159,47 @@
 
         const {content: cleanedContent, removedComponents: _} = extractMultilineJSXComponents(content)
 
+        renderedDocPath.value = path.replace(/^\/?(.*?)\/?$/, "$1") || "docs"
         markdownContent.value = replaceSelfClosingTagsWithOpenClose(cleanedContent)
     }
 
     async function fetchDefaultDocFromDocIdIfPossible() {
         if(!isOnline.value) return
 
+        const docId = docStore.docId
         try {
-            if(!docStore.docId) {
+            if(!docId) {
                 refreshPage()
                 return
             }
-            const response = await docStore.fetchDocId(docStore.docId)
+            const response = await docStore.fetchDocId(docId)
+            if (docId !== docStore.docId) return
             if (response) {
-                await setDocPageFromResponse(response)
+                await setDocPageFromResponse(response.metadata?.parsedUrl ?? "docs", response)
                 // Add the default page to history
                 addToHistory("docs")
             } else {
                 refreshPage()
             }
         } catch {
-            refreshPage()
+            if (docId === docStore.docId) refreshPage()
         }
     }
 
     async function refreshPage(val?: string) {
-        let response: {metadata?: any, content:string} | undefined = undefined
-        // if this fails to return a value, fetch the default doc
-        // if nothing, fetch the home page
-        if(response === undefined){
-            response = await docStore.fetchResource(val || "docs")
-        }
+        const path = val || "docs"
+        const response = await docStore.fetchResource(path)
+        if (path !== (docStore.docPath || "docs")) return
 
-        await setDocPageFromResponse(response)
-        // Always add to history, empty string for home/default page
-        addToHistory(val || "docs")
+        await setDocPageFromResponse(path, response)
+        addToHistory(path)
     }
-
-    onMounted(() => {
-        if (!docPath.value) {
-            fetchDefaultDocFromDocIdIfPossible()
-        }
-    })
 
     onUnmounted(() => {
         markdownContent.value = ""
     })
 
-    watch(() => docStore.docPath, async (val) => {
+    watch([() => docStore.docId, () => docStore.docPath], async ([, val]) => {
         if (!val?.length) {
             fetchDefaultDocFromDocIdIfPossible()
             return
@@ -205,11 +209,11 @@
         refreshPage(val)
     }, {immediate: true})
 
-    const scrollableElement = computed(() => contextInfoRef.value?.contentRef ?? null)
-    useScrollMemory(ref("context-panel-docs"), scrollableElement as any)
+    const scrollableElement = computed<HTMLElement | null>(() => contextInfoRef.value?.contentRef ?? null)
+    useScrollMemory(ref("context-panel-docs"), scrollableElement)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .back-button {
         background: var(--ks-btn-secondary-bg-default);
@@ -232,7 +236,7 @@
         &:focus:not(.disabled) {
             background: var(--ks-bg-hover);
             border-color: var(--ks-border-strong);
-            color: var(--ks-primary);
+            color: var(--ks-text-link);
             outline: none;
         }
 
@@ -261,17 +265,15 @@
         margin-bottom: 1rem;
     }
 
+    .offline-markdown {
+        margin: var(--ks-spacing-4);
+    }
+
     .docs-toolbar {
         position: relative;
         display: flex;
         align-items: center;
         gap: 0.5rem;
         padding: 12px 28px 0;
-    }
-
-    .markdown :deep(p:first-child:not(.kel-alert *)) {
-        margin-bottom: var(--ks-spacing-4);
-        font-weight: bold;
-        font-size: var(--ks-font-size-lg);
     }
 </style>

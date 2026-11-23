@@ -12,3 +12,9 @@ kestra:
     liveness:
       enabled: false
     termination-grace-period: 5s
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false

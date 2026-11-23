@@ -60,6 +60,7 @@
     import TaskIcon from "../../plugins/TaskIcon.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import {usePluginsStore} from "../../../stores/plugins"
+    import {blueprintTaskTypes} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const VISIBLE_TASK_LIMIT = 4
@@ -76,7 +77,7 @@
 
     const pluginsStore = usePluginsStore()
 
-    const uniqueTasks = computed(() => [...new Set(props.blueprint.includedTasks ?? [])])
+    const uniqueTasks = computed(() => blueprintTaskTypes(props.blueprint.includedTasks))
     const visibleTasks = computed(() => uniqueTasks.value.slice(0, VISIBLE_TASK_LIMIT))
     const hiddenTaskCount = computed(() => Math.max(0, uniqueTasks.value.length - VISIBLE_TASK_LIMIT))
 
@@ -88,7 +89,7 @@
     )
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .blueprint-row {
         display: flex;
         align-items: center;
@@ -107,78 +108,78 @@
                 pointer-events: auto;
             }
         }
+    }
 
-        &__main {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-3);
-        }
+    .blueprint-row__main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-3);
+    }
 
-        &__title {
-            margin: 0;
-            font-size: var(--ks-font-size-base);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-            line-height: 1.35;
-            overflow-wrap: break-word;
-        }
+    .blueprint-row__title {
+        margin: 0;
+        font-size: var(--ks-font-size-base);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+        line-height: 1.35;
+        overflow-wrap: break-word;
+    }
 
-        &__meta {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            flex-wrap: wrap;
-        }
+    .blueprint-row__meta {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        flex-wrap: wrap;
+    }
 
-        &__icons {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
+    .blueprint-row__icons {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
 
-            :deep(.task-icon) {
-                width: 1.5rem;
-                height: 1.5rem;
-            }
-        }
-
-        &__overflow {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+        & .task-icon {
+            width: 1.5rem;
             height: 1.5rem;
-            padding: 0 var(--ks-spacing-2);
-            border-radius: 4.57px;
-            border: 0.3px solid var(--ks-border-default);
+        }
+    }
+
+    .blueprint-row__overflow {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 1.5rem;
+        padding: 0 var(--ks-spacing-2);
+        border-radius: 4.57px;
+        border: 0.3px solid var(--ks-border-default);
+        background-color: var(--ks-bg-tag);
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-xs);
+        font-weight: 400;
+        box-shadow: 0 0.3px 1.22px 0 var(--ks-shadow-element);
+    }
+
+    .blueprint-row__tags {
+        display: flex;
+        gap: var(--ks-spacing-1);
+        flex-wrap: wrap;
+
+        .tag-item {
+            border: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-base);
+            padding: 0.25rem 0.5rem;
             background-color: var(--ks-bg-tag);
-            color: var(--ks-text-secondary);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-xs);
             font-weight: 400;
-            box-shadow: 0 0.3px 1.22px 0 var(--ks-shadow-element);
         }
+    }
 
-        &__tags {
-            display: flex;
-            gap: var(--ks-spacing-1);
-            flex-wrap: wrap;
-
-            .tag-item {
-                border: 1px solid var(--ks-border-default);
-                border-radius: var(--ks-radius-base);
-                padding: 0.25rem 0.5rem;
-                background-color: var(--ks-bg-tag);
-                color: var(--ks-text-primary);
-                font-size: var(--ks-font-size-xs);
-                font-weight: 400;
-            }
-        }
-
-        &__action {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s ease;
-            flex-shrink: 0;
-        }
+    .blueprint-row__action {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+        flex-shrink: 0;
     }
 </style>

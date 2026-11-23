@@ -2,9 +2,7 @@
     <div class="schema-root">
         <div v-if="!compact" class="schema-header">
             <KsAlert v-if="schema.properties?.$beta" type="info" :closable="false">
-                This plugin is currently in beta. While it is considered safe for use, please be aware that its API
-                could change in ways that are not compatible with earlier versions in future releases, or it might
-                become unsupported.
+                {{ $t("plugins.beta_notice") }}
             </KsAlert>
 
             <div v-if="schema.properties?.description" class="markdown plugin-description">
@@ -37,9 +35,10 @@
             >
                 <SchemaSection
                     class="plugin-section"
-                    clickableText="Examples"
+                    :clickableText="$t('plugins.nav_examples')"
                     href="examples"
                     :arrow="!compact"
+                    :compact="compact"
                     :initiallyExpanded="compact"
                     :noUrlChange
                 >
@@ -78,18 +77,17 @@
                     class="plugin-section"
                     :properties="schema.properties.properties"
                     :definitions="schema.definitions"
-                    sectionName="Properties"
+                    :sectionName="$t('plugins.nav_properties')"
                     href="properties"
-                    labelColor="var(--ks-text-blue)"
                     :initiallyExpanded="propsInitiallyExpanded || compact"
                     :forceInclude="forceIncludeProperties"
                     :noUrlChange
                     :compact
                     showFilter
                 >
-                    <template #markdown="{content}">
+                    <template #markdown="{content, dense}">
                         <div class="markdown">
-                            <slot name="markdown" :content="content" />
+                            <slot name="markdown" :content="content" :dense="dense" />
                         </div>
                     </template>
                 </SchemaPropertiesSection>
@@ -104,102 +102,115 @@
                     class="plugin-section"
                     :properties="schema.outputs.properties"
                     :definitions="schema.definitions"
-                    sectionName="Outputs"
+                    :sectionName="$t('plugins.nav_outputs')"
                     href="outputs"
-                    labelColor="var(--ks-text-green)"
                     :showDynamic="false"
                     :initiallyExpanded="compact"
                     :noUrlChange
                     :compact
                 >
-                    <template #markdown="{content}">
+                    <template #markdown="{content, dense}">
                         <div class="markdown">
-                            <slot name="markdown" :content="content" />
+                            <slot name="markdown" :content="content" :dense="dense" />
                         </div>
                     </template>
                 </SchemaPropertiesSection>
             </div>
 
-            <SchemaPropertiesSection
-                v-if="schema.properties?.$metrics"
-                class="plugin-section"
-                :properties="metrics"
-                :definitions="schema.definitions"
-                sectionName="Metrics"
-                href="metrics"
-                :showDynamic="false"
-                :noUrlChange
+            <div
+                v-if="Object.keys(metrics).length > 0"
+                v-show="!compact || activeSection === 'metrics'"
+                data-section="metrics"
             >
-                <template #markdown="{content}">
-                    <div class="markdown">
-                        <slot name="markdown" :content="content" />
-                    </div>
-                </template>
-            </SchemaPropertiesSection>
+                <SchemaPropertiesSection
+                    class="plugin-section"
+                    :properties="metrics"
+                    :definitions="schema.definitions"
+                    :sectionName="$t('plugins.nav_metrics')"
+                    href="metrics"
+                    :showDynamic="false"
+                    :initiallyExpanded="compact"
+                    :noUrlChange
+                    :compact
+                >
+                    <template #markdown="{content, dense}">
+                        <div class="markdown">
+                            <slot name="markdown" :content="content" :dense="dense" />
+                        </div>
+                    </template>
+                </SchemaPropertiesSection>
+            </div>
 
-            <SchemaSection
+            <div
                 v-if="nonDeprecatedDefinitions.length > 0"
-                :key="`definitions-${pluginType}-${forceExpandKey}`"
-                class="plugin-section"
-                clickableText="Definitions"
-                href="definitions"
-                :initiallyExpanded="definitionsExpanded"
-                :noUrlChange
+                v-show="!compact || activeSection === 'definitions'"
+                data-section="definitions"
             >
-                <template #content>
-                    <div class="definitions-list">
-                        <SchemaPropertiesSection
-                            v-for="[definitionKey, definitionValue] in nonDeprecatedDefinitions"
-                            :key="`${pluginType}-${definitionKey}`"
-                            class="plugin-section"
-                            nested
-                            :properties="definitionValue.properties"
-                            :definitions="schema.definitions"
-                            :sectionName="definitionValue.title ?? definitionKey.split('_')[0]"
-                            :href="definitionKey"
-                            :showDynamic="false"
-                            :initiallyExpanded="expandedDefinitions.has(definitionKey)"
-                            :noUrlChange
-                            :description="definitionValue.description"
-                            :examples="definitionValue?.$examples"
-                            @expand="onDefinitionExpand(definitionKey)"
-                        >
-                            <template #markdown="{content}">
-                                <div class="markdown">
-                                    <slot name="markdown" :content="content" />
-                                </div>
-                            </template>
-
-                            <template #example="{example}">
-                                <div class="example-block-tight">
-                                    <div v-if="example.title" class="markdown">
-                                        <slot name="markdown" :content="`**${example.title}**`" />
+                <SchemaSection
+                    :key="`definitions-${pluginType}-${forceExpandKey}`"
+                    class="plugin-section"
+                    :clickableText="$t('plugins.nav_definitions')"
+                    href="definitions"
+                    :arrow="!compact"
+                    :compact="compact"
+                    :initiallyExpanded="definitionsExpanded || compact"
+                    :noUrlChange
+                >
+                    <template #content>
+                        <div class="definitions-list">
+                            <SchemaPropertiesSection
+                                v-for="[definitionKey, definitionValue] in nonDeprecatedDefinitions"
+                                :key="`${pluginType}-${definitionKey}`"
+                                class="plugin-section"
+                                nested
+                                :properties="definitionValue.properties"
+                                :definitions="schema.definitions"
+                                :sectionName="definitionValue.title ?? definitionKey.split('_')[0]"
+                                :href="definitionKey"
+                                :showDynamic="false"
+                                :initiallyExpanded="expandedDefinitions.has(definitionKey)"
+                                :noUrlChange
+                                :description="definitionValue.description"
+                                :examples="definitionValue?.$examples"
+                                @expand="onDefinitionExpand(definitionKey)"
+                            >
+                                <template #markdown="{content}">
+                                    <div class="markdown">
+                                        <slot name="markdown" :content="content" />
                                     </div>
-                                    <SchemaToCode
-                                        v-if="example.code"
-                                        :highlighter="highlighter"
-                                        :language="example.lang ?? 'yaml'"
-                                        :theme="codeTheme"
-                                        :code="generateExampleCode(example)"
-                                    />
-                                </div>
-                            </template>
-                        </SchemaPropertiesSection>
-                    </div>
-                </template>
-            </SchemaSection>
+                                </template>
+
+                                <template #example="{example}">
+                                    <div class="example-block-tight">
+                                        <div v-if="example.title" class="markdown">
+                                            <slot name="markdown" :content="`**${example.title}**`" />
+                                        </div>
+                                        <SchemaToCode
+                                            v-if="example.code"
+                                            :highlighter="highlighter"
+                                            :language="example.lang ?? 'yaml'"
+                                            :theme="codeTheme"
+                                            :code="generateExampleCode(example)"
+                                            dense
+                                        />
+                                    </div>
+                                </template>
+                            </SchemaPropertiesSection>
+                        </div>
+                    </template>
+                </SchemaSection>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
-    import type {HighlighterCore} from "shiki/core"
     import {KsAlert} from "@kestra-io/design-system"
+    import {getShiki} from "@kestra-io/design-system/shiki"
     import SchemaSection from "./SchemaSection.vue"
     import SchemaPropertiesSection from "./SchemaPropertiesSection.vue"
     import SchemaToCode from "./SchemaToCode.vue"
-    import {getHighlighterCore} from "./shikiToolset"
     import {isDeprecated, type JSONProperty, type JSONSchema, type SchemaExample} from "./utils/schemaUtils"
 
     const COLON_NORMALIZE_REGEX = /(?<!:):(?![: /])/g
@@ -224,15 +235,16 @@
     })
 
     const emit = defineEmits<{
-        "section-counts": [{properties?: number; outputs?: number; examples?: boolean}]
+        "section-counts": [{properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}]
+        "definition-navigate": []
     }>()
 
     const definitionsExpanded = ref(false)
     const expandedDefinitions = ref<Set<string>>(new Set())
     const forceExpandKey = ref(0)
-    const highlighter: HighlighterCore = await getHighlighterCore()
+    const highlighter = await getShiki()
 
-    const codeTheme = computed(() => `github-${props.darkMode ? "dark" : "light"}`)
+    const codeTheme = computed(() => `kestra-${props.darkMode ? "dark" : "light"}`)
 
     const examples = computed(() => props.schema.properties?.$examples)
 
@@ -265,10 +277,13 @@
         const outputsCount = props.schema.outputs?.properties && Object.keys(props.schema.outputs.properties).length > 0
             ? Object.keys(props.schema.outputs.properties).length
             : undefined
+        const metricsCount = Object.keys(metrics.value).length
         emit("section-counts", {
             properties: propertiesCount,
             outputs: outputsCount,
             examples: Boolean(examples.value?.length),
+            metrics: metricsCount > 0 ? metricsCount : undefined,
+            definitions: nonDeprecatedDefinitions.value.length > 0 ? nonDeprecatedDefinitions.value.length : undefined,
         })
     }
 
@@ -301,13 +316,14 @@
         forceExpandKey.value += 1
         expandedDefinitions.value.clear()
         expandedDefinitions.value.add(definitionKey)
+        emit("definition-navigate")
 
         await nextTick()
 
         let attempts = 0
         const attemptScroll = () => {
             const element = document.getElementById(cleanHash)
-            if (element) {
+            if (element && element.getClientRects().length > 0) {
                 element.scrollIntoView({behavior: "smooth", block: "start"})
             } else if (attempts < MAX_SCROLL_ATTEMPTS) {
                 attempts++
@@ -329,11 +345,12 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .schema-root {
         display: flex;
         flex-direction: column;
         gap: 2rem;
+        --ks-markdown-code-block-spacing: 0;
     }
 
     .schema-header,
@@ -343,19 +360,9 @@
         gap: 1rem;
     }
 
-    .plugin-description :deep(p),
-    .plugin-description :deep(li) {
-        color: var(--ks-text-secondary);
-    }
-
-    .schema-sections.compact :deep(.plugin-section > .collapse-button) {
-        font-size: var(--ks-font-size-xs);
-        font-weight: var(--ks-font-weight-bold);
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: var(--ks-text-muted);
-        pointer-events: none;
-        margin-bottom: var(--ks-spacing-3);
+    .plugin-description {
+        --ks-markdown-paragraph-color: var(--ks-text-secondary);
+        --ks-markdown-list-color: var(--ks-text-secondary);
     }
 
     .examples-list {
@@ -366,7 +373,7 @@
     .example-block {
         display: flex;
         flex-direction: column;
-        gap: 1rem
+        gap: 1rem;
     }
 
     .example-block-tight {
@@ -387,33 +394,19 @@
         padding-left: 1rem;
     }
 
-    :deep(.markdown) {
+    .markdown {
         display: flex;
         flex-direction: column;
         gap: 1rem;
-
-        pre, .code-block {
-            margin: 0;
-        }
-
-        > ol, > ul, > dl {
-            margin-top: 0;
-            margin-bottom: 0;
-        }
     }
 
-    :deep(.plugin-section) {
-        p {
-            margin-bottom: 0;
-        }
+    .plugin-section {
+        --ks-markdown-paragraph-spacing: 0;
+    }
 
-        [id$="-body"]:not(#examples-body) span {
-            font-size: var(--ks-font-size-xs);
-            font-weight: 400;
-        }
-
-        > .collapse-button {
-            margin-bottom: var(--ks-spacing-2);
-        }
+    .plugin-section:not(#examples) {
+        --ks-tag-font-size: var(--ks-font-size-xs);
+        --ks-tag-font-weight: var(--ks-font-weight-regular);
+        --ks-markdown-code-token-size: var(--ks-font-size-xs);
     }
 </style>

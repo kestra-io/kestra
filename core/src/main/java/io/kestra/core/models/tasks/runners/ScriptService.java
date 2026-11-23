@@ -33,7 +33,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Helper class for task runners and script tasks.
  */
 public final class ScriptService {
-    private static final String ALLOWED_PATH_CHARS = "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~#=/,:;";
+    private static final String ALLOWED_PATH_CHARS = "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%=/,:;";
     private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[" + ALLOWED_PATH_CHARS + "]*)", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Pattern VALID_STORAGE_PATH_PATTERN = Pattern.compile("[" + ALLOWED_PATH_CHARS + "]+", Pattern.UNICODE_CHARACTER_CLASS);
 
@@ -41,13 +41,26 @@ public final class ScriptService {
     public static final String VAR_WORKING_DIR = "workingDir";
     public static final String VAR_OUTPUT_DIR = "outputDir";
     public static final String VAR_BUCKET_PATH = "bucketPath";
+    public static final String VAR_CHECKPOINTS = "checkpoints";
 
     // These are the three common environment variables task runners must add to the process/container that runs the script.
     public static final String ENV_WORKING_DIR = "WORKING_DIR";
     public static final String ENV_OUTPUT_DIR = "OUTPUT_DIR";
     public static final String ENV_BUCKET_PATH = "BUCKET_PATH";
+    public static final String ENV_CHECKPOINTS_PREFIX = "CHECKPOINTS_";
+
+    private static final Pattern NON_ENV_NAME_CHARACTERS = Pattern.compile("[^A-Za-z0-9_]");
 
     private ScriptService() {
+    }
+
+    /**
+     * Returns the name of the environment variable that exposes the checkpoint with the given key to a script:
+     * the key upper-cased with every character that is not valid in a shell variable name replaced by {@code _}.
+     * Keys that only differ by case or by such characters map to the same name.
+     */
+    public static String checkpointEnvName(String key) {
+        return ENV_CHECKPOINTS_PREFIX + NON_ENV_NAME_CHARACTERS.matcher(key).replaceAll("_").toUpperCase(Locale.ROOT);
     }
 
     public static String replaceInternalStorage(
@@ -153,7 +166,7 @@ public final class ScriptService {
     static void validateStoragePath(String filename) throws IOException {
         if (!VALID_STORAGE_PATH_PATTERN.matcher(filename).matches()) {
             throw new IOException(
-                "Output file '%s' contains unsupported characters. Allowed: letters, digits, hyphens, dots, underscores, plus, tilde, hash, equals, slashes, commas, colons, semicolons."
+                "Output file '%s' contains unsupported characters. Allowed: letters, digits, hyphens, dots, underscores, plus, tilde, percent, equals, slashes, commas, colons, semicolons."
                     .formatted(filename)
             );
         }

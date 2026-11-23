@@ -1,0 +1,16 @@
+id: executions_timeline_density
+type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+chartOptions:
+  displayName: Executions density
+  column: date
+  colorByColumn: state
+data:
+  type: io.kestra.plugin.core.dashboard.data.Executions
+  columns:
+    date:
+      field: START_DATE
+    state:
+      field: STATE
+    total:
+      agg: COUNT
+      graphStyle: BARS

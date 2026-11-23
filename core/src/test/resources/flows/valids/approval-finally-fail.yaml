@@ -1,0 +1,21 @@
+id: approval-finally-fail
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    onWait:
+      - id: waitFail
+        type: io.kestra.plugin.core.execution.Fail
+    onApprove:
+      - id: approved
+        type: io.kestra.plugin.core.log.Log
+        message: "Approved"
+    onDeny:
+      - id: denied
+        type: io.kestra.plugin.core.log.Log
+        message: "Denied"
+    finally:
+      - id: cleanup
+        type: io.kestra.plugin.core.log.Log
+        message: "Cleanup"

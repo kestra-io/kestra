@@ -16,7 +16,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.vnodes.VNodes;
 
 /**
  * A decorator class adding caching capabilities on top of {@link TriggerStateStore}.
@@ -84,7 +84,7 @@ public class CachedTriggerStateStore implements TriggerStateStore {
      * {@inheritDoc}
      */
     @Override
-    public Optional<TriggerState> findById(TriggerId triggerId) {
+    public Optional<TriggerState> findByIdWithoutAcl(TriggerId triggerId) {
         int vnode = VNodes.computeVNodeFromTrigger(triggerId, schedulerConfiguration.vnodes());
         Cache<String, TriggerState> cache = partitionedCache.get(vnode);
 
@@ -95,7 +95,7 @@ public class CachedTriggerStateStore implements TriggerStateStore {
             }
         }
 
-        Optional<TriggerState> state = delegate.findById(triggerId);
+        Optional<TriggerState> state = delegate.findByIdWithoutAcl(triggerId);
         state.ifPresent(s ->
         {
             partitionedCache

@@ -5,6 +5,9 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 import io.kestra.core.runners.pebble.AbstractDate;
 
@@ -33,7 +36,38 @@ public class DateAddFilter extends AbstractDate implements Filter {
         ZoneId zoneId = zoneId(timeZone);
         ZonedDateTime date = convert(input, zoneId, existingFormat);
 
-        ZonedDateTime plus = date.plus(amount, ChronoUnit.valueOf(unit));
+        if (unit == null || unit.isBlank()) {
+            throw new PebbleException(
+                null,
+                "The 'unit' argument cannot be null or blank. Valid units are: %s".formatted(
+                    Arrays.stream(ChronoUnit.values())
+                        .map(ChronoUnit::name)
+                        .collect(Collectors.joining(", "))
+                ),
+                lineNumber,
+                self != null ? self.getName() : "Unknown"
+            );
+        }
+
+        ChronoUnit chronoUnit;
+
+        try {
+            chronoUnit = ChronoUnit.valueOf(unit.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new PebbleException(
+                e,
+                "Invalid dateAdd unit '%s'. Valid units are: %s".formatted(
+                    unit,
+                    Arrays.stream(ChronoUnit.values())
+                        .map(ChronoUnit::name)
+                        .collect(Collectors.joining(", "))
+                ),
+                lineNumber,
+                self != null ? self.getName() : "Unknown"
+            );
+        }
+
+        ZonedDateTime plus = date.plus(amount, chronoUnit);
 
         return format(plus, args, context);
     }

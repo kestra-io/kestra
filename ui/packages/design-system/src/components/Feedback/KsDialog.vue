@@ -3,7 +3,8 @@
         v-model="model"
         :width="resolvedWidth"
         :class="{'is-form-layout': formLayout, 'is-fill': fill}"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        :beforeClose="guardedBeforeClose"
+        v-bind="{...filteredProps(), ...$attrs}"
         @close="emit('close')"
     >
         <template v-if="$slots.default" #default>
@@ -21,48 +22,51 @@
     </ElDialog>
 </template>
 
-<script setup lang="ts">
-    import {computed} from "vue"
-    import {ElDialog} from "element-plus"
-    import KsScrollbar from "../Basic/KsScrollbar.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+<script lang="ts">
+    import type {DialogProps} from "element-plus"
 
-    defineOptions({inheritAttrs: false})
-
-    const model = defineModel<boolean>()
-
-    const props = withDefaults(defineProps<{
-        title?: string
-        destroyOnClose?: boolean
-        lockScroll?: boolean
-        closeOnClickModal?: boolean
-        closeOnPressEscape?: boolean
-        showClose?: boolean
-        appendToBody?: boolean
-        width?: string | number
+    export interface KsDialogProps extends Omit<DialogProps, "modelValue"> {
         large?: boolean
         formLayout?: boolean
         /** Cap the dialog to the viewport so its own body scrolls instead of the overlay dragging the whole dialog around. */
         fill?: boolean
         scrollable?: boolean
-        top?: string
-        beforeClose?: (done: () => void) => void
-    }>(), {
-        title: undefined,
-        lockScroll: undefined,
-        closeOnClickModal: undefined,
-        closeOnPressEscape: undefined,
-        showClose: undefined,
-        width: undefined,
+        /** Asks for confirmation before an overlay, Escape or X close while true. */
+        dirty?: boolean
+        dirtyMessage?: string
+    }
+</script>
+
+<script setup lang="ts">
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
+    import {ElDialog} from "element-plus"
+    import KsScrollbar from "../Basic/KsScrollbar.vue"
+    import {usePassedProps} from "../../utils/filteredProps"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
+
+    defineOptions({inheritAttrs: false})
+
+    const model = defineModel<boolean>({default: false})
+
+    const props = withDefaults(defineProps<KsDialogProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsDialogProps>>(), {
         large: false,
         formLayout: false,
         fill: false,
         scrollable: false,
-        top: undefined,
-        beforeClose: undefined,
+        dirty: false,
     })
 
-    const resolvedWidth = computed(() => props.width ?? (props.large ? "min(750px, 90vw)" : "min(500px, 90vw)"))
+    const VIEWPORT_WIDTH_CAP = "92vw"
+
+    const INTRINSIC_WIDTHS = ["auto", "fit-content", "max-content", "min-content"]
+
+    const toCssLength = (width: string | number) => (typeof width === "number" || /^\d+(\.\d+)?$/.test(width) ? `${width}px` : width)
+
+    const resolvedWidth = computed(() => {
+        const width = toCssLength(props.width ?? (props.large ? "750px" : "500px"))
+        return INTRINSIC_WIDTHS.includes(width) ? width : `min(${width}, ${VIEWPORT_WIDTH_CAP})`
+    })
 
     const emit = defineEmits<{
         close: []
@@ -74,33 +78,42 @@
         footer?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout", "fill", "scrollable"])
+    const filteredProps = usePassedProps(props, ["width", "large", "formLayout", "fill", "scrollable", "beforeClose", "dirty", "dirtyMessage"])
+
+    const {guardedClose} = useDiscardGuard(() => props.dirty, {get message() { return props.dirtyMessage }})
+    const guardedBeforeClose = (done: () => void) => guardedClose(() => (props.beforeClose ? props.beforeClose(done) : done()))
 </script>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/dialog';
+</style>
 
+<style>
     .kel-dialog {
         --kel-dialog-bg-color: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-xl);
 
-        .kel-form-item__label {
-            font-size: var(--ks-font-size-md);
-            font-weight: var(--ks-font-weight-semibold);
+        &:not(.is-fullscreen) {
+            max-width: 92vw;
         }
 
-        .kel-dialog__header {
+        & .kel-form-item__label {
+            font-size: var(--ks-form-item-label-font-size, var(--ks-font-size-md));
+            font-weight: var(--ks-form-item-label-font-weight, var(--ks-font-weight-semibold));
+        }
+
+        & .kel-dialog__header {
             font-size: var(--ks-font-size-base);
             font-weight: bold;
 
-            .kel-dialog__headerbtn {
+            & .kel-dialog__headerbtn {
                 height: 62px;
                 width: 62px;
             }
 
-            .kel-dialog__close {
+            & .kel-dialog__close {
                 color: var(--ks-icon-default);
 
                 &:hover {
@@ -109,20 +122,20 @@
             }
         }
 
-        .kel-dialog__body {
+        & .kel-dialog__body {
             padding-bottom: var(--kel-dialog-padding-primary);
         }
 
-        .kel-dialog__scrollable-body {
+        & .kel-dialog__scrollable-body {
             margin-right: calc(var(--kel-dialog-padding-primary) * -1);
             padding-right: var(--kel-dialog-padding-primary);
 
-            .kel-scrollbar__view {
+            & .kel-scrollbar__view {
                 overflow-x: hidden;
             }
         }
 
-        .kel-dialog__footer {
+        & .kel-dialog__footer {
             border-top: 1px solid var(--ks-border-default);
             margin-left: calc(var(--kel-dialog-padding-primary) * -1);
             margin-bottom: calc(var(--kel-dialog-padding-primary) * -1);
@@ -135,6 +148,10 @@
             border-bottom-right-radius: var(--ks-radius-xl);
         }
 
+        &:has([data-dialog-wide]) {
+            width: min(1024px, 92vw);
+        }
+
         &.is-fill {
             --kel-dialog-fill-gutter: 2vh;
             display: flex;
@@ -143,7 +160,7 @@
             margin-bottom: var(--kel-dialog-fill-gutter);
             overflow: hidden;
 
-            .kel-dialog__body {
+            & .kel-dialog__body {
                 display: flex;
                 flex-direction: column;
                 flex: 1;
@@ -159,7 +176,7 @@
             flex-direction: column;
             gap: var(--ks-spacing-4);
 
-            .kel-form-item {
+            & .kel-form-item {
                 margin-bottom: 0;
             }
         }

@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -116,6 +117,32 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
         List<QueryFilter> filters);
 
     Flux<LogEntry> findAllAsync(@Nullable String tenantId);
+
+    /**
+     * A log entry together with its stable storage key (the unique row/document id), needed to
+     * resume keyset pagination — the deserialized {@link LogEntry} does not carry its own key.
+     */
+    record KeyedLog(String key, LogEntry log) {}
+
+    /**
+     * Keyset-paginated fetch ordered by (timestamp ASC, key ASC), strictly after the given position.
+     * Each call is an independent, short-lived query holding no cursor or transaction across calls,
+     * so an arbitrarily large result set is exported one bounded page at a time without exhausting heap.
+     * <p>
+     * No ACL is enforced (hence {@code WithoutAcl}): this is called from log-shipping tasks that run
+     * without a user context, so authorization must be checked by the caller before invoking it.
+     *
+     * @param afterTimestamp exclusive lower-bound timestamp — the window start (offset or lookback), always present
+     * @param afterKey       exclusive lower-bound key paired with {@code afterTimestamp}, or null to resume on the timestamp alone
+     * @param pageSize       maximum number of rows to return; fewer than this means the source is exhausted
+     * @return up to {@code pageSize} keyed log entries in (timestamp, key) ascending order
+     */
+    List<KeyedLog> findAfterWithoutAcl(
+        @Nullable String tenantId,
+        List<QueryFilter> filters,
+        Instant afterTimestamp,
+        @Nullable String afterKey,
+        int pageSize);
 
     LogEntry save(LogEntry log);
 

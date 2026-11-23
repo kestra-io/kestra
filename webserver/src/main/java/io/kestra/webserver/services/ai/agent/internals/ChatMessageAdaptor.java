@@ -1,12 +1,16 @@
 package io.kestra.webserver.services.ai.agent.internals;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.ai.agent.models.AgentThinking;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
@@ -41,6 +45,7 @@ public final class ChatMessageAdaptor {
 
     /** Project the durable AgentMessage log down to the four LangChain4j message kinds for the next request. */
     public static List<ChatMessage> project(final List<AgentMessage> rows) {
+        Set<String> pairedToolCallIds = pairedToolCallIds(rows);
         List<ChatMessage> out = new ArrayList<>();
         for (AgentMessage m : rows) {
             switch (m.type()) {
@@ -60,15 +65,16 @@ public final class ChatMessageAdaptor {
                             /* SYSTEM/TOOL text: skip */ }
                     }
                 }
+                // Drop a TOOL_CALL with no TOOL_RESULT (or pending PROPOSED_ACTION): providers reject an unpaired tool request, and the durable log would otherwise poison every later turn.
                 case TOOL_CALL -> {
-                    if (m.toolCall() != null) {
+                    if (m.toolCall() != null && isPairedToolCall(m.toolCall(), pairedToolCallIds)) {
                         out.add(toAiMessage(m.toolCall()));
                     }
                 }
                 case TOOL_RESULT -> {
                     if (m.toolCall() != null) {
                         ToolExecutionRequest req = toRequest(m.toolCall());
-                        Map<String, Object> toolResult = m.toolResult();
+                        Map<String, Object> toolResult = capResult(m.toolResult());
                         // Preserve the error flag on reload so a previously-failed tool call is still
                         // presented to the model (and provider APIs) as an error, matching the live path.
                         boolean isError = toolResult != null && "error".equals(toolResult.get("outcome"));
@@ -171,6 +177,20 @@ public final class ChatMessageAdaptor {
             .build();
     }
 
+    /**
+     * Cap an oversized {@code result} text on projection too, so a thread that already persisted a huge
+     * tool result before the dispatch-side cap existed recovers instead of failing every later turn.
+     */
+    @Nullable
+    private static Map<String, Object> capResult(@Nullable final Map<String, Object> toolResult) {
+        if (toolResult == null || !(toolResult.get("result") instanceof String text) || text.length() <= ToolResultLimit.MAX_CHARS) {
+            return toolResult;
+        }
+        Map<String, Object> capped = new LinkedHashMap<>(toolResult);
+        capped.put("result", ToolResultLimit.cap(text));
+        return capped;
+    }
+
     private static String toJson(final Object value) {
         if (value == null) {
             return "{}";
@@ -184,5 +204,21 @@ public final class ChatMessageAdaptor {
 
     private static String nullToEmpty(final String s) {
         return s == null ? "" : s;
+    }
+
+    private static Set<String> pairedToolCallIds(final List<AgentMessage> rows) {
+        Set<String> ids = new HashSet<>();
+        for (AgentMessage m : rows) {
+            if ((m.type() == AgentMessageType.TOOL_RESULT || m.type() == AgentMessageType.PROPOSED_ACTION)
+                && m.toolCall() != null && m.toolCall().id() != null) {
+                ids.add(m.toolCall().id());
+            }
+        }
+        return ids;
+    }
+
+    private static boolean isPairedToolCall(final AgentToolCall toolCall, final Set<String> pairedIds) {
+        String id = toolCall.id();
+        return id == null || pairedIds.contains(id);
     }
 }

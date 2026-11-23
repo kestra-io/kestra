@@ -1,4 +1,9 @@
-interface Label {
+import type {Label} from "@kestra-io/kestra-sdk"
+import type {LocationQuery} from "vue-router"
+import {applyDefaultFilters} from "@kestra-io/design-system"
+
+/** A label row as the editor holds it, where either half may still be blank. */
+interface DraftLabel {
     key: string | null;
     value: string | null;
 }
@@ -8,9 +13,9 @@ interface FilterResult {
     error?: boolean;
 }
 
-export const filterValidLabels = (labels: Label[]): FilterResult => {
-    const validLabels = labels.filter(label => label.key !== null && label.value !== null && label.key !== "" && label.value !== "")
-    return validLabels.length === labels.length ? {labels} : {labels: validLabels, error: true}
+export const filterValidLabels = (labels: DraftLabel[]): FilterResult => {
+    const validLabels = labels.filter((label): label is Label => Boolean(label.key) && Boolean(label.value))
+    return validLabels.length === labels.length ? {labels: validLabels} : {labels: validLabels, error: true}
 }
 
 export const FILTER_FIELD_PATTERN = /^filters(?:\[(?:and|or)]\[\d+])*\[([^\]]+)]/
@@ -25,4 +30,9 @@ export const keepSupportedFilters = (
             return !match || supportedFields.has(match[1])
         }),
     )
+}
+
+export const resetQueryToDefaults = (query: LocationQuery, options: Parameters<typeof applyDefaultFilters>[1]): LocationQuery => {
+    const kept = Object.fromEntries(Object.entries(query).filter(([key]) => !key.startsWith("filters[") && key !== "q" && key !== "page"))
+    return {...kept, ...applyDefaultFilters({}, options).query}
 }

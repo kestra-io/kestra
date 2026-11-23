@@ -1,0 +1,12 @@
+id: approval-comment-expression
+namespace: io.kestra.tests
+
+inputs:
+  - id: commentRequired
+    type: STRING
+    defaults: ON_DENY
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    commentRequired: "{{ inputs.commentRequired }}"

@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.webserver.configuration.QueryFilterConfiguration;
@@ -54,7 +55,9 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
             Matcher m = FILTER_PATTERN.matcher(key);
             if (!m.matches()) {
-                continue;
+                throw new InvalidQueryFiltersException(
+                    "Query filter '%s' is malformed. Expected filters[<field>][<operation>] or filters[<field>][<operation>][<key>].".formatted(key)
+                );
             }
 
             String prefixChain = m.group(1);
@@ -67,7 +70,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         }
         List<QueryFilter> filters = root.build(maxWidth);
         if (filters.size() > maxWidth) {
-            throw new IllegalArgumentException(
+            throw new InvalidQueryFiltersException(
                 "QueryFilter root width (" + filters.size() + ") exceeds maximum of " + maxWidth
             );
         }
@@ -83,7 +86,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         int depth = 0;
         while (pm.find()) {
             if (++depth > maxDepth) {
-                throw new IllegalArgumentException(
+                throw new InvalidQueryFiltersException(
                     "QueryFilter nesting depth exceeds maximum of " + maxDepth
                 );
             }
@@ -114,8 +117,35 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
         Map<String, List<String>> queryParams = source.getParameters().asMap();
         List<QueryFilter> filters = getQueryFilters(queryParams, maxDepth, maxWidth);
+        validate(filters, resource);
 
         return () -> Optional.of(filters);
+    }
+
+    @VisibleForTesting
+    static void validate(List<QueryFilter> filters, QueryFilter.Resource resource) {
+        QueryFilter.validateQueryFilters(withoutRewrittenFields(filters, resource), resource);
+    }
+
+    // Controllers rewrite these into a supported date field before the repository validates: timeRange everywhere, startDate and endDate on triggers.
+    private static List<QueryFilter> withoutRewrittenFields(List<QueryFilter> filters, QueryFilter.Resource resource) {
+        List<QueryFilter> kept = new ArrayList<>(filters.size());
+        for (QueryFilter filter : filters) {
+            if (filter.isNode()) {
+                List<QueryFilter> children = withoutRewrittenFields(filter.children(), resource);
+                if (!children.isEmpty()) {
+                    kept.add(QueryFilter.builder().logical(filter.logical()).children(children).build());
+                }
+            } else if (!isRewrittenByController(filter.field(), resource)) {
+                kept.add(filter);
+            }
+        }
+        return kept;
+    }
+
+    private static boolean isRewrittenByController(QueryFilter.Field field, QueryFilter.Resource resource) {
+        return QueryFilter.Field.TIME_RANGE == field
+            || QueryFilter.Resource.TRIGGER == resource && (QueryFilter.Field.START_DATE == field || QueryFilter.Field.END_DATE == field);
     }
 
     private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {
@@ -129,7 +159,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
     private static void checkWidth(int count, int maxWidth) {
         if (count > maxWidth) {
-            throw new IllegalArgumentException(
+            throw new InvalidQueryFiltersException(
                 "QueryFilter node width (" + count + ") exceeds maximum of " + maxWidth
             );
         }
@@ -153,8 +183,14 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         }
 
         void addLeaf(String fieldStr, String operationStr, String nestedKey, List<String> values) {
-            QueryFilter.Field field = QueryFilter.Field.fromString(fieldStr);
-            QueryFilter.Op op = QueryFilter.Op.valueOf(operationStr);
+            QueryFilter.Field field;
+            QueryFilter.Op op;
+            try {
+                field = QueryFilter.Field.fromString(fieldStr);
+                op = QueryFilter.Op.fromString(operationStr);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidQueryFiltersException(e.getMessage(), e);
+            }
 
             if (field == QueryFilter.Field.LABELS && nestedKey != null) {
                 labelsByOp.computeIfAbsent(op, k -> new HashMap<>()).put(nestedKey, values.getFirst());
@@ -162,7 +198,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
             }
 
             List<Object> parsedValues = nestedKey != null
-                ? List.of(Map.of(nestedKey, values.getFirst()))
+                ? List.of(Map.of(nestedKey, String.join(",", values)))
                 : parseValues(values, field, op);
 
             for (Object v : parsedValues) {

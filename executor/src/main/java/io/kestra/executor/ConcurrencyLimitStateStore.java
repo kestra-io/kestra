@@ -1,7 +1,6 @@
 package io.kestra.executor;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -88,27 +87,40 @@ public interface ConcurrencyLimitStateStore {
     }
 
     /**
+     * Decrement the running count of a flow whose concurrency limit was removed, then pop every
+     * queued execution of that flow: with no limit left, nothing keeps them queued.
+     *
+     * @param consumer maps each popped execution to the execution to run (e.g. marks it RUNNING)
+     * @return the mapped popped executions, oldest first
+     */
+    List<Execution> decrementAndPopAll(FlowInterface flow, ExecutionQueuedStateStore executionQueuedStateStore,
+        BiFunction<TransactionContext, Execution, Execution> consumer);
+
+    /**
      * Atomically release the slots a terminated execution holds — decrement the counter of
-     * every given scope — then pop the oldest queued execution that fits <b>all</b> of its own
-     * scopes, skipping candidates that do not fit yet. The popped execution's scope counters
-     * are incremented in the same transaction and the mapped execution is returned; the caller
-     * must emit it only after this method returns, never from inside the transaction.
+     * every given scope — then pop the oldest queued executions that fit <b>all</b> of their own
+     * scopes, skipping candidates that do not fit yet. Popping continues while the widest
+     * released scope still has room, so a removed limit, or a raised namespace or tenant limit, drains the queue instead of
+     * releasing a single execution. The popped executions' scope counters are incremented in the
+     * same transaction and the mapped executions are returned; the caller must emit them only
+     * after this method returns, never from inside the transaction.
      * <p>
      * The default implementation only supports the single flow-scoped limit case (the OSS
      * semantics): for the {@link Concurrency.Behavior#QUEUE} behavior it delegates to
-     * {@link #decrementAndPop(FlowInterface, ExecutionQueuedStateStore, BiConsumer)}, otherwise
-     * to {@link #decrement(FlowInterface)}. Implementors must override it to support namespace
-     * or tenant scoped limits.
+     * {@link #decrementAndPop(FlowInterface, ExecutionQueuedStateStore, BiConsumer)}, which pops
+     * at most one execution, otherwise to {@link #decrement(FlowInterface)}. When the flow limit
+     * was removed it delegates to {@link #decrementAndPopAll}. Implementors must override it to
+     * support namespace or tenant scoped limits.
      *
      * @param flow the flow of the terminated execution
      * @param limits the limits applying to the terminated execution, in evaluation order, never empty
      * @param executionQueuedStateStore the store queued candidates are popped from
      * @param candidateLimits resolves the limits applying to a queued candidate (its flow may
      *        differ from {@code flow} when namespace or tenant scopes are involved)
-     * @param consumer maps the popped execution to the execution to run (e.g. marks it RUNNING)
-     * @return the mapped popped execution, when one was popped
+     * @param consumer maps a popped execution to the execution to run (e.g. marks it RUNNING)
+     * @return the mapped popped executions, oldest first
      */
-    default Optional<Execution> releaseThenPop(
+    default List<Execution> releaseThenPop(
         FlowInterface flow,
         List<ScopedConcurrencyLimit> limits,
         ExecutionQueuedStateStore executionQueuedStateStore,
@@ -116,16 +128,13 @@ public interface ConcurrencyLimitStateStore {
         BiFunction<TransactionContext, Execution, Execution> consumer) {
         if (limits.size() == 1 && limits.getFirst().scope() == ScopedConcurrencyLimit.Scope.FLOW) {
             if (limits.getFirst().concurrency() == null) {
-                // the flow limit was removed while the admitted execution ran: still release
-                // the slot it claimed — the counter must not leak
-                decrement(flow);
-                return Optional.empty();
+                return decrementAndPopAll(flow, executionQueuedStateStore, consumer);
             }
 
             if (limits.getFirst().concurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                 AtomicReference<Execution> popped = new AtomicReference<>();
                 decrementAndPop(flow, executionQueuedStateStore, (txContext, queued) -> popped.set(consumer.apply(txContext, queued)));
-                return Optional.ofNullable(popped.get());
+                return popped.get() == null ? List.of() : List.of(popped.get());
             }
 
             int newLimit = decrement(flow);
@@ -135,7 +144,7 @@ public interface ConcurrencyLimitStateStore {
                     flow.getNamespace(), flow.getId()
                 );
             }
-            return Optional.empty();
+            return List.of();
         }
         throw new UnsupportedOperationException("This state store only supports flow-scoped concurrency limits");
     }

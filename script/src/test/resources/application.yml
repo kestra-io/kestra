@@ -5,3 +5,7 @@ kestra:
       base-path: /tmp/unittest
   queue:
     type: memory
+
+logger:
+  levels:
+    "io.kestra.core.migration": WARN

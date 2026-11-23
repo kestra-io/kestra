@@ -3,6 +3,7 @@ import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 
+import {storageKeys} from "../../../utils/constants"
 export const useLogExecutionsFilter = (
     playground: MaybeRefOrGetter<boolean> = false,
     executionKind: MaybeRefOrGetter<string | undefined> = undefined,
@@ -41,7 +42,7 @@ export const useLogExecutionsFilter = (
                     },
                     defaultValue: () => (
                         typeof window !== "undefined"
-                            ? localStorage.getItem("defaultLogLevel") || "INFO"
+                            ? localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO"
                             : "INFO"
                     ),
                     visibleByDefault: true,

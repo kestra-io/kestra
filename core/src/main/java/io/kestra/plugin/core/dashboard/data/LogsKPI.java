@@ -23,37 +23,36 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 @Schema(
-    title = "Display Log data in a dashboard chart.",
-    description = "Log data can be displayed in a chart with certain parameters such as Exectution date or Log level."
+    title = "Display a single Log value in a KPI chart.",
+    description = "Aggregates Log data into a single value, such as a count of logs or the ratio of logs matching the `numerator` filters, to be displayed in a KPI chart."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Display a chart with a count of Logs per date grouped by level.",
+            title = "Display the percentage of ERROR logs in a given namespace.",
             full = true,
             code = { """
                 charts:
-                  - id: logs_timeseries
-                    type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                  - id: kpi_error_logs_ratio
+                    type: io.kestra.plugin.core.dashboard.chart.KPI
                     chartOptions:
-                      displayName: Logs
-                      description: Logs count per date grouped by level
-                      legend:
-                        enabled: true
-                      column: date
-                      colorByColumn: level
+                      displayName: Error Logs Ratio
+                      numberType: PERCENTAGE
+                      width: 3
                     data:
-                      type: io.kestra.plugin.core.dashboard.data.Logs
+                      type: io.kestra.plugin.core.dashboard.data.LogsKPI
                       columns:
-                        date:
-                          field: DATE
-                          displayName: Execution Date
-                        level:
+                        field: LEVEL
+                        agg: COUNT
+                      numerator:
+                        - type: IN
                           field: LEVEL
-                        total:
-                          displayName: Total Executions
-                          agg: COUNT
-                          graphStyle: BARS
+                          values:
+                            - ERROR
+                      where:
+                        - field: NAMESPACE
+                          type: EQUAL_TO
+                          value: "company.team"
                 """
             }
         )

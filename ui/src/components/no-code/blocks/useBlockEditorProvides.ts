@@ -1,4 +1,4 @@
-import {computed, provide, type ComputedRef, type Ref} from "vue"
+import {computed, provide, type ComputedRef} from "vue"
 import {useFlowStore} from "../../../stores/flow"
 import {usePluginsStore} from "../../../stores/plugins"
 import {defaultNamespace} from "../../../composables/useNamespaces"
@@ -16,7 +16,6 @@ import {
     FIELDNAME_INJECTION_KEY,
     FULL_SCHEMA_INJECTION_KEY,
     FULL_SOURCE_INJECTION_KEY,
-    PANEL_INJECTION_KEY,
     PARENT_PATH_INJECTION_KEY,
     POSITION_INJECTION_KEY,
     REF_PATH_INJECTION_KEY,
@@ -32,7 +31,6 @@ export interface BlockEditorProvideContext {
     props: NoCodeProps
     flowYaml: ComputedRef<string>
     validationIssuesByTask: ComputedRef<Map<string, string[]>>
-    inlineEditPanel: Ref<unknown>
     createTask: (parentPath: string, blockSchemaPath: string, refPath: number | undefined, anchorEl?: HTMLElement) => void
     editTask: (parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean) => void
     closeTask: () => void
@@ -49,7 +47,6 @@ export function useBlockEditorProvides(ctx: BlockEditorProvideContext) {
     provide(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, ctx.validationIssuesByTask)
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "")
     provide(REF_PATH_INJECTION_KEY, props.refPath)
-    provide(PANEL_INJECTION_KEY, ctx.inlineEditPanel)
     provide(POSITION_INJECTION_KEY, props.position ?? "after")
     provide(CREATING_FLOW_INJECTION_KEY, flowStore.isCreating ?? false)
     provide(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => flowStore.flow?.namespace ?? defaultNamespace() ?? FALLBACK_NAMESPACE))

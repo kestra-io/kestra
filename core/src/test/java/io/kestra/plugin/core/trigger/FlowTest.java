@@ -12,9 +12,15 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
 
 import jakarta.inject.Inject;
@@ -25,6 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlowTest {
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    SearchableDataRepositoryInterface searchableDataRepository;
 
     @Test
     void success() {
@@ -70,7 +79,8 @@ class FlowTest {
             Optional.empty(),
             runContextFactory.of(),
             flow,
-            execution
+            execution,
+            Map.of()
         );
 
         assertThat(evaluate.isPresent()).isTrue();
@@ -127,7 +137,8 @@ class FlowTest {
             Optional.empty(),
             runContextFactory.of(),
             flow,
-            execution
+            execution,
+            Map.of()
         );
 
         assertThat(evaluate.isPresent()).isTrue();
@@ -187,7 +198,7 @@ class FlowTest {
             )
             .build();
 
-        Optional<Execution> evaluate = flowTrigger.evaluate(Optional.empty(), runContextFactory.of(), flow, execution);
+        Optional<Execution> evaluate = flowTrigger.evaluate(Optional.empty(), runContextFactory.of(), flow, execution, Map.of());
 
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).hasSize(5);
@@ -240,14 +251,65 @@ class FlowTest {
             Optional.empty(),
             runContextFactory.of(),
             flow,
-            triggeringExecution
+            triggeringExecution,
+            Map.of()
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getLabels()).hasSize(3);
-        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-execution-id", triggeringExecution.getId()));
-        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-namespace", "io.kestra.unittest.upstream"));
-        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-flow-id", "upstream-flow"));
+        assertThat(LabelService.labelsExcludingSystem(evaluate.get().getLabels()))
+            .containsExactlyInAnyOrder(
+                new Label("triggering-execution-id", triggeringExecution.getId()),
+                new Label("triggering-namespace", "io.kestra.unittest.upstream"),
+                new Label("triggering-flow-id", "upstream-flow")
+            );
+    }
+
+    @Test
+    void shouldIndexSearchableInputRenderedFromTriggerOutputs() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var flow = io.kestra.core.models.flows.Flow.builder()
+            .id("flow-with-flow-trigger")
+            .tenantId(tenant)
+            .namespace("io.kestra.unittest")
+            .revision(1)
+            .inputs(List.of(StringInput.builder().id("orderId").type(Type.STRING).searchable(true).build()))
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("test")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
+            .build();
+        var triggeringExecution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .namespace("io.kestra.unittest.upstream")
+            .flowId("upstream-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+        var flowTrigger = Flow.builder()
+            .id("flow")
+            .type(Flow.class.getName())
+            .inputs(Map.of("orderId", "{{ trigger.outputs.orderId }}"))
+            .build();
+
+        Optional<Execution> evaluate = flowTrigger.evaluate(
+            Optional.empty(),
+            runContextFactory.of(),
+            flow,
+            triggeringExecution,
+            Map.of("orderId", "ORD-1")
+        );
+
+        assertThat(evaluate.isPresent()).isTrue();
+        Execution execution = evaluate.get();
+        assertThat(execution.getInputs()).containsEntry("orderId", "ORD-1");
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "orderId"))
+            .contains(new SearchableData(tenant, execution.getId(), "orderId", "ORD-1"));
     }
 
     @Test
@@ -288,12 +350,13 @@ class FlowTest {
             Optional.empty(),
             runContextFactory.of(),
             flow,
-            triggeringExecution
+            triggeringExecution,
+            Map.of()
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getLabels()).hasSize(1);
-        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-execution-id", triggeringExecution.getId()));
+        assertThat(LabelService.labelsExcludingSystem(evaluate.get().getLabels()))
+            .containsExactly(new Label("triggering-execution-id", triggeringExecution.getId()));
         assertThat(evaluate.get().getLabels()).noneMatch(label -> label.key().equals("unknown-trigger-field"));
     }
 }

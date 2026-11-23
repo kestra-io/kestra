@@ -1,9 +1,13 @@
 <template>
-    <ElAlert v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElAlert :class="{'is-banner': banner, 'is-fill': fill}" v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
-        <template v-if="$slots.title" #title>
+        <template v-if="$slots.action" #title>
+            <span class="ks-alert-title-text"><slot name="title">{{ title }}</slot></span>
+            <span class="ks-alert-action"><slot name="action" /></span>
+        </template>
+        <template v-else-if="$slots.title" #title>
             <slot name="title" />
         </template>
 
@@ -16,7 +20,13 @@
     </ElAlert>
 </template>
 
+<script lang="ts">
+    export const KS_ALERT_TYPES = ["success", "warning", "info", "error"] as const
+    export type KsAlertType = typeof KS_ALERT_TYPES[number]
+</script>
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
     import {ElAlert} from "element-plus"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -28,21 +38,35 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        type?: "success" | "warning" | "info" | "error"
+        type?: KsAlertType
         title?: string
         description?: string
         closable?: boolean
         showIcon?: boolean
         center?: boolean
-    }>(), {
+        banner?: boolean
+        /** Stretch the content across the row with no gap under the title, and clip a description that would widen the alert. */
+        fill?: boolean
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
+        closable: false,
         showIcon: true,
+        banner: false,
+        fill: false,
     })
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["banner", "fill"])
+
+    // Element Plus renders an untyped alert as info. KsAlert.test.ts checks these tokens exist.
+    const alertType = computed(() => props.type ?? "info")
+    const borderColor = computed(() => `var(--ks-border-${alertType.value})`)
+    const backgroundColor = computed(() => `var(--ks-bg-${alertType.value})`)
+    const textColor = computed(() => `var(--ks-text-${alertType.value})`)
+    const iconColor = computed(() => `var(--ks-icon-${alertType.value})`)
 
     defineSlots<{
         default?(): unknown
         title?(): unknown
+        action?(): unknown
     }>()
 </script>
 
@@ -50,48 +74,116 @@
     @use '../../assets/styles/el-ns' as *;
     @use 'element-plus/theme-chalk/src/alert' as *;
     @use "element-plus/theme-chalk/src/common/var" as *;
+</style>
 
+<style>
     .kel-alert {
         --kel-alert-icon-size: 1.5rem;
         --kel-alert-icon-large-size: 1.5rem;
         --kel-alert-description-font-size: var(--ks-font-size-xs);
         --kel-alert-title-with-description-font-size: var(--ks-font-size-sm);
 
-         .kel-alert__title {
-            line-height: 1;
+        /* Element Plus centres the row, which leaves the icon mid-block once the message wraps. */
+        align-items: flex-start;
+
+        /* Font size of whichever element renders line one; the title shrinks when a description is present. */
+        --ks-alert-first-line-font-size: var(--kel-alert-title-font-size);
+
+        &:has(.kel-alert__title.with-description) {
+            --ks-alert-first-line-font-size: var(--kel-alert-title-with-description-font-size);
         }
 
-        .kel-alert__description {
+        &:not(:has(.kel-alert__title)) {
+            --ks-alert-first-line-font-size: var(--kel-alert-description-font-size);
+        }
+
+        & .kel-alert__title {
             line-height: var(--ks-line-height-base);
         }
 
-        .kel-alert__icon {
-            .material-design-icon,
-            .material-design-icon > .material-design-icon__svg {
+        &:has(.ks-alert-action:not(:empty)) {
+            align-items: center;
+
+            & .kel-alert__content {
+                flex: 1;
+                min-width: 0;
+            }
+
+            & .kel-alert__title {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: var(--ks-spacing-2) var(--ks-spacing-4);
+            }
+        }
+
+        &.is-fill {
+            & .kel-alert__content {
+                flex: 1;
+                min-width: 0;
+                gap: 0;
+            }
+
+            & .kel-alert__description {
+                min-width: 0;
+                overflow: hidden;
+            }
+        }
+
+        & .ks-alert-action {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            flex-shrink: 0;
+        }
+
+        & .kel-alert__description {
+            line-height: var(--ks-line-height-base);
+        }
+
+        & .kel-alert__icon {
+            height: var(--kel-alert-icon-size);
+            align-self: flex-start;
+
+            & .material-design-icon,
+            & .material-design-icon > .material-design-icon__svg {
                 height: var(--kel-alert-icon-size);
                 width: var(--kel-alert-icon-size);
             }
         }
 
-        .kel-alert__close-btn {
+        &:has(.kel-alert__icon) .kel-alert__content {
+            padding-block: max(0px, calc((var(--kel-alert-icon-size) - var(--ks-line-height-base) * var(--ks-alert-first-line-font-size)) / 2));
+        }
+
+        & .kel-alert__close-btn {
             top: 50%;
             transform: translateY(-50%);
             color: var(--ks-icon-muted);
         }
 
-        .kel-alert__title.with-description {
+        & .kel-alert__title.with-description {
             font-weight: bold;
         }
 
-        @each $type in (success, info, warning, error) {
-            &.kel-alert--#{$type}.is-light {
-                border: 1px solid var(--ks-border-#{$type});
-                background-color: var(--ks-bg-#{$type});
-                #{--kel-color-#{$type}}: var(--ks-text-#{$type});
+        &.is-light {
+            border: 1px solid v-bind(borderColor);
+            background-color: v-bind(backgroundColor);
+            color: v-bind(textColor);
 
-                .kel-alert__icon {
-                    color: var(--ks-icon-#{$type});
-                }
+            & .kel-alert__description {
+                color: inherit;
+            }
+
+            & .kel-alert__icon {
+                color: v-bind(iconColor);
+            }
+
+            &.is-banner {
+                border-width: 0 0 1px;
+                border-radius: 0;
+                color: var(--ks-text-primary);
             }
         }
     }

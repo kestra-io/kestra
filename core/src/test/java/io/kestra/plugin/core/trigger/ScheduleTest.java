@@ -10,9 +10,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import com.cronutils.model.time.ExecutionTime;
+
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -34,6 +41,7 @@ import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
@@ -59,6 +67,54 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "0 2 * * *, America/New_York, 2025-03-08T02:00-05:00[America/New_York], 2025-03-09T03:00-04:00[America/New_York], 2025-03-10T02:00-04:00[America/New_York]",
+        "30 2 * * *, Europe/Paris, 2025-03-29T02:30+01:00[Europe/Paris], 2025-03-30T03:30+02:00[Europe/Paris], 2025-03-31T02:30+02:00[Europe/Paris]",
+        "15 2 * * *, Australia/Lord_Howe, 2025-10-04T02:15+10:30[Australia/Lord_Howe], 2025-10-05T02:45+11:00[Australia/Lord_Howe], 2025-10-06T02:15+11:00[Australia/Lord_Howe]",
+        "*/15 2 * * *, America/New_York, 2025-03-08T02:45-05:00[America/New_York], 2025-03-09T03:00-04:00[America/New_York], 2025-03-10T02:00-04:00[America/New_York]"
+    })
+    void shouldRunOnceAfterTheGapWhenSpringForwardSkipsTheCronTime(String cron, String timezone, String last, String catchUp, String after) throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron(cron).timezone(timezone).build();
+
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(ZonedDateTime.parse(last), trigger)));
+        ZonedDateTime following = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(next, trigger)));
+
+        assertThat(next).isEqualTo(ZonedDateTime.parse(catchUp));
+        assertThat(following).isEqualTo(ZonedDateTime.parse(after));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "0 * * * *, 2025-03-09T01:00-05:00[America/New_York], 2025-03-09T03:00-04:00[America/New_York]",
+        "0 * * * *, 2025-03-09T03:00-04:00[America/New_York], 2025-03-09T04:00-04:00[America/New_York]",
+        "'0 2,3 * * *', 2025-03-08T03:00-05:00[America/New_York], 2025-03-09T03:00-04:00[America/New_York]",
+        "'0 2,3 * * *', 2025-03-09T03:00-04:00[America/New_York], 2025-03-10T02:00-04:00[America/New_York]",
+        "30 1 * * *, 2025-11-01T01:30-04:00[America/New_York], 2025-11-02T01:30-04:00[America/New_York]",
+        "30 1 * * *, 2025-11-02T01:30-04:00[America/New_York], 2025-11-03T01:30-05:00[America/New_York]"
+    })
+    void shouldNotAddARunWhenTheDaylightSavingChangeIsAlreadyCovered(String cron, String last, String expected) throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron(cron).timezone("America/New_York").build();
+
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(ZonedDateTime.parse(last), trigger)));
+
+        assertThat(next).isEqualTo(ZonedDateTime.parse(expected));
+    }
+
+    @Test
+    void shouldReportTheSpringForwardRunWhenEvaluatedAtIt() throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 2 * * *").timezone("America/New_York").build();
+        ZonedDateTime catchUp = ZonedDateTime.parse("2025-03-09T03:00-04:00[America/New_York]");
+
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(conditionContext(trigger), triggerContext(catchUp, trigger));
+
+        assertThat(evaluate).isPresent();
+        var vars = evaluate.get().trigger().getVariables();
+        assertThat(dateFromVars((String) vars.get("date"), catchUp)).isEqualTo(catchUp);
+        assertThat(dateFromVars((String) vars.get("previous"), catchUp)).isEqualTo(ZonedDateTime.parse("2025-03-08T02:00-05:00[America/New_York]"));
+        assertThat(dateFromVars((String) vars.get("next"), catchUp)).isEqualTo(ZonedDateTime.parse("2025-03-10T02:00-04:00[America/New_York]"));
     }
 
     private static TriggerContext triggerContext(ZonedDateTime date, Schedule schedule) {
@@ -104,7 +160,7 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().labels()).hasSize(4);
+        assertThat(evaluate.get().labels()).hasSize(2);
         assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
         assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
         var vars = evaluate.get().trigger().getVariables();
@@ -113,8 +169,12 @@ class ScheduleTest {
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), date)).isEqualTo(date.minusMonths(1));
-        assertThat(evaluate.get().labels()).contains(new Label("flow-label-1", "flow-label-1"));
-        assertThat(evaluate.get().labels()).contains(new Label("flow-label-2", "flow-label-2"));
+        // the flow's labels are deliberately absent: the execution takes them from the flow processed for
+        // runtime when it is created, so carrying the raw flow's here would let them override governance
+        assertThat(evaluate.get().labels()).doesNotContain(
+            new Label("flow-label-1", "flow-label-1"),
+            new Label("flow-label-2", "flow-label-2")
+        );
         assertThat(inputs.size()).isEqualTo(2);
         assertThat(inputs.get("input1")).isNull();
         assertThat(inputs.get("input2")).isEqualTo("default");
@@ -138,7 +198,7 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().labels()).hasSize(4);
+        assertThat(evaluate.get().labels()).hasSize(2);
         assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
         assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
         var inputs = evaluate.get().inputs();
@@ -181,6 +241,57 @@ class ScheduleTest {
         assertThat(evaluate.get().labels()).contains(new Label("trigger-label-1", "trigger-label-1"));
         assertThat(evaluate.get().labels()).contains(new Label("trigger-label-2", "trigger-label-2"));
         assertThat(evaluate.get().labels()).doesNotContain(new Label("trigger-label-3", ""));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "date", "next", "previous" })
+    void shouldRenderScheduleInputsWithTriggerDates(String field) throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("* * * * *")
+            .timezone("America/New_York")
+            .inputs(Map.of("input1", "{{ trigger." + field + " }}"))
+            .build();
+        ZonedDateTime date = ZonedDateTime.parse("2025-01-15T08:00:00-05:00[America/New_York]");
+
+        Optional<TriggerEvaluationResult> result = trigger.eval(conditionContext(trigger), triggerContext(date, trigger));
+
+        assertThat(result).isPresent();
+        ZonedDateTime expected = switch (field) {
+            case "next" -> date.plusMinutes(1);
+            case "previous" -> date.minusMinutes(1);
+            default -> date;
+        };
+        assertThat(dateFromVars((String) result.get().inputs().get("input1"), date)).isEqualTo(expected);
+        assertThat(result.get().inputs()).containsEntry("input2", "default");
+    }
+
+    @Test
+    void shouldRenderBackfillInputsWithHistoricalTriggerDatesAndOverrideScheduleInputs() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("* * * * *")
+            .timezone("America/New_York")
+            .inputs(Map.of("input1", "{{ trigger.date }}", "input2", "schedule value"))
+            .build();
+        ZonedDateTime date = ZonedDateTime.parse("2025-01-15T08:00:00-05:00[America/New_York]");
+        TriggerContext context = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+            .backfill(
+                Backfill.builder()
+                    .currentDate(date)
+                    .end(date.plusHours(1))
+                    .inputs(Map.of("input2", "{{ trigger.previous }}"))
+                    .build()
+            )
+            .build();
+
+        Optional<TriggerEvaluationResult> result = trigger.eval(conditionContext(trigger), context);
+
+        assertThat(result).isPresent();
+        assertThat(dateFromVars((String) result.get().inputs().get("input1"), date)).isEqualTo(date);
+        assertThat(dateFromVars((String) result.get().inputs().get("input2"), date)).isEqualTo(date.minusMinutes(1));
     }
 
     @Test
@@ -268,6 +379,39 @@ class ScheduleTest {
     }
 
     @Test
+    void shouldThrowWhenCronHasNoValidCalendarDate() {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 0 30 2 *")
+            .build();
+
+        assertThatThrownBy(trigger::nextEvaluationDate)
+            .isInstanceOf(InvalidTriggerConfigurationException.class)
+            .hasMessageContaining("0 0 30 2 *");
+
+        assertThatThrownBy(() -> trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty()))
+            .isInstanceOf(InvalidTriggerConfigurationException.class)
+            .hasMessageContaining("0 0 30 2 *");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenEvaluatingWithNullDate() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 0 * * *")
+            .build();
+
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
+            conditionContext(trigger),
+            TriggerContext.builder().date(null).build()
+        );
+
+        assertThat(evaluate).isEmpty();
+    }
+
+    @Test
     void noBackfillNextDate() {
         Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
@@ -340,6 +484,56 @@ class ScheduleTest {
         }
     }
 
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "2024-02-29T11:00:00+05:30, 2024-01-31T11:00:00+05:30, 2024-03-31T11:00:00+05:30",
+            "2025-02-28T11:00:00+05:30, 2025-01-31T11:00:00+05:30, 2025-03-31T11:00:00+05:30",
+            "2025-04-30T11:00:00+05:30, 2025-03-31T11:00:00+05:30, 2025-05-31T11:00:00+05:30"
+        }
+    )
+    void shouldWalkPreviousAndNextMonthEndsWhenUsingAWhenCondition(String current, String previous, String next) throws Exception {
+        // Daily cron deliberately exercises the when condition's previous/next walk; monthly schedules use cron L.
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 11 * * *")
+            .timezone("Asia/Kolkata")
+            .when("{{ isLastDayOfMonth(trigger.date) }}")
+            .build();
+        ZonedDateTime date = ZonedDateTime.parse(current);
+        var evaluated = trigger.eval(conditionContext(trigger), triggerContext(date, trigger));
+
+        assertThat(evaluated).isPresent();
+        var variables = evaluated.orElseThrow().trigger().getVariables();
+        assertThat(dateFromVars((String) variables.get("date"), date)).isEqualTo(date);
+        assertThat(dateFromVars((String) variables.get("previous"), ZonedDateTime.parse(previous))).isEqualTo(ZonedDateTime.parse(previous));
+        assertThat(dateFromVars((String) variables.get("next"), ZonedDateTime.parse(next))).isEqualTo(ZonedDateTime.parse(next));
+    }
+
+    @Test
+    void isDateBetweenConditions() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 12 * * 1")
+            .timezone("Europe/Paris")
+            .when("{{ isDateBetween(trigger.date, '2021-07-27T00:00:00Z', '2021-08-03T00:00:00Z') }}")
+            .build();
+
+        ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
+
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
+            conditionContext(trigger),
+            triggerContext(date, trigger)
+        );
+
+        assertThat(evaluate.isPresent()).isTrue();
+        var vars = evaluate.get().trigger().getVariables();
+        assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
+        assertThat(vars).doesNotContainKeys("previous", "next");
+    }
+
     @Test
     void impossibleNextConditions() throws Exception {
         Schedule trigger = Schedule.builder()
@@ -366,6 +560,62 @@ class ScheduleTest {
             assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
             assertThat(vars.containsKey("next")).isFalse();
         }
+    }
+
+    @Test
+    void neverMatchingWhenOnFrequentCronDoesNotHangTheEvaluation() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("* * * * * *")
+            .withSeconds(true)
+            .when("{{ false }}")
+            .build();
+
+        AtomicInteger tickCount = new AtomicInteger();
+        Optional<ZonedDateTime> next = trigger.findNextDateMatchingConditions(
+            countingExecutionTime(trigger.executionTime(), tickCount),
+            conditionContext(trigger),
+            ZonedDateTime.now()
+        );
+
+        assertThat(next).isEmpty();
+        // A 10-year lookahead on a per-second cron would otherwise walk ~315M ticks (3 calls/tick
+        // internally): bounding against the cap, with margin for that internal call count, proves
+        // the iteration bound kicked in rather than the year bound.
+        assertThat(tickCount.get())
+            .as("the tick walk must be bounded by an iteration cap, not just a 10-year lookahead")
+            .isBetween(Schedule.MAX_WHEN_CONDITION_ITERATIONS, Schedule.MAX_WHEN_CONDITION_ITERATIONS * 10);
+    }
+
+    private static ExecutionTime countingExecutionTime(ExecutionTime delegate, AtomicInteger counter) {
+        return new ExecutionTime() {
+            @Override
+            public Optional<ZonedDateTime> nextExecution(ZonedDateTime date) {
+                counter.incrementAndGet();
+                return delegate.nextExecution(date);
+            }
+
+            @Override
+            public Optional<Duration> timeToNextExecution(ZonedDateTime date) {
+                return delegate.timeToNextExecution(date);
+            }
+
+            @Override
+            public Optional<ZonedDateTime> lastExecution(ZonedDateTime date) {
+                return delegate.lastExecution(date);
+            }
+
+            @Override
+            public Optional<Duration> timeFromLastExecution(ZonedDateTime date) {
+                return delegate.timeFromLastExecution(date);
+            }
+
+            @Override
+            public boolean isMatch(ZonedDateTime date) {
+                return delegate.isMatch(date);
+            }
+        };
     }
 
     @Test
@@ -549,6 +799,32 @@ class ScheduleTest {
         assertThat(inputs.get("multiselectInput")).isEqualTo(List.of("option3"));
     }
 
+    @Test
+    void shouldRenderInputDefaultsReferencingFlowLabels() throws Exception {
+        // Given
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 1 * *").build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minusMonths(1);
+
+        // When
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
+            conditionContextWithLabelInput(trigger),
+            triggerContext(date, trigger)
+        );
+
+        // Then
+        assertThat(evaluate).isPresent();
+        assertThat(evaluate.get().inputs()).containsEntry("labelEcho", "platform/critical");
+        // the flow's labels are exposed for rendering only, never carried by the execution the executor creates
+        assertThat(evaluate.get().labels()).doesNotContain(new Label("team", "platform"), new Label("app.tier", "critical"));
+    }
+
     private ConditionContext conditionContext(AbstractTrigger trigger) {
         Flow flow = Flow.builder()
             .id(IdUtils.create())
@@ -650,6 +926,46 @@ class ScheduleTest {
                             )
                         )
                         .autoSelectFirst(true)
+                        .build()
+                )
+            )
+            .build();
+
+        TriggerContext triggerContext = TriggerContext.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .triggerId(trigger.getId())
+            .build();
+
+        return ConditionContext.builder()
+            .runContext(
+                runContextInitializer.forScheduler(
+                    (DefaultRunContext) runContextFactory.of(),
+                    triggerContext, trigger
+                )
+            )
+            .flow(flow)
+            .build();
+    }
+
+    private ConditionContext conditionContextWithLabelInput(AbstractTrigger trigger) {
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.tests")
+            .labels(
+                List.of(
+                    new Label("team", "platform"),
+                    new Label("app.tier", "critical")
+                )
+            )
+            .inputs(
+                List.of(
+                    StringInput.builder()
+                        .id("labelEcho")
+                        .type(Type.STRING)
+                        .required(false)
+                        // dotted keys are nested by Label.toNestedMap, so dot notation is the only working form
+                        .defaults(Property.ofExpression("{{ labels.team }}/{{ labels.app.tier }}"))
                         .build()
                 )
             )

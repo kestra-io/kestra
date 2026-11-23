@@ -1,0 +1,15 @@
+id: approval-comment-always
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    commentRequired: ALWAYS
+    onApprove:
+      - id: approved
+        type: io.kestra.plugin.core.log.Log
+        message: "Approved"
+    onDeny:
+      - id: denied
+        type: io.kestra.plugin.core.log.Log
+        message: "Denied"

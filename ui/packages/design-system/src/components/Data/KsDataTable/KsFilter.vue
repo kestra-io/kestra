@@ -7,26 +7,31 @@
                 </template>
             </MobileFilter>
             <template v-else>
-                <KsButton
-                    v-if="hasFilterKeys"
-                    :icon="CodeTags"
-                    size="default"
-                    class="code-toggle"
-                    :class="{'code-toggle--active': viewMode === 'raw'}"
-                    :disabled="readOnly || codeToggleDisabled"
-                    :aria-label="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
-                    :title="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
-                    @click="toggleViewMode"
-                />
-                <MainFilter v-if="viewMode === 'chip'" />
-                <RawFilter v-else>
-                    <template v-if="$slots.rawEditor" #rawEditor="slotProps">
-                        <slot name="rawEditor" v-bind="slotProps" />
-                    </template>
-                </RawFilter>
+                <div class="main-filters">
+                    <KsButton
+                        v-if="hasFilterKeys"
+                        :icon="CodeTags"
+                        size="default"
+                        class="code-toggle"
+                        :class="{'code-toggle--active': viewMode === 'raw'}"
+                        :disabled="readOnly || codeToggleDisabled"
+                        :aria-label="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
+                        :title="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
+                        @click="toggleViewMode"
+                    />
+                    <MainFilter v-if="viewMode === 'chip'" />
+                    <RawFilter v-else>
+                        <template v-if="$slots.rawEditor" #rawEditor="slotProps">
+                            <slot name="rawEditor" v-bind="slotProps" />
+                        </template>
+                    </RawFilter>
+                </div>
                 <RightFilter>
                     <template #extra>
                         <slot name="extra" />
+                    </template>
+                    <template v-if="$slots['data-options']" #data-options>
+                        <slot name="data-options" />
                     </template>
                 </RightFilter>
             </template>
@@ -49,6 +54,7 @@
     import {useSavedFilters} from "./filter/composables/useSavedFilters"
     import {newGroupId} from "./filter/composables/useFilterGroups"
     import {useDataOptions} from "./filter/composables/useDataOptions"
+    import {usePeriodicRefresh} from "./filter/composables/usePeriodicRefresh"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys.ts"
     import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, type SavedFilterAction} from "./filter/utils/filterAnalytics"
     import MainFilter from "./filter/MainFilter.vue"
@@ -124,6 +130,7 @@
         removeGroup,
         replaceTree,
         resetToDefaults,
+        getDefaultValue,
         clearFilters,
         hasPreApplied,
         getPreApplied,
@@ -199,9 +206,12 @@
     }
 
     const refreshData = () => {
-        tableRefreshData()
+        const result = tableRefreshData()
         emits("refresh")
+        return result
     }
+
+    usePeriodicRefresh(refreshData)
 
     provide(FILTER_CONTEXT_INJECTION_KEY, {
         configuration: computed(() => props.configuration),
@@ -245,6 +255,7 @@
         updateChart,
         refreshData,
         resetToDefaults,
+        getDefaultValue,
         clearFilters,
         hasPreApplied,
         getPreApplied,
@@ -280,7 +291,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filter {
     display: flex;
     flex-direction: column;
@@ -288,21 +299,32 @@
     width: 100%;
     border-radius: 0.5rem;
 
-    .top {
+    & .top {
         display: flex;
         align-items: flex-start;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: var(--ks-spacing-2);
+    }
 
-}
+    & .main-filters {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+        flex: 1;
+        /* Keeps the group usable instead of letting it collapse and the chips overflow; it was
+           7rem while the group was a nested box. A chip at FilterChip's 300px cap still
+           overflows a group this narrow. */
+        min-width: 14rem;
+    }
 
-    .code-toggle {
+    & .code-toggle {
         margin: 0 !important;
         flex-shrink: 0;
         background-color: var(--ks-btn-secondary-bg-default);
         box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
-        :deep(svg) {
+        & :deep(svg) {
             color: var(--ks-text-dim) !important;
             font-size: var(--ks-font-size-md);
         }
@@ -310,14 +332,14 @@
         &:hover {
             background-color: var(--ks-btn-secondary-bg-hover);
         }
+    }
 
-        &--active {
-            background-color: var(--ks-btn-secondary-bg-active);
-            border-color: var(--ks-btn-secondary-border-active);
+    & .code-toggle--active {
+        background-color: var(--ks-btn-secondary-bg-active);
+        border-color: var(--ks-btn-secondary-border-active);
 
-            :deep(svg) {
-                color: var(--ks-content-link, var(--ks-text-link)) !important;
-            }
+        & :deep(svg) {
+            color: var(--ks-text-link) !important;
         }
     }
 }

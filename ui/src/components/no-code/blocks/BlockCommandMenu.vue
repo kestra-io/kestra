@@ -2,13 +2,14 @@
     <Teleport to="body">
         <div
             class="block-command-menu-overlay"
+            data-authoring-overlay
             data-test="block-command-menu"
             @click="emit('close')"
         >
             <div
                 class="block-command-menu"
                 role="dialog"
-                :aria-label="t('block_editor.command_menu.title')"
+                :aria-label="$t('block_editor.command_menu.title')"
                 @click.stop
                 @keydown="onKeydown"
             >
@@ -17,8 +18,8 @@
                         ref="searchInput"
                         v-model="query"
                         class="block-command-menu-input"
-                        :placeholder="t('block_editor.command_menu.search_placeholder')"
-                        :aria-label="t('block_editor.command_menu.search_placeholder')"
+                        :placeholder="$t('block_editor.command_menu.search_placeholder')"
+                        :aria-label="$t('block_editor.command_menu.search_placeholder')"
                         aria-controls="block-command-menu-listbox"
                         :aria-activedescendant="activeIndex >= 0 ? `block-command-menu-option-${activeIndex}` : undefined"
                         clearable
@@ -31,7 +32,7 @@
                     id="block-command-menu-listbox"
                     class="block-command-menu-list"
                     role="listbox"
-                    :aria-label="t('block_editor.command_menu.title')"
+                    :aria-label="$t('block_editor.command_menu.title')"
                     data-test="block-command-menu-list"
                 >
                     <template v-if="filteredItems.length">
@@ -49,6 +50,8 @@
                                 class="block-command-menu-item"
                                 :class="{'block-command-menu-item--active': activeIndex === index}"
                                 :aria-selected="activeIndex === index"
+                                :aria-disabled="item.disabled"
+                                :disabled="item.disabled"
                                 data-test="block-command-menu-item"
                                 @click="run(item)"
                                 @mouseenter="activeIndex = index"
@@ -62,7 +65,7 @@
                             </button>
                         </template>
                     </template>
-                    <p v-else class="block-command-menu-empty">{{ t('block_editor.command_menu.no_match') }}</p>
+                    <p v-else class="block-command-menu-empty">{{ $t('block_editor.command_menu.no_match') }}</p>
                 </div>
             </div>
         </div>
@@ -71,7 +74,6 @@
 
 <script setup lang="ts">
     import {computed, nextTick, onMounted, ref, watch, type Component} from "vue"
-    import {useI18n} from "vue-i18n"
 
     import {KsInput} from "@kestra-io/design-system"
 
@@ -86,6 +88,8 @@
         keywords?: string
         /** Kept out of the idle list so the hundreds of task types only surface once the user types. */
         searchOnly?: boolean
+        /** Shown, not hidden, so the user learns why it can't be used right now rather than wondering where it went. */
+        disabled?: boolean
         run: () => void
     }
 
@@ -100,7 +104,6 @@
         (e: "close"): void
     }>()
 
-    const {t} = useI18n()
 
     const query = ref("")
     const activeIndex = ref(0)
@@ -123,6 +126,7 @@
     })
 
     function run(item: BlockCommandMenuItem) {
+        if (item.disabled) return
         item.run()
     }
 
@@ -150,7 +154,7 @@
     onMounted(() => nextTick(() => searchInput.value?.focus()))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-command-menu-overlay {
         position: fixed;
         inset: 0;
@@ -226,10 +230,23 @@
         text-align: left;
         transition: background-color 0.12s;
 
-        &:hover,
-        &--active {
+        &:hover {
             background: var(--ks-bg-hover);
         }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+
+            &:hover,
+            &.block-command-menu-item--active {
+                background: transparent;
+            }
+        }
+    }
+
+    .block-command-menu-item--active {
+        background: var(--ks-bg-hover);
     }
 
     .block-command-menu-item-ico {

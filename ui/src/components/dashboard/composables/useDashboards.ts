@@ -1,4 +1,4 @@
-import {onMounted, onBeforeUnmount, computed, ref} from "vue"
+import {onMounted, onBeforeUnmount, computed, inject, ref, type InjectionKey} from "vue"
 
 import {useRoute} from "vue-router"
 
@@ -8,20 +8,50 @@ import {useI18n} from "vue-i18n"
 
 import {decodeSearchParams} from "@kestra-io/design-system"
 
-import {Chart} from "../types.ts"
-import {ChartFiltersOverrides, QueryFilter} from "@kestra-io/kestra-sdk"
+import {Chart, type ChartResults} from "../types.ts"
+import {chartLoadQueue} from "./chartLoadQueue"
+import {ChartFiltersOverrides, type ChartMetadata, QueryFilter, QueryFilterField} from "@kestra-io/kestra-sdk"
 
 
+
+/** Provided by the dashboard layout, so it can warn which dashboard filters a chart's data source left out. */
+export const IGNORED_FILTERS_INJECTION_KEY = Symbol("dashboard-ignored-filters") as InjectionKey<(chartId: string, fields: QueryFilterField[]) => void>
+
+/** What a chart reports to the dashboard layout, to show on its card: what the data source tells about its rows, or why it has none. */
+export interface ChartNotice {
+    metadata?: ChartMetadata | null;
+    warning?: string;
+}
+
+/** Provided by the dashboard layout, so it can show on a chart's card the notice that chart's data source came with. */
+export const CHART_NOTICE_INJECTION_KEY = Symbol("dashboard-chart-notice") as InjectionKey<(chartId: string, notice: ChartNotice) => void>
+
+/** Lets a host that already holds a chart's rows (an app block) answer `useChartGenerator` without calling the dashboard API. */
+export const CHART_RESULTS_KEY: InjectionKey<(chartId: string, pagination?: {pageNumber: number; pageSize: number}) => ChartResults | undefined> = Symbol("chartResults")
 
 export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI"
 
 export const isMarkdownChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Markdown"
 
+/**
+ * Charts backed by an ECharts canvas. These dominate a dashboard's memory - a canvas backing store is sized by the
+ * chart's box times the device pixel ratio squared - so they are the ones worth unmounting when scrolled out of view.
+ */
+export const isCanvasChart = (type: string): boolean => [
+    "io.kestra.plugin.core.dashboard.chart.Bar",
+    "io.kestra.plugin.core.dashboard.chart.Pie",
+    "io.kestra.plugin.core.dashboard.chart.TimeSeries",
+].includes(type)
+
 export const isExportableChart = (type: string): boolean => !isMarkdownChart(type)
 
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id
 
-export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property]
+/** `data` is undefined when the chart went away before its request answered, or when the request 404ed. */
+export const getPropertyValue = (data: ChartResults | undefined, property: "value" | "description"): string | undefined => {
+    const value = data?.results?.[0]?.[property]
+    return value == null ? undefined : String(value)
+}
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false
 
@@ -35,11 +65,16 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     const route = useRoute()
 
     const dashboardStore = useDashboardStore()
+    const providedResults = inject(CHART_RESULTS_KEY, undefined)
 
     const {t} = useI18n({useScope: "global"})
     const EMPTY_TEXT = t("dashboards.empty")
 
-    const data = ref()
+    const reportIgnoredFilters = inject(IGNORED_FILTERS_INJECTION_KEY, undefined)
+    const reportNotice = inject(CHART_NOTICE_INJECTION_KEY, undefined)
+
+    const data = ref<ChartResults>()
+    const loading = ref(false)
     let isMounted = true
     onBeforeUnmount(() => {
         isMounted = false
@@ -50,33 +85,49 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         const allFilters = (appendFilters?.length ? [...filters, ...appendFilters] : filters)
         const parameters: ChartFiltersOverrides = {...pagination, filters: (allFilters ?? {})}
 
-        let result
-        if (!props.showDefault) {
-            if(!dashboardId){
-                throw new Error("to generate charts from backend we need a dashboard id")
-            }
-            result = await dashboardStore.generate(dashboardId, props.chart.id, parameters)
-        } else {
-            if (!props.chart.content){
-                throw new Error("Chart content must exist for preview.")
-            }
-
-            result = await dashboardStore.chartPreview({
-                chart: props.chart.content,
-                globalFilter: parameters,
-            })
+        if (providedResults) {
+            data.value = providedResults(props.chart.id, pagination)
+            return data.value
         }
 
-        if (!isMounted) return
-        data.value = result
-        return data.value
+        loading.value = true
+        try {
+            const result = await chartLoadQueue.enqueue(() => {
+                // the component may have been unmounted while waiting for a load slot
+                if (!isMounted) return Promise.resolve(undefined)
+
+                if (!props.showDefault) {
+                    if(!dashboardId){
+                        throw new Error("to generate charts from backend we need a dashboard id")
+                    }
+                    return dashboardStore.generate(dashboardId, props.chart.id, parameters)
+                }
+
+                if (!props.chart.content){
+                    throw new Error("Chart content must exist for preview.")
+                }
+
+                return dashboardStore.chartPreview({
+                    chart: props.chart.content,
+                    globalFilter: parameters,
+                })
+            })
+
+            if (!isMounted) return
+            data.value = result
+            reportIgnoredFilters?.(props.chart.id, data.value?.ignoredFilters ?? [])
+            reportNotice?.(props.chart.id, {metadata: data.value?.metadata, warning: data.value?.warning})
+            return data.value
+        } finally {
+            loading.value = false
+        }
     };
 
     onMounted(async () => {
         if (includeHooks) await generate()
     })
 
-    return {percentageShown, EMPTY_TEXT, data, generate}
+    return {percentageShown, EMPTY_TEXT, data, loading, generate}
 }
 
 export * from "../types"

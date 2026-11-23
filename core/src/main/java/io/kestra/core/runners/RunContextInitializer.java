@@ -8,8 +8,8 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 
+import io.kestra.core.assets.AssetEmitContext;
 import io.kestra.core.contexts.configuration.KestraConfiguration;
-import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
@@ -53,9 +53,6 @@ public class RunContextInitializer {
     protected NamespaceService namespaceService;
 
     @Inject
-    protected EncryptionConfig encryptionConfig;
-
-    @Inject
     protected RunContextCache runContextCache;
 
     @Inject
@@ -87,22 +84,6 @@ public class RunContextInitializer {
     }
 
     /**
-     * Builds a {@link RunContext} for the given {@link WorkerTask} for a WorkingDirectory task.
-     * <p>
-     * Preserves the current taskrun as {@code workerTaskrun} before overwriting with the subtask's taskrun.
-     *
-     * @param workerTask The {@link WorkerTask}.
-     * @return a fully initialized RunContext
-     */
-    public DefaultRunContext forWorkingDirectory(final WorkerTask workerTask) {
-        return forWorker(workerTask, variables ->
-        {
-            variables.put("workerTaskrun", variables.get("taskrun"));
-            return variables;
-        }, null);
-    }
-
-    /**
      * Builds a {@link RunContext} for a subtask within a WorkingDirectory, reusing the parent's
      * {@link WorkingDir} so that namespace files and prior subtask outputs remain accessible.
      *
@@ -118,7 +99,6 @@ public class RunContextInitializer {
         }, workingDir);
     }
 
-    @SuppressWarnings("unchecked")
     private DefaultRunContext forWorker(final WorkerTask workerTask,
         final Function<Map<String, Object>, Map<String, Object>> variablesModifier,
         final WorkingDir workingDir) {
@@ -132,24 +112,17 @@ public class RunContextInitializer {
         variables.put("taskrun", RunVariables.of(taskRun));
         enrichVariablesWithWorkerState(variables);
 
-        // Handle workerTaskrun value propagation (for WorkingDirectory subtasks)
-        Map<String, Object> workerTaskRun = (Map<String, Object>) variables.get("workerTaskrun");
-        if (workerTaskRun != null && workerTaskRun.containsKey("value")) {
-            Map<String, Object> taskrun = new HashMap<>((Map<String, Object>) variables.get("taskrun"));
-            taskrun.put("value", workerTaskRun.get("value"));
-            variables.put("taskrun", taskrun);
-        }
-
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTask);
         addSecretConsumer(variables, runContextLogger);
 
         variables = variablesModifier.apply(variables);
 
-        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.secretOutputs(), data.traceParent(), workingDir);
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.traceParent(), workingDir);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
-        runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
+        runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory, StorageContext.triggeringExecutionPrefix(variables)));
         runContext.setLogger(runContextLogger);
         runContext.setTask(task);
+        runContext.setAssetEmitContext(AssetEmitContext.of(workerTask, variables));
 
         return runContext;
     }
@@ -211,8 +184,9 @@ public class RunContextInitializer {
         }
 
         outputs.put(workerTaskResult.getTaskRun().getTaskId(), result);
-        variables.put("outputs", new Secret(encryptionConfig.asOptional(), runContext::logger, runContext::usedSecretOutput).decrypt(outputs));
-        variables.put("trigger", new Secret(encryptionConfig.asOptional(), runContext::logger, runContext::usedSecretOutput).decrypt(triggerOutputs));
+        // a subtask can return an encrypted output, which the run context decrypts when these variables are read
+        variables.put("outputs", outputs);
+        variables.put("trigger", triggerOutputs);
 
         runContext.setVariables(variables);
         return runContext;
@@ -264,7 +238,7 @@ public class RunContextInitializer {
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTrigger.triggerId(), trigger);
         addSecretConsumer(variables, runContextLogger);
 
-        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), List.of(), data.traceParent(), null);
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.traceParent(), null);
         configureTrigger(runContext, runContextLogger, workerTrigger.triggerId(), trigger);
 
         return ConditionContext.builder()
@@ -299,14 +273,10 @@ public class RunContextInitializer {
      *        when non-null, {@code init()} will keep it instead of creating a new one.
      */
     private DefaultRunContext buildAndInitRunContext(Map<String, Object> variables,
-        List<String> secretInputs,
-        List<String> secretOutputs,
         String traceParent,
         WorkingDir workingDir) {
         var builder = new DefaultRunContext.Builder()
-            .withVariables(variables)
-            .withSecretInputs(secretInputs)
-            .withSecretOutputs(secretOutputs);
+            .withVariables(variables);
         if (workingDir != null) {
             builder = builder.withWorkingDir(workingDir);
         }

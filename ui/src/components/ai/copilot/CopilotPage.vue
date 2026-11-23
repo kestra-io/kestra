@@ -83,10 +83,10 @@
         padding: var(--ks-spacing-4);
     }
 
-    /* Bounded, centered column so the copilot reads as a page surface rather than a full-bleed panel. */
+    /* Full-width so the transcript scroller spans the whole page and the wheel works from anywhere;
+       CopilotChat's page layout centers the content into a bounded column itself. */
     .copilot-page-surface {
         width: 100%;
-        max-width: 56rem;
         min-height: 0;
         display: flex;
         flex-direction: column;

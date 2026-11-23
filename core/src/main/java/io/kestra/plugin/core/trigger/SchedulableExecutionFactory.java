@@ -13,7 +13,6 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
@@ -35,14 +34,11 @@ final class SchedulableExecutionFactory {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of((AbstractTrigger) trigger, variables);
 
-        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), conditionContext.getFlow(), variables);
+        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), variables);
 
         List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(labels));
         executionLabels.add(new Label(Label.FROM, Label.FromLabel.TRIGGER.value));
-        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
-            // add a correlation ID if none exist
-            executionLabels.add(new Label(Label.CORRELATION_ID, runContext.getTriggerExecutionId()));
-        }
+        executionLabels = LabelService.withCorrelationId(executionLabels, runContext.getTriggerExecutionId());
 
         Execution execution = Execution.builder()
             .id(runContext.getTriggerExecutionId())
@@ -58,10 +54,14 @@ final class SchedulableExecutionFactory {
             .scheduleDate(Optional.ofNullable(scheduleDate).map(ChronoZonedDateTime::toInstant).orElse(null))
             .build();
 
-        Map<String, Object> allInputs = getInputs(trigger, runContext, triggerContext.getBackfill());
+        Map<String, Object> allInputs = getInputs(trigger, runContext, triggerContext.getBackfill(), variables);
+
+        Execution executionForRendering = execution.withLabels(
+            LabelService.forExecution(conditionContext.getFlow(), executionLabels, execution.getId())
+        );
 
         // add inputs and inject defaults (FlowInputOutput handles defaults internally)
-        execution = execution.withInputs(runContext.inputAndOutput().readInputs(conditionContext.getFlow(), execution, allInputs));
+        Map<String, Object> inputs = runContext.inputAndOutput().readInputs(conditionContext.getFlow(), executionForRendering, allInputs);
 
         return new TriggerEvaluationResult(
             runContext.getTriggerExecutionId(),
@@ -70,27 +70,33 @@ final class SchedulableExecutionFactory {
             executionLabels,
             conditionContext.getFlow().getRevision(),
             Optional.ofNullable(scheduleDate).map(ChronoZonedDateTime::toInstant).orElse(null),
-            runContext.inputAndOutput().readInputs(conditionContext.getFlow(), execution, allInputs)
+            inputs
         );
     }
 
-    private static Map<String, Object> getInputs(Schedulable trigger, RunContext runContext, Backfill backfill) throws IllegalVariableEvaluationException {
+    private static Map<String, Object> getInputs(Schedulable trigger, RunContext runContext, Backfill backfill, Map<String, Object> variables)
+        throws IllegalVariableEvaluationException {
         Map<String, Object> inputs = new HashMap<>();
+        Map<String, Object> triggerVariables = Map.of("trigger", variables);
 
         if (trigger.getInputs() != null) {
-            inputs.putAll(runContext.render(trigger.getInputs()));
+            inputs.putAll(runContext.render(trigger.getInputs(), triggerVariables));
         }
 
         if (backfill != null && backfill.getInputs() != null) {
-            inputs.putAll(runContext.render(backfill.getInputs()));
+            inputs.putAll(runContext.render(backfill.getInputs(), triggerVariables));
         }
 
         return inputs;
     }
 
-    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, FlowInterface flow, Map<String, Object> variables)
+    /**
+     * Builds the labels the trigger and its backfill contribute, without the flow's own labels: the execution
+     * takes those from the flow processed for runtime when it is created.
+     */
+    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, Map<String, Object> variables)
         throws IllegalVariableEvaluationException {
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, (AbstractTrigger) trigger, Map.of("trigger", variables));
+        List<Label> labels = LabelService.fromTrigger(runContext, (AbstractTrigger) trigger, Map.of("trigger", variables));
 
         if (backfill != null) {
             // It is better to remove system labels before rendering

@@ -1,58 +1,102 @@
 <template>
-    <div class="code-block" @mouseover="isHoveringCode = true" @mouseleave="isHoveringCode = false">
+    <div class="code-block" :class="{dense}" @mouseover="isHoveringCode = true" @mouseleave="isHoveringCode = false">
         <div v-if="language && !isHoveringCode" class="language">
             {{ language }}
         </div>
         <KsTooltip
             v-if="isHoveringCode"
             :visible="copied"
-            content="Copied!"
+            :content="$t('copied')"
             placement="left"
             trigger="manual"
         >
             <KsButton
                 class="copy"
+                :aria-label="$t('copy')"
                 :icon="copied ? Check : ContentCopy"
                 link
                 @click="copyToClipboard"
             />
         </KsTooltip>
-        <div v-html="codeData" />
+        <div>
+            <component :is="renderCode()" />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
-    import type {HighlighterCore} from "shiki/core"
-    import {KsButton, KsTooltip} from "@kestra-io/design-system"
+    import {Fragment, computed, h, ref, watchEffect, type VNode} from "vue"
+    import {KsButton, KsTooltip, copyToClipboard as writeToClipboard} from "@kestra-io/design-system"
+    import {isSpecialLang, loadLanguageOnDemand, type HighlighterCore} from "@kestra-io/design-system/shiki"
+    import {pebbleTransformer} from "@kestra-io/plumage"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
     const COPY_RESET_DELAY_MS = 2000
+
+    type HastNode = ReturnType<HighlighterCore["codeToHast"]>["children"][number]
 
     const props = withDefaults(defineProps<{
         highlighter: HighlighterCore;
         code?: string;
         language?: string | null;
         theme?: string;
+        /** Sets the code in the smallest text size, for an example nested in a definition. */
+        dense?: boolean;
     }>(), {
         code: "",
         language: null,
-        theme: "github-dark",
+        theme: "kestra-dark",
+        dense: false,
     })
 
     const isHoveringCode = ref(false)
     const copied = ref(false)
     const copyResetTimer = ref<ReturnType<typeof setTimeout>>()
 
-    const codeData = computed(() => props.highlighter.codeToHtml(props.code, {
-        lang: props.language ?? "text",
+    const resolvedLanguage = ref("text")
+
+    watchEffect(async () => {
+        const {highlighter} = props
+        const requested = props.language ?? "text"
+
+        if (isSpecialLang(requested) || highlighter.getLoadedLanguages().includes(requested)) {
+            resolvedLanguage.value = requested
+            return
+        }
+
+        // Plugin authors pick example.lang freely, so it may be a grammar the
+        // shared highlighter does not pre-register; render it plain until (and
+        // unless) that grammar loads, rather than letting codeToHtml throw.
+        resolvedLanguage.value = "text"
+        if (await loadLanguageOnDemand(highlighter, requested) && props.language === requested) {
+            resolvedLanguage.value = requested
+        }
+    })
+
+    const hast = computed(() => props.highlighter.codeToHast(props.code, {
+        lang: resolvedLanguage.value,
         theme: props.theme,
+        transformers: [pebbleTransformer()],
     }))
+
+    function toVNodes(nodes: HastNode[]): (VNode | string)[] {
+        return nodes.flatMap((node): (VNode | string)[] => {
+            if (node.type === "text") {
+                return [node.value]
+            }
+
+            return node.type === "element" ? [h(node.tagName, node.properties, toVNodes(node.children))] : []
+        })
+    }
+
+    function renderCode(): VNode {
+        return h(Fragment, toVNodes(hast.value.children))
+    }
 
     function copyToClipboard() {
         clearTimeout(copyResetTimer.value)
-        navigator.clipboard.writeText(props.code.trimEnd())
+        writeToClipboard(props.code.trimEnd())
         copied.value = true
 
         copyResetTimer.value = setTimeout(() => {
@@ -62,7 +106,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .code-block {
         position: relative;
         padding: 0.75rem;
@@ -75,13 +119,13 @@
             color: var(--ks-text-dim);
         }
 
-        :deep(pre) {
+        & pre {
             margin-bottom: 0;
             padding: 0;
             border: 0 !important;
         }
 
-        :deep(.shiki) {
+        & .shiki {
             background-color: transparent !important;
 
             code {
@@ -92,13 +136,8 @@
 
         .copy {
             color: var(--ks-text-primary);
-
-            :deep(.material-design-icon) {
-                &, & * {
-                    height: 1.125rem !important;
-                    width: 1.125rem !important;
-                }
-            }
+            --ks-icon-box-size: 1.125rem;
+            --ks-icon-glyph-size: 1.125rem;
         }
 
         .copy, .language {
@@ -108,9 +147,13 @@
         }
     }
 
-    :deep(pre code .line) {
+    pre code .line {
         display: block;
         min-height: 1rem;
         white-space: pre-wrap;
+    }
+
+    .dense pre code .line {
+        font-size: var(--ks-font-size-xs);
     }
 </style>

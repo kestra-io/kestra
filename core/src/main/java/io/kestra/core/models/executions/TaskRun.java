@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSetter;
 
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.assets.AssetsInOut;
@@ -14,12 +14,13 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 @ToString
@@ -27,10 +28,11 @@ import lombok.*;
 @AllArgsConstructor
 @Getter
 @Builder(toBuilder = true)
+@JsonIgnoreProperties({"assets", "assetEmits"})
 public class TaskRun implements TenantInterface {
     @NotNull
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     @NotNull
@@ -55,12 +57,6 @@ public class TaskRun implements TenantInterface {
 
     @With
     List<TaskRunAttempt> attempts;
-
-    // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own lineage event.
-    @With
-    @Nullable
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    List<AssetsInOut> assetEmits;
 
     @NotNull
     State state;
@@ -94,24 +90,6 @@ public class TaskRun implements TenantInterface {
         return this;
     }
 
-    /**
-     * Folds the pre-existing single `assets` object into {@code assetEmits} when deserializing executions
-     * saved before `assetEmits` existed, so old executions still load. New code uses {@link #getAssetEmits()}.
-     *
-     * @deprecated use {@code assetEmits}.
-     */
-    @Deprecated(forRemoval = true, since = "2.0.0")
-    @JsonSetter("assets")
-    public void setAssets(@Nullable AssetsInOut assets) {
-        if (assets == null) {
-            return;
-        }
-        if (!(this.assetEmits instanceof ArrayList)) {
-            this.assetEmits = this.assetEmits == null ? new ArrayList<>() : new ArrayList<>(this.assetEmits);
-        }
-        this.assetEmits.add(assets);
-    }
-
     public TaskRun withState(State.Type state) {
         return new TaskRun(
             this.tenantId,
@@ -123,7 +101,6 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             this.attempts,
-            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -152,7 +129,6 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -161,10 +137,32 @@ public class TaskRun implements TenantInterface {
         );
     }
 
+    /**
+     * Fail a task run: set its state to FAILED and create a new attempt.
+     * <p>
+     * If there is an already running attempt, it will be failed. Otherwise, a new attempt will be created.
+     */
     public TaskRun fail() {
-        var attempt = TaskRunAttempt.builder().state(new State(State.Type.FAILED)).build();
-        // Copy defensively: this.attempts may be immutable (e.g. after deserialization), and fail()
-        // must return a new TaskRun without mutating the caller's list in place.
+        TaskRunAttempt attempt;
+        if (!ListUtils.isEmpty(this.attempts) && this.attempts.getLast().getState().isRunning()) {
+            attempt = this.attempts.getLast().withState(State.Type.FAILED);
+        } else {
+            attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build();
+        }
+
+        return this.withNewStateAndAttempt(State.Type.FAILED, attempt);
+    }
+
+    /**
+     * Start running a task run: set its state to RUNNING and create a new attempt.
+     */
+    public TaskRun run() {
+        var attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build();
+        return this.withNewStateAndAttempt(State.Type.RUNNING, attempt);
+    }
+
+    private TaskRun withNewStateAndAttempt(State.Type newState, TaskRunAttempt attempt) {
+        // Copy defensively: this.attempts may be immutable (e.g. after deserialization).
         List<TaskRunAttempt> newAttempts = this.attempts == null ? new ArrayList<>(1) : new ArrayList<>(this.attempts);
         newAttempts.add(attempt);
 
@@ -178,8 +176,7 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.assetEmits,
-            this.state.withState(State.Type.FAILED),
+            this.state.withState(newState),
             this.iteration,
             this.dynamic,
             this.forceExecution,
@@ -201,7 +198,6 @@ public class TaskRun implements TenantInterface {
             .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.getOrDefault(this.getParentTaskRunId(), this.getParentTaskRunId()) : null)
             .value(this.getValue())
             .attempts(this.getAttempts())
-            .assetEmits(this.assetEmits)
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
             .build();
@@ -285,7 +281,6 @@ public class TaskRun implements TenantInterface {
             ", value=" + this.getValue() +
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
-            ", assetEmits=" + this.getAssetEmits() +
             ", attempts=" + this.getAttempts() +
             ")";
     }
@@ -375,5 +370,15 @@ public class TaskRun implements TenantInterface {
         }
         this.attempts.add(attempt);
         return this;
+    }
+
+    public static class TaskRunBuilder {
+        /**
+         * @deprecated assets are written when the task emits them, so this is ignored; kept so plugins built against 2.0 that still call it keep linking.
+         */
+        @Deprecated(forRemoval = true, since = "2.1.0")
+        public TaskRunBuilder assetEmits(List<AssetsInOut> assetEmits) {
+            return this;
+        }
     }
 }

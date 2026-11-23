@@ -43,6 +43,6 @@ class UiEnabledWebserverTest {
     void shouldRegisterUiBeansByDefault() {
         // Then
         assertThat(applicationContext.containsBean(RedirectController.class)).isTrue();
-        assertThat(applicationContext.containsBean(StaticFilter.class)).isTrue();
+        assertThat(applicationContext.containsBean(UiController.class)).isTrue();
     }
 }

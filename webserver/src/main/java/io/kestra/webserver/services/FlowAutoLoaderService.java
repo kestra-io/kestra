@@ -2,6 +2,7 @@ package io.kestra.webserver.services;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
@@ -24,6 +25,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -80,11 +82,14 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
                     {
                         String body = response.body();
                         if (it.getId().equals(PURGE_SYSTEM_FLOW_BLUEPRINT_ID)) {
-                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + systemFlowsConfiguration.namespace());
+                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst(Matcher.quoteReplacement("namespace: " + systemFlowsConfiguration.namespace()));
                         }
                         return body;
                     })
                 )
+                // Hop off the HTTP client's event loop: flowService.create() may block on plugin
+                // auto-install, and parking an event-loop thread starves the client itself.
+                .publishOn(Schedulers.boundedElastic())
                 .map(throwFunction(source ->
                 {
                     GenericFlow flow = GenericFlow.fromYaml(tenantService.resolveTenant(), source);

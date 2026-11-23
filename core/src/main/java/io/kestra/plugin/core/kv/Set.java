@@ -2,9 +2,14 @@ package io.kestra.plugin.core.kv;
 
 import java.time.Duration;
 import java.time.Instant;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectReader;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -61,6 +66,8 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class Set extends Task implements RunnableTask<VoidOutput> {
+    private static final ObjectReader EXACT_DECIMAL_READER = JacksonMapper.ofJson().reader(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
+
     @NotNull
     @Schema(
         title = "The key to set the value for"
@@ -95,7 +102,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Optional Time-To-Live (TTL) duration for the key-value pair. If not set, the KV pair will never be deleted from internal storage."
     )
-    private Property<Duration> ttl;
+    private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> ttl;
 
     @Schema(
         title = "Enum representing the data type of the KV pair. If not set, the value will be stored as a string."
@@ -116,8 +123,8 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
             KVType renderedKvType = runContext.render(kvType).as(KVType.class).orElseThrow();
             if (renderedValue instanceof String renderedValueStr) {
                 renderedValue = switch (renderedKvType) {
-                    case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
-                    case BOOLEAN -> TypeConverter.toBoolean(renderedValueStr);
+                    case NUMBER -> EXACT_DECIMAL_READER.forType(Number.class).readValue(renderedValueStr);
+                    case BOOLEAN -> parseBoolean(renderedValueStr);
                     case DATETIME -> TypeConverter.toInstant(renderedValueStr);
                     case DATE -> parseDate(renderedValueStr);
                     // We parse duration to make sure it's valid but we store it as a raw duration string
@@ -125,7 +132,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                         TypeConverter.toDuration(renderedValueStr);
                         yield renderedValueStr;
                     }
-                    case JSON -> JacksonMapper.toObject(renderedValueStr);
+                    case JSON -> EXACT_DECIMAL_READER.forType(Object.class).readValue(renderedValueStr);
                     default -> renderedValue;
                 };
             } else if (renderedValue instanceof Number valueNumber && renderedKvType == KVType.STRING) {
@@ -159,5 +166,20 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         } catch (DateTimeParseException e) {
             return LocalDate.ofInstant(Instant.parse(value), ZoneOffset.UTC);
         }
+    }
+
+    /**
+     * Parses a {@code BOOLEAN}-typed KV value, failing the task on anything but {@code true}/{@code false}
+     * (case-insensitive) so a typo is not silently coerced to {@code false}, matching how the other typed values reject
+     * invalid input.
+     */
+    private static Boolean parseBoolean(String value) {
+        if ("true".equalsIgnoreCase(value)) {
+            return Boolean.TRUE;
+        }
+        if ("false".equalsIgnoreCase(value)) {
+            return Boolean.FALSE;
+        }
+        throw new IllegalArgumentException("Cannot parse '%s' as a BOOLEAN value: expected 'true' or 'false'.".formatted(value));
     }
 }

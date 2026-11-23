@@ -11,9 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.*;
 import io.kestra.core.models.property.Property;
@@ -73,6 +75,26 @@ class FlowToolSchemaMapperTest {
         InputConversionTestCase.builder()
             .input(DurationInput.builder().type(Type.DURATION).min(Duration.ofSeconds(1)).max(Duration.ofSeconds(60)).build())
             .expectedSchema(Map.of("type", "string", "format", "duration", "description", "Must be at least PT1S. Must be at most PT1M."))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).build())
+            .expectedSchema(Map.of("type", "string", "description", "The id of a Kestra asset."))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).multiple(true).assetType("io.kestra.plugin.ee.assets.VM").namespace("infra").status("active").assetId("^web-").build())
+            .expectedSchema(Map.of(
+                "type", "array",
+                "items", Map.of("type", "string"),
+                "description", "The ids of Kestra assets, of type io.kestra.plugin.ee.assets.VM, in namespace infra or a child namespace, with status active, whose id matches ^web-."
+            ))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).metadata(Map.of("team", "ops", "env", "prod")).build())
+            .expectedSchema(Map.of("type", "string", "description", "The id of a Kestra asset, with metadata env = prod and team = ops."))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).metadata(Map.of()).build())
+            .expectedSchema(Map.of("type", "string", "description", "The id of a Kestra asset."))
             .build(),
         InputConversionTestCase.builder()
             .input(EmailInput.builder().type(Type.EMAIL).build())
@@ -159,6 +181,22 @@ class FlowToolSchemaMapperTest {
         InputConversionTestCase.builder()
             .input(YamlInput.builder().type(Type.YAML).build())
             .expectedSchema(Map.of("type", "object", "additionalProperties", true))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(TableInput.builder().type(Type.TABLE).minRows(1).maxRows(8).columns(List.of(
+                IntInput.builder().id("size_gb").type(Type.INT).build()
+            )).build())
+            .expectedSchema(Map.of(
+                "type", "array",
+                "items", Map.of(
+                    "type", "object",
+                    "properties", Map.of("size_gb", Map.of("type", "integer")),
+                    "required", List.of("size_gb"),
+                    "additionalProperties", false
+                ),
+                "minItems", 1,
+                "maxItems", 8
+            ))
             .build()
     );
 
@@ -190,76 +228,72 @@ class FlowToolSchemaMapperTest {
 
     final static List<OutputConversionTestCase> outputConversionTestCases = List.of(
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.STRING).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.STRING).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.STRING).value("v").description("An output").build())
+            .output(Output.builder().id("o").type(OutputType.STRING).value("v").description("An output").build())
             .expectedSchema(Map.of("type", "string", "description", "An output"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.INT).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.ASSET).value("v").build())
+            .expectedSchema(Map.of("description", "The id of a Kestra asset, or a list of asset ids."))
+            .build(),
+        OutputConversionTestCase.builder()
+            .output(Output.builder().id("o").type(OutputType.UNKNOWN).value("v").build())
+            .expectedSchema(Map.of())
+            .build(),
+        OutputConversionTestCase.builder()
+            .output(Output.builder().id("o").type(OutputType.INT).value("v").build())
             .expectedSchema(Map.of("type", "integer"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.FLOAT).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.FLOAT).value("v").build())
             .expectedSchema(Map.of("type", "number"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.BOOL).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.BOOL).value("v").build())
             .expectedSchema(Map.of("type", "boolean"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.DATETIME).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.DATETIME).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.DATE).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.DATE).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.TIME).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.TIME).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.DURATION).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.DURATION).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.FILE).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.FILE).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.JSON).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.JSON).value("v").build())
             .expectedSchema(Map.of("type", "object"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.URI).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.URI).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.SECRET).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.SECRET).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.ARRAY).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.ARRAY).value("v").build())
             .expectedSchema(Map.of("type", "array"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.MULTISELECT).value("v").build())
-            .expectedSchema(Map.of("type", "array"))
-            .build(),
-        OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.YAML).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.YAML).value("v").build())
             .expectedSchema(Map.of("type", "object"))
-            .build(),
-        OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.EMAIL).value("v").build())
-            .expectedSchema(Map.of("type", "string"))
-            .build(),
-        OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.SELECT).value("v").build())
-            .expectedSchema(Map.of("type", "string"))
             .build()
     );
 
@@ -269,7 +303,7 @@ class FlowToolSchemaMapperTest {
 
     @Test
     void shouldMapAllHintsCorrectlyWhenBuildingToolWithAnnotations() {
-        McpToolTrigger trigger = buildTrigger(new McpToolTrigger.Annotations(true, false, false, true, false));
+        McpToolTrigger trigger = buildTrigger(new McpToolAnnotations(true, false, false, true, false));
 
         McpSchema.Tool tool = mapper.buildTool(buildFlow(List.of()), trigger);
 
@@ -282,7 +316,7 @@ class FlowToolSchemaMapperTest {
 
     @Test
     void shouldSetNameAndTitleWhenBuildingToolWithTriggerMetadata() {
-        McpToolTrigger trigger = buildTrigger(new McpToolTrigger.Annotations(false, false, false, false, false));
+        McpToolTrigger trigger = buildTrigger(new McpToolAnnotations(false, false, false, false, false));
 
         McpSchema.Tool tool = mapper.buildTool(buildFlow(List.of()), trigger);
 
@@ -291,19 +325,20 @@ class FlowToolSchemaMapperTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReflectAllInputsInSchemaWhenBuildingToolForFlowWithInputs() {
         List<Input<?>> inputs = List.of(
             StringInput.builder().id("name").type(Type.STRING).required(true).build(),
             IntInput.builder().id("count").type(Type.INT).required(false).build()
         );
 
-        McpSchema.Tool tool = mapper.buildTool(buildFlow(inputs), buildTrigger(new McpToolTrigger.Annotations(false, false, false, false, false)));
+        McpSchema.Tool tool = mapper.buildTool(buildFlow(inputs), buildTrigger(new McpToolAnnotations(false, false, false, false, false)));
 
-        assertThat(tool.inputSchema().properties()).containsKeys("name", "count");
-        assertThat(tool.inputSchema().required()).containsExactly("name");
+        assertThat((Map<String, Object>) tool.inputSchema().get("properties")).containsKeys("name", "count");
+        assertThat((List<String>) tool.inputSchema().get("required")).containsExactly("name");
     }
 
-    private McpToolTrigger buildTrigger(McpToolTrigger.Annotations annotations) {
+    private McpToolTrigger buildTrigger(McpToolAnnotations annotations) {
         return McpToolTrigger.builder()
             .id("t").type(McpToolTrigger.class.getName())
             .toolName("my-tool").title("My Tool").toolDescription("desc")

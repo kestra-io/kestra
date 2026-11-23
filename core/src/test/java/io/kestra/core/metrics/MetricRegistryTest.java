@@ -10,6 +10,8 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.test.annotation.MockBean;
@@ -115,6 +117,60 @@ class MetricRegistryTest {
     }
 
     @Test
+    void shouldTagTriggerEvaluationWithFlowLabelWhenTheEvaluationResultDoesNotCarryIt() {
+        // Given a configured label key the flow declares and the trigger does not
+        when(mockConfig.getLabels()).thenReturn(List.of("owner_team"));
+        TriggerEvaluationResult evaluationResult = evaluationResult(List.of(new Label(Label.FROM, "trigger")));
+
+        // When
+        var tags = metricRegistry.tags(evaluationResult, triggerId(), List.of(new Label("owner_team", "platform")));
+
+        // Then the flow label is tagged, as it is on the execution the trigger creates
+        assertThat(tags).containsExactly(
+            "flow_id", "flow",
+            "namespace_id", "io.kestra.unittest",
+            "state", "CREATED",
+            "label_owner_team", "platform"
+        );
+    }
+
+    @Test
+    void shouldPreferTriggerLabelOverFlowLabelWhenTaggingATriggerEvaluation() {
+        // Given the flow and the trigger declaring the same configured label key
+        when(mockConfig.getLabels()).thenReturn(List.of("owner_team"));
+        TriggerEvaluationResult evaluationResult = evaluationResult(List.of(new Label("owner_team", "data")));
+
+        // When
+        var tags = metricRegistry.tags(evaluationResult, triggerId(), List.of(new Label("owner_team", "platform")));
+
+        // Then the trigger wins, matching the merge the created execution applies
+        assertThat(tags).containsExactly(
+            "flow_id", "flow",
+            "namespace_id", "io.kestra.unittest",
+            "state", "CREATED",
+            "label_owner_team", "data"
+        );
+    }
+
+    @Test
+    void shouldTagTriggerEvaluationWithPlaceholderWhenNeitherFlowNorTriggerCarriesTheLabel() {
+        // Given a configured label key nothing declares, and null label lists on both sides
+        when(mockConfig.getLabels()).thenReturn(List.of("owner_team"));
+        TriggerEvaluationResult evaluationResult = evaluationResult(null);
+
+        // When
+        var tags = metricRegistry.tags(evaluationResult, triggerId(), null);
+
+        // Then
+        assertThat(tags).containsExactly(
+            "flow_id", "flow",
+            "namespace_id", "io.kestra.unittest",
+            "state", "CREATED",
+            "label_owner_team", "__none__"
+        );
+    }
+
+    @Test
     void triggerTagsWithNullLabelsAndMetricsLabelsConfigured() {
         when(mockConfig.getLabels()).thenReturn(
             List.of("owner_team")
@@ -131,5 +187,13 @@ class MetricRegistryTest {
             "label_owner_team",
             "__none__"
         );
+    }
+
+    private static TriggerEvaluationResult evaluationResult(List<Label> labels) {
+        return new TriggerEvaluationResult(IdUtils.create(), State.Type.CREATED, null, labels, 1, null, null);
+    }
+
+    private static TriggerId triggerId() {
+        return TriggerId.of(null, "io.kestra.unittest", "flow", "trigger");
     }
 }

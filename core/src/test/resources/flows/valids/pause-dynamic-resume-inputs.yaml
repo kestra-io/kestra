@@ -1,0 +1,32 @@
+id: pause-dynamic-resume-inputs
+namespace: io.kestra.tests
+
+inputs:
+  - id: request
+    type: STRING
+    defaults: holiday
+
+tasks:
+  - id: prepare
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      decision: approve
+      description: Review
+      count: 0
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    onResume:
+      - id: decision
+        type: STRING
+        defaults: "{{ outputs.prepare.values.decision }}"
+        description: "{{ outputs.prepare.values.description }} {{ inputs.request }}"
+      - id: count
+        type: INT
+        defaults: "{{ outputs.prepare.values.count }}"
+        description: "{% if inputs.request == 'holiday' %}Days remaining{% endif %}"
+        min: 0
+        max: 5
+      - id: reason
+        type: STRING
+        defaults: Approved by reviewer
+        description: Explain your decision

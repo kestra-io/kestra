@@ -224,12 +224,21 @@ public abstract class AbstractSQLInjectionTest {
     }
 
     private static final String CATASTROPHIC_REGEX_PATTERN = "(a+)+$";
+    private static final String INVALID_SYNTAX_REGEX_PATTERN = "[a-";
 
     private QueryFilter catastrophicRegexFilter() {
         return QueryFilter.builder()
             .field(QueryFilter.Field.NAMESPACE)
             .operation(QueryFilter.Op.REGEX)
             .value(CATASTROPHIC_REGEX_PATTERN)
+            .build();
+    }
+
+    private QueryFilter invalidSyntaxRegexFilter() {
+        return QueryFilter.builder()
+            .field(QueryFilter.Field.NAMESPACE)
+            .operation(QueryFilter.Op.REGEX)
+            .value(INVALID_SYNTAX_REGEX_PATTERN)
             .build();
     }
 
@@ -250,6 +259,17 @@ public abstract class AbstractSQLInjectionTest {
         // Same guard on the execution repository's QueryFilter path
         assertThatThrownBy(() -> executionRepository.find(Pageable.from(1, 10), tenant, List.of(catastrophicRegexFilter())))
             .as("REGEX with a catastrophic-backtracking pattern should be rejected")
+            .isInstanceOf(InvalidQueryFiltersException.class);
+    }
+
+    @Test
+    void executionRegexFilterShouldRejectInvalidSyntaxPattern() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        // A syntactically invalid REGEX pattern must be rejected before it reaches the DB engine,
+        // instead of surfacing as a 500 that leaks the rendered SQL (kestra-ee#10266)
+        assertThatThrownBy(() -> executionRepository.find(Pageable.from(1, 10), tenant, List.of(invalidSyntaxRegexFilter())))
+            .as("REGEX with an invalid syntax pattern should be rejected")
             .isInstanceOf(InvalidQueryFiltersException.class);
     }
 

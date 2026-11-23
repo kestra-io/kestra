@@ -1,7 +1,10 @@
-import type {RouteRecordRaw} from "vue-router"
+import type {RouteMeta, RouteRecordRaw} from "vue-router"
+import type {Me} from "override/stores/auth"
 import resource from "../../models/resource"
 import action from "../../models/action"
-import {resolveDefaultTab} from "../../utils/routeTabs"
+import {mergeTabRoutes, resolveDefaultTab} from "../../utils/routeTabs"
+import {extraFlowTabRoutes} from "override/components/flows/flowTabsExtension"
+import {storageKeys} from "../../utils/constants"
 
 /** Parent route name for the Flows detail page. */
 export const FLOW_PARENT_ROUTE = "flows/update"
@@ -11,7 +14,7 @@ export const FLOW_PARENT_ROUTE = "flows/update"
  * permissions on the flow's namespace. Colocated here (rather than duplicated in
  * `useFlowRoot` and kestra-ee's `FlowRoot.vue`) so both repos stay in sync.
  */
-export function isFlowTabAllowed(tabName: string, ctx: {user: any; namespace: string | undefined}): boolean {
+export function isFlowTabAllowed(tabName: string, ctx: {user: Pick<Me, "hasAny" | "isAllowed"> | undefined; namespace: string | undefined}): boolean {
     const {user, namespace} = ctx
     switch (tabName) {
     case "overview":
@@ -30,11 +33,9 @@ export function isFlowTabAllowed(tabName: string, ctx: {user: any; namespace: st
     }
 }
 
-/** localStorage key remembering the user's preferred default tab (see BasicSettings.vue), used as the redirect fallback below. */
-const DEFAULT_TAB_STORAGE_KEY = "flowDefaultTab"
-
 /**
- * Single source of truth for the Flows detail tabs.
+ * The OSS Flows detail tabs; {@link FLOW_TAB_ROUTES} is this list with the edition's own tabs
+ * merged in.
  *
  * Each entry is the vue-router child route that `<router-view>` renders; the
  * horizontal tab bar is derived from these records (see {@link useFlowRoot}),
@@ -47,7 +48,7 @@ const DEFAULT_TAB_STORAGE_KEY = "flowDefaultTab"
  * - `meta.maximized` drives the content section layout.
  * - `meta.locked` flags an Enterprise-locked tab (lock badge in the bar).
  */
-export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
+const OSS_FLOW_TAB_ROUTES: RouteRecordRaw[] = [
     {
         name: `${FLOW_PARENT_ROUTE}/overview`,
         path: "overview",
@@ -59,32 +60,32 @@ export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
         path: "executions",
         component: () => import("./FlowExecutions.vue"),
         props: {embed: true},
-        meta: {tab: "executions", title: "executions"},
+        meta: {tab: "executions", title: "executions", fullContainer: true, docId: "executions"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/edit`,
         path: "edit",
         component: () => import("./MultiPanelFlowEditorView.vue"),
-        meta: {tab: "edit", title: "edit", maximized: true},
+        meta: {tab: "edit", title: "edit", maximized: true, docId: "flowEditor"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/promote`,
         path: "promote",
         component: () => import("../demo/Promote.vue"),
         props: {embed: true},
-        meta: {tab: "promote", title: "promote.label", locked: true},
+        meta: {tab: "promote", title: "promote.label", locked: true, docId: "promote"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/revisions`,
         path: "revisions",
         component: () => import("./FlowRevisions.vue"),
-        meta: {tab: "revisions", title: "revisions"},
+        meta: {tab: "revisions", title: "revisions", docId: "revisions"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/triggers`,
         path: "triggers",
         component: () => import("./FlowTriggers.vue"),
-        meta: {tab: "triggers", title: "triggers"},
+        meta: {tab: "triggers", title: "triggers", docId: "triggers"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/logs`,
@@ -110,16 +111,36 @@ export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${FLOW_PARENT_ROUTE}/concurrency`,
         path: "concurrency",
         component: () => import("./FlowConcurrency.vue"),
-        meta: {tab: "concurrency", title: "concurrency"},
+        meta: {tab: "concurrency", title: "concurrency", docId: "concurrency-limits"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/audit-logs`,
         path: "audit-logs",
         component: () => import("../demo/AuditLogs.vue"),
         props: {embed: true},
-        meta: {tab: "audit-logs", title: "auditlogs", locked: true},
+        meta: {tab: "audit-logs", title: "auditlogs", locked: true, docId: "auditlogs"},
     },
 ]
+
+export const FLOW_TAB_ROUTES: RouteRecordRaw[] = mergeTabRoutes(OSS_FLOW_TAB_ROUTES, extraFlowTabRoutes(FLOW_PARENT_ROUTE))
+
+/**
+ * Loads the flow the detail page is about into the store, so an unknown one renders the
+ * not-found screen and a known one is already there when the page mounts — `useFlowRoot`
+ * fetches only what the store does not already hold (EE reuses this for its own route record).
+ * `allowDeleted`: a deleted flow still has a page, so only an unknown one is missing.
+ */
+export const FLOW_ENTITY_META: RouteMeta = {
+    entity: async (to) => {
+        const {useFlowStore} = await import("../../stores/flow")
+        return useFlowStore().loadFlow({
+            namespace: String(to.params.namespace),
+            id: String(to.params.id),
+            revision: to.query.revision ? String(to.query.revision) : undefined,
+            allowDeleted: true,
+        })
+    },
+}
 
 /**
  * The Flows detail page's own route: parent + children, colocated with the tab
@@ -129,10 +150,11 @@ export const FLOW_ROUTE: RouteRecordRaw = {
     name: FLOW_PARENT_ROUTE,
     path: "/:tenant?/flows/edit/:namespace/:id",
     component: () => import("./FlowRoot.vue"),
+    meta: FLOW_ENTITY_META,
     // Resolve legacy deep-links `{name: "flows/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {
-        const requested = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY)
+        const requested = (to.params.tab as string) || localStorage.getItem(storageKeys.FLOW_DEFAULT_TAB)
         const tab = resolveDefaultTab(FLOW_TAB_ROUTES, requested, "edit")
         return {name: `${FLOW_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
     },

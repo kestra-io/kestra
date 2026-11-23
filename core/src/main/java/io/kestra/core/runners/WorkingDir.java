@@ -20,6 +20,14 @@ import io.kestra.core.models.tasks.FileExistComportment;
  * @see RunContext#workingDir()
  */
 public interface WorkingDir {
+    /**
+     * Name of the file holding the execution context, written by script tasks that opt into it.
+     * <p>
+     * Reserved by Kestra: it carries the decrypted `inputs`, `outputs` and `trigger` subtrees, so it
+     * must never be collected by a user pattern — a plain `*` glob would otherwise persist it to
+     * internal storage. {@link #findAllFilesMatching(List)} filters it out for that reason.
+     */
+    String EXECUTION_CONTEXT_FILE_NAME = ".kestra-execution-context.json";
 
     /**
      * Gets the working directory path.

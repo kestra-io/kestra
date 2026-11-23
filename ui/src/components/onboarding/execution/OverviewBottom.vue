@@ -34,7 +34,7 @@
             : {
                 title: t("execution_guide.get_started.title"),
                 description: t("execution_guide.get_started.text"),
-                link: "",
+                link: "https://kestra.io/docs/quickstart?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
                 icon: RocketLaunchOutline,
             },
         {
@@ -52,7 +52,7 @@
     ])
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .overview-bottom {
     display: flex;
     flex-direction: column;
@@ -60,7 +60,7 @@
     border-radius: var(--ks-radius-base);
     overflow: hidden;
 
-    > :not(:first-child) {
+    & > :not(:first-child) {
         border-top: var(--ks-border-block-primary);
     }
 }

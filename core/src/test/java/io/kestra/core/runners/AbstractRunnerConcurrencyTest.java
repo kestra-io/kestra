@@ -34,6 +34,12 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-limit.yml" }, tenantId = "concurrency-queue-limit")
+    void concurrencyQueueLimit() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueLimit("concurrency-queue-limit");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/flow-concurrency-queue-pause.yml" }, tenantId = "concurrency-queue-pause")
     protected void concurrencyQueuePause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueuePause("concurrency-queue-pause");
@@ -113,8 +119,14 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/flow-concurrency-queue.yml" }, tenantId = "flow-concurrency-scheduled")
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue.yml" }, tenantId = "concurrency-queue-scheduled")
     void flowConcurrencyScheduled() throws QueueException {
-        flowConcurrencyCaseTest.flowConcurrencyScheduled("flow-concurrency-scheduled");
+        flowConcurrencyCaseTest.flowConcurrencyScheduled("concurrency-queue-scheduled");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-loop.yml" }, tenantId = "concurrency-loop")
+    void concurrencyLoop() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyLoop("concurrency-loop");
     }
 }

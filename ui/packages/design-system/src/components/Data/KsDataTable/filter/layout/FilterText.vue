@@ -1,5 +1,5 @@
 <template>
-    <div class="p-3">
+    <div class="filter-text">
         <KsInput
             :modelValue="textValue"
             :placeholder="`Enter ${label.toLowerCase()}`"
@@ -19,11 +19,8 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
-    :deep(.kel-input__inner) {
-        &::placeholder {
-            color: var(--ks-text-dim);
-            font-size: var(--ks-font-size-sm);
-        }
+<style scoped>
+    .filter-text {
+        padding: var(--ks-spacing-4);
     }
 </style>

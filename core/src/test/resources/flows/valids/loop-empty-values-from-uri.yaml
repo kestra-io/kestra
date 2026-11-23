@@ -1,0 +1,16 @@
+id: loop-empty-values-from-uri
+namespace: io.kestra.tests
+
+tasks:
+  - id: write
+    type: io.kestra.plugin.core.storage.Write
+    content: ""
+    extension: .ion
+
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: "{{ outputs.write.uri }}"
+    tasks:
+      - id: item
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ item.value }}"

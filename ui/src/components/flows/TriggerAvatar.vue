@@ -1,22 +1,24 @@
 <template>
     <div class="trigger">
-        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon">
+        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon" @click.stop>
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
                 <KsPopover
-                    :ref="(el: any) => setPopoverRef(el, trigger)"
                     placement="left"
                     :persistent="true"
                     :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
                     :width="500"
+                    :showArrow="true"
+                    :popperOptions="{strategy: 'fixed'}"
                     transition=""
                     :hideAfter="0"
-                    @show="handlePopoverShow"
                 >
                     <template #reference>
                         <TaskIcon :onlyIcon="true" :cls="trigger?.type" :loadIcon="pluginsStore.loadIcon" />
                     </template>
                     <template #default>
-                        <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
+                        <div class="trigger-details" data-test="trigger-details">
+                            <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
+                        </div>
                     </template>
                 </KsPopover>
             </template>
@@ -24,10 +26,10 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed, ref, nextTick} from "vue"
+    import {computed} from "vue"
     import {usePluginsStore} from "../../stores/plugins"
     import * as Utils from "../../utils/utils"
-    import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
+    import {webhookUrl, WEBHOOK_TRIGGER_TYPES} from "../../utils/webhook"
     import TriggerVars from "./TriggerVars.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {useI18n} from "vue-i18n"
@@ -45,7 +47,7 @@
         type: string;
         key?: string;
         disabled?: boolean;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     const props = defineProps<{
@@ -55,8 +57,6 @@
     }>()
 
     const pluginsStore = usePluginsStore()
-
-    const popoverRefs = ref<Map<string, any>>(new Map())
 
     const triggers = computed<Trigger[]>(() => {
         if (props.flow && props.flow.triggers) {
@@ -74,27 +74,11 @@
         return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id
     }
 
-    function setPopoverRef(el: any, trigger: Trigger) {
-        if (el) {
-            popoverRefs.value.set(uid(trigger), el)
-        }
-    }
-
-    function handlePopoverShow() {
-        nextTick(() => {
-            popoverRefs.value.forEach((popover) => {
-                if (popover?.popperRef?.popperInstanceRef) {
-                    popover.popperRef.popperInstanceRef.update()
-                }
-            })
-        })
-    }
-
     const {t} = useI18n()
     const toast = useToast()
 
     async function copyLink(trigger: Trigger) {
-        if (trigger?.type === WEBHOOK_TRIGGER_TYPE && trigger.key && props.flow) {
+        if (WEBHOOK_TRIGGER_TYPES.includes(trigger.type) && trigger.key && props.flow) {
             const url = webhookUrl({namespace: props.flow.namespace, id: props.flow.id, key: trigger.key})
             try {
                 await Utils.copy(url)
@@ -106,7 +90,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .trigger {
         max-width: 180px;
         display: flex;
@@ -121,5 +105,13 @@
         height: var(--ks-font-size-lg);
         margin-right: var(--ks-spacing-1);
         cursor: default;
+    }
+
+    .trigger-details {
+        max-height: calc(
+            100dvh - 2 * var(--ks-spacing-4) - 2 * var(--kel-popover-padding) -
+            var(--kel-popover-title-font-size) - var(--ks-spacing-3) - 2 * var(--ks-border-width-thin)
+        );
+        overflow-y: auto;
     }
 </style>

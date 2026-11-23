@@ -53,7 +53,7 @@ public class StaticNameResolverProvider extends NameResolverProvider {
         if (!SCHEME.equals(targetUri.getScheme())) {
             return null;
         }
-        return new StaticNameResolver(parseAddresses(targetUri));
+        return new StaticNameResolver(parseAddresses(targetUri), args.getProxyDetector());
     }
 
     /**

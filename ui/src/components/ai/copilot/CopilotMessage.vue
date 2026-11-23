@@ -1,7 +1,10 @@
 <template>
     <div v-if="message.role === 'USER'" class="copilot-msg copilot-msg-user">
         <div class="copilot-bubble copilot-bubble-user">
-            <KsText size="small" class="copilot-bubble-text">{{ message.content }}</KsText>
+            <template v-for="(segment, index) in userSegments" :key="index">
+                <pre v-if="segment.code" class="copilot-user-code" data-test="copilot-user-code">{{ segment.content }}</pre>
+                <KsText v-else size="small" class="copilot-bubble-text">{{ segment.content }}</KsText>
+            </template>
         </div>
     </div>
 
@@ -9,20 +12,24 @@
          The resource id is a monospace code token, matching how ids read elsewhere in the copilot. -->
     <div v-else-if="message.type === 'CONTEXT' && message.context" class="copilot-msg copilot-context-notice" data-test="copilot-context-notice">
         <KsText size="small" class="copilot-context-notice-text">
-            <i18n-t
-                :keypath="message.context.action === 'added' ? 'ai.copilot.contextAdded' : 'ai.copilot.contextRemoved'"
-                scope="global"
-                tag="span"
-            >
+            <i18n-t :keypath="message.context.action === 'added' ? 'ai.copilot.contextAdded' : 'ai.copilot.contextRemoved'" tag="span" scope="global">
                 <template #type>{{ $t(message.context.noun) }}</template>
                 <template #id><code class="copilot-context-id">{{ message.context.id }}</code></template>
             </i18n-t>
         </KsText>
     </div>
 
+    <!-- A display-only line noting the AI provider/model was switched mid-conversation; same quiet
+         centred treatment as the context notice above. -->
+    <div v-else-if="message.type === 'MODEL_CHANGED' && message.modelChange" class="copilot-msg copilot-context-notice" data-test="copilot-model-notice">
+        <KsText size="small" class="copilot-context-notice-text">
+            {{ $t("ai.copilot.modelChanged", {model: message.modelChange.label}) }}
+        </KsText>
+    </div>
+
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
-        <div class="copilot-bubble copilot-bubble-assistant">
-            <KsMarkdown v-if="message.content" :content="message.content" />
+        <div class="copilot-bubble copilot-bubble-assistant" data-test="copilot-assistant-text">
+            <KsMarkdown v-if="message.content" :content="message.content" data-test="copilot-assistant-markdown" />
         </div>
     </div>
 
@@ -72,7 +79,13 @@
     </div>
 
     <div v-else-if="message.type === 'ARTEFACT_DRAFT' && message.draft" class="copilot-msg copilot-msg-assistant">
-        <CopilotArtefactDraft :draft="message.draft" />
+        <CopilotArtefactDraft
+            :draft="message.draft"
+            :dismissed="isDraftDismissed"
+            :applied="isDraftApplied"
+            @dismiss="emit('dismissDraft', $event)"
+            @applied="emit('draftApplied', $event)"
+        />
     </div>
 
     <!-- A past proposal, read-only in the transcript. The still-pending one is rendered by the
@@ -106,7 +119,44 @@
         isPending?: boolean
         /** True when this TOOL_CALL is still executing (no result yet) — drives the running spinner. */
         isRunning?: boolean
+        /** Draft ids the user already declined (CopilotChat.vue) — hides this ARTEFACT_DRAFT's actions. */
+        dismissedDraftIds?: Set<string>
+        /** Draft ids already applied (CopilotChat.vue) — hides this ARTEFACT_DRAFT's actions. */
+        appliedDraftIds?: Set<string>
     }>()
+
+    const emit = defineEmits<{
+        (e: "dismissDraft", draftId: string): void
+        (e: "draftApplied", draftId: string): void
+    }>()
+
+    const isDraftDismissed = computed(
+        () => Boolean(props.message.draft && props.dismissedDraftIds?.has(props.message.draft.draftId)),
+    )
+    const isDraftApplied = computed(
+        () => Boolean(props.message.draft && props.appliedDraftIds?.has(props.message.draft.draftId)),
+    )
+
+
+    // The user prompt rendered literally, split on ``` fences only — full markdown would mangle
+    // pasted code (a YAML `# comment` must not become a heading) (kestra-io/kestra-ee#10420).
+    const userSegments = computed<{code: boolean; content: string}[]>(() => {
+        const content = props.message.content ?? ""
+        const segments: {code: boolean; content: string}[] = []
+        const push = (code: boolean, text: string) => {
+            const value = code ? text : text.trim()
+            if (value.trim()) segments.push({code, content: value})
+        }
+        const fence = /```[^\n]*\n([\s\S]*?)(?:\n?```|$)/g
+        let cursor = 0
+        for (const match of content.matchAll(fence)) {
+            push(false, content.slice(cursor, match.index))
+            push(true, match[1])
+            cursor = (match.index ?? 0) + match[0].length
+        }
+        push(false, content.slice(cursor))
+        return segments
+    })
 
     // Display-only proposal for a historical PROPOSED_ACTION message: the live event carries the full
     // proposal; a reloaded one carries the summary as `content` and the held tool as `toolCall`.
@@ -165,6 +215,15 @@
         justify-content: flex-start;
     }
 
+    /* Assistant-side blocks (text bubble, draft card, past proposal) span the transcript column, so
+       they end on the same right edge as the full-width tool strip instead of a ragged, content-
+       dependent one (kestra-io/kestra#18388). `min-width: 0` keeps a wide code block or long id from
+       stretching the block past the column. */
+    .copilot-msg-assistant > * {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
     /* Context-change notice: a quiet, centred line, not a chat bubble. It's not selectable prose, so
        the pointer stays the default arrow rather than the text I-beam. */
     .copilot-context-notice {
@@ -200,10 +259,31 @@
         background: var(--ks-bg-elevated);
     }
 
+    /* Pasted multi-line text keeps its line breaks and indentation instead of collapsing into
+       one long line (kestra-io/kestra-ee#10420). */
+    .copilot-bubble-text {
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    /* A ``` fenced segment of the user prompt, shown as a literal code block. Wraps instead of
+       scrolling so the whole snippet stays readable inside the narrow bubble. */
+    .copilot-user-code {
+        margin: var(--ks-spacing-1) 0;
+        padding: var(--ks-spacing-2);
+        border: 1px solid var(--ks-border-subtle);
+        border-radius: var(--ks-radius-sm);
+        background: var(--ks-bg-base);
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-sm);
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
     /* Assistant replies get their own left-aligned bubble (surface fill) so they read as
        styled responses rather than plain text. */
     .copilot-bubble-assistant {
-        max-width: 90%;
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         border-radius: var(--ks-radius-lg);
         background: var(--ks-bg-surface);

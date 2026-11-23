@@ -1,5 +1,5 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
-import type {FilterConfiguration, AppliedFilter, FilterGroup, LogicalOperator, SavedFilter, TableOptions, TableProperties} from "./filterTypes"
+import type {FilterConfiguration, FilterKeyConfig, AppliedFilter, FilterGroup, LogicalOperator, SavedFilter, TableOptions, TableProperties} from "./filterTypes"
 
 export interface FilterContext {
     searchQuery: Ref<string>;
@@ -27,7 +27,7 @@ export interface FilterContext {
         tableOptions?: {shown?: boolean};
     }>;
 
-    refreshData: () => void;
+    refreshData: () => void | Promise<unknown>;
     closeEditFilter: () => void;
     removeFilter: (id: string) => void;
     updateChart: (value: boolean) => void;
@@ -49,6 +49,7 @@ export interface FilterContext {
     updateProperties: (columns: string[]) => void;
     deleteSavedFilter: (filter: SavedFilter) => void;
     resetToDefaults: () => void;
+    getDefaultValue: (key: FilterKeyConfig) => AppliedFilter["value"];
     clearFilters: () => void;
     hasPreApplied: (filterKey: string) => boolean;
     getPreApplied: (filterKey: string) => AppliedFilter | undefined;

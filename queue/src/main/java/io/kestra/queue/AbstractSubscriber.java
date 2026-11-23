@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
@@ -139,10 +140,21 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
             try {
                 consumer.accept(events);
             } catch (RuntimeException e) {
+                if (!shouldReplayBatchOneByOne(e)) {
+                    throw e;
+                }
                 // process messages one by one in case of an error, so we log the message that causes the error.
                 messages.forEach(message -> processMessage(message, m -> consumer.accept(List.of(m))));
             }
         });
+    }
+
+    /**
+     * Whether a failed batch is replayed message by message to locate the failing one. A backend returns {@code false}
+     * when the failure invalidates the whole batch, so replaying could only fail again and blame a healthy message.
+     */
+    protected boolean shouldReplayBatchOneByOne(RuntimeException failure) {
+        return true;
     }
 
     /**

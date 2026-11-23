@@ -1,11 +1,10 @@
 <template>
     <FlowRun
-        flow
-        execution
         autoPrefill
         buttonText="replay"
         :buttonIcon="PlayBoxMultiple"
         :replaySubmit="handleReplaySubmit"
+        :replay="{executionId: execution.id, taskRunId: taskRun?.id, revision}"
         buttonTestId="replay-dialog-button"
         @execution-trigger="$emit('executionTrigger')"
     />
@@ -14,13 +13,14 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import moment from "moment-timezone"
     import {useToast} from "../../utils/toast"
     import {useRouter, useRoute} from "vue-router"
     import {inputsToFormData} from "../../utils/submitTask"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {flattenInputs} from "../../utils/inputs"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
+    import {EXECUTION_PARENT_ROUTE} from "./executionTabs"
     import * as ExecutionUtils from "../../utils/executionUtils"
-    import FlowRun from "../../components/flows/FlowRun.vue"
+    import FlowRun, {type ReplaySubmitOptions} from "../../components/flows/FlowRun.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {useClient} from "@kestra-io/kestra-sdk"
 
@@ -43,10 +43,10 @@
 
     const axios = useClient()
 
-    const handleReplaySubmit = async ({inputs, breakpoints}: any) => {
+    const handleReplaySubmit = async ({inputs, breakpoints}: ReplaySubmitOptions) => {
 
-        const formData = inputsToFormData({$moment: moment}, flow.value.inputs, inputs)
-        let response = await executionsStore.replayExecutionWithInputs({
+        const formData = inputsToFormData(flattenInputs(flow.value?.inputs), inputs)
+        const replayed = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,
             revision: props.revision,
@@ -54,14 +54,16 @@
             formData,
         })
 
-        if (response.data.id === props.execution.id) {
-            response = await ExecutionUtils.waitForState(axios, response.data) as any
-        }
+        // A replay that reuses this execution's id only differs by its next state, so wait for it
+        // before navigating - otherwise the page reopens on the state it is already showing.
+        const execution = replayed.id === props.execution.id
+            ? await ExecutionUtils.waitForState(axios, replayed) as Execution
+            : replayed
 
-        const execution = response.data
         executionsStore.execution = execution
+        // The parent route resolves the user's default execution tab; naming a tab here ignored it.
         await router.push({
-            name: "executions/update/gantt",
+            name: EXECUTION_PARENT_ROUTE,
             params: {
                 namespace: execution.namespace,
                 flowId: execution.flowId,

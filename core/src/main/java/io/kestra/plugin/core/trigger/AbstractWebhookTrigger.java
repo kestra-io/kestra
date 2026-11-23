@@ -7,6 +7,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.triggers.AbstractTrigger;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -30,13 +31,13 @@ import reactor.core.publisher.Mono;
 @NoArgsConstructor
 public abstract class AbstractWebhookTrigger extends AbstractTrigger {
     @Size(max = 256)
-    @NotNull
+    @NotBlank
     @Schema(
         title = "The unique key that will be part of the URL.",
         description = "The key is used for generating the webhook URL.\n" +
             "\n" +
             "::alert{type=\"warning\"}\n" +
-            "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n"
+            "Make sure to keep the webhook key secure. It protects your endpoint from bad actors and must be considered as a secret. You can use a random key generator to create the key.\n"
             +
             "::\n"
     )

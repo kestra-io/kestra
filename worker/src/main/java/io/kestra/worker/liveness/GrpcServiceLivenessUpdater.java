@@ -1,17 +1,15 @@
 package io.kestra.worker.liveness;
 
 import java.util.Objects;
-import java.util.UUID;
 
 import io.kestra.controller.grpc.HeartbeatRequest;
 import io.kestra.controller.grpc.HeartbeatResponse;
 import io.kestra.controller.grpc.LivenessControllerServiceGrpc.LivenessControllerServiceBlockingStub;
-import io.kestra.controller.grpc.RequestOrResponseHeader;
 import io.kestra.controller.messages.HeartbeatMessage;
 import io.kestra.controller.messages.HeartbeatMessageReply;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.MessageFormats;
-import io.kestra.core.contexts.KestraContext;
+import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessUpdater;
@@ -73,15 +71,7 @@ public class GrpcServiceLivenessUpdater implements ServiceLivenessUpdater {
         HeartbeatResponse response = client.heartbeat(
             HeartbeatRequest
                 .newBuilder()
-                .setHeader(
-                    RequestOrResponseHeader
-                        .newBuilder()
-                        .setClientId(instance.uid())
-                        .setClientVersion(KestraContext.getContext().getVersion())
-                        .setMessageFormat(MessageFormats.JSON.name())
-                        .setCorrelationId(UUID.randomUUID().toString())
-                        .build()
-                )
+                .setHeader(RequestOrResponseHeaderFactory.create(instance.uid()))
                 .setMessage(MessageFormats.JSON.toByteString(new HeartbeatMessage(instance, newState, reason)))
                 .build()
         );

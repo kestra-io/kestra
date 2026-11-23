@@ -6,31 +6,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.Custom;
+import io.kestra.core.models.assets.External;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.AssetFailureBehavior;
+import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
+import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.runners.AssetEmit;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkingDirFactory;
 import io.kestra.core.runners.WorkerTaskData;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.IdUtils;
@@ -41,7 +54,10 @@ import io.kestra.worker.queues.InMemoryWorkerQueue;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
 
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Min;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -56,6 +72,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @KestraTest
 class WorkerTaskProcessorTest {
+
+    @Inject
+    private WorkingDirFactory workingDirFactory;
 
     @Inject
     private ServerConfig serverConfig;
@@ -83,6 +102,39 @@ class WorkerTaskProcessorTest {
 
     @Inject
     private DispatchQueueInterface<LogEntry> logQueue;
+
+    @Inject
+    private AssetManagerFactory assetManagerFactory;
+
+    @MockBean(AssetManagerFactory.class)
+    AssetManagerFactory assetManagerFactory() {
+        return new RecordingAssetManagerFactory();
+    }
+
+    @BeforeEach
+    void resetAssets() {
+        recorded().declaredEmits.clear();
+        recorded().refusal = null;
+        recorded().lockRefusal = null;
+        recorded().backendUnreachableAtFinish = false;
+        recorded().backendUnreachableAtStart = false;
+        recorded().refuseOnlyAtStart = false;
+        recorded().runtimeRefusal = null;
+    }
+
+    @Test
+    void shouldKeepTheLockedOutputsOfAnAttemptInterruptedByShutdownForItsResubmission() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        processor.signalShutdownInterrupt();
+        processor.stop();
+        WorkerTask workerTask = failingTaskDeclaringAnOutput();
+
+        processor.process(workerTask);
+
+        assertThat(recorded().of(workerTask.getTaskRun().getId())).first().satisfies(declaredEmit -> assertThat(declaredEmit.emit().lock()).isTrue());
+        assertThat(recorded().finished).doesNotContainKey(workerTask.getTaskRun().getId());
+    }
 
     @Test
     void shouldEmitFailedResultWhenTaskFailsOnItsOwnDuringShutdownDrain() throws Exception {
@@ -117,6 +169,308 @@ class WorkerTaskProcessorTest {
         assertThat(results)
             .as("an interrupted task's failure must be deferred for resubmission, not reported")
             .noneMatch(result -> result.getTaskRun().getState().isFailed());
+    }
+
+    @Test
+    void shouldKeepDeclaredInputsWhenOutputsCannotBeRendered() throws Exception {
+        // Given a task whose declared outputs cannot be rendered, while its declared inputs can
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        // When the task runs
+        processor.process(unrenderableOutputsWorkerTask());
+
+        // Then the inputs are still emitted, and the unrendered outputs only show up in the state
+        List<WorkerTaskResult> results = drain(resultQueue);
+        TaskRun taskRun = results.getLast().getTaskRun();
+        assertThat(recorded().of(taskRun.getId()))
+            .as("a failing output must not discard the declared inputs")
+            .allSatisfy(declaredEmit ->
+            {
+                assertThat(declaredEmit.emit().inputs()).extracting(AssetIdentifier::id).containsExactly("declared-input");
+                assertThat(declaredEmit.emit().outputs()).isEmpty();
+            })
+            .isNotEmpty();
+        assertThat(taskRun.getState().getCurrent())
+            .as("a partially emitted declaration is still an emission failure, escalated per assetFailureBehavior")
+            .isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldDefaultInputNamespaceButLeaveOutputNamespaceNullWhenNotDeclared() throws Exception {
+        // Given a task declaring an input and an output that carry no namespace
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        // When the task runs
+        processor.process(namespacelessAssetsWorkerTask());
+
+        // Then the input inherits the flow's namespace, but the output namespace is left null so
+        // Asset#toUpdated can keep the stored asset's own namespace instead of defaulting it here
+        List<WorkerTaskResult> results = drain(resultQueue);
+        TaskRun taskRun = results.getLast().getTaskRun();
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(recorded().of(taskRun.getId()).getLast().emit())
+            .satisfies(emit ->
+            {
+                assertThat(emit.inputs()).extracting(AssetIdentifier::namespace).containsExactly("io.kestra.unit-test");
+                assertThat(emit.outputs()).extracting(Asset::getNamespace).containsExactly((String) null);
+            });
+    }
+
+    @Test
+    void shouldEmitDeclaredAssetsWhenTheTaskStartsAndAgainWhenItEnds() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask());
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        List<RecordingAssetManagerFactory.DeclaredEmit> emits = recorded().of(taskRun.getId());
+        assertThat(emits).hasSize(2);
+
+        RecordingAssetManagerFactory.DeclaredEmit start = emits.getFirst();
+        assertThat(start.state()).isEqualTo(State.Type.RUNNING);
+        assertThat(start.alreadyUsed()).isEmpty();
+        assertThat(start.emit().inputs()).extracting(AssetIdentifier::id).containsExactly("declared-input");
+        assertThat(start.emit().outputs()).extracting(Asset::getId).containsExactly("static-output", "output-from-task-outputs");
+        assertThat(start.emit().outputs().getFirst().getMetadata()).containsEntry("region", "eu").doesNotContainKeys("value", Asset.STATUS_METADATA_KEY);
+        assertThat(start.emit().outputs().getLast().getDisplayName()).isNull();
+        assertThat(start.emit().lock()).isTrue();
+
+        RecordingAssetManagerFactory.DeclaredEmit end = emits.getLast();
+        assertThat(end.state()).isEqualTo(State.Type.SUCCESS);
+        assertThat(end.alreadyUsed()).containsExactlyInAnyOrder("declared-input", "static-output", "output-from-task-outputs");
+        assertThat(end.emit().inputs()).extracting(AssetIdentifier::id).containsExactly("declared-input", "produced-source");
+        assertThat(end.emit().outputs()).extracting(Asset::getId).containsExactly("static-output", "output-from-task-outputs", "produced-host");
+        assertThat(end.emit().outputs().getFirst().getMetadata())
+            .containsEntry("value", "produced")
+            .containsEntry(Asset.STATUS_METADATA_KEY, "active");
+        assertThat(end.emit().lock()).isFalse();
+        assertThat(recorded().finishes.get(taskRun.getId())).satisfies(finish ->
+        {
+            assertThat(finish.state()).isEqualTo(State.Type.SUCCESS);
+            assertThat(finish.startDate()).isEqualTo(start.startDate());
+            assertThat(finish.used().inputs()).extracting(AssetIdentifier::id).containsExactly("declared-input", "produced-source");
+            assertThat(finish.used().outputs()).extracting(Asset::getId).containsExactly("static-output", "output-from-task-outputs", "produced-host");
+        });
+    }
+
+    @Test
+    void shouldSendTheLineageOfTheAssetsAPluginEmittedWhenItsAttemptEnds() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        EmitsWhileRunning task = EmitsWhileRunning.builder()
+            .type(EmitsWhileRunning.class.getName())
+            .id("emitting_task")
+            .assets(new AssetsDeclaration(Property.ofValue(true), null, null, null))
+            .build();
+
+        processor.process(workerTaskFor(task));
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(recorded().finishes.get(taskRun.getId())).satisfies(finish ->
+        {
+            assertThat(finish.state()).isEqualTo(State.Type.SUCCESS);
+            assertThat(finish.used().outputs()).extracting(Asset::getId).containsExactly("emitted");
+        });
+    }
+
+    @Test
+    void shouldSendTheAssetsEmittedForADynamicTaskRunWithTheTaskRunTheExecutorReceives() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkerTask workerTask = workerTaskFor(EmitsForADynamicTaskRun.builder().type(EmitsForADynamicTaskRun.class.getName()).id("dynamic_task").build());
+
+        processor.process(workerTask);
+
+        TaskRun registered = drain(resultQueue).getLast().getDynamicTaskRuns().getFirst();
+        assertThat(recorded().emittedFor.get(workerTask.getTaskRun().getId())).singleElement().satisfies(emittedFor ->
+        {
+            assertThat(emittedFor.dynamicTaskRun().getId()).isEqualTo(registered.getId());
+            assertThat(emittedFor.dynamicTaskRun().getTaskId()).isEqualTo(registered.getTaskId()).hasSizeLessThanOrEqualTo(Task.ID_MAX_LENGTH);
+            assertThat(emittedFor.emit().outputs()).extracting(Asset::getId).containsExactly("model");
+        });
+    }
+
+    @Test
+    void shouldFailATaskThatEmitsAssetsOnBehalfOfATaskRunItDidNotCreate() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkerTask workerTask = workerTaskFor(EmitsForADynamicTaskRun.builder().type(EmitsForADynamicTaskRun.class.getName()).id("dynamic_task").parentTaskRunId("another-task-run").build());
+
+        processor.process(workerTask);
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(recorded().emittedFor).doesNotContainKey(workerTask.getTaskRun().getId());
+    }
+
+    @Test
+    void shouldNotSendTheAssetsEmittedForADynamicTaskRunOfAnAttemptInterruptedForItsResubmission() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        processor.signalShutdownInterrupt();
+        processor.stop();
+        WorkerTask workerTask = workerTaskFor(EmitsForADynamicTaskRun.builder().type(EmitsForADynamicTaskRun.class.getName()).id("dynamic_task").fail(true).build());
+
+        processor.process(workerTask);
+
+        assertThat(recorded().emittedFor).doesNotContainKey(workerTask.getTaskRun().getId());
+    }
+
+    @Test
+    void shouldReleaseTheLockedOutputsWhenAnAttemptFails() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        processor.process(failingTaskDeclaringAnOutput());
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(recorded().finished).containsEntry(taskRun.getId(), State.Type.FAILED);
+    }
+
+    @Test
+    void shouldKeepTheLockedOutputsOfAFailedAttemptThatWillBeRetried() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkerTask workerTask = failingTaskDeclaringAnOutput(Constant.builder().interval(Duration.ofSeconds(1)).maxAttempts(3).build());
+
+        processor.process(workerTask);
+
+        assertThat(recorded().of(workerTask.getTaskRun().getId())).first().satisfies(declaredEmit -> assertThat(declaredEmit.emit().lock()).isTrue());
+        assertThat(recorded().finished).doesNotContainKey(workerTask.getTaskRun().getId());
+    }
+
+    @Test
+    void shouldReleaseTheLockedOutputsWhenTheEmitAtStartThrows() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().backendUnreachableAtStart = true;
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask());
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(recorded().finished).containsKey(taskRun.getId());
+    }
+
+    @Test
+    void shouldFailTheTaskWhenItsLockedOutputsCouldNotBeReleased() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().backendUnreachableAtFinish = true;
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask(AssetFailureBehavior.IGNORE));
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldFailTheTaskWithoutRunningItWhenAnotherOwnerLockedItsOutputsAndBehaviorIsFail() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().lockRefusal = "static-output: the asset is locked by another execution";
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask(AssetFailureBehavior.FAIL));
+
+        WorkerTaskResult result = drain(resultQueue).getLast();
+        assertThat(result.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(result.getOutputs()).isNullOrEmpty();
+        assertThat(recorded().of(result.getTaskRun().getId())).singleElement().satisfies(declaredEmit -> assertThat(declaredEmit.emit().lock()).isTrue());
+        assertThat(recorded().finished).containsEntry(result.getTaskRun().getId(), State.Type.FAILED);
+    }
+
+    @Test
+    void shouldRunTheTaskAndApplyAssetFailureBehaviorWhenAnotherOwnerLockedItsOutputs() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().lockRefusal = "static-output: the asset is locked by another execution";
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask(AssetFailureBehavior.WARN));
+
+        WorkerTaskResult result = drain(resultQueue).getLast();
+        assertThat(result.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(result.getOutputs()).isNotEmpty();
+    }
+
+    @Test
+    void shouldReleaseTheAssetsAPluginLockedWhenItsAttemptEnds() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        LocksAnAsset task = LocksAnAsset.builder()
+            .type(LocksAnAsset.class.getName())
+            .id("locking_plugin")
+            .assets(new AssetsDeclaration(Property.ofValue(true), null, null, null))
+            .build();
+
+        processor.process(workerTaskFor(task));
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(recorded().finished).containsEntry(taskRun.getId(), State.Type.SUCCESS);
+    }
+
+    @Test
+    void shouldNeitherWriteNorLockAnythingForATaskWithNoAssetsBlock() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        processor.process(failingWorkerTask());
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(recorded().of(taskRun.getId())).isEmpty();
+        assertThat(recorded().finished).doesNotContainKey(taskRun.getId());
+    }
+
+    @Test
+    void shouldApplyAssetFailureBehaviorWhenAnEmitIsRefused() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().refusal = "static-output: the asset is locked by another execution";
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask());
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldApplyAssetFailureBehaviorWhenOnlyTheEmitAtStartIsRefused() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().refusal = "static-output: the asset is locked by another execution";
+        recorded().refuseOnlyAtStart = true;
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask());
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldApplyAssetFailureBehaviorWhenAnAssetEmittedWhileRunningIsRefused() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().runtimeRefusal = "emitted: the asset is locked by another execution";
+        EmitsWhileRunning task = EmitsWhileRunning.builder()
+            .type(EmitsWhileRunning.class.getName())
+            .id("emitting_task")
+            .assets(new AssetsDeclaration(Property.ofValue(true), null, null, null))
+            .build();
+
+        processor.process(workerTaskFor(task));
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldGiveTheAssetsTheExecutionKindOfTheTaskRunWhenItIsATest() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkerTask workerTask = outputsReferencingTaskOutputsWorkerTask();
+        workerTask.setExecutionKind(ExecutionKind.TEST);
+
+        processor.process(workerTask);
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(recorded().of(taskRun.getId())).isNotEmpty().allSatisfy(declaredEmit -> assertThat(declaredEmit.executionKind()).isEqualTo(ExecutionKind.TEST));
     }
 
     @Test
@@ -235,6 +589,141 @@ class WorkerTaskProcessorTest {
         assertThat(escalationLog.getMessage()).contains("SUCCESS").contains("WARNING").contains("WARN");
     }
 
+    // kestra-ee#10347: a declared asset with no id fails only its own task, outright rather than per
+    // assetFailureBehavior, since a malformed declaration cannot succeed on a retry or a later execution.
+    @Test
+    void shouldFailTaskWhenAssetOutputHasNoId() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetOutputMissingIdWorkerTask(AssetFailureBehavior.WARN));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(recorded().of(taskRunId)).isEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.outputs[0].id").contains("must not be blank");
+    }
+
+    @Test
+    void shouldFailTaskWhenAssetOutputHasMalformedTtl() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetOutputMalformedTtlWorkerTask());
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(recorded().of(taskRunId)).isEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.outputs[0].ttl").contains("must be a UTC instant");
+    }
+
+    @Test
+    void shouldFailTaskWhenAssetInputHasNoId() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetInputMissingIdWorkerTask(AssetFailureBehavior.WARN));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(recorded().of(taskRunId)).isEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.inputs[0].id").contains("must not be blank");
+    }
+
+    @Test
+    void shouldFailTaskWhenAssetOutputHasNoIdEvenWhenBehaviorIsIgnore() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        // IGNORE would otherwise silently drop a soft asset-emission failure (see
+        // shouldKeepSuccessWhenAssetEmissionFailsAndBehaviorIsIgnore); a malformed declaration
+        // must not be swallowed the same way — this is the exact regression the issue reports.
+        processor.process(assetOutputMissingIdWorkerTask(AssetFailureBehavior.IGNORE));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldNotRewriteAKilledTaskWhenItsAssetDeclarationIsInvalid() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        // pre-kill so the callable reports KILLED; the asset block still runs on the way out
+        processor.kill();
+
+        processor.process(assetOutputMissingIdWorkerTask(AssetFailureBehavior.WARN));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+    }
+
+    // validate() re-checks the whole task bean, so an unrelated invalid field throws from the asset
+    // render too. That is not a malformed declaration and must keep going through assetFailureBehavior.
+    @Test
+    void shouldNotReportAnUnrelatedTaskViolationAsAnInvalidAssetDeclaration() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        processor.process(unrelatedViolationWithValidAssetsWorkerTask());
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    // The tests above populate Property.value eagerly, so the violation is visible to the first
+    // whole-bean validate. A flow's YAML leaves it null until rendered, so the violation only surfaces
+    // mid-attempt, after the task body succeeded — the path a user actually hits.
+    @Test
+    void shouldFailTaskWhenAssetDeclarationIsOnlyInvalidOnceRendered() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetInputMissingIdFromExpressionWorkerTask(AssetFailureBehavior.IGNORE));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(recorded().of(taskRunId)).isEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.inputs[0].id").contains("must not be blank");
+    }
+
+    @Test
+    void shouldFailTaskWhenAssetOutputDeclarationIsOnlyInvalidOnceRendered() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetOutputMissingIdFromExpressionWorkerTask(AssetFailureBehavior.IGNORE));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(recorded().of(taskRunId)).isEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.outputs[0].id").contains("must not be blank");
+    }
+
     private WorkerTaskProcessor newProcessor(WorkerQueue<WorkerTaskResult> resultQueue) {
         return new WorkerTaskProcessor(
             "test-worker",
@@ -247,7 +736,8 @@ class WorkerTaskProcessorTest {
             runContextLoggerFactory,
             resultQueue,
             new InMemoryWorkerQueue<>(100),
-            executionKilledManager
+            executionKilledManager,
+            workingDirFactory
         );
     }
 
@@ -273,6 +763,90 @@ class WorkerTaskProcessorTest {
             .build();
     }
 
+    private RecordingAssetManagerFactory recorded() {
+        return (RecordingAssetManagerFactory) assetManagerFactory;
+    }
+
+    private WorkerTask outputsReferencingTaskOutputsWorkerTask() {
+        return outputsReferencingTaskOutputsWorkerTask(AssetFailureBehavior.WARN);
+    }
+
+    private WorkerTask outputsReferencingTaskOutputsWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        ProducesValue task = ProducesValue.builder()
+            .type(ProducesValue.class.getName())
+            .id("asset_task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    declaredInputs(
+                        List.of(
+                            Map.of("id", "declared-input", "type", "MY_OWN_ASSET_TYPE"),
+                            Map.of("id", "{{ outputs.asset_task.value }}-source", "type", "MY_OWN_ASSET_TYPE")
+                        )
+                    ),
+                    declaredOutputs(
+                        List.of(
+                            Map.of(
+                                "id", "static-output", "type", "custom",
+                                "metadata", Map.of("region", "eu", "value", "{{ outputs.asset_task.value }}", Asset.STATUS_METADATA_KEY, "active")
+                            ),
+                            Map.of("id", "output-from-task-outputs", "type", "custom", "displayName", "{{ outputs.asset_task.value }}"),
+                            Map.of("id", "{{ outputs.asset_task.value }}-host", "type", "custom")
+                        )
+                    ),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Property<List<AssetIdentifier>> declaredInputs(List<Map<String, Object>> inputs) {
+        return JacksonMapper.ofJson().convertValue(inputs, Property.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Property<List<Asset>> declaredOutputs(List<Map<String, Object>> outputs) {
+        return JacksonMapper.ofJson().convertValue(outputs, Property.class);
+    }
+
+    private WorkerTask unrenderableOutputsWorkerTask() {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, "io.kestra.unit-test", "declared-input", "MY_OWN_ASSET_TYPE"))),
+                    // rendered value is a plain string, not JSON, so binding it as List<Asset> fails
+                    Property.ofExpression("{{ 'not-json' }}"),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask namespacelessAssetsWorkerTask() {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, null, "declared-input", "MY_OWN_ASSET_TYPE"))),
+                    Property.ofValue(List.<Asset> of(External.builder().id("declared-output").build())),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
     private WorkerTask assetEmissionFailureWorkerTask(AssetFailureBehavior assetFailureBehavior) {
         return assetEmissionFailureWorkerTask(assetFailureBehavior, false, false);
     }
@@ -290,6 +864,111 @@ class WorkerTaskProcessorTest {
         return workerTaskFor(task);
     }
 
+    private WorkerTask assetOutputMissingIdWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-output-missing-id-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(List.of(Custom.builder().namespace("io.kestra.tests").type("custom").build())),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetOutputMalformedTtlWorkerTask() {
+        Custom asset = Custom.builder().id("asset-with-bad-ttl").namespace("io.kestra.tests").type("custom").build();
+        asset.setTtl("2026-09-15");
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-output-malformed-ttl-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(List.of(asset)),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetInputMissingIdFromExpressionWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-input-missing-id-expression-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofExpression("{{ '[{\"namespace\":\"io.kestra.tests\",\"type\":\"custom\"}]' }}"),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetOutputMissingIdFromExpressionWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-output-missing-id-expression-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of()),
+                    Property.ofExpression("{{ '[{\"type\":\"io.kestra.core.models.assets.Custom\",\"namespace\":\"io.kestra.tests\"}]' }}"),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetInputMissingIdWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-input-missing-id-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, "io.kestra.tests", null, "custom"))),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask unrelatedViolationWithValidAssetsWorkerTask() {
+        UnrelatedViolation task = UnrelatedViolation.builder()
+            .type(UnrelatedViolation.class.getName())
+            .id("unrelated-violation-task")
+            .count(Property.ofExpression("{{ 5 }}"))
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
     private WorkerTask taskFailsAndAssetEmissionFailsWorkerTask(AssetFailureBehavior assetFailureBehavior) {
         return taskFailsAndAssetEmissionFailsWorkerTask(assetFailureBehavior, false);
     }
@@ -301,6 +980,21 @@ class WorkerTaskProcessorTest {
             .allowFailure(allowFailure)
             // rendered value is a plain string, not JSON, so binding it as List<AssetIdentifier> fails
             .assets(new AssetsDeclaration(Property.ofValue(false), Property.ofExpression("{{ 'not-json' }}"), Property.ofValue(List.of()), Property.ofValue(assetFailureBehavior)))
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask failingTaskDeclaringAnOutput() {
+        return failingTaskDeclaringAnOutput(null);
+    }
+
+    private WorkerTask failingTaskDeclaringAnOutput(AbstractRetry retry) {
+        AlwaysFail task = AlwaysFail.builder()
+            .type(AlwaysFail.class.getName())
+            .id("failing-output-task")
+            .retry(retry)
+            .assets(new AssetsDeclaration(Property.ofValue(false), null, declaredOutputs(List.of(Map.of("id", "declared-output", "type", "custom"))), null))
             .build();
 
         return workerTaskFor(task);
@@ -347,9 +1041,8 @@ class WorkerTaskProcessorTest {
     }
 
     /**
-     * A task that succeeds on its own but whose asset declaration fails to render, modeling a task
-     * emitting a malformed asset. Constructed and executed directly by the processor, so no plugin
-     * registration is needed.
+     * A task that succeeds on its own, so only its asset declaration decides the outcome. Constructed and
+     * executed directly by the processor, so no plugin registration is needed.
      */
     @SuperBuilder
     @Getter
@@ -360,6 +1053,98 @@ class WorkerTaskProcessorTest {
             // null, not new VoidOutput(): the empty bean has no properties and Jackson's
             // FAIL_ON_EMPTY_BEANS would blow up when the processor serializes the output to a map
             return null;
+        }
+    }
+
+    /**
+     * A task that succeeds but leaves an invalid value on an unrelated property, by rendering it without
+     * going through the validating {@code RunContextProperty}. The asset render's whole-bean validate
+     * then reports that violation, which is not a malformed asset declaration.
+     */
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class UnrelatedViolation extends Task implements RunnableTask<VoidOutput> {
+        private Property<@Min(10) Integer> count;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            Property.as(this.count, runContext, Integer.class);
+            return null;
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class LocksAnAsset extends Task implements RunnableTask<VoidOutput> {
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            Asset asset = JacksonMapper.ofJson().convertValue(Map.of("id", "plugin-locked", "type", "custom"), Asset.class);
+            runContext.assets().emit(new AssetEmit(List.of(), List.of(asset), true));
+            return null;
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class ProducesValue extends Task implements RunnableTask<ProducesValue.ValueOutput> {
+        @Override
+        public ValueOutput run(RunContext runContext) {
+            return ValueOutput.builder().value("produced").build();
+        }
+
+        @Builder
+        @Getter
+        public static class ValueOutput implements Output {
+            private final String value;
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class EmitsWhileRunning extends Task implements RunnableTask<VoidOutput> {
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            runContext.assets().emit(new AssetEmit(List.of(), List.of(Custom.builder().id("emitted").type("custom").build())));
+            return null;
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class EmitsForADynamicTaskRun extends Task implements RunnableTask<VoidOutput> {
+        @Builder.Default
+        private boolean fail = false;
+
+        private String parentTaskRunId;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            String parentTaskRunId = this.parentTaskRunId != null ? this.parentTaskRunId : runContext.render("{{ taskrun.id }}");
+            TaskRun model = dynamicTaskRun(parentTaskRunId, "model." + "x".repeat(Task.ID_MAX_LENGTH));
+            runContext.assets().emitFor(model, new AssetEmit(List.of(), List.of(Custom.builder().id("model").type("custom").build())));
+            runContext.dynamicWorkerResult(List.of(WorkerTaskResult.builder().taskRun(model).build()));
+            runContext.assets().emitFor(dynamicTaskRun(parentTaskRunId, "never.registered"), new AssetEmit(List.of(), List.of(Custom.builder().id("ghost").type("custom").build())));
+            if (fail) {
+                throw new IllegalStateException("The task failed.");
+            }
+            return null;
+        }
+
+        private static TaskRun dynamicTaskRun(String parentTaskRunId, String taskId) {
+            return TaskRun.builder()
+                .id(IdUtils.create())
+                .namespace("io.kestra.unit-test")
+                .flowId("flow")
+                .executionId("execution")
+                .taskId(taskId)
+                .parentTaskRunId(parentTaskRunId)
+                .state(new State().withState(State.Type.SUCCESS))
+                .build();
         }
     }
 }

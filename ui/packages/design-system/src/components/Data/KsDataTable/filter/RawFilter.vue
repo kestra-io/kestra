@@ -74,7 +74,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .raw-filter {
     display: flex;
     flex-direction: column;
@@ -99,7 +99,7 @@
     box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
     &:focus-within {
-        border-color: var(--ks-content-link, var(--ks-text-link));
+        border-color: var(--ks-text-link);
     }
 }
 
@@ -115,7 +115,9 @@
     color: var(--ks-text-primary);
 
     &::placeholder {
-        color: var(--ks-text-secondary);
+        color: var(--ks-placeholder-color);
+        font-size: var(--ks-placeholder-font-size);
+        font-weight: var(--ks-placeholder-font-weight);
     }
 
     &[readonly] {
@@ -130,13 +132,13 @@
     flex-shrink: 0;
     color: var(--ks-text-dim);
 
-    :deep(svg) {
+    & :deep(svg) {
         font-size: var(--ks-font-size-base);
     }
 }
 
 .raw-apply:not(:disabled):hover {
-    color: var(--ks-content-success, var(--ks-status-success));
+    color: var(--ks-status-success);
 }
 
 .raw-clear:not(:disabled):hover {

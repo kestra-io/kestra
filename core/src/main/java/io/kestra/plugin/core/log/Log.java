@@ -84,7 +84,6 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
     @Builder.Default
     private Property<Level> level = Property.ofValue(Level.INFO);
 
-    @SuppressWarnings("unchecked")
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
@@ -95,11 +94,9 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
             String render = runContext.render(stringValue);
             this.log(logger, renderedLevel, render);
         } else if (this.message instanceof Collection<?> collectionValue) {
-            Collection<String> messages = (Collection<String>) collectionValue;
-            messages.forEach(throwConsumer(message ->
+            collectionValue.forEach(throwConsumer(message ->
             {
-                String render;
-                render = runContext.render(message);
+                String render = runContext.render(String.valueOf(message));
                 this.log(logger, renderedLevel, render);
             }));
         } else {

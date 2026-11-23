@@ -13,7 +13,7 @@
                     :icon="Plus"
                     @click="createToolFlow"
                 >
-                    {{ t("mcp.tools.create_tool_flow") }}
+                    {{ $t("mcp.tools.create_tool_flow") }}
                 </KsButton>
             </template>
         </Empty>
@@ -23,9 +23,10 @@
             fitHeight
             :data="filteredTools"
             :total="filteredTools.length"
+            :pageSizeOptions="[filteredTools.length || 1]"
             :loading="loading"
             :rowKey="rowKey"
-            :noDataText="t('mcp.tools.no_tools')"
+            :noDataText="$t('mcp.tools.no_tools')"
         >
             <template #navbar>
                 <KSFilter
@@ -50,7 +51,7 @@
 
             <KsTableColumn
                 prop="toolName"
-                :label="t('mcp.tools.tool_name')"
+                :label="$t('mcp.tools.tool_name')"
             >
                 <template #default="scope">
                     <KsId :value="(scope.row as McpTool).toolName" :shrink="false" />
@@ -85,7 +86,7 @@
                                 :key="ann"
                                 class="annotation"
                             >
-                                {{ t(`mcp.tools.${ann}`) }}
+                                {{ $t(`mcp.tools.${ann}`) }}
                             </KsTag>
                         </div>
                     </template>
@@ -110,7 +111,7 @@
 
             <KsTableColumn
                 prop="state"
-                :label="t('mcp.tools.state')"
+                :label="$t('mcp.tools.state')"
                 width="120"
             >
                 <template #default="scope">
@@ -130,8 +131,8 @@
 
     import {useMcpStore, type McpTool, type McpToolAnnotations} from "../../../../stores/mcp"
 
-    import {useMcpToolsFilter} from "../../../filter/configurations"
-    import {type ColumnConfig, useTableColumns} from "../../../../composables/useTableColumns"
+    import {useMcpToolsFilter} from "../../../filter/configurations/mcpToolsFilter"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useToolFlowCreation} from "../useToolFlowCreation"
 
     import {KsButton, KsDataTable, KsFilter as KSFilter, KsId, KsTableColumn, KsTag, decodeSearchParams} from "@kestra-io/design-system"
@@ -294,7 +295,7 @@
     watch(() => route.params.id, load)
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .mcp-tools {
         display: flex;
         flex-direction: column;

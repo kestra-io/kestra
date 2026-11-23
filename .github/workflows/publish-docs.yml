@@ -1,0 +1,18 @@
+name: Publish docs
+
+on:
+  push:
+    branches: [develop]
+    paths: ['docs/**']
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: kestra-io/actions/composite/publish-docs@main
+        with:
+          notion-token: ${{ secrets.NOTION_DOCS_TOKEN }}
+          notion-parent-page-id: ${{ vars.NOTION_DOCS_PARENT_PAGE_ID }}

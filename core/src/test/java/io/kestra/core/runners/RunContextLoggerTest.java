@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -110,6 +111,37 @@ class RunContextLoggerTest {
     }
 
     @Test
+    void shouldLogCauseClassNameWhenCauseHasNoMessage() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            false
+        );
+
+        ConnectException connectException = new ConnectException();
+        connectException.initCause(new IllegalStateException("Connection refused by localhost:1"));
+        RuntimeException exception = new RuntimeException(connectException);
+
+        runContextLogger.logger().error(exception.getMessage(), exception);
+
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 3);
+        assertThat(matchingLog)
+            .filteredOn(logEntry -> logEntry.getLevel().equals(Level.ERROR))
+            .extracting(LogEntry::getMessage)
+            .containsExactly(
+                "java.net.ConnectException",
+                "java.net.ConnectException\nConnection refused by localhost:1"
+            );
+    }
+
+    @Test
     void secrets() {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         List<LogEntry> matchingLog;
@@ -132,7 +164,7 @@ class RunContextLoggerTest {
         runContextLogger.usedSecret(null);
 
         Logger logger = runContextLogger.logger();
-        // exception are not handle and secret will not be replaced
+        // the attached exception's own message/stacktrace is logged as a separate entry, and is masked too
         logger.debug("test {} test", "john@doe.com", new Exception("exception from doe.com"));
         logger.info("test {} myawesomepassmyawesomepass myawesomepass myawesomepassmyawesomepass", Base64.getEncoder().encodeToString("myawesomepass".getBytes(StandardCharsets.UTF_8)));
         logger.warn("test {}", URI.create("http://it-s.secret"));
@@ -140,7 +172,12 @@ class RunContextLoggerTest {
         // the 3 logs will create 4 log entries as exceptions stacktraces are logged separately at the TRACE level
         matchingLog = TestsUtils.awaitLogs(logs, 4);
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG)).findFirst().orElseThrow().getMessage()).isEqualTo("test john@****** test");
-        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG)).anyMatch(msg -> msg.getMessage().contains("exception from doe.com")));
+        LogEntry stackTraceEntry = matchingLog.stream()
+            .filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG) && logEntry.getMessage().contains("java.lang.Exception"))
+            .findFirst()
+            .orElseThrow();
+        assertThat(stackTraceEntry.getMessage()).doesNotContain("doe.com");
+        assertThat(stackTraceEntry.getMessage()).contains("exception from ******");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElseThrow().getMessage())
             .isEqualTo("test ****** ************ ****** ************");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.WARN)).findFirst().orElseThrow().getMessage()).isEqualTo("test ******");
@@ -169,12 +206,13 @@ class RunContextLoggerTest {
             false
         );
 
-        // When the outputs are decrypted while building the run variables
-        new RunVariables.DefaultBuilder(Optional.of(secretKey))
-            .withExecution(execution)
-            .withOutputs(outputs)
-            .withDecryptVariables(true)
-            .build(runContextLogger, PropertyContext.create(renderer));
+        // When the outputs are decrypted as the run context reads them
+        new DefaultRunContext.Builder()
+            .withSecretKey(Optional.of(secretKey))
+            .withLogger(runContextLogger)
+            .withVariables(Map.of("outputs", outputs))
+            .build()
+            .getVariables();
 
         // Then the decrypted plaintext is registered for log masking, exactly like a SECRET input
         runContextLogger.logger().info("the secret is {}", "my-super-secret-value");
@@ -385,6 +423,29 @@ class RunContextLoggerTest {
         assertThat(fileContent).contains("to file ******");
         // file-only: ContextAppender is not attached, so nothing reaches the inline queue
         assertThat(logs).isEmpty();
+    }
+
+    @Test
+    void shouldMaskThrowableWhenLoggingToFile() throws Exception {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            true
+        );
+        String secret = "super-secret-value";
+        runContextLogger.usedSecret(secret);
+
+        runContextLogger.logger().error("Task failure {}", secret, new Exception("Task failure %s".formatted(secret)));
+
+        runContextLogger.closeLogFile();
+        String fileContent = java.nio.file.Files.readString(runContextLogger.getLogFile().toPath());
+        assertThat(fileContent)
+            .contains("Task failure ******")
+            .contains("java.lang.Exception: Task failure ******")
+            .doesNotContain(secret);
     }
 
     @Test

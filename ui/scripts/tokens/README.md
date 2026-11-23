@@ -1,0 +1,92 @@
+# `--ks-*` token rule
+
+An undeclared `var(--ks-…)` with no fallback does not fall back to anything: the whole declaration
+is invalid at computed-value time, so the property is dropped and the element inherits instead.
+Nothing is logged, and the page keeps rendering. A misspelled or retired token therefore looks fine
+until someone measures the computed style.
+
+That is how the interval filter's **Apply to** row shipped with no visible selection
+(kestra-io/kestra#18777): `.date-filter-option.active` painted with `--ks-primary` and
+`--ks-background-card`, neither of which has ever been declared, so the selected option computed
+identically to the unselected ones.
+
+The rule reports those as you type. There is no separate command to remember.
+
+## Where it runs
+
+| | linter | covers |
+|---|---|---|
+| `eslintPlugin.mjs` | eslint + `@eslint/css`, `kestra-tokens/no-undeclared-css-token` | `.css`, plain `<style>` blocks and static `style="…"` attributes in `.vue` |
+| `eslintPlugin.mjs` | eslint, `kestra-tokens/no-undeclared-ks-token` | `cssVar("--ks-…")` and `var(--ks-…)` written inside a string |
+| `stylelintPlugin.mjs` | stylelint, `ks/no-undeclared-custom-property` | `.scss` and `<style lang="scss">`, which `@eslint/css` cannot parse, plus plain CSS until CI fails on eslint errors (kestra-io/actions#342) |
+
+All three read the same `knownTokens.mjs`, so they agree on what exists and phrase the report the same
+way. `npm run lint` and `npm run test:lint` run them all. `../css-lint/vueStyleProcessor.mjs` hands
+eslint one copy of each SFC per plain `<style>` block or `style` attribute, everything else blanked,
+so each is its own stylesheet and positions need no mapping.
+Stylelint goes once the design system's SCSS does.
+
+`stylelint.config.mjs` and a `ks/custom-property-pattern-usage` plugin existed here from #6645 until
+#19084 deleted them, dormant the whole time because stylelint itself was never a dependency. This
+brings back a config that only carries the token rule, so the linter reports one thing and reports it
+for a reason; the 269 hex colours and 158 non-`--ks` properties the old config would have flagged are
+real debt, but enforcing them is a separate job with a separate cleanup.
+
+## In your editor
+
+ESLint covers `.vue` and `.js`/`.ts` with no setting. For `.css`, add it to the ESLint extension's
+`"eslint.validate"` list. Only design-system SCSS still needs the
+[Stylelint extension](https://marketplace.visualstudio.com/items?itemName=stylelint.vscode-stylelint),
+with `"stylelint.validate": ["scss", "vue"]`.
+
+WebStorm ships stylelint support: enable it under Languages & Frameworks → Style Sheets → Stylelint.
+
+## What counts as declared
+
+- every name in `packages/design-system/tests/storybook/Basic/Color-variables.json`, which
+  `packages/design-system/scripts/generate-palette.mjs` writes from the Figma palette and which is
+  the source of truth for colour
+- every `--ks-*` declared anywhere under `src/` and `packages/`: plain CSS, SCSS's `#{--name}:` form,
+  a quoted key in a JS style object, a runtime `element.style.setProperty("--name", …)`, or an
+  `@property` registration
+- everything the file being linted declares itself, read from the buffer rather than from disk, so
+  a token you have just typed is not reported while the file is unsaved
+
+Names built by interpolation (`var(--ks-status-#{$state})`) are skipped, since their value is only
+known at runtime. A declaration is registered whatever its case, since a usage is reported whatever
+its case; the comparison itself stays exact, so `--ks-Artwork-fill` and `--ks-artwork-fill` remain
+two different properties.
+
+Most of what is known comes from that scan rather than from the palette, so the scan needs a
+**complete** checkout: a sparse or partial `ui/src` and `ui/packages` under-reports what is declared
+and turns live tokens into findings.
+
+EE sets `KS_TOKEN_ROOTS=/path/to/ui-ee/src` in `ui-ee/eslint.config.js` so its own declarations
+count too — `--ks-sidebar-item-title-color`, for one. That config spreads this one, so every rule
+here applies there.
+
+## Known gaps
+
+- `var(--ks-…)` inside a template expression (`:style="{color: 'var(--ks-…)'}"`) is seen by neither
+  rule: the CSS rules read `<style>` blocks, and the script rule walks the script, not the
+  `vue-eslint-parser` template body. A static `style="…"` attribute is covered, through the
+  processor. Count the gap with `grep` over `.vue` template bodies rather than trusting a
+  figure here; every one of them resolves today.
+- `.jsx` and `.tsx` are covered by the script rule only, since a style written as a JSX attribute
+  is not a stylesheet.
+- `tests/` is linted but is not a declaration root, so a token declared in one test file and used in
+  another is reported. That is deliberate: this rule's own fixtures declare names no stylesheet has,
+  and a root covering them would let a fixture vouch for itself.
+- A private hook written as `var(--ks-x, 0px)` with no declaration anywhere is a finding, not an
+  idiom. Register it with `@property` instead, which the rule reads and which keeps the value
+  inheritable — `KsDataTable`'s navbar padding hook is the worked example.
+
+## Adding a token
+
+Do not declare a colour by hand. The `--ks-*` colour tokens are generated from Figma, and a
+hand-written declaration is disconnected from the theme it is supposed to follow: it will not change
+when the palette does, and it will not have a dark-mode counterpart. Add it in Figma and regenerate,
+or use a token that already exists.
+
+`RETIRED` in `knownTokens.mjs` maps names removed by a rename onto their replacements. Add an entry
+whenever a token is renamed, so the rule can propose the replacement instead of the nearest string.

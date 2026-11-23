@@ -1,10 +1,14 @@
 package io.kestra.core.validations.extractors;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import io.kestra.core.models.property.Property;
+import io.kestra.core.serializers.JacksonMapper;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.validation.validator.Validator;
@@ -31,6 +35,69 @@ public class PropertyValueExtractorTest {
         assertThat(violations.size()).isEqualTo(1);
         ConstraintViolation<DynamicPropertyDto> violation = violations.stream().findFirst().get();
         assertThat(violation.getMessage()).isEqualTo("must be greater than or equal to 10");
+    }
+
+    // @Valid only cascades into a Property's list elements when it is on the type argument
+    // (Property<List<@Valid X>>), never when it is on the field.
+    @Test
+    public void should_cascade_valid_into_property_list_elements() {
+        DynamicPropertyDto blank = new DynamicPropertyDto(
+            Property.ofValue(20), Property.ofValue("Test"), Property.ofValue(List.of(new NestedDto(" ")))
+        );
+        Set<ConstraintViolation<DynamicPropertyDto>> violations = validator.validate(blank);
+        assertThat(violations).isNotEmpty();
+        assertThat(violations.stream().findFirst().get().getPropertyPath().toString()).contains("list").contains("id");
+
+        DynamicPropertyDto valid = new DynamicPropertyDto(
+            Property.ofValue(20), Property.ofValue("Test"), Property.ofValue(List.of(new NestedDto("ok")))
+        );
+        assertThat(validator.validate(valid)).isEmpty();
+    }
+
+    @Test
+    public void should_not_cascade_valid_into_an_unrendered_expression() {
+        DynamicPropertyDto dto = new DynamicPropertyDto(
+            Property.ofValue(20), Property.ofValue("Test"), Property.ofExpression("{{ x }}")
+        );
+
+        assertThat(validator.validate(dto)).isEmpty();
+    }
+
+    // The state a saved flow is validated in: the deserializer keeps the literal as the expression
+    // and leaves the value unset, so a constraint that rejects null failed on a value the user had
+    // written. `ofExpression` cannot stand in here -- it requires a Pebble expression.
+    @Test
+    public void should_not_reject_an_unrendered_value_as_blank() throws Exception {
+        Property<String> parsed = JacksonMapper.ofYaml()
+            .readValue("Text to be reverted", new TypeReference<Property<String>>() {});
+
+        assertThat(validator.validate(new NotBlankPropertyDto(parsed))).isEmpty();
+    }
+
+    @Test
+    public void should_reject_a_blank_literal() throws Exception {
+        Property<String> parsed = JacksonMapper.ofYaml().readValue("\"\"", new TypeReference<Property<String>>() {});
+
+        Set<ConstraintViolation<NotBlankPropertyDto>> violations = validator.validate(new NotBlankPropertyDto(parsed));
+        assertThat(violations).extracting(ConstraintViolation::getMessage).containsExactly("must not be blank");
+    }
+
+    // Converted to Integer as rendering would, rather than reaching @Min as a raw String.
+    @Test
+    public void should_validate_a_literal_as_its_declared_type() throws Exception {
+        Property<Integer> tooSmall = JacksonMapper.ofYaml().readValue("5", new TypeReference<Property<Integer>>() {});
+        Set<ConstraintViolation<DynamicPropertyDto>> violations = validator.validate(new DynamicPropertyDto(tooSmall, Property.ofValue("Test")));
+        assertThat(violations).extracting(ConstraintViolation::getMessage).containsExactly("must be greater than or equal to 10");
+
+        Property<Integer> valid = JacksonMapper.ofYaml().readValue("20", new TypeReference<Property<Integer>>() {});
+        assertThat(validator.validate(new DynamicPropertyDto(valid, Property.ofValue("Test")))).isEmpty();
+    }
+
+    @Test
+    public void should_not_validate_a_pebble_expression_as_a_literal() throws Exception {
+        Property<String> pebble = JacksonMapper.ofYaml().readValue("\"{{ inputs.code }}\"", new TypeReference<Property<String>>() {});
+
+        assertThat(validator.validate(new ShortCodePropertyDto(pebble))).isEmpty();
     }
 
 }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
@@ -21,6 +22,12 @@ import io.kestra.core.models.dashboards.filters.NotIn;
 import io.kestra.core.models.dashboards.filters.Or;
 
 public interface IExecutions extends IData<IExecutions.Fields> {
+    Set<Fields> DURATION_FIELDS = Set.of(Fields.DURATION);
+
+    @Override
+    default Set<Fields> durationFields() {
+        return DURATION_FIELDS;
+    }
 
     default List<AbstractFilter<Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<Fields>> where) {
         List<AbstractFilter<Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();
@@ -28,7 +35,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         if (filters != null) {
             List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
             if (!namespaceFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.NAMESPACE));
                 namespaceFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.NAMESPACE, f.value()));
@@ -37,7 +43,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
 
             List<QueryFilter> labelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LABELS)).toList();
             if (!labelFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LABELS));
                 labelFilters.forEach(f ->
                 {
                     if (f.value() instanceof Map<?, ?> m) {
@@ -59,16 +64,22 @@ public interface IExecutions extends IData<IExecutions.Fields> {
 
             List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
             if (!flowFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
                 flowFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
                 });
             }
 
+            List<QueryFilter> kindFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.KIND)).toList();
+            if (!kindFilters.isEmpty()) {
+                kindFilters.forEach(f ->
+                {
+                    updatedWhere.add(f.toDashboardFilterBuilder(Fields.KIND, kindFilterValue(f.value())));
+                });
+            }
+
             List<QueryFilter> stateFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
             if (!stateFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.STATE));
                 stateFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.STATE, f.value()));
@@ -77,7 +88,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
 
             List<QueryFilter> scopeFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.SCOPE)).toList();
             if (!scopeFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.SCOPE));
                 scopeFilters.forEach(f -> updatedWhere.add(f.toDashboardFilterBuilder(Fields.SCOPE, f.value())));
             }
         }
@@ -94,6 +104,13 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         }
 
         return updatedWhere;
+    }
+
+    private static Object kindFilterValue(Object value) {
+        if (value instanceof List<?> values) {
+            return values.stream().map(Object::toString).toList();
+        }
+        return value.toString();
     }
 
     private static AbstractFilter<Fields> labelFilter(QueryFilter.Op operation, String key, Object value) {
@@ -135,6 +152,7 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         NAMESPACE,
         FLOW_ID,
         FLOW_REVISION,
+        KIND,
         STATE,
         DURATION,
         LABELS,

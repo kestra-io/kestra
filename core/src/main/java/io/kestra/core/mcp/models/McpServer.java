@@ -12,6 +12,7 @@ import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.NotBlank;
@@ -23,7 +24,7 @@ import jakarta.validation.constraints.Pattern;
  */
 public record McpServer(
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*") String tenantId,
+    @TenantId String tenantId,
 
     @NotNull
     @NotBlank

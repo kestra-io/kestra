@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -68,13 +70,14 @@ class SubflowFunctionTest {
         assertThat(team).isEqualTo("data");
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { "system.test", "system" })
     @LoadFlows("flows/valids/subflow-function-child.yaml")
-    void shouldThrowWhenSettingReservedSystemLabel() {
-        // The caller may not set reserved system.* labels via the 'labels' argument
+    void shouldThrowWhenSettingReservedSystemLabel(String key) {
+        // The caller may not set reserved system labels via the 'labels' argument
         assertThatThrownBy(
             () -> variableRenderer.render(
-                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child', labels={'system.test': 'x'}) }}",
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child', labels={'" + key + "': 'x'}) }}",
                 getVariables(MAIN_TENANT, NAMESPACE)
             )
         ).isInstanceOf(IllegalVariableEvaluationException.class)

@@ -6,6 +6,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 
@@ -30,7 +31,8 @@ public record Replay(
     @With @JsonProperty @Nullable String taskRunId,
     @With @JsonProperty @Nullable Integer revision,
     @With @JsonProperty @Nullable String breakpoints,
-    @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable Map<String, Object> inputs) implements ExecutionCommand {
+    @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable Map<String, Object> inputs,
+    @With @Nullable Actor actor) implements ExecutionCommand {
 
     /**
      * Creates a {@code Replay} command from the given source execution and pre-generated new execution ID.
@@ -56,7 +58,8 @@ public record Replay(
             taskRunId,
             revision,
             breakpoints,
-            sourceExecution.getInputs()
+            sourceExecution.getInputs(),
+            null
         );
     }
 }

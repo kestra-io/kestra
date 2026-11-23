@@ -13,6 +13,7 @@ public class RunContextSDKFactory {
 
     static class SDKImpl implements SDK {
         private static final String AUTH_PROP = "kestra.tasks.sdk.authentication";
+        private static final String URL_PROP = AUTH_PROP + ".url";
         private static final String API_TOKEN_PROP = AUTH_PROP + ".api-token";
         private static final String USERNAME_PROP = AUTH_PROP + ".username";
         private static final String PASSWORD_PROP = AUTH_PROP + ".password";
@@ -20,8 +21,12 @@ public class RunContextSDKFactory {
         private final Auth sdkAuthentication;
 
         SDKImpl(ApplicationContext applicationContext) {
+            Optional<String> maybeUrl = applicationContext
+                .getProperty(URL_PROP, String.class)
+                .filter(url -> !url.isBlank()); // to avoid Optional.of("")
+
             this.sdkAuthentication = applicationContext.getProperty(API_TOKEN_PROP, String.class)
-                .map(it -> new SDK.Auth(Optional.of(it), Optional.empty(), Optional.empty()))
+                .map(it -> new SDK.Auth(maybeUrl, Optional.of(it), Optional.empty(), Optional.empty()))
                 .orElseGet(() ->
                 {
                     Optional<String> maybeUserName = applicationContext
@@ -33,12 +38,15 @@ public class RunContextSDKFactory {
                         .filter(password -> !password.isBlank()); // to avoid Optional.of("")
 
                     if (maybePassword.isPresent() && maybeUserName.isPresent()) {
-                        return new SDK.Auth(Optional.empty(), maybeUserName, maybePassword);
+                        return new SDK.Auth(maybeUrl, Optional.empty(), maybeUserName, maybePassword);
                     }
                     if (maybeUserName.isPresent() || maybePassword.isPresent()) {
                         throw new IllegalArgumentException(
                             "Both username and password must be provided if either is present: please configure both '" + USERNAME_PROP + "' and '" + PASSWORD_PROP + "' properties"
                         );
+                    }
+                    if (maybeUrl.isPresent()) {
+                        return new SDK.Auth(maybeUrl, Optional.empty(), Optional.empty(), Optional.empty());
                     }
                     return null;
                 });

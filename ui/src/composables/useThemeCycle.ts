@@ -1,17 +1,18 @@
 /**
  * Registers a global Ctrl+Shift+L keyboard shortcut that cycles through
- * the three available themes: light → dark → dark-2 → light.
+ * the three available themes: light → dark → dark-2 → light, and re-applies
+ * "Sync with system" whenever the OS theme changes, on every page.
  *
  * Call once from the root App component, passing the misc store instance.
  */
-import {onMounted, onUnmounted} from "vue"
-import {switchTheme} from "../utils/utils"
+import {onMounted, onUnmounted, watch} from "vue"
+import {usePreferredDark} from "@vueuse/core"
+import {getSelectedTheme, switchTheme} from "../utils/utils"
 import type {SelectedTheme} from "../utils/utils"
-import type {useMiscStore} from "override/stores/misc"
 
 const THEMES: SelectedTheme[] = ["dark-2", "dark", "light"]
 
-export function useThemeCycle(miscStore: ReturnType<typeof useMiscStore>) {
+export function useThemeCycle(miscStore: {theme: SelectedTheme}) {
     function cycleTheme(e: KeyboardEvent) {
         if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "l") {
             const current = miscStore.theme ?? "light"
@@ -19,6 +20,12 @@ export function useThemeCycle(miscStore: ReturnType<typeof useMiscStore>) {
             switchTheme(miscStore, next)
         }
     }
+
+    watch(usePreferredDark(), () => {
+        if (getSelectedTheme() === "syncWithSystem") {
+            switchTheme(miscStore, "syncWithSystem")
+        }
+    })
 
     onMounted(() => window.addEventListener("keydown", cycleTheme))
     onUnmounted(() => window.removeEventListener("keydown", cycleTheme))

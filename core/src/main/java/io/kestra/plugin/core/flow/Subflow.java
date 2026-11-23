@@ -28,6 +28,8 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.validations.NoSystemLabelValidation;
@@ -114,6 +116,8 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     @PluginProperty(dynamic = true)
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    @tools.jackson.databind.annotation.JsonSerialize(using = Jackson3ListOrMapOfLabelSerializer.class)
+    @tools.jackson.databind.annotation.JsonDeserialize(using = Jackson3ListOrMapOfLabelDeserializer.class)
     private List<@NoSystemLabelValidation Label> labels;
 
     @Builder.Default
@@ -126,7 +130,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     @Builder.Default
     @Schema(
         title = "Flag specifying whether to fail the current execution if the subflow execution fails or is killed.",
-        description = "Note that this option works only if `wait` is set to `true`."
+        description = "Note that this option works only if `wait` is set to `true`. When a subflow execution ends CANCELLED, the Subflow task ends CANCELLED, but the parent continues and runs its next tasks."
     )
     @PluginProperty
     private final Boolean transmitFailed = true;
@@ -224,6 +228,10 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             String log = String
                 .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in FAILED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
             runContext.logger().error(log);
+        } else if (finalState == State.Type.CANCELLED) {
+            String log = String
+                .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in CANCELLED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
+            runContext.logger().warn(log);
         } else if (finalState == State.Type.WARNING) {
             String log = String
                 .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in WARNING state", execution.getId(), execution.getFlowId(), execution.getNamespace());
@@ -235,15 +243,16 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     private Optional<SubflowExecutionResult> failSubflowDueToOutput(RunContext runContext, TaskRun taskRun, Execution execution, Exception e, Map<String, Object> outputs) {
         runContext.logger().error("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-        var state = State.Type.fail(this);
+        // a killed subflow has no outputs to extract, and failing it instead would let a retry revive a killed execution
+        var state = execution.getState().getCurrent().isKilled() ? State.Type.KILLED : State.Type.fail(this);
         taskRun = taskRun
             .withState(state)
-            .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()));
+            .addAttempt(TaskRunAttempt.builder().state(new State().withState(state)).build());
 
         return Optional.of(
             SubflowExecutionResult.builder()
                 .executionId(execution.getId())
-                .state(State.Type.FAILED)
+                .state(state)
                 .parentTaskRun(taskRun)
                 .outputs(outputs)
                 .build()

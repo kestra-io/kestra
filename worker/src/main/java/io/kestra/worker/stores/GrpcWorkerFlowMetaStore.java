@@ -17,6 +17,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.DefaultFlowMetaStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.worker.MetaStoreCacheConfig;
 import io.kestra.core.worker.MetadataChangePayload;
 import io.kestra.core.worker.WorkerMetadataChangeHandler;
@@ -125,7 +126,18 @@ public class GrpcWorkerFlowMetaStore implements FlowMetaStoreInterface, WorkerMe
     }
 
     @Override
-    public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
-        throw new UnsupportedOperationException("findByExecutionThenInjectDefaults is not supported on workers");
+    public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
+        throw new UnsupportedOperationException("findByExecutionForRuntime is not supported on workers");
+    }
+
+    @Override
+    public Optional<ProcessedFlow> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        throw new UnsupportedOperationException("findByIdForRuntime is not supported on workers");
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant,
+        String fromNamespace, String fromId) {
+        throw new UnsupportedOperationException("findByIdFromTaskForRuntime is not supported on workers");
     }
 }

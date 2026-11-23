@@ -2,13 +2,14 @@ package io.kestra.core.repositories;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
-
-import com.devskiller.friendly_id.FriendlyId;
 
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
@@ -19,11 +20,13 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.kestra.plugin.core.dashboard.data.MetricsKPI;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
@@ -37,7 +40,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void all() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         ZonedDateTime now = ZonedDateTime.now();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
@@ -139,7 +142,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void names() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
 
@@ -164,7 +167,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void findAllAsync() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         TaskRun taskRun2 = taskRun(tenant, executionId, "task");
@@ -191,9 +194,320 @@ public abstract class AbstractMetricRepositoryTest {
     }
 
     @Test
+    void shouldNotPurgeMetricsOfOtherNamespaceWhenNamespacesDifferOnlyByCase() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        for (String namespace : List.of("company.a", "company.A")) {
+            metricRepository.save(
+                MetricEntry.builder()
+                    .tenantId(tenant)
+                    .namespace(namespace)
+                    .flowId("flow1")
+                    .executionId("exec-" + namespace)
+                    .taskId("task1")
+                    .taskRunId(IdUtils.create())
+                    .type("counter")
+                    .name("metric1")
+                    .value(1.0)
+                    .timestamp(Instant.now().minus(10, ChronoUnit.DAYS))
+                    .build()
+            );
+        }
+
+        int deleted = metricRepository.purge(tenant, "company.a", null, null, null, ZonedDateTime.now().minusDays(5), null);
+
+        assertThat(deleted).isEqualTo(1);
+        assertThat(metricRepository.findByExecutionId(tenant, "exec-company.A", Pageable.from(1, 10))).hasSize(1);
+    }
+
+    @Test
+    void shouldPurgeMetricsBeforeEndDate() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+        Instant recentTimestamp = Instant.now();
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("io.kestra.purge")
+                .flowId("flow1")
+                .executionId("exec1")
+                .taskId("task1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("metric1")
+                .value(1.0)
+                .timestamp(oldTimestamp)
+                .build()
+        );
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("io.kestra.purge")
+                .flowId("flow1")
+                .executionId("exec2")
+                .taskId("task1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("metric2")
+                .value(2.0)
+                .timestamp(recentTimestamp)
+                .build()
+        );
+
+        int deleted = metricRepository.purge(tenant, "io.kestra.purge", "flow1", null, null, ZonedDateTime.now().minusDays(5), null);
+        assertThat(deleted).isEqualTo(1);
+
+        List<MetricEntry> remaining = metricRepository.findByExecutionId(tenant, "exec2", Pageable.from(1, 10));
+        assertThat(remaining).hasSize(1);
+
+        List<MetricEntry> purged = metricRepository.findByExecutionId(tenant, "exec1", Pageable.from(1, 10));
+        assertThat(purged).isEmpty();
+    }
+
+    @Test
+    void shouldPurgeMetricsWithNamespacePrefix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant timestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("company.team")
+                .flowId("flow1")
+                .executionId("exec1")
+                .taskId("task1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("metric1")
+                .value(1.0)
+                .timestamp(timestamp)
+                .build()
+        );
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("company.team.sub")
+                .flowId("flow2")
+                .executionId("exec2")
+                .taskId("task1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("metric2")
+                .value(2.0)
+                .timestamp(timestamp)
+                .build()
+        );
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("other.team")
+                .flowId("flow3")
+                .executionId("exec3")
+                .taskId("task1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("metric3")
+                .value(3.0)
+                .timestamp(timestamp)
+                .build()
+        );
+
+        int deleted = metricRepository.purge(tenant, "company.team", null, null, null, ZonedDateTime.now(), null);
+        assertThat(deleted).isEqualTo(2);
+
+        List<MetricEntry> other = metricRepository.findByExecutionId(tenant, "exec3", Pageable.from(1, 10));
+        assertThat(other).hasSize(1);
+    }
+
+    @Test
+    void shouldPurgeMetricsWithStartDateAndEndDate() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant t1 = Instant.now().minus(15, ChronoUnit.DAYS);
+        Instant t2 = Instant.now().minus(10, ChronoUnit.DAYS);
+        Instant t3 = Instant.now().minus(2, ChronoUnit.DAYS);
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("ns")
+                .flowId("flow")
+                .executionId("exec1")
+                .taskId("task")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m1")
+                .value(1.0)
+                .timestamp(t1)
+                .build()
+        );
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("ns")
+                .flowId("flow")
+                .executionId("exec2")
+                .taskId("task")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m2")
+                .value(2.0)
+                .timestamp(t2)
+                .build()
+        );
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("ns")
+                .flowId("flow")
+                .executionId("exec3")
+                .taskId("task")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m3")
+                .value(3.0)
+                .timestamp(t3)
+                .build()
+        );
+
+        int deleted = metricRepository.purge(tenant, "ns", "flow", null, ZonedDateTime.now().minusDays(12), ZonedDateTime.now().minusDays(5), null);
+        assertThat(deleted).isEqualTo(1);
+
+        assertThat(metricRepository.findByExecutionId(tenant, "exec1", Pageable.from(1, 10))).hasSize(1);
+        assertThat(metricRepository.findByExecutionId(tenant, "exec2", Pageable.from(1, 10))).isEmpty();
+        assertThat(metricRepository.findByExecutionId(tenant, "exec3", Pageable.from(1, 10))).hasSize(1);
+    }
+
+    @Test
+    void shouldRespectTenantIsolationWhenPurgingMetrics() {
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant1)
+                .namespace("ns")
+                .flowId("flow")
+                .executionId("exec1")
+                .taskId("task")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m1")
+                .value(1.0)
+                .timestamp(oldTimestamp)
+                .build()
+        );
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant2)
+                .namespace("ns")
+                .flowId("flow")
+                .executionId("exec2")
+                .taskId("task")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m2")
+                .value(2.0)
+                .timestamp(oldTimestamp)
+                .build()
+        );
+
+        int deleted = metricRepository.purge(tenant1, null, null, null, null, ZonedDateTime.now(), null);
+        assertThat(deleted).isEqualTo(1);
+
+        assertThat(metricRepository.findByExecutionId(tenant1, "exec1", Pageable.from(1, 10))).isEmpty();
+        assertThat(metricRepository.findByExecutionId(tenant2, "exec2", Pageable.from(1, 10))).hasSize(1);
+    }
+
+    @Test
+    void shouldReturnZeroWhenNoMatchingMetricsToPurge() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        int deleted = metricRepository.purge(tenant, "non.existing.ns", null, null, null, ZonedDateTime.now(), null);
+        assertThat(deleted).isEqualTo(0);
+    }
+
+    @Test
+    void shouldPurgeMetricsByExecutionId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("io.kestra.purge")
+                .flowId("flow1")
+                .executionId("exec1")
+                .taskId("task1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("metric1")
+                .value(1.0)
+                .timestamp(oldTimestamp)
+                .build()
+        );
+
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("io.kestra.purge")
+                .flowId("flow1")
+                .executionId("exec2")
+                .taskId("task1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("metric2")
+                .value(2.0)
+                .timestamp(oldTimestamp)
+                .build()
+        );
+
+        int deleted = metricRepository.purge(tenant, null, null, "exec1", null, ZonedDateTime.now(), null);
+        assertThat(deleted).isEqualTo(1);
+
+        assertThat(metricRepository.findByExecutionId(tenant, "exec1", Pageable.from(1, 10))).isEmpty();
+        assertThat(metricRepository.findByExecutionId(tenant, "exec2", Pageable.from(1, 10))).hasSize(1);
+    }
+
+    @Test
+    void shouldPurgeMetricsWithBatchSize() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+
+        for (int i = 0; i < 5; i++) {
+            metricRepository.save(
+                MetricEntry.builder()
+                    .tenantId(tenant)
+                    .namespace("io.kestra.purge")
+                    .flowId("flow-batch")
+                    .executionId("exec-batch-" + i)
+                    .taskId("task1")
+                    .taskRunId(IdUtils.create())
+                    .type("counter")
+                    .name("metric" + i)
+                    .value((double) i)
+                    .timestamp(oldTimestamp)
+                    .build()
+            );
+        }
+
+        int deleted = metricRepository.purge(tenant, "io.kestra.purge", "flow-batch", null, null, ZonedDateTime.now(), 2);
+        assertThat(deleted).isEqualTo(5);
+
+        for (int i = 0; i < 5; i++) {
+            assertThat(metricRepository.findByExecutionId(tenant, "exec-batch-" + i, Pageable.from(1, 10))).isEmpty();
+        }
+    }
+
+    @Test
     protected void fetchData() throws IOException {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
@@ -219,7 +533,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     protected void fetchValue() throws IOException {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
@@ -243,7 +557,7 @@ public abstract class AbstractMetricRepositoryTest {
         // A plugin-generated taskId (e.g. Ansible "<host> | <play> : <task>") can exceed the legacy
         // VARCHAR(150) task_id column and crash-loop the indexer; the column now allows up to 256.
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         String longTaskId = "a".repeat(200);
         MetricEntry counter = MetricEntry.of(taskRun(tenant, executionId, longTaskId), counter("counter"), null);
 
@@ -269,14 +583,14 @@ public abstract class AbstractMetricRepositoryTest {
             .namespace("namespace")
             .executionId(executionId)
             .taskId(taskId)
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .build();
     }
 
     @Test
     void shouldAggregateByFlowIdWithTaskIdFilter() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
 
         TaskRun taskRunA = taskRun(tenant, executionId, "taskA");
         TaskRun taskRunB = taskRun(tenant, executionId, "taskB");
@@ -301,7 +615,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void shouldAggregateByFlowIdWithDifferentAggregationTypes() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
 
         metricRepository.save(MetricEntry.of(taskRun1, counter("agg-metric"), null));
@@ -319,7 +633,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void shouldPaginateFindByExecutionId() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
 
         for (int i = 0; i < 5; i++) {
@@ -338,7 +652,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void shouldReturnDistinctTasksWithMetrics() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
 
         TaskRun taskRunA = taskRun(tenant, executionId, "taskA");
         TaskRun taskRunB = taskRun(tenant, executionId, "taskB");
@@ -350,6 +664,44 @@ public abstract class AbstractMetricRepositoryTest {
         List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(tenant, "namespace", "flow");
 
         assertThat(tasksWithMetrics).containsExactlyInAnyOrder("taskA", "taskB");
+    }
+
+    @Test
+    void shouldSortByValueUnlikeOtherResourcesWhereItIsExcluded() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 3), null));
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 1), null));
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 2), null));
+
+        Function<String, String> sortMapper = metricRepository.sortMapping();
+        Pageable pageable = Pageable.from(1, 10, Sort.of(Sort.Order.asc(sortMapper.apply("value"))));
+
+        List<MetricEntry> results = metricRepository.findByExecutionId(tenant, executionId, pageable);
+
+        assertThat(results).extracting(MetricEntry::getValue).containsExactly(1.0, 2.0, 3.0);
+    }
+
+    @Test
+    void shouldSortByTaskRunIdUsingItsApiFieldName() {
+        // Regression: AbstractJdbcMetricRepository.sortMapping() used to map the lowercase "taskrunId",
+        // rejecting the camelCase "taskRunId" that MetricEntry#getTaskRunId() and every other sort key
+        // in this map actually use.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+        metricRepository.save(MetricEntry.of(taskRun1, counter("c"), null));
+
+        Function<String, String> sortMapper = metricRepository.sortMapping();
+        String mapped = sortMapper.apply("taskRunId");
+        assertThat(mapped).isNotNull();
+
+        Pageable pageable = Pageable.from(1, 10, Sort.of(Sort.Order.asc(mapped)));
+        List<MetricEntry> results = metricRepository.findByExecutionId(tenant, executionId, pageable);
+
+        assertThat(results).hasSize(1);
     }
 
 }

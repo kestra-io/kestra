@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.utils.IdUtils;
 
 import jakarta.validation.constraints.NotNull;
@@ -32,6 +33,14 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
      * {@inheritDoc}
      */
     @Override
+    public boolean isLegacy() {
+        return data == null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String uid() {
         return IdUtils.fromParts(
             data.tenantId(),
@@ -39,6 +48,10 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
             data.flowId(),
             trigger.getId()
         );
+    }
+
+    public TriggerId triggerId() {
+        return TriggerId.of(data.tenantId(), data.namespace(), data.flowId(), trigger.getId());
     }
 
     public static WorkerTriggerRunning of(WorkerTrigger workerTrigger, WorkerInstance workerInstance) {

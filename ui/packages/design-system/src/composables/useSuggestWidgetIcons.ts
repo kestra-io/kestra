@@ -1,6 +1,5 @@
 import {h, ref, render, watch, type Component, type Ref, type VNode} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
-import uniqBy from "lodash/uniqBy"
 import {STATES} from "../utils/state"
 import {OVERFLOW_WIDGETS_ID} from "../utils/monacoSetup"
 import {DATE_PICKER_SUGGESTION_LABEL} from "./useEditorDatePicker"
@@ -8,6 +7,20 @@ import type {TaskIconProps} from "./taskIcon"
 
 const KESTRA_ICON_WRAPPER_CLASS = "kestra-icon-wrapper"
 const SASH_DRAG_DISTANCE = 80
+const PLUGIN_FQCN = /^[a-z][\w$]*(?:\.[\w$]+)+$/
+
+// Monaco suffixes the row aria-label with ", <kind>" (and ", docs: …" once resolved), so read the rendered label.
+export function suggestionLabel(row: HTMLElement): string | undefined {
+    const rendered = row.querySelector(".monaco-icon-name-container")?.textContent?.trim()
+    // Rejoins what the app's `splitPluginTypeLabel` split apart, so the icon resolves from the fully qualified name.
+    if (rendered && !row.classList.contains("string-label")) {
+        const packageName = row.querySelector(".details-label")?.textContent?.trim()
+        if (packageName && PLUGIN_FQCN.test(packageName)) {
+            return `${packageName}.${rendered}`
+        }
+    }
+    return rendered || row.getAttribute("aria-label")?.split(",")[0].trim()
+}
 
 type CodeEditor = monaco.editor.ICodeEditor
 
@@ -30,27 +43,31 @@ export function useSuggestWidgetIcons(ctx: SuggestWidgetIconsContext) {
     function replaceRowIcon(vsCodeIcon: HTMLElement, iconVNode: VNode) {
         vsCodeIcon.style.display = "none"
         const tempContainer = document.createElement("div")
-        render(h("div", {class: `${KESTRA_ICON_WRAPPER_CLASS} d-flex align-items-center me-1`}, iconVNode), tempContainer)
+        render(h("div", {class: KESTRA_ICON_WRAPPER_CLASS}, iconVNode), tempContainer)
         vsCodeIcon.after(tempContainer.firstElementChild!)
         tempContainer.remove()
     }
 
     function replaceRowsIcons(nodes: HTMLElement[]) {
-        for (const node of uniqBy(nodes, n => n.id)) {
-            const completionValue = node?.getAttribute("aria-label")
+        const seenIds = new Set<string>()
+        for (const node of nodes) {
+            if (seenIds.has(node.id)) continue
+            seenIds.add(node.id)
+
+            const completionValue = suggestionLabel(node)
             if (!completionValue || node.getAttribute("data-index") === null) continue
 
             const vsCodeIcon = node.querySelector(".suggest-icon") as HTMLElement
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove()
 
-            if (completionValue.includes(".") && !completionValue.includes("{") && ctx.loadTaskIcon.value) {
+            if (PLUGIN_FQCN.test(completionValue) && ctx.loadTaskIcon.value) {
                 replaceRowIcon(vsCodeIcon, h(ctx.taskIcon, {
                     cls: completionValue,
                     onlyIcon: true,
                     loadIcon: ctx.loadTaskIcon.value,
                 }))
-            } else if ((STATES as any)[completionValue] !== undefined) {
-                replaceRowIcon(vsCodeIcon, h((STATES as any)[completionValue].icon))
+            } else if (STATES[completionValue] !== undefined) {
+                replaceRowIcon(vsCodeIcon, h(STATES[completionValue].icon))
             } else {
                 vsCodeIcon.style.display = ""
             }
@@ -89,10 +106,10 @@ export function useSuggestWidgetIcons(ctx: SuggestWidgetIconsContext) {
             })
 
             const addedRows = addedSuggestRows(mutations)
-            replaceRowsIcons(addedRows.filter(row => row.ariaLabel !== DATE_PICKER_SUGGESTION_LABEL))
+            replaceRowsIcons(addedRows.filter(row => suggestionLabel(row) !== DATE_PICKER_SUGGESTION_LABEL))
 
             addedRows.forEach(async row => {
-                if (!editor || row.ariaLabel !== DATE_PICKER_SUGGESTION_LABEL) return
+                if (!editor || suggestionLabel(row) !== DATE_PICKER_SUGGESTION_LABEL) return
                 ;(editor.getContribution("editor.contrib.suggestController") as unknown as {
                     cancelSuggestWidget: () => void
                 }).cancelSuggestWidget()

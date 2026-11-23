@@ -1,0 +1,15 @@
+id: sla-avg-duration-not-enough-history
+namespace: io.kestra.tests
+
+sla:
+  - id: avgDuration
+    type: AVG_DURATION
+    behavior: FAIL
+    lookbackPeriod: P1D
+    minExecutions: 100
+    durationThreshold: PT0.01S
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT1S

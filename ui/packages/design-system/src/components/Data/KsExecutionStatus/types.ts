@@ -9,6 +9,7 @@ import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue"
 import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
 import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
 import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+import TrayArrowDown from "vue-material-design-icons/TrayArrowDown.vue"
 import Restore from "vue-material-design-icons/Restore.vue"
 import Cancel from "vue-material-design-icons/Cancel.vue"
 import SkipNextCircleOutline from "vue-material-design-icons/SkipNextCircleOutline.vue"
@@ -31,6 +32,13 @@ export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.f
         isKillable: true,
         isFailed: false,
     },
+    SUBMITTED: {
+        name: "SUBMITTED",
+        icon: TrayArrowDown,
+        isRunning: true,
+        isKillable: true,
+        isFailed: false,
+    },
     RESTARTED: {
         name: "RESTARTED",
         icon: BackupRestore,
@@ -48,6 +56,13 @@ export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.f
     RUNNING: {
         name: "RUNNING",
         icon: PlayCircleOutline,
+        isRunning: true,
+        isKillable: true,
+        isFailed: false,
+    },
+    PAUSING: {
+        name: "PAUSING",
+        icon: Pause,
         isRunning: true,
         isKillable: true,
         isFailed: false,

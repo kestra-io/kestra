@@ -1,12 +1,27 @@
 import {client} from "./openapi/client.gen"
 import {formDataBodySerializer} from "./openapi/client"
-import {OPENAPI_SPEC_HASH} from "./openapi/index"
-import type {NamespaceLight} from "./openapi/index"
+import {OPENAPI_SPEC_HASH} from "./openapi/sdk/shared.gen"
+import type {NamespaceLight} from "./openapi/types.gen"
 import {createConfigureClient} from "@kestra-io/hey-api-plugin/runtime"
 import {createClientFacade} from "./client-facade"
 
-export * from "./openapi/index"
+// Types only: the operations live on their per-tag subpaths, or all together on `./all`.
+export type * from "./openapi/types.gen"
 export type {AxiosLikeConfig, AxiosLikeResponse, AxiosLikeClient, StreamConfig} from "./client-facade"
+
+// RFC 9457 problem details — the API's single error shape. Re-exported here so app code imports error
+// handling from the SDK it already depends on, rather than reaching into the shared runtime package.
+export {
+    PROBLEM_TYPE_BASE,
+    KestraProblemError,
+    isProblemDetail,
+    parseProblem,
+    asProblem,
+    problemSlug,
+    isProblemType,
+    ProblemTypes,
+} from "@kestra-io/hey-api-plugin/runtime"
+export type {ProblemDetail, ProblemFieldError, ProblemType} from "@kestra-io/hey-api-plugin/runtime"
 
 // The OSS spec models a namespace as `NamespaceLight` ({ id }); the UI consumes a slightly richer
 // shape (an optional `description`, populated on EE). Exposed here as the compatibility name the
@@ -30,7 +45,7 @@ export const configureClient: typeof configure = (clientConfig) => {
     // Dev-only: warn (once) if the committed SDK is stale vs the backend's live OpenAPI spec. The
     // guard + dynamic import make bundlers drop this entirely from production builds (tree-shaken).
     // Also excluded under Vitest (`MODE === "test"`, its documented default): there is no live
-    // backend to compare against there — Storybook's `preview.jsx` short-circuits every axios
+    // backend to compare against there — Storybook's `preview.ts` short-circuits every axios
     // request but calls `configureClient()` on native `fetch` on every single story render, and
     // without this guard each one hits an unmatched dev-server route and logs a bogus mismatch.
     // `import.meta.env` is a Vite construct (not in this package's lib types), hence the cast.

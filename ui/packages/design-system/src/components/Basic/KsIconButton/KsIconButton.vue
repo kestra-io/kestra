@@ -33,21 +33,29 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, useAttrs} from "vue"
-    import KsButton from "../KsButton/KsButton.vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {computed, useAttrs, type ButtonHTMLAttributes} from "vue"
+    import type {Placement} from "element-plus"
+    import KsButton, {type KsButtonProps, type KsButtonType} from "../KsButton/KsButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
+
+    type IconSize = "xs" | "sm" | "base" | "lg" | "xl"
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
+    interface KsIconButtonProps {
         tooltip?: string
-        placement?: string
+        placement?: Placement
         ariaLabel?: string
         disabled?: boolean
         to?: string | Record<string, unknown>
         replace?: boolean
         filled?: boolean
-    }>(), {
+        size?: IconSize
+        type?: KsButtonType
+    }
+
+    const props = withDefaults(defineProps<KsIconButtonProps & /* @vue-ignore */ Omit<KsButtonProps & NativeAttributes<ButtonHTMLAttributes>, keyof KsIconButtonProps>>(), {
         tooltip: "",
         placement: "left",
         ariaLabel: "",
@@ -55,6 +63,8 @@
         to: undefined,
         replace: false,
         filled: false,
+        size: "sm",
+        type: undefined,
     })
 
     defineSlots<{
@@ -64,19 +74,26 @@
     const attrs = useAttrs()
     const buttonAttrs = computed(() => ({
         ...attrs,
-        class: ["ks-icon-button", {"ks-icon-button--filled": props.filled}, attrs.class],
+        type: props.type,
+        class: [
+            "ks-icon-button",
+            `ks-icon-button--${props.size}`,
+            {"ks-icon-button--filled": props.filled},
+            attrs.class,
+        ],
     }))
 
     const buttonTag = computed(() => (props.to ? "router-link" : undefined))
     const nativeType = computed(() => (props.to ? undefined : "button" as const))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-icon-button {
-        color: var(--ks-text-primary);
-        width: 24px;
-        height: 24px;
-        min-width: 24px;
+        --ks-icon-button-glyph: var(--ks-icon-size-sm);
+        color: var(--ks-icon-button-color, var(--ks-text-primary));
+        width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
+        height: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
+        min-width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
         border-radius: var(--kel-border-radius-base);
         text-align: center;
         display: inline-flex;
@@ -85,11 +102,27 @@
         padding: 0;
         cursor: pointer;
 
-        :deep(.material-design-icon__svg) {
-            width: 16px;
-            height: 16px;
-            transform: translateY(1px) translateX(-0.5px);
+        & :deep(.material-design-icon),
+        & :deep(.material-design-icon > .material-design-icon__svg) {
+            width: var(--ks-icon-button-glyph);
+            height: var(--ks-icon-button-glyph);
         }
+    }
+
+    .ks-icon-button--xs {
+        --ks-icon-button-glyph: var(--ks-icon-size-xs);
+    }
+
+    .ks-icon-button--base {
+        --ks-icon-button-glyph: var(--ks-icon-size-base);
+    }
+
+    .ks-icon-button--lg {
+        --ks-icon-button-glyph: var(--ks-icon-size-lg);
+    }
+
+    .ks-icon-button--xl {
+        --ks-icon-button-glyph: var(--ks-icon-size-xl);
     }
 
     .ks-icon-button:not(.ks-icon-button--filled) {

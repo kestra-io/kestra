@@ -1,10 +1,28 @@
 <template>
-    <div class="position-relative">
-        <pre><code>{{ curlCommand }}</code></pre>
+    <div class="curl-wrapper">
+        <div class="code">
+            <KsEditor
+                v-bind="editorBindings"
+                :modelValue="curlCommand"
+                lang="shell"
+                inline
+                :navbar="false"
+                readOnly
+                :options="{
+                    fullHeight: false,
+                    customHeight: 24,
+                    editor: {
+                        padding: {top: 6, bottom: 6},
+                        guides: {indentation: false},
+                        wrappingIndent: 'indent',
+                    },
+                }"
+            />
+        </div>
 
         <CopyToClipboard :text="curlCommand" />
 
-        <KsAlert class="mt-3" type="info" :closable="false">
+        <KsAlert class="curl-alert" type="info" :closable="false">
             {{ $t('curl.note') }}
         </KsAlert>
     </div>
@@ -14,20 +32,30 @@
     import {computed, ref} from "vue"
     import {baseUrl, basePath, apiUrl} from "override/utils/route"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import moment from "moment"
+    import {dayjs, KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {Flow} from "../../stores/flow"
     import {Label} from "../../stores/executions"
+    import {flattenInputs} from "../../utils/inputs"
+
+    type DateInput = Parameters<typeof dayjs>[0]
+
+    const DATE_LIKE_TYPES = ["DATE", "TIME", "DATETIME"]
 
     const props = withDefaults(defineProps<{
         flow: Flow;
-        inputs?: Record<string, any>;
+        inputs?: Record<string, unknown>;
         executionLabels?: Label[];
         verbose?: boolean;
+        replay?: {executionId: string; taskRunId?: string; revision?: number};
     }>(),{
+        replay: undefined,
         inputs: () => ({}),
         executionLabels: () => [],
         verbose: true,
     })
+
+    const editorBindings = useEditorBindings()
 
     const exampleFileName = ref("kestra.json")
 
@@ -36,39 +64,50 @@
     )
 
     function addHeader(command: string[], name: string, value: string) {
-        command.push("-H", `'${name}: ${value}'`)
+        command.push(`-H '${name}: ${value}'`)
     }
 
-    function addInputs(command: string[]) {
-        if (!props.flow.inputs) return
+    const leafInputs = computed(() => flattenInputs(props.flow.inputs))
 
-        props.flow.inputs.forEach((input) => {
+    function addInputs(command: string[]) {
+        leafInputs.value.forEach((input) => {
             let inputValue: string | undefined
+            const value = props.inputs?.[input.id]
+
+            // An untouched or cleared picker holds undefined, null or "", which Execute leaves out
+            // (normalizeInputValues), and dayjs() would turn into the current date or "Invalid Date".
+            if (DATE_LIKE_TYPES.includes(input.type) && (value === undefined || value === null || value === "")) return
 
             switch (input.type) {
             case "FILE":
                 inputValue = exampleFileName.value
                 break
             case "SECRET":
-                inputValue = props.inputs?.[input.id] ? "******" : undefined
+                inputValue = value ? "******" : undefined
                 break
             case "DATE":
-                inputValue = moment(props.inputs?.[input.id]).format("YYYY-MM-DD")
+                inputValue = dayjs(value as DateInput).format("YYYY-MM-DD")
                 break
             case "TIME":
-                inputValue = moment(props.inputs?.[input.id]).format("hh:mm:ss")
+                inputValue = dayjs(value as DateInput).format("HH:mm:ss")
                 break
+            case "DATETIME":
+            {
+                // The picker holds a Date, and String(date) is not a value the API can parse.
+                const date = dayjs(value as DateInput)
+                inputValue = date.isValid() ? date.toISOString() : String(value)
+                break
+            }
             default:
-                inputValue = props.inputs?.[input.id]
+                inputValue = value === undefined ? undefined : String(value)
             }
 
             if (inputValue === undefined) return
 
-            command.push("-F")
             if (input.type === "FILE") {
-                command.push(`'${input.id}=@${inputValue};filename=${inputValue}'`)
+                command.push(`-F '${input.id}=@${inputValue};filename=${inputValue}'`)
             } else {
-                command.push(`'${input.id}=${inputValue}'`)
+                command.push(`-F '${input.id}=${inputValue}'`)
             }
         })
     }
@@ -78,11 +117,21 @@
     }
 
     const url = computed(() => {
+        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
+
+        if (props.replay) {
+            const replayParams = [
+                props.replay.taskRunId ? `taskRunId=${encodeURIComponent(props.replay.taskRunId)}` : undefined,
+                props.replay.revision === undefined ? undefined : `revision=${props.replay.revision}`,
+            ].filter(Boolean)
+            const replayUrl = `${origin}/executions/${props.replay.executionId}/actions/replay-with-inputs`
+            return replayParams.length > 0 ? `${replayUrl}?${replayParams.join("&")}` : replayUrl
+        }
+
         const queryParams = (props.executionLabels || [])
             .filter((label) => label.key && label.value)
             .map((label) => generateExecutionLabel(label.key, label.value))
 
-        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
         let ret = `${origin}/executions/${props.flow.namespace}/${props.flow.id}`
 
         if (queryParams.length > 0) {
@@ -93,39 +142,38 @@
     })
 
     const prefix = computed(() => {
-        return ["curl", "-O", `'${exampleFileInputUrl.value}'`]
+        return `curl -O '${exampleFileInputUrl.value}'`
     })
 
     function toShell(command: string[]) {
-        return command.join(" ")
+        return command.join(" \\\n  ")
     }
 
     const curlCommand = computed(() => {
-        const mainCommand = ["curl"]
+        const mainCommand = [props.verbose ? "curl -v -X POST" : "curl -X POST"]
 
-        if (props.verbose) mainCommand.push("-v")
-
-        mainCommand.push("-X", "POST")
         addHeader(mainCommand, "Content-Type", "multipart/form-data")
         addInputs(mainCommand)
         mainCommand.push(`'${url.value}'`)
-        const hasFileInput = props.flow.inputs?.some((input) => input.type === "FILE")
+        const hasFileInput = leafInputs.value.some((input) => input.type === "FILE")
 
         if (hasFileInput) {
-            return `${toShell(prefix.value)} && \\\n${toShell(mainCommand)}`
+            return `${prefix.value} && \\\n${toShell(mainCommand)}`
         }
         return `${toShell(mainCommand)}`
     })
 </script>
 
-<style scoped lang="scss">
-    pre {
-        border-radius: var(--kel-border-radius-base);
+<style scoped>
+    .curl-wrapper {
+        position: relative;
     }
 
-    /* Allow line-wraps */
-    code {
-        display: block;
-        white-space: pre-wrap;
+    .code {
+        padding-right: var(--ks-spacing-8);
+    }
+
+    .curl-alert {
+        margin-top: var(--ks-spacing-4);
     }
 </style>

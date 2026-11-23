@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.event.Level;
 
@@ -14,6 +15,7 @@ import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.Logs;
@@ -46,7 +48,7 @@ public class FlowParsingService {
      * Parses the given abstract flow, returning a parsed {@link FlowWithSource}.
      *
      * <p>
-     * This parses the flow as authored: plugin versions are injected (required to resolve versioned plugin
+     * This parses the raw flow: plugin versions are injected (required to resolve versioned plugin
      * classes) but no runtime governance is applied — use {@link #parseForRuntime(FlowInterface)} for the
      * executor and scheduler paths.
      * </p>
@@ -119,13 +121,32 @@ public class FlowParsingService {
      * {@link FlowWithSource}. Editions may override this method to apply governance to the flow about to run;
      * the open-source edition parses leniently without further processing.
      *
-     * @param flow the flow to be parsed
-     * @return a parsed {@link FlowWithSource}
+     * @return the flow processed for runtime, with the label keys governance pinned on it
      *
      * @throws FlowBlockedException if governance rejected the flow — it must not run
      * @throws FlowProcessingException if an error occurred while processing the flow
      */
-    public FlowWithSource parseForRuntime(final FlowInterface flow) throws FlowProcessingException {
+    public ProcessedFlow parseForRuntime(final FlowInterface flow) throws FlowProcessingException {
+        return ProcessedFlow.of(parse(flow, false));
+    }
+
+    /**
+     * Parses the given abstract flow for the validation paths (save, validate endpoint, pre-execution check),
+     * returning a parsed {@link FlowWithSource}. May be overridden to apply the same governance mutations the
+     * flow will run with, so constraints are checked against the effective configuration rather than the
+     * authored source; the default parses leniently without further processing.
+     *
+     * <p>
+     * Unlike {@link #parseForRuntime(FlowInterface)} this never rejects the flow: governance blocking is owned
+     * by the save and execution gates, which frame their own errors.
+     * </p>
+     *
+     * @param flow the flow to be parsed
+     * @return a parsed {@link FlowWithSource}
+     *
+     * @throws FlowProcessingException if an error occurred while processing the flow
+     */
+    public FlowWithSource parseForValidation(final FlowInterface flow) throws FlowProcessingException {
         return parse(flow, false);
     }
 
@@ -199,7 +220,7 @@ public class FlowParsingService {
         @Nullable final String namespace,
         final String source) throws JsonProcessingException, FlowProcessingException {
         Map<String, Object> mapFlow = YAML_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
-        return injectPluginVersions(tenantId, namespace == null ? (String) mapFlow.get("namespace") : namespace, mapFlow);
+        return injectPluginVersions(tenantId, namespace == null ? Objects.toString(mapFlow.get("namespace"), null) : namespace, mapFlow);
     }
 
     /**

@@ -27,7 +27,9 @@
                         :initialInputs="flow.inputs"
                         :selectedTrigger="selectedTrigger"
                         :flow="flow"
+                        :renderLabels="renderLabels"
                         mode="wizard"
+                        :hideRecapNavigation="!embed"
                         v-model="inputs"
                         :executeClicked="executeClicked"
                         @confirm="onSubmit"
@@ -54,6 +56,7 @@
                         <KsDatePicker
                             v-model="scheduleDate"
                             type="datetime"
+                            :disabledDate="isScheduleDayDisabled"
                         />
                     </KsFormItem>
                     <KsFormItem
@@ -75,7 +78,7 @@
                     </KsFormItem>
                 </KsTabPane>
                 <KsTabPane name="curl" :label="$t('curl.command')" class="execution-pane">
-                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
+                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" :replay="replay" />
                 </KsTabPane>
                 <KsTabPane v-if="hasWebhookTriggers" name="webhookCurl" :label="$t('webhook.curl_command')" class="execution-pane">
                     <WebhookCurl :flow="flow" />
@@ -83,14 +86,19 @@
             </KsTabs>
 
             <div class="bottom-buttons" v-if="!embed">
-                <div class="left-align">
-                    <KsFormItem>
-                        <KsButton v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
-                            {{ $t('prefill inputs') }}
-                        </KsButton>
-                    </KsFormItem>
+                <div class="secondary-actions">
+                    <KsButton
+                        v-if="openTab === 'inputs' && hasFormInputs && inputsOnRecap"
+                        :icon="ChevronLeft"
+                        @click="inputsFormRef?.goBack()"
+                    >
+                        {{ $t('back') }}
+                    </KsButton>
+                    <KsButton v-if="canPrefill" :icon="ContentCopy" @click="fillInputsFromExecution">
+                        {{ $t('prefill inputs') }}
+                    </KsButton>
                 </div>
-                <div class="right-align execute-row" v-if="!hasFormInputs || inputsOnRecap">
+                <div class="execute-row" v-if="!hasFormInputs || inputsOnRecap">
                     <ValidationMessages :messages="validationMessages" />
                     <span data-onboarding-target="flow-execute-confirm-button">
                         <KsButton
@@ -117,26 +125,30 @@
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
-    import moment from "moment-timezone"
+    import type {KestraHttpError} from "../../utils/kestraHttp"
+    import {buildScheduleDateParam, isPastScheduleDate, isScheduleDayDisabled} from "../../utils/scheduleDate"
+    import {dateUtils} from "@kestra-io/design-system"
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
+    import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
-    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
-    import {executeTask} from "../../utils/submitTask"
+    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys} from "../../utils/executionLabels"
+    import {executeTask, normalizeInputValues} from "../../utils/submitTask"
     import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {flattenInputs} from "../../utils/inputs"
-    import get from "lodash/get"
+    import {getPath} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import Play from "vue-material-design-icons/Play.vue"
     import Curl from "./Curl.vue"
     import WebhookCurl from "./WebhookCurl.vue"
@@ -146,11 +158,11 @@
 
     type AlertType = "success" | "warning" | "info" | "error"
     
-    function toAlertType(style: string): AlertType {
-        return style.toLowerCase() as AlertType
+    function toAlertType(style: string | undefined): AlertType | undefined {
+        return style?.toLowerCase() as AlertType | undefined
     }
 
-    interface ReplaySubmitOptions {
+    export interface ReplaySubmitOptions {
         formRef: FormInstance
         id: string
         namespace: string
@@ -173,7 +185,10 @@
         buttonIcon?: Component
         buttonTestId?: string
         autoPrefill?: boolean
+        renderLabels?: string[]
+        replay?: {executionId: string; taskRunId?: string; revision?: number}
     }>(), {
+        replay: undefined,
         redirect: true,
         embed: false,
         replaySubmit: null,
@@ -182,6 +197,7 @@
         buttonIcon: () => Play as Component,
         buttonTestId: "execute-dialog-button",
         autoPrefill: false,
+        renderLabels: undefined,
     })
 
     const emit = defineEmits<{
@@ -199,6 +215,7 @@
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
+    const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
 
@@ -237,9 +254,9 @@
             if (isSuccessfulFlowSaveOutcome(outcome)) {
                 await executionsStore.loadFlowForExecution({namespace, flowId: id, store: true})
             }
-        } catch (error: any) {
-            if (error?.status === 401) {
-                toast.error("401 Unauthorized", undefined, {duration: 2000})
+        } catch (error) {
+            if ((error as KestraHttpError)?.status === 401) {
+                toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
             }
         } finally {
             publishing.value = false
@@ -257,6 +274,16 @@
         hasForbiddenUserSystemLabels(executionLabels.value),
     )
 
+    const haveInvalidLabelKeys = computed(() =>
+        hasInvalidLabelKeys(executionLabels.value),
+    )
+
+    const validationClock = ref(Date.now())
+
+    const hasPastScheduleDate = computed(() =>
+        isPastScheduleDate(scheduleDate.value, new Date(validationClock.value)),
+    )
+
     const validationMessages = computed(() => {
         const messages: string[] = []
         if (haveBadLabels.value) {
@@ -265,11 +292,17 @@
         if (haveForbiddenSystemLabels.value) {
             messages.push(t("forbidden system labels"))
         }
+        if (haveInvalidLabelKeys.value) {
+            messages.push(t("invalid label key"))
+        }
+        if (hasPastScheduleDate.value) {
+            messages.push(t("scheduleDateInPast"))
+        }
         return messages
     })
 
     const flowCanBeExecuted = computed(() =>
-        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value),
+        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value && !haveInvalidLabelKeys.value && !hasPastScheduleDate.value),
     )
 
     const isDirty = computed(() =>
@@ -297,6 +330,7 @@
     const showExecuteButton = computed(() => !hasFormInputs.value || inputsOnRecap.value)
 
     const canPrefill = computed(() =>
+        (openTab.value === "inputs" || openTab.value === "labels") &&
         Boolean(execution.value && (execution.value.inputs || hasExecutionLabels())),
     )
 
@@ -363,7 +397,7 @@
         const executionInputs = execution.value?.inputs ?? {}
         flattenInputs(flow.value.inputs)
             .forEach(leaf => {
-                const value = get(executionInputs, leaf.id)
+                const value = getPath(executionInputs, leaf.id)
                 if (value === undefined) {
                     return
                 }
@@ -373,7 +407,6 @@
 
     // Adapter object for the legacy executeTask utility
     const submitor = {
-        $moment: moment,
         $router: router,
         $route: route,
         $toast: () => toast,
@@ -381,6 +414,8 @@
     }
 
     function onSubmit() {
+        validationClock.value = Date.now()
+
         if (form.value && flowCanBeExecuted.value) {
             checks.value = []
             executeClicked.value = false
@@ -417,20 +452,32 @@
                         })
                     } else {
                         if (flow.value) {
-                            await executeTask(submitor, flow.value, mergedInputs, {
-                                redirect: props.redirect,
-                                newTab: newTab.value,
-                                id: flow.value.id,
-                                namespace: flow.value.namespace,
-                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
-                                revision: flow.value.draft ? undefined : flow.value.revision,
-                                labels: labelStrings,
-                                scheduleDate: moment(scheduleDate.value)
-                                    .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-                                    .toISOString(true),
-                                nextStep: true,
-                                breakpoints: breakpoints.value,
-                            })
+                            if (playgroundStore.enabled) {
+                                const formData = normalizeInputValues(flattenInputs(flow.value.inputs), inputs.value)
+                                await playgroundStore.runUntilTask(
+                                    playgroundStore.actionOptions?.taskId, 
+                                    playgroundStore.actionOptions?.runDownstreamTasks || false, 
+                                    formData,
+                                )
+                                playgroundStore.showInputPrompt = false
+                                playgroundStore.actionOptions = undefined
+                            } else {
+                                await executeTask(submitor, flow.value, mergedInputs, {
+                                    redirect: props.redirect,
+                                    newTab: newTab.value,
+                                    id: flow.value.id,
+                                    namespace: flow.value.namespace,
+                                    // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                    revision: flow.value.draft ? undefined : flow.value.revision,
+                                    labels: labelStrings,
+                                    scheduleDate: buildScheduleDateParam(
+                                        scheduleDate.value,
+                                        dateUtils.currentTimezone(),
+                                    ),
+                                    nextStep: true,
+                                    breakpoints: breakpoints.value,
+                                })
+                            }
                         }
                     }
                     executeClicked.value = true
@@ -441,6 +488,10 @@
             })
         }
     }
+
+    watch(scheduleDate, () => {
+        validationClock.value = Date.now()
+    })
 
     watch(inputs, () => {
         emit("updateInputs", inputs.value)
@@ -455,53 +506,32 @@
     }, {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-execution-checks-alerts {
-        margin-bottom: 1rem;
+        margin-bottom: var(--ks-spacing-4);
     }
 
     .draft-publish-action {
         margin-top: var(--ks-spacing-2);
     }
-    :deep(.kel-collapse) {
-        border-radius: var(--kel-border-radius-round);
-        border: 1px solid var(--ks-border-default);
-        background: var(--ks-bg-tag);
 
-        .kel-collapse-item__header {
-            background: transparent;
-            border-bottom: 1px solid var(--ks-border-default);
-            font-size: var(--ks-font-size-sm);
-        }
-
-        .kel-collapse-item__content {
-            background: var(--ks-bg-tag);
-            border-bottom: 1px solid var(--ks-border-default);
-        }
-
-        .kel-collapse-item__header, .kel-collapse-item__content {
-            &:last-child {
-                border-bottom-left-radius: var(--kel-border-radius-round);
-                border-bottom-right-radius: var(--kel-border-radius-round);
-            }
-        }
+    .bottom-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        margin-top: var(--ks-spacing-4);
     }
 
-    .onboarding-glow {
-        animation: glowAnimation 1s infinite alternate;
-    }
+    .secondary-actions {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: var(--ks-spacing-2);
 
-    @keyframes glowAnimation {
-        0% {
-            box-shadow: 0px 0px 0px 0px #8405FF;
+        & > * {
+            margin: 0;
         }
-        100% {
-            box-shadow: 0px 0px 50px 2px #8405FF;
-        }
-    }
-
-    .right-align{
-        text-align: right;
     }
 
     .execute-row {
@@ -513,6 +543,6 @@
     }
 
     .execution-pane {
-        margin-top: 1rem;
+        margin-top: var(--ks-spacing-4);
     }
 </style>

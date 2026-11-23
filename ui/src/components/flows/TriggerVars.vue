@@ -1,6 +1,6 @@
 <template>
-    <KsTable tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
-        <KsTableColumn prop="key" rowspan="3" :label="$t('name')">
+    <KsTable tableLayout="auto" :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+        <KsTableColumn prop="key" :label="$t('name')">
             <template #default="scope">
                 {{ getHumanizeLabel(scope.row.key) }}
             </template>
@@ -8,21 +8,23 @@
 
         <KsTableColumn prop="value" :label="$t('value')">
             <template #default="scope">
-                <template v-if="scope.row.key === 'description'">
-                    <KsMarkdown :content="scope.row.value" />
-                </template>
-                <template v-else-if="scope.row.key === 'cron'">
-                    <Cron :cronExpression="scope.row.value" />
-                </template>
-                <template v-else-if="scope.row.key === 'key'">
-                    {{ scope.row.value }}
-                    <KsButton @click="emit('on-copy', null)" size="small" class="ms-2">
-                        {{ $t('copy url') }}
-                    </KsButton>
-                </template>
-                <template v-else>
-                    <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" />
-                </template>
+                <div class="value">
+                    <template v-if="scope.row.key === 'description'">
+                        <KsMarkdown :content="scope.row.value" />
+                    </template>
+                    <template v-else-if="scope.row.key === 'cron'">
+                        <Cron :cronExpression="scope.row.value" class="muted" />
+                    </template>
+                    <template v-else-if="scope.row.key === 'key'">
+                        {{ scope.row.value }}
+                        <KsButton @click="emit('on-copy')" size="small" class="copy-button">
+                            {{ $t('copy url') }}
+                        </KsButton>
+                    </template>
+                    <template v-else>
+                        <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" class="muted" />
+                    </template>
+                </div>
             </template>
         </KsTableColumn>
     </KsTable>
@@ -38,11 +40,11 @@
     const {t, te} = useI18n()
 
     defineProps<{
-        data: Record<string, any>;
+        data: Record<string, unknown>;
         execution?: Execution;
     }>()
 
-    const emit = defineEmits<{ (e: "on-copy", event: any): void }>()
+    const emit = defineEmits<{ (e: "on-copy"): void }>()
 
     const getHumanizeLabel = (key: string): string => {
         const mappings: Record<string, string> = {
@@ -59,14 +61,15 @@
     }
 </script>
 
-<style scoped lang="scss">
-    :deep(.markdown) {
-        p {
-            margin-bottom: auto;
-        }
+<style scoped>
+    .copy-button {
+        margin-inline-start: var(--ks-spacing-2);
     }
 
-    :deep(.kel-table__cell:nth-child(2) span) {
-        color: var(--ks-text-secondary);
+    .value {
+        & .muted,
+        & .copy-button {
+            color: var(--ks-text-secondary);
+        }
     }
 </style>

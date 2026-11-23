@@ -1,8 +1,9 @@
 <template>
     <ElCollapse
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event as string | string[])"
+        v-bind="({...filteredProps(), ...$attrs} as CollapseProps)"
+        :class="{'is-flush': flush}"
+        @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -11,33 +12,37 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCollapse} from "element-plus"
+    import {ElCollapse, type CollapseModelValue, type CollapseProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<CollapseModelValue>({default: () => []})
 
     const props = defineProps<{
         accordion?: boolean
+        /** Compact navigation tree: no padding on headers or content, and the arrow sits next to the title (the docs table of contents). */
+        flush?: boolean
     }>()
 
     const emit = defineEmits<{
-        change: [value: string | string[]]
+        change: [value: CollapseModelValue]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["flush"])
 </script>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/collapse';
+</style>
 
+<style>
     .kel-collapse {
         --kel-collapse-content-text-color: var(--ks-text-primary);
         --kel-collapse-header-text-color: var(--ks-text-primary);
@@ -46,20 +51,41 @@
         --kel-collapse-header-font-size: var(--ks-font-size-base);
         --kel-collapse-content-font-size: var(--ks-font-size-base);
         --kel-collapse-border-color: var(--ks-border-default);
-
         border: none;
 
-        .kel-collapse-item__header {
-            padding: .5rem;
+        & .kel-collapse-item__header {
+            padding: var(--ks-collapse-header-padding, .5rem);
+            border: var(--ks-collapse-header-border, none);
+            border-radius: var(--ks-collapse-header-radius, 0);
+            background-color: var(--ks-collapse-header-bg, var(--kel-collapse-header-bg-color));
+        }
+
+        & .kel-collapse-item.is-active .kel-collapse-item__header {
+            border: var(--ks-collapse-header-border, none);
+        }
+
+        & .kel-collapse-item__content {
+            padding: var(--ks-collapse-content-padding, .5rem);
+        }
+
+        & .kel-collapse-item__wrap {
             border: none;
         }
 
-        .kel-collapse-item__content {
-            padding: .5rem;
-        }
+        &.is-flush {
+            & .kel-collapse-item__header {
+                padding: 0;
+                min-height: 2rem;
+                line-height: 1.2;
+            }
 
-        .kel-collapse-item__wrap {
-            border: none;
+            & .kel-collapse-item__content {
+                padding: 0;
+            }
+
+            & .kel-collapse-item__arrow {
+                margin: 0 var(--ks-spacing-2);
+            }
         }
     }
 </style>

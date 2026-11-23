@@ -1,11 +1,28 @@
 import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
-import {App, h} from "vue"
+import {App, type Component, h} from "vue"
 import {useI18n} from "vue-i18n"
 
+// Module-scoped so repeated Ctrl+S collapses earlier "saved" toasts without dismissing
+// unrelated notifications (e.g. the plugin auto-install progress toast).
+let savedNotificationHandles: {close: () => void}[] = []
+
+
+/**
+ * What a toast body may be: markdown text, or one entry per item for a bulk operation that partly failed.
+ */
+export type ToastMessageBody = string | {message: string}[]
+
+type KsNotificationOptions = Extract<Parameters<typeof KsNotification>[0], Record<string, unknown>>
+
+export type ToastOptions = Partial<KsNotificationOptions> & {
+    multiple?: boolean
+    [key: string]: unknown
+}
 
 export const makeToast = (t: (t:string, options?: Record<string, string>) => string) => {
-    function wrapMessage(message:string) {
-        if(Array.isArray(message) && message.length > 0){
+    /** A list of items renders as a table; a plain string renders as markdown. */
+    function wrapMessage(message: ToastMessageBody) {
+        if (Array.isArray(message) && message.length > 0) {
             return h(
                 KsTable,
                 {
@@ -13,45 +30,47 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                     tableLayout: "auto",
                     fixed: true,
                     data: message,
-                    class: ["mt-2"],
+                    style: {marginTop: "var(--ks-spacing-2)"},
                     size: "small",
                 },
                 [
-                    h(KsTableColumn, {label: "Message", formatter: (row: any) => { return h("span",{innerHTML:row.message})}}),
+                    // Through KsMarkdown like every other toast body: the messages come from the API and can echo
+                    // user-provided ids, so they get the same sanitizing instead of a raw innerHTML.
+                    h(KsTableColumn, {label: t("toast_message_column"), formatter: (row: {message: string}) => h(KsMarkdown, {content: row.message})}),
                 ],
             )
         } else {
-            return h(KsMarkdown, {content: message})
+            return h(KsMarkdown, {content: message as string})
         }
     }
 
     function MarkdownWrap(message:string) {
         return h(KsMarkdown, {content: message})
     }
-    
+
     return {
-        confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
+        confirm: function(message: string | Component, callback: () => Promise<unknown> | unknown, type: "warning" | false = "warning", showCancelButton = true) {
             return KsMessageBox
-                .confirm(typeof message === "string" ? MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton})
+                .confirm(typeof message === "string" ? MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type: type || undefined, showCancelButton})
                 .then(() => callback())
                 .catch(() => {
                     // User cancelled
                 })
         },
-        saved: function(name:string, title?:string, options?: Record<string, any>) {
-            KsNotification.closeAll()
+        saved: function(name:string, title?:string, options?: ToastOptions) {
+            savedNotificationHandles.forEach((handle) => handle.close())
             const message = options?.multiple
                 ? t("multiple saved done", {name})
                 : t("saved done", {name: name})
-            KsNotification({
+            savedNotificationHandles = [KsNotification({
                     title: title || t("saved"),
                     message: wrapMessage(message),
                     position: "bottom-right",
                     type: "success",
                 ...options,
-            })
+            })]
         },
-        deleted: function(name:string, title?:string, options?: Record<string, any>) {
+        deleted: function(name:string, title?:string, options?: ToastOptions) {
             KsNotification({
                     title: title || t("deleted"),
                     message: wrapMessage(t("deleted confirm", {name: name})),
@@ -60,7 +79,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        success: function(message:string, title?:string, options?: Record<string, any>) {
+        success: function(message:string, title?:string, options?: ToastOptions) {
             KsNotification({
                     title: title || t("success"),
                     message: wrapMessage(message),
@@ -69,7 +88,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        warning: function(message:string, title?:string, options?: Record<string, any>) {
+        warning: function(message:string, title?:string, options?: ToastOptions) {
             KsNotification({
                     title: title || t("warning"),
                     message: wrapMessage(message),
@@ -78,7 +97,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        error: function(message:string, title?:string, options?: Record<string, any>) {
+        error: function(message: ToastMessageBody, title?:string, options?: ToastOptions) {
             KsNotification({
                     title: title ?? t("error"),
                     message: wrapMessage(message),

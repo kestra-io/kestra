@@ -1,10 +1,11 @@
 <template>
     <div
-        class="p-2 sidebar"
+        ref="sidebar"
+        class="sidebar"
         @contextmenu.prevent="onTabContextMenu"
         @click="onRootClick"
     >
-        <div class="flex-row d-flex">
+        <div class="toolbar">
             <KsSelect
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
@@ -24,11 +25,16 @@
                     @click.prevent.stop="chooseSearchResults(item)"
                 />
             </KsSelect>
-            <KsButtonGroup class="d-flex">
+            <KsButtonGroup class="toolbar-actions">
                 <KsTooltip
                     :content="canManageFiles ? $t('namespace files.create.file') : $t('namespace files.read_only')"
                 >
-                    <KsButton class="px-2" :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
+                    <KsButton
+                        class="toolbar-button"
+                        :aria-label="$t('namespace files.create.file')"
+                        :disabled="!canManageFiles"
+                        @click="toggleDialog(true, 'file')"
+                    >
                         <FilePlus />
                     </KsButton>
                 </KsTooltip>
@@ -36,7 +42,8 @@
                     :content="canManageFiles ? $t('namespace files.create.folder') : $t('namespace files.read_only')"
                 >
                     <KsButton
-                        class="px-2"
+                        class="toolbar-button"
+                        :aria-label="$t('namespace files.create.folder')"
                         :disabled="!canManageFiles"
                         @click="toggleDialog(true, 'folder')"
                     >
@@ -54,10 +61,6 @@
                     ref="folderPicker"
                     type="file"
                     webkitdirectory
-                    mozdirectory
-                    msdirectory
-                    odirectory
-                    directory
                     class="hidden"
                     @change="importFiles"
                 >
@@ -65,8 +68,8 @@
                     :content="canManageFiles ? $t('import') : $t('namespace files.read_only')"
                 >
                     <KsDropdown :disabled="!canManageFiles">
-                        <KsButton :aria-label="$t('import')" :disabled="!canManageFiles">
-                            <PlusBox />
+                        <KsButton class="toolbar-button" :aria-label="$t('import')" :disabled="!canManageFiles">
+                            <Upload />
                         </KsButton>
                         <template #dropdown>
                             <KsDropdownMenu>
@@ -85,7 +88,7 @@
                 <KsTooltip
                     :content="$t('namespace files.export')"
                 >
-                    <KsButton class="px-2" @click="exportFiles()">
+                    <KsButton class="toolbar-button" :aria-label="$t('namespace files.export')" @click="exportFiles()">
                         <FolderDownloadOutline />
                     </KsButton>
                 </KsTooltip>
@@ -97,36 +100,31 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            :allowDrop="
-                (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
-            "
+            :allowDrop="allowDrop"
             :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
-            :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
-            class="mt-3"
-            @node-drag-start="
-                nodeBeforeDrag = {
-                    parent: $event.parent.data.id,
-                    path: filesStore.getPath($event.data.id) ?? '',
-                }
-            "
+            :props="treeProps"
+            class="file-tree"
+            variant="files"
+            :class="{'is-drop-not-allow': isDropOutsideSidebar}"
+            @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
         >
             <template #empty>
-                <div class="m-4 empty">
-                    <img alt="Empty icon" :src="FileExplorerEmpty">
+                <div class="empty">
+                    <img alt="" :src="FileExplorerEmpty">
                     <h3>{{ $t("namespace files.no_items.heading") }}</h3>
                     <p>{{ $t("namespace files.no_items.paragraph") }}</p>
                 </div>
             </template>
             <template #default="{data, node}">
                 <KsDropdown
-                    :ref="(el: any) => dropdowns[data.id as string] = el"
+                    :ref="(el) => setDropdownRef(data.id as string, el)"
                     @contextmenu.prevent.stop="toggleDropdown(data.id)"
                     trigger="contextmenu"
-                    class="w-100"
+                    class="tree-node-dropdown"
                 >
                     <div
                         class="tree-node-hitbox"
@@ -134,18 +132,18 @@
                         @click.stop="(e) => { if(!selectionMode) onRowClickWrapper(data, node, e) }"
                     >
                         <div class="item-line">
-                            <Checkbox
+                            <KsCheckbox
                                 v-if="selectionMode"
-                                class="me-2"
+                                class="item-prefix"
                                 :modelValue="selectedNodes.includes(data.id)"
-                                @update-model-value="checked => toggleCheckboxSelection(checked, node)"
+                                @change="checked => toggleCheckboxSelection(checked, node)"
                                 @mousedown.stop
                                 @click.stop
                             />
                             <TypeIcon
                                 :name="data.fileName"
                                 :folder="!data.leaf"
-                                class="me-2"
+                                class="item-prefix"
                             />
                             <span class="filename" @click="(e) => { if(selectionMode) onRowClickWrapper(data, node, e) }">{{ data.fileName }}</span>
                         </div>
@@ -172,7 +170,7 @@
                             <KsDropdownItem v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(data)">
                                 {{ $t("namespace files.export_single") }}
                             </KsDropdownItem>
                             <KsDropdownItem
@@ -224,10 +222,10 @@
             "
             width="500"
             appendToBody
-            @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+            @keydown.enter.prevent="dialog.name?.trim() ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
-            <div class="pb-1">
+            <div class="dialog-label">
                 <span>
                     {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
@@ -236,10 +234,10 @@
                 ref="creation_name"
                 v-model="dialog.name"
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             />
 
-            <div class="py-1">
+            <div class="parent-folder-label">
                 <span>
                     {{ $t("namespace files.dialog.parent_folder") }}
                 </span>
@@ -248,7 +246,7 @@
                 v-model="dialog.folder"
                 clearable
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             >
                 <KsOption
                     v-for="folder in filesStore.folders"
@@ -264,7 +262,7 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!dialog.name"
+                        :disabled="!dialog.name?.trim()"
                         @click="dialogHandler"
                     >
                         {{ $t("namespace files.create.label") }}
@@ -280,7 +278,7 @@
             @keydown.enter.prevent="renameItem()"
             @opened="focusRenamingInput"
         >
-            <div class="pb-1">
+            <div class="dialog-label">
                 <span>
                     {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
@@ -289,7 +287,7 @@
                 ref="renaming_name"
                 v-model="renameDialog.name"
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             />
             <template #footer>
                 <div>
@@ -298,7 +296,8 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!renameDialog.name"
+                        :disabled="!renameDialog.name || isRenaming"
+                        :loading="isRenaming"
                         @click="renameItem()"
                     >
                         {{ $t("namespace files.rename.label") }}
@@ -309,10 +308,14 @@
 
         <KsDialog
             v-model="confirmation.visible"
-            :title="confirmationLabels.title"
+            :title="$t('namespace files.dialog.deletion.title')"
             @keydown.enter.prevent="removeItems()"
         >
-            <span class="py-3" v-html="confirmationLabels.message" />
+            <i18n-t :keypath="deletionMessage.keypath" tag="span" scope="global">
+                <template v-for="(value, name) in deletionMessage.params" :key="name" #[name]>
+                    <code>{{ value }}</code>
+                </template>
+            </i18n-t>
             <template #footer>
                 <div>
                     <KsButton @click="confirmation.visible = false">
@@ -370,22 +373,30 @@
     import {EditorTabProps} from "./FlowFileEditorTab.vue"
 
     export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>
-    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>
+    /** Returns whether a tab was actually open for that path, so callers can reopen it elsewhere. */
+    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string; folder?: boolean}) => boolean>
+    /** Points the tabs open at `from`, or under it when it is a folder, at `to`, keeping unsaved edits. */
+    export const FILES_MOVE_TABS_INJECTION_KEY = Symbol("files-move-tabs-injection-key") as InjectionKey<(move: {from: string; to: string}) => void>
 </script>
 
 <script lang="ts" setup>
     import {ref, computed, inject, watch} from "vue"
     import {useRoute} from "vue-router"
+    import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {safePath} from "../../composables/useBaseNamespaces"
+    import {handled} from "../../utils/kestraHttp"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import FilePlus from "vue-material-design-icons/FilePlus.vue"
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue"
-    import PlusBox from "vue-material-design-icons/PlusBox.vue"
+    import Upload from "vue-material-design-icons/Upload.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
+    import {KsInput, KsTree, type KsTreeInstance, type TreeOptionProps} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
+    import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
     import {
         ElTreeNode,
@@ -398,7 +409,6 @@
     import Revisions, {Revision} from "../layout/Revisions.vue"
     import {FILES_REFRESH_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
     import Crud from "override/components/auth/Crud.vue"
-    import Checkbox from "../layout/Checkbox.vue"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
     import action from "../../models/action"
@@ -423,6 +433,8 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
+    const moveTabs = inject(FILES_MOVE_TABS_INJECTION_KEY, undefined)
     const refreshTabContent = inject(FILES_REFRESH_CONTENT_INJECTION_KEY, undefined)
 
     // exposed so parents (e.g. the dedicated empty state) can reuse the
@@ -463,20 +475,31 @@
     const filter = ref<string>("")
     const dialog = ref<Dialog>({...DIALOG_DEFAULTS})
     const renameDialog = ref<Dialog>({...RENAME_DEFAULTS})
-    const tree = ref<any>()
+    const isRenaming = ref(false)
+    const sidebar = ref<HTMLElement>()
+    const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
+    const tree = ref<KsTreeInstance<TreeNode>>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
-    const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({})
+    type DropdownInstance = {handleClose: () => void; handleOpen: () => void}
+    const dropdowns = ref<Record<string, DropdownInstance>>({})
+
+    function setDropdownRef(id: string, el: unknown) {
+        if (el) {
+            dropdowns.value[id] = el as DropdownInstance
+        }
+    }
     const revisionsHistory = ref<{ visible: boolean, path: string, revisions: Revision[] }>({visible: false, path: "", revisions: []})
-    const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}})
+    const confirmation = ref<{ visible: boolean; data?: TreeNode; nodes?: TreeNode[] }>({visible: false, nodes: []})
     const nodeBeforeDrag = ref<{
         parent: string;
         path: string;
     }>()
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0})
-    const selectedNodes = ref<any[]>([])
+    const selectedNodes = ref<string[]>([])
     const selectionMode = computed(() => selectedNodes.value.length > 1)
     const lastClickedIndex = ref<number | null>(null)
+    const bulkDragSiblings = ref<{ path: string; fileName: string }[]>()
 
     const selectedFiles = computed(() => {
         return selectedNodes.value.map(id => filesStore.getPath(id)).filter((p): p is string => !!p)
@@ -500,29 +523,36 @@
 
     const multiSelected = computed(() => selectedNodes.value.length > 1)
 
-    const confirmationLabels = computed(() => {
-        const files = confirmation.value.nodes?.filter(n => n.type === "File")
-        const filesCount = files?.length ?? 0
-        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory")
-        const foldersCount = folders?.length ?? 0
-        const labels = {title: t("namespace files.dialog.deletion.title"), message: ""}
-        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: folders?.[0].fileName})
-        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: files?.[0].fileName})
-        else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount})
-        else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount})
-        else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})
-        return labels
+    const deletionMessage = computed((): {keypath: string, params: Record<string, string | number>} => {
+        const files = confirmation.value.nodes?.filter(n => n.type === "File") ?? []
+        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory") ?? []
+        if (folders.length === 1) return {keypath: "namespace files.dialog.deletion.folder_single", params: {name: folders[0].fileName}}
+        if (files.length === 1) return {keypath: "namespace files.dialog.deletion.file_single", params: {name: files[0].fileName}}
+        if (folders.length > 0 && files.length > 0) return {keypath: "namespace files.dialog.deletion.mixed", params: {folders: folders.length, files: files.length}}
+        if (folders.length > 0) return {keypath: "namespace files.dialog.deletion.folders", params: {count: folders.length}}
+        return {keypath: "namespace files.dialog.deletion.files", params: {count: files.length}}
     })
 
-    function nodeClass(data: any) {
+    function nodeClass(data: TreeNode) {
         if (selectedNodes.value.includes(data.id)) {
-            return "node selected-tree-node"
+            return "is-selected"
         }
-        return "node"
+        return ""
     }
 
-    function flattenTree(itemsArr: TreeNode[], parentPath = ""): any[] {
-        const result: any[] = []
+    const treeProps: TreeOptionProps = {
+        class: (data) => nodeClass(data as TreeNode),
+        isLeaf: "leaf",
+    }
+
+    interface FlatTreeNode {
+        path: string
+        fileName: string
+        id: string
+    }
+
+    function flattenTree(itemsArr: TreeNode[], parentPath = ""): FlatTreeNode[] {
+        const result: FlatTreeNode[] = []
         for (const item of itemsArr) {
             const fullPath = `${parentPath}${item.fileName}`
             result.push({path: fullPath, fileName: item.fileName, id: item.id})
@@ -533,7 +563,7 @@
         return result.filter(i => i.path)
     }
 
-    function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null) {
+    function handleNodeClick(data: TreeNode, node: ElTreeNode, event: MouseEvent | null = null) {
         const path = filesStore.getPath(node.data.id) ?? ""
         const flatList = flatTree.value
         const currentIndex = flatList.findIndex(item => item.path === path)
@@ -592,7 +622,7 @@
             openTab?.({
                 name: data.fileName,
                 path,
-                extension: data.fileName.split(".").pop(),
+                extension: data.fileName.split(".").pop() ?? "",
                 flow: false,
                 dirty: false,
             })
@@ -673,7 +703,13 @@
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
-        return (await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})).content ?? ""
+        const {content, notFound} = await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})
+        // readFile silences the global 404 toast, so surface the missing revision here rather than
+        // rendering a silent empty diff.
+        if (notFound) {
+            toast.error(t("namespace files.revisions.load_error", {revision}))
+        }
+        return content ?? ""
     }
 
     async function restore(source: string) {
@@ -706,7 +742,7 @@
         }]
     }
 
-    async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
+    async function removeSelectedFiles(_data?: unknown, node?: ElTreeNode) {
         // Guards the keyboard-delete path, which bypasses the disabled context-menu item
         if (!canManageFiles.value) return
         if (selectedFiles.value.length <= 1 && node) {
@@ -758,14 +794,14 @@
         }
     }
 
-    function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: any) {
+    function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: ElTreeNode | string) {
         if (isShown) {
             let folder
-            if (node?.data?.leaf === false) {
+            if (typeof node === "object" && node?.data?.leaf === false) {
                 folder = filesStore.getPath(node.data.id)
             } else {
-                const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
-                const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
+                const selectedKey = tree.value?.getCurrentKey ? tree.value.getCurrentKey() : null
+                const selectedNode = selectedKey ? tree.value?.getNode(selectedKey) : null
                 if (selectedNode?.data?.leaf === false) {
                     node = selectedNode.data.id
                     folder = filesStore.getPath(selectedNode.data.id)
@@ -795,47 +831,164 @@
         }
     }
 
-    function renameItem() {
-        if (!canManageFiles.value) return
-        const path = renameDialog.value.node?.data.id ? filesStore.getPath(renameDialog.value.node.data.id) ?? "" : ""
+    async function renameItem() {
+        // The Enter handler on the dialog is not gated by the button's disabled state, so
+        // without this a second Enter fires a duplicate rename whose `old` path is already gone.
+        if (!canManageFiles.value || isRenaming.value) return
+
+        const {node, old: oldName, name: newName} = renameDialog.value
+        if (!newName) return
+
+        const path = node?.data.id ? filesStore.getPath(node.data.id) ?? "" : ""
         const start = path.substring(0, path.lastIndexOf("/") + 1)
-        namespacesStore.renameFileDirectory({
-            namespace: namespaceId.value,
-            old: `${start}${renameDialog.value.old}`,
-            new: `${start}${renameDialog.value.name}`,
-        })
-        tree.value.getNode(renameDialog.value.node).data.fileName = renameDialog.value.name
+        const oldPath = `${start}${oldName}`
+        const newPath = `${start}${newName}`
+
+        isRenaming.value = true
+        try {
+            await namespacesStore.renameFileDirectory({
+                namespace: namespaceId.value,
+                old: oldPath,
+                new: newPath,
+            })
+        } catch (error) {
+            handled(error)
+            // The tree is left untouched on purpose: it used to be renamed before the response
+            // arrived, so a refused rename (an existing name answers 500) still looked applied.
+            console.error(`Failed to rename ${oldPath} to ${newPath}`, error)
+            toast.error(t("namespace files.rename.error", {name: newName}))
+            return
+        } finally {
+            isRenaming.value = false
+        }
+
+        if (node) {
+            const treeNode = tree.value?.getNode(node.data.id)
+            if (treeNode) {
+                treeNode.data.fileName = newName
+            }
+        }
         renameDialog.value = {...RENAME_DEFAULTS}
+
+        // Tabs are keyed by path, so a renamed file or folder left them pointing at a path that
+        // no longer exists. Move them across, unsaved edits included.
+        moveTabs?.({from: oldPath, to: newPath})
     }
 
-    async function nodeMoved(draggedNode: any) {
-        // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
-        if (!canManageFiles.value) {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+    function onNodeDragStart(draggingNode: ElTreeNode) {
+        startRestrictDrop()
+
+        nodeBeforeDrag.value = {
+            parent: draggingNode.parent?.data.id,
+            path: filesStore.getPath(draggingNode.data.id) ?? "",
+        }
+    
+        bulkDragSiblings.value = undefined
+
+        const isBulkDrag = selectedNodes.value.length > 1 && selectedNodes.value.includes(draggingNode.data.id)
+        if (!isBulkDrag) {
             return
         }
-        try {
-            await namespacesStore.moveFileDirectory({
-                namespace: namespaceId.value,
-                old: nodeBeforeDrag.value?.path ?? "",
-                new: filesStore.getPath(draggedNode.data.id) ?? "",
-            })
-        } catch {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+
+        // handle bulk drag
+        const draggedPath = nodeBeforeDrag.value.path
+        const selectedPaths = selectedFiles.value
+
+        if (selectedPaths.some(p => draggedPath.startsWith(`${p}/`))) {
+            return
         }
+
+        bulkDragSiblings.value = selectedNodes.value
+            // ignore the main node
+            .filter(id => id !== draggingNode.data.id)
+            .map(id => filesStore.getPath(id))
+            .filter((path): path is string => !!path && !selectedPaths.some(p => p !== path && path.startsWith(`${p}/`)))
+            .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
-    const creation_name = ref<any>()
-    const renaming_name = ref<any>()
+    function allowDrop(draggingNode: ElTreeNode, dropNode: ElTreeNode, dropType: string) {
+        if (dropType === "inner" && dropNode.data?.leaf) {
+            return false
+        }
+        const targetFolder = dropType === "inner" ? dropNode : dropNode.parent
+        return targetFolder !== draggingNode.parent || Boolean(bulkDragSiblings.value?.length)
+    }
+
+    async function nodeMoved(draggedNode: ElTreeNode) {
+        // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
+        if (!canManageFiles.value) {
+            tree.value?.remove(draggedNode)
+            tree.value?.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            return
+        }
+        const oldPath = nodeBeforeDrag.value?.path ?? ""
+        const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
+
+        if (newPath !== oldPath) {
+            try {
+                await namespacesStore.moveFileDirectory({
+                    namespace: namespaceId.value,
+                    old: oldPath,
+                    new: newPath,
+                })
+            } catch {
+                tree.value?.remove(draggedNode)
+                tree.value?.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+                bulkDragSiblings.value = undefined
+                return
+            }
+            moveTabs?.({from: oldPath, to: newPath})
+        }
+
+        const siblings = bulkDragSiblings.value
+        bulkDragSiblings.value = undefined
+
+        // handle siblings move
+        const targetFolder = newPath.includes("/") ? newPath.substring(0, newPath.lastIndexOf("/")) : ""
+        const moves = (siblings ?? [])
+            .map((sibling) => ({old: sibling.path, new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName}))
+            .filter((move) => move.old !== move.new)
+        if (!moves.length) {
+            return
+        }
+
+        const results = await Promise.allSettled(moves.map(async (move) => {
+            await namespacesStore.moveFileDirectory({
+                namespace: namespaceId.value,
+                ...move,
+            })
+            moveTabs?.({from: move.old, to: move.new})
+        }))
+
+        await filesStore.loadNodes()
+        selectedNodes.value = []
+        lastClickedIndex.value = null
+
+        const failedCount = results.filter(r => r.status === "rejected").length
+
+        if (failedCount > 0) {
+            return toast.error(t("namespace files.move.bulk_error", {count: failedCount}))
+        }
+        return toast.success(t("namespace files.move.bulk_success"))
+    }
+
+    const creation_name = ref<InstanceType<typeof KsInput>>()
+    const renaming_name = ref<InstanceType<typeof KsInput>>()
 
     function focusCreationInput() {
-        creation_name.value?.$el?.querySelector("input")?.focus()
+        if (creation_name.value?.focus) {
+            creation_name.value.focus()
+        } else {
+            (creation_name.value?.$el as HTMLElement | undefined)?.querySelector("input")?.focus()
+        }
     }
 
     function focusRenamingInput() {
-        renaming_name.value?.$el?.querySelector("input")?.focus()
+        if (renaming_name.value?.focus) {
+            renaming_name.value.focus()
+        } else {
+            (renaming_name.value?.$el as HTMLElement | undefined)?.querySelector("input")?.focus()
+        }
     }
 
     async function importFiles(event: Event) {
@@ -851,6 +1004,9 @@
         } finally {
             (event.target as HTMLInputElement).value = ""
             dialog.value = {...DIALOG_DEFAULTS}
+            selectedNodes.value = []
+            lastClickedIndex.value = null
+            syncTreeCurrentKey()
         }
     }
 
@@ -863,16 +1019,18 @@
     async function addFile({file, creation, shouldReset = true}: { file?: Omit<TreeNodeFile, "id" | "type">; creation?: boolean; shouldReset?: boolean }) {
         let FILE: Omit<TreeNodeFile, "id" | "type">
         if (creation && dialog.value.name) {
-            const [fileName, extension] = getFileNameWithExtension(dialog.value.name)
+            const [fileName, extension] = getFileNameWithExtension(dialog.value.name.trim())
             FILE = {fileName, extension, content: "", leaf: true}
         } else {
             if(!file) return
             FILE = file
         }
 
-        const {path, file: createdFile} = await filesStore.addFile(FILE, dialog.value.folder, creation)
+        const parentFolder = dialog.value.folder
+        const {path, file: createdFile} = await filesStore.addFile(FILE, parentFolder, creation)
         if (creation) {
             if(path === undefined || createdFile === undefined) return
+            reloadFolder(parentFolder)
             openTab?.({
                 name: createdFile.fileName,
                 path,
@@ -888,45 +1046,65 @@
         }
     }
 
-    function confirmRemove(nodes: any[]) {
+    function confirmRemove(nodes: (TreeNode | null | undefined)[]) {
         confirmation.value = {
             visible: true,
-            nodes: Array.isArray(nodes) ? nodes : [nodes],
+            nodes: nodes.filter((n): n is TreeNode => Boolean(n)),
         }
     }
 
-    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
-
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return
-        await Promise.all(confirmation.value.nodes.map(async (node) => {
+        const results = await Promise.allSettled(confirmation.value.nodes.map(async (node) => {
             const path = filesStore.getPath(node.id) ?? ""
             try {
                 await namespacesStore.deleteFileDirectory({
                     namespace: props.currentNS ?? route.params.namespace as string,
                     path,
                 })
-                tree.value.remove(node.id)
+                tree.value?.remove(node)
                 closeTab?.({
                     path,
+                    folder: !node.leaf,
                 })
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error)
-                toast.error(`Failed to delete file: ${node.fileName}`)
+                throw error
             }
         }))
         confirmation.value = {visible: false, nodes: []}
-        toast.success("Selected files deleted successfully.")
+
+        const failedCount = results.filter(r => r.status === "rejected").length
+
+        if (failedCount === 0) {
+            toast.success(t("namespace files.delete.bulk_success"))
+        } else if (failedCount < results.length) {
+            toast.error(t("namespace files.delete.bulk_partial_error", {totalCount: results.length, failedCount}))
+        } else {
+            toast.error(t("namespace files.delete.all_failed_error"))
+        }
     }
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {
         const parentPath = dialog.value.folder || ""
-        filesStore.addFolder({
-            fileName: dialog.value.name ?? "unknown",
+        const payload = {
+            fileName: dialog.value.name?.trim() ?? "unknown",
             parentPath,
             ...folder,
-        }, creation)
+        }
         dialog.value = {...DIALOG_DEFAULTS}
+        await filesStore.addFolder(payload, creation)
+        reloadFolder(parentPath)
+    }
+
+    /** Re-fetches an already loaded folder, since the tree only diffs its own root level and would otherwise stay stale until a refresh. */
+    function reloadFolder(path?: string) {
+        const node = path ? tree.value?.getNode(filesStore.findNodeByPath(path)?.id) : undefined
+        if (!node?.loaded) {
+            return
+        }
+        node.loaded = false
+        node.expand()
     }
 
     async function showRevisionsHistory(data: TreeNode) {
@@ -948,15 +1126,17 @@
         }
     }
 
-    async function exportFile(node: TreeNode, data: {fileName: string}) {
-        const {content} = await namespacesStore.readFile({
-            path: filesStore.getPath(node.id) ?? "",
-            namespace: namespaceId.value,
-        })
-        if(!content?.length)
-            throw new Error("File is empty or undefined")
-        const blob = new Blob([content], {type: "text/plain"})
-        Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName)
+    function exportFile(file: TreeNode) {
+        // `getPath` resolves the tree's own uid; it used to be handed Element Plus's numeric
+        // internal node id, which never matched, so the request asked for the namespace root
+        // and silently downloaded nothing.
+        const path = filesStore.getPath(file.id)
+        if (!path) {
+            toast.error(t("namespace files.export_error", {name: file.fileName}))
+            return
+        }
+
+        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=/${safePath(path)}`, file.fileName)
     }
 
     function onTabContextMenu(event: MouseEvent) {
@@ -975,29 +1155,49 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .revision-history-dialog-body {
-    // We subtract the dialog margins and title height (78px)
+    /* We subtract the dialog margins and title height (78px) */
     height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
 }
 
+.dialog-label {
+    padding-bottom: var(--ks-spacing-1);
+}
+
+.parent-folder-label {
+    padding-block: var(--ks-spacing-1);
+}
+
+.dialog-field {
+    margin-bottom: var(--ks-spacing-4);
+}
+
 .sidebar {
+    padding: var(--ks-spacing-2);
     background: var(--ks-bg-surface);
     border-right: 1px solid var(--ks-border-default);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
     width: 20%;
 
-    .filter{
-        :deep(.kel-select__wrapper) {
-            min-height: 32px;
-            height: 32px;
-            padding-right: 0px;
-        }
+    & .toolbar,
+    & .toolbar-actions {
+        display: flex;
+    }
+
+    & .tree-node-dropdown {
+        width: 100%;
+    }
+
+    .filter {
+        --ks-select-height: 32px;
+        --ks-select-padding: 4px 0 4px 12px;
     }
 
     .empty {
+        margin: var(--ks-spacing-5);
         position: relative;
         top: 100px;
         text-align: center;
@@ -1019,17 +1219,12 @@
         }
     }
 
-    :deep(.kel-button):not(.kel-dialog .kel-button) {
+    & .toolbar .toolbar-actions .toolbar-button {
         border: 0;
         background: none;
         outline: none;
         opacity: 0.5;
-        padding-left: .5rem;
-        padding-right: .5rem;
-
-        &.kel-button--primary {
-            opacity: 1;
-        }
+        padding-inline: var(--ks-spacing-2);
     }
 
     .hidden {
@@ -1046,7 +1241,7 @@
 
     ul.tabs-context {
         position: fixed;
-        z-index: 9999;
+        z-index: var(--ks-z-top);
         border: 1px solid var(--ks-border-default);
 
         & li {
@@ -1061,63 +1256,19 @@
         }
     }
 
-    :deep(.kel-tree) {
+    & .file-tree {
+        margin-top: var(--ks-spacing-4);
         height: calc(100% - 64px);
         overflow: auto;
         background: var(--ks-bg-surface);
 
-        .kel-tree__empty-block {
-            height: auto;
-        }
-
-        .node {
-            --kel-tree-node-hover-bg-color: transparent;
-        }
-
-        .kel-tree-node__content {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2px !important;
-            padding-left: 0 !important;
-            border: 1px solid transparent;
-
-            &:last-child{
-                margin-bottom: 0px;
-            }
-
-            &:hover{
-                background: none;
-                border: 1px solid var(--ks-border-focus);
-            }
-        }
-
-        .is-expanded {
-            .kel-tree-node__children {
-                margin-left: 11px !important;
-                padding-left: 0 !important;
-                border-left: 1px solid var(--ks-border-default);
-            }
-        }
-
-        .kel-tree-node.is-current > .kel-tree-node__content {
-            min-width: fit-content;
-            border: 1px solid var(--ks-border-focus);
-            background: var(--ks-btn-primary-bg-default);
-
-            .filename {
-                color: var(--ks-btn-primary-text);
-            }
-        }
-        .kel-tree-node.selected-tree-node > .kel-tree-node__content {
-            background-color: var(--ks-btn-primary-bg-default);
-            min-width: fit-content;
-            .filename {
-                color: var(--ks-btn-primary-text);
-            }
+        & .is-current > .kel-tree-node__content .filename,
+        & .is-selected > .kel-tree-node__content .filename {
+            color: var(--ks-btn-primary-text);
         }
     }
 
-    :deep(.tree-node-hitbox) {
+    & .tree-node-hitbox {
         width: 100%;
         flex: 1;
         display: flex;
@@ -1127,6 +1278,10 @@
     .item-line{
         display: flex;
         align-items: center;
+
+        & .item-prefix {
+            margin-right: var(--ks-spacing-2);
+        }
     }
 }
 </style>

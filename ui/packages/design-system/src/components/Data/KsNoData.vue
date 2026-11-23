@@ -4,7 +4,7 @@
         <strong>{{ title ?? $t("ks_no_data.no_results") }}</strong>
         <p v-if="$slots.default"><slot /></p>
         <!-- eslint-disable-next-line vue/no-v-html -->
-        <p v-else-if="description" v-html="description" />
+        <p v-else-if="description" v-html="description" /> <!-- nosemgrep: kestra-vue-avoid-v-html -- description is translated markup from the caller, who must escape any interpolated value. -->
         <template v-else>
             <p>{{ $t("ks_no_data.nothing_here") }}</p>
             <p>{{ $t("ks_no_data.will_appear") }}</p>
@@ -13,18 +13,19 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {Component, HTMLAttributes} from "vue"
     import FilterRemoveOutlineIcon from "vue-material-design-icons/FilterRemoveOutline.vue"
 
     defineProps<{
         title?: string
         description?: string
         icon?: Component
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .empty-state {
         display: flex;
         flex-direction: column;
@@ -33,13 +34,15 @@
         height: 100%;
         text-align: center;
         padding: var(--ks-spacing-4) 0;
-        strong{
+
+        & strong {
             color: var(--ks-text-primary);
             font-size: var(--ks-font-size-md);
             line-height: 2rem;
             font-weight: var(--ks-font-weight-bold);
         }
-        p {
+
+        & p {
             line-height: 1rem;
             margin: 0;
             max-width: 320px;
@@ -49,12 +52,13 @@
             color: var(--ks-text-secondary);
         }
 
-        .empty-icon{
+        & .empty-icon {
             height: 24px;
             width: 24px;
             margin: 8px;
             color: var(--ks-icon-muted);
-            :deep(.material-design-icon__svg) {
+
+            & :deep(.material-design-icon__svg) {
                 width: 100%;
                 height: 100%;
             }

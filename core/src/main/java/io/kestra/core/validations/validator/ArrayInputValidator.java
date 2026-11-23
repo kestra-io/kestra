@@ -24,6 +24,8 @@ public class ArrayInputValidator implements ConstraintValidator<ArrayInputValida
                 || value.getItemType() == Type.SECRET
                 || value.getItemType() == Type.MULTISELECT
                 || value.getItemType() == Type.SELECT
+                || value.getItemType() == Type.TABLE
+                || value.getItemType() == Type.ASSET
         ) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("`itemType` cannot be " + value.getItemType())

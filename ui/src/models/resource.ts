@@ -8,4 +8,4 @@ export default {
     SECRET: "SECRET",
     COPILOT: "COPILOT",
     MCP_SERVER: "MCP_SERVER",
-}
+} as const

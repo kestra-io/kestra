@@ -11,7 +11,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
-@Plugin
+@Plugin(internal = true)
 public class External extends Asset {
     public static final String ASSET_TYPE = External.class.getName();
 

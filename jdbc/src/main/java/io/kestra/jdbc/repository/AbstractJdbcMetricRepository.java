@@ -15,6 +15,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -186,8 +187,61 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
     }
 
     @Override
+    public int purge(
+        @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable String executionId,
+        @Nullable ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        @Nullable Integer batchSize) {
+        Condition condition = this.defaultFilter(tenantId)
+            .and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
+
+        if (startDate != null) {
+            condition = condition.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
+        }
+
+        if (namespace != null) {
+            if (flowId != null) {
+                condition = condition.and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace));
+            } else {
+                condition = condition
+                    .and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace).or(CaseSensitiveMatch.startsWith(field("namespace", String.class), namespace + ".")));
+            }
+        }
+
+        if (flowId != null) {
+            condition = condition.and(field("flow_id").eq(flowId));
+        }
+
+        if (executionId != null) {
+            condition = condition.and(field("execution_id").eq(executionId));
+        }
+
+        Condition finalCondition = condition;
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
+            if (batchSize != null && configuration.dialect().family() == SQLDialect.MYSQL) {
+                int total = 0;
+                int deleted;
+                do {
+                    deleted = DSL.using(configuration)
+                        .delete(this.jdbcRepository.getTable())
+                        .where(finalCondition)
+                        .limit(batchSize)
+                        .execute();
+                    total += deleted;
+                } while (deleted > 0);
+                return total;
+            }
+            return DSL.using(configuration).delete(this.jdbcRepository.getTable()).where(finalCondition).execute();
+        });
+    }
+
+    @Override
     protected Condition defaultFilter(String tenantId) {
-        return buildTenantCondition(tenantId);
+        return buildTenantCondition(tenantId).and(aclCondition(QueryFilter.Resource.EXECUTION));
     }
 
     @Override
@@ -323,7 +377,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
             "flowId", "flow_id",
             "taskId", "task_id",
             "executionId", "execution_id",
-            "taskrunId", "taskrun_id",
+            "taskRunId", "taskrun_id",
             "name", "metric_name",
             "timestamp", "timestamp",
             "value", "metric_value"
@@ -336,7 +390,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<Metrics.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
@@ -380,7 +434,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
+                DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
                 Map<String, ? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))

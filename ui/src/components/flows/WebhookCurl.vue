@@ -14,7 +14,7 @@
             <div v-for="trigger in webhookTriggers" :key="trigger.id" class="trigger">
                 <div class="code">
                     <pre><code>{{ generateWebhookCurlCommand(trigger) }}</code></pre>
-                    <CopyToClipboard :text="generateWebhookCurlCommand(trigger)" class="copy" />
+                    <CopyToClipboard :text="generateWebhookCurlCommand(trigger)" />
                 </div>
             </div>
 
@@ -95,7 +95,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .webhook-curl {
     position: relative;
     border: 1px solid var(--ks-border-default);
@@ -105,29 +105,20 @@
     .payload {
         margin-bottom: 1rem;
 
-        :deep(.kel-form-item__label) {
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-secondary);
-        }
-
-        :deep(.editor-container) {
-            height: 50px;
-            max-height: 120px;
-        }
+        --ks-form-item-label-font-size: var(--ks-font-size-sm);
+        --ks-form-item-label-color: var(--ks-text-secondary);
+        --ks-editor-height: 3.125rem;
+        --ks-editor-max-height: 7.5rem;
     }
 
     .code {
         position: relative;
-        pre {
-            overflow-x: auto;
-        }
-    }
 
-    .copy {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        z-index: 10;
+        pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            padding-right: var(--ks-spacing-8);
+        }
     }
 }
 </style>

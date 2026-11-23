@@ -1,6 +1,6 @@
 <template>
     <ElTabPane
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as TabPaneProps)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -12,18 +12,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTabPane} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {ElTabPane, type TabPaneProps} from "element-plus"
+    import type {HTMLAttributes} from "vue"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        label?: string
-        name?: string
-        disabled?: boolean
-    }>()
+    const props = defineProps<TabPaneProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof TabPaneProps>>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 
     defineSlots<{
         default?(): unknown
@@ -34,4 +32,7 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/tab-pane';
+</style>
+
+<style>
 </style>

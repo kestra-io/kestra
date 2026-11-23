@@ -4,7 +4,7 @@
             type="default"
             :disabled="disabled"
             @click="showSaveDialog = true"
-            :icon="ContentSaveOutline"
+            :icon="ContentSave"
             class="no-bg-border"
         >
             <slot />
@@ -93,7 +93,7 @@
                     type="primary"
                     @click="saveFilter"
                     :disabled="!filterName.trim() || hasDuplicate"
-                    :icon="ContentSaveOutline"
+                    :icon="ContentSave"
                 >
                     {{ isEditMode ? $t("filter.update") : $t("filter.save") }}
                 </KsButton>
@@ -108,7 +108,7 @@
     import type {AppliedFilter, FilterGroup, LogicalOperator, SavedFilter} from "../utils/filterTypes"
     import {isWrapperGroup} from "../utils/filterTypes"
     import {isDateRangeValue} from "../utils/filterChipFactory"
-    import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons"
+    import {CloseCircleOutline, ContentSave} from "../utils/icons"
 
     interface PreviewLeaf {
         id: string;
@@ -215,16 +215,16 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .save-form {
-    >div {
+    & >div {
         margin-bottom: 1rem;
 
         &:last-child {
             margin-bottom: 0;
         }
 
-        label {
+        & label {
             display: block;
             margin-bottom: 0.25rem;
             font-weight: 600;
@@ -233,33 +233,33 @@
         }
     }
 
-    .update-hint {
+    & .update-hint {
         margin: 0 0 0.5rem;
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-secondary);
     }
 
-    .filter-summary {
+    & .filter-summary {
         padding: 0.5rem 0.75rem;
-        background-color: var(--ks-surface-secondary);
+        background-color: var(--ks-bg-base);
         border-radius: var(--ks-radius-base);
         border: 1px solid var(--ks-border-default);
         min-height: 2rem;
     }
 
-    .filter-list {
+    & .filter-list {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
     }
 
-    .filter-groups {
+    & .filter-groups {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);
     }
 
-    .filter-group-box {
+    & .filter-group-box {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);
@@ -268,8 +268,8 @@
         border-radius: var(--ks-radius-base);
     }
 
-    .group-operator,
-    .leaf-operator {
+    & .group-operator,
+    & .leaf-operator {
         align-self: flex-start;
         padding: 0 var(--ks-spacing-1);
         border: 1px solid var(--ks-border-default);
@@ -280,23 +280,23 @@
         color: var(--ks-text-secondary);
     }
 
-    .item {
+    & .item {
         display: flex;
         align-items: center;
         gap: 0.25rem;
         font-size: var(--ks-font-size-xs);
 
-        .key {
+        & .key {
             color: var(--ks-text-primary);
             font-weight: 400;
         }
 
-        .comparator {
+        & .comparator {
             color: var(--ks-status-success);
             font-weight: 400;
         }
 
-        .value {
+        & .value {
             color: var(--ks-text-primary);
             font-weight: 700;
         }
@@ -310,12 +310,6 @@
 
 .kel-button-group .kel-button--primary:last-child {
     border: none;
-}
-
-:deep(.kel-input__inner::placeholder),
-:deep(.kel-textarea__inner::placeholder) {
-    color: var(--ks-text-dim);
-    font-size: var(--ks-font-size-sm);
 }
 
 :deep(footer.kel-dialog__footer) {

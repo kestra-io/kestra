@@ -2,8 +2,9 @@ package io.kestra.core.runners.pebble.filters;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,8 @@ class ToJsonFilterTest {
         assertThat(render).isEqualTo("true");
 
         render = variableRenderer.render("{{ vars.second.date | toJson }}", vars);
-        assertThat(render).isEqualTo("\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\"");
+        assertThat(ZonedDateTime.parse(render.substring(1, render.length() - 1)).toInstant())
+            .isEqualTo(date.toInstant());
 
         render = variableRenderer.render("{{ vars.second.map | toJson }}", vars);
         assertThat(render).contains("\"int\":1");
@@ -81,6 +83,20 @@ class ToJsonFilterTest {
 
         render = variableRenderer.render("{{ null | toJson }}", Map.of());
         assertThat(render).isEqualTo("null");
+    }
+
+    @Test
+    void shouldKeepNullMapContentWhenIncludeNullsIsTrue() throws IllegalVariableEvaluationException {
+        Map<String, Object> record = new LinkedHashMap<>();
+        record.put("a", 1);
+        record.put("b", null);
+        Map<String, Object> vars = Map.of("records", List.of(record));
+
+        assertThat(variableRenderer.render("{{ records | toJson }}", vars))
+            .isEqualTo("[{\"a\":1}]");
+
+        assertThat(variableRenderer.render("{{ records | toJson(includeNulls=true) }}", vars))
+            .isEqualTo("[{\"a\":1,\"b\":null}]");
     }
 
     @Test

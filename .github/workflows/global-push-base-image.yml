@@ -26,13 +26,18 @@ jobs:
     strategy:
       matrix:
         variant:
-          - cache-tag: latest-no-plugins
+          # The -no-plugins tags are deprecated aliases of -slim. Keep them as long as a maintained
+          # release branch (0.22 -> 1.3) still defaults its Dockerfile BASE_IMAGE to them — dropping
+          # them earlier would break local builds and any pinned consumer of those branches.
+          - cache-tag: latest-slim
             tags: |
+              ghcr.io/kestra-io/kestra-base:latest-slim
+              ghcr.io/kestra-io/kestra-base:latest-jre25-slim
               ghcr.io/kestra-io/kestra-base:latest-no-plugins
               ghcr.io/kestra-io/kestra-base:latest-jre25-no-plugins
             jre: "25"
             with-python: "false"
-            description: "Kestra base image (no plugins) — JRE 25 + uv pre-installed"
+            description: "Kestra base image (slim, no plugins) — JRE 25 + uv pre-installed"
           - cache-tag: latest
             tags: |
               ghcr.io/kestra-io/kestra-base:latest
@@ -40,12 +45,13 @@ jobs:
             jre: "25"
             with-python: "true"
             description: "Kestra base image — JRE 25 + uv + Python + kestra pip pre-installed"
-          - cache-tag: latest-jre21-no-plugins
+          - cache-tag: latest-jre21-slim
             tags: |
+              ghcr.io/kestra-io/kestra-base:latest-jre21-slim
               ghcr.io/kestra-io/kestra-base:latest-jre21-no-plugins
             jre: "21"
             with-python: "false"
-            description: "Kestra base image (no plugins) — JRE 21 + uv pre-installed"
+            description: "Kestra base image (slim, no plugins) — JRE 21 + uv pre-installed"
           - cache-tag: latest-jre21
             tags: |
               ghcr.io/kestra-io/kestra-base:latest-jre21
@@ -53,17 +59,17 @@ jobs:
             with-python: "true"
             description: "Kestra base image — JRE 21 + uv + Python + kestra pip pre-installed"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to GitHub Container Registry
         if: ${{ inputs.dry-run != true }}
-        uses: docker/login-action@v4
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -71,7 +77,7 @@ jobs:
 
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ghcr.io/kestra-io/kestra-base
           labels: |
@@ -84,7 +90,7 @@ jobs:
             org.opencontainers.image.vendor=Kestra Technologies
 
       - name: Build and push
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: Dockerfile.base
@@ -97,8 +103,12 @@ jobs:
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
             JRE_VERSION=${{ matrix.variant.jre }}
             WITH_PYTHON=${{ matrix.variant.with-python }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.variant.cache-tag }}
-          cache-to: type=inline
+          # No layer cache: the point of the nightly rebuild is to re-run `apt-get upgrade` and
+          # `uv pip install kestra`, and a cached layer never re-runs (the RUN line doesn't change),
+          # so OS and Python security fixes only landed when the eclipse-temurin parent moved.
+          # `pull` also fetches the latest parent image instead of a stale local copy.
+          no-cache: true
+          pull: true
 
       - name: Slack - Notification
         if: ${{ failure() }}

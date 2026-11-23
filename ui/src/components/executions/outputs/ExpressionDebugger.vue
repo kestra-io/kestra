@@ -1,6 +1,6 @@
 <template>
     <div class="expression-debugger">
-        <h2>{{ $t("eval.expression") }}</h2>
+        <h2 v-if="!hideTitle">{{ $t("eval.expression") }}</h2>
         <KsEditor
             v-bind="editorBindings"
             v-model="editorValue"
@@ -20,32 +20,47 @@
             v-if="error"
             type="error"
             :closable="false"
-            class="error overflow-auto"
+            class="error"
         >
             <p>
                 <strong>{{ error }}</strong>
             </p>
         </KsAlert>
 
-        <template v-else-if="result !== undefined">
+        <template v-else-if="result !== undefined || fileResult !== undefined">
             <div class="result-section">
                 <span class="result-label">{{ $t("eval.preview") }}</span>
                 <VarValue
-                    v-if="execution && isFileResult"
-                    :value="result"
+                    v-if="execution && fileResult"
+                    :value="fileResult"
                     :execution="execution"
                 />
-                <KsEditor
-                    v-else
-                    v-bind="editorBindings"
-                    :readOnly="true"
-                    :inline="true"
-                    :navbar="false"
-                    :options="{showScroll: true, fullHeight: false, customHeight: 8}"
-                    :modelValue="result"
-                    :lang="resultLang"
-                    class="result"
-                />
+                <template v-else>
+                    <KsAlert
+                        v-if="isResultTruncated"
+                        type="warning"
+                        :closable="false"
+                        data-test="result-truncated"
+                        :title="$t('large_outputs.value_truncated', {size: resultSize})"
+                    >
+                        <KsButton size="small" @click="copyFullResult">
+                            {{ $t('copy') }}
+                        </KsButton>
+                        <KsButton size="small" :icon="Download" data-test="download-result" @click="downloadFullResult">
+                            {{ $t('download') }}
+                        </KsButton>
+                    </KsAlert>
+                    <KsEditor
+                        v-bind="editorBindings"
+                        :readOnly="true"
+                        :inline="true"
+                        :navbar="false"
+                        :options="{showScroll: true, fullHeight: false, customHeight: 8}"
+                        :modelValue="displayResult"
+                        :lang="resultLang"
+                        class="result"
+                    />
+                </template>
             </div>
         </template>
     </div>
@@ -53,11 +68,14 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
+    import {useI18n} from "vue-i18n"
 
-    import {KsEditor, KsButton, KsAlert} from "@kestra-io/design-system"
+    import Download from "vue-material-design-icons/Download.vue"
+    import {KsEditor, KsButton, KsAlert, copyToClipboard} from "@kestra-io/design-system"
     import {evalExpression} from "@kestra-io/kestra-sdk/executions"
 
     import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import {useToast} from "../../../utils/toast"
     import * as Utils from "../../../utils/utils"
     import type {Execution} from "../../../stores/executions"
 
@@ -67,9 +85,14 @@
         execution?: Execution;
         /** Suggested expression to seed the editor with (e.g. `{{ vars.x }}`). */
         expression?: string;
+        /** File URI of the selected value, previewed without waiting for an evaluation. */
+        fileUri?: string;
+        hideTitle?: boolean;
     }>()
 
     const editorBindings = useEditorBindings()
+    const {t} = useI18n()
+    const toast = useToast()
 
     const editorValue = ref(props.expression ?? "")
 
@@ -84,13 +107,47 @@
     )
 
     const result = ref<string | undefined>(undefined)
+    const parsedResult = ref<unknown>(undefined)
+
+    // Evaluating an expression over a large output put the whole result in Monaco. A JSON result
+    // previews through its parsed value so the editor is never handed a clipped, broken one.
+    const resultPreview = computed(() => parsedResult.value === undefined
+        ? undefined
+        : Utils.boundForDisplay(parsedResult.value))
+
+    const displayResult = computed(() => resultPreview.value
+        ? JSON.stringify(resultPreview.value.value, null, 2) ?? ""
+        : Utils.capForDisplay(result.value ?? ""))
+
+    const isResultTruncated = computed(() => resultPreview.value
+        ? resultPreview.value.truncated
+        : displayResult.value.length < (result.value?.length ?? 0))
+
+    const resultSize = computed(() => Utils.humanTextSize(result.value ?? ""))
+
+    const copyFullResult = async () => {
+        await copyToClipboard(result.value ?? "")
+        toast.success(t("copied"))
+    }
+
+    const downloadFullResult = () => Utils.downloadText(
+        result.value ?? "",
+        `expression-result.${resultLang.value === "json" ? "json" : "txt"}`,
+    )
+
     const resultLang = ref<"json" | "">("")
     const error = ref<string | undefined>(undefined)
 
-    const isFileResult = computed(() => result.value !== undefined && Utils.isFile(result.value))
+    const fileResult = computed(() => {
+        if (result.value !== undefined) {
+            return Utils.isFile(result.value) ? result.value : undefined
+        }
+        return props.execution ? props.fileUri : undefined
+    })
 
     function clear() {
         result.value = undefined
+        parsedResult.value = undefined
         error.value = undefined
     }
 
@@ -109,19 +166,22 @@
             }
 
             try {
-                result.value = JSON.stringify(JSON.parse(response.result ?? ""), null, 2)
+                const parsed = JSON.parse(response.result ?? "")
+                result.value = JSON.stringify(parsed, null, 2)
+                // Only a container previews structurally; a scalar is worth reading in full.
+                parsedResult.value = typeof parsed === "object" && parsed !== null ? parsed : undefined
                 resultLang.value = "json"
             } catch {
                 result.value = response.result ?? ""
                 resultLang.value = ""
             }
         } catch (err) {
-            error.value = (err as Error).message ?? "Failed to evaluate expression"
+            error.value = (err as Error).message ?? t("eval.failed")
         }
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .expression-debugger {
     display: flex;
     flex-direction: column;

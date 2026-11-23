@@ -24,4 +24,13 @@ public interface WorkerIOSender extends Runnable {
      */
     void stop();
 
+    /**
+     * Whether some results this sender was given may not have reached the controller, once it has stopped: dropped
+     * after a failure, never acknowledged, or still queued. A worker in that case cannot claim a graceful termination,
+     * since the leases of those jobs would otherwise be reclaimed as if the jobs never ran.
+     */
+    default boolean hasUndeliveredResults() {
+        return false;
+    }
+
 }

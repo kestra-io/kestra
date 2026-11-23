@@ -1,5 +1,5 @@
 <template>
-    <DotsCircleIcon class="loading-dots-circle" :alt="alt" />
+    <DotsCircleIcon class="loading-dots-circle" :title="alt" />
 </template>
 
 <script lang="ts" setup>
@@ -9,7 +9,7 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .loading-dots-circle {
     animation: rotate 2s linear infinite;
 }

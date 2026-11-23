@@ -160,7 +160,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                         .getCausalChain(throwable)
                         .stream()
                         .skip(1)
-                        .map(Throwable::getMessage)
+                        .map(cause -> cause.getMessage() != null ? cause.getMessage() : cause.toString())
                         .collect(Collectors.joining("\n")),
                     null,
                     logEntry
@@ -186,9 +186,39 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
     public void usedSecret(String secret) {
         if (secret != null && !secret.isEmpty()) {
-            this.useSecrets.add(secret);
-            this.useSecrets.add(Base64.getEncoder().encodeToString(secret.getBytes(StandardCharsets.UTF_8)));
+            this.addSecretToMask(secret);
+            this.addSecretToMask(Base64.getEncoder().encodeToString(secret.getBytes(StandardCharsets.UTF_8)));
         }
+    }
+
+    /**
+     * Inserts a secret keeping the list ordered by descending length, because masking is a plain sequence of
+     * replacements: were a secret masked before a longer one containing it, the remainder of the longer secret
+     * would survive in the log line (masking 'pass' before 'password' leaves '******word').
+     */
+    private void addSecretToMask(final String secret) {
+        if (this.useSecrets.contains(secret)) {
+            return;
+        }
+        int index = 0;
+        while (index < this.useSecrets.size() && this.useSecrets.get(index).length() >= secret.length()) {
+            index++;
+        }
+        this.useSecrets.add(index, secret);
+    }
+
+    boolean hasSecrets() {
+        return !this.useSecrets.isEmpty();
+    }
+
+    String maskSecrets(String data) {
+        for (String s : this.useSecrets) {
+            if (data.contains(s)) {
+                data = data.replace(s, "******");
+            }
+        }
+
+        return data;
     }
 
     public org.slf4j.Logger logger() {
@@ -374,14 +404,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             this.logger = logger;
         }
 
-        private String replaceSecret(String data) {
-            for (String s : runContextLogger.useSecrets) {
-                if (data.contains(s)) {
-                    data = data.replace(s, "******");
-                }
-            }
-
-            return data;
+        protected String replaceSecret(String data) {
+            return runContextLogger.maskSecrets(data);
         }
 
         private Object recursive(@Nullable Object object) {
@@ -484,7 +508,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         protected void append(ILoggingEvent e) {
             e = this.transform(e);
 
-            var entries = logEntries(e, logEntry);
+            // transform() only masks the log statement's own message/args; an attached
+            // exception's message and stack trace (built into these entries below) carry the
+            // original exception content untouched, so mask them here too.
+            var entries = logEntries(e, logEntry).stream()
+                .map(entry -> entry.toBuilder().message(replaceSecret(entry.getMessage())).build())
+                .toList();
             logEmitter.emits(entries);
         }
     }
@@ -512,7 +541,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             e = this.transform(e);
 
             try {
-                String line = PATTERN_LAYOUT.doLayout(e);
+                String line = replaceSecret(PATTERN_LAYOUT.doLayout(e));
                 fileOS.write(line.getBytes());
             } catch (IOException ex) {
                 // silently do nothing, the message will still be forwarded to the server log

@@ -12,7 +12,6 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
-import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -32,8 +31,6 @@ class FileURIFunctionTest {
     @Inject
     NamespaceFactory namespaceFactory;
 
-    @Inject
-    StorageInterface storageInterface;
 
     @Test
     void fileURIFunction() throws IllegalVariableEvaluationException {
@@ -116,8 +113,27 @@ class FileURIFunctionTest {
         assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath);
     }
 
+    @Test
+    void shouldThrowWhenBuildingTheUriGivenADeletedFile() throws IllegalVariableEvaluationException, IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        String filePath = "deleted_file.txt";
+        upsertNsFile(filePath, namespace, "Version 1");
+        upsertNsFile(filePath, namespace, "Version 2");
+
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
+        namespaceStorage.delete(Path.of("/" + filePath));
+
+        Map<String, Object> variables = getVariables(namespace);
+
+        // The URI of a deleted file must not resolve: its revisions are still backed by objects in storage
+        var exception = assertThrows(
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileURI('" + filePath + "') }}", variables)
+        );
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+    }
+
     private void upsertNsFile(String filePath, String namespace, String value) throws IOException, URISyntaxException {
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
     }
 

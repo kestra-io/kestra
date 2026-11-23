@@ -3,22 +3,25 @@
         <div
             v-if="taskPickerVisible"
             class="block-editor-picker-overlay"
+            data-authoring-overlay
+            :class="{'block-editor-picker-overlay--modal': modal}"
             @click="taskPickerVisible = false"
         >
             <div
                 class="block-editor-picker"
-                :style="pickerStyle"
+                :class="{'block-editor-picker--modal': modal}"
+                :style="modal ? undefined : pickerStyle"
                 data-test="block-editor-picker"
                 @click.stop
                 @keydown="onPickerKeydown"
             >
-                <p class="block-editor-picker-context">{{ t('block_editor.inserting_into', {section: sectionLabel}) }}</p>
+                <p class="block-editor-picker-context">{{ $t('block_editor.inserting_into', {section: sectionLabel}) }}</p>
 
                 <KsInput
-                    :ref="(el) => (picker.pickerSearchInput.value = el)"
+                    :ref="setSearchInput"
                     v-model="taskPickerSearch"
-                    :placeholder="t('block_editor.search_task_placeholder')"
-                    :aria-label="t('block_editor.search_task_placeholder')"
+                    :placeholder="$t('block_editor.search_task_placeholder')"
+                    :aria-label="$t('block_editor.search_task_placeholder')"
                     aria-controls="block-editor-picker-listbox"
                     :aria-activedescendant="pickerFocusedIndex >= 0 ? `block-editor-picker-option-${pickerFocusedIndex}` : undefined"
                     clearable
@@ -38,7 +41,7 @@
                         @click="setPickerTab(tab.id)"
                     >
                         <component :is="tab.icon" class="block-editor-picker-tab-ico" />
-                        {{ t(tab.labelKey) }}
+                        {{ $t(tab.labelKey) }}
                         <span v-if="tab.id === 'apps'" class="block-editor-picker-tab-count">{{ appGroups.length }}</span>
                     </button>
                 </div>
@@ -48,7 +51,7 @@
                     v-ks-loading="pluginsLoading"
                     class="block-editor-picker-list"
                     :class="{'block-editor-picker-list--loading': pluginsLoading}"
-                    :aria-label="t('block_editor.pick_task_type')"
+                    :aria-label="$t('block_editor.pick_task_type')"
                     data-test="block-editor-picker-list"
                     role="listbox"
                 >
@@ -62,7 +65,7 @@
                         >
                             <TaskIcon class="block-editor-picker-icon" :cls="grp.sampleFqcn" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" :onlyIcon="true" />
                             <span class="block-editor-picker-app-name">{{ grp.group }}</span>
-                            <span class="block-editor-picker-app-count">{{ t('block_editor.app_actions', {count: grp.count}) }}</span>
+                            <span class="block-editor-picker-app-count">{{ $t('block_editor.app_actions', {count: grp.count}) }}</span>
                         </button>
                     </template>
 
@@ -76,7 +79,7 @@
                             @keydown.enter="appFilter = undefined"
                         >
                             <ChevronLeft class="block-editor-picker-back-ico" />
-                            {{ t('block_editor.all_apps') }}
+                            {{ $t('block_editor.all_apps') }}
                         </div>
 
                         <button
@@ -100,19 +103,19 @@
                         </button>
 
                         <p v-if="!pluginsLoading && displayedEntries.length === 0" class="block-editor-picker-empty">
-                            {{ (!hasSearch && pickerTab === "recent") ? t("block_editor.no_recent") : t("block_editor.no_task_results") }}
+                            {{ (!hasSearch && pickerTab === "recent") ? $t("block_editor.no_recent") : $t("block_editor.no_task_results") }}
                         </p>
 
                         <p v-else-if="hasSearch && pickerHiddenCount > 0" class="block-editor-picker-more">
-                            {{ t("block_editor.picker_more_results", {count: pickerHiddenCount}) }}
+                            {{ $t("block_editor.picker_more_results", {count: pickerHiddenCount}) }}
                         </p>
                     </template>
                 </div>
 
                 <div class="block-editor-picker-footer" aria-hidden="true">
-                    <span><kbd>↑</kbd><kbd>↓</kbd> {{ t('block_editor.kbd_navigate') }}</span>
-                    <span><kbd>↵</kbd> {{ t('block_editor.kbd_add') }}</span>
-                    <span><kbd>esc</kbd> {{ t('block_editor.kbd_close') }}</span>
+                    <span><kbd>↑</kbd><kbd>↓</kbd> {{ $t('block_editor.kbd_navigate') }}</span>
+                    <span><kbd>↵</kbd> {{ $t('block_editor.kbd_add') }}</span>
+                    <span><kbd>esc</kbd> {{ $t('block_editor.kbd_close') }}</span>
                 </div>
             </div>
         </div>
@@ -120,16 +123,20 @@
 </template>
 
 <script setup lang="ts">
+    import type {ComponentPublicInstance} from "vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import {KsInput, vKsLoading} from "@kestra-io/design-system"
-    import {useI18n} from "vue-i18n"
     import TaskIcon from "../../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../../stores/plugins"
     import type {TaskPickerApi} from "./useTaskPicker"
 
-    const props = defineProps<{picker: TaskPickerApi}>()
+    const props = defineProps<{picker: TaskPickerApi, modal?: boolean}>()
 
-    const {t} = useI18n()
+    const {pickerSearchInput} = props.picker
+    const setSearchInput = (el: Element | ComponentPublicInstance | null) => {
+        pickerSearchInput.value = el
+    }
+
     const pluginsStore = usePluginsStore()
 
     const {
@@ -152,7 +159,7 @@
     } = props.picker
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-editor-picker-overlay {
         position: fixed;
         inset: 0;
@@ -171,6 +178,17 @@
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         box-shadow: var(--ks-shadow-lg);
+    }
+
+    .block-editor-picker-overlay--modal {
+        background: var(--ks-bg-scrim);
+    }
+
+    .block-editor-picker--modal {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(440px, 90vw);
     }
 
     .block-editor-picker-context {
@@ -232,10 +250,10 @@
         min-height: 0;
         max-height: 320px;
         overflow-y: auto;
+    }
 
-        &--loading {
-            min-height: var(--ks-spacing-10);
-        }
+    .block-editor-picker-list--loading {
+        min-height: var(--ks-spacing-10);
     }
 
     .block-editor-picker-row {
@@ -250,10 +268,13 @@
         text-align: left;
         transition: background-color 0.15s;
 
-        &:hover,
-        &--focused {
+        &:hover {
             background: var(--ks-bg-hover);
         }
+    }
+
+    .block-editor-picker-row--focused {
+        background: var(--ks-bg-hover);
     }
 
     .block-editor-picker-icon {

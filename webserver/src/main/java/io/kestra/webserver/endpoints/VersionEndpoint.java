@@ -25,7 +25,6 @@ public class VersionEndpoint {
      * If the endpoint is sensitive if no configuration is provided.
      */
     public static final boolean DEFAULT_SENSITIVE = false;
-    private static final String VERSION_SUFFIX = "-oss";
 
     protected String versionSuffix() {
         return "-oss";
@@ -42,7 +41,7 @@ public class VersionEndpoint {
     public Publisher<ServerInfo> version() {
         return Mono.just(
             new ServerInfo(
-                version.getVersion() + VERSION_SUFFIX,
+                version.getVersion() + versionSuffix(),
                 version.getRevision(),
                 version.getDate(),
                 serverType

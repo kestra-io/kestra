@@ -1,6 +1,8 @@
 package io.kestra.core.utils;
 
 import java.time.*;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,6 +41,18 @@ public class DateUtils {
         }
     }
 
+    /**
+     * Adds {@code duration} to {@code instant}, throwing a checked {@link InternalException} when the
+     * result is out of range instead of the unchecked exception raised by {@link Instant#plus}.
+     */
+    public static Instant plusOrThrow(Instant instant, Duration duration) throws InternalException {
+        try {
+            return instant.plus(duration);
+        } catch (ArithmeticException | DateTimeException e) {
+            throw new InternalException("The duration '%s' is out of the supported range when added to '%s'.".formatted(duration, instant), e);
+        }
+    }
+
     public static GroupType groupByType(Duration duration) {
         if (duration.toDays() > GroupValue.MONTH.getValue()) {
             return GroupType.MONTH;
@@ -51,6 +65,20 @@ public class DateUtils {
         } else {
             return GroupType.MINUTE;
         }
+    }
+
+    /** Truncates an instant to the start of its bucket, in UTC, weeks starting on Monday. */
+    public static Instant truncateToBucket(Instant instant, GroupType groupType) {
+        return switch (groupType) {
+            case MINUTE -> instant.truncatedTo(ChronoUnit.MINUTES);
+            case HOUR -> instant.truncatedTo(ChronoUnit.HOURS);
+            case DAY -> instant.truncatedTo(ChronoUnit.DAYS);
+            case WEEK -> instant.truncatedTo(ChronoUnit.DAYS)
+                .atZone(ZoneOffset.UTC)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .toInstant();
+            case MONTH -> instant.atZone(ZoneOffset.UTC).withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS).toInstant();
+        };
     }
 
     public enum GroupType {

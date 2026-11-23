@@ -6,6 +6,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import io.kestra.webserver.configuration.SecurityHeadersConfiguration;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
@@ -97,6 +99,13 @@ class SecurityHeadersFilterTest {
 
         // Then
         assertThat(secureResponse.getHeaders().get("Strict-Transport-Security")).isEqualTo("max-age=31536000; includeSubDomains");
+
+        // When - plain HTTP forwarded by a TLS-terminating reverse proxy
+        MutableHttpResponse<?> forwardedResponse = HttpResponse.ok();
+        filter.addSecurityHeaders(request(false, "https"), forwardedResponse);
+
+        // Then - the forwarded proto is trusted, since it can only make the request more secure
+        assertThat(forwardedResponse.getHeaders().get("Strict-Transport-Security")).isEqualTo("max-age=31536000; includeSubDomains");
     }
 
     @Test
@@ -119,8 +128,15 @@ class SecurityHeadersFilterTest {
     }
 
     private static HttpRequest<?> request(boolean secure) {
+        return request(secure, null);
+    }
+
+    private static HttpRequest<?> request(boolean secure, @Nullable String forwardedProto) {
         HttpRequest<?> request = mock(HttpRequest.class);
         when(request.isSecure()).thenReturn(secure);
+        HttpHeaders headers = mock(HttpHeaders.class);
+        when(headers.get("X-Forwarded-Proto")).thenReturn(forwardedProto);
+        when(request.getHeaders()).thenReturn(headers);
         return request;
     }
 }

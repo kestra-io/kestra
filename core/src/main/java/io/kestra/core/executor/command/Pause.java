@@ -2,6 +2,7 @@ package io.kestra.core.executor.command;
 
 import java.time.Instant;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 
@@ -13,7 +14,8 @@ public record Pause(String tenantId,
     String executionId,
     Instant timestamp,
     EventId eventId,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @Nullable Actor actor) implements ExecutionCommand {
     public static Pause from(Execution execution) {
         return new Pause(
             execution.getTenantId(),
@@ -22,11 +24,16 @@ public record Pause(String tenantId,
             execution.getId(),
             Instant.now(),
             EventId.create(),
+            null,
             null
         );
     }
 
     public Pause withOperationId(String operationId) {
-        return new Pause(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId);
+        return new Pause(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId, actor);
+    }
+
+    public Pause withActor(Actor actor) {
+        return new Pause(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId, actor);
     }
 }

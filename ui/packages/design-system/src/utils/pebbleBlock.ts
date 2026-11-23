@@ -4,30 +4,40 @@ export interface PebbleCursorEditor {
     getValue: () => string
 }
 
-export function isOffsetInPebbleBlock(text: string, offset: number): boolean {
+function activePebbleBlockStart(text: string, offset: number): number | null {
     if (offset < 2) {
-        return false
+        return null
     }
     const searchUpTo = offset - 1
-    return text.lastIndexOf("{{", searchUpTo) > text.lastIndexOf("}}", searchUpTo)
+    const lastPrintOpen = text.lastIndexOf("{{", searchUpTo)
+    const lastPrintClose = text.lastIndexOf("}}", searchUpTo)
+    const printStart = lastPrintOpen > lastPrintClose ? lastPrintOpen : -1
+
+    const lastStmtOpen = text.lastIndexOf("{%", searchUpTo)
+    const lastStmtClose = text.lastIndexOf("%}", searchUpTo)
+    const stmtStart = lastStmtOpen > lastStmtClose ? lastStmtOpen : -1
+
+    const blockStart = Math.max(printStart, stmtStart)
+    return blockStart >= 0 ? blockStart : null
+}
+
+export function isOffsetInPebbleBlock(text: string, offset: number): boolean {
+    return activePebbleBlockStart(text, offset) !== null
 }
 
 /**
- * Returns a stable key identifying the Pebble `{{ }}` block the cursor sits in — the offset
- * of the block's opening `{{` — or `null` when the cursor is not inside a block. Moving to a
- * different block yields a different key, which is how we distinguish "entered a new block"
+ * Returns a stable key identifying the Pebble block (`{{ }}` or `{% %}`) the cursor sits in —
+ * the offset of the block's opening delimiter — or `null` when the cursor is not inside a block.
+ * Moving to a different block yields a different key, which is how we distinguish "entered a new block"
  * from "still in the same block".
  */
 export function pebbleBlockKeyAtOffset(text: string, offset: number): number | null {
-    if (!isOffsetInPebbleBlock(text, offset)) {
-        return null
-    }
-    const blockStart = text.lastIndexOf("{{", offset - 1)
-    // The cursor must be past the opening `{{` (i.e. in the expression body), not wedged
-    // between its two braces. `{|{}}` resolves to the same nearest `{{` as `{{|}}`, so without
-    // this guard both yield the same key and moving back into the expression looks like
-    // "never left" — the re-entry is missed and autocomplete never reopens.
-    if (offset < blockStart + 2) {
+    const blockStart = activePebbleBlockStart(text, offset)
+    // The cursor must be past the opening delimiter (`{{` or `{%`) (i.e. in the expression body),
+    // not wedged between its two opening characters. `{|{}}` or `{|%}}` resolves to the same nearest
+    // delimiter as `{{|}}` / `{%|%}`, so without this guard both yield the same key and moving back
+    // into the expression looks like "never left" — the re-entry is missed and autocomplete never reopens.
+    if (blockStart === null || offset < blockStart + 2) {
         return null
     }
     return blockStart

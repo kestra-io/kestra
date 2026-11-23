@@ -304,7 +304,7 @@
                     :data-testid="`input-form-${input.id}`"
                     lang="yaml"
                     :modelValue="inputsValues[input.id] as string | undefined"
-                    @change="onYamlChange(input, $event)"
+                    @update:modelValue="(value) => { inputsValues[input.id] = value; onChange(input); }"
                 />
                 <KsDurationPicker
                     v-if="input.type === 'DURATION'"
@@ -725,11 +725,6 @@
         setTimeout(() => onChange(input), 300)
     }
 
-    function onYamlChange(input: InputMetaData, e: Event): void {
-        const target = e.target as HTMLInputElement
-        inputsValues[input.id] = target.value
-        onChange(input)
-    }
 
     const inputsValuesWithNoDefault = computed<Record<string, unknown>>(() => {
         return inputsMetaData.value.reduce((acc: Record<string, unknown>, input) => {

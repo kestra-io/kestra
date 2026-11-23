@@ -235,6 +235,9 @@
         ].includes(componentType.value.ksTaskName)
     })
 
+    // TaskObject hides required markers on an undefined model, so a blank object item starts as {}.
+    const emptyObjectItem = computed(() => props.schema.items?.$ref || props.schema.items?.type === "object" ? {} : undefined)
+
     const items = ref<unknown[]>([])
     const localEdit = ref(false)
 
@@ -245,7 +248,7 @@
         }
         items.value = (value === undefined && !props.required) || value === null
             ? []
-            : !Array.isArray(value) ? [value] : [...value]
+            : value === undefined ? [emptyObjectItem.value] : !Array.isArray(value) ? [value] : [...value]
     }, {immediate: true, deep: true})
 
     function emitItems(value: unknown[] | undefined) {
@@ -262,7 +265,7 @@
         if (props.schema.items?.type === "string") {
             return ""
         }
-        return props.schema.items?.default ?? undefined
+        return props.schema.items?.default ?? emptyObjectItem.value
     })
 
     const addItem = () => {

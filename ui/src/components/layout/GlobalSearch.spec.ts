@@ -1,10 +1,11 @@
-import {nextTick} from "vue"
+import {nextTick, ref} from "vue"
 import {describe, expect, test, beforeEach, afterEach, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {createRouter, createWebHistory} from "vue-router"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import {useAuthStore} from "override/stores/auth"
+import type {MenuItem} from "override/components/useLeftMenu"
 import {searchFlows} from "@kestra-io/kestra-sdk/flows"
 import {searchNamespaces} from "@kestra-io/kestra-sdk/namespaces"
 
@@ -14,8 +15,10 @@ vi.mock("@kestra-io/kestra-sdk/flows", () => ({
 vi.mock("@kestra-io/kestra-sdk/namespaces", () => ({
     searchNamespaces: vi.fn(async () => ({results: [], total: 0})),
 }))
+
+const mockMenu = ref<MenuItem[]>([])
 vi.mock("override/components/useLeftMenu", () => ({
-    useLeftMenu: () => ({menu: {value: []}}),
+    useLeftMenu: () => ({menu: mockMenu}),
 }))
 
 import GlobalSearch from "./GlobalSearch.vue"
@@ -39,6 +42,7 @@ const mountSearch = () => {
             {path: "/", name: "home", component: {template: "<div />"}},
             {path: "/flows/:namespace/:id", name: "flows/update", component: {template: "<div />"}},
             {path: "/flows/:namespace/:id/executions", name: "flows/update/executions", component: {template: "<div />"}},
+            {path: "/flows/search", name: "flows/search", component: {template: "<div />"}},
             {path: "/namespaces/:id", name: "namespaces/update", component: {template: "<div />"}},
         ],
     })
@@ -78,6 +82,7 @@ const openAndQuery = async (value: string) => {
 
 describe("GlobalSearch", () => {
     beforeEach(() => {
+        mockMenu.value = []
         setActivePinia(createPinia())
         vi.useFakeTimers()
         searchFlowsMock.mockReset()
@@ -142,7 +147,7 @@ describe("GlobalSearch", () => {
             await flushPromises()
 
             const leaves = [...document.querySelectorAll(".result-leaf")].map(node => node.textContent)
-            expect(leaves).toEqual(["daily", "daily", "analytics", "billing", "Search \"daily\" in flow source"])
+            expect(leaves).toEqual(["daily", "daily", "analytics", "billing"])
             const namespaces = [...document.querySelectorAll(".result-namespace")].map(node => node.textContent)
             expect(namespaces).toEqual(["analytics", "billing"])
         } finally {
@@ -326,17 +331,73 @@ describe("GlobalSearch", () => {
         }
     })
 
-    test("appends source search entry for any non-empty query", async () => {
-        searchFlowsMock.mockResolvedValue({results: [], total: 0})
-        searchNamespacesMock.mockResolvedValue({results: [], total: 0})
-        const {wrapper} = mountSearch()
+    test("appends source search entry when scope includes flows", async () => {
+        mockMenu.value = [
+            {
+                id: "workspace",
+                title: "Workspace",
+                child: [
+                    {id: "flows", title: "Flows", href: {name: "flows/list"}},
+                ],
+            },
+        ]
+        const {wrapper, router} = mountSearch()
+        const push = vi.spyOn(router, "push").mockResolvedValue()
         try {
-            await openAndQuery("nonexistent-term")
+            await openAndQuery("orders")
             await vi.advanceTimersByTimeAsync(200)
             await flushPromises()
 
             const leaves = [...document.querySelectorAll(".result-leaf")].map(node => node.textContent)
-            expect(leaves).toContain("Search \"nonexistent-term\" in flow source")
+            expect(leaves).toContain("Search \"orders\" in flow source")
+            expect(leaves).not.toContain("Source search")
+
+            const parent = document.querySelector(".result-parent")?.textContent?.trim()
+            expect(parent).toBe("Flows")
+
+            const sourceLink = [...document.querySelectorAll<HTMLElement>(".result-link")].find(el => el.textContent?.includes("Search \"orders\""))
+            expect(sourceLink).not.toBeNull()
+
+            const input = document.querySelector<HTMLInputElement>(".search-modal input")
+            input?.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", bubbles: true}))
+            await nextTick()
+            expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "flows/search", query: {q: "orders"}}))
+            expect(document.querySelector(".search-modal")).toBeNull()
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
+    test("does not append source search and shows empty state when scoped outside flows", async () => {
+        mockMenu.value = [
+            {
+                id: "blueprints",
+                title: "Blueprints",
+                child: [
+                    {id: "community", title: "Community", href: {name: "blueprints/community"}},
+                ],
+            },
+        ]
+        const {wrapper} = mountSearch()
+        try {
+            press("k", {ctrlKey: true})
+            await nextTick()
+
+            const scopeBtn = document.querySelector<HTMLButtonElement>("button.result-link")
+            expect(scopeBtn?.textContent).toContain("Blueprints")
+            scopeBtn?.click()
+            await nextTick()
+
+            const input = document.querySelector<HTMLInputElement>(".search-modal input")
+            expect(input).not.toBeNull()
+            input!.value = "nonexistent"
+            input!.dispatchEvent(new Event("input", {bubbles: true}))
+            await vi.advanceTimersByTimeAsync(200)
+            await flushPromises()
+
+            const leaves = [...document.querySelectorAll(".result-leaf")].map(node => node.textContent)
+            expect(leaves).not.toContain("Search \"nonexistent\" in flow source")
+            expect(document.querySelector(".empty")?.textContent?.trim()).toBe("No results found")
         } finally {
             wrapper.unmount()
         }

@@ -810,7 +810,6 @@
     align-items: center;
     flex-wrap: wrap;
     gap: var(--ks-spacing-2);
-    font-size: var(--ks-font-size-sm);
     padding-top: var(--ks-spacing-3);
 }
 </style>

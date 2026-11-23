@@ -256,6 +256,17 @@
         return entries
     }
 
+    const findFlowsItem = (items: MenuItem[]): MenuItem | undefined => {
+        for (const item of items) {
+            if (item.id === "flows") return item
+            if (item.child) {
+                const found = findFlowsItem(item.child)
+                if (found) return found
+            }
+        }
+        return undefined
+    }
+
     const navItems = computed(() => {
         if (!isOpen.value) {
             return []
@@ -263,33 +274,8 @@
 
         const root = scopeStack.value.length > 0 ? scopeStack.value[scopeStack.value.length - 1].items : menu.value
         const order = {value: 0}
-        const entries = buildEntries(root, [], 0, order)
-
-        const findFlowsItem = (items: MenuItem[]): MenuItem | undefined => {
-            for (const item of items) {
-                if (item.id === "flows") return item
-                if (item.child) {
-                    const found = findFlowsItem(item.child)
-                    if (found) return found
-                }
-            }
-            return undefined
-        }
-
-        const flowsItem = findFlowsItem(root)
-        if (flowsItem) {
-            entries.push({
-                kind: "link",
-                title: t("source search"),
-                parentTitle: flowsItem.title,
-                href: {name: "flows/search"},
-                icon: {element: TextBoxSearch},
-                depth: 1,
-                order: order.value++,
-            })
-        }
-
-        return entries
+        // When scoped, we treat the scope root as depth 0 for ordering.
+        return buildEntries(root, [], 0, order)
     })
 
     const menuResults = computed(() => {
@@ -337,21 +323,25 @@
 
         const trimmed = query.value.trim()
         if (trimmed) {
-            rows.push({
-                kind: "link",
-                destination: "menu",
-                title: t("search_in_flow_source", {query: trimmed}),
-                parentTitle: t("flows"),
-                href: {
-                    name: "flows/search",
-                    query: {q: trimmed},
-                },
-                icon: {
-                    element: TextBoxSearch,
-                },
-                depth: 1,
-                order: Number.MAX_SAFE_INTEGER,
-            })
+            const root = scopeStack.value.length > 0 ? scopeStack.value[scopeStack.value.length - 1].items : menu.value
+            const flowsItem = findFlowsItem(root)
+            if (flowsItem) {
+                rows.push({
+                    kind: "link",
+                    destination: "menu",
+                    title: t("search_in_flow_source", {query: trimmed}),
+                    parentTitle: flowsItem.title,
+                    href: {
+                        name: "flows/search",
+                        query: {q: trimmed},
+                    },
+                    icon: {
+                        element: TextBoxSearch,
+                    },
+                    depth: 1,
+                    order: Number.MAX_SAFE_INTEGER,
+                })
+            }
         }
 
         return rows

@@ -13,6 +13,7 @@
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
         selectable
+        :rowSelectable="() => true"
         :showSelection="!paneView"
         :rowKey="(row: KvEntry) => `${row.namespace}-${row.key}`"
     >

@@ -66,7 +66,7 @@ class FlowTopologyServiceTest {
     }
 
     @Test
-    void flowTaskWithParentNamespaceExpression() {
+    void shouldDetectFlowTaskWhenSubflowNamespaceIsParentNamespaceExpression() {
         Flow parent = Flow.builder()
             .namespace("io.kestra.ee")
             .id("parent")

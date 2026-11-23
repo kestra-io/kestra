@@ -50,7 +50,6 @@ export function resolveSubflowLinks(source: string): SubflowLink[] {
         return links
     }
 
-    // Read the namespace of the parent flow from the root YAML document.
     const parentNamespace = isMap(document.contents)
         ? scalarString(document.contents.get("namespace", true))
         : undefined

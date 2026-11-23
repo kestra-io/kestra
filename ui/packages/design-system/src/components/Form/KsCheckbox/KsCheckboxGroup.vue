@@ -1,7 +1,7 @@
 <template>
     <ElCheckboxGroup
-        :modelValue="model"
-        @update:modelValue="(value: CheckboxGroupValueType) => (model = value as T[])"
+        :modelValue="props.modelValue"
+        @update:modelValue="(value: CheckboxGroupValueType) => emit('update:modelValue', value as T[])"
         :class="props.size ? `kel-checkbox-group--${props.size}` : undefined"
         v-bind="({...filteredProps(), ...$attrs} as CheckboxGroupProps)"
         @change="emit('change', $event as T[])"
@@ -19,14 +19,14 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<T[]>()
-
     const props = defineProps<{
+        modelValue?: T[]
         disabled?: boolean
         size?: "large" | "default" | "small"
     }>()
 
     const emit = defineEmits<{
+        "update:modelValue": [value: T[]]
         change: [value: T[]]
     }>()
 
@@ -34,7 +34,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["modelValue"])
 </script>
 
 <style lang="scss">

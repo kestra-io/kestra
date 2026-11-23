@@ -84,6 +84,19 @@ describe("flow deletion dependency links", () => {
         expect(link.attributes("href")).toBe("/ui/flows/edit/other.%3Ci%3Ens%3C%2Fi%3E/parent%3Cb%3Ex%3C%2Fb%3E&amp;%22%23%3F/overview")
     })
 
+    it("renders dependency warning inside the alert box", async () => {
+        vi.mocked(flowDependencies).mockResolvedValue({nodes: [
+            {uid: "child", namespace: "company.team", id: "child"},
+            {uid: "parent", namespace: "other.team", id: "parent"},
+        ]})
+
+        const wrapper = await renderConfirmation()
+        const alertBox = wrapper.find("div[role='alert']")
+        expect(alertBox.exists()).toBe(true)
+        expect(alertBox.text()).toContain("dependencies delete flow")
+        expect(alertBox.findAll("a")).toHaveLength(1)
+    })
+
     it("keeps the ordinary confirmation when there are no other flows", async () => {
         vi.mocked(flowDependencies).mockResolvedValue({nodes: [
             {uid: "child", namespace: "company.team", id: "child"},

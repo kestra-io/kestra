@@ -286,7 +286,12 @@ public class Loop extends AbstractBranch<Loop.Output> {
 
     @Schema(
         title = "Output values available and exposed outside the loop.",
-        description = "They can be fetched from the execution context using the `outputs` output of the loop task run."
+        description = """
+            They can be fetched from the execution context using the `outputs` output of the loop task run.
+            The values are in the order in which iterations finished, not the order of `values`: with the default `concurrencyLimit` of 0, \
+            iterations run in parallel and the order can change between executions. To match a result to its input, use the iteration index \
+            rather than the value, since `values` can contain duplicates: read `item.iteration` from the same entry of the `outputs` output, \
+            or include `{{ item.index }}` in the output value."""
     )
     @PluginProperty(dynamic = true)
     @Valid
@@ -417,7 +422,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
 
         @Schema(
             title = "The list of loop iteration (task runs) outputs, accessible outside of the loop for subsequent tasks",
-            description = "Outputs must first be defined using the `outputs` property."
+            description = "Outputs must first be defined using the `outputs` property. The list is in the order in which iterations finished, not the order of `values`."
         )
         private List<LoopOutput> outputs;
     }

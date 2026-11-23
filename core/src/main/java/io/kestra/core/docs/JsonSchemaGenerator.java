@@ -1415,7 +1415,15 @@ public class JsonSchemaGenerator {
     }
 
     private static boolean isHiddenFromSchema(MemberScope<?, ?> memberScope) {
-        return memberScope.getAnnotation(Hidden.class) != null || memberScope.getAnnotation(ServerOwned.class) != null;
+        return memberScope.getAnnotation(Hidden.class) != null
+            || memberScope.getAnnotation(ServerOwned.class) != null
+            || isPropertyOfVoid(memberScope.getType());
+    }
+
+    private static boolean isPropertyOfVoid(ResolvedType type) {
+        return type != null
+            && type.isInstanceOf(Property.class)
+            && type.getTypeParameters().stream().anyMatch(parameter -> Void.class.equals(parameter.getErasedType()));
     }
 
     private static boolean isAssetAttribute(MethodScope methodScope) {

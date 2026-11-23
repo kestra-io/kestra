@@ -396,6 +396,7 @@
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, deepMerge} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
+    import type {ExecutionLabelInput} from "../../../utils/executionLabels"
     import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
@@ -482,7 +483,7 @@
         start: Date | null;
         end: Date | null;
         inputs: Record<string, unknown> | null;
-        labels: Label[];
+        labels: ExecutionLabelInput[];
     }>({
         start: null,
         end: null,
@@ -697,7 +698,7 @@
     type BackfillRequest = TriggerControllerApiCreateBackfillRequest["backfill"]
 
     const cleanBackfill = computed<BackfillRequest>(() => {
-        const labels = backfill.value.labels.filter(label => label.key && label.value)
+        const labels = backfill.value.labels.filter((label): label is Label => Boolean(label.key && label.value))
         return {
             start: backfill.value.start?.toISOString(),
             end: backfill.value.end?.toISOString(),

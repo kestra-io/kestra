@@ -1,24 +1,23 @@
 <template>
     <span ref="host" class="ks-picker-host">
         <ElDatePicker
-            :modelValue="(model as DatePickerPropsPublic['modelValue'])"
+            :modelValue="(props.modelValue as DatePickerPropsPublic['modelValue'])"
             v-bind="({...filteredProps(), ...pickerAttrs()} as DatePickerPropsPublic)"
-            @update:modelValue="(value: T) => (model = value)"
-            @change="emit('change', $event)"
+            @update:modelValue="(value: T) => emit('update:modelValue', value)"
+            @change="(value: DatePickerPropsPublic['modelValue']) => emit('change', value as T)"
         />
     </span>
 </template>
 
 <script setup lang="ts" generic="T">
-    import {ElDatePicker, type DatePickerPropsPublic, type ElTooltipContentProps} from "element-plus"
+    import {type DatePickerPropsPublic, type ElTooltipContentProps} from "element-plus"
+    import {ElDatePicker} from "../../utils/elementPlusListeners"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {useInputAttrs} from "../../composables/useInputAttrs"
     import type {NativeAttributes} from "../../utils/nativeAttributes"
     import type {HTMLAttributes} from "vue"
 
     defineOptions({inheritAttrs: false})
-
-    const model = defineModel<T>()
 
     type KsDatePickerProps = {
         type?: string
@@ -34,7 +33,7 @@
 
     type PickerTooltipProps = Pick<ElTooltipContentProps, "teleported">
 
-    const props = withDefaults(defineProps<KsDatePickerProps & /* @vue-ignore */ Omit<NativeAttributes<DatePickerPropsPublic & PickerTooltipProps & HTMLAttributes>, keyof KsDatePickerProps | "modelValue">>(), {
+    const props = withDefaults(defineProps<KsDatePickerProps & {modelValue?: T} & /* @vue-ignore */ Omit<NativeAttributes<DatePickerPropsPublic & PickerTooltipProps & HTMLAttributes>, keyof KsDatePickerProps | "modelValue">>(), {
         type: undefined,
         placeholder: undefined,
         clearable: undefined,
@@ -45,10 +44,11 @@
     })
 
     const emit = defineEmits<{
+        "update:modelValue": [value: T]
         change: [value: T]
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["modelValue"])
     const {pickerAttrs} = useInputAttrs("host")
 </script>
 

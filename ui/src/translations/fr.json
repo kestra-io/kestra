@@ -800,7 +800,8 @@
       "dialog_title": "Limites de Concurrence",
       "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée.",
       "queued": "En file d'attente",
-      "save_error": "Échec de la mise à jour de la limite de Concurrency, la valeur précédente est conservée."
+      "save_error": "Échec de la mise à jour de la limite de Concurrency, la valeur précédente est conservée.",
+      "invalid_running_count": "Saisissez un nombre entier entre 0 et {max}."
     },
     "flowConcurrency": {
       "loadError": "Impossible de charger la limite de concurrence de ce flow.",
@@ -3192,7 +3193,7 @@
       "undo": "Annuler",
       "upstream_outputs": "Sorties en amont",
       "open_in_tabs": "Ouvrir dans des onglets",
-      "open_mode_hint": "Les tasks s'ouvrent dans une modale par défaut. Vous pouvez définir les onglets par défaut dans les {settings}."
+      "open_mode_hint": "Cet éditeur s'ouvre par défaut dans une modale. Vous pouvez définir les onglets comme valeur par défaut dans les {settings}."
     },
     "blocks": "Blocs",
     "move_panel_to_bottom": "Déplacer le panneau vers le bas",

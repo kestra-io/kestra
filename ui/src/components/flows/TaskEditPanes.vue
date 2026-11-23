@@ -22,7 +22,7 @@
                 :modelValue="modelValue"
                 :schemaType="sectionSchemaType(section)"
                 :path="editorPath"
-                :options="{fullHeight: false}"
+                :options="{fullHeight: false, editor: {padding: {top: 16}}}"
                 :navbar="false"
                 lang="yaml"
                 @save="emit('save')"

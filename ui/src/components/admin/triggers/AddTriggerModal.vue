@@ -186,7 +186,7 @@
     }))
 
     const generateId = () => `mytrigger_${Math.floor(10000 + Math.random() * 90000)}`
-    const formModel = ref({
+    const formModel = ref<{namespace: string | undefined; flowId: string; triggerId: string}>({
         namespace: "",
         flowId: "",
         triggerId: generateId(),
@@ -300,10 +300,11 @@
     }
 
     const addTriggerToFlow = () => {
-        if (!canSubmit.value) return
+        const namespace = formModel.value.namespace
+        if (!canSubmit.value || !namespace) return
 
         triggerDraftStore.setDraft({
-            namespace: formModel.value.namespace,
+            namespace,
             flowId: formModel.value.flowId,
             triggerYaml: triggerBlock.value,
         })
@@ -311,7 +312,7 @@
         visible.value = false
         router.push({
             name: "flows/update/edit",
-            params: {namespace: formModel.value.namespace, id: formModel.value.flowId},
+            params: {namespace, id: formModel.value.flowId},
             query: {createTrigger: "true"},
         })
     }

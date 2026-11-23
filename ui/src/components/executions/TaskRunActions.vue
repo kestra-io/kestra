@@ -63,7 +63,6 @@
                         :execution="execution"
                         :taskRun="currentTaskRun"
                         :attemptIndex="currentAttemptIndex"
-                        @follow="emit('follow', $event)"
                     />
 
                     <ChangeStatus
@@ -72,7 +71,6 @@
                         :execution="execution"
                         :taskRun="currentTaskRunWithExecution"
                         :attemptIndex="currentAttemptIndex"
-                        @follow="emit('follow', $event)"
                     />
 
                     <TaskEdit
@@ -114,7 +112,6 @@
                         component="KsDropdownItem"
                         v-if="hasWorkerId"
                         :taskRun="currentTaskRun"
-                        @follow="emit('follow', $event)"
                     />
 
                     <Interrupt

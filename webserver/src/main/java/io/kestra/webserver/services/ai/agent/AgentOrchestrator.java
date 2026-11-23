@@ -352,12 +352,13 @@ public class AgentOrchestrator {
             ToolEntry heldEntry = null;
             Map<String, Object> heldArgs = null;
 
-            for (ToolExecutionRequest req : ai.toolExecutionRequests()) {
+            for (ToolExecutionRequest emitted : ai.toolExecutionRequests()) {
                 if (sink.isCancelled()) {
                     abortCancelled(ctx);
                     return;
                 }
 
+                ToolExecutionRequest req = ChatMessageAdaptor.withNormalizedArguments(emitted);
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {

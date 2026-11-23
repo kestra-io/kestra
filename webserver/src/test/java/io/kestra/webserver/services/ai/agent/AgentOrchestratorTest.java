@@ -19,6 +19,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
@@ -602,6 +604,32 @@ class AgentOrchestratorTest {
             .asString()
             .contains("Unrecognized token 'my_task'")
             .contains(malformed);
+        assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "{\"executionId\":\"exec-1\",}",
+        "\"{\\\"executionId\\\":\\\"exec-1\\\"}\""
+    })
+    void shouldExecuteToolAndReplayNormalizedArgumentsWhenArgumentsOnlyNeedNormalizing(final String arguments) {
+        // Given — Ask mode; the arguments have a trailing comma or are an object wrapped in a string
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(arguments).build())));
+        scriptedModel.enqueue(AiMessage.from("The run failed on the load task."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("why did exec-1 fail?").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then — the tool runs, and the call is replayed to the provider as valid JSON
+        assertThat(sink.error).isNull();
+        assertThat(toolResultOutcome(sink)).isEqualTo("ok");
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(AiMessage.class::isInstance)
+            .flatExtracting(m -> ((AiMessage) m).toolExecutionRequests())
+            .extracting(ToolExecutionRequest::arguments)
+            .containsExactly("{\"executionId\":\"exec-1\"}");
         assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
     }
 

@@ -800,7 +800,8 @@
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
       "queued": "Queued",
-      "save_error": "Failed to update the concurrency limit, the previous value is kept."
+      "save_error": "Failed to update the concurrency limit, the previous value is kept.",
+      "invalid_running_count": "Enter a whole number between 0 and {max}."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",

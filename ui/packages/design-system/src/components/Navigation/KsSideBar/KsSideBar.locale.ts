@@ -26,7 +26,7 @@ export default {
     },
     "it": {
         "ks_sidebar": {
-            "label": "Barra laterale",
+            "label": "Sidebar",
         },
     },
     "ja": {
@@ -41,7 +41,7 @@ export default {
     },
     "pl": {
         "ks_sidebar": {
-            "label": "Pasek boczny",
+            "label": "Panel boczny",
         },
     },
     "pt": {

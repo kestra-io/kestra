@@ -84,7 +84,7 @@ export default {
         "breadcrumb_empty": "Здесь пока ничего нет",
     },
     "zh_CN": {
-        "breadcrumb_home": "首页",
+        "breadcrumb_home": "主页",
         "breadcrumb_siblings": "{label} 旁边的其他条目",
         "breadcrumb_hidden": "显示隐藏级别",
         "breadcrumb_in": "在 {label} 中",

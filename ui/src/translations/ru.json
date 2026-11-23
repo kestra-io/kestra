@@ -1,10 +1,5 @@
 {
   "ru": {
-    "editor_panels": {
-      "flow_code": "Код flow",
-      "no_code": "Без кода",
-      "files": "Файлы"
-    },
     "support_links": {
       "slack_title": "Сообщество в Slack",
       "slack_description": "Обсуждайте темы с другими пользователями и командой Kestra",

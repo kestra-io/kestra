@@ -15,7 +15,6 @@ import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrappe
 import FileExplorerWrapper from "../../../components/inputs/FileExplorerWrapper.vue"
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue"
 import {EditorElement} from "../../../utils/multiPanelTypes"
-import {globalI18n} from "../../../translations/i18n"
 
 export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
 
@@ -23,9 +22,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(CodeTagsIcon),
-            get label() {
-                return globalI18n.value?.t("editor_panels.flow_code") ?? "editor_panels.flow_code"
-            },
+            label: "Flow Code",
         },
         uid: "code",
         main: true,
@@ -40,9 +37,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(MouseRightClickIcon),
-            get label() {
-                return globalI18n.value?.t("editor_panels.no_code") ?? "editor_panels.no_code"
-            },
+            label: "No Code",
         },
         uid: "nocode",
         main: true,
@@ -51,9 +46,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FileTreeOutlineIcon),
-            get label() {
-                return globalI18n.value?.t("topology") ?? "topology"
-            },
+            label: "Topology",
         },
         uid: "topology",
         main: true,
@@ -62,9 +55,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FileDocumentIcon),
-            get label() {
-                return globalI18n.value?.t("docs") ?? "docs"
-            },
+            label: "Docs",
         },
         uid: "doc",
         component: markRaw(PluginListWrapper),
@@ -72,9 +63,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FolderOpenOutline),
-            get label() {
-                return globalI18n.value?.t("editor_panels.files") ?? "editor_panels.files"
-            },
+            label: "Files",
         },
         uid: "files",
         prepend: true,
@@ -84,9 +73,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(ShapePlusOutline),
-            get label() {
-                return globalI18n.value?.t("blueprints.title") ?? "blueprints.title"
-            },
+            label: "Blueprints",
         },
         uid: "blueprints",
         component: markRaw(BlueprintsWrapper),

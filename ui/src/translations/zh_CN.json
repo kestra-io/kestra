@@ -1,10 +1,5 @@
 {
   "zh_CN": {
-    "editor_panels": {
-      "flow_code": "Flow 代码",
-      "no_code": "无代码",
-      "files": "文件"
-    },
     "support_links": {
       "slack_title": "社区 Slack",
       "slack_description": "与其他用户和 Kestra 团队交流",

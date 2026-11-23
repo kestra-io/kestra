@@ -1,10 +1,5 @@
 {
   "ja": {
-    "editor_panels": {
-      "flow_code": "Flowコード",
-      "no_code": "ノーコード",
-      "files": "ファイル"
-    },
     "support_links": {
       "slack_title": "コミュニティSlack",
       "slack_description": "他のユーザーやKestraチームと話し合う",

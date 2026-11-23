@@ -1,10 +1,5 @@
 {
   "ko": {
-    "editor_panels": {
-      "flow_code": "Flow 코드",
-      "no_code": "노코드",
-      "files": "파일"
-    },
     "support_links": {
       "slack_title": "커뮤니티 Slack",
       "slack_description": "다른 사용자 및 Kestra 팀과 토론하세요",

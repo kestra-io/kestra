@@ -1,10 +1,5 @@
 {
   "hi": {
-    "editor_panels": {
-      "flow_code": "Flow कोड",
-      "no_code": "नो-कोड",
-      "files": "फ़ाइलें"
-    },
     "support_links": {
       "slack_title": "कम्युनिटी Slack",
       "slack_description": "अन्य उपयोगकर्ताओं और Kestra टीम के साथ चर्चा करें",

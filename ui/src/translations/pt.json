@@ -1,10 +1,5 @@
 {
   "pt": {
-    "editor_panels": {
-      "flow_code": "Código do flow",
-      "no_code": "Sem código",
-      "files": "Ficheiros"
-    },
     "support_links": {
       "slack_title": "Slack da comunidade",
       "slack_description": "Converse com outros utilizadores e com a equipa Kestra",

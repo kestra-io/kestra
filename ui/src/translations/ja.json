@@ -3190,7 +3190,7 @@
       "undo": "元に戻す",
       "upstream_outputs": "アップストリームのoutput",
       "open_in_tabs": "タブで開く",
-      "open_mode_hint": "タスクはデフォルトでモーダルで開きます。{settings}でタブをデフォルトに設定できます。"
+      "open_mode_hint": "このエディターはデフォルトでモーダルで開きます。{settings}でタブをデフォルトにできます。"
     },
     "blocks": "ブロック",
     "move_panel_to_bottom": "パネルを下に移動",

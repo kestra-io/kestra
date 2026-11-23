@@ -3190,7 +3190,7 @@
       "undo": "Cofnij",
       "upstream_outputs": "Outputy upstream",
       "open_in_tabs": "Otwórz w zakładkach",
-      "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
+      "open_mode_hint": "Ten edytor domyślnie otwiera się w oknie modalnym. Możesz ustawić zakładki jako domyślne w {settings}."
     },
     "blocks": "Bloki",
     "move_panel_to_bottom": "Przenieś panel na dół",

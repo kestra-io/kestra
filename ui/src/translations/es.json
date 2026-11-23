@@ -3190,7 +3190,7 @@
       "undo": "Deshacer",
       "upstream_outputs": "Outputs de Upstream",
       "open_in_tabs": "Abrir en pestañas",
-      "open_mode_hint": "Las tasks se abren en un modal por defecto. Puedes hacer que las pestañas sean el valor por defecto en {settings}."
+      "open_mode_hint": "Este editor se abre en un modal por defecto. Puedes hacer que las pestañas sean el valor por defecto en {settings}."
     },
     "blocks": "Bloques",
     "move_panel_to_bottom": "Mover panel a la parte inferior",

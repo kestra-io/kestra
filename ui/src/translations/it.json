@@ -3190,7 +3190,7 @@
       "undo": "Annulla",
       "upstream_outputs": "Output upstream",
       "open_in_tabs": "Apri in schede",
-      "open_mode_hint": "I task si aprono in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
+      "open_mode_hint": "Questo editor si apre in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
     },
     "blocks": "Blocchi",
     "move_panel_to_bottom": "Sposta il pannello in basso",

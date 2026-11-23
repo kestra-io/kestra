@@ -102,7 +102,6 @@ class MiscControllerTest {
         assertThat(response.getUuid()).isNotNull();
         assertThat(response.getIsAnonymousUsageEnabled()).isTrue();
         assertThat(response.getIsAiEnabled()).isTrue();
-        // The platform MCP server is opt-in, so the UI must not advertise it by default.
         assertThat(response.getIsMcpServerEnabled()).isFalse();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
         assertThat(response.getFlowTemplate()).isEqualTo("tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log\n    message: Configured");

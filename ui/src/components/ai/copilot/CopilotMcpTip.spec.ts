@@ -8,7 +8,6 @@ import {storageKeys} from "../../../utils/constants"
 
 const TIP = "[data-test=\"copilot-mcp-tip\"]"
 
-// Shared mutable stub (no Pinia in the unit env): each test swaps `configs` to model the instance.
 const miscStore = reactive({configs: undefined as MiscControllerConfiguration | undefined})
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 

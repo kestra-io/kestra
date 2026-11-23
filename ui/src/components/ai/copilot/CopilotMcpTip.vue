@@ -36,8 +36,6 @@
 
     const DOCS_URL = "https://kestra.io/docs/ai-orchestration/mcp-server?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-mcp#platform-mcp-server"
 
-    // The tip points at `/api/v1/mcp`, which 404s unless `kestra.mcp.platform-server.enabled` is set.
-    // Hidden until the configs load, so a disabled instance never flashes a tip it cannot honor.
     const miscStore = useMiscStore()
     const mcpServerEnabled = computed(() => miscStore.configs?.isMcpServerEnabled === true)
 

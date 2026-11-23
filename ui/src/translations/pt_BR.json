@@ -1,5 +1,12 @@
 {
   "pt_BR": {
+    "support_links": {
+      "slack_title": "Slack da comunidade",
+      "slack_description": "Converse com outros usuários e com a equipe Kestra",
+      "github_description": "Dê uma estrela ao nosso projeto open source",
+      "help_center_title": "Central de ajuda",
+      "help_center_description": "Entre em contato com o suporte para obter ajuda com sua conta Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "O Kestra foi atualizado para a versão {version} e pode incluir alterações que exigem atualizações nos seus Flows.",
       "cta": "Ver o que mudou"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Saídas do Flow",
     "eval": {
+      "failed": "Não foi possível avaliar a expressão",
       "title": "Expressão de Depuração",
       "preview": "Visualizar",
       "expression": "Expressão"
@@ -2145,6 +2153,7 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
+      "unknown_schema": "Esquema desconhecido",
       "toggle_pebble": "Alternar editor Pebble",
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition",
       "adding": "+ Adicionar um {what}",

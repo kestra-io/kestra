@@ -1,7 +1,7 @@
 <template>
     <div class="ks-breadcrumb">
         <template v-if="showLeading">
-            <RouterLink :to="leadingTo" class="ks-breadcrumb__leading" aria-label="Home">
+            <RouterLink :to="leadingTo" class="ks-breadcrumb__leading" :aria-label="$t('breadcrumb_home')">
                 <img :src="monogram" class="ks-breadcrumb__monogram" alt="" />
             </RouterLink>
             <span class="ks-breadcrumb__separator">/</span>

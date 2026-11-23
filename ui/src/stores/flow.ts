@@ -744,13 +744,11 @@ function deleteFlowAndDependencies(router: Router) {
 
                 if (deps.length) {
                     warning =
-                        "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
-                        "<p style=\"margin: 0;\">\n" +
+                        "\n\n<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n\n" +
                         t("dependencies delete flow") +
-                        "<ul>\n" +
+                        "\n\n<ul>\n" +
                         deps +
-                        "</ul>\n" +
-                        "</p>\n" +
+                        "\n</ul>\n\n" +
                         "</div>"
                 }
             }

@@ -95,7 +95,7 @@
                 :ariaLabel="$t('topology-graph.loop.first-iteration')"
                 :disabled="lane.scopedNumber <= 1"
                 data-test="loop-step-first"
-                @click.stop="emit('step', 1 - lane.scopedNumber)"
+                @click.stop="emit('select', 1)"
             >
                 <PageFirst />
             </KsIconButton>
@@ -108,20 +108,20 @@
                 <ChevronLeft />
             </KsIconButton>
             <KsIconButton
-                :ariaLabel="$t('topology-graph.loop.last-iteration')"
-                :disabled="lane.scopedNumber >= startedIterations"
-                data-test="loop-step-last"
-                @click.stop="emit('step', startedIterations - lane.scopedNumber)"
-            >
-                <PageLast />
-            </KsIconButton>
-            <KsIconButton
                 :ariaLabel="$t('topology-graph.loop.next-iteration')"
                 :disabled="lane.scopedNumber >= startedIterations"
                 data-test="loop-step-next"
                 @click.stop="emit('step', 1)"
             >
                 <ChevronRight />
+            </KsIconButton>
+            <KsIconButton
+                :ariaLabel="$t('topology-graph.loop.last-iteration')"
+                :disabled="lane.scopedNumber >= startedIterations"
+                data-test="loop-step-last"
+                @click.stop="emit('select', startedIterations)"
+            >
+                <PageLast />
             </KsIconButton>
         </span>
     </span>

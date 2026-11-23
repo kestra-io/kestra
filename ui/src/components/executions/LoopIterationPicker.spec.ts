@@ -233,7 +233,7 @@ describe("LoopIterationPicker", () => {
         await wrapper.find("[data-test='loop-step-first']").trigger("click")
         await wrapper.find("[data-test='loop-step-last']").trigger("click")
 
-        expect(wrapper.emitted("step")).toEqual([[-1], [2]])
+        expect(wrapper.emitted("select")).toEqual([[1], [4]])
     })
 
     it("shouldFallBackToTheZeroBasedIndexWhenTheItemHasNoValue", () => {
@@ -250,6 +250,13 @@ describe("LoopIterationPicker", () => {
         expect(first.find("[data-test='loop-step-first']").attributes("disabled")).toBeDefined()
         expect(last.find("[data-test='loop-step-next']").attributes("disabled")).toBeDefined()
         expect(last.find("[data-test='loop-step-last']").attributes("disabled")).toBeDefined()
+    })
+
+    it("shouldDisableFirstAndLastWhenOnlyOneIterationHasStarted", () => {
+        const wrapper = mountPicker(lane({scopedNumber: 1, iterationCount: 1, terminatedIterations: {SUCCESS: 1}}))
+
+        expect(wrapper.find("[data-test='loop-step-first']").attributes("disabled")).toBeDefined()
+        expect(wrapper.find("[data-test='loop-step-last']").attributes("disabled")).toBeDefined()
     })
 
     it("shouldDisableNextAtTheLastStartedIterationOfARunningLoop", () => {

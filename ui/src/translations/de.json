@@ -1,5 +1,17 @@
 {
   "de": {
+    "editor_panels": {
+      "flow_code": "Flow-Code",
+      "no_code": "No-Code",
+      "files": "Dateien"
+    },
+    "support_links": {
+      "slack_title": "Community-Slack",
+      "slack_description": "Tausche dich mit anderen Nutzern und dem Kestra-Team aus",
+      "github_description": "Gib unserem Open-Source-Projekt einen Stern",
+      "help_center_title": "Hilfe-Center",
+      "help_center_description": "Wende dich an den Support, um Hilfe zu deinem Enterprise-Konto zu erhalten"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra wurde auf {version} aktualisiert und kann Breaking Changes enthalten, die Updates deiner Flows erfordern.",
       "cta": "Siehe, was sich geändert hat"
@@ -562,6 +574,7 @@
     "output": "Output",
     "flow_outputs": "Flow-Outputs",
     "eval": {
+      "failed": "Der Ausdruck konnte nicht ausgewertet werden",
       "title": "Debug-Ausdruck",
       "preview": "Vorschau",
       "expression": "Ausdruck"
@@ -2145,6 +2158,7 @@
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "no_code": {
+      "unknown_schema": "Unbekanntes Schema",
       "toggle_pebble": "Pebble-Editor umschalten",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",
       "adding": "+ {what} hinzufügen",

@@ -1,5 +1,17 @@
 {
   "zh_CN": {
+    "editor_panels": {
+      "flow_code": "Flow 代码",
+      "no_code": "无代码",
+      "files": "文件"
+    },
+    "support_links": {
+      "slack_title": "社区 Slack",
+      "slack_description": "与其他用户和 Kestra 团队交流",
+      "github_description": "为我们的开源项目点星",
+      "help_center_title": "帮助中心",
+      "help_center_description": "联系支持团队获取企业版账户帮助"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra 已升级到 {version}，可能包含需要更新 Flow 的重大更改。",
       "cta": "查看更改"
@@ -562,6 +574,7 @@
     "output": "输出",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "无法计算表达式",
       "title": "调试表达式",
       "preview": "预览",
       "expression": "表达式"
@@ -2145,6 +2158,7 @@
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
+      "unknown_schema": "未知架构",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",

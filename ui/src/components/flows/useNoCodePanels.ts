@@ -110,7 +110,7 @@ function getTabFromNoCodeTab(Comp: Component, tab: NoCodeTabWithAction, t: (key:
         return {
             uid: NOCODE_PREFIX,
             button: {
-                label: "No Code",
+                label: t("editor_panels.no_code"),
                 icon: markRaw(MouseRightClickIcon),
             },
         } satisfies Omit<Tab, "component">

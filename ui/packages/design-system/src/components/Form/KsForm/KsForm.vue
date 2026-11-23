@@ -8,7 +8,8 @@
 
 <script setup lang="ts">
     import {ref, type HTMLAttributes} from "vue"
-    import {ElForm, type FormInstance, type FormProps, type FormValidateCallback} from "element-plus"
+    import {type FormInstance, type FormProps, type FormValidateCallback} from "element-plus"
+    import {ElForm} from "../../../utils/elementPlusListeners"
     import {usePassedProps} from "../../../utils/filteredProps"
     import type {NativeAttributes} from "../../../utils/nativeAttributes"
 

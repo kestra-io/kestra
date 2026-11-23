@@ -10,7 +10,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElRadioButton, type RadioButtonProps} from "element-plus"
+    import {type RadioButtonProps} from "element-plus"
+    import {ElRadioButton} from "../../../utils/elementPlusListeners"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

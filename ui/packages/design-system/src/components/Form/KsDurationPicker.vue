@@ -54,7 +54,7 @@
             <KsText size="small" :type="durationIssue ? 'danger': ''">
                 {{ durationIssue ?? $t('input_custom_duration') }}
             </KsText>
-            <KsInput type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :disabled="disabled" :placeholder="$t('datepicker.custom duration')" />
+            <KsInput type="text" id="ks-duration-custom" :modelValue="customDuration" @update:modelValue="parseDuration" :disabled="disabled" :placeholder="$t('datepicker.custom duration')" />
         </div>
     </div>
 </template>

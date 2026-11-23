@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
     import {computed, type HTMLAttributes} from "vue"
-    import {ElTabs, type TabsProps, type TabsPropsPublic} from "element-plus"
+    import {ElTabs, type TabPaneName, type TabsProps, type TabsPropsPublic} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
     import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
@@ -33,7 +33,7 @@
         hideDisabledArrows?: boolean
     }
 
-    const props = defineProps<KsTabsProps & /* @vue-ignore */ Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue">>()
+    const props = defineProps<KsTabsProps & /* @vue-ignore */ (Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue"> & {onTabChange?: (name: TabPaneName) => void})>()
 
     defineSlots<{
         default?(): unknown

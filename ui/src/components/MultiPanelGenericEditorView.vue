@@ -129,7 +129,7 @@
         leaveFullscreenUnlessTabIsShown(tabValue)
 
         if(openTabs.value.includes(tabValue)){
-            if(hasMainView.value){
+            if(hasMainView.value && !panels.value.some(p => p.activeTab?.uid === tabValue)){
                 focusTab(tabValue)
             } else {
                 onRemoveTab(tabValue)

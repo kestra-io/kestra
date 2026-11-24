@@ -2128,6 +2128,7 @@
     "iterations": "반복",
     "load_10_more": "10개 더 불러오기",
     "show_all_executions": "모든 실행 보기",
+    "open_subflow_execution": "{flow} subflow 실행 열기",
     "loop_iterations_shown": "{total}개 중 {shown}개 표시됨",
     "loop_iterations_load_error": "반복 로드 실패",
     "retry": "다시 시도",

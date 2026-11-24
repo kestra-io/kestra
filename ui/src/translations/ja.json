@@ -2128,6 +2128,7 @@
     "iterations": "イテレーション",
     "load_10_more": "さらに10件読み込む",
     "show_all_executions": "すべての実行を表示",
+    "open_subflow_execution": "{flow} subflow の実行を開く",
     "loop_iterations_shown": "{total}件中{shown}件表示",
     "loop_iterations_load_error": "反復の読み込みに失敗しました",
     "retry": "再試行",

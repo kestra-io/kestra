@@ -2128,6 +2128,7 @@
     "iterations": "Iterationen",
     "load_10_more": "10 weitere laden",
     "show_all_executions": "Alle Ausführungen anzeigen",
+    "open_subflow_execution": "Öffne die {flow} Subflow Execution",
     "loop_iterations_shown": "{shown} von {total} angezeigt",
     "loop_iterations_load_error": "Iterationen konnten nicht geladen werden",
     "retry": "Versuche es erneut",

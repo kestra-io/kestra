@@ -80,6 +80,18 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
+    void shouldNotResolveDraftWithoutRevisionWhenItArrivesAsAFlowEvent() throws Exception {
+        // Given a draft-only flow delivered by the flow queue, which deserializes it as a GenericFlow
+        GenericFlow draft = GenericFlow.of(createFlow()).toBuilder().revision(1).draft(true).build();
+
+        // When
+        flowMetaStore.onFlowEvent(draft);
+
+        // Then
+        assertThat(flowMetaStore.findById(draft.getTenantId(), draft.getNamespace(), draft.getId(), Optional.empty())).isEmpty();
+    }
+
+    @Test
     void findByIdShouldReturnLastRevision() throws FlowProcessingException, QueueException {
         FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
         Flow toUpdate = test.toBuilder()

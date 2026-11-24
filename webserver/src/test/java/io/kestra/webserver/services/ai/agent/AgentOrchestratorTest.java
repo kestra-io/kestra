@@ -404,6 +404,23 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldFinishWithoutPlanCardWhenDraftAlreadyProposedInPlanMode() {
+        // Given
+        AgentThread thread = newThread(AgentMode.PLAN);
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "draft-artefact", "exec-1"))));
+        scriptedModel.enqueue(AiMessage.from("I've drafted a revised flow."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "edit this task", AgentMode.PLAN, TENANT, null, null, null), sink);
+
+        // Then
+        assertThat(sink.names()).contains(AgentEvents.ARTEFACT_DRAFT).doesNotContain(AgentEvents.PROPOSED_ACTION);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+    }
+
+    @Test
     void shouldSuspendWithPlanCardWhenFirstResponseHasNoToolCallsInPlanMode() {
         // Given — Plan mode; the first tool-free response is the plan
         AgentThread thread = newThread(AgentMode.PLAN);

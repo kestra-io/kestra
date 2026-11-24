@@ -16,12 +16,13 @@ describe("logs store kind filter", () => {
         setActivePinia(createPinia())
     })
 
-    it("should send no kind filter when only NORMAL is selected, so normal runs stored without a kind match", async () => {
+    it("should also match a null kind when NORMAL is selected, so normal runs stored without a kind match", async () => {
         const {useLogsStore} = await import("./logs")
 
         await useLogsStore().findLogs({page: 1, size: 25, "filters[kind][IN]": "NORMAL", "filters[namespace][EQUALS]": "company.team"})
 
         expect(searchLogs.mock.calls[0]?.[0]?.filters).toEqual([
+            {logical: "or", children: [{field: "kind", operation: "IS_NULL"}, {field: "kind", operation: "IN", value: "NORMAL"}]},
             {field: "namespace", operation: "EQUALS", value: "company.team"},
         ])
     })

@@ -17,7 +17,9 @@ public interface IMetrics extends IData<IMetrics.Fields> {
             return updatedWhere;
         }
 
-        List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
+        List<QueryFilter> leaves = filters.stream().filter(QueryFilter::isLeaf).toList();
+
+        List<QueryFilter> namespaceFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
         if (!namespaceFilters.isEmpty()) {
             namespaceFilters.forEach(f ->
             {
@@ -25,7 +27,7 @@ public interface IMetrics extends IData<IMetrics.Fields> {
             });
         }
 
-        List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
+        List<QueryFilter> flowFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
         if (!flowFilters.isEmpty()) {
             flowFilters.forEach(f ->
             {

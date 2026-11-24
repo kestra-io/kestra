@@ -725,31 +725,51 @@ describe("routeQueryToQueryFilters", () => {
 })
 
 describe("routeQueryToExecutionQueryFilters", () => {
+    const nullKindOr = (filter: QueryFilter): QueryFilter => ({logical: "or", children: [{field: "kind", operation: "IS_NULL"}, filter]})
+
     it.each([
         ["EQUALS", "NORMAL"],
-        ["IN", ["NORMAL"]],
-    ])("drops a lone NORMAL kind filter (%s), since normal runs are stored without a kind", (operation, value) => {
-        expect(routeQueryToExecutionQueryFilters({
-            [`filters[kind][${operation}]`]: value,
-            "filters[namespace][EQUALS]": "io.kestra",
-        })).toEqual([
+        ["IN", "NORMAL,PLAYGROUND"],
+        ["NOT_EQUALS", "PLAYGROUND"],
+        ["NOT_IN", "PLAYGROUND,TEST"],
+    ])("also matches a null kind when NORMAL satisfies the kind filter (%s %s), since normal runs are stored without a kind", (operation, value) => {
+        const query = {[`filters[kind][${operation}]`]: value, "filters[namespace][EQUALS]": "io.kestra"}
+
+        expect(routeQueryToExecutionQueryFilters(query)).toEqual([
+            nullKindOr({field: "kind", operation, value} as QueryFilter),
             {field: "namespace", operation: "EQUALS", value: "io.kestra"},
         ])
     })
 
-    it("keeps NORMAL when another kind is selected with it", () => {
-        expect(routeQueryToExecutionQueryFilters({"filters[kind][IN]": ["NORMAL", "PLAYGROUND"]})).toEqual([
-            {field: "kind", operation: "IN", value: ["NORMAL", "PLAYGROUND"]},
-        ])
-    })
-
-    it("keeps NORMAL when a kind filter also sits in a logical group", () => {
-        const query = {
-            "filters[kind][EQUALS]": "NORMAL",
-            "filters[or][0][kind][EQUALS]": "PLAYGROUND",
-            "filters[or][1][namespace][EQUALS]": "io.kestra",
-        }
+    it.each([
+        ["EQUALS", "PLAYGROUND"],
+        ["IN", "PLAYGROUND,TEST"],
+        ["NOT_EQUALS", "NORMAL"],
+    ])("keeps a kind filter NORMAL does not satisfy (%s %s) as it is", (operation, value) => {
+        const query = {[`filters[kind][${operation}]`]: value}
 
         expect(routeQueryToExecutionQueryFilters(query)).toEqual(routeQueryToQueryFilters(query))
+    })
+
+    it("serializes the null kind alternative as an OR group the backend parses", () => {
+        expect(serializeQueryFilters(routeQueryToExecutionQueryFilters({"filters[kind][IN]": "NORMAL,PLAYGROUND"})))
+            .toBe("filters%5Bor%5D%5B0%5D%5Bkind%5D%5BIS_NULL%5D=&filters%5Bor%5D%5B1%5D%5Bkind%5D%5BIN%5D=NORMAL%2CPLAYGROUND")
+    })
+
+    it("nests the null kind group and an existing root group under one AND group, so the query string keeps them apart", () => {
+        const filters = routeQueryToExecutionQueryFilters({
+            "filters[kind][EQUALS]": "NORMAL",
+            "filters[or][0][namespace][EQUALS]": "io.kestra",
+            "filters[or][1][flowId][EQUALS]": "hello",
+        })
+
+        expect(filters).toEqual([{
+            logical: "and",
+            children: [
+                nullKindOr({field: "kind", operation: "EQUALS", value: "NORMAL"}),
+                {logical: "or", children: [{field: "namespace", operation: "EQUALS", value: "io.kestra"}, {field: "flowId", operation: "EQUALS", value: "hello"}]},
+            ],
+        }])
+        expect(new URLSearchParams(serializeQueryFilters(filters)).getAll("filters[and][0][or][0][kind][IS_NULL]")).toEqual([""])
     })
 })

@@ -20,7 +20,7 @@ import type {Chart} from "../types"
 const chart: Chart = {id: "total", type: "io.kestra.plugin.core.dashboard.chart.TimeSeries", content: "id: total"}
 
 describe("useChartGenerator kind filter", () => {
-    it("should send no kind filter when the route selects only NORMAL, so normal runs stored without a kind are counted", async () => {
+    it("should also match a null kind when the route selects NORMAL, so normal runs stored without a kind are counted", async () => {
         chartPreview.mockResolvedValue({results: [], total: 0})
 
         i18nMount(defineComponent({
@@ -32,6 +32,9 @@ describe("useChartGenerator kind filter", () => {
 
         await vi.waitFor(() => expect(chartPreview).toHaveBeenCalled())
         const filters = chartPreview.mock.calls[0][0].globalFilter.filters
-        expect(filters.map((filter: {field: string}) => filter.field)).toEqual(["namespace"])
+        expect(filters).toEqual([
+            {logical: "or", children: [{field: "kind", operation: "IS_NULL"}, {field: "kind", operation: "EQUALS", value: "NORMAL"}]},
+            {field: "namespace", operation: "EQUALS", value: "company.team"},
+        ])
     })
 })

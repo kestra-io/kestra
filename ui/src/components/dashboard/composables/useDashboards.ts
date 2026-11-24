@@ -10,7 +10,7 @@ import {decodeSearchParams} from "@kestra-io/design-system"
 
 import {Chart, type ChartResults, type ChartStateCounts} from "../types.ts"
 import {chartLoadQueue} from "./chartLoadQueue"
-import {withoutNormalOnlyKindFilter} from "../../../utils/queryFilters"
+import {withNullKindForNormal} from "../../../utils/queryFilters"
 import {ChartFiltersOverrides, type ChartMetadata, QueryFilter, QueryFilterField} from "@kestra-io/kestra-sdk"
 
 
@@ -82,7 +82,7 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     })
 
     async function generate(pagination?: { pageNumber: number; pageSize: number }, customFilters?: QueryFilter[], appendFilters?: QueryFilter[]) {
-        const filters = customFilters ?? props.filters.concat(withoutNormalOnlyKindFilter(decodeSearchParams(route.query) as QueryFilter[] ?? []))
+        const filters = customFilters ?? props.filters.concat(withNullKindForNormal(decodeSearchParams(route.query) as QueryFilter[] ?? []))
         const allFilters = (appendFilters?.length ? [...filters, ...appendFilters] : filters)
         const parameters: ChartFiltersOverrides = {...pagination, filters: (allFilters ?? {})}
 

@@ -154,6 +154,41 @@ class DashboardDataGlobalFiltersTest {
     }
 
     @Test
+    void shouldLeaveOutAndReportAKindGroupForLogs() {
+        QueryFilter namespace = leaf(QueryFilter.Field.NAMESPACE, QueryFilter.Op.EQUALS, "company.team");
+        QueryFilter kindIsNullOrNormal = group(QueryFilter.Logical.OR, leaf(QueryFilter.Field.KIND, QueryFilter.Op.IS_NULL, null), leaf(QueryFilter.Field.KIND, QueryFilter.Op.EQUALS, ExecutionKind.NORMAL));
+
+        ILogs iLogs = new ILogs() {
+        };
+
+        assertThat(iLogs.whereWithGlobalFilters(List.of(namespace, kindIsNullOrNormal), null, null, null))
+            .singleElement().extracting("field").isEqualTo(ILogs.Fields.NAMESPACE);
+        assertThat(iLogs.ignoredGlobalFilterFields(List.of(namespace, kindIsNullOrNormal))).containsExactly(QueryFilter.Field.KIND);
+    }
+
+    @Test
+    void shouldMapNestedGroupsForExecutionsAndReportTheOrGroupsItCannotMap() {
+        QueryFilter kindIsNullOrNormal = group(QueryFilter.Logical.OR, leaf(QueryFilter.Field.KIND, QueryFilter.Op.IS_NULL, null), leaf(QueryFilter.Field.KIND, QueryFilter.Op.EQUALS, ExecutionKind.NORMAL));
+        QueryFilter labelsOrNamespace = group(QueryFilter.Logical.OR, leaf(QueryFilter.Field.LABELS, QueryFilter.Op.EQUALS, Map.of("team", "data")), leaf(QueryFilter.Field.NAMESPACE, QueryFilter.Op.EQUALS, "company.team"));
+        QueryFilter withAndBranch = group(
+            QueryFilter.Logical.OR,
+            group(QueryFilter.Logical.AND, leaf(QueryFilter.Field.STATE, QueryFilter.Op.EQUALS, "FAILED"), leaf(QueryFilter.Field.FLOW_ID, QueryFilter.Op.EQUALS, "hello")),
+            leaf(QueryFilter.Field.STATE, QueryFilter.Op.EQUALS, "SUCCESS")
+        );
+        List<QueryFilter> filters = List.of(group(QueryFilter.Logical.AND, kindIsNullOrNormal, labelsOrNamespace, withAndBranch));
+
+        IExecutions iExecutions = new IExecutions() {
+        };
+
+        var where = iExecutions.whereWithGlobalFilters(filters, null, null, null);
+
+        assertThat(where).singleElement().isInstanceOf(Or.class).extracting("field").isEqualTo(IExecutions.Fields.KIND);
+        assertThat(((Or<?>) where.getFirst()).getValues()).hasExactlyElementsOfTypes(IsNull.class, EqualTo.class);
+        assertThat(iExecutions.ignoredGlobalFilterFields(filters))
+            .containsExactly(QueryFilter.Field.LABELS, QueryFilter.Field.NAMESPACE, QueryFilter.Field.STATE, QueryFilter.Field.FLOW_ID);
+    }
+
+    @Test
     void shouldMapKindFilterForExecutions() {
         QueryFilter kindFilter = QueryFilter.builder()
             .field(QueryFilter.Field.KIND)
@@ -381,5 +416,13 @@ class DashboardDataGlobalFiltersTest {
         assertThat(where.get(0)).isSameAs(existingLevelFilter);
         In<?> inFilter = (In<?>) where.get(1);
         assertThat(inFilter.getValues()).containsExactly("ERROR");
+    }
+
+    private static QueryFilter leaf(QueryFilter.Field field, QueryFilter.Op operation, Object value) {
+        return QueryFilter.builder().field(field).operation(operation).value(value).build();
+    }
+
+    private static QueryFilter group(QueryFilter.Logical logical, QueryFilter... children) {
+        return QueryFilter.builder().logical(logical).children(List.of(children)).build();
     }
 }

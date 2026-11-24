@@ -1,6 +1,7 @@
 <template>
     <KsDialog
         v-model="visible"
+        :dirty="isDirty"
         destroyOnClose
         appendToBody
         large
@@ -185,12 +186,17 @@
     }))
 
     const generateId = () => `mytrigger_${Math.floor(10000 + Math.random() * 90000)}`
-    const formModel = ref({
+    const formModel = ref<{namespace: string | undefined; flowId: string; triggerId: string}>({
         namespace: "",
         flowId: "",
         triggerId: generateId(),
     })
     const triggerPropertiesModel = ref<Record<string, unknown>>({})
+    const baseline = ref("")
+    /** The no-code switch writes `false` on mount when the schema default is the string "false", so only a real value counts. */
+    const isDirty = computed(() => JSON.stringify(formModel.value) !== baseline.value || Object.values(triggerPropertiesModel.value).some(value =>
+        value !== undefined && value !== null && value !== "" && value !== false && !(Array.isArray(value) && value.length === 0),
+    ))
 
     // Fields handled by the modal itself, not rendered through the no-code form.
     const RESERVED_FIELDS = new Set(["id", "type", "description"])
@@ -294,10 +300,11 @@
     }
 
     const addTriggerToFlow = () => {
-        if (!canSubmit.value) return
+        const namespace = formModel.value.namespace
+        if (!canSubmit.value || !namespace) return
 
         triggerDraftStore.setDraft({
-            namespace: formModel.value.namespace,
+            namespace,
             flowId: formModel.value.flowId,
             triggerYaml: triggerBlock.value,
         })
@@ -305,7 +312,7 @@
         visible.value = false
         router.push({
             name: "flows/update/edit",
-            params: {namespace: formModel.value.namespace, id: formModel.value.flowId},
+            params: {namespace, id: formModel.value.flowId},
             query: {createTrigger: "true"},
         })
     }
@@ -316,6 +323,7 @@
             copied.value = false
             formModel.value = {namespace: "", flowId: "", triggerId: generateId()}
             triggerPropertiesModel.value = {}
+            baseline.value = JSON.stringify(formModel.value)
             loadDocumentation()
         }
     }, {immediate: true})

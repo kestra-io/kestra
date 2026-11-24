@@ -23,9 +23,9 @@
         />
 
         <TaskIcon
-            v-if="showIcon"
+            v-if="isPluginClass(type)"
             class="leaf-block-card-ico"
-            :cls="String(displayBlock.type ?? '')"
+            :cls="type"
             :icons="icons"
             :loadIcon="pluginsStore.loadIcon"
             :onlyIcon="true"
@@ -105,6 +105,7 @@
 
     import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
     import {displayTaskOf} from "../../../utils/flowableBlockOps"
+    import {isPluginClass} from "../../../utils/pluginUtils"
     import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "../injectionKeys"
 
     const {t} = useI18n()
@@ -123,12 +124,10 @@
         runnable?: boolean
         showOpenSplit?: boolean
         showDuplicate?: boolean
-        showIcon?: boolean
         icons?: Record<string, PluginIconData>
     }>(), {
         showOpenSplit: true,
         showDuplicate: true,
-        showIcon: true,
     })
 
     const emit = defineEmits<{
@@ -144,6 +143,7 @@
     }>()
 
     const displayBlock = computed(() => displayTaskOf(props.block))
+    const type = computed(() => String(displayBlock.value.type ?? ""))
 
     const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
     const panelMaximized = inject(PANEL_MAXIMIZED_INJECTION_KEY, undefined)
@@ -152,9 +152,8 @@
     )
 
     const shortType = computed(() => {
-        const type = String(displayBlock.value.type ?? "")
-        const parts = type.split(".")
-        return parts[parts.length - 1] ?? type
+        const parts = type.value.split(".")
+        return parts[parts.length - 1] ?? type.value
     })
 
     const displayLabel = computed(() => props.label ?? String(displayBlock.value.id ?? ""))

@@ -1,5 +1,12 @@
 {
   "en": {
+    "support_links": {
+      "slack_title": "Community Slack",
+      "slack_description": "Discuss topics with other users and the Kestra team",
+      "github_description": "Give our open-source project a star",
+      "help_center_title": "Help Center",
+      "help_center_description": "Contact support for help with your Enterprise account"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra was upgraded to {version} and it may include breaking changes that require updates to your flows.",
       "cta": "See what changed"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "Failed to evaluate expression",
       "title": "Debug Expression",
       "preview": "Preview",
       "expression": "Expression"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "This task was retried",
+      "task-details": "Details for {task}",
       "artifacts": "no artifacts | {count} artifact | {count} artifacts",
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
@@ -791,7 +800,8 @@
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
       "queued": "Queued",
-      "save_error": "Failed to update the concurrency limit, the previous value is kept."
+      "save_error": "Failed to update the concurrency limit, the previous value is kept.",
+      "invalid_running_count": "Enter a whole number between 0 and {max}."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -2144,6 +2154,7 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
+      "unknown_schema": "Unknown Schema",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -3180,7 +3191,7 @@
       "undo": "Undo",
       "upstream_outputs": "Upstream outputs",
       "open_in_tabs": "Open in tabs",
-      "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
+      "open_mode_hint": "This editor opens in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
     "move_panel_to_bottom": "Move panel to bottom",

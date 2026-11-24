@@ -1,5 +1,12 @@
 {
   "pl": {
+    "support_links": {
+      "slack_title": "Slack społeczności",
+      "slack_description": "Rozmawiaj z innymi użytkownikami i zespołem Kestra",
+      "github_description": "Daj gwiazdkę naszemu projektowi open source",
+      "help_center_title": "Centrum pomocy",
+      "help_center_description": "Skontaktuj się z pomocą techniczną w sprawie konta Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra został zaktualizowany do wersji {version} i może zawierać zmiany powodujące niezgodność, które wymagają aktualizacji Twoich Flowów.",
       "cta": "Zobacz, co się zmieniło"
@@ -562,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Outputy Flow",
     "eval": {
+      "failed": "Nie udało się obliczyć wyrażenia",
       "title": "Debugowanie wyrażenia",
       "preview": "Podgląd",
       "expression": "Wyrażenie"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Ten Task został ponowiony",
+      "task-details": "Szczegóły: {task}",
       "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
       "graph-orientation": "Orientacja grafu",
       "zoom-in": "Powiększ",
@@ -791,7 +800,8 @@
       "dialog_title": "Limity Concurrency",
       "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit.",
       "queued": "W kolejce",
-      "save_error": "Nie udało się zaktualizować limitu Concurrency, poprzednia wartość została zachowana."
+      "save_error": "Nie udało się zaktualizować limitu Concurrency, poprzednia wartość została zachowana.",
+      "invalid_running_count": "Wprowadź liczbę całkowitą z zakresu od 0 do {max}."
     },
     "flowConcurrency": {
       "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",
@@ -2144,6 +2154,7 @@
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "no_code": {
+      "unknown_schema": "Nieznany schemat",
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
       "adding": "+ Dodaj {what}",
@@ -3180,7 +3191,7 @@
       "undo": "Cofnij",
       "upstream_outputs": "Outputy upstream",
       "open_in_tabs": "Otwórz w zakładkach",
-      "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
+      "open_mode_hint": "Ten edytor domyślnie otwiera się w oknie modalnym. Możesz ustawić zakładki jako domyślne w {settings}."
     },
     "blocks": "Bloki",
     "move_panel_to_bottom": "Przenieś panel na dół",

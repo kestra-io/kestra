@@ -256,14 +256,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedInt", "9");
         InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(mapMin, "tenant5"));
-        assertThat(e.getMessage()).contains("Invalid value for input `validatedInt`. Cause: it must be more than `10`");
+        assertThat(e.getMessage()).contains("Invalid value for input `validatedInt`. Cause: it must be at least `10`, but received `9`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedInt", "21");
 
         e = assertThrows(InputOutputValidationException.class, () -> typedInputs(mapMax, "tenant5"));
 
-        assertThat(e.getMessage()).contains("Invalid value for input `validatedInt`. Cause: it must be less than `20`");
+        assertThat(e.getMessage()).contains("Invalid value for input `validatedInt`. Cause: it must be at most `20`, but received `21`");
     }
 
     @Test
@@ -304,14 +304,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDuration", "PT1S");
         InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(mapMin, "tenant8"));
-        assertThat(e.getMessage()).contains("Invalid value for input `validatedDuration`. Cause: It must be more than `PT10S`");
+        assertThat(e.getMessage()).contains("Invalid value for input `validatedDuration`. Cause: it must be at least `PT10S`, but received `PT1S`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDuration", "PT30S");
 
         e = assertThrows(InputOutputValidationException.class, () -> typedInputs(mapMax, "tenant8"));
 
-        assertThat(e.getMessage()).contains("Invalid value for input `validatedDuration`. Cause: It must be less than `PT20S`");
+        assertThat(e.getMessage()).contains("Invalid value for input `validatedDuration`. Cause: it must be at most `PT20S`, but received `PT30S`");
     }
 
     @Test
@@ -320,14 +320,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedFloat", "0.01");
         InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(mapMin, "tenant9"));
-        assertThat(e.getMessage()).contains("Invalid value for input `validatedFloat`. Cause: it must be more than `0.1`");
+        assertThat(e.getMessage()).contains("Invalid value for input `validatedFloat`. Cause: it must be at least `0.1`, but received `0.01`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedFloat", "1.01");
 
         e = assertThrows(InputOutputValidationException.class, () -> typedInputs(mapMax, "tenant9"));
 
-        assertThat(e.getMessage()).contains("Invalid value for input `validatedFloat`. Cause: it must be less than `0.5`");
+        assertThat(e.getMessage()).contains("Invalid value for input `validatedFloat`. Cause: it must be at most `0.5`, but received `1.01`");
     }
 
     @Test

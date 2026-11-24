@@ -21,7 +21,7 @@ export interface EditorDatePickerContext {
 
 export function useEditorDatePicker(ctx: EditorDatePickerContext) {
     const startOfToday = dayjs().startOf("day")
-    const selectedDate = ref<Date>(startOfToday.toDate())
+    const selectedDate = ref<Date | undefined>(startOfToday.toDate())
     const shown = ref(false)
     let widget: monaco.editor.IContentWidget | undefined
 

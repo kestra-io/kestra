@@ -32,7 +32,6 @@
         <TaskObject
             v-ks-loading="isLoading || isPluginSchemaLoading"
             v-if="!navStack.length && (selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
-            name="root"
             :modelValue="taskModel"
             @update:model-value="onTaskInput"
             :schema

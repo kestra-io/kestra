@@ -18,6 +18,7 @@
         >
             <span class="options">
                 <TaskIcon
+                    v-if="isPluginClass(item?.cls)"
                     :cls="item?.cls"
                     :onlyIcon="true"
                     :loadIcon="pluginsStore.loadIcon"
@@ -33,7 +34,7 @@
 
         <template #prefix>
             <TaskIcon
-                v-if="modelValue"
+                v-if="isPluginClass(modelValue)"
                 :cls="modelValue"
                 :onlyIcon="true"
                 :loadIcon="pluginsStore.loadIcon"
@@ -53,6 +54,7 @@
         SCHEMA_LOADER_INJECTION_KEY,
     } from "../no-code/injectionKeys"
     import {getValueAtJsonPath} from "../../utils/utils"
+    import {isPluginClass} from "../../utils/pluginUtils"
 
     const pluginsStore = usePluginsStore()
 
@@ -158,10 +160,7 @@
         return selected ? [selected] : []
     })
 
-    const modelValue = defineModel({
-        type: String,
-        default: "",
-    })
+    const modelValue = defineModel<string | undefined>({default: ""})
 
     const props = defineProps<{
         blockSchemaPath: string,

@@ -121,8 +121,8 @@
 
     const local = reactive({
         value: modelValue.value,
-        endDateValue: endDateValue.value ?? null,
-        startDateValue: startDateValue.value ?? null,
+        endDateValue: endDateValue.value,
+        startDateValue: startDateValue.value,
         timeRangeMode: timeRangeMode.value ?? "predefined",
         dateFilterMode: dateFilterMode.value ?? props.filterKey?.dateFilterOptions?.[0]?.value ?? "",
     })
@@ -140,8 +140,8 @@
     watchEffect(() => {
         emit("update:modelValue", local.value)
         emit("update:timeRangeMode", local.timeRangeMode)
-        emit("update:endDateValue", local.endDateValue)
-        emit("update:startDateValue", local.startDateValue)
+        emit("update:endDateValue", local.endDateValue ?? null)
+        emit("update:startDateValue", local.startDateValue ?? null)
         emit("update:dateFilterMode", local.dateFilterMode)
     })
 </script>

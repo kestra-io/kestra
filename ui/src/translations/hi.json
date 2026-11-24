@@ -1,5 +1,12 @@
 {
   "hi": {
+    "support_links": {
+      "slack_title": "कम्युनिटी Slack",
+      "slack_description": "अन्य उपयोगकर्ताओं और Kestra टीम के साथ चर्चा करें",
+      "github_description": "हमारे ओपन-सोर्स प्रोजेक्ट को स्टार दें",
+      "help_center_title": "सहायता केंद्र",
+      "help_center_description": "अपने Enterprise खाते में मदद के लिए सहायता टीम से संपर्क करें"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra को {version} में अपग्रेड किया गया था और इसमें ऐसे ब्रेकिंग बदलाव शामिल हो सकते हैं जिनके लिए आपके Flows में अपडेट की आवश्यकता होती है।",
       "cta": "देखें क्या बदला"
@@ -562,6 +569,7 @@
     "output": "आउटपुट",
     "flow_outputs": "फ्लो Outputs",
     "eval": {
+      "failed": "एक्सप्रेशन का मूल्यांकन नहीं हो सका",
       "title": "डिबग अभिव्यक्ति",
       "preview": "पूर्वावलोकन",
       "expression": "अभिव्यक्ति"
@@ -583,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
+      "task-details": "{task} का विवरण",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
       "graph-orientation": "ग्राफ़ अभिविन्यास",
       "zoom-in": "ज़ूम इन करें",
@@ -791,7 +800,8 @@
       "dialog_title": "समानांतरता सीमाएँ",
       "warning": "चल रहे काउंटर को बदलने से समवर्तीता दूषित हो सकती है, इसलिए एग्जीक्यूशन अनुमत सीमा से अधिक हो सकते हैं।",
       "queued": "कतारबद्ध",
-      "save_error": "समवर्ती सीमा को अपडेट करने में विफल रहा, पिछला मान रखा गया है।"
+      "save_error": "समवर्ती सीमा को अपडेट करने में विफल रहा, पिछला मान रखा गया है।",
+      "invalid_running_count": "0 और {max} के बीच एक पूर्ण संख्या दर्ज करें।"
     },
     "flowConcurrency": {
       "loadError": "इस flow की समवर्तीता सीमा लोड नहीं हो सकी।",
@@ -2144,6 +2154,7 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
+      "unknown_schema": "अज्ञात स्कीमा",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",
@@ -3180,7 +3191,7 @@
       "undo": "पूर्ववत करें",
       "upstream_outputs": "अपस्ट्रीम आउटपुट",
       "open_in_tabs": "टैब में खोलें",
-      "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
+      "open_mode_hint": "यह एडिटर डिफ़ॉल्ट रूप से एक modal में खुलता है। आप {settings} में टैब को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
     "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",

@@ -473,6 +473,7 @@
 
         .revision-label {
             display: flex;
+            align-items: center;
             gap: var(--ks-spacing-2);
         }
     }

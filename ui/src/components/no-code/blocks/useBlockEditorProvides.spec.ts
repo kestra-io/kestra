@@ -36,6 +36,7 @@ import {
     ROOT_SCHEMA_INJECTION_KEY,
     SAVE_FLOW_FUNCTION_INJECTION_KEY,
     SCHEMA_DEFINITIONS_INJECTION_KEY,
+    SCHEMA_LOADER_INJECTION_KEY,
     UPDATE_YAML_FUNCTION_INJECTION_KEY,
 } from "../injectionKeys"
 
@@ -57,6 +58,7 @@ const KEYS = {
     FULL_SCHEMA: FULL_SCHEMA_INJECTION_KEY,
     ROOT_SCHEMA: ROOT_SCHEMA_INJECTION_KEY,
     SCHEMA_DEFINITIONS: SCHEMA_DEFINITIONS_INJECTION_KEY,
+    SCHEMA_LOADER: SCHEMA_LOADER_INJECTION_KEY,
     CREATE_TASK_FUNCTION: CREATE_TASK_FUNCTION_INJECTION_KEY,
     EDIT_TASK_FUNCTION: EDIT_TASK_FUNCTION_INJECTION_KEY,
     CLOSE_TASK_FUNCTION: CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -263,6 +265,17 @@ describe("useBlockEditorProvides", () => {
             expect(value("FULL_SCHEMA")).toEqual(flowSchema)
             expect(value("ROOT_SCHEMA")).toEqual(flowRootSchema)
             expect(value("SCHEMA_DEFINITIONS")).toEqual(flowDefinitions)
+        })
+
+        // Topology also mounts read-only on an execution, where nothing ever needs the megabytes of schema.
+        it("hands forms the flow schema loader without loading it", () => {
+            const flowSchemaLoader = {load: vi.fn()}
+            const {injected} = setupWithStores(() => {
+                pluginsStore.flowSchemaLoader = flowSchemaLoader
+            })
+
+            expect(injected.SCHEMA_LOADER).toBe(flowSchemaLoader)
+            expect(flowSchemaLoader.load).not.toHaveBeenCalled()
         })
 
         it("falls back to an empty object for the schema, root schema and definitions", () => {

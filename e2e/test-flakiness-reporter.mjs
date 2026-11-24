@@ -18,7 +18,7 @@ test("reports retry-passed tests as flaky and persistent failures separately", (
     const temporaryDirectory = mkdtempSync(join(tmpdir(), "kestra-flakiness-report-"))
     const rootDirectory = join(temporaryDirectory, "e2e")
     const sampleFile = join(rootDirectory, "sample.spec.ts")
-    const reportDirectory = join(temporaryDirectory, "report")
+    const reportDirectory = join(rootDirectory, "playwright-report")
     const summaryPath = join(temporaryDirectory, "step-summary.md")
     const previousSummaryPath = process.env.GITHUB_STEP_SUMMARY
     writeFileSync(summaryPath, "", "utf8")
@@ -31,8 +31,11 @@ test("reports retry-passed tests as flaky and persistent failures separately", (
             fakeTest("passes first time", "expected", ["passed"], sampleFile),
             fakeTest("is skipped", "skipped", [], sampleFile),
         ]
-        const reporter = new FlakinessReporter({outputDirectory: reportDirectory})
-        reporter.onBegin({rootDir: rootDirectory}, {allTests: () => tests})
+        const reporter = new FlakinessReporter({outputDirectory: "playwright-report"})
+        reporter.onBegin({
+            rootDir: rootDirectory,
+            configFile: join(rootDirectory, "playwright.config.ts"),
+        }, {allTests: () => tests})
         reporter.onEnd({status: "failed"})
 
         const report = JSON.parse(readFileSync(join(reportDirectory, "flakiness-report.json"), "utf8"))

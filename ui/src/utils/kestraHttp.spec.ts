@@ -328,6 +328,19 @@ describe("setupKestraHttp server reachability", () => {
         expect(useServerReachability().unreachable.value).toBe(true)
     })
 
+    it("keeps the server flagged unreachable on a response the service worker may have served from its cache", () => {
+        const {onResponse} = interceptors()
+        const {unreachable} = useServerReachability()
+        markServerUnreachable()
+        vi.advanceTimersByTime(UNREACHABLE_DELAY)
+
+        onResponse({status: 200}, new Request("http://localhost/api/v1/plugins/schemas/flow"), {})
+        expect(unreachable.value).toBe(true)
+
+        onResponse({status: 200}, kestraApiRequest(), {})
+        expect(unreachable.value).toBe(false)
+    })
+
     it("marks the error itself only when the server never answered, so a caller can queue the work instead of reporting it", () => {
         const {onError} = interceptors()
         const gatewayResponse = {status: 503, statusText: "Service Unavailable", url: "http://x/api", headers: new Headers({"content-type": "text/html"})}

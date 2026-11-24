@@ -1,9 +1,14 @@
 import {describe, expect, it} from "vitest"
-import {EDITOR_REFERENCE_PATTERN} from "./pwaEditorReferenceCache"
+import {EDITOR_REFERENCE_PATTERN} from "../src/utils/editorReferenceRequests"
+import {editorReferenceCache} from "./pwaEditorReferenceCache"
 
 const ORIGIN = "https://kestra.example"
 
 describe("EDITOR_REFERENCE_PATTERN", () => {
+    it("is the pattern the service worker caches on", () => {
+        expect(editorReferenceCache.urlPattern).toBe(EDITOR_REFERENCE_PATTERN)
+    })
+
     it.each([
         "/api/v1/plugins",
         "/api/v1/plugins/schemas/flow",

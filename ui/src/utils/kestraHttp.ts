@@ -3,6 +3,7 @@ import type {Router} from "vue-router"
 import {configureClient, useClient, asProblem, type ProblemDetail} from "@kestra-io/kestra-sdk"
 import {markServerReachable, markServerUnreachable} from "../composables/useServerReachability"
 import {isReauthOpen, recheckReauth} from "../composables/useReauthDialog"
+import {EDITOR_REFERENCE_PATTERN} from "./editorReferenceRequests"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -14,6 +15,11 @@ const GATEWAY_STATUSES = new Set([502, 503, 504])
 
 function isKestraApiRequest(request?: Request): boolean {
     return Boolean(request?.url) && new URL(request!.url, window.location.href).pathname.includes("/api/v1/")
+}
+
+// The service worker answers these from its cache when the network fails, so a response to one is no proof the server is back.
+function mayComeFromCache(request?: Request): boolean {
+    return request?.method === "GET" && EDITOR_REFERENCE_PATTERN.test(new URL(request.url, window.location.href).href)
 }
 
 function isSameOrigin(request: Request): boolean {
@@ -237,7 +243,7 @@ export function setupKestraHttp(
 
     client.interceptors.response.use((response, request, opts) => {
         if (isKestraApiRequest(request)) {
-            markServerReachable()
+            if (!mayComeFromCache(request)) markServerReachable()
             if (isReauthOpen()) void recheckReauth()
         }
         if (!skipProgress(opts)) increaseProgress()

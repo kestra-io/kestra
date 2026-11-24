@@ -4,13 +4,12 @@
         destroyOnClose
         lockScroll
         :resizable="resizable"
-        :size="resizable ? drawerSize : ''"
+        :size="resizable ? drawerSize : (props.size ?? '')"
         :appendToBody="true"
         :beforeClose="guardedBeforeClose"
         v-bind="{...filteredProps(), ...$attrs}"
         :class="{'full-screen': fullScreen && !resizable}"
         @resize-end="onResizeEnd"
-        @before-close="emit('before-close', $event)"
     >
         <slot />
         <template v-if="$slots.header || props.title" #header>
@@ -30,38 +29,29 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
-    import {ElDrawer} from "element-plus"
+    import {ref, computed, type HTMLAttributes} from "vue"
+    import {ElDrawer, type DrawerProps} from "element-plus"
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
     import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<boolean>({default: false})
 
-    const props = withDefaults(defineProps<{
-        title?: string
+    export interface KsDrawerProps extends Omit<DrawerProps, "modelValue"> {
         isFullScreen?: boolean
-        withHeader?: boolean
-        resizable?: boolean
-        beforeClose?: (done: () => void) => void
         dirty?: boolean
         dirtyMessage?: string
-    }>(), {
-        title: undefined,
-        isFullScreen: false,
-        withHeader: true,
-        resizable: false,
-        beforeClose: undefined,
-        dirty: false,
-        dirtyMessage: undefined,
-    })
+    }
 
-    const emit = defineEmits<{
-        "before-close": [done: () => void]
-    }>()
+    const props = withDefaults(defineProps<KsDrawerProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsDrawerProps>>(), {
+        isFullScreen: false,
+        resizable: false,
+        dirty: false,
+    })
 
     defineSlots<{
         default?(): unknown
@@ -73,27 +63,37 @@
 
     const fullScreenToggle = ref(props.isFullScreen)
     const drawerWidth = ref<number | null>(null)
+    const widthBeforeFullScreen = ref<number | null>(null)
 
-    const resizableFull = computed(() =>
-        props.resizable && drawerWidth.value != null && drawerWidth.value >= window.innerWidth * FULLSCREEN_THRESHOLD,
-    )
+    const isFullScreenWidth = (width: number | null) => width != null && width >= window.innerWidth * FULLSCREEN_THRESHOLD
+
+    const resizableFull = computed(() => props.resizable && isFullScreenWidth(drawerWidth.value))
     const fullScreen = computed(() => (props.resizable ? resizableFull.value : fullScreenToggle.value))
 
-    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"))
+    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : (props.size ?? "65%")))
 
     const onResizeEnd = (_event: MouseEvent, size: number) => {
-        drawerWidth.value = Math.round(size)
+        const width = Math.round(size)
+        if (!resizableFull.value && isFullScreenWidth(width)) {
+            widthBeforeFullScreen.value = drawerWidth.value
+        }
+        drawerWidth.value = width
     }
 
     const toggleFullScreen = () => {
         if (props.resizable) {
-            drawerWidth.value = resizableFull.value ? null : window.innerWidth
+            if (resizableFull.value) {
+                drawerWidth.value = widthBeforeFullScreen.value
+            } else {
+                widthBeforeFullScreen.value = drawerWidth.value
+                drawerWidth.value = window.innerWidth
+            }
         } else {
             fullScreenToggle.value = !fullScreenToggle.value
         }
     }
 
-    const filteredProps = useFilteredProps(props, ["beforeClose", "dirty", "dirtyMessage"])
+    const filteredProps = usePassedProps(props, ["beforeClose", "dirty", "dirtyMessage", "isFullScreen", "size"])
 
     const {guardedClose} = useDiscardGuard(() => props.dirty, {get message() { return props.dirtyMessage }})
     const guardedBeforeClose = (done: () => void) => guardedClose(() => (props.beforeClose ? props.beforeClose(done) : done()))

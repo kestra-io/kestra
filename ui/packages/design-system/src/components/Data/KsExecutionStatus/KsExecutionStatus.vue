@@ -24,7 +24,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, useAttrs} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {computed, useAttrs, type HTMLAttributes} from "vue"
     import {EXECUTION_STATUSES, type ExecutionStatus} from "./types"
 
     defineOptions({inheritAttrs: false})
@@ -40,7 +41,7 @@
         clickable?: boolean;
         disabled?: boolean;
         dot?: boolean;
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         icon: true,
         size: "default",
         title: undefined,

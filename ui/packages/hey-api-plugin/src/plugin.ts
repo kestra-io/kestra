@@ -283,9 +283,9 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
                         .prop("parseAs", $.literal("text"))
                     : $("options")
 
-            const operationOptionsType = (sym: Parameters<typeof $.type.query>[0], idx: 0 | 1 = 1) =>
+            const operationOptionsType = (querySym: Parameters<typeof $.type.query>[0], idx: 0 | 1 = 1) =>
                 $.type("Omit").generics(
-                    $.type("Parameters").generic($.type.query(sym)).idx(idx),
+                    $.type("Parameters").generic($.type.query(querySym)).idx(idx),
                     $.type.literal("throwOnError"),
                 )
 

@@ -94,14 +94,21 @@
                     />
                 </div>
 
-                <KsJsonTree
-                    v-else-if="isExpandableValue"
-                    :value="selectedValue"
-                    :basePath="selectedBase"
-                    :selectedPath="expressionPath"
-                    defaultExpanded
-                    @select="onSelectPath"
-                />
+                <template v-else-if="customViewer || isExpandableValue">
+                    <component
+                        :is="customViewer"
+                        v-if="customViewer"
+                        :value="selectedValue"
+                    />
+                    <KsJsonTree
+                        v-if="isExpandableValue"
+                        :value="selectedValue"
+                        :basePath="selectedBase"
+                        :selectedPath="expressionPath"
+                        defaultExpanded
+                        @select="onSelectPath"
+                    />
+                </template>
 
                 <template v-else>
                     <div v-if="isRawTruncated" class="truncated-banner">
@@ -146,7 +153,7 @@
             </KsCollapse>
         </div>
 
-        <KsSplitter v-else layout="horizontal">
+        <KsSplitter v-else layout="horizontal" class="variable-explorer__splitter">
             <!-- Left + Center: searchable list and tree/raw viewer as a single unified block -->
             <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--main">
                 <KsSplitter layout="horizontal" class="variable-explorer__inner-splitter">
@@ -220,6 +227,7 @@
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import {loopTaskIds} from "../../../utils/flowUtils"
+    import {useVariableValueRenderer} from "override/components/executions/outputs/variableValueExtension"
     import FilePreview from "../FilePreview.vue"
     import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
@@ -509,6 +517,8 @@
     const selectedSearchable = computed(() =>
         (selectedFlowOutputId.value !== undefined && searchableOutputIds.value.has(selectedFlowOutputId.value))
         || (selectedFlowInputId.value !== undefined && searchableInputIds.value.has(selectedFlowInputId.value)))
+    const variableValueRenderer = useVariableValueRenderer()
+    const customViewer = computed(() => selectedBase.value && selectedValue.value !== null ? variableValueRenderer(selectedBase.value, executionsStore.flow) : undefined)
     const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
@@ -717,8 +727,8 @@
     padding: var(--ks-spacing-4) var(--ks-spacing-4) 0;
 }
 
-:deep(.kel-splitter),
-:deep(.kel-splitter-panel) {
+.variable-explorer__splitter,
+.variable-explorer__inner-splitter {
     height: 100%;
     min-height: 0;
 }

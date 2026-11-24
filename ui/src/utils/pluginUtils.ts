@@ -1,4 +1,5 @@
 import semver from "semver"
+import {capitalize} from "./global"
 
 export type PluginElement = {
     cls: string;
@@ -82,6 +83,11 @@ export function isPluginMatched(plugin: Plugin, search: string): boolean {
         pluginElementClasses(plugin).some(cls => cls.toLowerCase().includes(q))
 }
 
+/** The title a plugin is shown and sorted under: its title on the plugins API when known, else its own. */
+export function pluginDisplayTitle(plugin: Plugin, enrichment: {title?: string} | null | undefined): string {
+    return enrichment?.title ?? capitalize(plugin.title)
+}
+
 export function pluginElementClasses(plugin: Plugin): string[] {
     return Object.values(extractPluginElements(plugin)).flat()
 }
@@ -106,6 +112,9 @@ export function latestVersionEntries(plugins: Plugin[]): Plugin[] {
 
 export const isEnterpriseEditionPlugin = (classOrGroup?: string | null): boolean =>
     Boolean(classOrGroup?.includes(".ee."))
+
+export const isPluginClass = (type?: string | null): boolean =>
+    Boolean(type?.includes("."))
 
 export const getPluginReleaseUrl = (pluginClass?: string): string | null => {
     const [, , groupId, pluginType] = pluginClass?.split(".") ?? []

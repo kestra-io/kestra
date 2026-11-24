@@ -3,6 +3,7 @@
         ref="elInputRef"
         v-model="model"
         class="ks-search"
+        :class="{'ks-search--borderless': borderless}"
         v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         @change="emit('change', $event)"
     >
@@ -18,10 +19,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {ref, type HTMLAttributes} from "vue"
     import {ElInput, type InputProps} from "element-plus"
     import Magnify from "vue-material-design-icons/Magnify.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
@@ -35,14 +37,12 @@
 
     const model = defineModel<string>({default: ""})
 
-    const props = defineProps<{
-        placeholder?: string
-        disabled?: boolean
-        clearable?: boolean
-        readonly?: boolean
-        name?: string
-        id?: string
-    }>()
+    type KsSearchProps = Omit<InputProps, "modelValue"> & {
+        /** Drop the border, shadow and background so the field sits flush in a container that draws them (the global search). */
+        borderless?: boolean
+    }
+
+    const props = defineProps<KsSearchProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsSearchProps> & {onInput?: (value: string) => void})>()
 
     const emit = defineEmits<{
         change: [value: string | number]
@@ -53,7 +53,7 @@
         suffix?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props, ["borderless"])
 </script>
 
 <style>
@@ -89,6 +89,17 @@
 
         & .kel-input__inner {
             font-size: var(--ks-font-size-sm);
+        }
+
+        &.ks-search--borderless .kel-input__wrapper {
+            &, &:hover, &.is-focus, &.is-focus:hover {
+                border: 0;
+                box-shadow: none;
+            }
+
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            background-color: transparent;
+            border-radius: 0;
         }
 
         & .ks-search__icon {

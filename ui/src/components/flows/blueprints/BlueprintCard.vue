@@ -1,5 +1,5 @@
 <template>
-    <KsCard class="blueprint-card" shadow="never" @click="emit('click')">
+    <KsCard class="blueprint-card" shadow="never" :bodyStyle="{width: '100%', height: '100%'}" @click="emit('click')">
         <div class="content">
             <h3 class="title">
                 {{ blueprint.title ?? blueprint.id }}
@@ -146,11 +146,6 @@
             border-color: var(--ks-border-strong);
             box-shadow: 0 0.5rem 1rem 0 var(--ks-shadow-element);
         }
-
-        & :deep(.kel-card__body) {
-            width: 100%;
-            height: 100%;
-        }
     }
 
     .content {
@@ -212,7 +207,7 @@
                 display: flex;
                 flex-shrink: 0;
 
-                & :deep(.task-icon) {
+                & .task-icon {
                     width: 1.5rem;
                     height: 1.5rem;
                 }

@@ -29,6 +29,9 @@ vi.mock("@kestra-io/design-system", () => ({
     ),
 }))
 
+// The confirm body counts the changes with topology's diff, which needs the real design system.
+vi.mock("./ApplyFlowConfirm.vue", () => ({default: {}}))
+
 // The YAML goes through topology's real parser, so each test states its target in its own source.
 
 const createFlow = vi.fn().mockResolvedValue({})
@@ -302,7 +305,6 @@ describe("useApplyDraft", () => {
     })
 
     it("throws a non-404 error during the diff fetch instead of silently falling back to empty", async () => {
-        messageBox.mockResolvedValueOnce(undefined)
         loadFlow.mockRejectedValueOnce(Object.assign(new Error("server error"), {status: 500}))
         await useApplyDraft().apply(draft())
         expect(messageBox).not.toHaveBeenCalled()

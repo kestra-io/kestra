@@ -6,7 +6,7 @@
         :class="{'is-link': isLink}"
     >
         <div class="avatar">
-            <ServerNetworkOutline :size="24" />
+            <ServerNetworkOutline :size="24" class="glyph" />
         </div>
 
         <div class="details">
@@ -143,19 +143,11 @@
         border: var(--ks-border-block-secondary);
         border-radius: var(--ks-radius-sm);
         color: var(--ks-icon-muted);
+        --ks-icon-glyph-size: var(--ks-icon-size-lg);
 
-        & :deep(.material-design-icon),
-        & :deep(.material-design-icon__svg) {
+        & .glyph {
             width: 24px;
             height: 24px;
-        }
-
-        & :deep(.material-design-icon) {
-            display: inline-flex;
-        }
-
-        & :deep(.material-design-icon__svg) {
-            position: static;
         }
     }
 

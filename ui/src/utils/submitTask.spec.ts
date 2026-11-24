@@ -4,15 +4,15 @@ import type {Execution} from "../stores/executions"
 import type {Flow} from "../stores/flow"
 
 const {triggerExecution, executionsStore} = vi.hoisted(() => {
-    const triggerExecution = vi.fn()
-    const executionsStore: {
-        triggerExecution: typeof triggerExecution
+    const trigger = vi.fn()
+    const store: {
+        triggerExecution: typeof trigger
         execution: unknown
     } = {
-        triggerExecution,
+        triggerExecution: trigger,
         execution: undefined,
     }
-    return {triggerExecution, executionsStore}
+    return {triggerExecution: trigger, executionsStore: store}
 })
 
 vi.mock("../stores/executions", () => ({

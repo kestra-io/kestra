@@ -7,7 +7,6 @@
         <div>
             <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
-                type="default"
                 @click.stop="() => emit('toggleShowAttempt', (attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
             >
                 <ChevronDown
@@ -105,7 +104,7 @@
             />
         </KsSelect>
 
-        <div class="task-status">
+        <div v-if="hideHeader || attempts(currentTaskRun).length > 1" class="task-status">
             <KsExecutionStatus size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
@@ -339,15 +338,10 @@
             }
         }
 
-        .kel-select {
+        .attempt-select {
+            --ks-select-height: 32px;
             width: 115px;
             height: 32px;
-
-            & :deep(.kel-select__wrapper) {
-                height: 32px;
-                min-height: 32px;
-            }
-
         }
 
         .attempt-number {

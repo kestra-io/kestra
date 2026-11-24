@@ -3,28 +3,35 @@
         <ElTimePicker
             v-model="model"
             v-bind="({...filteredProps(), ...pickerAttrs()} as TimePickerDefaultPropsPublic)"
-            @change="emit('change', $event)"
+            @change="(value: TimePickerDefaultPropsPublic['modelValue']) => emit('change', value as Date | string | null)"
         />
     </span>
 </template>
 
 <script setup lang="ts">
-    import {ElTimePicker, type TimePickerDefaultPropsPublic} from "element-plus"
+    import {type TimePickerDefaultPropsPublic, type ElTooltipContentProps} from "element-plus"
+    import {ElTimePicker} from "../../utils/elementPlusListeners"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {useInputAttrs} from "../../composables/useInputAttrs"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<Date | string | null>()
 
-    const props = withDefaults(defineProps<{
+    export interface KsTimePickerProps {
         placeholder?: string
         disabled?: boolean
         clearable?: boolean
         format?: string
         valueFormat?: string
         size?: "large" | "default" | "small"
-    }>(), {
+    }
+
+    type PickerTooltipProps = Pick<ElTooltipContentProps, "teleported">
+
+    const props = withDefaults(defineProps<KsTimePickerProps & /* @vue-ignore */ Omit<NativeAttributes<TimePickerDefaultPropsPublic & PickerTooltipProps & HTMLAttributes>, keyof KsTimePickerProps | "modelValue">>(), {
         placeholder: undefined,
         clearable: undefined,
         format: undefined,

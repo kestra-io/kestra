@@ -64,7 +64,7 @@
             placement="top"
             :rawContent="true"
             :visible="tooltipVisible && !popoverVisible"
-            :virtualRef="barRef"
+            :virtualRef="barRef ?? undefined"
             virtualTriggering
         >
             <template #content>

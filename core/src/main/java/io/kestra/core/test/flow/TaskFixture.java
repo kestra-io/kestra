@@ -30,6 +30,8 @@ public class TaskFixture {
 
     private Map<String, Object> outputs;
 
+    // test executions write no assets, so the assets of a fixture are never written either
+    @Deprecated(forRemoval = true, since = "2.1.0")
     private List<Asset> assets;
 
     private Property<String> description;

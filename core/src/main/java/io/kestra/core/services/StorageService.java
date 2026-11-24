@@ -100,11 +100,11 @@ public abstract class StorageService {
 
     // region split operations (format-agnostic, parameterized by a SplitStrategy)
 
-    private static List<Path> splitByPredicate(RunContext runContext, String extension, SplitStrategy strategy, BiFunction<Integer, Integer, Boolean> predicate)
+    private static List<Path> splitByPredicate(RunContext runContext, String extension, SplitStrategy strategy, BiFunction<Long, Integer, Boolean> predicate)
         throws IOException {
         List<Path> files = new ArrayList<>();
         RecordWriter writer = null;
-        int totalBytes = 0;
+        long totalBytes = 0;
         int totalRows = 0;
 
         try {

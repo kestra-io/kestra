@@ -387,7 +387,7 @@
             ? executionsStore.execution
             : executionId ? executionsStore.graphExecutions[executionId] : undefined
         const taskRuns = taskRunIds.flatMap(id => {
-            const run = execution?.taskRunList?.find(run => run.id === id)
+            const run = execution?.taskRunList?.find(candidate => candidate.id === id)
             return run ? [run] : []
         })
         const taskRun = execution?.taskRunList?.find(run => run.id === taskRunId)
@@ -664,7 +664,7 @@
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
-    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo} = useYamlUndo(
+    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
@@ -861,7 +861,7 @@
     })
 
     const shortcutsOpen = ref(false)
-    const shortcutGroups = buildShortcutGroups()
+    const shortcutGroups = buildShortcutGroups({supportsClipboard: false})
     const commandMenuOpen = ref(false)
     const flowPropertiesOpen = ref(false)
 
@@ -995,6 +995,8 @@
             return reorderFocusedTask(event.key === "ArrowDown" ? "down" : "up") ? undefined : false
         case "undo":
             return performUndo()
+        case "redo":
+            return performRedo()
         case "save":
             saveFlow()
             return
@@ -1069,7 +1071,7 @@
     }
 
     async function saveFlow() {
-        const outcome = await flowStore.save?.()
+        const outcome = await flowStore.save?.(flowStore.flow?.draft ?? false)
         if (outcome === "blocked") {
             coreStore.message = {
                 variant: "error",
@@ -1289,12 +1291,6 @@
     height: 100%;
     width: 100%;
     position: relative;
-
-    /* Anchor the state icon (playground-button) to the node header area, not */
-    /* the full VueFlow node element, so it doesn't overlap plugin UI details. */
-    & :deep(.main-content) {
-        position: relative;
-    }
 }
 
 </style>

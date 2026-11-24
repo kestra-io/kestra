@@ -1,6 +1,6 @@
 <template>
     <ElFormItem
-        :class="{'is-inline-row': inline}"
+        :class="{'is-inline-row': inline, 'is-stacked': stacked, 'is-wide-label': wideLabel}"
         v-bind="({...filteredProps(), ...$attrs} as FormItemProps)"
     >
         <template v-if="$slots.default" #default>
@@ -16,35 +16,29 @@
 </template>
 
 <script setup lang="ts">
-    import {ElFormItem, type FormItemProps, type FormItemRule} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {HTMLAttributes} from "vue"
+    import {ElFormItem, type FormItemProps} from "element-plus"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+
+    export interface KsFormItemProps extends FormItemProps {
+        /** Lay the item out as a single row: label on the left, control pushed to the right. */
+        inline?: boolean
+        /** Put each child of the content on its own full-width line instead of wrapping them in a row. */
+        stacked?: boolean
+        /** Stretch the label across the row so a label slot can lay out its own content. */
+        wideLabel?: boolean
+    }
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
-        label?: string
-        /** Id of the control the label points at. Pass an empty string when the label slot is a header strip rather than a caption: the label renders as a plain div, so clicking it no longer focuses the control. */
-        for?: string
-        prop?: string | string[]
-        rules?: FormItemRule[]
-        required?: boolean
-        labelWidth?: string | number
-        error?: string
-        showMessage?: boolean
-        /** Lay the item out as a single row: label on the left, control pushed to the right. */
-        inline?: boolean
-    }>(), {
-        label: undefined,
-        for: undefined,
-        prop: undefined,
-        rules: undefined,
-        labelWidth: undefined,
-        error: undefined,
-        showMessage: undefined,
+    const props = withDefaults(defineProps<KsFormItemProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsFormItemProps>>(), {
         inline: false,
+        stacked: false,
+        wideLabel: false,
     })
 
-    const filteredProps = useFilteredProps(props, ["inline"])
+    const filteredProps = usePassedProps(props, ["inline", "stacked", "wideLabel"])
 
     defineSlots<{
         default?(): unknown
@@ -59,6 +53,12 @@
 </style>
 
 <style>
+    :where(.kel-form-item) .kel-form-item__label {
+        font-size: var(--ks-form-item-label-font-size, var(--kel-form-label-font-size));
+        font-weight: var(--ks-form-item-label-font-weight, inherit);
+        color: var(--ks-form-item-label-color, var(--kel-text-color-regular));
+    }
+
     .kel-form-item {
         &:has(.kel-switch:not(.is-disabled)) .kel-form-item__label {
             cursor: pointer;
@@ -90,8 +90,20 @@
             }
 
             & .kel-form-item__content {
-                flex: 0 0 auto;
+                flex: 0 0 var(--ks-form-item-content-width, auto);
+                max-width: var(--ks-form-item-content-width, none);
             }
+        }
+
+        &.is-stacked .kel-form-item__content {
+            display: block;
+        }
+
+        &.is-wide-label > .kel-form-item__label {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0;
         }
     }
 </style>

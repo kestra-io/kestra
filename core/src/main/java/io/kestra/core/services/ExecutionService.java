@@ -374,10 +374,16 @@ public class ExecutionService {
     }
 
     /**
-     * Resume a flowable task: set both the taskrun and the execution to {@link State.Type#RUNNING}.
+     * Resume a flowable task: set both the taskrun and the execution to {@link State.Type#RUNNING},
+     * unless a loop sub-execution other than the resumed one is still paused, in which case the execution is returned unchanged.
      */
-    public Execution resumeFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
-        return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.RUNNING)).withState(State.Type.RUNNING);
+    public Execution resumeFlowable(Execution execution, TaskRun updateFlowableTaskRun, String resumedSubExecutionId) throws InternalException {
+        // the resumed sub-execution is excluded as its new state is not persisted yet when the restart event is handled
+        List<Execution> loopSubExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), updateFlowableTaskRun.getTaskId());
+        if (loopSubExecutions.stream().noneMatch(e -> e.getState().isPaused() && !e.getId().equals(resumedSubExecutionId))) {
+            return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.RUNNING)).withState(State.Type.RUNNING);
+        }
+        return execution;
     }
 
     public Execution create(Create createCommand, ProcessedFlow processedFlow) {
@@ -714,8 +720,13 @@ public class ExecutionService {
 
     private void copySearchableData(Execution original, Execution replayed) {
         try {
+            Set<String> alreadyIndexed = searchableDataRepository.findByExecutionId(replayed.getTenantId(), replayed.getId(), Pageable.UNPAGED)
+                .stream()
+                .map(SearchableData::dataId)
+                .collect(Collectors.toSet());
             List<SearchableData> copied = searchableDataRepository.findByExecutionId(original.getTenantId(), original.getId(), Pageable.UNPAGED)
                 .stream()
+                .filter(it -> !alreadyIndexed.contains(it.dataId()))
                 .map(it -> new SearchableData(it.tenantId(), replayed.getId(), it.dataId(), it.index(), it.value()))
                 .toList();
             searchableDataRepository.saveBatch(copied);
@@ -912,14 +923,14 @@ public class ExecutionService {
     }
 
     /** Ends an Approval request without a decision: neither a branch nor {@code finally} runs, and the task run is cancelled. */
-    public Execution cancelApproval(final Execution execution, FlowInterface flow, String taskRunId, @Nullable PausableTask.Resumed resumed) throws Exception {
+    public Execution cancelApproval(final Execution execution, FlowInterface flow, String taskRunId, @Nullable PausableTask.Resumed resumed, boolean bulk) throws Exception {
         Approval approval = this.findPausedApproval(execution, flow, taskRunId);
 
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
         Execution cancelled = this.markAs(execution, flowWithSource, taskRunId, State.Type.CANCELLED, null, resumed != null ? resumed : PausableTask.Resumed.now(State.Type.CANCELLED));
         TaskRun cancelledTaskRun = cancelled.findTaskRunByTaskRunId(taskRunId);
         this.eventPublisher.publishEvent(CrudEvent.of(execution, cancelled));
-        approvalRequestHandler.closed(cancelled, cancelledTaskRun, approval, ApprovalRequestHandler.Resolution.CANCELLED);
+        approvalRequestHandler.closed(cancelled, cancelledTaskRun, approval, ApprovalRequestHandler.Resolution.CANCELLED, resumed, bulk);
         this.notifyLoopParent(cancelled, State.Type.RESTARTED);
         this.notifyLoopParent(cancelled, cancelled.getState().getCurrent());
         return cancelled;
@@ -1233,6 +1244,16 @@ public class ExecutionService {
             });
     }
 
+    /**
+     * Same as {@link #readInputs(Execution, FlowInterface, Publisher)}, with the onResume inputs already parsed.
+     */
+    public Mono<Map<String, Object>> readResumeInputs(final Execution execution, final FlowInterface flow, final Map<String, ?> inputs) {
+        return getFirstPausedTaskOr(execution, flow)
+            .map(task -> task.isPresent() && task.get() instanceof PausableTask pausableTask
+                ? flowInputOutput.readExecutionInputs(pausableTask.resumeInputs(), flow, execution, inputs)
+                : Collections.<String, Object> emptyMap());
+    }
+
     /** Validates the reviewer inputs of the Approval task run {@code taskRunId}. */
     public Mono<List<InputAndValue>> validateForReview(final Execution execution, Flow flow, String taskRunId, @Nullable Publisher<CompletedPart> inputs) {
         return getTaskOr(execution, flow, taskRunId)
@@ -1510,7 +1531,7 @@ public class ExecutionService {
             try {
                 final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
                 if (flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval && this.isAwaitingDecision(taskRun)) {
-                    approvalRequestHandler.closed(execution, taskRun, approval, resolution);
+                    approvalRequestHandler.closed(execution, taskRun, approval, resolution, null, false);
                 }
             } catch (Exception e) {
                 log.warn("Unable to close the approval request of task run '{}'", taskRun.getId(), e);

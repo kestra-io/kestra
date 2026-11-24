@@ -1,5 +1,5 @@
 import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+import {escapeHtml, KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
@@ -14,7 +14,7 @@ import {InputType} from "../utils/inputs"
 import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/utils/transform"
 import {useAuthStore} from "override/stores/auth"
-import {useRoute} from "vue-router"
+import {useRoute, type Router} from "vue-router"
 import type {
     AbstractTrigger,
     Flow as SdkFlow,
@@ -34,6 +34,7 @@ import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analyti
 import type {KestraHttpError} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {confirmOutdatedSave} from "../utils/confirmOutdatedSave"
+import {latestRequest} from "../utils/latestRequest"
 
 const textYamlHeader = {
     headers: {
@@ -482,20 +483,20 @@ export const useFlowStore = defineStore("flow", () => {
 
     /** Sequence number for committing searches: a response that is no longer the newest may
      * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
-    let latestFlowSearch = 0
+    const startFlowSearch = latestRequest()
 
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findFlows(options: FlowSearchOptions & { onlyTotal: true }): Promise<number>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow | number> {
-        const search = options.commit === false ? undefined : ++latestFlowSearch
+        const isLatestSearch = options.commit === false ? undefined : startFlowSearch()
         return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
                 return response.total
             }
 
             else {
-                if (options.commit !== false && search === latestFlowSearch) {
+                if (isLatestSearch?.()) {
                     flows.value = response.results
                     total.value = response.total ?? 0
                 }
@@ -713,7 +714,7 @@ export const useFlowStore = defineStore("flow", () => {
         return request
     }
 
-function deleteFlowAndDependencies() {
+function deleteFlowAndDependencies(router: Router) {
     const metadataForDelete = flowYamlMetadata.value
 
     return FlowsAPI.flowDependencies({namespace: metadataForDelete.namespace ?? "", id: metadataForDelete.id ?? "", destinationOnly: true})
@@ -728,25 +729,26 @@ function deleteFlowAndDependencies() {
                                 n.id === metadataForDelete.id
                             ),
                     )
-                    .map(
-                        (n) =>
-                            "<li>" +
-                            n.namespace +
-                            ".<code>" +
-                            n.id +
-                            "</code></li>",
-                    )
+                    .map((n) => {
+                        const {href} = router.resolve({
+                            name: "flows/update/overview",
+                            params: {
+                                tenant: router.currentRoute.value.params.tenant,
+                                namespace: n.namespace,
+                                id: n.id,
+                            },
+                        })
+                        return `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.namespace)}.<code>${escapeHtml(n.id)}</code></a></li>`
+                    })
                     .join("\n")
 
                 if (deps.length) {
                     warning =
-                        "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
-                        "<p style=\"margin: 0;\">\n" +
+                        "\n\n<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n\n" +
                         t("dependencies delete flow") +
-                        "<ul>\n" +
+                        "\n\n<ul>\n" +
                         deps +
-                        "</ul>\n" +
-                        "</p>\n" +
+                        "\n</ul>\n\n" +
                         "</div>"
                 }
             }
@@ -870,10 +872,10 @@ function deleteFlowAndDependencies() {
         dependenciesCount.value = undefined
     }
 
-    let latestValidation = 0
+    const startValidation = latestRequest()
 
     function validateFlow(options: { flow: string }) {
-        const validation = ++latestValidation
+        const isLatestValidation = startValidation()
         let creationDenied: string | undefined
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata<ParsedFlow>(options.flow)
@@ -894,7 +896,7 @@ function deleteFlowAndDependencies() {
                 }
 
                 // A response overtaken by a newer validation describes a source the editor no longer holds.
-                if (validation === latestValidation) {
+                if (isLatestValidation()) {
                     flowValidation.value = validResults
                 }
                 return validResults

@@ -109,7 +109,6 @@
             :original="revisionLeftText"
             readOnly
             :lang
-            :showDoc="false"
         />
 
         <div v-if="isLoadingRevisions" class="revision-loading">
@@ -474,6 +473,7 @@
 
         .revision-label {
             display: flex;
+            align-items: center;
             gap: var(--ks-spacing-2);
         }
     }

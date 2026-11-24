@@ -13,12 +13,27 @@ import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
 import io.kestra.core.queues.event.VNodeDispatchEvent;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.vnodes.VNodes;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public abstract class AbstractVNodeDispatchQueue<T extends VNodeDispatchEvent> extends AbstractQueue<T> implements VNodeDispatchQueueInterface<T> {
-    public AbstractVNodeDispatchQueue(Class<T> cls, QueueService queueService, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
+    private final int vNodeCount;
+
+    public AbstractVNodeDispatchQueue(Class<T> cls, QueueService queueService, int vNodeCount, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         super(cls, queueService, executorsUtils, metricRegistry);
+        if (vNodeCount <= 0) {
+            throw new IllegalArgumentException("The vNode count of the queue of '%s' must be positive, got %d.".formatted(cls.getName(), vNodeCount));
+        }
+        this.vNodeCount = vNodeCount;
+    }
+
+    /**
+     * @deprecated since 2.1, the queue hashes its keys with the scheduler's vNode count: pass the queue's own count instead.
+     */
+    @Deprecated(since = "2.1", forRemoval = true)
+    public AbstractVNodeDispatchQueue(Class<T> cls, QueueService queueService, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
+        this(cls, queueService, queueService.getVNodeCount(), executorsUtils, metricRegistry);
     }
 
     @Override
@@ -72,6 +87,17 @@ public abstract class AbstractVNodeDispatchQueue<T extends VNodeDispatchEvent> e
     @Override
     public final QueueSubscriber<T> subscriber(Set<Integer> vNodes) {
         return trackSubscriber(doSubscriber(vNodes));
+    }
+
+    /**
+     * @return the number of vNodes of this queue, which can differ from one queue to another.
+     */
+    protected int vNodeCount() {
+        return vNodeCount;
+    }
+
+    protected int computeVNode(String key) {
+        return VNodes.computeVNode(vNodeCount, key);
     }
 
     protected abstract QueueSubscriber<T> doSubscriber(Set<Integer> vNodes);

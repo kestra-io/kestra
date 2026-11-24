@@ -8,7 +8,7 @@
     >
         <template #header>
             <div class="header-title">
-                <KsIcon size="xl">
+                <KsIcon size="sm">
                     <Keyboard />
                 </KsIcon>
                 <span class="header-label">

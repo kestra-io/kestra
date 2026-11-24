@@ -25,21 +25,22 @@
         </KsAlert>
         <p v-else-if="drillDown.rows.value.length === 0" class="loop-empty">{{ $t("no_iterations") }}</p>
         <div v-else class="mini-list">
-            <GanttPanelListRow
-                v-for="row in drillDown.rows.value"
-                :key="row.id"
-                :name="row.value"
-                emphasized
-                :offset="offset(row.state.histories)"
-                :histories="row.state.histories"
-                :state="row.state.current"
-                data-test="gantt-loop-iteration"
-                @click="tree.selectIteration(node, row)"
-            >
-                <template #leading>
-                    <span class="iteration-index">#{{ row.index + 1 }}</span>
-                </template>
-            </GanttPanelListRow>
+            <div v-for="row in drillDown.rows.value" :key="row.id" class="iteration-row">
+                <GanttPanelListRow
+                    :name="row.value"
+                    emphasized
+                    :offset="offset(row.state.histories)"
+                    :histories="row.state.histories"
+                    :state="row.state.current"
+                    data-test="gantt-loop-iteration"
+                    @click="tree.selectIteration(node, row)"
+                >
+                    <template #leading>
+                        <span class="iteration-index">#{{ row.index + 1 }}</span>
+                    </template>
+                </GanttPanelListRow>
+                <SubflowExecutionsLink :executions="subflowExecutionsOf(row.id)" />
+            </div>
         </div>
 
         <div class="loop-pager">
@@ -62,6 +63,17 @@
                 <KsButton :tag="RouterLink" size="small" link :icon="OpenInNew" :to="allExecutionsRoute">
                     {{ $t("show_all_executions") }}
                 </KsButton>
+                <KsButton
+                    v-if="executionsStore.execution"
+                    :tag="RouterLink"
+                    size="small"
+                    link
+                    :icon="OpenInNew"
+                    :to="subflowExecutionsOfRunRoute(executionsStore.execution)"
+                    data-test="gantt-loop-subflow-executions"
+                >
+                    {{ $t("show_executions_started_by_run") }}
+                </KsButton>
             </span>
         </div>
     </div>
@@ -77,9 +89,12 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import {KsAlert, KsButton, KsIconButton, KsInput, KsSegmented, KsSkeleton} from "@kestra-io/design-system"
     import GanttPanelListRow from "./GanttPanelListRow.vue"
+    import SubflowExecutionsLink from "../SubflowExecutionsLink.vue"
     import {loopRefOf, useGanttTree, type TaskRunNode} from "./ganttTree"
     import {useLoopDrillDown} from "./useLoopDrillDown"
     import {useGanttTimeline} from "../ganttTimeline"
+    import {subflowExecutionsOfRunRoute, useSubflowExecutions} from "../../../composables/useSubflowExecutions"
+    import {useExecutionsStore} from "../../../stores/executions"
 
     const props = defineProps<{
         node: TaskRunNode;
@@ -89,6 +104,8 @@
     const tree = useGanttTree()
     const {offset} = useGanttTimeline()
     const drillDown = useLoopDrillDown(loopRefOf(props.node))
+    const {subflowExecutionsOf} = useSubflowExecutions(() => drillDown.rows.value)
+    const executionsStore = useExecutionsStore()
 
     const stateOptions = computed(() => [
         {value: "all", label: t("gantt_panel.filter_all", {count: drillDown.counts.value.all ?? "…"})},
@@ -134,6 +151,19 @@
         border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-sm);
         overflow: hidden;
+    }
+
+    .iteration-row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        padding-right: var(--ks-spacing-2);
+        border-top: var(--ks-border-width-thin) solid var(--ks-border-default);
+        background: var(--ks-dropdown-bg);
+
+        &:first-child {
+            border-top: 0;
+        }
     }
 
     .iteration-index {

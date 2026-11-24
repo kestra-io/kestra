@@ -28,13 +28,14 @@
                         <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
-                <SubFlowLink
-                    v-if="subflowExecutionId"
-                    component="KsDropdownItem"
-                    tabExecution="logs"
-                    :executionId="subflowExecutionId"
-                    @click="emit('dismiss')"
-                />
+                <KsDropdownItem
+                    v-if="isSubflow"
+                    :icon="AxisYArrow"
+                    data-test="task-run-subflow-execution"
+                    @click="openSubflowExecution"
+                >
+                    {{ $t("sub flow") }}
+                </KsDropdownItem>
                 <KsDropdownItem
                     v-if="isLoop"
                     :icon="Repeat"
@@ -143,6 +144,7 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Repeat from "vue-material-design-icons/Repeat.vue"
+    import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue"
 
     import type {LogEntry} from "@kestra-io/kestra-sdk"
     import type {Execution} from "../../stores/executions"
@@ -151,6 +153,8 @@
 
     import * as Utils from "../../utils/utils"
     import {findTaskById, LOOP_TASK_TYPE} from "../../utils/flowUtils"
+    import {isSubflowTaskType} from "../../services/subflowReferences"
+    import {findSubflowExecutions, subflowExecutionRoute} from "../../composables/useSubflowExecutions"
     import {useToast} from "../../utils/toast"
     import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
@@ -167,7 +171,6 @@
     import Outputs from "./Outputs.vue"
     import WorkerInfo from "./WorkerInfo.vue"
     import TaskEdit from "../flows/TaskEdit.vue"
-    import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
     import {useAiEnabled} from "../../composables/useAiEnabled"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
@@ -227,11 +230,9 @@
         forcedAttemptNumber: () => props.forcedAttemptNumber,
     })
 
-    const subflowExecutionId = computed(() => {
-        const executionId = currentTaskRun.value.outputs?.executionId
-        return typeof executionId === "string" ? executionId : undefined
-    })
-    const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === LOOP_TASK_TYPE)
+    const taskType = computed(() => props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type)
+    const isLoop = computed(() => taskType.value === LOOP_TASK_TYPE)
+    const isSubflow = computed(() => isSubflowTaskType(taskType.value))
 
     const hasWorkerId = computed<boolean>(() =>
         currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId != null) !== undefined,
@@ -242,6 +243,16 @@
     const canReadFlow = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.VIEW, String(route.params.namespace)),
     )
+
+    // Task run outputs are no longer on the execution payload, so the child is found through its trigger instead.
+    async function openSubflowExecution() {
+        emit("dismiss")
+        const children = (await findSubflowExecutions([props.execution.id]))
+            .filter(child => child.taskRunId === currentTaskRun.value.id)
+        router.push(children.length === 1
+            ? subflowExecutionRoute(children[0])
+            : {name: "executions/list", query: {"filters[triggerExecutionId][EQUALS]": props.execution.id}})
+    }
 
     function openIterations() {
         emit("dismiss")

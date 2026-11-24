@@ -44,12 +44,7 @@
                     <Duration :histories="iteration.row.state.histories" />
                 </template>
                 <template #actions>
-                    <SubFlowLink
-                        :executionId="iteration.row.id"
-                        :namespace="loopRef.namespace"
-                        :flowId="loopRef.flowId"
-                        tabExecution="gantt"
-                    />
+                    <SubflowExecutionsLink :executions="subflowExecutionsOf(iteration.row.id)" />
                 </template>
             </GanttRow>
 
@@ -81,6 +76,17 @@
             >
                 {{ $t("show_all_executions") }}
             </KsButton>
+            <KsButton
+                v-if="executionsStore.execution"
+                :tag="RouterLink"
+                size="small"
+                link
+                class="tree-link"
+                :to="subflowExecutionsOfRunRoute(executionsStore.execution)"
+                data-test="loop-subflow-executions"
+            >
+                {{ $t("show_executions_started_by_run") }}
+            </KsButton>
         </GanttMessageRow>
     </div>
 </template>
@@ -91,7 +97,7 @@
     import Loading from "vue-material-design-icons/Loading.vue"
     import {Duration} from "@kestra-io/topology"
     import {KsAlert, KsButton, KsIcon} from "@kestra-io/design-system"
-    import SubFlowLink from "../flows/SubFlowLink.vue"
+    import SubflowExecutionsLink from "./SubflowExecutionsLink.vue"
     import GanttRow from "./gantt/GanttRow.vue"
     import GanttMessageRow from "./gantt/GanttMessageRow.vue"
     import IterationTaskRuns from "./IterationTaskRuns.vue"
@@ -104,6 +110,8 @@
         type TaskRunNode,
     } from "./gantt/ganttTree"
     import {useGanttTimeline} from "./ganttTimeline"
+    import {subflowExecutionsOfRunRoute, useSubflowExecutions} from "../../composables/useSubflowExecutions"
+    import {useExecutionsStore} from "../../stores/executions"
 
     const props = defineProps<{
         node: TaskRunNode;
@@ -129,6 +137,9 @@
         retry,
         setFailedOnly,
     } = tree.loopHandle(loopRef.value)
+
+    const {subflowExecutionsOf} = useSubflowExecutions(() => iterations.value)
+    const executionsStore = useExecutionsStore()
 
     const iterationNodes = computed(() => iterations.value.map(row => createIterationNode(loopRef.value, row, ancestors.value)))
 

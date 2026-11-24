@@ -88,8 +88,9 @@ describe("TaskRunActions overflow", () => {
 
     it("shouldAskToDismissItsHostBeforeOpeningTheSubflowExecution", async () => {
         // Given
-        const run = {id: "run-1", taskId: "loop", state: state("SUCCESS"), outputs: {executionId: "child-execution"}}
-        const wrapper = await mountActions(true, {taskRun: run, taskRuns: [run]})
+        const run = {id: "run-1", taskId: "call_subflow", state: state("SUCCESS")}
+        const wrapper = await mountActions(true, {taskRun: run, taskRuns: [run], taskType: "io.kestra.plugin.core.flow.Subflow"})
+        vi.spyOn(useExecutionsStore(), "findExecutions").mockResolvedValue({results: [], total: 0})
 
         // When
         await wrapper.findAllComponents(KsDropdownItem).find((item) => item.text() === "sub flow")!.get("[role=\"menuitem\"]").trigger("click")

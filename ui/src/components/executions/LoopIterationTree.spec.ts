@@ -7,6 +7,7 @@ import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import {useExecutionsStore} from "../../stores/executions"
 import LoopIterationTree from "./LoopIterationTree.vue"
+import SubflowExecutionsLink from "./SubflowExecutionsLink.vue"
 import type {ExecutionTaskRun} from "./executionTaskRun"
 import {GANTT_TREE, LOOP_TYPE, createGanttTree, createTaskRunNode, type GanttTree} from "./gantt/ganttTree"
 
@@ -48,7 +49,6 @@ function mountTree() {
         global: {
             provide: {[GANTT_TREE as symbol]: tree},
             stubs: {
-                SubFlowLink: true,
                 TaskRunActions: true,
                 TaskIcon: true,
                 Duration: true,
@@ -80,6 +80,31 @@ describe("LoopIterationTree", () => {
         }))
         expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(3)
         expect(wrapper.find("[data-test='loop-preview-footer']").exists()).toBe(false)
+    })
+
+    it("shouldLinkEachIterationRowToTheSubflowExecutionItStartedWhenOneExists", async () => {
+        const iterations = pageOf(2)
+        findExecutions.mockImplementation((async (options: Record<string, unknown>) => {
+            if (!options["filters[triggerExecutionId][IN]"]) return iterations(options)
+            return {
+                results: [{
+                    id: "child-0",
+                    namespace: "demo.subflows",
+                    flowId: "subflow_add",
+                    state: {current: "SUCCESS"},
+                    trigger: {variables: {executionId: "it-0", taskRunId: "tr-call"}},
+                }],
+                total: 1,
+            }
+        }) as never)
+
+        const wrapper = mountTree()
+        await flushPromises()
+
+        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({"filters[triggerExecutionId][IN]": ["it-0", "it-1"]}))
+        const [first, second] = wrapper.findAll("[data-test='loop-iteration-row']")
+        expect(first.findComponent(SubflowExecutionsLink).props("executions")).toEqual([expect.objectContaining({id: "child-0", flowId: "subflow_add"})])
+        expect(second.find("[data-test='subflow-execution-link']").exists()).toBe(false)
     })
 
     it("shouldFetchIterationTaskRunsOnlyForTheRowWhoseChevronIsToggled", async () => {

@@ -16,11 +16,12 @@ function executionProps(id: string): Execution {
     return {id, flowId: "flow-1", namespace: "ns-1", flowRevision: 1, originalId: id, metadata: {originalCreatedDate: ""}, state: state("SUCCESS")}
 }
 
+const routerPush = vi.hoisted(() => vi.fn())
 vi.mock("vue-router", () => ({
     useRoute: vi.fn(() => ({
         params: {namespace: "ns-1"},
     })),
-    useRouter: vi.fn(() => ({})),
+    useRouter: vi.fn(() => ({push: routerPush})),
 }))
 
 vi.mock("../../utils/toast", () => ({
@@ -66,7 +67,6 @@ function mountActions(propsData: Partial<TaskRunActionsProps>) {
                 Restart: true,
                 ChangeStatus: true,
                 TaskEdit: true,
-                SubFlowLink: true,
                 WorkerInfo: true,
                 AiIcon: true,
                 DotsVertical: true,
@@ -101,6 +101,41 @@ describe("TaskRunActions", () => {
         expect(options).toHaveLength(2)
         expect(options[0].text()).toBe("Iteration 1")
         expect(options[1].text()).toBe("iteration_number")
+    })
+
+    it("shouldOpenTheSubflowExecutionStartedByTheTaskRunWhenOutputsAreNotOnTheExecution", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.findExecutions = vi.fn().mockResolvedValue({
+            results: [
+                {id: "other-child", namespace: "ns-1", flowId: "other", state: state("SUCCESS"), trigger: {variables: {executionId: "ex-1", taskRunId: "tr-other"}}},
+                {id: "child", namespace: "ns-1", flowId: "child_flow", state: state("RUNNING"), trigger: {variables: {executionId: "ex-1", taskRunId: "tr-1"}}},
+            ],
+            total: 2,
+        }) as never
+
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "call_subflow", state: state("RUNNING")},
+            taskType: "io.kestra.plugin.core.flow.Subflow",
+            execution,
+        })
+        await wrapper.find("[data-test='task-run-subflow-execution']").trigger("click")
+        await flushPromises()
+
+        expect(executionsStore.findExecutions).toHaveBeenCalledWith(expect.objectContaining({"filters[triggerExecutionId][IN]": ["ex-1"]}))
+        expect(routerPush).toHaveBeenCalledWith({
+            name: "executions/update",
+            params: {namespace: "ns-1", flowId: "child_flow", id: "child"},
+        })
+    })
+
+    it("shouldNotOfferTheSubflowExecutionForATaskThatStartsNone", () => {
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "log", state: state("SUCCESS")},
+            taskType: "io.kestra.plugin.core.log.Log",
+            execution,
+        })
+
+        expect(wrapper.find("[data-test='task-run-subflow-execution']").exists()).toBe(false)
     })
 
     const execution2 = {...execution, id: "ex-2"}

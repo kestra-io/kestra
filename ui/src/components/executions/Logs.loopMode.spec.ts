@@ -60,9 +60,9 @@ const globalConfig = {
 const loopFlow = {id: "close_lite", namespace: "company.team", tasks: [{id: "per_customer", type: "io.kestra.plugin.core.flow.Loop"}]}
 const plainFlow = {id: "hello", namespace: "company.team", tasks: [{id: "log", type: "io.kestra.plugin.core.log.Log"}]}
 
-function mountLogs(flow: {id: string}, props: {playground?: boolean} = {}) {
+function mountLogs(flow: {id: string}, props: {playground?: boolean} = {}, execution: Record<string, unknown> = {}) {
     const store = useExecutionsStore()
-    store.execution = {id: "root", namespace: "company.team", flowId: flow.id, state: {current: "SUCCESS"}} as never
+    store.execution = {id: "root", namespace: "company.team", flowId: flow.id, state: {current: "SUCCESS"}, ...execution} as never
     store.flow = flow as never
     return i18nMount(ExecutionLogs, {props, global: globalConfig})
 }
@@ -115,6 +115,26 @@ describe("executions/Logs loop iterations mode", () => {
         expect(wrapper.find("[data-test='logs-mode-switch']").exists()).toBe(false)
         expect(wrapper.find("[data-test='task-run-details']").exists()).toBe(true)
         expect(routeState.route.query[LEVEL_KEY]).toBe("INFO")
+    })
+
+    test("shouldShowAnIterationsOwnLogsAtTheDefaultLevelWhenItsLoopBodyHasNoLoop", async () => {
+        const wrapper = mountLogs(loopFlow, {}, {id: "iteration", kind: "LOOP", loopRun: {taskId: "per_customer", index: 0, value: "a"}})
+        await flushPromises()
+
+        expect(wrapper.find("[data-test='logs-mode-switch']").exists()).toBe(false)
+        expect(wrapper.find("[data-test='task-run-details']").exists()).toBe(true)
+        expect(routeState.route.query[LEVEL_KEY]).toBe("INFO")
+    })
+
+    test("shouldKeepMergedModeOnAnIterationWhoseLoopBodyHoldsANestedLoop", async () => {
+        const nestedLoopFlow = {
+            ...loopFlow,
+            tasks: [{id: "per_customer", type: "io.kestra.plugin.core.flow.Loop", tasks: [{id: "per_invoice", type: "io.kestra.plugin.core.flow.Loop"}]}],
+        }
+        const wrapper = mountLogs(nestedLoopFlow, {}, {id: "iteration", kind: "LOOP", loopRun: {taskId: "per_customer", index: 0, value: "a"}})
+        await flushPromises()
+
+        expect(wrapper.find("[data-test='loop-merged-logs-stub']").exists()).toBe(true)
     })
 
     test("shouldNotOfferMergedModeInThePlayground", async () => {

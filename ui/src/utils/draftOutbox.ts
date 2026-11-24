@@ -42,6 +42,22 @@ export function readQueuedDraft(key: DraftKey): QueuedDraft | undefined {
     }
 }
 
+export function isSameDraft(a: DraftKey, b: DraftKey): boolean {
+    return storageKey(a) === storageKey(b)
+}
+
+/** Drops every queued draft, whatever its tenant or flow: for a sign-out, after which none of them is this browser's to keep. */
+export function clearQueuedDrafts(): void {
+    try {
+        const keys = Array.from({length: localStorage.length}, (_, index) => localStorage.key(index))
+        for (const key of keys) {
+            if (key?.startsWith(`${PREFIX}:`)) localStorage.removeItem(key)
+        }
+    } catch {
+        return
+    }
+}
+
 export function removeQueuedDraft(key: DraftKey): void {
     try {
         localStorage.removeItem(storageKey(key))

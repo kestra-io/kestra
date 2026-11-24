@@ -28,7 +28,7 @@ import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
-import {readQueuedDraft, removeQueuedDraft, writeQueuedDraft, type DraftKey, type QueuedDraft} from "../utils/draftOutbox"
+import {clearQueuedDrafts, isSameDraft, readQueuedDraft, removeQueuedDraft, writeQueuedDraft, type DraftKey, type QueuedDraft} from "../utils/draftOutbox"
 import {toFlowGraph} from "../utils/flowGraph"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
@@ -177,8 +177,7 @@ export const useFlowStore = defineStore("flow", () => {
     const errorNavigation = ref<{count: number; revealNext: () => void} | null>(null)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
-    /** The draft of the open flow that was saved on this device and still has to reach the server. */
-    const queuedDraft = ref<QueuedDraft>()
+    const queuedEntry = ref<{key: DraftKey, draft: QueuedDraft}>()
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
@@ -252,7 +251,7 @@ export const useFlowStore = defineStore("flow", () => {
             queuedAt: new Date().toISOString(),
         }
         if (!writeQueuedDraft(key, draft)) return false
-        queuedDraft.value = draft
+        queuedEntry.value = {key, draft}
         return true
     }
 
@@ -263,9 +262,23 @@ export const useFlowStore = defineStore("flow", () => {
 
     function discardQueuedDraft() {
         const key = draftKey()
-        if (key) removeQueuedDraft(key)
-        queuedDraft.value = undefined
+        if (!key) return
+        removeQueuedDraft(key)
+        if (queuedEntry.value && isSameDraft(key, queuedEntry.value.key)) queuedEntry.value = undefined
     }
+
+    /** Forgets every draft kept on this device, for a sign-out. */
+    function purgeQueuedDrafts() {
+        clearQueuedDrafts()
+        queuedEntry.value = undefined
+    }
+
+    /** The draft of the open flow that was saved on this device and still has to reach the server; another flow's is not this one's. */
+    const queuedDraft = computed(() => {
+        const key = draftKey()
+        const entry = queuedEntry.value
+        return key && entry && isSameDraft(key, entry.key) ? entry.draft : undefined
+    })
 
     function confirmFlowOutdatedSave(): Promise<boolean> {
         const key = "outdated revision save confirmation.update"
@@ -1200,6 +1213,7 @@ function deleteFlowAndDependencies(router: Router) {
         queueDraft,
         storedDraft,
         discardQueuedDraft,
+        purgeQueuedDrafts,
         findFlows,
         searchFlows,
         flowsByNamespace,

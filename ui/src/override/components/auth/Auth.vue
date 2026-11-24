@@ -66,6 +66,7 @@
     import * as BasicAuth from "../../../utils/basicAuth"
     import VersionMenuItem from "../../../components/layout/VersionMenuItem.vue"
     import {useMiscStore} from "override/stores/misc"
+    import {useFlowStore} from "../../../stores/flow"
     import ChangePasswordDialog from "../../../components/basicauth/ChangePasswordDialog.vue"
 
     const SLACK_URL = "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth"
@@ -98,6 +99,8 @@
     }
 
     function logout() {
+        // Only this explicit sign-out: a lost session or a mistyped password must not cost the draft it was kept for.
+        useFlowStore().purgeQueuedDrafts()
         BasicAuth.logout()
         delete axios.defaults.headers.common["Authorization"]
         router.push({name: "login"})

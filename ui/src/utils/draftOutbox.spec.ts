@@ -1,5 +1,5 @@
 import {afterEach, describe, expect, it, vi} from "vitest"
-import {readQueuedDraft, removeQueuedDraft, writeQueuedDraft, type DraftKey, type QueuedDraft} from "./draftOutbox"
+import {clearQueuedDrafts, readQueuedDraft, removeQueuedDraft, writeQueuedDraft, type DraftKey, type QueuedDraft} from "./draftOutbox"
 
 const key: DraftKey = {tenant: "main", namespace: "company.team", id: "hello"}
 const draft: QueuedDraft = {source: "id: hello\nnamespace: company.team\n", baseRevision: 3, queuedAt: "2026-11-24T10:00:00.000Z"}
@@ -18,6 +18,18 @@ describe("draftOutbox", () => {
 
         removeQueuedDraft(key)
         expect(readQueuedDraft(key)).toBeUndefined()
+    })
+
+    it("clears every tenant's drafts on sign-out and nothing else the app keeps in storage", () => {
+        writeQueuedDraft(key, draft)
+        writeQueuedDraft({...key, tenant: "other", id: "bye"}, draft)
+        localStorage.setItem("paginationSize", "50")
+
+        clearQueuedDrafts()
+
+        expect(readQueuedDraft(key)).toBeUndefined()
+        expect(readQueuedDraft({...key, tenant: "other", id: "bye"})).toBeUndefined()
+        expect(localStorage.getItem("paginationSize")).toBe("50")
     })
 
     it("reports a refused write instead of throwing, so the save still fails visibly", () => {

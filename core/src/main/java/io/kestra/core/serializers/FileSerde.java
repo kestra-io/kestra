@@ -308,6 +308,7 @@ public final class FileSerde {
 
     /**
      * Reads one record per request, for the first subscription only, instead of the whole stream up front, and closes the stream when the Flux completes, fails or is cancelled.
+     * A later subscription completes empty, without any error, and a Flux that is never subscribed leaves the stream open.
      */
     public static <T> Flux<T> readOnDemand(InputStream inputStream, Class<T> type) throws IOException {
         return readOnDemand(createMappingIterator(DEFAULT_OBJECT_MAPPER, inputStream, type), inputStream);

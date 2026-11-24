@@ -66,6 +66,8 @@ public class Data {
     /**
      * Same as {@link #read(RunContext)}, but a stored file is read one record per request, for the first subscription only,
      * and closed when the Flux completes, fails or is cancelled, instead of being buffered whole, so prefer it for large files.
+     * For a stored file, a later subscription completes empty, without any error.
+     * The file is opened by this call, so a Flux that is never subscribed keeps it open, as {@link #read(RunContext)} does.
      */
     public Flux<Map<String, Object>> readOnDemand(RunContext runContext) throws IllegalVariableEvaluationException {
         if (from instanceof String str) {

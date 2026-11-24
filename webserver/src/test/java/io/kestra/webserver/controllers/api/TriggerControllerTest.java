@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,7 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.webserver.controllers.api.TriggerController.ApiCreateBackfillRequest;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiTriggerAndState;
@@ -757,6 +759,29 @@ class TriggerControllerTest {
 
         // THEN
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityWhenCreatingBackfillWithMissingFields() {
+        // GIVEN
+        List<ApiCreateBackfillRequest> requests = List.of(
+            new ApiCreateBackfillRequest(null, "flow", "trigger", new ApiCreateBackfillRequest.Backfill(ZonedDateTime.now(), null, null, null)),
+            new ApiCreateBackfillRequest("ns", " ", "trigger", new ApiCreateBackfillRequest.Backfill(ZonedDateTime.now(), null, null, null)),
+            new ApiCreateBackfillRequest("ns", "flow", null, new ApiCreateBackfillRequest.Backfill(ZonedDateTime.now(), null, null, null)),
+            new ApiCreateBackfillRequest("ns", "flow", "trigger", null),
+            new ApiCreateBackfillRequest("ns", "flow", "trigger", new ApiCreateBackfillRequest.Backfill(null, null, null, null))
+        );
+
+        for (ApiCreateBackfillRequest request : requests) {
+            // WHEN
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(HttpRequest.PUT(TRIGGER_PATH + "/backfill/create", request), ApiTriggerState.class)
+            );
+
+            // THEN
+            Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+        }
     }
 
     @Test

@@ -63,17 +63,6 @@
                 <KsButton :tag="RouterLink" size="small" link :icon="OpenInNew" :to="allExecutionsRoute">
                     {{ $t("show_all_executions") }}
                 </KsButton>
-                <KsButton
-                    v-if="executionsStore.execution"
-                    :tag="RouterLink"
-                    size="small"
-                    link
-                    :icon="OpenInNew"
-                    :to="subflowExecutionsOfRunRoute(executionsStore.execution)"
-                    data-test="gantt-loop-subflow-executions"
-                >
-                    {{ $t("show_executions_started_by_run") }}
-                </KsButton>
             </span>
         </div>
     </div>
@@ -93,8 +82,7 @@
     import {loopRefOf, useGanttTree, type TaskRunNode} from "./ganttTree"
     import {useLoopDrillDown} from "./useLoopDrillDown"
     import {useGanttTimeline} from "../ganttTimeline"
-    import {subflowExecutionsOfRunRoute, useSubflowExecutions} from "../../../composables/useSubflowExecutions"
-    import {useExecutionsStore} from "../../../stores/executions"
+    import {useSubflowExecutions} from "../../../composables/useSubflowExecutions"
 
     const props = defineProps<{
         node: TaskRunNode;
@@ -105,7 +93,6 @@
     const {offset} = useGanttTimeline()
     const drillDown = useLoopDrillDown(loopRefOf(props.node))
     const {subflowExecutionsOf} = useSubflowExecutions(() => drillDown.rows.value)
-    const executionsStore = useExecutionsStore()
 
     const stateOptions = computed(() => [
         {value: "all", label: t("gantt_panel.filter_all", {count: drillDown.counts.value.all ?? "…"})},

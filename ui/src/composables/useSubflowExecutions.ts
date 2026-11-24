@@ -13,7 +13,6 @@ export interface SubflowExecutionRef {
 }
 
 const SEARCH_SIZE = 100
-const CORRELATION_ID_LABEL = "system.correlationId"
 
 function stringVariable(variables: unknown, key: string): string | undefined {
     if (variables === null || typeof variables !== "object") return undefined
@@ -59,21 +58,6 @@ export function subflowExecutionRoute(execution: Pick<SubflowExecutionRef, "id" 
     return {
         name: "executions/update",
         params: {namespace: execution.namespace, flowId: execution.flowId, id: execution.id},
-    }
-}
-
-/**
- * Every execution a Subflow task started under the run of `execution`, whatever the depth: they share its correlation id,
- * and `childFilter` drops the run's own executions while the default NORMAL kind drops its Loop iterations.
- */
-export function subflowExecutionsOfRunRoute(execution: {id: string; labels?: Array<{key?: string; value?: string}>}): RouteLocationRaw {
-    const correlationId = execution.labels?.find(label => label.key === CORRELATION_ID_LABEL)?.value ?? execution.id
-    return {
-        name: "executions/list",
-        query: {
-            [`filters[labels][EQUALS][${CORRELATION_ID_LABEL}]`]: correlationId,
-            "filters[childFilter][EQUALS]": "CHILD",
-        },
     }
 }
 

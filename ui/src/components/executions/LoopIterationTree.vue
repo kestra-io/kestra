@@ -76,17 +76,6 @@
             >
                 {{ $t("show_all_executions") }}
             </KsButton>
-            <KsButton
-                v-if="executionsStore.execution"
-                :tag="RouterLink"
-                size="small"
-                link
-                class="tree-link"
-                :to="subflowExecutionsOfRunRoute(executionsStore.execution)"
-                data-test="loop-subflow-executions"
-            >
-                {{ $t("show_executions_started_by_run") }}
-            </KsButton>
         </GanttMessageRow>
     </div>
 </template>
@@ -110,8 +99,7 @@
         type TaskRunNode,
     } from "./gantt/ganttTree"
     import {useGanttTimeline} from "./ganttTimeline"
-    import {subflowExecutionsOfRunRoute, useSubflowExecutions} from "../../composables/useSubflowExecutions"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {useSubflowExecutions} from "../../composables/useSubflowExecutions"
 
     const props = defineProps<{
         node: TaskRunNode;
@@ -139,7 +127,6 @@
     } = tree.loopHandle(loopRef.value)
 
     const {subflowExecutionsOf} = useSubflowExecutions(() => iterations.value)
-    const executionsStore = useExecutionsStore()
 
     const iterationNodes = computed(() => iterations.value.map(row => createIterationNode(loopRef.value, row, ancestors.value)))
 

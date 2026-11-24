@@ -59,10 +59,7 @@ export function useBlockEditorProvides(ctx: BlockEditorProvideContext) {
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
     // Loaded on demand: topology also renders read-only (an execution's graph) and must not fetch it then.
-    provide(SCHEMA_LOADER_INJECTION_KEY, {
-        load: () => void pluginsStore.lazyLoadSchemaType({type: "flow"}),
-        isLoading: computed(() => pluginsStore.isFlowSchemaLoading),
-    })
+    provide(SCHEMA_LOADER_INJECTION_KEY, pluginsStore.flowSchemaLoader)
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, anchorEl) => {
         ctx.createTask(parentPath, blockSchemaPath, refPath, anchorEl)
     })

@@ -170,10 +170,7 @@
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}))
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
-    provide(SCHEMA_LOADER_INJECTION_KEY, {
-        load: () => void pluginsStore.lazyLoadSchemaType({type: "flow"}),
-        isLoading: computed(() => pluginsStore.isFlowSchemaLoading),
-    })
+    provide(SCHEMA_LOADER_INJECTION_KEY, pluginsStore.flowSchemaLoader)
 
     provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => {
         if (props.creatingTask) return undefined

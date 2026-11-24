@@ -74,4 +74,14 @@ describe("plugins store schema load", () => {
         void store.lazyLoadSchemaType({type: "flow"})
         expect(schemasFromTypeMock).toHaveBeenCalledTimes(2)
     })
+
+    // Topology also mounts read-only on an execution, where nothing ever needs the megabytes of schema.
+    it("fetches the flow schema only once a form calls the loader, and reports it on its way", () => {
+        expect(schemasFromTypeMock).not.toHaveBeenCalled()
+
+        store.flowSchemaLoader.load()
+
+        expect(schemasFromTypeMock).toHaveBeenCalledTimes(1)
+        expect(store.flowSchemaLoader.isLoading.value).toBe(true)
+    })
 })

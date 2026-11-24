@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {ref, shallowRef, shallowReactive, computed, toRaw, nextTick} from "vue"
+import {ref, shallowRef, shallowReactive, computed, toRaw, nextTick, markRaw} from "vue"
 import {trackPluginDocumentationView} from "../utils/tabTracking"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
@@ -433,6 +433,12 @@ export const usePluginsStore = defineStore("plugins", () => {
         return pending
     }
 
+    // Raw, so that reading it through the store keeps `isLoading` a ref for the components it is provided to.
+    const flowSchemaLoader = markRaw({
+        load: () => void lazyLoadSchemaType({type: "flow"}),
+        isLoading: isFlowSchemaLoading,
+    })
+
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
             const schema = inflateCompactSchema(data as RootJsonSchema)
@@ -621,6 +627,7 @@ export const usePluginsStore = defineStore("plugins", () => {
 
         flowSchema,
         isFlowSchemaLoading,
+        flowSchemaLoader,
         flowDefinitions,
         flowRootSchema,
         flowRootProperties,
@@ -658,3 +665,4 @@ export const usePluginsStore = defineStore("plugins", () => {
         getInstallJob,
     }
 })
+

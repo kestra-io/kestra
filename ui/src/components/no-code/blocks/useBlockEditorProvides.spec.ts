@@ -142,7 +142,6 @@ describe("useBlockEditorProvides", () => {
         for (const store of [flowStore, pluginsStore]) {
             Object.keys(store).forEach((k) => delete store[k])
         }
-        pluginsStore.lazyLoadSchemaType = vi.fn()
     })
 
     it.each(Object.keys(KEYS) as KeyName[])("provides the %s key", (name) => {
@@ -269,17 +268,14 @@ describe("useBlockEditorProvides", () => {
         })
 
         // Topology also mounts read-only on an execution, where nothing ever needs the megabytes of schema.
-        it("requests the flow schema only once a form asks for it, and exposes whether it is on its way", () => {
+        it("hands forms the flow schema loader without loading it", () => {
+            const flowSchemaLoader = {load: vi.fn()}
             const {injected} = setupWithStores(() => {
-                pluginsStore.isFlowSchemaLoading = true
+                pluginsStore.flowSchemaLoader = flowSchemaLoader
             })
-            const loader = injected.SCHEMA_LOADER as {load: () => void, isLoading: {value: boolean}}
-            expect(pluginsStore.lazyLoadSchemaType).not.toHaveBeenCalled()
 
-            loader.load()
-
-            expect(pluginsStore.lazyLoadSchemaType).toHaveBeenCalledWith({type: "flow"})
-            expect(loader.isLoading.value).toBe(true)
+            expect(injected.SCHEMA_LOADER).toBe(flowSchemaLoader)
+            expect(flowSchemaLoader.load).not.toHaveBeenCalled()
         })
 
         it("falls back to an empty object for the schema, root schema and definitions", () => {

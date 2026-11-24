@@ -6,6 +6,7 @@
 import {readFileSync, writeFileSync} from "node:fs"
 import path from "node:path"
 import {fileURLToPath} from "node:url"
+import {inflateCompactSchema} from "../src/utils/compactSchema.ts"
 
 const OUTPUT = path.join(path.dirname(fileURLToPath(import.meta.url)), "../src/stores/flow-schema.json")
 const DEFINITIONS = "#/definitions/"
@@ -20,7 +21,8 @@ if (!source) {
     process.exit(1)
 }
 
-const full = JSON.parse(/^https?:/.test(source) ? await (await fetch(source)).text() : readFileSync(source, "utf8"))
+// The endpoint serves the compact schema, whose subtype lists sit behind shared-* refs this script compares inline.
+const full = inflateCompactSchema(JSON.parse(/^https?:/.test(source) ? await (await fetch(source)).text() : readFileSync(source, "utf8")))
 const rootKey = full.$ref.slice(DEFINITIONS.length)
 const root = structuredClone(full.definitions[rootKey])
 

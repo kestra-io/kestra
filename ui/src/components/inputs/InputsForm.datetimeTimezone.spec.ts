@@ -27,7 +27,9 @@ describe("InputsForm DATETIME input time zone", () => {
     })
 
     afterEach(() => {
-        process.env.TZ = originalTz
+        // Assigning undefined would store the string "undefined", so drop the variable when it was unset.
+        if (originalTz === undefined) delete process.env.TZ
+        else process.env.TZ = originalTz
         localStorage.removeItem("timezone")
         document.body.innerHTML = ""
     })

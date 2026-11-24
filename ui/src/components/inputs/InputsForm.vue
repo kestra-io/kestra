@@ -353,15 +353,18 @@
             </KsButton>
         </div>
 
-        <div v-if="isWizard && !isOnRecap" class="wizard-progress">
-            <KsSteps variant="bar" :active="currentStep" data-testid="wizard-progress">
-                <KsStep
-                    v-for="section in recapSections"
-                    :key="section.index"
-                    :title="section.title"
-                    :status="stepStatus(section.index)"
-                />
-            </KsSteps>
+        <div class="inputs-form-footer">
+            <slot name="footer" />
+            <div v-if="isWizard && !isOnRecap" class="wizard-progress">
+                <KsSteps variant="bar" :active="currentStep" data-testid="wizard-progress">
+                    <KsStep
+                        v-for="section in recapSections"
+                        :key="section.index"
+                        :title="section.title"
+                        :status="stepStatus(section.index)"
+                    />
+                </KsSteps>
+            </div>
         </div>
     </template>
 
@@ -1161,12 +1164,15 @@
     gap: var(--ks-spacing-1);
 }
 
-.wizard-progress {
+.inputs-form-footer {
     position: sticky;
     bottom: 0;
+    background: var(--ks-bg-surface);
+}
+
+.wizard-progress {
     margin-top: 1rem;
     padding: 0.75rem 0 0.25rem;
-    background: var(--ks-bg-surface);
     border-top: 1px solid var(--ks-border-default);
 }
 

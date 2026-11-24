@@ -13,11 +13,6 @@
                 </KsButton>
             </div>
         </KsAlert>
-        <div class="flow-execution-checks-alerts">
-            <KsAlert v-for="alert in checks || []" :type="toAlertType(alert.style)" :closable="false" :key="alert.message">
-                {{ alert.message }}
-            </KsAlert>
-        </div>
         <KsForm labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
             <KsTabs v-model="openTab" type="segmented">
                 <KsTabPane name="inputs" :label="$t('inputs')" class="execution-pane">
@@ -86,6 +81,10 @@
                 </KsTabPane>
             </KsTabs>
 
+            <div class="failing-checks-footer">
+                <FailingChecksAlert :checks="checks" />
+            </div>
+
             <div class="bottom-buttons" v-if="!embed">
                 <div class="secondary-actions">
                     <KsButton
@@ -101,19 +100,21 @@
                 </div>
                 <div class="execute-row" v-if="!hasFormInputs || inputsOnRecap">
                     <ValidationMessages :messages="validationMessages" />
-                    <span data-onboarding-target="flow-execute-confirm-button">
-                        <KsButton
-                            :icon="buttonIcon"
-                            :disabled="!flowCanBeExecuted || hasBlockingChecks"
-                            :data-test="buttonTestId"
-                            class="flow-run-trigger-button"
-                            type="primary"
-                            nativeType="submit"
-                            @click.prevent="() => { onSubmit(); executeClicked = true; }"
-                        >
-                            {{ $t(buttonText) }}
-                        </KsButton>
-                    </span>
+                    <KsTooltip :disabled="!hasBlockingChecks" :content="$t('checks_failing', {count: checks.length}, checks.length)">
+                        <span data-onboarding-target="flow-execute-confirm-button">
+                            <KsButton
+                                :icon="buttonIcon"
+                                :disabled="!flowCanBeExecuted || hasBlockingChecks"
+                                :data-test="buttonTestId"
+                                class="flow-run-trigger-button"
+                                type="primary"
+                                nativeType="submit"
+                                @click.prevent="() => { onSubmit(); executeClicked = true; }"
+                            >
+                                {{ $t(buttonText) }}
+                            </KsButton>
+                        </span>
+                    </KsTooltip>
                 </div>
             </div>
         </KsForm>
@@ -156,12 +157,7 @@
     import InputsForm from "../../components/inputs/InputsForm.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
     import ValidationMessages from "./ValidationMessages.vue"
-
-    type AlertType = "success" | "warning" | "info" | "error"
-    
-    function toAlertType(style: string | undefined): AlertType | undefined {
-        return style?.toLowerCase() as AlertType | undefined
-    }
+    import FailingChecksAlert from "../inputs/FailingChecksAlert.vue"
 
     export interface ReplaySubmitOptions {
         formRef: FormInstance
@@ -347,6 +343,7 @@
         canPrefill,
         flowCanBeExecuted,
         hasBlockingChecks,
+        failingChecksCount: computed(() => checks.value.length),
         showExecuteButton,
         validationMessages,
         buttonText: props.buttonText,
@@ -512,8 +509,11 @@
 </script>
 
 <style scoped>
-    .flow-execution-checks-alerts {
-        margin-bottom: var(--ks-spacing-4);
+    .failing-checks-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: var(--ks-z-sticky);
+        background: var(--ks-bg-surface);
     }
 
     .draft-publish-action {

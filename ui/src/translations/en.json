@@ -1271,6 +1271,7 @@
     "collapse all": "Collapse all",
     "expand": "Expand",
     "collapse": "Collapse",
+    "checks_failing": "{count} check failing | {count} checks failing",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
     "copy_value": "Copy value",

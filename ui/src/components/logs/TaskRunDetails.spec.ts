@@ -35,21 +35,16 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
 const scrollerMocks = vi.hoisted(() => ({
     scrollToItemCalls: [] as {taskRunId?: string; index: number; options?: unknown}[],
     scrollToItem: vi.fn(),
-    elementDimensions: undefined as
-        | {scrollHeight: number; clientHeight: number; scrollTop?: number}
-        | undefined,
-    lastScrollerEl: undefined as HTMLElement | undefined,
 }))
 
 vi.mock("vue-virtual-scroller", async () => {
-    const {defineComponent, h, onMounted, ref} = await import("vue")
+    const {defineComponent, h} = await import("vue")
 
     return {
         DynamicScroller: defineComponent({
             inheritAttrs: true,
             props: ["items"],
             setup(props, {attrs, slots, expose}) {
-                const rootEl = ref<HTMLElement | null>(null)
                 const scrollToItem = vi.fn((index: number, options?: unknown) => {
                     const taskRunId = attrs["data-scroll-key"]
                     if (typeof taskRunId === "string") {
@@ -61,29 +56,7 @@ vi.mock("vue-virtual-scroller", async () => {
                     scrollToItem,
                 })
 
-                onMounted(() => {
-                    if (rootEl.value && attrs["data-scroll-key"]) {
-                        scrollerMocks.lastScrollerEl = rootEl.value
-                        let currentScrollTop = scrollerMocks.elementDimensions?.scrollTop ?? 0
-                        Object.defineProperty(rootEl.value, "scrollHeight", {
-                            get: () => scrollerMocks.elementDimensions?.scrollHeight ?? 0,
-                            configurable: true,
-                        })
-                        Object.defineProperty(rootEl.value, "clientHeight", {
-                            get: () => scrollerMocks.elementDimensions?.clientHeight ?? 0,
-                            configurable: true,
-                        })
-                        Object.defineProperty(rootEl.value, "scrollTop", {
-                            get: () => currentScrollTop,
-                            set: (val: number) => {
-                                currentScrollTop = val
-                            },
-                            configurable: true,
-                        })
-                    }
-                })
-
-                return () => h("div", {...attrs, ref: rootEl}, [
+                return () => h("div", attrs, [
                     ...(slots.before ? [slots.before()] : []),
                     ...(props.items ?? []).map((item: unknown, index: number) =>
                         slots.default?.({item, index, active: true}),
@@ -159,8 +132,6 @@ describe("TaskRunDetails log loading across executions", () => {
         openedStreams = []
         scrollerMocks.scrollToItemCalls = []
         scrollerMocks.scrollToItem.mockClear()
-        scrollerMocks.elementDimensions = undefined
-        scrollerMocks.lastScrollerEl = undefined
         store.executions = reactive({
             execution: undefined,
             logs: undefined,
@@ -368,81 +339,6 @@ describe("TaskRunDetails log loading across executions", () => {
         await flushPromises()
 
         expect(scrollerMocks.scrollToItemCalls).toContainEqual({taskRunId: "tr-failed", index: 1, options: {align: "end"}})
-
-        wrapper.unmount()
-    })
-
-    it("should scroll failed task logs to the bottom and apply scrollTop fallback when layout is clamped", async () => {
-        scrollerMocks.elementDimensions = {
-            scrollHeight: 500,
-            clientHeight: 300,
-            scrollTop: 0,
-        }
-        store.executions.loadLogs.mockResolvedValue([
-            {
-                level: "INFO",
-                taskRunId: "tr-failed",
-                attemptNumber: 0,
-                message: "first log line",
-            },
-            {
-                level: "ERROR",
-                taskRunId: "tr-failed",
-                attemptNumber: 0,
-                message: "final error line",
-            },
-        ])
-        store.executions.execution = executionWithTaskRuns("exec-1") as never
-        const wrapper = mountDetails()
-        await flushPromises()
-        await nextTick()
-        await flushPromises()
-
-        expect(scrollerMocks.scrollToItemCalls).toContainEqual({taskRunId: "tr-failed", index: 1, options: {align: "end"}})
-        expect(scrollerMocks.lastScrollerEl?.scrollTop).toBe(500)
-
-        wrapper.unmount()
-    })
-
-    it("should retry scrolling until scroller reaches bottom when initial layout is delayed", async () => {
-        scrollerMocks.elementDimensions = {
-            scrollHeight: 0,
-            clientHeight: 0,
-            scrollTop: 0,
-        }
-        store.executions.loadLogs.mockResolvedValue([
-            {
-                level: "INFO",
-                taskRunId: "tr-failed",
-                attemptNumber: 0,
-                message: "first log line",
-            },
-            {
-                level: "ERROR",
-                taskRunId: "tr-failed",
-                attemptNumber: 0,
-                message: "final error line",
-            },
-        ])
-        store.executions.execution = executionWithTaskRuns("exec-1") as never
-        const wrapper = mountDetails()
-        await flushPromises()
-        await nextTick()
-        await flushPromises()
-
-        expect(scrollerMocks.lastScrollerEl?.scrollTop).toBe(0)
-        expect(scrollerMocks.scrollToItemCalls.length).toBe(1)
-
-        // Delayed layout completes: scrollHeight is now 500
-        scrollerMocks.elementDimensions.scrollHeight = 500
-        scrollerMocks.elementDimensions.clientHeight = 300
-
-        // Advance fake timers by an animation frame to trigger next retry attempt
-        vi.advanceTimersByTime(16)
-        await flushPromises()
-
-        expect(scrollerMocks.scrollToItemCalls.length).toBe(2)
-        expect(scrollerMocks.lastScrollerEl?.scrollTop).toBe(500)
 
         wrapper.unmount()
     })

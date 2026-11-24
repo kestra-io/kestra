@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from "vitest"
+import {beforeEach, describe, expect, it, vi} from "vitest"
 import {defineComponent, h} from "vue"
 
 const chartPreview = vi.fn()
@@ -20,6 +20,8 @@ import type {Chart} from "../types"
 const chart: Chart = {id: "total", type: "io.kestra.plugin.core.dashboard.chart.TimeSeries", content: "id: total"}
 
 describe("useChartGenerator kind filter", () => {
+    beforeEach(() => vi.clearAllMocks())
+
     it("should also match a null kind when the route selects NORMAL, so normal runs stored without a kind are counted", async () => {
         chartPreview.mockResolvedValue({results: [], total: 0})
 

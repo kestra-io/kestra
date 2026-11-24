@@ -617,6 +617,8 @@
       "zoom-reset": "Zresetuj powiększenie",
       "zoom-fit": "Dopasuj",
       "invalid": "Błąd grafu",
+      "stale": "Topologia może być nieaktualna",
+      "stale_description": "Serwer jest nieosiągalny, więc wykres pokazuje ostatnią wersję, którą mógł wyrenderować. Odświeży się, gdy serwer ponownie odpowie.",
       "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
       "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
       "expand_subflow_error": "Nie można rozwinąć Subflow",
@@ -1029,6 +1031,17 @@
     "sign in failed": "Nie udało się zalogować. Sprawdź połączenie i spróbuj ponownie.",
     "sign in not confirmed": "Nie mogliśmy potwierdzić, że jesteś zalogowany. Zaloguj się w innej zakładce, a następnie kontynuuj.",
     "server unreachable": "Nie można połączyć się z serwerem Kestra",
+    "offlineDraft": {
+      "badge": "Niezsynchronizowany",
+      "queued title": "Zapisano na tym urządzeniu",
+      "queued": "Serwer jest nieosiągalny. Ten szkic jest przechowywany w tej przeglądarce i zostanie zapisany na serwerze, gdy tylko serwer ponownie odpowie.",
+      "restore": {
+        "title": "Znaleziono niezsynchronizowany szkic",
+        "message": "Szkic tego Flow został zapisany w tej przeglądarce {date} i nigdy nie dotarł do serwera. Przywrócić go do edytora?",
+        "changed": "Flow zmienił się na serwerze od tego czasu, więc przejrzyj szkic przed jego zapisaniem.",
+        "discard": "Odrzuć szkic"
+      }
+    },
     "server unreachable description": "Skopiuj wszelkie niezapisane zmiany (na przykład YAML Flow) w bezpieczne miejsce przed odświeżeniem tej strony. Ten baner zniknie, gdy serwer ponownie odpowie.",
     "unsaved changes": "Niezapisane zmiany",
     "unsaved changes warning": "Masz niezapisane zmiany. Jeśli opuścisz tę stronę, twoje zmiany zostaną utracone.",

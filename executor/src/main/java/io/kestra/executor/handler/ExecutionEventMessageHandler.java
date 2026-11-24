@@ -410,12 +410,13 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                 // Bind the logger to the parent task so its configured logLevel (e.g. plugin
                                 // defaults setting logLevel: WARN) applies to the creation log, which is emitted
                                 // directly and therefore bypasses the regular logging pipeline (#16238).
+                                // The parent's kind, not the subflow's: a Loop iteration's logs are queried with kind LOOP.
                                 Task parentTask = flow.findTaskByTaskIdOrNull(subflowExecution.getParentTaskRun().getTaskId());
                                 var logger = parentTask != null
-                                    ? runContextLoggerFactory.create(subflowExecution.getParentTaskRun(), parentTask, subflowExecution.getExecution().getKind())
+                                    ? runContextLoggerFactory.create(subflowExecution.getParentTaskRun(), parentTask, execution.getKind())
                                     : runContextLoggerFactory.create(execution);
                                 logger.emitLogIfEnabled(
-                                    LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
+                                    LogEntry.of(subflowExecution.getParentTaskRun(), execution.getKind()).toBuilder()
                                         .level(Level.INFO)
                                         .message(msg)
                                         .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())

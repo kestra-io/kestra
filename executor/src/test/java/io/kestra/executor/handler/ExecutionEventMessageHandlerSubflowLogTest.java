@@ -2,7 +2,9 @@ package io.kestra.executor.handler;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,8 +15,10 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -22,6 +26,8 @@ import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.executor.ExecutorContext;
+import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.log.Log;
 
@@ -96,6 +102,44 @@ class ExecutionEventMessageHandlerSubflowLogTest {
         assertThat(capturedCreationLogs()).isEmpty();
     }
 
+    @Test
+    void shouldTagSubflowCreationLogWithLoopKindWhenStartedInsideALoopIteration() {
+        var childFlow = createChildFlow();
+        var subflowTask = Subflow.builder()
+            .id("subflow")
+            .type(Subflow.class.getName())
+            .namespace(childFlow.getNamespace())
+            .flowId(childFlow.getId())
+            .build();
+        var parentFlow = flowRepository.create(GenericFlow.of(Flow.builder()
+            .tenantId("tenant")
+            .namespace("namespace")
+            .id(IdUtils.create())
+            .tasks(List.of(Loop.builder()
+                .id("loop")
+                .type(Loop.class.getName())
+                .values(List.of("a"))
+                .tasks(List.of(subflowTask))
+                .build()))
+            .build()));
+        var rootExecution = Execution.newExecution(parentFlow, Collections.emptyList());
+        executionRepository.save(rootExecution);
+
+        var iteration = handleUntil(rootExecution, executor -> !executor.getLoopExecutions().isEmpty())
+            .map(executor -> executor.getLoopExecutions().getFirst())
+            .orElseThrow();
+        executionRepository.save(iteration);
+        var subflowStarted = handleUntil(iteration, executor -> !executor.getSubflowExecutions().isEmpty());
+
+        assertThat(subflowStarted).isPresent();
+        assertThat(capturedCreationLogs())
+            .singleElement()
+            .satisfies(logEntry -> {
+                assertThat(logEntry.getExecutionId()).isEqualTo(iteration.getId());
+                assertThat(logEntry.getExecutionKind()).isEqualTo(ExecutionKind.LOOP);
+            });
+    }
+
     /**
      * Creates a child flow and a parent flow holding a single Subflow task with the given logLevel,
      * then drives the handler until the subflow execution is produced.
@@ -103,16 +147,7 @@ class ExecutionEventMessageHandlerSubflowLogTest {
      * @return true when a subflow execution was produced within the allotted executor passes
      */
     private boolean runParentFlowWithSubflowTask(Level subflowTaskLogLevel) {
-        var childFlow = flowRepository.create(
-            GenericFlow.of(
-                Flow.builder()
-                    .tenantId("tenant")
-                    .namespace("namespace")
-                    .id(IdUtils.create())
-                    .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello from child").build()))
-                    .build()
-            )
-        );
+        var childFlow = createChildFlow();
 
         var parentFlow = flowRepository.create(
             GenericFlow.of(
@@ -138,19 +173,30 @@ class ExecutionEventMessageHandlerSubflowLogTest {
         var execution = Execution.newExecution(parentFlow, Collections.emptyList());
         executionRepository.save(execution);
 
-        var maybeExecutor = executionEventMessageHandler.handle(new ExecutionEvent(execution, ExecutionEventType.CREATED));
+        return handleUntil(execution, executor -> !executor.getSubflowExecutions().isEmpty()).isPresent();
+    }
 
-        // The subflow execution is produced once the executor processes the executable task; the
-        // number of passes is an executor implementation detail, so re-handle until it shows up.
+    private FlowWithSource createChildFlow() {
+        return flowRepository.create(GenericFlow.of(Flow.builder()
+            .tenantId("tenant")
+            .namespace("namespace")
+            .id(IdUtils.create())
+            .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello from child").build()))
+            .build()));
+    }
+
+    // The number of passes is an executor implementation detail, so re-handle until the condition holds.
+    private Optional<ExecutorContext> handleUntil(Execution execution, Predicate<ExecutorContext> condition) {
+        var maybeExecutor = executionEventMessageHandler.handle(new ExecutionEvent(execution, ExecutionEventType.CREATED));
         for (int pass = 0; pass < MAX_EXECUTOR_PASSES && maybeExecutor.isPresent(); pass++) {
-            if (!maybeExecutor.get().getSubflowExecutions().isEmpty()) {
-                return true;
+            if (condition.test(maybeExecutor.get())) {
+                return maybeExecutor;
             }
             var current = maybeExecutor.get().getExecution();
             executionRepository.save(current);
             maybeExecutor = executionEventMessageHandler.handle(new ExecutionEvent(current, ExecutionEventType.UPDATED));
         }
-        return maybeExecutor.map(executor -> !executor.getSubflowExecutions().isEmpty()).orElse(false);
+        return maybeExecutor.filter(condition);
     }
 
     private List<LogEntry> capturedCreationLogs() {

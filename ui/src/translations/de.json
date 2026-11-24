@@ -800,7 +800,8 @@
       "dialog_title": "Concurrency-Limits",
       "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können.",
       "queued": "In Warteschlange",
-      "save_error": "Fehler beim Aktualisieren des Concurrency-Limits, der vorherige Wert wird beibehalten."
+      "save_error": "Fehler beim Aktualisieren des Concurrency-Limits, der vorherige Wert wird beibehalten.",
+      "invalid_running_count": "Gib eine ganze Zahl zwischen 0 und {max} ein."
     },
     "flowConcurrency": {
       "loadError": "Das Concurrency-Limit dieses Flows konnte nicht geladen werden.",
@@ -3190,7 +3191,7 @@
       "undo": "Rückgängig",
       "upstream_outputs": "Upstream-Outputs",
       "open_in_tabs": "In Tabs öffnen",
-      "open_mode_hint": "Tasks werden standardmäßig in einem Modal geöffnet. Unter {settings} kannst du Tabs als Standard festlegen."
+      "open_mode_hint": "Dieser Editor wird standardmäßig in einem Modal geöffnet. Du kannst Tabs in den {settings} als Standard festlegen."
     },
     "blocks": "Blöcke",
     "move_panel_to_bottom": "Panel nach unten verschieben",

@@ -218,4 +218,26 @@ describe("resolveSubflowLinks", () => {
         expect(links).toHaveLength(1)
         expect(links[0].target).toEqual({namespace: "other.namespace", flowId: "child_flow"})
     })
+
+    it("resolves the parent flow namespace expression", () => {
+        const source = [
+            "id: parent",
+            "namespace: company.team",
+            "",
+            "tasks:",
+            "  - id: child",
+            "    type: io.kestra.plugin.core.flow.Subflow",
+            "    namespace: \"{{ flow.namespace }}\"",
+            "    flowId: child_flow",
+        ].join("\n")
+
+        const links = resolveSubflowLinks(source)
+
+        expect(links).toHaveLength(1)
+        expect(links[0].target).toEqual({
+            namespace: "company.team",
+            flowId: "child_flow",
+        })
+        expect(source.slice(links[0].range[0], links[0].range[1])).toBe("child_flow")
+    })
 })

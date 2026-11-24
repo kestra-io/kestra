@@ -800,7 +800,8 @@
       "dialog_title": "Limity Concurrency",
       "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit.",
       "queued": "W kolejce",
-      "save_error": "Nie udało się zaktualizować limitu Concurrency, poprzednia wartość została zachowana."
+      "save_error": "Nie udało się zaktualizować limitu Concurrency, poprzednia wartość została zachowana.",
+      "invalid_running_count": "Wprowadź liczbę całkowitą z zakresu od 0 do {max}."
     },
     "flowConcurrency": {
       "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",
@@ -3190,7 +3191,7 @@
       "undo": "Cofnij",
       "upstream_outputs": "Outputy upstream",
       "open_in_tabs": "Otwórz w zakładkach",
-      "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
+      "open_mode_hint": "Ten edytor domyślnie otwiera się w oknie modalnym. Możesz ustawić zakładki jako domyślne w {settings}."
     },
     "blocks": "Bloki",
     "move_panel_to_bottom": "Przenieś panel na dół",

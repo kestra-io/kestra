@@ -2675,14 +2675,14 @@ export type TriggerAssetsDeclaration = {
 };
 
 export type TriggerControllerApiCreateBackfillRequest = {
-    namespace?: string;
-    flowId?: string;
-    triggerId?: string;
+    namespace: string;
+    flowId: string;
+    triggerId: string;
     backfill: TriggerControllerApiCreateBackfillRequestBackfill;
 };
 
 export type TriggerControllerApiCreateBackfillRequestBackfill = {
-    start?: string;
+    start: string;
     end?: string;
     inputs?: {
         [key: string]: {

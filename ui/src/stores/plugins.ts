@@ -9,6 +9,7 @@ import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type Pl
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
+import {inflateCompactSchema} from "../utils/compactSchema"
 
 /** Mirrors io.kestra.core.plugins.PluginInstallJob */
 export interface PluginArtifact {
@@ -430,9 +431,10 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
+            const schema = inflateCompactSchema(data as {definitions?: Record<string, unknown>})
             schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = data
-            return data
+            schemaType.value[options.type] = schema
+            return schema
         })
     }
 

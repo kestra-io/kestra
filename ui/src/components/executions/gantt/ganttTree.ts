@@ -7,6 +7,7 @@ import {buildTaskRunHierarchy} from "../../../utils/taskRunHierarchy"
 import {firstFailedLeaf, isFailedTaskRunState as isFailed, isHiddenTaskType} from "../../../utils/executionUtils"
 import {useLoopIterations, type LoopIterationRow} from "../../../composables/useLoopIterations"
 import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
+import {runningIterationsOf} from "../../../utils/loopIterations"
 import type {ExecutionTaskRun} from "../executionTaskRun"
 
 export const LOOP_TYPE = "io.kestra.plugin.core.flow.Loop"
@@ -341,7 +342,8 @@ export function createGanttTree(options: {
     function needsLoopOutputs(cached: LoopOutputsEntry | undefined, terminal: boolean): boolean {
         if (!cached) return true
         const stale = Date.now() - cached.fetchedAt >= LOOP_OUTPUTS_REFRESH_MS
-        if (terminal) return !cached.terminal && (!cached.failed || stale)
+        if (terminal && cached.terminal) return stale && runningIterationsOf(cached.outputs) > 0
+        if (terminal) return !cached.failed || stale
         return cached.terminal || stale
     }
 

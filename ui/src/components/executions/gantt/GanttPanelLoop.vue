@@ -79,6 +79,7 @@
     import GanttPanelListRow from "./GanttPanelListRow.vue"
     import {loopRefOf, useGanttTree, type TaskRunNode} from "./ganttTree"
     import {useLoopDrillDown} from "./useLoopDrillDown"
+    import {useLoopRefresh} from "./useLoopRefresh"
     import {useGanttTimeline} from "../ganttTimeline"
 
     const props = defineProps<{
@@ -88,7 +89,9 @@
     const {t} = useI18n()
     const tree = useGanttTree()
     const {offset} = useGanttTimeline()
-    const drillDown = useLoopDrillDown(loopRefOf(props.node))
+    const drillDown = useLoopDrillDown(loopRefOf(props.node), tree.loopHandle(loopRefOf(props.node)))
+
+    useLoopRefresh(() => props.node, {rows: () => drillDown.rows.value, refresh: drillDown.refresh})
 
     const stateOptions = computed(() => [
         {value: "all", label: t("gantt_panel.filter_all", {count: drillDown.counts.value.all ?? "…"})},

@@ -7,7 +7,7 @@ import {
     toLoopIterationRow,
     type LoopIterationRow,
 } from "../../../composables/useLoopIterations"
-import type {LoopRef} from "./ganttTree"
+import type {LoopHandle, LoopRef} from "./ganttTree"
 import {latestRequest} from "../../../utils/latestRequest"
 
 export type DrillDownState = "all" | "failed" | "success"
@@ -20,7 +20,7 @@ const STATE_FILTERS: Record<DrillDownState, string[] | undefined> = {
 
 const SEARCH_DEBOUNCE_MS = 300
 
-export function useLoopDrillDown(loop: LoopRef) {
+export function useLoopDrillDown(loop: LoopRef, handle: Pick<LoopHandle, "totalCount" | "failedCount" | "loadCounts">) {
     const executionsStore = useExecutionsStore()
     const scope = loopScopeFilters(loop.parentExecutionId, loop.taskId)
 
@@ -32,7 +32,12 @@ export function useLoopDrillDown(loop: LoopRef) {
     const total = ref(0)
     const loading = ref(false)
     const error = ref<unknown>(undefined)
-    const counts = ref<Record<DrillDownState, number | undefined>>({all: undefined, failed: undefined, success: undefined})
+    const successCount = ref<number | undefined>(undefined)
+    const counts = computed<Record<DrillDownState, number | undefined>>(() => ({
+        all: handle.totalCount.value,
+        failed: handle.failedCount.value,
+        success: successCount.value,
+    }))
 
     const pageCount = computed(() => Math.max(1, Math.ceil(total.value / LOOP_ITERATIONS_PAGE_SIZE)))
     const firstShown = computed(() => total.value === 0 ? 0 : (page.value - 1) * LOOP_ITERATIONS_PAGE_SIZE + 1)
@@ -69,22 +74,19 @@ export function useLoopDrillDown(loop: LoopRef) {
         }
     }
 
-    async function loadCounts() {
-        const entries = await Promise.all((Object.keys(STATE_FILTERS) as DrillDownState[]).map(async (filterState) => {
-            try {
-                const count = await executionsStore.findExecutions({
-                    ...filtersFor(filterState, ""),
-                    page: 1,
-                    size: 1,
-                    commit: false,
-                    onlyTotal: true,
-                })
-                return [filterState, count ?? 0] as const
-            } catch {
-                return [filterState, undefined] as const
-            }
-        }))
-        counts.value = Object.fromEntries(entries) as Record<DrillDownState, number | undefined>
+    async function loadSuccessCount() {
+        try {
+            const count = await executionsStore.findExecutions({
+                ...filtersFor("success", ""),
+                page: 1,
+                size: 1,
+                commit: false,
+                onlyTotal: true,
+            })
+            successCount.value = count ?? 0
+        } catch {
+            successCount.value = undefined
+        }
     }
 
     const applySearch = useDebounceFn(() => {
@@ -102,8 +104,13 @@ export function useLoopDrillDown(loop: LoopRef) {
         load()
     }
 
-    load()
-    loadCounts()
+    function refresh() {
+        load()
+        handle.loadCounts({force: true})
+        loadSuccessCount()
+    }
 
-    return {state, search, page, rows, total, loading, error, counts, pageCount, firstShown, lastShown, load, goToPage}
+    refresh()
+
+    return {state, search, page, rows, total, loading, error, counts, pageCount, firstShown, lastShown, load, refresh, goToPage}
 }

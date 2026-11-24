@@ -5,6 +5,7 @@ import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import {useExecutionsStore} from "../../../stores/executions"
 import type {LoopRef} from "./ganttTree"
 import {useLoopDrillDown} from "./useLoopDrillDown"
+import {useLoopIterations} from "../../../composables/useLoopIterations"
 
 const loop: LoopRef = {parentExecutionId: "root", taskId: "per_region", namespace: "company.team", flowId: "monthly_close"}
 
@@ -39,7 +40,7 @@ afterEach(() => {
 describe("useLoopDrillDown", () => {
     it("shouldBackToPageOneAndFilterByExactValueWhenSearchSettles", async () => {
         respondWith(35)
-        const drillDown = useLoopDrillDown(loop)
+        const drillDown = useLoopDrillDown(loop, useLoopIterations(loop.parentExecutionId, loop.taskId))
         await vi.advanceTimersByTimeAsync(0)
         drillDown.goToPage(3)
         await vi.advanceTimersByTimeAsync(0)
@@ -57,7 +58,7 @@ describe("useLoopDrillDown", () => {
 
     it("shouldRefetchFromPageOneWhenStateFilterChanges", async () => {
         respondWith(35)
-        const drillDown = useLoopDrillDown(loop)
+        const drillDown = useLoopDrillDown(loop, useLoopIterations(loop.parentExecutionId, loop.taskId))
         await vi.advanceTimersByTimeAsync(0)
         drillDown.goToPage(2)
         await vi.advanceTimersByTimeAsync(0)
@@ -75,7 +76,7 @@ describe("useLoopDrillDown", () => {
             if (options.onlyTotal) return Promise.resolve(2)
             return new Promise(resolve => resolvers.push(resolve))
         }) as never)
-        const drillDown = useLoopDrillDown(loop)
+        const drillDown = useLoopDrillDown(loop, useLoopIterations(loop.parentExecutionId, loop.taskId))
         await vi.advanceTimersByTimeAsync(0)
         drillDown.state.value = "failed"
         await nextTick()
@@ -94,7 +95,7 @@ describe("useLoopDrillDown", () => {
 
     it("shouldClampPageWithinTheAvailablePages", async () => {
         respondWith(25)
-        const drillDown = useLoopDrillDown(loop)
+        const drillDown = useLoopDrillDown(loop, useLoopIterations(loop.parentExecutionId, loop.taskId))
         await vi.advanceTimersByTimeAsync(0)
         expect(drillDown.pageCount.value).toBe(3)
 

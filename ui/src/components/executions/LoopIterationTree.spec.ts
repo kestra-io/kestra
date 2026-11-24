@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {setActivePinia} from "pinia"
 import {routedPinia} from "../../../tests/unit/memoryRouter"
@@ -8,9 +8,11 @@ import {i18nMount} from "../../../tests/unit/i18nMount"
 import {useExecutionsStore} from "../../stores/executions"
 import LoopIterationTree from "./LoopIterationTree.vue"
 import type {ExecutionTaskRun} from "./executionTaskRun"
-import {GANTT_TREE, LOOP_TYPE, createGanttTree, createTaskRunNode, type GanttTree} from "./gantt/ganttTree"
+import {GANTT_TREE, LOOP_OUTPUTS_REFRESH_MS, LOOP_TYPE, createGanttTree, createTaskRunNode, type GanttTree} from "./gantt/ganttTree"
 
 const mockExecution = vi.hoisted(() => vi.fn())
+const loadTaskRunOutputs = vi.hoisted(() => vi.fn())
+vi.mock("../../composables/useTaskRunOutputs", () => ({loadTaskRunOutputs}))
 vi.mock("@kestra-io/kestra-sdk/executions", () => ({
     execution: (...args: unknown[]) => mockExecution(...args),
 }))
@@ -42,9 +44,9 @@ function pageOf(total: number, size = 10) {
     }
 }
 
-function mountTree() {
+function mountTree(node = loopNode) {
     return i18nMount(LoopIterationTree, {
-        props: {node: loopNode},
+        props: {node},
         global: {
             provide: {[GANTT_TREE as symbol]: tree},
             stubs: {
@@ -61,8 +63,14 @@ function mountTree() {
 beforeEach(() => {
     setActivePinia(routedPinia())
     mockExecution.mockReset()
+    loadTaskRunOutputs.mockReset()
+    loadTaskRunOutputs.mockResolvedValue({})
     findExecutions = vi.spyOn(useExecutionsStore(), "findExecutions")
     tree = createGanttTree({compact: ref(false), levelFilter: ref(undefined)})
+})
+
+afterEach(() => {
+    vi.useRealTimers()
 })
 
 describe("LoopIterationTree", () => {
@@ -194,5 +202,31 @@ describe("LoopIterationTree", () => {
         await flushPromises()
 
         expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(1)
+    })
+
+    it("shouldRefreshTheRowsOfARunningLoopWithoutDroppingTheLoadedPages", async () => {
+        vi.useFakeTimers()
+        let state = "RUNNING"
+        findExecutions.mockImplementation((async (options: Record<string, unknown>) => {
+            if (options.onlyTotal) return 15
+            const start = ((options.page as number) - 1) * (options.size as number)
+            const results = Array.from({length: Math.max(0, Math.min(options.size as number, 15 - start))}, (_, i) => iterationExecution(`it-${start + i}`, `REGION-${start + i}`, start + i, state))
+            return {results, total: 15}
+        }) as never)
+        loadTaskRunOutputs.mockImplementation(async () => ({iterationCount: 15, runningIterations: state === "RUNNING" ? 15 : 0, terminatedIterations: {}}))
+        const runningLoop = createTaskRunNode({id: "root-execution", namespace: "company.team", flowId: "nested_loop_demo"}, {...loopTaskRun, state: {current: "RUNNING", histories}} as unknown as ExecutionTaskRun, LOOP_TYPE, [])
+
+        const wrapper = mountTree(runningLoop)
+        await vi.advanceTimersByTimeAsync(0)
+        await wrapper.find("[data-test='loop-load-more']").trigger("click")
+        await vi.advanceTimersByTimeAsync(0)
+        expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(15)
+
+        state = "SUCCESS"
+        await vi.advanceTimersByTimeAsync(LOOP_OUTPUTS_REFRESH_MS)
+
+        const rows = wrapper.findAll("[data-test='loop-iteration-row']")
+        expect(rows).toHaveLength(15)
+        expect(rows.every(row => row.text().includes("Success"))).toBe(true)
     })
 })

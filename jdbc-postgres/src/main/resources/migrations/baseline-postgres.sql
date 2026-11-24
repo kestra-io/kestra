@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS executions (
     namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
     flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
     state_current state_type NOT NULL GENERATED ALWAYS AS (STATE_FROMTEXT(value #>> '{state, current}')) STORED,
-    state_duration BIGINT GENERATED ALWAYS AS ((ROUND(EXTRACT(EPOCH FROM PARSE_ISO8601_DURATION(value #>> '{state, duration}')) * 1000))::bigint) STORED,
+    state_duration BIGINT GENERATED ALWAYS AS (EXTRACT(MILLISECONDS FROM PARSE_ISO8601_DURATION(value #>> '{state, duration}'))) STORED,
     start_date TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value #>> '{state, startDate}')) STORED,
     end_date TIMESTAMP GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value #>> '{state, endDate}')) STORED,
     fulltext TSVECTOR GENERATED ALWAYS AS (

@@ -29,6 +29,12 @@ describe("Duration", () => {
         expect(wrapper.find("span").text()).toBe("1m, 44.24s")
     })
 
+    it("keeps long durations in hours instead of rolling them over into days", () => {
+        const wrapper = mount(Duration, {props: {field: 90_000, startDate: START}})
+
+        expect(wrapper.find("span").text()).toBe("25h")
+    })
+
     it("renders the live elapsed seconds inside an em when field is missing", () => {
         const wrapper = mount(Duration, {props: {field: undefined, startDate: START}})
 

@@ -13,7 +13,6 @@ import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutionResult;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -26,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Singleton
-@Requires(property = "kestra.ai.enabled", value = "true", defaultValue = "true")
+@RequiresAiEnabled
 public class KestraDocsContextTool implements AutoCloseable {
 
     private static final Duration MCP_TIMEOUT = Duration.ofSeconds(15);

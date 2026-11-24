@@ -12,6 +12,7 @@ import ContextDocs from "../../components/docs/ContextDocs.vue"
 import CopilotChat from "../../components/ai/copilot/CopilotChat.vue"
 import AiIcon from "../../components/ai/AiIcon.vue"
 import {useApiStore} from "../../stores/api"
+import {useAiEnabled} from "../../composables/useAiEnabled"
 
 import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
 import FileDocument from "vue-material-design-icons/FileDocument.vue"
@@ -37,6 +38,7 @@ export interface Button {
 export function useContextButtons() {
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
+    const aiEnabled = useAiEnabled()
 
     const apiStore = useApiStore()
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
@@ -57,7 +59,7 @@ export function useContextButtons() {
                   component: CopilotChat,
                   // The full-page AI Copilot (`/ai`) is the same agent — hide the redundant dock tab there.
                   get hidden() {
-                      return route.name === "ai"
+                      return !aiEnabled.value || route.name === "ai"
                   },
               },
               news: {

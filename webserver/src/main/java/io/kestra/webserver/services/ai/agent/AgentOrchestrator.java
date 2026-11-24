@@ -43,6 +43,7 @@ import io.micronaut.core.annotation.Nullable;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.output.FinishReason;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.PartialResponse;
@@ -68,6 +69,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AgentOrchestrator {
     private static final long MODEL_CANCEL_POLL_MS = 50;
+
+    private static final int MAX_MALFORMED_ARGUMENTS_CHARS = 2000;
 
     private final AiServiceManager aiServiceManager;
     private final ToolCatalog catalog;
@@ -307,7 +310,8 @@ public class AgentOrchestrator {
                     return;
                 }
 
-                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get()) {
+                // A draft already proposed this turn is the outcome, not a plan: asking to approve its summary would only replay the authoring.
+                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get() && !hasDraftInTurn(ctx)) {
                     suspendForPlan(ctx, ai.text(), sink);
                     return;
                 }
@@ -327,17 +331,18 @@ public class AgentOrchestrator {
                 return;
             }
 
-            ctx.messages().add(ai);
+            ctx.messages().add(ChatMessageAdaptor.withValidToolArguments(ai));
             ToolExecutionRequest heldAction = null;
             ToolEntry heldEntry = null;
             Map<String, Object> heldArgs = null;
 
-            for (ToolExecutionRequest req : ai.toolExecutionRequests()) {
+            for (ToolExecutionRequest emitted : ai.toolExecutionRequests()) {
                 if (sink.isCancelled()) {
                     abortCancelled(ctx);
                     return;
                 }
 
+                ToolExecutionRequest req = ChatMessageAdaptor.withNormalizedArguments(emitted);
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {
@@ -348,6 +353,16 @@ public class AgentOrchestrator {
                 ToolEntry entry = catalog.byName(req.name()).orElseThrow();
                 threadManager.appendToolCall(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ai.text(),
                     ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family(), ChatMessageAdaptor.thinkingOf(ai)));
+
+                if (ChatMessageAdaptor.hasMalformedArguments(req.arguments())) {
+                    // The arguments are model-written text, so they go to the model but never to the server log.
+                    log.warn(
+                        "Copilot thread {}: tool '{}' was not executed: malformed arguments ({} chars, finish reason {})",
+                        ctx.thread().uid(), req.name(), req.arguments().length(), response.finishReason()
+                    );
+                    recordToolError(ctx, req, entry.kind(), entry.family(), malformedArgumentsMessage(req, response.finishReason()), sink);
+                    continue;
+                }
 
                 if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
                     if (heldAction == null) {
@@ -415,6 +430,11 @@ public class AgentOrchestrator {
     private void failTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
         final AgentToolFamily family, final String message, final TurnEventSink sink) {
         log.warn("Copilot thread {}: tool '{}' failed: {}", ctx.thread().uid(), req.name(), message);
+        recordToolError(ctx, req, kind, family, message, sink);
+    }
+
+    private void recordToolError(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
+        final AgentToolFamily family, final String message, final TurnEventSink sink) {
         // Mark the result as an error so the model (and provider APIs, e.g. Gemini's functionResponse)
         // see it as a failed tool call rather than a normal result — ToolExecutionResultMessage.from(..)
         // leaves isError null.
@@ -426,6 +446,16 @@ public class AgentOrchestrator {
             .build());
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
         emitToolResult(sink, req.name(), "error", message, null);
+    }
+
+    private static String malformedArgumentsMessage(final ToolExecutionRequest req, @Nullable final FinishReason finishReason) {
+        if (finishReason == FinishReason.LENGTH) {
+            return "The tool call was not executed because the output token limit was reached before its arguments were complete. Reissue the call with shorter arguments.";
+        }
+        String raw = req.arguments();
+        String received = raw.length() <= MAX_MALFORMED_ARGUMENTS_CHARS ? raw : raw.substring(0, MAX_MALFORMED_ARGUMENTS_CHARS) + "…";
+        return "Invalid tool arguments, so the call was not executed: %s. Received: %s Reissue the call with valid JSON arguments."
+            .formatted(ChatMessageAdaptor.malformedArgumentsReason(raw), received);
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
@@ -579,6 +609,11 @@ public class AgentOrchestrator {
         return (int) log.stream()
             .filter(m -> m.type() == AgentMessageType.TOOL_CALL && traceId.equals(m.traceId()))
             .count();
+    }
+
+    private boolean hasDraftInTurn(final AgentLoopContext ctx) {
+        return threadManager.load(ctx.thread().tenant(), ctx.thread().uid()).stream()
+            .anyMatch(m -> AgentMessageType.ARTEFACT_DRAFT == m.type() && ctx.traceId().equals(m.traceId()));
     }
 
     private void abortCancelled(final AgentLoopContext ctx) {

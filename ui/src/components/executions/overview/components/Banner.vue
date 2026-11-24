@@ -108,7 +108,7 @@
                     {{ $t("copy logs") }}
                 </KsButton>
 
-                <KsButton v-if="isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
+                <KsButton v-if="aiEnabled && isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
                     {{ $t("fix_with_ai") }}
                 </KsButton>
             </div>
@@ -158,6 +158,7 @@
 
     import {Execution, useExecutionsStore} from "../../../../stores/executions"
     import {useMiscStore} from "override/stores/misc"
+    import {useAiEnabled} from "../../../../composables/useAiEnabled"
     import * as Utils from "../../../../utils/utils"
     import {useToast} from "../../../../utils/toast"
     import {createLink} from "../utils/links"
@@ -190,6 +191,7 @@
     const executionsStore = useExecutionsStore()
     const toast = useToast()
 
+    const aiEnabled = useAiEnabled()
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
     const statusLabel = computed(() => {

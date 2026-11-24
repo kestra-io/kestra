@@ -61,9 +61,12 @@ export interface MinimalNode {
         type: string;
         namespace?: string;
         flowId?: string;
+        revision?: number;
         disabled?: boolean;
     };
     triggerDeclaration?: {id?: string};
+    /** The trigger's state on the server, absent for a trigger that was never saved. */
+    trigger?: {disabled?: boolean};
 }
 
 export interface Cluster {

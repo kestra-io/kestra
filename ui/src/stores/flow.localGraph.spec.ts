@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {generateFlowGraphFromSource, validateFlows} from "@kestra-io/kestra-sdk/flows"
+import {flow as fetchFlow, generateFlowGraph, generateFlowGraphFromSource, validateFlows} from "@kestra-io/kestra-sdk/flows"
 import {useFlowStore, type Flow} from "./flow"
 
 vi.mock("vue-router", () => ({
@@ -12,6 +12,8 @@ vi.mock("override/stores/auth", () => ({
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     validateFlows: vi.fn(() => Promise.resolve([{}])),
     generateFlowGraphFromSource: vi.fn(),
+    generateFlowGraph: vi.fn(),
+    flow: vi.fn(),
 }))
 const PLUGIN_FLOWABLE = "io.kestra.plugin.acme.Retry"
 vi.mock("./plugins", () => ({
@@ -34,6 +36,8 @@ describe("flow store topology", () => {
         setActivePinia(createPinia())
         vi.mocked(generateFlowGraphFromSource).mockReset().mockResolvedValue(BACKEND_GRAPH)
         vi.mocked(validateFlows).mockReset().mockResolvedValue([{index: 0}])
+        vi.mocked(generateFlowGraph).mockReset()
+        vi.mocked(fetchFlow).mockReset().mockRejectedValue({response: {status: 404}})
     })
 
     it("should draw the graph from the source without asking the backend", async () => {
@@ -73,6 +77,34 @@ describe("flow store topology", () => {
         expect(taskUids(store)).toEqual(["root.log"])
         expect(store.invalidGraph).toBe(true)
         expect(generateFlowGraphFromSource).not.toHaveBeenCalled()
+    })
+
+    it("should keep the server state of a trigger on the graph it builds", async () => {
+        const store = useFlowStore()
+        const source = `${flowWith(LOG)}triggers:\n  - id: nightly\n    type: io.kestra.plugin.core.trigger.Schedule\n`
+        const savedGraph = {nodes: [{uid: "root.Triggers.nightly", type: "GraphTrigger", trigger: {disabled: true}}]}
+        vi.mocked(generateFlowGraph).mockResolvedValue(savedGraph)
+        await store.loadGraph({flow: {id: "hello", namespace: "company.team"} as Flow})
+
+        await store.loadGraphFromSource({flow: source})
+
+        const trigger = store.flowGraph?.nodes.find((node) => node.uid === "root.Triggers.nightly")
+        expect(trigger?.trigger?.disabled).toBe(true)
+        expect(generateFlowGraphFromSource).not.toHaveBeenCalled()
+    })
+
+    it("should disable a subflow node whose flow is disabled, asking for that flow once", async () => {
+        const store = useFlowStore()
+        const source = flowWith("  - id: child\n    type: io.kestra.plugin.core.flow.Subflow\n    namespace: company.team\n    flowId: archived")
+        const archived = {id: "archived", namespace: "company.team", disabled: true, draft: false, deleted: false, tasks: []}
+        vi.mocked(fetchFlow).mockResolvedValue(archived)
+
+        await store.loadGraphFromSource({flow: source})
+        await store.loadGraphFromSource({flow: source})
+
+        expect(store.flowGraph?.nodes.find((node) => node.uid === "root.child")?.disabled).toBe(true)
+        expect(fetchFlow).toHaveBeenCalledOnce()
+        expect(fetchFlow).toHaveBeenCalledWith({namespace: "company.team", id: "archived", revision: undefined})
     })
 
     it("should redraw on edit when the validation never answers", async () => {

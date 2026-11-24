@@ -94,7 +94,7 @@ Not compared:
 - the suffix of a root, end, finally or after-execution uid: random on the server on every build, fixed in the browser
 - a task or trigger body beyond `id` and `type`: the server sends its plugin model serialized back (defaults, `Property` values, a label map turned into a list), the browser keeps the YAML as written
 - `cluster.finally`, an internal getter the server serializes by accident and nothing reads
-- `trigger` on a trigger node and `disabled: true` on a subflow node, which the server reads from its repository and the source does not hold
+- `trigger` on a trigger node and `disabled: true` on a subflow node, which the server reads from its repository and the source does not hold. An app that wants them dimmed sets them on the built graph itself, as the Kestra UI does
 
 ### Styles
 

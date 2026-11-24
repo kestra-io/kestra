@@ -135,6 +135,19 @@ type GraphSubflows = {params?: {subflows?: string | string[]}}
 /** A source the browser cannot draw, the local counterpart of the 422 the graph endpoint answers. */
 class UndrawableFlowError extends Error {}
 
+type GraphNode = FlowGraph["nodes"][number]
+
+const PEBBLE_OPENING = /\{[{%]/
+
+/** The flow a subflow node points to, unless it is only known once the expressions are rendered. */
+function subflowTarget(node: GraphNode) {
+    const {namespace, flowId, revision} = node.task ?? {}
+    if (!node.type.endsWith("SubflowGraphTask") || !namespace || !flowId || PEBBLE_OPENING.test(namespace + flowId)) {
+        return undefined
+    }
+    return {key: `${namespace}/${flowId}/${revision ?? ""}`, namespace, id: flowId, revision}
+}
+
 export type FlowSaveOutcome =
     | "saved"
     | "redirect_to_update"
@@ -790,6 +803,10 @@ function deleteFlowAndDependencies(router: Router) {
         }).then(data => {
             invalidGraph.value = false
             flowGraph.value = toFlowGraph(data)
+            serverTriggers = {
+                flow: `${flowVar.namespace}/${flowVar.id}`,
+                byUid: new Map(flowGraph.value.nodes.flatMap(node => (node.trigger ? [[node.uid, node.trigger] as const] : []))),
+            }
             return flowGraph.value
         }).catch(() => {
             invalidGraph.value = true
@@ -800,6 +817,40 @@ function deleteFlowAndDependencies(router: Router) {
         return config?.params?.subflows ? String(config.params.subflows).split(",").filter(Boolean) : []
     }
 
+    // What only the server knows about a node, kept so that a graph built in the browser still dims it.
+    let serverTriggers: {flow: string; byUid: Map<string, NonNullable<GraphNode["trigger"]>>} | undefined
+    const disabledSubflows = new Set<string>()
+    const subflowChecks = new Map<string, Promise<void>>()
+
+    /** Asks the server, once per target, whether the flow a subflow task points to is disabled. */
+    function checkSubflow(target: NonNullable<ReturnType<typeof subflowTarget>>): Promise<void> {
+        let check = subflowChecks.get(target.key)
+        if (!check) {
+            check = FlowsAPI.flow({namespace: target.namespace, id: target.id, revision: target.revision})
+                .then(found => {
+                    if (found.disabled) disabledSubflows.add(target.key)
+                })
+                .catch(error => {
+                    handled(error)
+                    // only an answer is remembered: an unreachable server says nothing about the flow
+                    if (!error?.response) subflowChecks.delete(target.key)
+                })
+            subflowChecks.set(target.key, check)
+        }
+        return check
+    }
+
+    function withServerState(graph: FlowGraph, flowKey?: string): FlowGraph {
+        const triggers = serverTriggers && serverTriggers.flow === flowKey ? serverTriggers.byUid : undefined
+        return {
+            ...graph,
+            nodes: graph.nodes.map(node => {
+                const trigger = triggers?.get(node.uid)
+                if (trigger) return {...node, trigger}
+                return disabledSubflows.has(subflowTarget(node)?.key ?? "") ? {...node, disabled: true} : node
+            }),
+        }
+    }
     /**
      * The graph of `source` built in the browser, or undefined when only the backend can draw it:
      * the subgraph of a flowable shipped by a plugin is defined by that plugin's code.
@@ -807,9 +858,9 @@ function deleteFlowAndDependencies(router: Router) {
     async function localGraph(source: string): Promise<FlowGraph | undefined> {
         const icons = pluginsStore.iconsLoaded ? pluginsStore.icons : await pluginsStore.fetchIcons()
         try {
-            const parsed = YAML_UTILS.parse(source)
+            const parsed = YAML_UTILS.parse<ParsedFlow>(source)
             if (unsupportedFlowableTypes(parsed, (type) => icons[type]?.flowable === true).length) return undefined
-            return buildFlowGraph(parsed)
+            return withServerState(buildFlowGraph(parsed), `${parsed?.namespace}/${parsed?.id}`)
         } catch {
             throw new UndrawableFlowError()
         }
@@ -818,7 +869,13 @@ function deleteFlowAndDependencies(router: Router) {
     /** The backend is only asked for what it alone knows: an expanded subflow, or a plugin's flowable. */
     async function graphFromSource(source: string, subflows: string[]): Promise<FlowGraph> {
         const local = subflows.length ? undefined : await localGraph(source)
-        if (local) return local
+        if (local) {
+            await Promise.all(local.nodes.flatMap(node => {
+                const target = subflowTarget(node)
+                return target ? [checkSubflow(target)] : []
+            }))
+            return withServerState(local)
+        }
 
         const flowParsed = YAML_UTILS.parse<ParsedFlow>(source)
         const body = !flowParsed?.id || !flowParsed.namespace

@@ -343,6 +343,8 @@
     }
 
     type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem"> & {
+        scrollToBottom?: () => void
+        scrollToPosition?: (position: number, options?: unknown) => void
         $el?: HTMLElement
     }
 
@@ -1123,7 +1125,7 @@
         return `${taskRunId}-${attemptNumber}`
     }
 
-    const MAX_SCROLL_ATTEMPTS = 5
+    const MAX_SCROLL_ATTEMPTS = 15
     const SCROLL_BOTTOM_TOLERANCE_PX = 5
 
     function scrollScrollerToEnd(uid: string, targetIndex: number, attempt = 0) {
@@ -1137,6 +1139,7 @@
         }
 
         scroller.scrollToItem(targetIndex, {align: "end"})
+        scroller.scrollToBottom?.()
 
         const el = scroller.$el
         if (el && el.scrollHeight > el.clientHeight && el.scrollTop === 0) {
@@ -1146,13 +1149,19 @@
         if (attempt < MAX_SCROLL_ATTEMPTS) {
             requestAnimationFrame(() => {
                 const currentEl = scroller.$el
+                if (!currentEl) return
+                const maxScroll = currentEl.scrollHeight - currentEl.clientHeight
                 const isAtBottom =
-                    currentEl &&
-                    currentEl.scrollHeight > currentEl.clientHeight &&
-                    currentEl.scrollTop >= currentEl.scrollHeight - currentEl.clientHeight - SCROLL_BOTTOM_TOLERANCE_PX
+                    maxScroll > 0 &&
+                    currentEl.scrollTop >= maxScroll - SCROLL_BOTTOM_TOLERANCE_PX
                 if (!isAtBottom) {
-                    scrollScrollerToEnd(uid, targetIndex, attempt + 1)
+                    scroller.scrollToItem(targetIndex, {align: "end"})
+                    scroller.scrollToBottom?.()
+                    if (maxScroll > 0 && currentEl.scrollTop === 0) {
+                        currentEl.scrollTop = currentEl.scrollHeight
+                    }
                 }
+                scrollScrollerToEnd(uid, targetIndex, attempt + 1)
             })
         }
     }
@@ -1186,6 +1195,7 @@
     }
 
     function handleLogScrollerResize() {
+        if (disposed) return
         scrollToBottomFailedTask()
         emit("scroller-update")
     }

@@ -262,6 +262,10 @@ subprojects {subProj ->
                 System.getenv('JUNIT_TEST_TIMEOUT_MIN') ? "${System.getenv('JUNIT_TEST_TIMEOUT_MIN')} m" : '5 m'
             t.finalizedBy jacocoTestReport
 
+            // Always run the tests: no up-to-date check and no build cache hit
+            t.outputs.upToDateWhen { false }
+            t.outputs.cacheIf { false }
+
 
             // -PprofileHeap: raise the ceiling so no module is heap-starved, and log real GC
             // occupancy per module so per-module maxHeapSize can be set from measurements

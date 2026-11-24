@@ -4,10 +4,11 @@ import {type VueWrapper} from "@vue/test-utils"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 const publishDraft = vi.fn().mockResolvedValue("saved")
+const saveAsDraft = vi.fn()
 
 const routeState = {tab: "edit"}
 const flowState = {deleted: false, exists: true, isCreating: false}
-const editorState = {isAllowedEdit: true}
+const editorState = {isAllowedEdit: true, hasBlockingErrors: false}
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {tab: routeState.tab}, query: {}}),
@@ -52,6 +53,9 @@ vi.mock("../../../components/flows/useFlowEditorActions", () => ({
         hasFlowSourceChange: false,
         canSave: false,
         hasErrors: false,
+        get hasBlockingErrors() {
+            return editorState.hasBlockingErrors
+        },
         isReadOnly: false,
         get isAllowedEdit() {
             return editorState.isAllowedEdit
@@ -62,7 +66,7 @@ vi.mock("../../../components/flows/useFlowEditorActions", () => ({
         isPlaygroundEnabled: false,
         isPlaygroundAllowed: false,
         save: vi.fn(),
-        saveAsDraft: vi.fn(),
+        saveAsDraft,
         publishDraft,
         saveAndExecute: vi.fn(),
         exportYaml: vi.fn(),
@@ -127,6 +131,7 @@ describe("Actions.vue — publish a draft flow", () => {
         flowState.exists = true
         flowState.isCreating = false
         editorState.isAllowedEdit = true
+        editorState.hasBlockingErrors = false
     })
 
     it("shows an enabled Publish action for an unchanged draft flow, and clicking it publishes", async () => {
@@ -140,6 +145,26 @@ describe("Actions.vue — publish a draft flow", () => {
 
         expect(publishDraft).toHaveBeenCalledTimes(1)
     })
+
+    it("blocks Publish on a flow with validation errors, and keeps Save as draft reachable", async () => {
+        editorState.hasBlockingErrors = true
+        const wrapper = mountActions()
+
+        const publishButton = findButtonByText(wrapper, "Publish")
+        expect(publishButton!.attributes("disabled")).toBeDefined()
+        await publishButton!.trigger("click")
+        expect(publishDraft).not.toHaveBeenCalled()
+
+        await wrapper.find("button[aria-label='Toggle Dropdown']").trigger("mouseenter")
+        const saveAsDraftItem = await vi.waitFor(() => {
+            const item = Array.from(document.body.querySelectorAll("li")).find(li => li.textContent?.trim() === "Save as draft")
+            expect(item).toBeDefined()
+            return item!
+        })
+        saveAsDraftItem.click()
+
+        expect(saveAsDraft).toHaveBeenCalledTimes(1)
+    })
 })
 
 describe("Actions.vue — the quick action pair is the same shape on every tab", () => {
@@ -150,6 +175,7 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
         flowState.exists = true
         flowState.isCreating = false
         editorState.isAllowedEdit = true
+        editorState.hasBlockingErrors = false
     })
 
     it("pairs the save-family control with Execute on the editor tab", () => {

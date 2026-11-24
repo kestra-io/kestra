@@ -37,7 +37,7 @@
                 v-if="isEditTab && editorIsAllowedEdit && !deleted"
                 splitButton
                 :disabled="editorIsReadOnly || (!isPublishAction && !editorCanSave)"
-                :buttonProps="{disabled: editorHasErrors}"
+                :mainButtonDisabled="editorHasBlockingErrors"
                 @click="editorSaveOrPublish"
             >
                 {{ isPublishAction ? $t('publish') : $t('save') }}
@@ -142,6 +142,7 @@
         haveChange: editorHaveChange,
         canSave: editorCanSave,
         hasErrors: editorHasErrors,
+        hasBlockingErrors: editorHasBlockingErrors,
         isReadOnly: editorIsReadOnly,
         isAllowedEdit: editorIsAllowedEdit,
         isDraft: editorIsDraft,

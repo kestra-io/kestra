@@ -14,6 +14,7 @@ import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
 import {asProblem} from "@kestra-io/kestra-sdk"
 import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
+import {validationErrorLines} from "../../utils/validationErrors"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
 import {storageKeys} from "../../utils/constants"
@@ -32,6 +33,8 @@ export function useFlowEditorActions() {
     const haveChange = computed(() => hasFlowSourceChange.value || flowStore.hasDirtyEditorFiles)
     const canSave = computed(() => haveChange.value || flowStore.isCreating)
     const hasErrors = computed(() => (flowStore.flowErrors?.length ?? 0) > 0)
+    // On a create, "flow already exists" is in flowErrors too, but saving is its remedy (the override prompt).
+    const hasBlockingErrors = computed(() => validationErrorLines(flowStore.flowValidation?.errors).length > 0)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
     const isDraft = computed(() => flowStore.flow?.draft ?? false)
@@ -335,6 +338,7 @@ export function useFlowEditorActions() {
         hasFlowSourceChange,
         canSave,
         hasErrors,
+        hasBlockingErrors,
         isReadOnly,
         isAllowedEdit,
         isDraft,

@@ -1,5 +1,5 @@
-import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
+import {afterEach, describe, test, expect} from "vitest"
+import {mount, type VueWrapper} from "@vue/test-utils"
 import {defineComponent, nextTick} from "vue"
 import {ElDropdown} from "element-plus"
 import KestraDesignSystem from "../../../index"
@@ -57,6 +57,49 @@ describe("KsDropdown", () => {
         })
 
         expect(wrapper.getComponent(ElDropdown).props("popperOptions")).toEqual(custom)
+    })
+})
+
+describe("KsDropdown split button", () => {
+    let wrapper: VueWrapper | undefined
+
+    afterEach(() => {
+        wrapper?.unmount()
+        wrapper = undefined
+    })
+
+    const mountSplit = (props: Record<string, unknown>) => {
+        wrapper = mount(KsDropdown, {
+            props: {splitButton: true, ...props},
+            slots: {
+                default: "Save",
+                dropdown: defineComponent({
+                    components: {KsDropdownMenu, KsDropdownItem},
+                    template: "<ks-dropdown-menu><ks-dropdown-item>Save as draft</ks-dropdown-item></ks-dropdown-menu>",
+                }),
+            },
+            attachTo: document.body,
+            global: globalConfig,
+        })
+        const [main, caret] = wrapper.findAll("button")
+        return {wrapper, main, caret}
+    }
+
+    test("mainButtonDisabled blocks the label button only", async () => {
+        const {wrapper, main, caret} = mountSplit({mainButtonDisabled: true})
+
+        expect(main.attributes("disabled")).toBeDefined()
+        expect(caret.attributes("disabled")).toBeUndefined()
+
+        await main.trigger("click")
+        expect(wrapper.emitted("click")).toBeUndefined()
+    })
+
+    test("disabled blocks both halves", () => {
+        const {main, caret} = mountSplit({disabled: true})
+
+        expect(main.attributes("disabled")).toBeDefined()
+        expect(caret.attributes("disabled")).toBeDefined()
     })
 })
 

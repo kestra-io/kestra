@@ -92,21 +92,24 @@ function renderMarkdown(report: Report): string {
 export default class FlakinessReporter implements Reporter {
     private suite?: Suite
     private rootDir?: string
-    private readonly reportDirectory: string
+    private readonly outputDirectory: string
+    private reportDirectory?: string
 
     constructor(options: {outputDirectory?: string} = {}) {
-        this.reportDirectory = options.outputDirectory ? resolve(options.outputDirectory) : DEFAULT_REPORT_DIRECTORY
+        this.outputDirectory = options.outputDirectory ?? "playwright-report"
     }
 
     onBegin(config: FullConfig, suite: Suite): void {
         this.rootDir = config.rootDir
+        this.reportDirectory = resolve(dirname(config.configFile), this.outputDirectory)
         this.suite = suite
     }
 
     onEnd(result: FullResult): void {
         const suite = this.suite
         const rootDir = this.rootDir
-        if (!suite || !rootDir) {
+        const reportDirectory = this.reportDirectory
+        if (!suite || !rootDir || !reportDirectory) {
             return
         }
 
@@ -139,9 +142,9 @@ export default class FlakinessReporter implements Reporter {
         const markdown = renderMarkdown(report)
 
         try {
-            mkdirSync(this.reportDirectory, {recursive: true})
-            writeFileSync(resolve(this.reportDirectory, "flakiness-report.json"), JSON.stringify(report, null, 2) + "\n", "utf8")
-            writeFileSync(resolve(this.reportDirectory, "flakiness-report.md"), markdown + "\n", "utf8")
+            mkdirSync(reportDirectory, {recursive: true})
+            writeFileSync(resolve(reportDirectory, "flakiness-report.json"), JSON.stringify(report, null, 2) + "\n", "utf8")
+            writeFileSync(resolve(reportDirectory, "flakiness-report.md"), markdown + "\n", "utf8")
         } catch (error) {
             console.error("Could not write the E2E flakiness report:", error)
         }

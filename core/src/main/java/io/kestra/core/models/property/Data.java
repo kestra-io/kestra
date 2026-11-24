@@ -64,6 +64,37 @@ public class Data {
     }
 
     /**
+     * Same as {@link #read(RunContext)}, but a stored file is read one record per request, for the first subscription only,
+     * and closed when the Flux completes, fails or is cancelled, instead of being buffered whole, so prefer it for large files.
+     * For a stored file, a later subscription completes empty, without any error.
+     * The file is opened by this call, so a Flux that is never subscribed keeps it open, as {@link #read(RunContext)} does.
+     */
+    public Flux<Map<String, Object>> readOnDemand(RunContext runContext) throws IllegalVariableEvaluationException {
+        if (from instanceof String str) {
+            var renderedString = runContext.render(str);
+            if (URIFetcher.supports(renderedString)) {
+                try {
+                    var inputStream = new BufferedInputStream(URIFetcher.of(renderedString).fetch(runContext), FileSerde.BUFFER_SIZE);
+                    try {
+                        return FileSerde.readOnDemand(inputStream, MAP_OF_STRING_OBJECT)
+                            .publishOn(Schedulers.boundedElastic());
+                    } catch (IOException | RuntimeException e) {
+                        try {
+                            inputStream.close();
+                        } catch (IOException closeError) {
+                            e.addSuppressed(closeError);
+                        }
+                        throw e;
+                    }
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        }
+        return read(runContext);
+    }
+
+    /**
      * Generates a <code>Flux</code> of objects for the data items.
      * The mapper passed to this method will be used to map to the desired type when the `from` attribute is a Map or a List of Maps.
      * If you want to work with maps, use {@link #read(RunContext)} instead.

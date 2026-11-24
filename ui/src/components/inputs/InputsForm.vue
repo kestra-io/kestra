@@ -160,10 +160,10 @@
                 <KsDatePicker
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'DATETIME'"
-                    :modelValue="instantToPickerDate(inputsValues[input.id])"
-                    @update:model-value="(val: Date | null) => { inputsValues[input.id] = pickerDateToInstant(val); onChange(input); }"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
                     type="datetime"
-                    :showNow="false"
+                    :timezone="dateUtils.currentTimezone()"
                     :disabledDate="(date: Date) => isOutsideDateRange(input, date)"
                 />
                 <div v-if="input.type === 'DATETIME' && dateHint(input)" class="hint">{{ dateHint(input) }}</div>
@@ -378,7 +378,7 @@
     import {useI18n} from "vue-i18n"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useInputsWizard} from "../../composables/useInputsWizard"
-    import {normalize, flattenInputs, instantToPickerDate, pickerDateToInstant, type InputType} from "../../utils/inputs"
+    import {normalize, flattenInputs, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
     import * as Utils from "../../utils/utils"
     import DeleteIcon from "vue-material-design-icons/Delete.vue"
@@ -759,7 +759,7 @@
     // A DATETIME picker works on the wall clock of the Time Zone preference, so its limits must be read there too.
     function dateLimitForPicker(input: InputMetaData, value: unknown) {
         const limit = dateLimit(value)
-        const shifted = limit !== undefined && input.type === "DATETIME" ? instantToPickerDate(limit.toDate()) : undefined
+        const shifted = limit !== undefined && input.type === "DATETIME" ? dateUtils.instantToPickerDate(limit.toDate()) : undefined
         return shifted ? dayjs(shifted) : limit
     }
 

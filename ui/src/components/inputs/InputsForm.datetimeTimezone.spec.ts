@@ -50,9 +50,9 @@ describe("InputsForm DATETIME input time zone", () => {
 
     test("stores the typed value as a wall clock in the Time Zone preference, not the browser zone", async () => {
         const wrapper = await mountDatetime()
-        const picker = wrapper.findComponent({name: "KsDatePicker"})
+        const picker = wrapper.findComponent({name: "ElDatePicker"})
 
-        // The picker emits a browser-local Date: 09:00 as typed by the user.
+        // Element Plus emits a browser-local Date: 09:00 as typed by the user.
         picker.vm.$emit("update:modelValue", new Date(2026, 10, 24, 9, 0, 0))
         await flushPromises()
 
@@ -62,7 +62,7 @@ describe("InputsForm DATETIME input time zone", () => {
 
     test("shows a stored instant as the wall clock of the Time Zone preference", async () => {
         const wrapper = await mountDatetime("2026-11-24T08:00:00.000Z")
-        const shown = wrapper.findComponent({name: "KsDatePicker"}).props("modelValue") as Date
+        const shown = wrapper.findComponent({name: "ElDatePicker"}).props("modelValue") as Date
 
         expect(shown).toEqual(new Date(2026, 10, 24, 9, 0, 0))
     })

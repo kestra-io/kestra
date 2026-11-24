@@ -1,6 +1,6 @@
 <template>
-    <span v-if="field">{{ durationUtils.humanDuration(calculatedField) }}</span>
-    <em v-else>{{ durationUtils.humanDuration(calculatedField) }}</em>
+    <span v-if="field">{{ format(calculatedField) }}</span>
+    <em v-else>{{ format(calculatedField) }}</em>
 </template>
 
 <script setup lang="ts">
@@ -12,6 +12,10 @@
         field: number | undefined,
         startDate?: string
     }>()
+
+    const format = (value: number) => {
+        return durationUtils.humanDuration(value, {maxDecimalPoints: 2, units: ["h", "m", "s"]})
+    }
 
     // A non-terminated execution carries no duration, so it is counted against a ticking clock:
     // a bare Date.now() stays cached in the computed and survives a refresh of identical props.

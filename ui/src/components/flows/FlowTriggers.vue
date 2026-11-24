@@ -571,10 +571,12 @@
 
     type BackfillRequest = TriggerControllerApiCreateBackfillRequest["backfill"]
 
-    const cleanBackfill = computed<BackfillRequest>(() => {
+    const cleanBackfill = computed<BackfillRequest | undefined>(() => {
+        const {start} = backfill.value
+        if (!start) return undefined
         const labels = backfill.value.labels.filter((label): label is Label => Boolean(label.key && label.value))
         return {
-            start: backfill.value.start?.toISOString(),
+            start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
             inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
@@ -638,10 +640,11 @@
 
     const postBackfill = () => {
         const trigger = selectedTrigger.value
-        if (!trigger) return
+        const request = cleanBackfill.value
+        if (!trigger || !request) return
 
         const identity = triggerIdentity(trigger)
-        TriggersAPI.createBackfill({...identity, backfill: cleanBackfill.value})
+        TriggersAPI.createBackfill({...identity, backfill: request})
             .then(() => {
                 toast.saved(identity.triggerId)
                 setBackfillModal(null, false)

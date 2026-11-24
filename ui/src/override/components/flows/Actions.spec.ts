@@ -73,7 +73,13 @@ vi.mock("../../../components/flows/useFlowEditorActions", () => ({
     }),
 }))
 
+// The retry loop and the restore prompt have their own spec; here only the buttons are under test.
+vi.mock("../../../components/flows/useDraftOutbox", () => ({
+    useDraftOutbox: vi.fn(),
+}))
+
 import Actions from "./Actions.vue"
+import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY} from "../../../composables/useServerReachability"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 const messages = {
@@ -178,6 +184,20 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
 
         // Then — Edit flow used to render here and navigate to an undefined flow
         expect(findButtonByText(wrapper, "Edit flow")).toBeUndefined()
+    })
+
+    it("disables Execute while the server is unreachable, since a run cannot wait for it", () => {
+        routeState.tab = "overview"
+        vi.useFakeTimers()
+        try {
+            markServerUnreachable()
+            vi.advanceTimersByTime(UNREACHABLE_DELAY)
+
+            expect(findExecute(mountActions()).attributes("disabled")).toBe("true")
+        } finally {
+            markServerReachable()
+            vi.useRealTimers()
+        }
     })
 
     it("promotes Restore to the primary slot on a deleted flow, and offers no Execute", () => {

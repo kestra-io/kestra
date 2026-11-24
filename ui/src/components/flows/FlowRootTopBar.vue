@@ -9,6 +9,11 @@
                 {{ routeInfo.title }}
                 <Badge v-if="routeInfo.beta" :label="$t('plugins.beta')" />
                 <Badge v-if="isDraft" :label="$t('draft')" />
+                <Badge
+                    v-if="flowStore.queuedDraft"
+                    :label="$t('offlineDraft.badge')"
+                    :tooltip="$t('offlineDraft.queued')"
+                />
             </span>
         </template>
         <template #actions>

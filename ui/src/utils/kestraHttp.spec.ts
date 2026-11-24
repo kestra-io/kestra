@@ -31,7 +31,7 @@ vi.mock("nprogress", () => ({
 }))
 
 import type {Router} from "vue-router"
-import {handled, handledIf, isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
+import {handled, handledIf, isReportedCentrally, isServerUnreachableError, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
 import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY, useServerReachability} from "../composables/useServerReachability"
 import {isReauthOpen, requestReauth, resolveReauth} from "../composables/useReauthDialog"
 
@@ -326,6 +326,17 @@ describe("setupKestraHttp server reachability", () => {
         vi.advanceTimersByTime(UNREACHABLE_DELAY)
 
         expect(useServerReachability().unreachable.value).toBe(true)
+    })
+
+    it("marks the error itself only when the server never answered, so a caller can queue the work instead of reporting it", () => {
+        const {onError} = interceptors()
+        const gatewayResponse = {status: 503, statusText: "Service Unavailable", url: "http://x/api", headers: new Headers({"content-type": "text/html"})}
+        const kestraResponse = {status: 422, statusText: "Unprocessable", url: "http://x/api", headers: new Headers({"content-type": "application/json"})}
+
+        expect(isServerUnreachableError(onError(new TypeError("Failed to fetch"), undefined, kestraApiRequest(), {}))).toBe(true)
+        expect(isServerUnreachableError(onError(Object.assign(new Error("503"), {status: 503}), gatewayResponse, kestraApiRequest(), {}))).toBe(true)
+        expect(isServerUnreachableError(onError(Object.assign(new Error("422"), {status: 422}), kestraResponse, kestraApiRequest(), {}))).toBe(false)
+        expect(isServerUnreachableError(new TypeError("a bug in the save path, not a network failure"))).toBe(false)
     })
 
     it("does not flag the server unreachable when Kestra itself answers a 502 with a JSON body", () => {

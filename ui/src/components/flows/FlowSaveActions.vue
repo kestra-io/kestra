@@ -12,7 +12,7 @@
                     <KsDropdownItem v-if="isPublishPrimary" :icon="FileDocumentEditOutline" disabled>
                         {{ $t("save_draft") }}
                     </KsDropdownItem>
-                    <KsDropdownItem v-else :icon="Publish" :disabled="hasErrors" data-test="flow-publish" @click="publish">
+                    <KsDropdownItem v-else :icon="Publish" :disabled="hasErrors || unreachable" data-test="flow-publish" @click="publish">
                         <div class="publish-item">
                             {{ $t("publish") }}
                             <KsText size="small" type="secondary">{{ $t("flow_publish.description") }}</KsText>
@@ -21,7 +21,7 @@
                     <KsDropdownItem
                         v-if="haveChange && !flowStore.isCreating"
                         :icon="PlayBoxOutline"
-                        :disabled="hasErrors || isReadOnly"
+                        :disabled="hasErrors || isReadOnly || unreachable"
                         @click="saveAndExecute"
                     >
                         {{ $t("save_and_execute") }}
@@ -39,11 +39,15 @@
     import Publish from "vue-material-design-icons/Publish.vue"
     import {useFlowStore} from "../../stores/flow"
     import {useFlowEditorActions} from "./useFlowEditorActions"
+    import {useServerReachability} from "../../composables/useServerReachability"
 
     const flowStore = useFlowStore()
     const {haveChange, canSave, hasErrors, isReadOnly, isDraft, publish, saveAsDraft, saveAndExecute} = useFlowEditorActions()
 
-    const isPublishPrimary = computed(() => isDraft.value && !haveChange.value && !flowStore.isCreating)
+    const {unreachable} = useServerReachability()
+
+    // A draft is the only save that can wait for the server, so Publish never takes the button while there is none.
+    const isPublishPrimary = computed(() => isDraft.value && !haveChange.value && !flowStore.isCreating && !unreachable.value)
 </script>
 
 <style scoped>

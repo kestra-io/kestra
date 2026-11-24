@@ -17,12 +17,13 @@ vi.mock("@kestra-io/kestra-sdk/searchable-data", () => ({
 }))
 
 const triggerScope = reactive({visible: false, enabled: false})
-const logsAllowed = vi.hoisted(() => ({value: true}))
+const denied = vi.hoisted(() => new Set<string>())
 
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {
         isAllowed: (resource: string, act: string, namespace: string) =>
-            (resource === "EXECUTION" && act === "ACCESS_LOGS" && namespace === "io.kestra.tests") === logsAllowed.value,
+            namespace === "io.kestra.tests" && !denied.has(`${resource}.${act}`),
+        hasAny: (resource: string) => !denied.has(resource),
     }}),
 }))
 
@@ -82,13 +83,13 @@ describe("Banner", () => {
         setActivePinia(routedPinia())
         triggerScope.visible = false
         triggerScope.enabled = false
-        logsAllowed.value = true
+        denied.clear()
     })
 
     test("offers to copy the logs only to a user who can access them", () => {
         expect(mountBanner().text()).toContain("copy logs")
 
-        logsAllowed.value = false
+        denied.add("EXECUTION.ACCESS_LOGS")
 
         expect(mountBanner().text()).not.toContain("copy logs")
     })
@@ -145,6 +146,24 @@ describe("Banner", () => {
 
         expect(wrapper.findComponent(ChevronUp).exists()).toBe(true)
         expect(wrapper.findComponent(ChevronDown).exists()).toBe(false)
+    })
+
+    test("offers to fix with AI only to a user who can use the copilot", () => {
+        expect(mountBanner(buildExecution("FAILED")).find(".fix-with-ai").exists()).toBe(true)
+
+        denied.add("COPILOT")
+
+        expect(mountBanner(buildExecution("FAILED")).find(".fix-with-ai").exists()).toBe(false)
+    })
+
+    test("links the flow id to the flow only for a user who can view it", () => {
+        expect(mountBanner().find(".execution-banner__flow").element.tagName).toBe("A")
+
+        denied.add("FLOW.VIEW")
+
+        const flow = mountBanner().find(".execution-banner__flow")
+        expect(flow.element.tagName).toBe("SPAN")
+        expect(flow.text()).toBe(buildExecution().flowId)
     })
 
     test("fix with AI asks only for the first page of ERROR logs", async () => {

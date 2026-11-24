@@ -4,7 +4,9 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import {buildFlowGraph, unsupportedFlowableTypes} from "@kestra-io/topology/flow-graph-builder"
 import {useCoreStore} from "./core"
+import {usePluginsStore} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {defineStore} from "pinia"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
@@ -130,6 +132,9 @@ export interface FlowPreviewBanner {
 /** `subflows` lists the subflow paths whose own graph is expanded inline. */
 type GraphSubflows = {params?: {subflows?: string | string[]}}
 
+/** A source the browser cannot draw, the local counterpart of the 422 the graph endpoint answers. */
+class UndrawableFlowError extends Error {}
+
 export type FlowSaveOutcome =
     | "saved"
     | "redirect_to_update"
@@ -178,6 +183,7 @@ export const useFlowStore = defineStore("flow", () => {
     const creationId = ref<string>()
 
     const coreStore = useCoreStore()
+    const pluginsStore = usePluginsStore()
     const unsavedChangesStore = useUnsavedChangesStore()
     const ksEditorWarnings = ref<string[]>([])
 
@@ -316,17 +322,17 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
+        const drawsTopology = topologyVisible &&
+            flowHaveTasks.value &&
+            flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
+        // drawn from the YAML alone, so the canvas follows the editor without waiting for the validation
+        if (drawsTopology) drawLocalGraph(flowYaml.value ?? "")
+
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? "",
         })
             .then((value: FlowValidations) => {
-                if (
-                    topologyVisible &&
-                    flowHaveTasks.value &&
-                    flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
-                ) {
-                    if (!value.errors?.length) fetchGraph()
-                }
+                if (drawsTopology && !value.errors?.length) fetchGraph()
 
                 return value
             })
@@ -790,21 +796,57 @@ function deleteFlowAndDependencies(router: Router) {
             return undefined
         })
     }
-    function loadGraphFromSource(options: { flow: string, config?: GraphSubflows }) {
-        const subflows: string[] | undefined = options.config?.params?.subflows
-            ? String(options.config.params.subflows).split(",").filter(Boolean)
-            : undefined
-        const flowParsed = YAML_UTILS.parse<ParsedFlow>(options.flow)
-        let flowSource = options.flow
-        if (!flowParsed?.id || !flowParsed.namespace) {
-            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
+    function expandedSubflowsOf(config?: GraphSubflows): string[] {
+        return config?.params?.subflows ? String(config.params.subflows).split(",").filter(Boolean) : []
+    }
+
+    /**
+     * The graph of `source` built in the browser, or undefined when only the backend can draw it:
+     * the subgraph of a flowable shipped by a plugin is defined by that plugin's code.
+     */
+    async function localGraph(source: string): Promise<FlowGraph | undefined> {
+        const icons = pluginsStore.iconsLoaded ? pluginsStore.icons : await pluginsStore.fetchIcons()
+        try {
+            const parsed = YAML_UTILS.parse(source)
+            if (unsupportedFlowableTypes(parsed, (type) => icons[type]?.flowable === true).length) return undefined
+            return buildFlowGraph(parsed)
+        } catch {
+            throw new UndrawableFlowError()
         }
-        return FlowsAPI.generateFlowGraphFromSource(
-            {subflows, body: flowSource},
-        )
-            .then(data => {
+    }
+
+    /** The backend is only asked for what it alone knows: an expanded subflow, or a plugin's flowable. */
+    async function graphFromSource(source: string, subflows: string[]): Promise<FlowGraph> {
+        const local = subflows.length ? undefined : await localGraph(source)
+        if (local) return local
+
+        const flowParsed = YAML_UTILS.parse<ParsedFlow>(source)
+        const body = !flowParsed?.id || !flowParsed.namespace
+            ? YAML_UTILS.updateMetadata(source, {id: "default", namespace: "default"})
+            : source
+        return toFlowGraph(await FlowsAPI.generateFlowGraphFromSource({subflows: subflows.length ? subflows : undefined, body}))
+    }
+
+    const startGraph = latestRequest()
+
+    /** Draws `source` when the browser can do it alone, and leaves the canvas as it is otherwise. */
+    async function drawLocalGraph(source: string) {
+        if (expandedSubflows.value.length) return
+        const isLatest = startGraph()
+        const graph = await localGraph(source).catch(() => undefined)
+        if (!graph || !isLatest()) return
+        invalidGraph.value = false
+        flowGraph.value = graph
+    }
+
+    function loadGraphFromSource(options: { flow: string, config?: GraphSubflows }) {
+        const subflows = expandedSubflowsOf(options.config)
+        const isLatest = startGraph()
+        return graphFromSource(options.flow, subflows)
+            .then(graph => {
+                if (!isLatest()) return graph
                 invalidGraph.value = false
-                flowGraph.value = toFlowGraph(data)
+                flowGraph.value = graph
 
                 const flowVar = YAML_UTILS.parse<Flow>(options.flow)
                 if (flowVar) {
@@ -816,18 +858,18 @@ function deleteFlowAndDependencies(router: Router) {
                     flow.value = flowVar
                 }
 
-                return data
+                return graph
             }).catch(error => {
                 const status = error?.status || error?.response?.status
                 handledIf(error, [404, 422])
-                if (status === 422 && (!subflows || subflows.length === 0)) {
+                if ((status === 422 || error instanceof UndrawableFlowError) && subflows.length === 0) {
                     // flowGraph is deliberately left on the last good layout rather than cleared,
                     // so invalidGraph is what tells the canvas it is showing stale nodes.
-                    invalidGraph.value = true
+                    if (isLatest()) invalidGraph.value = true
                     return Promise.resolve(error.response)
                 }
 
-                if ([404, 422].includes(status) && subflows && subflows.length > 0) {
+                if ([404, 422].includes(status) && subflows.length > 0) {
                     coreStore.message = {
                         title: t("topology-graph.expand_subflow_error"),
                         content: asProblem(error)?.detail,
@@ -840,15 +882,7 @@ function deleteFlowAndDependencies(router: Router) {
     }
 
     function getGraphFromSourceResponse(options: { flow: string, config?: GraphSubflows }) {
-        const subflows: string[] | undefined = options.config?.params?.subflows
-            ? String(options.config.params.subflows).split(",").filter(Boolean)
-            : undefined
-        const flowParsed = YAML_UTILS.parse<ParsedFlow>(options.flow)
-        let flowSource = options.flow
-        if (!flowParsed?.id || !flowParsed.namespace) {
-            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
-        }
-        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource}).then(toFlowGraph)
+        return graphFromSource(options.flow, expandedSubflowsOf(options.config))
     }
 
     function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<FlowRevision[]> {

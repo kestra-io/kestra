@@ -1,0 +1,66 @@
+id: graph-approvals
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval-empty
+    type: io.kestra.plugin.core.flow.Approval
+
+  - id: approval-wait-only
+    type: io.kestra.plugin.core.flow.Approval
+    onWait:
+      - id: approval-wait-only-1
+        type: io.kestra.plugin.core.log.Log
+        message: waiting
+      - id: approval-wait-only-2
+        type: io.kestra.plugin.core.log.Log
+        message: waiting
+
+  - id: approval-full
+    type: io.kestra.plugin.core.flow.Approval
+    onWait:
+      - id: approval-full-wait-1
+        type: io.kestra.plugin.core.log.Log
+        message: waiting
+      - id: approval-full-wait-2
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+          - id: approval-full-wait-2-1
+            type: io.kestra.plugin.core.log.Log
+            message: waiting
+    onApprove:
+      - id: approval-full-approve-1
+        type: io.kestra.plugin.core.log.Log
+        message: approved
+      - id: approval-full-approve-2
+        type: io.kestra.plugin.core.log.Log
+        message: approved
+    onDeny:
+      - id: approval-full-deny
+        type: io.kestra.plugin.core.log.Log
+        message: denied
+    errors:
+      - id: approval-full-error
+        type: io.kestra.plugin.core.log.Log
+        message: error
+    finally:
+      - id: approval-full-finally
+        type: io.kestra.plugin.core.log.Log
+        message: finally
+
+  - id: approval-wait-approve
+    type: io.kestra.plugin.core.flow.Approval
+    onWait:
+      - id: approval-wait-approve-wait
+        type: io.kestra.plugin.core.log.Log
+        message: waiting
+    onApprove:
+      - id: approval-wait-approve-approve
+        type: io.kestra.plugin.core.log.Log
+        message: approved
+
+  - id: approval-deny-only
+    type: io.kestra.plugin.core.flow.Approval
+    onDeny:
+      - id: approval-deny-only-deny
+        type: io.kestra.plugin.core.log.Log
+        message: denied

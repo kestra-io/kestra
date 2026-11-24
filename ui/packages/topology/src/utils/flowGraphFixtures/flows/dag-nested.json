@@ -1,0 +1,385 @@
+{
+  "source" : "id: graph-dag-nested\nnamespace: io.kestra.tests\n\ntasks:\n  - id: dag\n    type: io.kestra.plugin.core.flow.Dag\n    tasks:\n      - task:\n          id: last\n          type: io.kestra.plugin.core.log.Log\n          message: last\n        dependsOn:\n          - group\n          - subflow\n          - inner-dag\n      - task:\n          id: first\n          type: io.kestra.plugin.core.log.Log\n          message: first\n      - task:\n          id: group\n          type: io.kestra.plugin.core.flow.Sequential\n          tasks:\n            - id: group-1\n              type: io.kestra.plugin.core.log.Log\n              message: group\n            - id: group-2\n              type: io.kestra.plugin.core.log.Log\n              message: group\n        dependsOn:\n          - first\n      - task:\n          id: subflow\n          type: io.kestra.plugin.core.flow.Subflow\n          namespace: io.kestra.tests\n          flowId: switch\n        dependsOn:\n          - first\n      - task:\n          id: inner-dag\n          type: io.kestra.plugin.core.flow.Dag\n          tasks:\n            - task:\n                id: inner-1\n                type: io.kestra.plugin.core.log.Log\n                message: inner\n            - task:\n                id: inner-2\n                type: io.kestra.plugin.core.log.Log\n                message: inner\n              dependsOn:\n                - inner-1\n        dependsOn:\n          - group\n      - task:\n          id: detached\n          type: io.kestra.plugin.core.log.Log\n          message: no dependency list at all\n        dependsOn: []\n      - task:\n          id: lone-group\n          type: io.kestra.plugin.core.flow.Parallel\n          tasks:\n            - id: lone-group-1\n              type: io.kestra.plugin.core.log.Log\n              message: lone\n    errors:\n      - id: dag-error\n        type: io.kestra.plugin.core.log.Log\n        message: error\n    finally:\n      - id: dag-finally\n        type: io.kestra.plugin.core.log.Log\n        message: finally\n",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.dag.dag-error",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "ERROR",
+      "relationType" : "ERROR",
+      "task" : {
+        "id" : "dag-error",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.dag-finally",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "FINALLY",
+      "relationType" : "FINALLY",
+      "task" : {
+        "id" : "dag-finally",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.detached",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "detached",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.dag.finally-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterFinally"
+    }, {
+      "uid" : "root.dag.first",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "first",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.group.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.dag.group.group-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "group-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.group.group-2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "group-2",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.group.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.dag.group",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "group",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.dag.inner-dag.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.dag.inner-dag.inner-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "inner-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.inner-dag.inner-2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "inner-2",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.inner-dag.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.dag.inner-dag",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "DYNAMIC",
+      "task" : {
+        "id" : "inner-dag",
+        "type" : "io.kestra.plugin.core.flow.Dag"
+      }
+    }, {
+      "uid" : "root.dag.last",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "last",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.lone-group.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.dag.lone-group.lone-group-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "lone-group-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.lone-group.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.dag.lone-group",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "lone-group",
+        "type" : "io.kestra.plugin.core.flow.Parallel"
+      }
+    }, {
+      "uid" : "root.dag.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.dag.subflow",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "subflow",
+        "type" : "io.kestra.plugin.core.flow.Subflow"
+      }
+    }, {
+      "uid" : "root.dag",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "DYNAMIC",
+      "task" : {
+        "id" : "dag",
+        "type" : "io.kestra.plugin.core.flow.Dag"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.dag",
+      "target" : "root.dag.first",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag",
+      "target" : "root.dag.lone-group.root-*",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.dag-error",
+      "target" : "root.dag.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.dag-finally",
+      "target" : "root.dag.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.detached",
+      "target" : "root.dag.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.end-*",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.finally-*",
+      "target" : "root.dag.dag-finally",
+      "relation" : {
+        "relationType" : "DYNAMIC"
+      }
+    }, {
+      "source" : "root.dag.first",
+      "target" : "root.dag.group.root-*",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.first",
+      "target" : "root.dag.subflow",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.group",
+      "target" : "root.dag.group.group-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.dag.group.end-*",
+      "target" : "root.dag.inner-dag.root-*",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.group.end-*",
+      "target" : "root.dag.last",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.group.group-1",
+      "target" : "root.dag.group.group-2",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.dag.group.group-2",
+      "target" : "root.dag.group.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.group.root-*",
+      "target" : "root.dag.group",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.inner-dag",
+      "target" : "root.dag.inner-dag.inner-1",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.inner-dag.end-*",
+      "target" : "root.dag.last",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.inner-dag.inner-1",
+      "target" : "root.dag.inner-dag.inner-2",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.inner-dag.inner-2",
+      "target" : "root.dag.inner-dag.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.inner-dag.root-*",
+      "target" : "root.dag.inner-dag",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.last",
+      "target" : "root.dag.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.lone-group",
+      "target" : "root.dag.lone-group.lone-group-1",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.lone-group.end-*",
+      "target" : "root.dag.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.lone-group.lone-group-1",
+      "target" : "root.dag.lone-group.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.lone-group.root-*",
+      "target" : "root.dag.lone-group",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.root-*",
+      "target" : "root.dag.dag-error",
+      "relation" : {
+        "relationType" : "ERROR"
+      }
+    }, {
+      "source" : "root.dag.root-*",
+      "target" : "root.dag",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.subflow",
+      "target" : "root.dag.last",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.dag.root-*",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.dag.group",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.dag.group",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "group",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "root.dag.group", "root.dag.group.end-*", "root.dag.group.group-1", "root.dag.group.group-2", "root.dag.group.root-*" ],
+      "parents" : [ "cluster_root.dag" ],
+      "start" : "root.dag.group.root-*",
+      "end" : "root.dag.group.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.dag.inner-dag",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "DYNAMIC",
+        "taskNode" : {
+          "uid" : "root.dag.inner-dag",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "DYNAMIC",
+          "task" : {
+            "id" : "inner-dag",
+            "type" : "io.kestra.plugin.core.flow.Dag"
+          }
+        }
+      },
+      "nodes" : [ "root.dag.inner-dag", "root.dag.inner-dag.end-*", "root.dag.inner-dag.inner-1", "root.dag.inner-dag.inner-2", "root.dag.inner-dag.root-*" ],
+      "parents" : [ "cluster_root.dag" ],
+      "start" : "root.dag.inner-dag.root-*",
+      "end" : "root.dag.inner-dag.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.dag.lone-group",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "PARALLEL",
+        "taskNode" : {
+          "uid" : "root.dag.lone-group",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "PARALLEL",
+          "task" : {
+            "id" : "lone-group",
+            "type" : "io.kestra.plugin.core.flow.Parallel"
+          }
+        }
+      },
+      "nodes" : [ "root.dag.lone-group", "root.dag.lone-group.end-*", "root.dag.lone-group.lone-group-1", "root.dag.lone-group.root-*" ],
+      "parents" : [ "cluster_root.dag" ],
+      "start" : "root.dag.lone-group.root-*",
+      "end" : "root.dag.lone-group.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.dag",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "DYNAMIC",
+        "taskNode" : {
+          "uid" : "root.dag",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "DYNAMIC",
+          "task" : {
+            "id" : "dag",
+            "type" : "io.kestra.plugin.core.flow.Dag"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.dag.group", "cluster_root.dag.inner-dag", "cluster_root.dag.lone-group", "root.dag", "root.dag.dag-error", "root.dag.dag-finally", "root.dag.detached", "root.dag.end-*", "root.dag.finally-*", "root.dag.first", "root.dag.group.end-*", "root.dag.group.root-*", "root.dag.inner-dag.end-*", "root.dag.inner-dag.root-*", "root.dag.last", "root.dag.lone-group.end-*", "root.dag.lone-group.root-*", "root.dag.root-*", "root.dag.subflow" ],
+      "parents" : [ ],
+      "start" : "root.dag.root-*",
+      "end" : "root.dag.end-*"
+    } ]
+  }
+}

@@ -55,6 +55,7 @@ export interface MinimalNode {
     uid: string;
     type: string;
     disabled?: boolean;
+    relationType?: string;
     task?: {
         id?: string;
         type: string;
@@ -78,6 +79,7 @@ export interface Cluster {
     } | null;
     // The backend only sets this on a node inside an error/finally branch, as MinimalNode already reflects.
     branchType?: BranchType;
+    relationType?: string;
 }
 
 interface FlowGraphEdge {

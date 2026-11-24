@@ -1,0 +1,65 @@
+{
+  "source" : "id: task-flow\nnamespace: io.kestra.tests\n\ninputs:\n  - id: string\n    type: STRING\n\nlabels:\n  mainFlowLabel: flowFoo\n  overriding: parent\n\ntasks:\n  - id: launch\n    type: io.kestra.plugin.core.flow.Subflow\n    namespace: io.kestra.tests\n    flowId: switch\n    inputs:\n      string: \"{{ inputs.string }}\"\n    wait: true\n    transmitFailed: true\n    inheritLabels: true\n    labels:\n      launchTaskLabel: launchFoo\n\ntriggers:\n  - id: schedule\n    type: io.kestra.plugin.core.trigger.Schedule\n    cron: \"0 * * * *\"\n    inputs:\n      string: hello",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.Triggers.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.Triggers.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.Triggers.schedule",
+      "type" : "io.kestra.core.models.hierarchies.GraphTrigger",
+      "triggerDeclaration" : {
+        "id" : "schedule",
+        "type" : "io.kestra.plugin.core.trigger.Schedule"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.launch",
+      "type" : "io.kestra.core.models.hierarchies.SubflowGraphTask",
+      "relationType" : "SEQUENTIAL",
+      "disabled" : false,
+      "task" : {
+        "id" : "launch",
+        "type" : "io.kestra.plugin.core.flow.Subflow"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.Triggers.end-*",
+      "target" : "root.root-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.root-*",
+      "target" : "root.Triggers.schedule",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.schedule",
+      "target" : "root.Triggers.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.launch",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.launch",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.Triggers",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster"
+      },
+      "nodes" : [ "root.Triggers.end-*", "root.Triggers.root-*", "root.Triggers.schedule" ],
+      "parents" : [ ],
+      "start" : "root.Triggers.root-*",
+      "end" : "root.Triggers.end-*"
+    } ]
+  }
+}

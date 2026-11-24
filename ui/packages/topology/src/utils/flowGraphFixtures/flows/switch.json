@@ -1,0 +1,250 @@
+{
+  "source" : "id: switch\nnamespace: io.kestra.tests\n\ninputs:\n  - id: string\n    type: STRING\n  - id: def\n    type: STRING\n    defaults: amazing\n\nlabels:\n  switchFlowLabel: switchFoo\n  overriding: child\n\ntasks:\n  - id: parent-seq\n    type: io.kestra.plugin.core.flow.Switch\n    value: \"{{inputs.string}}\"\n    cases:\n      FIRST:\n        - id: t1\n          type: io.kestra.plugin.core.debug.Return\n          format: \"{{task.id}} > {{taskrun.startDate}}\"\n      SECOND:\n        - id: t2\n          type: io.kestra.plugin.core.debug.Return\n          format: \"{{task.id}} > {{taskrun.startDate}}\"\n        - id: t2_sub\n          type: io.kestra.plugin.core.debug.Return\n          format: \"{{task.id}} > {{taskrun.startDate}}\"\n      THIRD:\n        - id: t3\n          type: io.kestra.plugin.core.flow.Sequential\n          tasks:\n            - id: failed\n              type: io.kestra.plugin.core.execution.Fail\n          errors:\n            - id: error-t1\n              type: io.kestra.plugin.core.debug.Return\n              format: \"Error Trigger ! {{task.id}}\"\n    defaults:\n      - id: default\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{task.id}} > {{ inputs.def }} > {{taskrun.startDate}}\"\n\ntriggers:\n  - id: schedule\n    type: io.kestra.plugin.core.trigger.Schedule\n    cron: \"0 * * * *\"\n    inputs:\n      string: FIRST",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.Triggers.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.Triggers.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.Triggers.schedule",
+      "type" : "io.kestra.core.models.hierarchies.GraphTrigger",
+      "triggerDeclaration" : {
+        "id" : "schedule",
+        "type" : "io.kestra.plugin.core.trigger.Schedule"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.parent-seq.default",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "default",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.parent-seq.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.parent-seq.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.parent-seq.t1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "t1",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.parent-seq.t2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "t2",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.parent-seq.t2_sub",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "t2_sub",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.parent-seq.t3.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.parent-seq.t3.error-t1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "ERROR",
+      "relationType" : "ERROR",
+      "task" : {
+        "id" : "error-t1",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.parent-seq.t3.failed",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "failed",
+        "type" : "io.kestra.plugin.core.execution.Fail"
+      }
+    }, {
+      "uid" : "root.parent-seq.t3.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.parent-seq.t3",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "t3",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.parent-seq",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "parent-seq",
+        "type" : "io.kestra.plugin.core.flow.Switch"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.Triggers.end-*",
+      "target" : "root.root-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.root-*",
+      "target" : "root.Triggers.schedule",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.schedule",
+      "target" : "root.Triggers.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq",
+      "target" : "root.parent-seq.default",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "defaults"
+      }
+    }, {
+      "source" : "root.parent-seq",
+      "target" : "root.parent-seq.t1",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "FIRST"
+      }
+    }, {
+      "source" : "root.parent-seq",
+      "target" : "root.parent-seq.t2",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "SECOND"
+      }
+    }, {
+      "source" : "root.parent-seq",
+      "target" : "root.parent-seq.t3.root-*",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "THIRD"
+      }
+    }, {
+      "source" : "root.parent-seq.default",
+      "target" : "root.parent-seq.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq.end-*",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq.root-*",
+      "target" : "root.parent-seq",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq.t1",
+      "target" : "root.parent-seq.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq.t2",
+      "target" : "root.parent-seq.t2_sub",
+      "relation" : {
+        "relationType" : "SEQUENTIAL",
+        "value" : "SECOND"
+      }
+    }, {
+      "source" : "root.parent-seq.t2_sub",
+      "target" : "root.parent-seq.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq.t3",
+      "target" : "root.parent-seq.t3.failed",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.parent-seq.t3.end-*",
+      "target" : "root.parent-seq.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq.t3.error-t1",
+      "target" : "root.parent-seq.t3.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq.t3.failed",
+      "target" : "root.parent-seq.t3.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent-seq.t3.root-*",
+      "target" : "root.parent-seq.t3.error-t1",
+      "relation" : {
+        "relationType" : "ERROR"
+      }
+    }, {
+      "source" : "root.parent-seq.t3.root-*",
+      "target" : "root.parent-seq.t3",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.parent-seq.root-*",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.Triggers",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster"
+      },
+      "nodes" : [ "root.Triggers.end-*", "root.Triggers.root-*", "root.Triggers.schedule" ],
+      "parents" : [ ],
+      "start" : "root.Triggers.root-*",
+      "end" : "root.Triggers.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.parent-seq",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.parent-seq",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "parent-seq",
+            "type" : "io.kestra.plugin.core.flow.Switch"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.parent-seq.t3", "root.parent-seq", "root.parent-seq.default", "root.parent-seq.end-*", "root.parent-seq.root-*", "root.parent-seq.t1", "root.parent-seq.t2", "root.parent-seq.t2_sub", "root.parent-seq.t3.end-*", "root.parent-seq.t3.root-*" ],
+      "parents" : [ ],
+      "start" : "root.parent-seq.root-*",
+      "end" : "root.parent-seq.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.parent-seq.t3",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.parent-seq.t3",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "t3",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "root.parent-seq.t3", "root.parent-seq.t3.end-*", "root.parent-seq.t3.error-t1", "root.parent-seq.t3.failed", "root.parent-seq.t3.root-*" ],
+      "parents" : [ "cluster_root.parent-seq" ],
+      "start" : "root.parent-seq.t3.root-*",
+      "end" : "root.parent-seq.t3.end-*"
+    } ]
+  }
+}

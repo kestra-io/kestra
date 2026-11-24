@@ -143,3 +143,10 @@ dependencies {
 
     testImplementation "org.wiremock:wiremock-jetty12"
 }
+
+tasks.withType(Test).configureEach {
+    // FlowGraphContractTest reads these committed UI fixtures, so editing one has to rerun the tests
+    inputs.dir(rootProject.file("ui/packages/topology/src/utils/flowGraphFixtures"))
+        .withPropertyName("flowGraphFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}

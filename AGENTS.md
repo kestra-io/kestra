@@ -288,6 +288,7 @@ A whole-repo `./gradlew build` can take tens of minutes, and almost nothing abou
 |---|---|
 | One backend module | `./gradlew :<module>:test --tests "TheClassName"`, then `./gradlew :<module>:test` |
 | Anything in the executor | `./gradlew :jdbc-h2:test --tests "H2RunnerTest"` (mandatory) |
+| `GraphUtils`, the `hierarchies` model or a flowable's `tasksTree` | `KESTRA_UPDATE_FLOW_GRAPH_FIXTURES=true ./gradlew :core:test --tests "FlowGraphContractTest"`, then `cd ui/packages/topology && npm run test:unit` and port the change to `flowGraphBuilder.ts` if it fails |
 | Something crossing module boundaries | `./gradlew build -x integrationTest` |
 | A Vue component or composable | `cd ui && npm run check:types && npm run test:unit && npm run lint` |
 | A design-system component | the above, plus `npm run test:storybook` |

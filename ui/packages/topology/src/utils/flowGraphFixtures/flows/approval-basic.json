@@ -1,0 +1,125 @@
+{
+  "source" : "id: approval-basic\nnamespace: io.kestra.tests\n\ntasks:\n  - id: approval\n    type: io.kestra.plugin.core.flow.Approval\n    onWait:\n      - id: notify\n        type: io.kestra.plugin.core.log.Log\n        message: \"Approval requested\"\n    onApprove:\n      - id: approved\n        type: io.kestra.plugin.core.log.Log\n        message: \"Approved\"\n    onDeny:\n      - id: denied\n        type: io.kestra.plugin.core.log.Log\n        message: \"Denied\"\n  - id: last\n    type: io.kestra.plugin.core.debug.Return\n    format: \"{{task.id}} > {{taskrun.startDate}}\"\n",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.approval.approved",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approved",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval.denied",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "denied",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.approval.notify",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "notify",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.approval",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "approval",
+        "type" : "io.kestra.plugin.core.flow.Approval"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.last",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "last",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.approval",
+      "target" : "root.approval.notify",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval.approved",
+      "target" : "root.approval.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval.denied",
+      "target" : "root.approval.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval.end-*",
+      "target" : "root.last",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval.notify",
+      "target" : "root.approval.approved",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "approve"
+      }
+    }, {
+      "source" : "root.approval.notify",
+      "target" : "root.approval.denied",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "deny"
+      }
+    }, {
+      "source" : "root.approval.root-*",
+      "target" : "root.approval",
+      "relation" : { }
+    }, {
+      "source" : "root.last",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.approval.root-*",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.approval",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.approval",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "approval",
+            "type" : "io.kestra.plugin.core.flow.Approval"
+          }
+        }
+      },
+      "nodes" : [ "root.approval", "root.approval.approved", "root.approval.denied", "root.approval.end-*", "root.approval.notify", "root.approval.root-*" ],
+      "parents" : [ ],
+      "start" : "root.approval.root-*",
+      "end" : "root.approval.end-*"
+    } ]
+  }
+}

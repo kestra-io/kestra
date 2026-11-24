@@ -1,0 +1,492 @@
+{
+  "source" : "id: graph-approvals\nnamespace: io.kestra.tests\n\ntasks:\n  - id: approval-empty\n    type: io.kestra.plugin.core.flow.Approval\n\n  - id: approval-wait-only\n    type: io.kestra.plugin.core.flow.Approval\n    onWait:\n      - id: approval-wait-only-1\n        type: io.kestra.plugin.core.log.Log\n        message: waiting\n      - id: approval-wait-only-2\n        type: io.kestra.plugin.core.log.Log\n        message: waiting\n\n  - id: approval-full\n    type: io.kestra.plugin.core.flow.Approval\n    onWait:\n      - id: approval-full-wait-1\n        type: io.kestra.plugin.core.log.Log\n        message: waiting\n      - id: approval-full-wait-2\n        type: io.kestra.plugin.core.flow.Sequential\n        tasks:\n          - id: approval-full-wait-2-1\n            type: io.kestra.plugin.core.log.Log\n            message: waiting\n    onApprove:\n      - id: approval-full-approve-1\n        type: io.kestra.plugin.core.log.Log\n        message: approved\n      - id: approval-full-approve-2\n        type: io.kestra.plugin.core.log.Log\n        message: approved\n    onDeny:\n      - id: approval-full-deny\n        type: io.kestra.plugin.core.log.Log\n        message: denied\n    errors:\n      - id: approval-full-error\n        type: io.kestra.plugin.core.log.Log\n        message: error\n    finally:\n      - id: approval-full-finally\n        type: io.kestra.plugin.core.log.Log\n        message: finally\n\n  - id: approval-wait-approve\n    type: io.kestra.plugin.core.flow.Approval\n    onWait:\n      - id: approval-wait-approve-wait\n        type: io.kestra.plugin.core.log.Log\n        message: waiting\n    onApprove:\n      - id: approval-wait-approve-approve\n        type: io.kestra.plugin.core.log.Log\n        message: approved\n\n  - id: approval-deny-only\n    type: io.kestra.plugin.core.flow.Approval\n    onDeny:\n      - id: approval-deny-only-deny\n        type: io.kestra.plugin.core.log.Log\n        message: denied\n",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.approval-deny-only.approval-deny-only-deny",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-deny-only-deny",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-deny-only.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.approval-deny-only.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.approval-deny-only",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "approval-deny-only",
+        "type" : "io.kestra.plugin.core.flow.Approval"
+      }
+    }, {
+      "uid" : "root.approval-empty.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.approval-empty.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.approval-empty",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "approval-empty",
+        "type" : "io.kestra.plugin.core.flow.Approval"
+      }
+    }, {
+      "uid" : "root.approval-full.approval-full-approve-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-full-approve-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-full.approval-full-approve-2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-full-approve-2",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-full.approval-full-deny",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-full-deny",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-full.approval-full-error",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "ERROR",
+      "relationType" : "ERROR",
+      "task" : {
+        "id" : "approval-full-error",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-full.approval-full-finally",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "FINALLY",
+      "relationType" : "FINALLY",
+      "task" : {
+        "id" : "approval-full-finally",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-full.approval-full-wait-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-full-wait-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-full.approval-full-wait-2.approval-full-wait-2-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-full-wait-2-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-full.approval-full-wait-2.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.approval-full.approval-full-wait-2.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.approval-full.approval-full-wait-2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-full-wait-2",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.approval-full.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.approval-full.finally-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterFinally"
+    }, {
+      "uid" : "root.approval-full.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.approval-full",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "approval-full",
+        "type" : "io.kestra.plugin.core.flow.Approval"
+      }
+    }, {
+      "uid" : "root.approval-wait-approve.approval-wait-approve-approve",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-wait-approve-approve",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-wait-approve.approval-wait-approve-wait",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-wait-approve-wait",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-wait-approve.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.approval-wait-approve.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.approval-wait-approve",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "approval-wait-approve",
+        "type" : "io.kestra.plugin.core.flow.Approval"
+      }
+    }, {
+      "uid" : "root.approval-wait-only.approval-wait-only-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-wait-only-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-wait-only.approval-wait-only-2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "approval-wait-only-2",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.approval-wait-only.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.approval-wait-only.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.approval-wait-only",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "approval-wait-only",
+        "type" : "io.kestra.plugin.core.flow.Approval"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.approval-deny-only",
+      "target" : "root.approval-deny-only.approval-deny-only-deny",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "deny"
+      }
+    }, {
+      "source" : "root.approval-deny-only.approval-deny-only-deny",
+      "target" : "root.approval-deny-only.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-deny-only.end-*",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-deny-only.root-*",
+      "target" : "root.approval-deny-only",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-empty",
+      "target" : "root.approval-empty.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-empty.end-*",
+      "target" : "root.approval-wait-only.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-empty.root-*",
+      "target" : "root.approval-empty",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-full",
+      "target" : "root.approval-full.approval-full-wait-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-full.approval-full-approve-1",
+      "target" : "root.approval-full.approval-full-approve-2",
+      "relation" : {
+        "relationType" : "SEQUENTIAL",
+        "value" : "approve"
+      }
+    }, {
+      "source" : "root.approval-full.approval-full-approve-2",
+      "target" : "root.approval-full.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-full.approval-full-deny",
+      "target" : "root.approval-full.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-full.approval-full-error",
+      "target" : "root.approval-full.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-full.approval-full-finally",
+      "target" : "root.approval-full.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-full.approval-full-wait-1",
+      "target" : "root.approval-full.approval-full-wait-2.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-full.approval-full-wait-2",
+      "target" : "root.approval-full.approval-full-wait-2.approval-full-wait-2-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-full.approval-full-wait-2.approval-full-wait-2-1",
+      "target" : "root.approval-full.approval-full-wait-2.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-full.approval-full-wait-2.end-*",
+      "target" : "root.approval-full.approval-full-approve-1",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "approve"
+      }
+    }, {
+      "source" : "root.approval-full.approval-full-wait-2.end-*",
+      "target" : "root.approval-full.approval-full-deny",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "deny"
+      }
+    }, {
+      "source" : "root.approval-full.approval-full-wait-2.root-*",
+      "target" : "root.approval-full.approval-full-wait-2",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-full.end-*",
+      "target" : "root.approval-wait-approve.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-full.finally-*",
+      "target" : "root.approval-full.approval-full-finally",
+      "relation" : {
+        "relationType" : "CHOICE"
+      }
+    }, {
+      "source" : "root.approval-full.root-*",
+      "target" : "root.approval-full.approval-full-error",
+      "relation" : {
+        "relationType" : "ERROR"
+      }
+    }, {
+      "source" : "root.approval-full.root-*",
+      "target" : "root.approval-full",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-wait-approve",
+      "target" : "root.approval-wait-approve.approval-wait-approve-wait",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-wait-approve.approval-wait-approve-approve",
+      "target" : "root.approval-wait-approve.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-wait-approve.approval-wait-approve-wait",
+      "target" : "root.approval-wait-approve.approval-wait-approve-approve",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "approve"
+      }
+    }, {
+      "source" : "root.approval-wait-approve.approval-wait-approve-wait",
+      "target" : "root.approval-wait-approve.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-wait-approve.end-*",
+      "target" : "root.approval-deny-only.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-wait-approve.root-*",
+      "target" : "root.approval-wait-approve",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-wait-only",
+      "target" : "root.approval-wait-only.approval-wait-only-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-wait-only.approval-wait-only-1",
+      "target" : "root.approval-wait-only.approval-wait-only-2",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-wait-only.approval-wait-only-2",
+      "target" : "root.approval-wait-only.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.approval-wait-only.end-*",
+      "target" : "root.approval-full.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.approval-wait-only.root-*",
+      "target" : "root.approval-wait-only",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.approval-empty.root-*",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.approval-deny-only",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.approval-deny-only",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "approval-deny-only",
+            "type" : "io.kestra.plugin.core.flow.Approval"
+          }
+        }
+      },
+      "nodes" : [ "root.approval-deny-only", "root.approval-deny-only.approval-deny-only-deny", "root.approval-deny-only.end-*", "root.approval-deny-only.root-*" ],
+      "parents" : [ ],
+      "start" : "root.approval-deny-only.root-*",
+      "end" : "root.approval-deny-only.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.approval-empty",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.approval-empty",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "approval-empty",
+            "type" : "io.kestra.plugin.core.flow.Approval"
+          }
+        }
+      },
+      "nodes" : [ "root.approval-empty", "root.approval-empty.end-*", "root.approval-empty.root-*" ],
+      "parents" : [ ],
+      "start" : "root.approval-empty.root-*",
+      "end" : "root.approval-empty.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.approval-full.approval-full-wait-2",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.approval-full.approval-full-wait-2",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "approval-full-wait-2",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "root.approval-full.approval-full-wait-2", "root.approval-full.approval-full-wait-2.approval-full-wait-2-1", "root.approval-full.approval-full-wait-2.end-*", "root.approval-full.approval-full-wait-2.root-*" ],
+      "parents" : [ "cluster_root.approval-full" ],
+      "start" : "root.approval-full.approval-full-wait-2.root-*",
+      "end" : "root.approval-full.approval-full-wait-2.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.approval-full",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.approval-full",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "approval-full",
+            "type" : "io.kestra.plugin.core.flow.Approval"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.approval-full.approval-full-wait-2", "root.approval-full", "root.approval-full.approval-full-approve-1", "root.approval-full.approval-full-approve-2", "root.approval-full.approval-full-deny", "root.approval-full.approval-full-error", "root.approval-full.approval-full-finally", "root.approval-full.approval-full-wait-1", "root.approval-full.approval-full-wait-2.end-*", "root.approval-full.approval-full-wait-2.root-*", "root.approval-full.end-*", "root.approval-full.finally-*", "root.approval-full.root-*" ],
+      "parents" : [ ],
+      "start" : "root.approval-full.root-*",
+      "end" : "root.approval-full.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.approval-wait-approve",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.approval-wait-approve",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "approval-wait-approve",
+            "type" : "io.kestra.plugin.core.flow.Approval"
+          }
+        }
+      },
+      "nodes" : [ "root.approval-wait-approve", "root.approval-wait-approve.approval-wait-approve-approve", "root.approval-wait-approve.approval-wait-approve-wait", "root.approval-wait-approve.end-*", "root.approval-wait-approve.root-*" ],
+      "parents" : [ ],
+      "start" : "root.approval-wait-approve.root-*",
+      "end" : "root.approval-wait-approve.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.approval-wait-only",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.approval-wait-only",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "approval-wait-only",
+            "type" : "io.kestra.plugin.core.flow.Approval"
+          }
+        }
+      },
+      "nodes" : [ "root.approval-wait-only", "root.approval-wait-only.approval-wait-only-1", "root.approval-wait-only.approval-wait-only-2", "root.approval-wait-only.end-*", "root.approval-wait-only.root-*" ],
+      "parents" : [ ],
+      "start" : "root.approval-wait-only.root-*",
+      "end" : "root.approval-wait-only.end-*"
+    } ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "source" : "id: after-execution\nnamespace: io.kestra.tests\n\noutputs:\n  - id: final\n    type: STRING\n    value: \"{{ outputs.mytask.value }}\"\n\ntasks:\n  - id: mytask\n    type: io.kestra.plugin.core.debug.Return\n    format: this is a task output used as a final flow output\n\nafterExecution:\n  - id: end\n    type: io.kestra.plugin.core.output.OutputValues\n    values:\n      state: \"{{execution.state}}\"\n      output: \"{{execution.outputs.final}}\"",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.after-execution-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterAfterExecution"
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.end",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "AFTER_EXECUTION",
+      "relationType" : "AFTER_EXECUTION",
+      "task" : {
+        "id" : "end",
+        "type" : "io.kestra.plugin.core.output.OutputValues"
+      }
+    }, {
+      "uid" : "root.mytask",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "mytask",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.after-execution-*",
+      "target" : "root.end",
+      "relation" : { }
+    }, {
+      "source" : "root.end",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.mytask",
+      "target" : "root.after-execution-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.mytask",
+      "relation" : { }
+    } ],
+    "clusters" : [ ]
+  }
+}

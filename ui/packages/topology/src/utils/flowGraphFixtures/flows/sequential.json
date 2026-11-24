@@ -1,0 +1,269 @@
+{
+  "source" : "id: sequential\nnamespace: io.kestra.tests\n\ntasks:\n  - id: 1-seq\n    type: io.kestra.plugin.core.flow.Sequential\n    tasks:\n      - id: 1-1\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{task.id}} > {{taskrun.startDate}}\"\n      - id: 1-2\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{task.id}} > {{taskrun.id}}\"\n      - id: 1-3_seq\n        type: io.kestra.plugin.core.flow.Sequential\n        tasks:\n          - id: 1-3-1\n            type: io.kestra.plugin.core.debug.Return\n            format: \"{{task.id}} > {{taskrun.id}}\"\n          - id: 1-3-2_seq\n            type: io.kestra.plugin.core.flow.Sequential\n            tasks:\n              - id: 1-3-2-1\n                type: io.kestra.plugin.core.debug.Return\n                format: \"{{task.id}} > {{taskrun.startDate}}\"\n              - id: 1-3-2-2_end\n                type: io.kestra.plugin.core.debug.Return\n                format: \"{{task.id}} > {{taskrun.id}}\"\n          - id: 1-3-3_end\n            type: io.kestra.plugin.core.debug.Return\n            format: \"{{task.id}} > {{taskrun.id}}\"\n      - id: 1-4_end\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{task.id}} > {{taskrun.startDate}}\"\n  - id: 2_end\n    type: io.kestra.plugin.core.debug.Return\n    format: \"{{task.id}} > {{taskrun.startDate}}\"\n",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.1-seq.1-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-1",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.1-seq.1-2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-2",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.1-seq.1-3_seq.1-3-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-3-1",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.1-seq.1-3_seq.1-3-2_seq.1-3-2-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-3-2-1",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.1-seq.1-3_seq.1-3-2_seq.1-3-2-2_end",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-3-2-2_end",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.1-seq.1-3_seq.1-3-2_seq.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.1-seq.1-3_seq.1-3-2_seq.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.1-seq.1-3_seq.1-3-2_seq",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-3-2_seq",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.1-seq.1-3_seq.1-3-3_end",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-3-3_end",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.1-seq.1-3_seq.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.1-seq.1-3_seq.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.1-seq.1-3_seq",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-3_seq",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.1-seq.1-4_end",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-4_end",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.1-seq.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.1-seq.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.1-seq",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "1-seq",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.2_end",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "2_end",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.1-seq",
+      "target" : "root.1-seq.1-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-1",
+      "target" : "root.1-seq.1-2",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-2",
+      "target" : "root.1-seq.1-3_seq.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-3_seq",
+      "target" : "root.1-seq.1-3_seq.1-3-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-3_seq.1-3-1",
+      "target" : "root.1-seq.1-3_seq.1-3-2_seq.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-3_seq.1-3-2_seq",
+      "target" : "root.1-seq.1-3_seq.1-3-2_seq.1-3-2-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-3_seq.1-3-2_seq.1-3-2-1",
+      "target" : "root.1-seq.1-3_seq.1-3-2_seq.1-3-2-2_end",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-3_seq.1-3-2_seq.1-3-2-2_end",
+      "target" : "root.1-seq.1-3_seq.1-3-2_seq.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.1-seq.1-3_seq.1-3-2_seq.end-*",
+      "target" : "root.1-seq.1-3_seq.1-3-3_end",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-3_seq.1-3-2_seq.root-*",
+      "target" : "root.1-seq.1-3_seq.1-3-2_seq",
+      "relation" : { }
+    }, {
+      "source" : "root.1-seq.1-3_seq.1-3-3_end",
+      "target" : "root.1-seq.1-3_seq.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.1-seq.1-3_seq.end-*",
+      "target" : "root.1-seq.1-4_end",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.1-3_seq.root-*",
+      "target" : "root.1-seq.1-3_seq",
+      "relation" : { }
+    }, {
+      "source" : "root.1-seq.1-4_end",
+      "target" : "root.1-seq.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.1-seq.end-*",
+      "target" : "root.2_end",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.1-seq.root-*",
+      "target" : "root.1-seq",
+      "relation" : { }
+    }, {
+      "source" : "root.2_end",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.1-seq.root-*",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.1-seq.1-3_seq.1-3-2_seq",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.1-seq.1-3_seq.1-3-2_seq",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "1-3-2_seq",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "root.1-seq.1-3_seq.1-3-2_seq", "root.1-seq.1-3_seq.1-3-2_seq.1-3-2-1", "root.1-seq.1-3_seq.1-3-2_seq.1-3-2-2_end", "root.1-seq.1-3_seq.1-3-2_seq.end-*", "root.1-seq.1-3_seq.1-3-2_seq.root-*" ],
+      "parents" : [ "cluster_root.1-seq", "cluster_root.1-seq.1-3_seq" ],
+      "start" : "root.1-seq.1-3_seq.1-3-2_seq.root-*",
+      "end" : "root.1-seq.1-3_seq.1-3-2_seq.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.1-seq.1-3_seq",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.1-seq.1-3_seq",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "1-3_seq",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.1-seq.1-3_seq.1-3-2_seq", "root.1-seq.1-3_seq", "root.1-seq.1-3_seq.1-3-1", "root.1-seq.1-3_seq.1-3-2_seq.end-*", "root.1-seq.1-3_seq.1-3-2_seq.root-*", "root.1-seq.1-3_seq.1-3-3_end", "root.1-seq.1-3_seq.end-*", "root.1-seq.1-3_seq.root-*" ],
+      "parents" : [ "cluster_root.1-seq" ],
+      "start" : "root.1-seq.1-3_seq.root-*",
+      "end" : "root.1-seq.1-3_seq.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.1-seq",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.1-seq",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "1-seq",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.1-seq.1-3_seq", "root.1-seq", "root.1-seq.1-1", "root.1-seq.1-2", "root.1-seq.1-3_seq.end-*", "root.1-seq.1-3_seq.root-*", "root.1-seq.1-4_end", "root.1-seq.end-*", "root.1-seq.root-*" ],
+      "parents" : [ ],
+      "start" : "root.1-seq.root-*",
+      "end" : "root.1-seq.end-*"
+    } ]
+  }
+}

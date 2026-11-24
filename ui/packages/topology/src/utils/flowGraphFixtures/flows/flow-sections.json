@@ -1,0 +1,446 @@
+{
+  "source" : "id: graph-flow-sections\nnamespace: io.kestra.tests\n\ntasks:\n  - id: 100\n    type: io.kestra.plugin.core.log.Log\n    message: a numeric id is read as a string\n  - id: subflow\n    type: io.kestra.plugin.core.flow.Subflow\n    namespace: io.kestra.tests\n    flowId: switch\n  - id: cluster_group\n    type: io.kestra.plugin.core.flow.Sequential\n    tasks:\n      - id: cluster_group-1\n        type: io.kestra.plugin.core.log.Log\n        message: the cluster prefix is stripped from a cluster uid\n\nerrors:\n  - id: error-1\n    type: io.kestra.plugin.core.log.Log\n    message: error\n  - id: error-subflow\n    type: io.kestra.plugin.core.flow.Subflow\n    namespace: io.kestra.tests\n    flowId: switch\n  - id: error-group\n    type: io.kestra.plugin.core.flow.Sequential\n    tasks:\n      - id: error-group-1\n        type: io.kestra.plugin.core.log.Log\n        message: error\n\nfinally:\n  - id: finally-1\n    type: io.kestra.plugin.core.log.Log\n    message: finally\n  - id: finally-group\n    type: io.kestra.plugin.core.flow.Parallel\n    tasks:\n      - id: finally-group-1\n        type: io.kestra.plugin.core.log.Log\n        message: finally\n      - id: finally-group-2\n        type: io.kestra.plugin.core.log.Log\n        message: finally\n\nafterExecution:\n  - id: after-1\n    type: io.kestra.plugin.core.log.Log\n    message: after\n  - id: after-group\n    type: io.kestra.plugin.core.flow.Sequential\n    tasks:\n      - id: after-group-1\n        type: io.kestra.plugin.core.log.Log\n        message: after\n\ntriggers:\n  - id: schedule\n    type: io.kestra.plugin.core.trigger.Schedule\n    cron: \"0 * * * *\"\n  - id: webhook\n    type: io.kestra.plugin.core.trigger.Webhook\n    key: contract\n",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.100",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "100",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.Triggers.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.Triggers.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.Triggers.schedule",
+      "type" : "io.kestra.core.models.hierarchies.GraphTrigger",
+      "triggerDeclaration" : {
+        "id" : "schedule",
+        "type" : "io.kestra.plugin.core.trigger.Schedule"
+      }
+    }, {
+      "uid" : "root.Triggers.webhook",
+      "type" : "io.kestra.core.models.hierarchies.GraphTrigger",
+      "triggerDeclaration" : {
+        "id" : "webhook",
+        "type" : "io.kestra.plugin.core.trigger.Webhook"
+      }
+    }, {
+      "uid" : "root.after-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "AFTER_EXECUTION",
+      "relationType" : "AFTER_EXECUTION",
+      "task" : {
+        "id" : "after-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.after-execution-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterAfterExecution"
+    }, {
+      "uid" : "root.after-group.after-group-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "after-group-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.after-group.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd",
+      "branchType" : "AFTER_EXECUTION"
+    }, {
+      "uid" : "root.after-group.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot",
+      "branchType" : "AFTER_EXECUTION"
+    }, {
+      "uid" : "root.after-group",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "AFTER_EXECUTION",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "after-group",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.cluster_group.cluster_group-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "cluster_group-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.cluster_group.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.cluster_group.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.cluster_group",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "cluster_group",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.error-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "ERROR",
+      "relationType" : "ERROR",
+      "task" : {
+        "id" : "error-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.error-group.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd",
+      "branchType" : "ERROR"
+    }, {
+      "uid" : "root.error-group.error-group-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "error-group-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.error-group.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot",
+      "branchType" : "ERROR"
+    }, {
+      "uid" : "root.error-group",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "ERROR",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "error-group",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    }, {
+      "uid" : "root.error-subflow",
+      "type" : "io.kestra.core.models.hierarchies.SubflowGraphTask",
+      "branchType" : "ERROR",
+      "relationType" : "ERROR",
+      "disabled" : false,
+      "task" : {
+        "id" : "error-subflow",
+        "type" : "io.kestra.plugin.core.flow.Subflow"
+      }
+    }, {
+      "uid" : "root.finally-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterFinally"
+    }, {
+      "uid" : "root.finally-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "FINALLY",
+      "relationType" : "FINALLY",
+      "task" : {
+        "id" : "finally-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.finally-group.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd",
+      "branchType" : "FINALLY"
+    }, {
+      "uid" : "root.finally-group.finally-group-1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "finally-group-1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.finally-group.finally-group-2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "finally-group-2",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.finally-group.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot",
+      "branchType" : "FINALLY"
+    }, {
+      "uid" : "root.finally-group",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "FINALLY",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "finally-group",
+        "type" : "io.kestra.plugin.core.flow.Parallel"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.subflow",
+      "type" : "io.kestra.core.models.hierarchies.SubflowGraphTask",
+      "relationType" : "SEQUENTIAL",
+      "disabled" : false,
+      "task" : {
+        "id" : "subflow",
+        "type" : "io.kestra.plugin.core.flow.Subflow"
+      }
+    } ],
+    "edges" : [ {
+      "source" : "root.100",
+      "target" : "root.subflow",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.Triggers.end-*",
+      "target" : "root.root-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.root-*",
+      "target" : "root.Triggers.schedule",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.root-*",
+      "target" : "root.Triggers.webhook",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.schedule",
+      "target" : "root.Triggers.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.webhook",
+      "target" : "root.Triggers.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.after-1",
+      "target" : "root.after-group.root-*",
+      "relation" : {
+        "relationType" : "AFTER_EXECUTION"
+      }
+    }, {
+      "source" : "root.after-execution-*",
+      "target" : "root.after-1",
+      "relation" : { }
+    }, {
+      "source" : "root.after-group",
+      "target" : "root.after-group.after-group-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.after-group.after-group-1",
+      "target" : "root.after-group.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.after-group.end-*",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.after-group.root-*",
+      "target" : "root.after-group",
+      "relation" : { }
+    }, {
+      "source" : "root.cluster_group",
+      "target" : "root.cluster_group.cluster_group-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.cluster_group.cluster_group-1",
+      "target" : "root.cluster_group.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.cluster_group.end-*",
+      "target" : "root.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.cluster_group.root-*",
+      "target" : "root.cluster_group",
+      "relation" : { }
+    }, {
+      "source" : "root.error-1",
+      "target" : "root.error-subflow",
+      "relation" : {
+        "relationType" : "ERROR"
+      }
+    }, {
+      "source" : "root.error-group",
+      "target" : "root.error-group.error-group-1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.error-group.end-*",
+      "target" : "root.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.error-group.error-group-1",
+      "target" : "root.error-group.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.error-group.root-*",
+      "target" : "root.error-group",
+      "relation" : { }
+    }, {
+      "source" : "root.error-subflow",
+      "target" : "root.error-group.root-*",
+      "relation" : {
+        "relationType" : "ERROR"
+      }
+    }, {
+      "source" : "root.finally-*",
+      "target" : "root.finally-1",
+      "relation" : { }
+    }, {
+      "source" : "root.finally-1",
+      "target" : "root.finally-group.root-*",
+      "relation" : {
+        "relationType" : "FINALLY"
+      }
+    }, {
+      "source" : "root.finally-group",
+      "target" : "root.finally-group.finally-group-1",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.finally-group",
+      "target" : "root.finally-group.finally-group-2",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.finally-group.end-*",
+      "target" : "root.after-execution-*",
+      "relation" : { }
+    }, {
+      "source" : "root.finally-group.finally-group-1",
+      "target" : "root.finally-group.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.finally-group.finally-group-2",
+      "target" : "root.finally-group.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.finally-group.root-*",
+      "target" : "root.finally-group",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.100",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.error-1",
+      "relation" : {
+        "relationType" : "ERROR"
+      }
+    }, {
+      "source" : "root.subflow",
+      "target" : "root.cluster_group.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.Triggers",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster"
+      },
+      "nodes" : [ "root.Triggers.end-*", "root.Triggers.root-*", "root.Triggers.schedule", "root.Triggers.webhook" ],
+      "parents" : [ ],
+      "start" : "root.Triggers.root-*",
+      "end" : "root.Triggers.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.after-group",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "branchType" : "AFTER_EXECUTION",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.after-group",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "branchType" : "AFTER_EXECUTION",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "after-group",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "root.after-group", "root.after-group.after-group-1", "root.after-group.end-*", "root.after-group.root-*" ],
+      "parents" : [ ],
+      "start" : "root.after-group.root-*",
+      "end" : "root.after-group.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.group",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.cluster_group",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "cluster_group",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "root.cluster_group", "root.cluster_group.cluster_group-1", "root.cluster_group.end-*", "root.cluster_group.root-*" ],
+      "parents" : [ ],
+      "start" : "root.cluster_group.root-*",
+      "end" : "root.cluster_group.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.error-group",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "branchType" : "ERROR",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.error-group",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "branchType" : "ERROR",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "error-group",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "root.error-group", "root.error-group.end-*", "root.error-group.error-group-1", "root.error-group.root-*" ],
+      "parents" : [ ],
+      "start" : "root.error-group.root-*",
+      "end" : "root.error-group.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.finally-group",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "branchType" : "FINALLY",
+        "relationType" : "PARALLEL",
+        "taskNode" : {
+          "uid" : "root.finally-group",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "branchType" : "FINALLY",
+          "relationType" : "PARALLEL",
+          "task" : {
+            "id" : "finally-group",
+            "type" : "io.kestra.plugin.core.flow.Parallel"
+          }
+        }
+      },
+      "nodes" : [ "root.finally-group", "root.finally-group.end-*", "root.finally-group.finally-group-1", "root.finally-group.finally-group-2", "root.finally-group.root-*" ],
+      "parents" : [ ],
+      "start" : "root.finally-group.root-*",
+      "end" : "root.finally-group.end-*"
+    } ]
+  }
+}

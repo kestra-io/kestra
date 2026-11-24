@@ -1,0 +1,181 @@
+{
+  "source" : "id: finally-sequential\nnamespace: io.kestra.tests\n\ninputs:\n  - id: failed\n    type: BOOL\n    defaults: false\n\ntasks:\n  - id: seq\n    type: io.kestra.plugin.core.flow.Sequential\n    tasks:\n      - id: if\n        type: io.kestra.plugin.core.flow.If\n        condition: \"{{ inputs.failed == false }}\"\n        then:\n          - id: ok\n            type: io.kestra.plugin.core.debug.Return\n            format: \"{{ task.id }}\"\n        else:\n          - id: ko\n            type: io.kestra.plugin.core.execution.Fail\n\n    finally:\n      - id: a1\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{ task.id }}\"\n\n      - id: a2\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{ task.id }}\"",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.seq.a1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "FINALLY",
+      "relationType" : "FINALLY",
+      "task" : {
+        "id" : "a1",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.seq.a2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "FINALLY",
+      "relationType" : "FINALLY",
+      "task" : {
+        "id" : "a2",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.seq.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.seq.finally-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterFinally"
+    }, {
+      "uid" : "root.seq.if.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.seq.if.ko",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "ko",
+        "type" : "io.kestra.plugin.core.execution.Fail"
+      }
+    }, {
+      "uid" : "root.seq.if.ok",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "ok",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.seq.if.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.seq.if",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "if",
+        "type" : "io.kestra.plugin.core.flow.If"
+      }
+    }, {
+      "uid" : "root.seq.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.seq",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "seq",
+        "type" : "io.kestra.plugin.core.flow.Sequential"
+      }
+    } ],
+    "edges" : [ {
+      "source" : "root.root-*",
+      "target" : "root.seq.root-*",
+      "relation" : { }
+    }, {
+      "source" : "root.seq",
+      "target" : "root.seq.if.root-*",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.seq.a1",
+      "target" : "root.seq.a2",
+      "relation" : {
+        "relationType" : "FINALLY"
+      }
+    }, {
+      "source" : "root.seq.a2",
+      "target" : "root.seq.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.seq.end-*",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.seq.finally-*",
+      "target" : "root.seq.a1",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.seq.if",
+      "target" : "root.seq.if.ko",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "else"
+      }
+    }, {
+      "source" : "root.seq.if",
+      "target" : "root.seq.if.ok",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "then"
+      }
+    }, {
+      "source" : "root.seq.if.end-*",
+      "target" : "root.seq.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.seq.if.ko",
+      "target" : "root.seq.if.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.seq.if.ok",
+      "target" : "root.seq.if.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.seq.if.root-*",
+      "target" : "root.seq.if",
+      "relation" : { }
+    }, {
+      "source" : "root.seq.root-*",
+      "target" : "root.seq",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.seq.if",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.seq.if",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "if",
+            "type" : "io.kestra.plugin.core.flow.If"
+          }
+        }
+      },
+      "nodes" : [ "root.seq.if", "root.seq.if.end-*", "root.seq.if.ko", "root.seq.if.ok", "root.seq.if.root-*" ],
+      "parents" : [ "cluster_root.seq" ],
+      "start" : "root.seq.if.root-*",
+      "end" : "root.seq.if.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.seq",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "SEQUENTIAL",
+        "taskNode" : {
+          "uid" : "root.seq",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "SEQUENTIAL",
+          "task" : {
+            "id" : "seq",
+            "type" : "io.kestra.plugin.core.flow.Sequential"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.seq.if", "root.seq", "root.seq.a1", "root.seq.a2", "root.seq.end-*", "root.seq.finally-*", "root.seq.if.end-*", "root.seq.if.root-*", "root.seq.root-*" ],
+      "parents" : [ ],
+      "start" : "root.seq.root-*",
+      "end" : "root.seq.end-*"
+    } ]
+  }
+}

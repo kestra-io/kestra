@@ -1,0 +1,49 @@
+{
+  "source" : "id: graph-triggers-empty\nnamespace: io.kestra.tests\n\ntasks:\n  - id: only\n    type: io.kestra.plugin.core.log.Log\n    message: an empty trigger list still draws the Triggers cluster\n\ntriggers: []\n",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.Triggers.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.Triggers.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.only",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "only",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.Triggers.end-*",
+      "target" : "root.root-*",
+      "relation" : { }
+    }, {
+      "source" : "root.only",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.only",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.Triggers",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster"
+      },
+      "nodes" : [ "root.Triggers.end-*", "root.Triggers.root-*" ],
+      "parents" : [ ],
+      "start" : "root.Triggers.root-*",
+      "end" : "root.Triggers.end-*"
+    } ]
+  }
+}

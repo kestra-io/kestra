@@ -4,6 +4,7 @@ export default defineConfig({
     entry: {
         index: "src/index.ts",
         "vue-flow-utils": "src/vue-flow-utils.ts",
+        "flow-graph-builder": "src/utils/flowGraphBuilder.ts",
     },
     platform: "browser",
     exports: {

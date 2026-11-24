@@ -1,0 +1,79 @@
+{
+  "source" : "id: trigger-flow-listener-no-inputs\nnamespace: io.kestra.tests.trigger\nrevision: 1\n\ntasks:\n  - id: only-no-input\n    type: io.kestra.plugin.core.debug.Return\n    format: \"v1: {{trigger.executionId}}\"\n\ntriggers:\n  - id: listen-flow\n    type: io.kestra.plugin.core.trigger.Flow\n    dependsOn:\n      - states:\n          - SUCCESS\n        namespace: io.kestra.tests.trigger\n        flowId: trigger-flow\n  - id: listen-flow-failed\n    type: io.kestra.plugin.core.trigger.Flow\n    dependsOn:\n      - states:\n          - FAILED\n        namespace: io.kestra.tests.trigger\n        flowId: other-flow",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.Triggers.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.Triggers.listen-flow-failed",
+      "type" : "io.kestra.core.models.hierarchies.GraphTrigger",
+      "triggerDeclaration" : {
+        "id" : "listen-flow-failed",
+        "type" : "io.kestra.plugin.core.trigger.Flow"
+      }
+    }, {
+      "uid" : "root.Triggers.listen-flow",
+      "type" : "io.kestra.core.models.hierarchies.GraphTrigger",
+      "triggerDeclaration" : {
+        "id" : "listen-flow",
+        "type" : "io.kestra.plugin.core.trigger.Flow"
+      }
+    }, {
+      "uid" : "root.Triggers.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.only-no-input",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "only-no-input",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.Triggers.end-*",
+      "target" : "root.root-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.listen-flow",
+      "target" : "root.Triggers.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.listen-flow-failed",
+      "target" : "root.Triggers.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.root-*",
+      "target" : "root.Triggers.listen-flow-failed",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.root-*",
+      "target" : "root.Triggers.listen-flow",
+      "relation" : { }
+    }, {
+      "source" : "root.only-no-input",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.only-no-input",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.Triggers",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster"
+      },
+      "nodes" : [ "root.Triggers.end-*", "root.Triggers.listen-flow", "root.Triggers.listen-flow-failed", "root.Triggers.root-*" ],
+      "parents" : [ ],
+      "start" : "root.Triggers.root-*",
+      "end" : "root.Triggers.end-*"
+    } ]
+  }
+}

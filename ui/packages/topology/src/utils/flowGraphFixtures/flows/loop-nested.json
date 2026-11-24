@@ -1,0 +1,199 @@
+{
+  "source" : "id: loop-nested\nnamespace: io.kestra.tests\n\ntasks:\n  - id: loop1\n    type: io.kestra.plugin.core.flow.Loop\n    concurrencyLimit: 1\n    values: [1, 2, 3]\n    tasks:\n      - id: loop2\n        type: io.kestra.plugin.core.flow.Loop\n        values: [1, 2, 3]\n        tasks:\n          - id: loop3\n            type: io.kestra.plugin.core.flow.Loop\n            values: [ 1, 2, 3 ]\n            tasks:\n            - id: item\n              type: io.kestra.plugin.core.debug.Return\n              format: \"{{item.index}} - {{item.value}}\"\n            - id: parent\n              type: io.kestra.plugin.core.debug.Return\n              format: \"{{item.parent.index}} - {{item.parent.value}}\"\n            - id: parents\n              type: io.kestra.plugin.core.debug.Return\n              format: \"{{item.parents[0].index}} - {{item.parents[0].value}} - {{item.parents[1].index}} - {{item.parents[1].value}}\"",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.loop1.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.loop1.loop2.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.loop1.loop2.loop3.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.loop1.loop2.loop3.item",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "item",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.loop1.loop2.loop3.parent",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "parent",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.loop1.loop2.loop3.parents",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "parents",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.loop1.loop2.loop3.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.loop1.loop2.loop3",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "DYNAMIC",
+      "task" : {
+        "id" : "loop3",
+        "type" : "io.kestra.plugin.core.flow.Loop"
+      }
+    }, {
+      "uid" : "root.loop1.loop2.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.loop1.loop2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "DYNAMIC",
+      "task" : {
+        "id" : "loop2",
+        "type" : "io.kestra.plugin.core.flow.Loop"
+      }
+    }, {
+      "uid" : "root.loop1.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.loop1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "DYNAMIC",
+      "task" : {
+        "id" : "loop1",
+        "type" : "io.kestra.plugin.core.flow.Loop"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.loop1",
+      "target" : "root.loop1.loop2.root-*",
+      "relation" : {
+        "relationType" : "DYNAMIC"
+      }
+    }, {
+      "source" : "root.loop1.end-*",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.loop1.loop2",
+      "target" : "root.loop1.loop2.loop3.root-*",
+      "relation" : {
+        "relationType" : "DYNAMIC"
+      }
+    }, {
+      "source" : "root.loop1.loop2.end-*",
+      "target" : "root.loop1.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.loop1.loop2.loop3",
+      "target" : "root.loop1.loop2.loop3.item",
+      "relation" : {
+        "relationType" : "DYNAMIC"
+      }
+    }, {
+      "source" : "root.loop1.loop2.loop3.end-*",
+      "target" : "root.loop1.loop2.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.loop1.loop2.loop3.item",
+      "target" : "root.loop1.loop2.loop3.parent",
+      "relation" : {
+        "relationType" : "DYNAMIC"
+      }
+    }, {
+      "source" : "root.loop1.loop2.loop3.parent",
+      "target" : "root.loop1.loop2.loop3.parents",
+      "relation" : {
+        "relationType" : "DYNAMIC"
+      }
+    }, {
+      "source" : "root.loop1.loop2.loop3.parents",
+      "target" : "root.loop1.loop2.loop3.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.loop1.loop2.loop3.root-*",
+      "target" : "root.loop1.loop2.loop3",
+      "relation" : { }
+    }, {
+      "source" : "root.loop1.loop2.root-*",
+      "target" : "root.loop1.loop2",
+      "relation" : { }
+    }, {
+      "source" : "root.loop1.root-*",
+      "target" : "root.loop1",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.loop1.root-*",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.loop1.loop2.loop3",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "DYNAMIC",
+        "taskNode" : {
+          "uid" : "root.loop1.loop2.loop3",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "DYNAMIC",
+          "task" : {
+            "id" : "loop3",
+            "type" : "io.kestra.plugin.core.flow.Loop"
+          }
+        }
+      },
+      "nodes" : [ "root.loop1.loop2.loop3", "root.loop1.loop2.loop3.end-*", "root.loop1.loop2.loop3.item", "root.loop1.loop2.loop3.parent", "root.loop1.loop2.loop3.parents", "root.loop1.loop2.loop3.root-*" ],
+      "parents" : [ "cluster_root.loop1", "cluster_root.loop1.loop2" ],
+      "start" : "root.loop1.loop2.loop3.root-*",
+      "end" : "root.loop1.loop2.loop3.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.loop1.loop2",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "DYNAMIC",
+        "taskNode" : {
+          "uid" : "root.loop1.loop2",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "DYNAMIC",
+          "task" : {
+            "id" : "loop2",
+            "type" : "io.kestra.plugin.core.flow.Loop"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.loop1.loop2.loop3", "root.loop1.loop2", "root.loop1.loop2.end-*", "root.loop1.loop2.loop3.end-*", "root.loop1.loop2.loop3.root-*", "root.loop1.loop2.root-*" ],
+      "parents" : [ "cluster_root.loop1" ],
+      "start" : "root.loop1.loop2.root-*",
+      "end" : "root.loop1.loop2.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.loop1",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "DYNAMIC",
+        "taskNode" : {
+          "uid" : "root.loop1",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "DYNAMIC",
+          "task" : {
+            "id" : "loop1",
+            "type" : "io.kestra.plugin.core.flow.Loop"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.loop1.loop2", "root.loop1", "root.loop1.end-*", "root.loop1.loop2.end-*", "root.loop1.loop2.root-*", "root.loop1.root-*" ],
+      "parents" : [ ],
+      "start" : "root.loop1.root-*",
+      "end" : "root.loop1.end-*"
+    } ]
+  }
+}

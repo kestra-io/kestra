@@ -152,8 +152,6 @@ export function assetInputIds(value: unknown): string[] {
         .filter((id): id is string => typeof id === "string" && id !== "")
 }
 
-const WALL_CLOCK_FORMAT = "YYYY-MM-DD HH:mm:ss.SSS"
-
 /**
  * The date picker edits a browser-local `Date`, so the digits it shows are the browser's wall clock.
  * Turns the instant held by the form into the `Date` whose local fields read as that instant does
@@ -178,7 +176,10 @@ export function pickerDateToInstant(value: Date | null | undefined, timezone: st
     if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
         return undefined
     }
-    return dayjs.tz(dayjs(value).format(WALL_CLOCK_FORMAT), timezone).toDate()
+    const pad = (n: number, width = 2) => String(n).padStart(width, "0")
+    const wallClock = `${pad(value.getFullYear(), 4)}-${pad(value.getMonth() + 1)}-${pad(value.getDate())} `
+        + `${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}.${pad(value.getMilliseconds(), 3)}`
+    return dayjs.tz(wallClock, timezone).toDate()
 }
 
 export function normalize(type: InputType | undefined, value: unknown): unknown {

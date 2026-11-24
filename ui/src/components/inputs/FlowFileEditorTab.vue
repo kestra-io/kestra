@@ -250,9 +250,6 @@
     )
 
     onMounted(() => {
-        if(props.flow){
-            pluginsStore.lazyLoadSchemaType({type: "flow"})
-        }
         loadFile()
         window.addEventListener("keydown", handleGlobalSave)
         window.addEventListener("keydown", toggleAiShortcut)

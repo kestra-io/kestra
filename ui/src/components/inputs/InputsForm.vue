@@ -278,6 +278,7 @@
                     v-if="customInputs[input.id]"
                     :input="input"
                     :errors="valueErrors(input.id)"
+                    :submitAttempted="submitAttempted"
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
@@ -408,7 +409,7 @@
     const modelValue = defineModel<Record<string, unknown>>({default: () => ({})})
 
     const props = withDefaults(defineProps<{
-        executeClicked?: boolean;
+        submitAttempted?: boolean;
         initialInputs?: InputMetaData[];
         flow?: Flow;
         execution?: Execution;
@@ -422,7 +423,7 @@
         /** Centres each label vertically against its input, for inputs taller than one line. */
         centered?: boolean;
     }>(), {
-        executeClicked: false,
+        submitAttempted: false,
         initialInputs: () => [],
         flow: undefined,
         execution: undefined,

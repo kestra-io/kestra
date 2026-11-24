@@ -817,6 +817,15 @@ export type DashboardControllerChartData = {
     metadata?: ChartMetadata | null;
 };
 
+export type DashboardControllerChartStateCounts = {
+    /**
+     * the number of executions per state name, without an entry for a state that has none
+     */
+    counts: {
+        [key: string]: number;
+    };
+};
+
 export type DashboardControllerDashboardResponse = {
     tenantId?: string;
     id: string;
@@ -2666,14 +2675,14 @@ export type TriggerAssetsDeclaration = {
 };
 
 export type TriggerControllerApiCreateBackfillRequest = {
-    namespace?: string;
-    flowId?: string;
-    triggerId?: string;
+    namespace: string;
+    flowId: string;
+    triggerId: string;
     backfill: TriggerControllerApiCreateBackfillRequestBackfill;
 };
 
 export type TriggerControllerApiCreateBackfillRequestBackfill = {
-    start?: string;
+    start: string;
     end?: string;
     inputs?: {
         [key: string]: {
@@ -5187,6 +5196,41 @@ export type PreviewChartResponses = {
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];
+
+export type PreviewChartStateCountsData = {
+    body: DashboardControllerPreviewRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/dashboards/charts/state-counts';
+};
+
+export type PreviewChartStateCountsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PreviewChartStateCountsError = PreviewChartStateCountsErrors[keyof PreviewChartStateCountsErrors];
+
+export type PreviewChartStateCountsResponses = {
+    /**
+     * previewChartStateCounts 200 response
+     */
+    200: DashboardControllerChartStateCounts;
+};
+
+export type PreviewChartStateCountsResponse = PreviewChartStateCountsResponses[keyof PreviewChartStateCountsResponses];
 
 export type GetDefaultDashboardDefinitionsData = {
     body?: never;

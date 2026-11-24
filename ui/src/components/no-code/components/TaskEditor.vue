@@ -11,7 +11,8 @@
         @back="fieldNav.pop"
     />
 
-    <KsForm v-if="isTaskDefinitionBasedOnType && !navStack.length" labelPosition="top">
+    <KsSkeleton v-if="isAwaitingSchema" :rows="5" animated data-test="task-editor-schema-skeleton" />
+    <KsForm v-else-if="isTaskDefinitionBasedOnType && !navStack.length" labelPosition="top">
         <KsFormItem stacked>
             <template #label>
                 <div class="type-div">
@@ -27,7 +28,7 @@
             <FieldValidationErrors :errors="typeErrors" />
         </KsFormItem>
     </KsForm>
-    <div @click="() => onTaskEditorClick(taskModel)">
+    <div v-if="!isAwaitingSchema" @click="() => onTaskEditorClick(taskModel)">
         <TaskObject
             v-ks-loading="isLoading || isPluginSchemaLoading"
             v-if="!navStack.length && (selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
@@ -70,6 +71,7 @@
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
+        SCHEMA_LOADER_INJECTION_KEY,
         DATA_TYPES_MAP_INJECTION_KEY,
         ON_TASK_EDITOR_CLICK_INJECTION_KEY,
         FIELD_NAV_INJECTION_KEY,
@@ -299,6 +301,14 @@
     const resolvedSchemas = computed(() => {
         return resolvedTypes.value.map((type) => definitions.value?.[type])
     })
+
+    // The placeholder schema only knows the core models, so a block it cannot resolve waits for the full schema.
+    const schemaLoader = inject(SCHEMA_LOADER_INJECTION_KEY, undefined)
+    schemaLoader?.load()
+    const isAwaitingSchema = computed(() => Boolean(schemaLoader?.isLoading.value) && (
+        schemaAtBlockPath.value === undefined
+        || (isTaskDefinitionBasedOnType.value && Boolean(selectedTaskType.value) && resolvedTypes.value.length === 0)
+    ))
 
     const dataTypes = computed(() => {
         const types = new Set<string>()

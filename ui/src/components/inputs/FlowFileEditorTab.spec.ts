@@ -9,6 +9,7 @@ import {useViolationMarkers} from "../../composables/useViolationMarkers"
 const fileMetadata = vi.fn()
 const readFile = vi.fn()
 const saveOrCreateFile = vi.fn()
+const lazyLoadSchemaType = vi.fn()
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {namespace: "io.kestra.test"}, query: {}}),
@@ -45,7 +46,7 @@ vi.mock("../../composables/useViolationMarkers", async () => {
     return {useViolationMarkers: () => ({markers, revealNext})}
 })
 vi.mock("../../stores/plugins", () => ({
-    usePluginsStore: () => ({lazyLoadSchemaType: vi.fn(), editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
+    usePluginsStore: () => ({lazyLoadSchemaType, editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
 }))
 vi.mock("../../stores/productTour", () => ({
     useProductTourStore: () => ({isGuidedActive: false}),
@@ -284,6 +285,14 @@ describe("FlowFileEditorTab", () => {
 
         wrapper.unmount()
         expect(useFlowStore().errorNavigation).toBeNull()
+    })
+
+    // The YAML worker fetches its own schema; a second copy parsed on the main thread only slows the editor down.
+    it("should not load the flow schema when the flow tab opens", async () => {
+        mountWithTabContext(FlowFileEditorTab, flowTabProps)
+        await flushPromises()
+
+        expect(lazyLoadSchemaType).not.toHaveBeenCalled()
     })
 
     it("should drop error navigation while the flow tab is parked in KeepAlive and restore it when shown again", async () => {

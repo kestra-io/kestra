@@ -133,4 +133,21 @@ describe("MultiPanelGenericEditorView with a maximized panel", () => {
         expect(wrapper.find(".panel-maximized").exists()).toBe(true)
         expect(visibleTabs(wrapper)).toEqual(["code"])
     })
+
+    test("clicking a main-view tab hidden behind the maximized panel brings it to the front", async () => {
+        // Given
+        const wrapper = i18nMount(MultiPanelGenericEditorView, {
+            global: {plugins: [KestraDesignSystem]},
+            props: {editorElements: [makeElement("code", {main: true}), makeElement("topology")], defaultActiveTabs: ["code", "topology"]},
+        })
+        await maximizeFirstPanel(wrapper)
+
+        // When
+        await headerButton(wrapper, "topology").trigger("click")
+        await nextTick()
+
+        // Then
+        expect(wrapper.find(".panel-maximized").exists()).toBe(false)
+        expect(visibleTabs(wrapper)).toEqual(["code", "topology"])
+    })
 })

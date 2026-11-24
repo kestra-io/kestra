@@ -191,6 +191,21 @@ describe("KsEchart", () => {
         expect(content).toContain(">1.5s<")
     })
 
+    test("external tooltip falls back to the chart-wide tooltip.valueFormatter", async () => {
+        const options = {
+            ...BASE_OPTIONS,
+            tooltip: {valueFormatter: (value: unknown) => `~${value}`},
+            series: [{name: "Executions", type: "bar", data: [10]}],
+        }
+        const wrapper = mount(KsEchart, {props: {options, tooltipType: TooltipType.EXTERNAL}})
+
+        const opt = wrapper.findComponent({name: "VChart"}).props("option") as {tooltip: {formatter: (params: unknown) => string}}
+        opt.tooltip.formatter([{seriesName: "Executions", seriesType: "bar", seriesIndex: 0, name: "Jan", value: 10, color: "#0f0"}])
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.findComponent({name: "KsTooltip"}).props("content") as string).toContain(">~10<")
+    })
+
     test("external tooltip shows the seriesLabel text of a series, escaped, and keeps the default for the others", async () => {
         const options = {
             ...BASE_OPTIONS,

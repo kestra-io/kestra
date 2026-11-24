@@ -144,8 +144,8 @@
                 <KsDatePicker
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'DATETIME'"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="instantToPickerDate(inputsValues[input.id])"
+                    @update:model-value="(val: Date | null) => { inputsValues[input.id] = pickerDateToInstant(val); onChange(input); }"
                     type="datetime"
                 />
                 <KsDatePicker
@@ -347,7 +347,7 @@
     import debounce from "lodash/debounce"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useInputsWizard} from "../../composables/useInputsWizard"
-    import {normalize, flattenInputs, type InputType} from "../../utils/inputs"
+    import {normalize, flattenInputs, instantToPickerDate, pickerDateToInstant, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
     import * as Utils from "../../utils/utils"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"

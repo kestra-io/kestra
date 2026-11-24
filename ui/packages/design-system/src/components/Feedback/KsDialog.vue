@@ -131,7 +131,8 @@
             padding-right: var(--kel-dialog-padding-primary);
 
             & .kel-scrollbar__view {
-                overflow-x: hidden;
+                /* clip, unlike hidden, does not make the view a scroll container, so a sticky descendant sticks to the dialog's scroller. */
+                overflow-x: clip;
             }
         }
 

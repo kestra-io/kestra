@@ -124,20 +124,25 @@ class DashboardControllerTest {
     }
 
     @Test
-    void shouldReportTheDashboardFiltersALogsChartCannotApply() {
+    void shouldNarrowLogsChartToExecutionsMatchingStateFilter() {
+        String namespace = TestsUtils.randomNamespace();
+        Instant startDate = Instant.now().minusSeconds(60);
+        String failedExecutionId = saveExecutionWithLog(namespace, State.Type.FAILED, startDate);
+        saveExecutionWithLog(namespace, State.Type.SUCCESS, startDate);
+
         String chartYaml = """
             id: table_logs_chart_id
             type: io.kestra.plugin.core.dashboard.chart.Table
             data:
               type: io.kestra.plugin.core.dashboard.data.Logs
               columns:
-                chart_namespace:
-                  field: NAMESPACE
+                chart_execution_id:
+                  field: EXECUTION_ID
             """;
         var previewRequest = new DashboardController.PreviewRequest(
             chartYaml, ChartFiltersOverrides.builder().filters(
                 List.of(
-                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value("company").build(),
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build(),
                     QueryFilter.builder().field(QueryFilter.Field.STATE).operation(Op.IN).value(List.of("FAILED")).build()
                 )
             ).build()
@@ -148,7 +153,67 @@ class DashboardControllerTest {
             DashboardController.ChartData.class
         );
 
-        assertThat(chartData.ignoredFilters()).containsExactly(QueryFilter.Field.STATE);
+        assertThat(chartData.results()).extracting(row -> row.get("chart_execution_id")).containsExactly(failedExecutionId);
+        assertThat(chartData.ignoredFilters()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnNoLogsWhenNoExecutionMatchesStateFilter() {
+        String namespace = TestsUtils.randomNamespace();
+        saveExecutionWithLog(namespace, State.Type.SUCCESS, Instant.now().minusSeconds(60));
+
+        String chartYaml = """
+            id: table_logs_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Logs
+              columns:
+                chart_execution_id:
+                  field: EXECUTION_ID
+            """;
+        var previewRequest = new DashboardController.PreviewRequest(
+            chartYaml, ChartFiltersOverrides.builder().filters(
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build(),
+                    QueryFilter.builder().field(QueryFilter.Field.STATE).operation(Op.IN).value(List.of("FAILED")).build()
+                )
+            ).build()
+        );
+
+        DashboardController.ChartData chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+            DashboardController.ChartData.class
+        );
+
+        assertThat(chartData.results()).isEmpty();
+        assertThat(chartData.ignoredFilters()).isEmpty();
+    }
+
+    private String saveExecutionWithLog(String namespace, State.Type state, Instant startDate) {
+        String executionId = IdUtils.create();
+        executionRepository.save(
+            Execution.builder()
+                .tenantId(MAIN_TENANT)
+                .id(executionId)
+                .namespace(namespace)
+                .flowId("flow")
+                .state(State.of(state, List.of(new State.History(State.Type.CREATED, startDate), new State.History(state, startDate.plusSeconds(1)))))
+                .build()
+        );
+        logRepository.save(
+            LogEntry.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId("flow")
+                .executionId(executionId)
+                .executionKind(ExecutionKind.NORMAL)
+                .level(Level.INFO)
+                .attemptNumber(1)
+                .timestamp(startDate.plusSeconds(1))
+                .message("a message")
+                .build()
+        );
+        return executionId;
     }
 
     @Test

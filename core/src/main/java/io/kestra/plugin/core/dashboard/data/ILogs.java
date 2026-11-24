@@ -19,7 +19,7 @@ public interface ILogs extends IData<ILogs.Fields> {
 
     @Override
     default Set<QueryFilter.Field> globalFilterFields() {
-        return Set.of(QueryFilter.Field.NAMESPACE, QueryFilter.Field.FLOW_ID, QueryFilter.Field.LEVEL);
+        return Set.of(QueryFilter.Field.NAMESPACE, QueryFilter.Field.FLOW_ID, QueryFilter.Field.LEVEL, QueryFilter.Field.EXECUTION_ID);
     }
 
     default List<AbstractFilter<ILogs.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<ILogs.Fields>> where) {
@@ -42,6 +42,10 @@ public interface ILogs extends IData<ILogs.Fields> {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
                 });
             }
+
+            filters.stream()
+                .filter(f -> f.field().equals(QueryFilter.Field.EXECUTION_ID))
+                .forEach(f -> updatedWhere.add(f.toDashboardFilterBuilder(Fields.EXECUTION_ID, f.value())));
 
             List<QueryFilter> levelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LEVEL)).toList();
             if (!levelFilters.isEmpty()) {

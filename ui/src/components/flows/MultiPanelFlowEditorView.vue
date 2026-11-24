@@ -40,6 +40,7 @@
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
     import {useTopologyPanels} from "./useTopologyPanels"
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
+    import {usePublishShortcut} from "./usePublishShortcut"
     import {storageKeys} from "../../utils/constants"
 
     import {useNoCodePanelsFull} from "./useNoCodePanels"
@@ -60,6 +61,7 @@
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
     const {trackTabOpen} = useTabTracking()
+    usePublishShortcut()
 
     const alwaysSaveKey = computed(() => `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`)
     const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value)

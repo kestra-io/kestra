@@ -330,7 +330,7 @@ describe("FlowFileEditorTab", () => {
         expect(useFlowStore().errorNavigation?.count).toBe(2)
     })
 
-    it("should save the flow without choosing its draft state, so a draft stays a draft", async () => {
+    it("should save a draft on the editor's save shortcut", async () => {
         const flowStore = useFlowStore() as unknown as {saveAll: ReturnType<typeof vi.fn>}
         flowStore.saveAll.mockReset()
         const wrapper = mountWithTabContext(FlowFileEditorTab, flowTabProps)
@@ -339,6 +339,6 @@ describe("FlowFileEditorTab", () => {
         wrapper.findComponent({name: "KsEditor"}).vm.$emit("save")
         await flushPromises()
 
-        expect(flowStore.saveAll).toHaveBeenCalledExactlyOnceWith(undefined)
+        expect(flowStore.saveAll).toHaveBeenCalledExactlyOnceWith(true)
     })
 })

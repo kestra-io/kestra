@@ -89,6 +89,7 @@ class DefaultFlowMetaStoreTest {
 
         // Then
         assertThat(flowMetaStore.findById(draft.getTenantId(), draft.getNamespace(), draft.getId(), Optional.empty())).isEmpty();
+        assertThat(flowMetaStore.findLatestRevision(draft.getTenantId(), draft.getNamespace(), draft.getId())).contains(1);
     }
 
     @Test

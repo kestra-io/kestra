@@ -1,6 +1,5 @@
 import {appendFileSync, mkdirSync, writeFileSync} from "node:fs"
 import {dirname, relative, resolve, sep} from "node:path"
-import {fileURLToPath} from "node:url"
 import type {FullConfig, FullResult, Reporter, Suite, TestCase} from "@playwright/test/reporter"
 
 type Outcome = "flaky" | "unexpected"
@@ -20,8 +19,6 @@ type Report = {
     flakyTests: TestSummary[]
     unexpectedTests: TestSummary[]
 }
-
-const DEFAULT_REPORT_DIRECTORY = resolve(dirname(fileURLToPath(import.meta.url)), "playwright-report")
 
 function summarize(test: TestCase, outcome: Outcome, rootDir: string): TestSummary {
     return {

@@ -142,7 +142,7 @@ export function useExecutionRoot() {
     const setupLifecycle = () => {
         onMounted(async () => {
             if (!route.params.tab) {
-                const tab = localStorage.getItem("executeDefaultTab") || undefined;
+                const tab = localStorage.getItem("executeDefaultTab") || "gantt";
                 router.replace({name: "executions/update", params: {...route.params, tab}});
             }
 

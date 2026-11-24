@@ -245,7 +245,7 @@ describe("ExecutionRootTopBar — an execution paused on an Approval", () => {
     }
 
     it("leaves Review to the banner on a tab that shows it, with Execute and Edit Flow in the top bar", async () => {
-        routeMeta.value = {tab: "overview", banner: true}
+        routeMeta.value = {tab: "overview", reviewInBanner: true}
 
         const {visible, all} = await labels(mountTopBar())
 
@@ -255,7 +255,7 @@ describe("ExecutionRootTopBar — an execution paused on an Approval", () => {
     })
 
     it("keeps Review in the bottom bar on mobile, where no banner is shown", async () => {
-        routeMeta.value = {tab: "gantt", banner: true}
+        routeMeta.value = {tab: "gantt", reviewInBanner: true}
         mobile.value = true
 
         const wrapper = mountTopBar({

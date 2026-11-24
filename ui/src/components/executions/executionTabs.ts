@@ -23,28 +23,28 @@ export const DEFAULT_EXECUTION_TAB = "gantt"
  * - `meta.title` is the i18n key resolved to the bar label.
  * - `meta.maximized` / `meta.noOverflow` / `meta.fullHeight` drive the content section layout.
  * - `meta.locked` flags an Enterprise-locked tab (lock badge in the bar).
- * - `meta.banner` flags a tab that shows the execution banner, whose approval actions the top bar then leaves out.
+ * - `meta.reviewInBanner` flags a tab whose execution banner offers Review, so the top bar leaves it out.
  */
 const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
     {
         name: `${EXECUTION_PARENT_ROUTE}/overview`,
         path: "overview",
         component: () => import("./overview/Overview.vue"),
-        meta: {tab: "overview", title: "overview", banner: true, fullHeight: true},
+        meta: {tab: "overview", title: "overview", reviewInBanner: true, fullHeight: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/gantt`,
         path: "gantt",
         component: () => import("./Gantt.vue"),
         props: {showBanner: true},
-        meta: {tab: "gantt", title: "gantt", banner: true},
+        meta: {tab: "gantt", title: "gantt", reviewInBanner: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/logs`,
         path: "logs",
         component: () => import("./Logs.vue"),
         props: {showBanner: true},
-        meta: {tab: "logs", title: "logs", banner: true},
+        meta: {tab: "logs", title: "logs", reviewInBanner: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/outputs`,

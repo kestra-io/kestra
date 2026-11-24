@@ -205,7 +205,7 @@
 
     /** Review takes Execute's place, except on the desktop tabs whose banner already offers it: mobile shows no banner. */
     const reviewInTopBar = computed(() =>
-        executionFlowLoaded.value && pausedOnApproval.value && reviewEnabled.value && (isMobile.value || route.meta.banner !== true),
+        executionFlowLoaded.value && pausedOnApproval.value && reviewEnabled.value && (isMobile.value || route.meta.reviewInBanner !== true),
     )
 
     const pausedBesideApproval = computed(() =>

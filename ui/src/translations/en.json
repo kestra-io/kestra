@@ -800,7 +800,8 @@
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
       "queued": "Queued",
-      "save_error": "Failed to update the concurrency limit, the previous value is kept."
+      "save_error": "Failed to update the concurrency limit, the previous value is kept.",
+      "invalid_running_count": "Enter a whole number between 0 and {max}."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -3190,7 +3191,7 @@
       "undo": "Undo",
       "upstream_outputs": "Upstream outputs",
       "open_in_tabs": "Open in tabs",
-      "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
+      "open_mode_hint": "This editor opens in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
     "move_panel_to_bottom": "Move panel to bottom",

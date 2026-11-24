@@ -800,7 +800,8 @@
       "dialog_title": "Limites de Concurrency",
       "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido.",
       "queued": "Em fila",
-      "save_error": "Falha ao atualizar o limite de Concurrency, o valor anterior foi mantido."
+      "save_error": "Falha ao atualizar o limite de Concurrency, o valor anterior foi mantido.",
+      "invalid_running_count": "Insira um número inteiro entre 0 e {max}."
     },
     "flowConcurrency": {
       "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
@@ -3190,7 +3191,7 @@
       "undo": "Desfazer",
       "upstream_outputs": "Outputs upstream",
       "open_in_tabs": "Abrir em abas",
-      "open_mode_hint": "As tasks abrem em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
+      "open_mode_hint": "Este editor abre em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
     },
     "blocks": "Blocos",
     "move_panel_to_bottom": "Mover painel para baixo",

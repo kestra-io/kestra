@@ -441,6 +441,7 @@
         "validation": [payload: ValidationEventPayload];
         "update:onRecap": [value: boolean];
         "ready": [];
+        "clearValidation": [fieldId: string];
     }>()
 
     const executionsStore = useExecutionsStore()
@@ -624,6 +625,9 @@
         input.isDefault = false
         modelValue.value = {...inputsValues}
         emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
+        if (!inputError(input.id)) {
+            emit("clearValidation", input.id)
+        }
     }
 
     function onSubmit(): void {

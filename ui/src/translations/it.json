@@ -800,7 +800,8 @@
       "dialog_title": "Limiti di Concorrenza",
       "warning": "La modifica del contatore in esecuzione potrebbe corrompere la concurrency, quindi le esecuzioni potrebbero superare il limite consentito.",
       "queued": "In coda",
-      "save_error": "Impossibile aggiornare il limite di Concurrency, il valore precedente è stato mantenuto."
+      "save_error": "Impossibile aggiornare il limite di Concurrency, il valore precedente è stato mantenuto.",
+      "invalid_running_count": "Inserisci un numero intero tra 0 e {max}."
     },
     "flowConcurrency": {
       "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",
@@ -3190,7 +3191,7 @@
       "undo": "Annulla",
       "upstream_outputs": "Output upstream",
       "open_in_tabs": "Apri in schede",
-      "open_mode_hint": "I task si aprono in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
+      "open_mode_hint": "Questo editor si apre in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
     },
     "blocks": "Blocchi",
     "move_panel_to_bottom": "Sposta il pannello in basso",

@@ -800,7 +800,8 @@
       "dialog_title": "동시성 제한",
       "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다.",
       "queued": "대기 중",
-      "save_error": "동시성 limit 업데이트에 실패했습니다. 이전 value가 유지됩니다."
+      "save_error": "동시성 limit 업데이트에 실패했습니다. 이전 value가 유지됩니다.",
+      "invalid_running_count": "0에서 {max} 사이의 정수를 입력하세요."
     },
     "flowConcurrency": {
       "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
@@ -3190,7 +3191,7 @@
       "undo": "실행 취소",
       "upstream_outputs": "업스트림 output",
       "open_in_tabs": "탭에서 열기",
-      "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
+      "open_mode_hint": "이 에디터는 기본적으로 모달로 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
     "blocks": "블록",
     "move_panel_to_bottom": "패널을 하단으로 이동",

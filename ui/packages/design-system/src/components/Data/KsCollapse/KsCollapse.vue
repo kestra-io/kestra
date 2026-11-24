@@ -1,8 +1,10 @@
 <template>
     <ElCollapse
-        v-model="model"
+        :modelValue="props.modelValue"
+        @update:modelValue="(value: CollapseModelValue) => emit('update:modelValue', value as T)"
         v-bind="({...filteredProps(), ...$attrs} as CollapseProps)"
-        @change="emit('change', $event)"
+        :class="{'is-flush': flush}"
+        @change="(value: CollapseModelValue) => emit('change', value as T)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -10,28 +12,30 @@
     </ElCollapse>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends CollapseModelValue = CollapseModelValue">
     import {ElCollapse, type CollapseModelValue, type CollapseProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<CollapseModelValue>({default: () => []})
-
     const props = defineProps<{
+        modelValue?: T
         accordion?: boolean
+        /** Compact navigation tree: no padding on headers or content, and the arrow sits next to the title (the docs table of contents). */
+        flush?: boolean
     }>()
 
     const emit = defineEmits<{
-        change: [value: CollapseModelValue]
+        "update:modelValue": [value: T]
+        change: [value: T]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["flush", "modelValue"])
 </script>
 
 <style lang="scss">
@@ -51,16 +55,38 @@
         border: none;
 
         & .kel-collapse-item__header {
-            padding: .5rem;
-            border: none;
+            padding: var(--ks-collapse-header-padding, .5rem);
+            border: var(--ks-collapse-header-border, none);
+            border-radius: var(--ks-collapse-header-radius, 0);
+            background-color: var(--ks-collapse-header-bg, var(--kel-collapse-header-bg-color));
+        }
+
+        & .kel-collapse-item.is-active .kel-collapse-item__header {
+            border: var(--ks-collapse-header-border, none);
         }
 
         & .kel-collapse-item__content {
-            padding: .5rem;
+            padding: var(--ks-collapse-content-padding, .5rem);
         }
 
         & .kel-collapse-item__wrap {
             border: none;
+        }
+
+        &.is-flush {
+            & .kel-collapse-item__header {
+                padding: 0;
+                min-height: 2rem;
+                line-height: 1.2;
+            }
+
+            & .kel-collapse-item__content {
+                padding: 0;
+            }
+
+            & .kel-collapse-item__arrow {
+                margin: 0 var(--ks-spacing-2);
+            }
         }
     }
 </style>

@@ -56,7 +56,8 @@ Kestra Dark and Kestra Light are the defaults: the app uses them when the editor
 | Background | `#111115` | `#FFFFFF` | `#14181F` | `#0B021C` | `#08090A` | `#FFFFFF` |
 | Keys | `#CDB6FB` | `#631BF3` | `#3DC9B0` | `#CDB6FB` | `#CDB6FB` | `#440AB8` |
 | Values | `#F7F7F8` | `#001233` | `#CE9178` | `#EEE7FE` | `#FFFFFF` | `#001233` |
-| Pebble | `#80FAC5` | `#8F6A00` | `#FFCA16` | `#80FAC5` | `#80FAC5` | `#5C3209` |
+| Pebble | `#80FAC5` | `#215D42` | `#FFCA16` | `#80FAC5` | `#80FAC5` | `#5C3209` |
+| Pebble variables | `#BFFDDD` | `#194530` | `#FFCA16` | `#80FAC5` | `#80FAC5` | `#5C3209` |
 | Keywords | `#CDB6FB` | `#631BF3` | `#569CD6` | `#FF8B61` | `#CDB6FB` | `#440AB8` |
 | Strings | `#FFC5B7` | `#AB0009` | `#CE9178` | `#FDEE99` | `#FFC5B7` | `#870006` |
 | Numbers | `#FCE070` | `#0542B6` | `#B5CEA8` | `#FFC5B7` | `#FDEE99` | `#033083` |
@@ -133,7 +134,7 @@ for (const role of PEBBLE_ROLES) container.style.setProperty(`--code-${role}`, k
 ```css
 .highlight-pebble-pebble { color: var(--code-pebble) !important; }
 .highlight-pebble-keyword { color: var(--code-keyword) !important; }
-/* and so on for constant, string, number, function, operator and punctuation */
+/* and so on for pebbleVariable, constant, string, number, function, operator and punctuation */
 ```
 
 ### Shiki
@@ -224,7 +225,8 @@ A theme is one color per role. Every adapter maps grammar scopes and Monaco toke
 | `text` | Plain text with no other role |
 | `key` | Mapping keys in YAML, JSON, TOML, INI and properties files, and object keys in JavaScript and TypeScript |
 | `value` | Plain and quoted scalars in data languages such as YAML and JSON |
-| `pebble` | Pebble `{{ }}` and `{% %}` blocks: the delimiters, the variables and whatever else is not one of the roles below |
+| `pebble` | Pebble `{{ }}` and `{% %}` blocks: the delimiters and whatever else is not one of the roles below |
+| `pebbleVariable` | Variables and paths inside a Pebble block, such as `outputs.task.uri` |
 | `keyword` | Language keywords, such as `import`, `def`, `SELECT` or `FROM` |
 | `string` | Strings in code |
 | `escape` | Escape sequences and string interpolation, such as `{name}` in a Python f-string |
@@ -263,7 +265,8 @@ Inside a block, `pebbleTokens` and the VS Code grammar give the same role to eve
 | `function` | A name followed by `(`, such as `now()` or `x.toUpperCase()`, and the name after a `\|` filter pipe, such as `\| date(…)` or `\| json` |
 | `operator` | `\|`, `??`, `???`, `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%`, `~`, `=`, `!`, `?`, `..` |
 | `punctuation` | `(`, `)`, `[`, `]`, `{`, `}`, `,`, `:` |
-| `pebble` | The delimiters, including `{{-` and `-}}`, variables and paths such as `outputs.task.value`, whitespace, and anything else |
+| `pebbleVariable` | Variables and paths such as `outputs.task.value`, dots included |
+| `pebble` | The delimiters, including `{{-` and `-}}`, whitespace, and anything else |
 
 Filters and functions are told by position rather than by a list, so a new filter needs no change here.
 

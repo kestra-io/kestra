@@ -1,5 +1,12 @@
 {
   "en": {
+    "support_links": {
+      "slack_title": "Community Slack",
+      "slack_description": "Discuss topics with other users and the Kestra team",
+      "github_description": "Give our open-source project a star",
+      "help_center_title": "Help Center",
+      "help_center_description": "Contact support for help with your Enterprise account"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra was upgraded to {version} and it may include breaking changes that require updates to your flows.",
       "cta": "See what changed"
@@ -292,6 +299,16 @@
     "last execution status": "Last execution status",
     "jump to": "Jump to",
     "jump to...": "Jump to...",
+    "global_search": {
+        "open_flow": "Open flow",
+        "flow_executions": "Flow executions",
+        "move": "Move",
+        "menu": "Menu",
+        "sources": "Menu + flows + namespaces",
+        "sources_flows": "Menu + flows",
+        "sources_namespaces": "Menu + namespaces",
+        "search_failed": "Couldn't load flows or namespaces"
+    },
     "contextBar": {
       "ai": "AI",
       "news": "News",
@@ -563,6 +580,7 @@
     "output": "Output",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "Failed to evaluate expression",
       "title": "Debug Expression",
       "preview": "Preview",
       "expression": "Expression"
@@ -584,6 +602,7 @@
     },
     "topology-graph": {
       "retried": "This task was retried",
+      "task-details": "Details for {task}",
       "artifacts": "no artifacts | {count} artifact | {count} artifacts",
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
@@ -792,7 +811,8 @@
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
       "queued": "Queued",
-      "save_error": "Failed to update the concurrency limit, the previous value is kept."
+      "save_error": "Failed to update the concurrency limit, the previous value is kept.",
+      "invalid_running_count": "Enter a whole number between 0 and {max}."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -1581,7 +1601,7 @@
           },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
-            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
+            "color_mode_shortcut": "Tip: press {ctrl}+{shift}+{key} to cycle themes from anywhere.",
             "logs_font_size": "Font size used in log viewers and terminals.",
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",
@@ -1791,7 +1811,12 @@
           },
           "flow_generated": {
             "title": "This is a flow",
-            "body": "The flow is written in YAML with two tasks:<ol><li><code>fetch_orders</code> to download the orders</li><li><code>summarize</code> to compute the revenue in Python</li></ol>Tasks are executed sequentially, in the order in which they are defined.",
+            "body": "The flow is written in YAML with two tasks:",
+            "tasks": {
+              "fetch_orders": "{task} to download the orders",
+              "summarize": "{task} to compute the revenue in Python"
+            },
+            "after_tasks": "Tasks are executed sequentially, in the order in which they are defined.",
             "next": "Save and execute"
           },
           "first_execution": {
@@ -2140,6 +2165,7 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
+      "unknown_schema": "Unknown Schema",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -3176,7 +3202,7 @@
       "undo": "Undo",
       "upstream_outputs": "Upstream outputs",
       "open_in_tabs": "Open in tabs",
-      "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
+      "open_mode_hint": "This editor opens in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
     "move_panel_to_bottom": "Move panel to bottom",

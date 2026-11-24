@@ -26,9 +26,9 @@ describe("pwaInstallState", () => {
     })
 
     it("does not register the listener twice when called multiple times", () => {
+        initPwaInstallCapture()
         const addSpy = vi.spyOn(window, "addEventListener")
 
-        initPwaInstallCapture()
         initPwaInstallCapture()
         initPwaInstallCapture()
 

@@ -116,6 +116,10 @@ export default defineConfig([
                 name: "@kestra-io/design-system",
                 importNames: ["KsEmpty"],
                 message: "KsEmpty is deprecated: use KsNoData, or KsEmptyState when the empty state has its own illustration.",
+            }, {
+                name: "vue-virtual-scroller",
+                importNames: ["DynamicScroller"],
+                message: "Import DynamicScroller from src/utils/virtualScroller.ts, which types the props it forwards to RecycleScroller.",
             }]}],
         },
     },

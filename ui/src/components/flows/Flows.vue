@@ -20,7 +20,7 @@
             </NavBarActions>
         </template>
     </TopNavBar>
-    <section :class="{'full-container': fitHeightResolved}">
+    <section class="flows" :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -35,6 +35,7 @@
             :mobileColumns="mobileColumns"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
+            :rowStyle="{cursor: 'pointer'}"
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
             :no-data-text="$t('no_results.flows')"
@@ -733,11 +734,6 @@
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
-:deep(nav .dropdown-menu) {
-    display: flex;
-    width: 20rem;
-}
-
 .flow-id {
     min-width: 200px;
     display: flex;
@@ -767,12 +763,8 @@
     vertical-align: middle;
 }
 
-:deep(.flows-table) .kel-table__row {
-    cursor: pointer;
-}
-
-:deep(.flows-table) th.row-action .cell {
-    padding-right: var(--ks-spacing-4);
+.flows {
+    --ks-table-action-header-padding-right: var(--ks-spacing-4);
 }
 
 .header-actions-list {

@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect} from "storybook/test"
 import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+import Cog from "vue-material-design-icons/Cog.vue"
 import KsIcon from "./KsIcon.vue"
 
 const meta: Meta<typeof KsIcon> = {
@@ -117,4 +118,26 @@ export const Tooltip: Story = {
         `,
     }),
     args: {tooltip: "I'm a tooltip", size: "lg"},
+}
+
+/** Material icon size: `--ks-icon-glyph-size` sizes the drawn glyph and `--ks-icon-box-size` the box it sits in, both 1rem by default, set on the icon or an ancestor */
+export const MaterialIconSize: Story = {
+    render: () => ({
+        components: {Cog},
+        template: `
+            <div style="padding:24px;display:flex;gap:24px;align-items:center">
+                <span data-test="default"><cog /></span>
+                <span data-test="glyph" style="--ks-icon-glyph-size:var(--ks-icon-size-lg)"><cog /></span>
+                <span data-test="box" style="--ks-icon-box-size:var(--ks-icon-size-lg);--ks-icon-glyph-size:var(--ks-icon-size-lg)"><cog /></span>
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const size = (test: string, selector: string) => canvasElement.querySelector(`[data-test="${test}"] ${selector}`)!.getBoundingClientRect().height
+        await expect(size("default", "svg")).toBe(16)
+        await expect(size("glyph", "svg")).toBe(24)
+        await expect(size("glyph", "span")).toBe(16)
+        await expect(size("box", "span")).toBe(24)
+    },
 }

@@ -26,8 +26,18 @@ dependencies {
     implementation("dev.langchain4j:langchain4j")
     implementation("dev.langchain4j:langchain4j-mcp")
     implementation("dev.langchain4j:langchain4j-google-ai-gemini")
+    implementation("dev.langchain4j:langchain4j-vertex-ai-gemini")
+    implementation("dev.langchain4j:langchain4j-open-ai")
+    implementation("dev.langchain4j:langchain4j-azure-open-ai")
+    implementation("dev.langchain4j:langchain4j-anthropic")
+    implementation("dev.langchain4j:langchain4j-bedrock")
+    implementation("dev.langchain4j:langchain4j-mistral-ai")
+    implementation("dev.langchain4j:langchain4j-ollama")
     implementation("dev.langchain4j:langchain4j-http-client-jdk")
     implementation('org.bouncycastle:bcpkix-jdk18on')
+    implementation("software.amazon.awssdk:auth")
+    implementation("software.amazon.awssdk:bedrockruntime")
+    implementation("com.azure:azure-identity")
 
     // mcp
     api 'io.modelcontextprotocol.sdk:mcp'

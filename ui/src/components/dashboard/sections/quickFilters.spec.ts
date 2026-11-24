@@ -3,6 +3,7 @@ import {
     stateFilterForTab,
     hasQuickFilters,
     chartConstrainsState,
+    countsByTab,
     upcomingChartFor,
     ALL_STATES,
     QUICK_FILTER_TABS,
@@ -132,6 +133,22 @@ describe("quickFilters", () => {
         it("stays out of the state tabs, so the All tab keeps its own states", () => {
             expect(QUICK_FILTER_TABS.map((tab) => tab.key)).not.toContain(UPCOMING_TAB.key)
             expect(ALL_STATES).toHaveLength(17)
+        })
+    })
+
+    describe("countsByTab", () => {
+        it("sums the states of each tab and every state for All", () => {
+            expect(countsByTab({SUCCESS: 9, FAILED: 2, KILLED: 1, RUNNING: 4, WARNING: 0})).toEqual({
+                all: 16, running: 4, paused: 0, success: 9, warning: 0, failed: 3,
+            })
+        })
+
+        it("counts a state that is in no tab only for All", () => {
+            expect(countsByTab({SUCCESS: 1, SOMETHING_ELSE: 5}).all).toBe(6)
+        })
+
+        it("gives every tab zero when there are no executions", () => {
+            expect(countsByTab({})).toEqual({all: 0, running: 0, paused: 0, success: 0, warning: 0, failed: 0})
         })
     })
 })

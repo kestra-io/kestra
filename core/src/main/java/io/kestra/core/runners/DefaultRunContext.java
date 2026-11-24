@@ -244,6 +244,14 @@ public class DefaultRunContext extends RunContext {
         }
     }
 
+    boolean hasSecrets() {
+        return logger.hasSecrets();
+    }
+
+    String maskSecrets(final String data) {
+        return logger.maskSecrets(data);
+    }
+
     /**
      * Registers a value to be masked in this run context's logs, and records it in {@link #secretOutputs}.
      * Makes a defensive copy of the list, since {@link #clone()} may share it with another run context.
@@ -333,6 +341,14 @@ public class DefaultRunContext extends RunContext {
     @Override
     public Object renderTyped(String inline) throws IllegalVariableEvaluationException {
         return variableRenderer.renderTyped(inline, getVariables());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object renderTyped(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return variableRenderer.renderTyped(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
 
     @Override
@@ -541,7 +557,7 @@ public class DefaultRunContext extends RunContext {
 
     private Map<String, Object> decryptVariables(Map<String, Object> variables) {
         if (secretKey.isPresent()) {
-            final Secret secret = new Secret(secretKey, logger);
+            final Secret secret = new Secret(secretKey, logger, logger::usedSecret);
             return secret.decrypt(variables);
         }
         return variables;

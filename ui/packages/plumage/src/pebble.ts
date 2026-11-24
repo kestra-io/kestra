@@ -1,9 +1,9 @@
 import type {SyntaxRole} from "./types.ts"
 
-/** The roles a Pebble block is painted with. Delimiters, variables and anything unknown keep the `pebble` color. */
-export type PebbleRole = Extract<SyntaxRole, "pebble" | "keyword" | "constant" | "string" | "number" | "function" | "operator" | "punctuation">
+/** The roles a Pebble block is painted with. Delimiters and anything unknown keep the `pebble` color. */
+export type PebbleRole = Extract<SyntaxRole, "pebble" | "pebbleVariable" | "keyword" | "constant" | "string" | "number" | "function" | "operator" | "punctuation">
 
-export const PEBBLE_ROLES: readonly PebbleRole[] = ["pebble", "keyword", "constant", "string", "number", "function", "operator", "punctuation"]
+export const PEBBLE_ROLES: readonly PebbleRole[] = ["pebble", "pebbleVariable", "keyword", "constant", "string", "number", "function", "operator", "punctuation"]
 
 /** A run of a Pebble block painted with one role, as `[start, end)` offsets into the text. */
 export type PebbleToken = [start: number, end: number, role: PebbleRole]
@@ -45,6 +45,7 @@ export const pebbleInjection = {
                 {match: IDENTIFIER, name: "variable.other.pebble"},
                 {match: NUMBER, name: "constant.numeric.pebble"},
                 {match: OPERATOR, name: "keyword.operator.pebble"},
+                {match: "\\.", name: "variable.other.pebble"},
                 {match: PUNCTUATION, name: "punctuation.pebble"},
             ],
         },
@@ -109,8 +110,8 @@ function matchAt(re: RegExp, text: string, at: number): number {
 /**
  * The tokens of every Pebble block of `text`, in order. Each block covers exactly the range `pebbleBlocks` gives
  * it, cut into runs painted with one role: keywords, constants, strings, numbers, functions (a name before `(` or
- * after a `|` filter pipe), operators and punctuation, with delimiters, variables and whitespace staying `pebble`.
- * Adjacent runs of one role are merged, so `{{ inputs.name }}` is a single token.
+ * after a `|` filter pipe), operators, punctuation, and variables with their path dots, with delimiters and
+ * whitespace staying `pebble`. Adjacent runs of one role are merged, so `inputs.name` is a single token.
  */
 export function pebbleTokens(text: string): PebbleToken[] {
     const tokens: PebbleToken[] = []
@@ -152,7 +153,7 @@ export function pebbleTokens(text: string): PebbleToken[] {
                     : standalone && KEYWORD_SET.has(word) ? "keyword"
                     : standalone && CONSTANT_SET.has(word) ? "constant"
                     : matchAt(CALL_RE, text, next) !== -1 ? "function"
-                    : "pebble"
+                    : "pebbleVariable"
             } else if (char >= 48 && char <= 57) {
                 next = matchAt(NUMBER_RE, text, at)
                 role = "number"
@@ -163,10 +164,10 @@ export function pebbleTokens(text: string): PebbleToken[] {
             }
             if (next === -1 || next > contentEnd) {
                 next = at + 1
-                role = "pebble"
+                role = char === 46 ? "pebbleVariable" : "pebble"
             }
             afterPipe = role === "operator" && char === 124
-            afterDot = role === "pebble" && char === 46
+            afterDot = role === "pebbleVariable" && char === 46
             push(at, next, role)
             at = next
         }

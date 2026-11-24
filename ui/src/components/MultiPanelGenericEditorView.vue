@@ -13,7 +13,7 @@
             </div>
         </MultiPanelEditorTabs>
         <div class="editor-wrapper">
-            <KsSplitter class="default-theme editor-panels" :layout="splitOrientation">
+            <KsSplitter class="default-theme editor-panels" :class="{vertical: splitOrientation === 'vertical'}" :layout="splitOrientation">
                 <KsSplitterPanel min="100">
                     <MultiPanelTabs v-model="panels" v-model:maximizedPanelIndex="maximizedPanelIndex" @remove-tab="onRemoveTab" />
                 </KsSplitterPanel>
@@ -215,31 +215,16 @@
         flex-shrink: 0;
     }
 
-    :deep(.editor-panels){
+    .editor-panels {
         position: absolute;
     }
 
-    .default-theme{
-        & :deep(.kel-splitter__horizontal > .kel-splitter-bar){
-            width: 2px !important;
-        }
+    .default-theme {
+        --ks-splitter-panel-bg: var(--ks-bg-surface);
+        --ks-splitter-bar-size: 2px;
 
-        & :deep(.kel-splitter__vertical > .kel-splitter-bar){
-            height: 4px !important;
-            width: 100% !important;
-            cursor: ns-resize;
-        }
-
-        & :deep(.kel-splitter-panel) {
-            background-color: var(--ks-bg-surface);
-        }
-
-        & :deep(.kel-splitter__splitter){
-            border-top-color: var(--ks-border-default);
-            background-color: var(--ks-bg-surface);
-            &:before, &:after{
-                background-color: var(--ks-text-secondary);
-            }
+        &.vertical {
+            --ks-splitter-bar-size: 4px;
         }
     }
 </style>

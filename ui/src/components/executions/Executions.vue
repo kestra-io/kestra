@@ -526,7 +526,7 @@
         widenEmptyTimeRange,
     } from "./timeRangeWiden"
     import {useExecutionsQueryScope} from "../../composables/useExecutionsQueryScope"
-    import {hasInvalidLabelKeys} from "../../utils/executionLabels"
+    import {hasInvalidLabelKeys, type ExecutionLabelInput} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import {usePageSize} from "../../composables/usePageSize"
@@ -544,7 +544,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
-    import {type Execution, type Label, useExecutionsStore} from "../../stores/executions"
+    import {type Execution, useExecutionsStore} from "../../stores/executions"
     import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
     import {useExecutionFilter} from "../filter/configurations/executionFilter"
@@ -616,7 +616,7 @@
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
 
-    const executionLabels = ref<Label[]>([])
+    const executionLabels = ref<ExecutionLabelInput[]>([])
     const hasInvalidLabels = computed(() => hasInvalidLabelKeys(executionLabels.value))
     const recomputeInterval = ref(false)
     const isOpenLabelsModal = ref(false)
@@ -1303,35 +1303,11 @@
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
-.custom-warning {
-    border: 1px solid var(--ks-status-warning);
-    border-radius: 7px;
-    box-shadow: 1px 1px 3px 1px var(--ks-status-warning);
-
-    & :deep(.kel-alert__title) {
-        font-size: var(--ks-font-size-base);
-        color: var(--ks-status-warning);
-        font-weight: bold;
-    }
-
-    & :deep(.kel-alert__description) {
-        font-size: var(--ks-font-size-xs);
-    }
-
-    & :deep(.kel-alert__icon) {
-        color: var(--ks-status-warning);
-    }
-}
-
 .code-text {
     color: var(--ks-text-primary);
 }
 
-:deep(.executions-table) .kel-table__row {
-    cursor: pointer;
-}
-
-:deep(a.execution-id) code {
-    color: var(--ks-text-link);
+.execution-id {
+    --ks-id-color: var(--ks-text-link);
 }
 </style>

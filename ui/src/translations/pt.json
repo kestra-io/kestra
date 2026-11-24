@@ -1,5 +1,12 @@
 {
   "pt": {
+    "support_links": {
+      "slack_title": "Slack da comunidade",
+      "slack_description": "Converse com outros utilizadores e com a equipa Kestra",
+      "github_description": "Dê uma estrela ao nosso projeto open source",
+      "help_center_title": "Centro de ajuda",
+      "help_center_description": "Contacte o suporte para obter ajuda com a sua conta Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "O Kestra foi atualizado para a versão {version} e pode incluir alterações que exigem atualizações nos seus Flows.",
       "cta": "Ver o que mudou"
@@ -292,6 +299,16 @@
     "last execution status": "Último status de execução",
     "jump to": "Ir para",
     "jump to...": "Ir para...",
+    "global_search": {
+      "open_flow": "Abrir flow",
+      "flow_executions": "Execuções do flow",
+      "move": "Mover",
+      "menu": "Menu",
+      "sources": "Menu + flows + namespaces",
+      "sources_flows": "Menu + flows",
+      "sources_namespaces": "Menu + namespaces",
+      "search_failed": "Não foi possível carregar flows ou namespaces"
+    },
     "contextBar": {
       "ai": "IA",
       "news": "Notícias",
@@ -563,6 +580,7 @@
     "output": "Output",
     "flow_outputs": "Saídas do Flow",
     "eval": {
+      "failed": "Não foi possível avaliar a expressão",
       "title": "Expressão de Depuração",
       "preview": "Pré-visualização",
       "expression": "Expressão"
@@ -584,6 +602,7 @@
     },
     "topology-graph": {
       "retried": "Esta Task foi repetida",
+      "task-details": "Detalhes de {task}",
       "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientação do gráfico",
       "zoom-in": "Aumentar zoom",
@@ -792,7 +811,8 @@
       "dialog_title": "Limites de Concurrency",
       "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido.",
       "queued": "Em fila",
-      "save_error": "Falha ao atualizar o limite de Concurrency, o valor anterior foi mantido."
+      "save_error": "Falha ao atualizar o limite de Concurrency, o valor anterior foi mantido.",
+      "invalid_running_count": "Insira um número inteiro entre 0 e {max}."
     },
     "flowConcurrency": {
       "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
@@ -1581,7 +1601,7 @@
           },
           "descriptions": {
             "color_mode": "Escolha o tema de interface preferido.",
-            "color_mode_shortcut": "Dica: prima <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> para alternar temas a partir de qualquer lugar.",
+            "color_mode_shortcut": "Dica: prima {ctrl}+{shift}+{key} para alternar temas a partir de qualquer lugar.",
             "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais.",
             "editor_font_family": "Fonte monoespaçada usada no editor YAML.",
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
@@ -1791,7 +1811,12 @@
           },
           "flow_generated": {
             "title": "Isto é um flow",
-            "body": "O flow é escrito em YAML com duas tasks:<ol><li><code>fetch_orders</code> para baixar os pedidos</li><li><code>summarize</code> para calcular a receita em Python</li></ol>As tasks são executadas sequencialmente, na ordem em que são definidas.",
+            "body": "O flow é escrito em YAML com duas tasks:",
+            "tasks": {
+              "fetch_orders": "{task} para baixar os pedidos",
+              "summarize": "{task} para calcular a receita em Python"
+            },
+            "after_tasks": "As tasks são executadas sequencialmente, na ordem em que são definidas.",
             "next": "Salvar e executar"
           },
           "first_execution": {
@@ -2140,6 +2165,7 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
+      "unknown_schema": "Esquema desconhecido",
       "toggle_pebble": "Alternar editor Pebble",
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition",
       "adding": "+ Adicionar um {what}",
@@ -3176,7 +3202,7 @@
       "undo": "Desfazer",
       "upstream_outputs": "Outputs upstream",
       "open_in_tabs": "Abrir em abas",
-      "open_mode_hint": "As tasks abrem em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
+      "open_mode_hint": "Este editor abre em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
     },
     "blocks": "Blocos",
     "move_panel_to_bottom": "Mover painel para baixo",

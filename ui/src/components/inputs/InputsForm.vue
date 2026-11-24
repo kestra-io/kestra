@@ -20,6 +20,7 @@
                 :prop="input.id.includes('.') ? [input.id] : input.id"
                 :error="customInputs[input.id] ? undefined : inputError(input.id)"
                 :inlineMessage="true"
+                :class="{centered}"
             >
                 <template #label>
                     <span
@@ -51,6 +52,7 @@
                 <KsMarkdown v-if="input.description && input.descriptionDisplayMode !== 'TOOLTIP'" :data-testid="`input-description-${input.id}`" class="text-description" :content="input.description" />
                 <KsEditor
                     v-bind="editorBindings"
+                    class="editor"
                     :options="{fullHeight: false}"
                     :inline="true"
                     :navbar="false"
@@ -151,7 +153,7 @@
                 <KsSwitch
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'BOOL'"
-                    :modelValue="inputsValues[input.id] as string | number | boolean | undefined"
+                    :modelValue="inputsValues[input.id] as boolean | undefined"
                     @update:model-value="(val) => { inputsValues[input.id] = val; onChangeBool(input); }"
                     class="boolean-inputs"
                 />
@@ -209,6 +211,7 @@
                             <KsTag
                                 v-for="(item, index) in parseArrayValue(input.id)"
                                 :key="index"
+                                class="tag"
                             >
                                 {{ item }}
                             </KsTag>
@@ -281,6 +284,7 @@
                 />
                 <KsEditor
                     v-bind="editorBindings"
+                    class="editor"
                     :options="{fullHeight: false, showScroll: ((inputsValues[input.id] as string)?.length ?? 0) > 530}"
                     :inline="true"
                     :navbar="false"
@@ -292,6 +296,7 @@
                 />
                 <KsEditor
                     v-bind="editorBindings"
+                    class="editor"
                     :options="{fullHeight: false}"
                     :inline="true"
                     :navbar="false"
@@ -299,7 +304,7 @@
                     :data-testid="`input-form-${input.id}`"
                     lang="yaml"
                     :modelValue="inputsValues[input.id] as string | undefined"
-                    @change="onYamlChange(input, $event)"
+                    @update:modelValue="(value) => { inputsValues[input.id] = value; onChange(input); }"
                 />
                 <KsDurationPicker
                     v-if="input.type === 'DURATION'"
@@ -400,7 +405,7 @@
 
     type PrefillInput = Pick<InputMetaData, "id"> & {type?: InputType | string}
 
-    const modelValue = defineModel<Record<string, unknown>>()
+    const modelValue = defineModel<Record<string, unknown>>({default: () => ({})})
 
     const props = withDefaults(defineProps<{
         executeClicked?: boolean;
@@ -414,6 +419,8 @@
         // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
         // so an expression or a default can read a label the caller already knows.
         renderLabels?: string[];
+        /** Centres each label vertically against its input, for inputs taller than one line. */
+        centered?: boolean;
     }>(), {
         executeClicked: false,
         initialInputs: () => [],
@@ -424,6 +431,7 @@
         hideRecapNavigation: false,
         formGroups: undefined,
         renderLabels: undefined,
+        centered: false,
     })
 
     const emit = defineEmits<{
@@ -433,6 +441,7 @@
         "validation": [payload: ValidationEventPayload];
         "update:onRecap": [value: boolean];
         "ready": [];
+        "clearValidation": [fieldId: string];
     }>()
 
     const executionsStore = useExecutionsStore()
@@ -616,6 +625,9 @@
         input.isDefault = false
         modelValue.value = {...inputsValues}
         emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
+        if (!inputError(input.id)) {
+            emit("clearValidation", input.id)
+        }
     }
 
     function onSubmit(): void {
@@ -717,11 +729,6 @@
         setTimeout(() => onChange(input), 300)
     }
 
-    function onYamlChange(input: InputMetaData, e: Event): void {
-        const target = e.target as HTMLInputElement
-        inputsValues[input.id] = target.value
-        onChange(input)
-    }
 
     const inputsValuesWithNoDefault = computed<Record<string, unknown>>(() => {
         return inputsMetaData.value.reduce((acc: Record<string, unknown>, input) => {
@@ -1130,6 +1137,10 @@
 </script>
 
 <style scoped>
+.centered {
+    align-items: center;
+}
+
 .md-label {
     display: inline-flex;
     height: var(--ks-font-size-lg);
@@ -1237,35 +1248,10 @@
     overflow-y: auto;
 }
 
-:deep(.boolean-inputs) {
+.boolean-inputs {
     display: flex;
     align-items: center;
     width: 100%;
-
-    .kel-radio-button {
-        &.is-active {
-            .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
-                color: var(--ks-text-primary);
-                background-color: var(--ks-btn-secondary-bg-active);
-                box-shadow: 0 0 0 0 var(--ks-border-focus);
-            }
-        }
-
-        .kel-radio-button__inner {
-            border: var(--ks-border-default);
-            transition: 0.3s ease-in-out;
-
-            &:hover {
-                color: var(--ks-text-secondary);
-                border-color: var(--ks-border-focus);
-                background-color: var(--ks-bg-surface);
-            }
-
-            &:first-child {
-                border-left: var(--ks-border-default);
-            }
-        }
-    }
 }
 
 .kel-input-file {
@@ -1308,7 +1294,7 @@
         box-sizing: border-box;
         gap: 4px;
 
-        & :deep(.kel-tag) {
+        & .tag {
             display: inline-flex;
             align-items: center;
             border-radius: 4px;
@@ -1332,17 +1318,12 @@
         }
 
         .array-cell {
-            & :deep(.kel-input__wrapper) {
-                box-shadow: none;
-                border: 1px solid var(--ks-border-default);
-                border-radius: 5px;
-                padding-right: var(--ks-spacing-5);
-            }
-
-            & :deep(.kel-input__inner) {
-                color: var(--ks-text-warning) !important;
-                font-size: var(--ks-font-size-sm) !important;
-            }
+            --ks-input-border-color: transparent;
+            --ks-input-border: 1px solid var(--ks-border-default);
+            --ks-input-radius: 5px;
+            --ks-input-inner-padding-end: 0.8125rem;
+            --ks-input-text-color: var(--ks-text-warning);
+            --ks-input-font-size: var(--ks-font-size-sm);
         }
 
         .controls-input {
@@ -1388,13 +1369,10 @@
     }
 }
 
-:deep(.editor-container){
-        max-height: 200px;
-
-        & .ks-monaco-editor {
-            overflow-x: hidden;
-        }
-    }
+.editor {
+    --ks-editor-max-height: 200px;
+    --ks-editor-overflow-x: hidden;
+}
 
 .custom-file-input {
   color: transparent;

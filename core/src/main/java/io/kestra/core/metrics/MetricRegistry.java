@@ -70,6 +70,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_TRIGGER_EXECUTION_COUNT_DESCRIPTION = "The total number of triggers evaluated by the Worker";
     public static final String METRIC_WORKER_KILLED_COUNT = "worker.killed.count";
     public static final String METRIC_WORKER_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Worker";
+    public static final String METRIC_WORKER_STREAM_RECONNECT_COUNT = "worker.stream.reconnect.count";
+    public static final String METRIC_WORKER_STREAM_RECONNECT_COUNT_DESCRIPTION = "The total number of times the Worker opened a new job stream to the controller after losing the previous one";
 
     // Controller (WorkerJobDispatcher) metrics
     public static final String METRIC_CONTROLLER_WORKER_ACTIVE = "controller.worker.active";
@@ -90,6 +92,8 @@ public class MetricRegistry {
     public static final String METRIC_CONTROLLER_JOB_KILLED_TOTAL_DESCRIPTION = "The total number of jobs skipped because the execution was killed";
     public static final String METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL = "controller.job.dispatch.failed.total";
     public static final String METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION = "The total number of job dispatch failures";
+    public static final String METRIC_CONTROLLER_JOB_RESUBMITTED_TOTAL = "controller.job.resubmitted.total";
+    public static final String METRIC_CONTROLLER_JOB_RESUBMITTED_TOTAL_DESCRIPTION = "The total number of jobs resubmitted because the worker they were sent to never received them";
     public static final String METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL = "controller.worker.registered.total";
     public static final String METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL_DESCRIPTION = "The total number of (worker, worker queue) subscription registrations; a worker subscribed to N queues bumps this counter N times";
     public static final String METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL = "controller.worker.unregistered.total";
@@ -279,6 +283,7 @@ public class MetricRegistry {
     public static final String TAG_ATTEMPT_COUNT = "attempt_count";
     public static final String TAG_WORKER_GROUP = "worker_group";
     public static final String TAG_WORKER_QUEUE = "worker_queue";
+    public static final String TAG_REASON = "reason";
     public static final String TAG_QUEUE_NAME = "queue_name";
     public static final String TAG_SSE_TYPE = "sse_type";
     public static final String TAG_AI_PROVIDER_ID = "ai_provider_id";

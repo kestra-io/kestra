@@ -2,8 +2,29 @@ import {ref} from "vue"
 
 import {cssVar, dateUtils, dayjs, type Dayjs} from "@kestra-io/design-system"
 import {getSchemeValue} from "../../../utils/scheme"
-import {DateGrouping} from "../../../utils/utils"
+import {DateGrouping, getLanguageTag} from "../../../utils/utils"
 import type {ColorByValue} from "../types"
+
+type NumberFormatOptionsWithRounding = Intl.NumberFormatOptions & {roundingPriority?: "morePrecision"}
+
+const numberFormats = new Map<string, Intl.NumberFormat>()
+
+/** Rounds to 2 decimals, or to 2 significant digits for a tiny value, so that a non-zero value never shows as 0. */
+export function formatNumber(value: number): string {
+    const language = getLanguageTag()
+    let format = numberFormats.get(language)
+    if (!format) {
+        const options: NumberFormatOptionsWithRounding = {
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 2,
+            roundingPriority: "morePrecision",
+            useGrouping: true,
+        }
+        format = new Intl.NumberFormat(language, options)
+        numberFormats.set(language, format)
+    }
+    return format.format(value)
+}
 
 export interface RankedStackedBars {
     categories: string[]

@@ -54,7 +54,7 @@ public class ChartDataService {
     }
 
     /**
-     * Counts the executions a chart on {@link Executions} data covers, grouped by state, with a single query.
+     * Counts the executions a chart on {@link Executions} data covers, grouped by state, grouped by state in the repository instead of fetching the rows.
      * The chart's own {@code where} and the dashboard filters apply, so the counts match the rows the chart shows
      * for each state.
      *

@@ -93,7 +93,7 @@
     .quick-filter-tab {
         display: inline-flex;
         align-items: center;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        padding: var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         font-weight: var(--ks-font-weight-regular);
         color: var(--ks-text-secondary);
@@ -102,9 +102,9 @@
         cursor: pointer;
         white-space: nowrap;
         position: relative;
+        flex-shrink: 0;
+        gap: var(--ks-spacing-1);
         transition: color var(--ks-duration-fast);
-
-        gap: var(--ks-spacing-2);
 
         &:hover:not(:disabled),
         &.active {

@@ -33,6 +33,11 @@ export interface ColorByValue {
     color?: string;
 }
 
+/** The executions of a chart per state name, with no entry for a state that has none. Not in the generated SDK until it is regenerated from the state-counts routes. */
+export interface ChartStateCounts {
+    counts: Record<string, number>;
+}
+
 export interface Chart extends ChartChartOption {
     chartOptions?: {
         displayName?: string;

@@ -1177,6 +1177,7 @@
     "bulk action ineligible change state": "{count} von {total} ausgewählten Executions sind für eine Statusänderung nicht zulässig.",
     "bulk action ineligible not state": "{count} von {total} ausgewählten Executions befinden sich nicht im Status {state}.",
     "bulk action ineligible not pausable": "{count} von {total} ausgewählten Executions können nicht pausiert werden.",
+    "bulk action ineligible not resumable": "{count} von {total} ausgewählten Executions können nicht fortgesetzt werden.",
     "bulk action ineligible not terminated": "{count} von {total} ausgewählten Executions sind nicht beendet.",
     "bulk action ineligible already terminated": "{count} von {total} ausgewählten Executions wurden bereits beendet.",
     "cancel": "Abbrechen",

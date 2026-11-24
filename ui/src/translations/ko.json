@@ -1177,6 +1177,7 @@
     "bulk action ineligible change state": "선택한 실행 {total}개 중 {count}개는 상태를 변경할 수 없습니다.",
     "bulk action ineligible not state": "선택한 실행 {total}개 중 {count}개는 {state} 상태가 아닙니다.",
     "bulk action ineligible not pausable": "선택한 실행 {total}개 중 {count}개는 일시 중지할 수 없습니다.",
+    "bulk action ineligible not resumable": "선택한 실행 {total}개 중 {count}개는 재개할 수 없습니다.",
     "bulk action ineligible not terminated": "선택한 실행 {total}개 중 {count}개는 종료되지 않았습니다.",
     "bulk action ineligible already terminated": "선택한 실행 {total}개 중 {count}개는 이미 종료되었습니다.",
     "cancel": "취소",

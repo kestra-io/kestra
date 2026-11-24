@@ -370,6 +370,7 @@
   "bulk action ineligible already terminated": "4acf35aeea12",
   "bulk action ineligible change state": "7c3d5d066e63",
   "bulk action ineligible not pausable": "37261667cfc4",
+  "bulk action ineligible not resumable": "d33a6a286911",
   "bulk action ineligible not state": "e2b7b24932df",
   "bulk action ineligible not terminated": "95eed5705037",
   "bulk actions": "19f0dd9ac406",

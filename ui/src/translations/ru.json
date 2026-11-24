@@ -1177,6 +1177,7 @@
     "bulk action ineligible change state": "У {count} из {total} выбранных executions нельзя изменить состояние.",
     "bulk action ineligible not state": "{count} из {total} выбранных executions находятся не в состоянии {state}.",
     "bulk action ineligible not pausable": "{count} из {total} выбранных executions нельзя приостановить.",
+    "bulk action ineligible not resumable": "{count} из {total} выбранных executions нельзя возобновить.",
     "bulk action ineligible not terminated": "{count} из {total} выбранных executions не завершены.",
     "bulk action ineligible already terminated": "{count} из {total} выбранных executions уже завершены.",
     "cancel": "Отмена",

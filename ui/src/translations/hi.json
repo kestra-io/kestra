@@ -1177,6 +1177,7 @@
     "bulk action ineligible change state": "{total} में से {count} चुने गए executions का state नहीं बदला जा सकता।",
     "bulk action ineligible not state": "{total} में से {count} चुने गए executions {state} state में नहीं हैं।",
     "bulk action ineligible not pausable": "{total} में से {count} चुने गए executions को pause नहीं किया जा सकता।",
+    "bulk action ineligible not resumable": "{total} में से {count} चुने गए executions को resume नहीं किया जा सकता।",
     "bulk action ineligible not terminated": "{total} में से {count} चुने गए executions समाप्त नहीं हुए हैं।",
     "bulk action ineligible already terminated": "{total} में से {count} चुने गए executions पहले ही समाप्त हो चुके हैं।",
     "cancel": "रद्द करें",

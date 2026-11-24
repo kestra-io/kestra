@@ -1177,6 +1177,7 @@
     "bulk action ineligible change state": "所选 {total} 个执行中有 {count} 个不符合状态更改条件。",
     "bulk action ineligible not state": "所选 {total} 个执行中有 {count} 个不处于 {state} 状态。",
     "bulk action ineligible not pausable": "所选 {total} 个执行中有 {count} 个无法暂停。",
+    "bulk action ineligible not resumable": "所选 {total} 个执行中有 {count} 个无法恢复。",
     "bulk action ineligible not terminated": "所选 {total} 个执行中有 {count} 个尚未终止。",
     "bulk action ineligible already terminated": "所选 {total} 个执行中有 {count} 个已经终止。",
     "cancel": "取消",

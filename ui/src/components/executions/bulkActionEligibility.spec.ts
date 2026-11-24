@@ -14,6 +14,7 @@ function makeExecution(state: string): Execution {
             current: state,
             histories: [],
         },
+        breakpoints: state === State.BREAKPOINT ? [{id: "t1"}] : undefined,
     } as unknown as Execution
 }
 
@@ -25,13 +26,19 @@ describe("bulk action eligibility rules", () => {
         expect(isExecutionTerminated(makeExecution(State.KILLED))).toBe(true)
     })
 
+    it("refuses to resume a BREAKPOINT execution without breakpoints", () => {
+        const execution = {...makeExecution(State.BREAKPOINT), breakpoints: []}
+
+        expect(bulkActionRules[action.RESUME].allowed(execution)).toBe(false)
+    })
+
     it.each([
         [action.UPDATE, [State.SUCCESS, State.FAILED, State.WARNING, State.CANCELLED], [State.KILLED, State.RUNNING, State.PAUSED, State.QUEUED]],
         [action.RESTART, [State.FAILED], [State.SUCCESS, State.RUNNING, State.KILLED]],
         [action.REPLAY, [State.SUCCESS, State.FAILED, State.KILLED], [State.RUNNING, State.PAUSED]],
         [action.KILL, [State.RUNNING, State.PAUSED, State.QUEUED], [State.SUCCESS, State.FAILED, State.KILLED]],
         [action.PAUSE, [State.RUNNING, State.PAUSING, State.KILLING], [State.PAUSED, State.SUCCESS]],
-        [action.RESUME, [State.PAUSED], [State.RUNNING, State.SUCCESS]],
+        [action.RESUME, [State.PAUSED, State.BREAKPOINT], [State.RUNNING, State.SUCCESS]],
         [action.UNQUEUE, [State.QUEUED], [State.RUNNING, State.SUCCESS]],
         [action.FORCE_RUN, [State.RUNNING, State.QUEUED, State.PAUSED], [State.SUCCESS, State.KILLED]],
         [action.CHANGE_LABELS, [State.SUCCESS, State.FAILED], [State.RUNNING, State.PAUSED]],

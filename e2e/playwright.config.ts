@@ -16,7 +16,7 @@ import {STORAGE_STATE} from "./fixtures/auth"
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
-const PLAYWRIGHT_REPORT_DIRECTORY = "playwright-report"
+const PLAYWRIGHT_REPORT_DIRECTORY = process.env.PLAYWRIGHT_HTML_OUTPUT_DIR || "playwright-report"
 
 const config: PlaywrightTestConfig = {
     testDir: "./",

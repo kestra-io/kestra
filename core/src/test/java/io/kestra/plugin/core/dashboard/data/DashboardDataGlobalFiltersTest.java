@@ -227,6 +227,24 @@ class DashboardDataGlobalFiltersTest {
     }
 
     @Test
+    void shouldFilterLogsByExecutionId() {
+        QueryFilter executionFilter = QueryFilter.builder()
+            .field(QueryFilter.Field.EXECUTION_ID)
+            .operation(QueryFilter.Op.IN)
+            .value(List.of("e1", "e2"))
+            .build();
+
+        ILogs iLogs = new ILogs() {
+        };
+        var where = iLogs.whereWithGlobalFilters(List.of(executionFilter), null, null, null);
+
+        assertThat(where).hasSize(1);
+        assertThat(where.get(0)).isInstanceOf(In.class);
+        assertThat(((Enum<?>) where.get(0).getField()).name()).isEqualTo(ILogs.Fields.EXECUTION_ID.name());
+        assertThat(((In<?>) where.get(0)).getValues()).containsExactly("e1", "e2");
+    }
+
+    @Test
     void shouldAcceptStringLevelValueForLogs() {
         QueryFilter levelFilter = QueryFilter.builder()
             .field(QueryFilter.Field.LEVEL)

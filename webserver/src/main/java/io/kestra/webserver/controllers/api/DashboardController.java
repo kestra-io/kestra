@@ -31,9 +31,11 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ChartDataService;
+import io.kestra.core.services.LogsExecutionFilterService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.validations.TenantId;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
+import io.kestra.plugin.core.dashboard.data.ILogs;
 import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
 import io.kestra.webserver.models.ChartFiltersOverrides;
 import io.kestra.webserver.responses.PagedResults;
@@ -95,6 +97,9 @@ public class DashboardController {
 
     @Inject
     private ChartDataService chartDataService;
+
+    @Inject
+    private LogsExecutionFilterService logsExecutionFilterService;
 
     @Inject
     protected TenantService tenantService;
@@ -247,11 +252,13 @@ public class DashboardController {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     protected PagedResults<Map<String, Object>> fetchChartData(FetchChartDataQuery fetchChartDataQuery) throws IOException {
         var chart = fetchChartDataQuery.chart();
-        var filters = fetchChartDataQuery.filters();
         var startDate = fetchChartDataQuery.startDate();
         var endDate = fetchChartDataQuery.endDate();
         var tenantId = fetchChartDataQuery.tenantId();
         var pageable = fetchChartDataQuery.pageable();
+        var filters = isLogsChart(chart)
+            ? logsExecutionFilterService.resolve(tenantId, fetchChartDataQuery.filters(), startDate, endDate)
+            : fetchChartDataQuery.filters();
 
         if (chart instanceof DataChart dataChart) {
             DataFilter<?, ?> dataChartDatas = dataChart.getData();
@@ -282,6 +289,11 @@ public class DashboardController {
         }
 
         throw new IllegalArgumentException("Only data charts can be generated.");
+    }
+
+    private static boolean isLogsChart(Chart<?> chart) {
+        return chart instanceof DataChart<?, ?> dataChart && dataChart.getData() instanceof ILogs
+            || chart instanceof DataChartKPI<?, ?> dataChartKPI && dataChartKPI.getData() instanceof ILogs;
     }
 
     @ExecuteOn(TaskExecutors.IO)

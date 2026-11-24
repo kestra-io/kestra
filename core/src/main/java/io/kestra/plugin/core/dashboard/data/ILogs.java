@@ -40,6 +40,10 @@ public interface ILogs extends IData<ILogs.Fields> {
                 });
             }
 
+            filters.stream()
+                .filter(f -> f.field().equals(QueryFilter.Field.EXECUTION_ID))
+                .forEach(f -> updatedWhere.add(f.toDashboardFilterBuilder(Fields.EXECUTION_ID, f.value())));
+
             List<QueryFilter> levelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LEVEL)).toList();
             if (!levelFilters.isEmpty()) {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LEVEL));

@@ -160,8 +160,8 @@
                 <KsDatePicker
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'DATETIME'"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="instantToPickerDate(inputsValues[input.id])"
+                    @update:model-value="(val: Date | null) => { inputsValues[input.id] = pickerDateToInstant(val); onChange(input); }"
                     type="datetime"
                     :disabledDate="(date: Date) => isOutsideDateRange(input, date)"
                 />
@@ -377,7 +377,7 @@
     import {useI18n} from "vue-i18n"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useInputsWizard} from "../../composables/useInputsWizard"
-    import {normalize, flattenInputs, type InputType} from "../../utils/inputs"
+    import {normalize, flattenInputs, instantToPickerDate, pickerDateToInstant, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
     import * as Utils from "../../utils/utils"
     import DeleteIcon from "vue-material-design-icons/Delete.vue"
@@ -755,10 +755,17 @@
         return limit.isValid() ? limit : undefined
     }
 
+    // A DATETIME picker works on the wall clock of the Time Zone preference, so its limits must be read there too.
+    function dateLimitForPicker(input: InputMetaData, value: unknown) {
+        const limit = dateLimit(value)
+        const shifted = limit !== undefined && input.type === "DATETIME" ? instantToPickerDate(limit.toDate()) : undefined
+        return shifted ? dayjs(shifted) : limit
+    }
+
     function isOutsideDateRange(input: InputMetaData, date: Date): boolean {
         const day = dayjs(date)
-        const after = dateLimit(input.after)
-        const before = dateLimit(input.before)
+        const after = dateLimitForPicker(input, input.after)
+        const before = dateLimitForPicker(input, input.before)
         return (after !== undefined && day.endOf("day").isBefore(after))
             || (before !== undefined && day.startOf("day").isAfter(before))
     }

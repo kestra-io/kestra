@@ -1,4 +1,4 @@
-import {dayjs} from "@kestra-io/design-system"
+import {dateUtils, dayjs} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {storageKeys} from "./constants"
 import type {Type} from "@kestra-io/kestra-sdk"
@@ -150,6 +150,35 @@ export function assetInputIds(value: unknown): string[] {
     return items
         .map((item) => (item !== null && typeof item === "object" ? (item as {id?: unknown}).id : item))
         .filter((id): id is string => typeof id === "string" && id !== "")
+}
+
+const WALL_CLOCK_FORMAT = "YYYY-MM-DD HH:mm:ss.SSS"
+
+/**
+ * The date picker edits a browser-local `Date`, so the digits it shows are the browser's wall clock.
+ * Turns the instant held by the form into the `Date` whose local fields read as that instant does
+ * in `timezone` (the Time Zone preference), so the picker shows the same zone as the rest of the UI.
+ */
+export function instantToPickerDate(value: unknown, timezone: string = dateUtils.currentTimezone()): Date | undefined {
+    if (value === null || value === undefined || value === "") {
+        return undefined
+    }
+    const zoned = dayjs(value as dayjs.ConfigType).tz(timezone)
+    if (!zoned.isValid()) {
+        return undefined
+    }
+    return new Date(zoned.year(), zoned.month(), zoned.date(), zoned.hour(), zoned.minute(), zoned.second(), zoned.millisecond())
+}
+
+/**
+ * Inverse of {@link instantToPickerDate}: reads the picker's local fields as a wall clock in
+ * `timezone` and returns the matching instant.
+ */
+export function pickerDateToInstant(value: Date | null | undefined, timezone: string = dateUtils.currentTimezone()): Date | undefined {
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+        return undefined
+    }
+    return dayjs.tz(dayjs(value).format(WALL_CLOCK_FORMAT), timezone).toDate()
 }
 
 export function normalize(type: InputType | undefined, value: unknown): unknown {

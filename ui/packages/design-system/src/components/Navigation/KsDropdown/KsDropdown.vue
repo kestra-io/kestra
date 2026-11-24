@@ -17,7 +17,7 @@
             </ElButton>
             <ElButton
                 ref="caret"
-                v-bind="{...buttonProps, ...caretAttrs}"
+                v-bind="{...buttonProps, id: triggerId, 'aria-label': $t('ks_dropdown.toggle')}"
                 class="kel-dropdown__caret-button"
                 :size="size"
                 :type="type"
@@ -63,7 +63,7 @@
 <script setup lang="ts">
     import {camelize, computed, ref, useAttrs, useId, type ExtractPublicPropTypes, type HTMLAttributes} from "vue"
     import {
-        ElButton, ElButtonGroup, ElDropdown, ElIcon, dropdownProps, useLocale,
+        ElButton, ElButtonGroup, ElDropdown, ElIcon, dropdownProps,
         type ButtonInstance, type ButtonProps, type ButtonType, type DropdownInstance,
     } from "element-plus"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -104,10 +104,8 @@
 
     // Element Plus binds one `disabled` to both halves of its split button, so the pair is rendered here
     // with the same markup and the caret handed to ElDropdown as a virtual trigger.
-    const {t} = useLocale()
     const triggerId = useId()
     const caret = ref<ButtonInstance>()
-    const caretAttrs = computed(() => ({id: triggerId, "aria-label": t("el.dropdown.toggleDropdown")}))
     const attrs = useAttrs()
     const isMenuAttr = (name: string) => camelize(name) in dropdownProps || name === "onCommand" || name === "onVisibleChange"
     const rootAttrs = computed(() => Object.fromEntries(Object.entries(attrs).filter(([name]) => !isMenuAttr(name))))

@@ -6,6 +6,7 @@ import KestraDesignSystem from "../../../index"
 import KsDropdown from "./KsDropdown.vue"
 import KsDropdownItem from "./KsDropdownItem.vue"
 import KsDropdownMenu from "./KsDropdownMenu.vue"
+import {i18nMount} from "../../../../tests/units/i18nMount"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -69,7 +70,7 @@ describe("KsDropdown split button", () => {
     })
 
     const mountSplit = (props: Record<string, unknown>) => {
-        wrapper = mount(KsDropdown, {
+        wrapper = i18nMount(KsDropdown, {
             props: {splitButton: true, ...props},
             slots: {
                 default: "Save",
@@ -79,7 +80,6 @@ describe("KsDropdown split button", () => {
                 }),
             },
             attachTo: document.body,
-            global: globalConfig,
         })
         const [main, caret] = wrapper.findAll("button")
         return {wrapper, main, caret}

@@ -91,6 +91,7 @@ const messages = {
     save_as_draft: "Save as draft",
     publish: "Publish",
     actions: "Actions",
+    ks_dropdown: {toggle: "Toggle dropdown"},
 }
 
 // The unit project shares one jsdom per worker, so a wrapper left mounted keeps the teleported
@@ -155,7 +156,7 @@ describe("Actions.vue — publish a draft flow", () => {
         await publishButton!.trigger("click")
         expect(publishDraft).not.toHaveBeenCalled()
 
-        await wrapper.find("button[aria-label='Toggle Dropdown']").trigger("mouseenter")
+        await wrapper.find("button[aria-label='Toggle dropdown']").trigger("mouseenter")
         const saveAsDraftItem = await vi.waitFor(() => {
             const item = Array.from(document.body.querySelectorAll("li")).find(li => li.textContent?.trim() === "Save as draft")
             expect(item).toBeDefined()

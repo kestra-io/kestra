@@ -259,7 +259,7 @@ export const SplitButtonMainDisabled: Story = {
         const canvas = within(canvasElement)
         await expect(canvas.getByRole("button", {name: "Save"})).toBeDisabled()
 
-        await userEvent.click(canvas.getAllByRole("button", {name: "Toggle Dropdown"})[0])
+        await userEvent.click(canvas.getAllByRole("button", {name: /toggle/i})[0])
 
         const item = await within(document.body).findByText("Save as draft")
         await waitFor(() => expect(item).toBeVisible())

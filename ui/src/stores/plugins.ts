@@ -10,6 +10,7 @@ import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient, type PluginArtifact, type PluginControllerApiTriggerPlugin, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {handledIf} from "../utils/kestraHttp"
+import {inflateCompactSchema} from "../utils/compactSchema"
 
 export type {PluginArtifact, PluginInstallJob, PluginInstallJobArtifactProgress as ArtifactProgress} from "@kestra-io/kestra-sdk"
 
@@ -425,7 +426,7 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
-            const schema = data as RootJsonSchema
+            const schema = inflateCompactSchema(data as RootJsonSchema)
             schemaType.value = schemaType.value || {}
             schemaType.value[options.type] = schema
             return schema

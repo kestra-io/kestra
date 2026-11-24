@@ -3191,7 +3191,7 @@
       "undo": "पूर्ववत करें",
       "upstream_outputs": "अपस्ट्रीम आउटपुट",
       "open_in_tabs": "टैब में खोलें",
-      "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
+      "open_mode_hint": "यह एडिटर डिफ़ॉल्ट रूप से एक modal में खुलता है। आप {settings} में टैब को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
     "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",

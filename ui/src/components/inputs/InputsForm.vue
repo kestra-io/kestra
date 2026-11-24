@@ -163,6 +163,7 @@
                     :modelValue="instantToPickerDate(inputsValues[input.id])"
                     @update:model-value="(val: Date | null) => { inputsValues[input.id] = pickerDateToInstant(val); onChange(input); }"
                     type="datetime"
+                    :showNow="false"
                     :disabledDate="(date: Date) => isOutsideDateRange(input, date)"
                 />
                 <div v-if="input.type === 'DATETIME' && dateHint(input)" class="hint">{{ dateHint(input) }}</div>

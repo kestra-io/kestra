@@ -69,4 +69,17 @@ describe("InputsForm DATETIME input time zone", () => {
 
         expect(shown).toEqual(new Date(2026, 10, 24, 9, 0, 0))
     })
+
+    // Element Plus fills "Now" with the browser's wall clock, which the picker would then read in the preference zone.
+    test("offers no Now button, which would be read in the browser zone", async () => {
+        const wrapper = await mountDatetime()
+        await wrapper.find("input").trigger("focus")
+        await flushPromises()
+
+        const labels = [...document.body.querySelectorAll<HTMLButtonElement>("button")]
+            .filter((button) => button.style.display !== "none")
+            .map((button) => button.textContent?.trim())
+        expect(labels).toContain("OK")
+        expect(labels).not.toContain("Now")
+    })
 })

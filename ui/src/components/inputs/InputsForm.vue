@@ -147,6 +147,7 @@
                     :modelValue="instantToPickerDate(inputsValues[input.id])"
                     @update:model-value="(val: Date | null) => { inputsValues[input.id] = pickerDateToInstant(val); onChange(input); }"
                     type="datetime"
+                    :showNow="false"
                 />
                 <KsDatePicker
                     :data-testid="`input-form-${input.id}`"

@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
@@ -49,6 +51,7 @@ import dev.langchain4j.model.chat.response.PartialResponse;
 import dev.langchain4j.model.chat.response.PartialResponseContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.chat.response.StreamingHandle;
+import dev.langchain4j.model.output.FinishReason;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -522,6 +525,126 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldReturnErrorResultAndReplayValidArgumentsWhenToolCallArgumentsAreNotValidJson() {
+        // Given — Ask mode; the model emits a tool call whose arguments are not valid JSON (unquoted value)
+        AgentThread thread = newThread(AgentMode.ASK);
+        String malformed = "{\"executionId\": \"abc\", \"TASK_ID\": my_task}";
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(malformed).build())));
+        scriptedModel.enqueue(AiMessage.from("I could not read the logs."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did it fail", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        // Then — the call is not executed: it is a recoverable error result and the loop continues to an answer
+        assertThat(sink.error).isNull();
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE
+        );
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error()).contains("Unrecognized token 'my_task'").contains("line 1, column").contains(malformed);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(AiMessage.class::isInstance)
+            .flatExtracting(m -> ((AiMessage) m).toolExecutionRequests())
+            .extracting(ToolExecutionRequest::arguments)
+            .containsExactly("{}");
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(ToolExecutionResultMessage.class::isInstance)
+            .extracting(m -> ((ToolExecutionResultMessage) m).text())
+            .singleElement()
+            .asString()
+            .contains("Unrecognized token 'my_task'")
+            .contains(malformed);
+        assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "{\"executionId\":\"exec-1\",}",
+        "\"{\\\"executionId\\\":\\\"exec-1\\\"}\""
+    })
+    void shouldExecuteToolAndReplayNormalizedArgumentsWhenArgumentsOnlyNeedNormalizing(final String arguments) {
+        // Given — Ask mode; the arguments have a trailing comma or are an object wrapped in a string
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(arguments).build())));
+        scriptedModel.enqueue(AiMessage.from("The run failed on the load task."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 fail?", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        // Then — the tool runs, and the call is replayed to the provider as valid JSON
+        assertThat(sink.error).isNull();
+        assertThat(toolResultOutcome(sink)).isEqualTo("ok");
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(AiMessage.class::isInstance)
+            .flatExtracting(m -> ((AiMessage) m).toolExecutionRequests())
+            .extracting(ToolExecutionRequest::arguments)
+            .containsExactly("{\"executionId\":\"exec-1\"}");
+        assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
+    }
+
+    @Test
+    void shouldAskForShorterArgumentsWhenArgumentsAreCutOffByOutputTokenLimit() {
+        // Given — Ask mode; the response hit the output token limit in the middle of the arguments
+        AgentThread thread = newThread(AgentMode.ASK);
+        String truncated = "{\"executionId\": \"exec-";
+        scriptedModel.enqueue(
+            AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(truncated).build())),
+            FinishReason.LENGTH
+        );
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did it fail", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        // Then — the model is told about the limit, not handed a parser error it cannot act on
+        assertThat(sink.error).isNull();
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error()).contains("output token limit").doesNotContain(truncated);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
+    void shouldCapReceivedArgumentsWhenMalformedArgumentsAreLong() {
+        // Given — Ask mode; malformed arguments far longer than the cap on what is echoed back
+        AgentThread thread = newThread(AgentMode.ASK);
+        String malformed = "{\"executionId\": " + "x".repeat(5000) + "}";
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(malformed).build())));
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did it fail", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        // Then — only the first 2000 characters of the arguments are echoed back
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error())
+            .contains(malformed.substring(0, 2000) + "…")
+            .doesNotContain(malformed.substring(0, 2001));
+    }
+
+    @Test
+    void shouldNotAskForConfirmationWhenConfirmToolArgumentsAreNotValidJson() {
+        // Given — Edit mode; the model proposes a write whose arguments are not valid JSON
+        AgentThread thread = newThread(AgentMode.EDIT);
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("update-artefact").arguments("{\"namespace\": company}").build())));
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "do it", AgentMode.EDIT, TENANT, null, null, null), sink);
+
+        // Then — nothing is held for confirmation; the model gets an error result instead
+        assertThat(sink.error).isNull();
+        assertThat(sink.names()).doesNotContain(AgentEvents.PROPOSED_ACTION);
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
     void shouldExecuteEveryToolWhenModelRequestsThemInParallel() {
         // Given — Ask mode; the model returns two read tool calls in one response (parallel tool calls)
         AgentThread thread = newThread(AgentMode.ASK);
@@ -830,6 +953,7 @@ class AgentOrchestratorTest {
 
     private static final class ScriptedStreamingChatModel implements StreamingChatModel {
         private final Deque<AiMessage> responses = new ArrayDeque<>();
+        private final Map<AiMessage, FinishReason> finishReasons = new java.util.IdentityHashMap<>();
         private final List<List<ChatMessage>> requestMessages = new java.util.concurrent.CopyOnWriteArrayList<>();
         private volatile boolean hang;
         private CountDownLatch hungChatStarted;
@@ -837,6 +961,12 @@ class AgentOrchestratorTest {
 
         private void enqueue(final AiMessage message) {
             responses.addLast(message);
+        }
+
+        /** Enqueues a response that ends for the given reason, e.g. the output token limit. */
+        private void enqueue(final AiMessage message, final FinishReason finishReason) {
+            responses.addLast(message);
+            finishReasons.put(message, finishReason);
         }
 
         private void hang() {
@@ -854,6 +984,7 @@ class AgentOrchestratorTest {
 
         private void clear() {
             responses.clear();
+            finishReasons.clear();
             requestMessages.clear();
             this.hang = false;
             this.hungChatStarted = null;
@@ -887,7 +1018,7 @@ class AgentOrchestratorTest {
             if (ai.text() != null && !ai.text().isEmpty()) {
                 handler.onPartialResponse(new PartialResponse(ai.text()), new PartialResponseContext(lastHandle));
             }
-            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).build());
+            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).finishReason(finishReasons.get(ai)).build());
         }
     }
 

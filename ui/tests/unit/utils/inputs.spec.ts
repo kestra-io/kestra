@@ -304,7 +304,9 @@ describe("DATETIME picker time zone", () => {
     const original = process.env.TZ
 
     afterEach(() => {
-        process.env.TZ = original
+        // Assigning undefined would store the string "undefined", so drop the variable when it was unset.
+        if (original === undefined) delete process.env.TZ
+        else process.env.TZ = original
     })
 
     it("reads the typed wall clock in the preference zone, whatever the browser zone is", () => {

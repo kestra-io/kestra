@@ -1794,13 +1794,13 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions())
             .extracting(Throwable::getMessage)
             .containsExactlyInAnyOrder(
-                "Invalid value for input `disks`. Cause: row 2, column `size_gb`: it must be less than `2048`",
+                "Invalid value for input `disks`. Cause: row 2, column `size_gb`: it must be at most `2048`, but received `4096`",
                 "Invalid value for input `disks`. Cause: row 2, column `mountpoint`: it must match the pattern `^/.*`",
                 "Invalid value for input `disks`. Cause: row 3: expected an object"
             );
         assertThat(values.getFirst().exceptions())
             .extracting(InputOutputValidationException::getPath, InputOutputValidationException::getDetail)
-            .contains(tuple("disks[1].size_gb", "it must be less than `2048`"), tuple("disks[2]", "expected an object"));
+            .contains(tuple("disks[1].size_gb", "it must be at most `2048`, but received `4096`"), tuple("disks[2]", "expected an object"));
     }
 
     @Test
@@ -1821,7 +1821,7 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions())
             .extracting(Throwable::getMessage)
             .containsExactlyInAnyOrder(
-                "Invalid value for input `disks`. Cause: row 1, column `size_gb`: it must be more than `10`",
+                "Invalid value for input `disks`. Cause: row 1, column `size_gb`: it must be at least `10`, but received `5`",
                 "Invalid value for input `disks`. Cause: row 1, column `mountpoint`: it must match the pattern `^/.*`",
                 "Invalid value for input `disks`. Cause: row 3, column `size_gb`: Cannot convert value 'big' to Integer",
                 "Invalid value for input `disks`. Cause: row 3, column `mountpoint`: it must match the pattern `^/.*`",

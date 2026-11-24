@@ -800,7 +800,8 @@
       "dialog_title": "Límites de Concurrencia",
       "warning": "Cambiar el contador en ejecución puede corromper la Concurrency, por lo que las egzekucje pueden exceder el límite permitido.",
       "queued": "En cola",
-      "save_error": "No se pudo actualizar el límite de concurrency, se mantiene el valor anterior."
+      "save_error": "No se pudo actualizar el límite de concurrency, se mantiene el valor anterior.",
+      "invalid_running_count": "Introduce un número entero entre 0 y {max}."
     },
     "flowConcurrency": {
       "loadError": "No se pudo cargar el límite de concurrencia de este flow.",
@@ -3190,7 +3191,7 @@
       "undo": "Deshacer",
       "upstream_outputs": "Outputs de Upstream",
       "open_in_tabs": "Abrir en pestañas",
-      "open_mode_hint": "Las tasks se abren en un modal por defecto. Puedes hacer que las pestañas sean el valor por defecto en {settings}."
+      "open_mode_hint": "Este editor se abre en un modal por defecto. Puedes hacer que las pestañas sean el valor por defecto en {settings}."
     },
     "blocks": "Bloques",
     "move_panel_to_bottom": "Mover panel a la parte inferior",

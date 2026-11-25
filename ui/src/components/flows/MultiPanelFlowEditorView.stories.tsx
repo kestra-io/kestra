@@ -1,5 +1,6 @@
 import type {Meta, StoryFn} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
+import {useRouter, type Router} from "vue-router";
 import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils";
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils";
@@ -9,7 +10,7 @@ import flowSchema from "../../stores/flow-schema.json";
 import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
 import {mockClientFallback, mockResponse} from "../../../.storybook/apiMock";
 import {useFlowStore, type Flow} from "../../stores/flow";
-import {expect, waitFor} from "storybook/test";
+import {expect, waitFor, within} from "storybook/test";
 import * as monaco from "monaco-editor/editor/editor.api";
 import {READ_ONLY_LINE_CLASS} from "../../composables/useReadOnlyYamlKeys";
 import translations from "../../translations/en.json";
@@ -320,3 +321,30 @@ export const EnterAtEndOfLockedLineIsAllowed = lockedStory(async (editor) => {
     expect(editor.getPosition()).toMatchObject({lineNumber: 2})
     expectNoToast()
 })
+
+const FILE_TAB_FLOW_A = "id: flow_a\nnamespace: repro.a\ntasks: []"
+const FILE_TAB_FLOW_B = "id: flow_b\nnamespace: repro.b\ntasks: []"
+let fileTabRouter: Router | undefined
+
+export const FileTabsStayWithTheirFlow = Template.bind({}) as StoryFn<{flow: string; flowGraph?: FlowGraph}> & {play?: (context: {canvasElement: HTMLElement}) => Promise<void>}
+FileTabsStayWithTheirFlow.args = {flow: FILE_TAB_FLOW_A}
+FileTabsStayWithTheirFlow.decorators = [() => ({
+    setup() {
+        localStorage.setItem("el-fl-repro.a-flow_a", JSON.stringify([{tabs: ["code", "code-conf.yml"], activeTab: "code", size: 100}]))
+        fileTabRouter = useRouter()
+        fileTabRouter.addRoute({path: "/flows/edit/:namespace/:id/edit", name: "flows/update/edit", component: {template: "<div/>"}})
+    },
+    template: "<story />",
+})]
+FileTabsStayWithTheirFlow.play = async ({canvasElement}) => {
+    const canvas = within(canvasElement)
+    await fileTabRouter!.push("/flows/edit/repro.a/flow_a/edit")
+    await canvas.findByText("conf.yml")
+
+    const flowStore = useFlowStore()
+    flowStore.flow = {...YAML_UTILS.parse<Flow>(FILE_TAB_FLOW_B)!, source: FILE_TAB_FLOW_B}
+    flowStore.flowYaml = FILE_TAB_FLOW_B
+    await fileTabRouter!.push("/flows/edit/repro.b/flow_b/edit")
+
+    await waitFor(() => expect(canvas.queryByText("conf.yml")).toBeNull())
+}

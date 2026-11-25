@@ -13,7 +13,7 @@ import {useCoreStore} from "../../stores/core"
 import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
 import {asProblem} from "@kestra-io/kestra-sdk"
-import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
+import type {KestraHttpError} from "../../utils/kestraHttp"
 import {validationErrorLines} from "../../utils/validationErrors"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
@@ -171,11 +171,11 @@ export function useFlowEditorActions() {
         const httpError = error as KestraHttpError
         if (httpError?.status === 401) {
             toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
-        } else if (!isReportedCentrally(httpError)) {
+        } else {
             // A validation error and a lost connection reach here unreported; anything the
             // interceptor toasted, a 404 on a flow deleted under the editor included, is on screen
             // already with its problem title and its own remedies.
-            toast.error(asProblem(error)?.detail ?? t("error"))
+            toast.requestError(error, asProblem(error)?.detail ?? t("error"))
         }
     }
 
@@ -318,7 +318,7 @@ export function useFlowEditorActions() {
                 })
             })
             .catch((error: unknown) => {
-                if (!isReportedCentrally(error as KestraHttpError)) toast.error(t("delete flow error", {id: flowId}))
+                toast.requestError(error, t("delete flow error", {id: flowId}))
             })
     }
 

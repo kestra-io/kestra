@@ -1,6 +1,7 @@
 import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
 import {App, type Component, h} from "vue"
 import {useI18n} from "vue-i18n"
+import {isReportedCentrally, type KestraHttpError} from "./kestraHttp"
 
 // Module-scoped so repeated Ctrl+S collapses earlier "saved" toasts without dismissing
 // unrelated notifications (e.g. the plugin auto-install progress toast).
@@ -46,6 +47,18 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
 
     function MarkdownWrap(message:string) {
         return h(KsMarkdown, {content: message})
+    }
+
+    function error(message: ToastMessageBody, title?:string, options?: ToastOptions) {
+        KsNotification({
+                title: title ?? t("error"),
+                message: wrapMessage(message),
+                position: "bottom-right",
+                type: "error",
+                duration: 0,
+                customClass: "kel-notification__large",
+            ...options,
+        })
     }
 
     return {
@@ -97,16 +110,12 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        error: function(message: ToastMessageBody, title?:string, options?: ToastOptions) {
-            KsNotification({
-                    title: title ?? t("error"),
-                    message: wrapMessage(message),
-                    position: "bottom-right",
-                    type: "error",
-                    duration: 0,
-                    customClass: "kel-notification__large",
-                ...options,
-            })
+        error,
+        /** Shows the error only when the global handler did not already toast this failed request. */
+        requestError: function(failure: unknown, message: ToastMessageBody, title?: string, options?: ToastOptions) {
+            if (!isReportedCentrally(failure as KestraHttpError)) {
+                error(message, title, options)
+            }
         },
     }
 }

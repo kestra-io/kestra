@@ -340,7 +340,7 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 |-----|------|---------|-------------|
 | common.affinity | object | `{}` | Affinity rules for pod scheduling. |
 | common.annotations | object | `{}` | Annotations applied to all resources. |
-| common.autoscaler | object | `{"enabled":false,"extra":{},"maxReplicas":3,"metrics":[],"minReplicas":1}` | Enabled or not horizontal autoscaling. |
+| common.autoscaler | object | `{"enabled":false,"external":false,"extra":{},"maxReplicas":3,"metrics":[],"minReplicas":1}` | Enabled or not horizontal autoscaling. |
 | common.configmapReloader | object | `{"enabled":false}` | Application configuration reloader if configmap changed. |
 | common.extraContainers | list | `[]` | Additional sidecar containers. |
 | common.extraEnv | list | `[]` | Extra environment variables for containers. |

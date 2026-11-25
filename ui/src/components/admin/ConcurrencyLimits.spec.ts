@@ -5,7 +5,7 @@ import ConcurrencyLimits from "./ConcurrencyLimits.vue"
 
 const {toastError, put, get} = vi.hoisted(() => ({toastError: vi.fn(), put: vi.fn(), get: vi.fn()}))
 
-vi.mock("../../utils/toast", () => ({useToast: () => ({error: toastError})}))
+vi.mock("../../utils/toast", () => ({useToast: () => ({requestError: toastError})}))
 vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({get, put})}))
 vi.mock("override/utils/route", () => ({apiUrlWithTenant: () => "/api/v1/main"}))
 vi.mock("override/stores/auth", () => ({useAuthStore: () => ({user: {instanceOwner: true}})}))
@@ -87,18 +87,11 @@ describe("ConcurrencyLimits", () => {
         document.body.classList.remove("kel-popup-parent--hidden")
     })
 
-    it("shouldNotToastTwiceWhenTheFailureIsAlreadyReportedCentrally", async () => {
-        await saveWith(httpError(PROBLEM))
-
-        expect(put).toHaveBeenCalledOnce()
-        expect(toastError).not.toHaveBeenCalled()
-    })
-
-    it("shouldToastWhenTheFailureHasNoResponse", async () => {
+    it("shouldReportTheSaveFailure", async () => {
         await saveWith(httpError(undefined))
 
         expect(toastError).toHaveBeenCalledOnce()
-        expect(toastError).toHaveBeenCalledWith("concurrency_limit.save_error")
+        expect(toastError).toHaveBeenCalledWith(expect.any(Error), "concurrency_limit.save_error")
     })
 
     describe("running count range", () => {

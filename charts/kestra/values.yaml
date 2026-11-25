@@ -64,6 +64,8 @@ common:
   # @section -- common settings
   autoscaler:
     enabled: false
+    # Set when an autoscaler outside the chart (KEDA, own HPA) scales the deployment, so the chart stops rendering `spec.replicas`.
+    external: false
     minReplicas: 1
     maxReplicas: 3
     extra: {}

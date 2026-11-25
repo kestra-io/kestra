@@ -18,7 +18,7 @@ vi.mock("override/stores/auth", () => ({
 }))
 
 vi.mock("../../utils/toast", () => ({
-    useToast: () => ({success: toastSuccess, error: toastError}),
+    useToast: () => ({success: toastSuccess, requestError: toastError}),
 }))
 
 const messages = {
@@ -191,20 +191,6 @@ describe("ChangeExecutionStatus", () => {
         expect(followExecution).toHaveBeenCalled()
     })
 
-    test("shouldLeaveErrorReportingToGlobalToastWhenFailureIsAlreadyReported", async () => {
-        const wrapper = mountChangeExecutionStatus("FAILED")
-        const store = useExecutionsStore()
-        vi.spyOn(store, "changeExecutionStatus").mockRejectedValue(Object.assign(new Error("conflict"), {
-            status: 409,
-            response: {data: {title: "Conflict"}},
-        }))
-        vi.spyOn(store, "followExecution").mockImplementation(() => undefined)
-
-        await openAndConfirm(wrapper)
-
-        expect(toastError).not.toHaveBeenCalled()
-        expect(toastSuccess).not.toHaveBeenCalled()
-    })
 
     test("shouldToastSuccessWhenChangeStateSucceeds", async () => {
         const wrapper = mountChangeExecutionStatus("FAILED")

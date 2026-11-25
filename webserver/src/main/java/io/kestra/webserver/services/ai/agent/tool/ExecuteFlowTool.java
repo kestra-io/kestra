@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
@@ -24,6 +26,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.services.ExecutionStreamingService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.services.ExecutionCreationService;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
@@ -108,7 +111,8 @@ public class ExecuteFlowTool implements McpPlatformTool {
         List<Label> requestedLabels = new ArrayList<>(executionCreationService.requestLabels(
             MapUtils.emptyOnNull(labels).entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).toList()
         ));
-        requestedLabels.addAll(callerLabels(context));
+        addOverriding(requestedLabels, ListUtils.emptyOnNull(context.originLabels()));
+        addOverriding(requestedLabels, callerLabels(context));
 
         String executionId = IdUtils.create();
         Map<String, Object> executionInputs = flowInputOutput.readExecutionInputs(
@@ -139,6 +143,12 @@ public class ExecuteFlowTool implements McpPlatformTool {
      */
     protected List<Label> callerLabels(final AgentCallContext.Context context) {
         return List.of();
+    }
+
+    private static void addOverriding(final List<Label> labels, final List<Label> overriding) {
+        Set<String> keys = overriding.stream().map(Label::key).collect(Collectors.toSet());
+        labels.removeIf(label -> keys.contains(label.key()));
+        labels.addAll(overriding);
     }
 
     private Execution awaitEnd(final Flow flow, final Execution created) {

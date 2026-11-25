@@ -561,7 +561,11 @@
                 if (!backfill.value.inputs) {
                     return true
                 }
-                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value.inputs[i] !== null && backfill.value.inputs[i] !== undefined)
+                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => {
+                    const value = backfill.value.inputs[i]
+                    // a cleared field sends "" or [], which is no value either
+                    return value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)
+                })
                 if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
                     return true
                 }

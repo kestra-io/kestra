@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {effectScope, nextTick} from "vue"
+import {effectScope, nextTick, reactive} from "vue"
 
 interface MockRoute {
     params: {namespace: string; id: string}
@@ -9,12 +9,12 @@ interface MockRoute {
 }
 
 const routerReplace = vi.fn()
-const currentRoute: MockRoute = {
+const currentRoute = reactive<MockRoute>({
     params: {namespace: "company.team", id: "myflow"},
     query: {},
     meta: {tab: "edit"},
     name: "flows/update/edit",
-}
+})
 
 vi.mock("vue-router", () => ({
     useRoute: () => currentRoute,
@@ -26,8 +26,8 @@ vi.mock("vue-i18n", () => ({
 }))
 
 vi.mock("../../../../src/stores/flow", async () => {
-    const {reactive} = await import("vue")
-    const flowStore = reactive({
+    const vue = await import("vue")
+    const flowStore = vue.reactive({
         flow: undefined,
         dependenciesCount: undefined,
         loadDependencies: vi.fn(),
@@ -72,6 +72,7 @@ describe("useFlowRoot", () => {
         currentRoute.meta = {tab: "edit"}
         currentRoute.name = "flows/update/edit"
         currentRoute.query = {}
+        currentRoute.params = {namespace: "company.team", id: "myflow"}
         routerReplace.mockReset()
         flowStore.flow = undefined
         flowStore.dependenciesCount = undefined
@@ -168,6 +169,25 @@ describe("useFlowRoot", () => {
         expect(routerReplace).toHaveBeenCalledWith({
             name: "flows/update/overview",
             params: {namespace: "company.team", id: "myflow"},
+            query: {"filters[timeRange][EQUALS]": "PT24H"},
+        })
+        scope.stop()
+    })
+
+    it("injects the default duration again when the overview switches to another flow", async () => {
+        currentRoute.meta = {tab: "overview"}
+        currentRoute.name = "flows/update/overview"
+        const scope = effectScope()
+        scope.run(() => useFlowRoot())
+        await nextTick()
+        routerReplace.mockReset()
+
+        currentRoute.params = {namespace: "company.team", id: "otherflow"}
+        await nextTick()
+
+        expect(routerReplace).toHaveBeenCalledWith({
+            name: "flows/update/overview",
+            params: {namespace: "company.team", id: "otherflow"},
             query: {"filters[timeRange][EQUALS]": "PT24H"},
         })
         scope.stop()

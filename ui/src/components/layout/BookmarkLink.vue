@@ -125,6 +125,7 @@
     align-items: center;
     width: 100%;
     min-width: 0;
+    border-radius: var(--ks-radius-base);
     text-decoration: none;
     color: var(--ks-text-secondary);
     font-size: var(--ks-font-size-xs);

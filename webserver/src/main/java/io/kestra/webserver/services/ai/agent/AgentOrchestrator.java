@@ -580,7 +580,7 @@ public class AgentOrchestrator {
             throw new IllegalStateException("LLM streaming call interrupted", e);
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
-            throw new IllegalStateException("LLM streaming call failed: " + cause.getMessage(), cause);
+            throw new IllegalStateException("LLM streaming call failed: " + ModelCallFailure.reason(cause), cause);
         }
     }
 

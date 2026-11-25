@@ -54,7 +54,7 @@ public class OpenRouterAiService extends AiService<OpenRouterConfiguration> {
             .timeout(getAiConfiguration().timeout())
             .customHeaders(getAiConfiguration().customHeaders());
 
-        pemHttpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
             .ifPresent(builder::httpClientBuilder);
 
         return builder.build();
@@ -76,7 +76,7 @@ public class OpenRouterAiService extends AiService<OpenRouterConfiguration> {
             .timeout(getAiConfiguration().timeout())
             .customHeaders(getAiConfiguration().customHeaders());
 
-        pemHttpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
             .ifPresent(builder::httpClientBuilder);
 
         return builder.build();

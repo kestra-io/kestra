@@ -47,6 +47,9 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
 
+    /** The platform and the tools that wrote the asset. A write adds to the stored list, so a tool leaves it only when the list is replaced. */
+    public static final String TOOLS_METADATA_KEY = SYSTEM_METADATA_PREFIX + "tools";
+
     public static final Set<String> CONDITION_FIELDS = Set.of("namespace", "id", "type", "displayName", "description", "status", "ttl", "owner");
 
     public static final String METADATA_PREFIX = "metadata.";
@@ -85,6 +88,10 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String description;
 
     protected Map<String, Object> metadata;
+
+    @JsonIgnore
+    @Hidden
+    private transient Set<String> replacedMetadataKeys = Set.of();
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(max = 100)
@@ -191,6 +198,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         {
             if (value == null) {
                 mergedMetadata.remove(key);
+            } else if (replacedMetadataKeys.contains(key)) {
+                mergedMetadata.put(key, value);
             }
         });
         this.metadata = mergedMetadata;
@@ -347,6 +356,15 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withAssetActions(List<FlowAction> assetActions) {
         this.assetActions = assetActions;
+        return this;
+    }
+
+    /**
+     * Makes {@link #toUpdated} store the value of these metadata keys as given, rather than merging it into the stored
+     * one: a merge only adds to a list or a map, so an item removed by hand would come back.
+     */
+    public Asset replacingMetadata(Set<String> keys) {
+        this.replacedMetadataKeys = keys;
         return this;
     }
 

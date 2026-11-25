@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -220,6 +221,32 @@ class AssetTest {
 
         // Then
         assertThat(updated.getMetadata()).extracting("m").isEqualTo(Map.of("x", 1, "y", 2));
+    }
+
+    @Test
+    void shouldAddEachNewToolOnceWhenAnotherToolWritesTheAsset() {
+        Custom previous = Custom.builder().namespace("io.kestra").id("vm").type("EC2")
+            .metadata(Map.of(Asset.TOOLS_METADATA_KEY, List.of("AWS", "Terraform"))).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("vm").type("EC2")
+            .metadata(Map.of(Asset.TOOLS_METADATA_KEY, List.of("Terraform", "Ansible"))).build();
+
+        Custom updated = incoming.toUpdated(previous);
+
+        assertThat(updated.getMetadata()).containsEntry(Asset.TOOLS_METADATA_KEY, List.of("AWS", "Terraform", "Ansible"));
+    }
+
+    @Test
+    void shouldStoreAReplacedMetadataKeyAsGivenSoAToolRemovedByHandStaysRemoved() {
+        Custom previous = Custom.builder().namespace("io.kestra").id("vm").type("EC2")
+            .metadata(Map.of(Asset.TOOLS_METADATA_KEY, List.of("AWS", "Terraform", "OpenTofu"), "keep", "value")).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("vm").type("EC2")
+            .metadata(Map.of(Asset.TOOLS_METADATA_KEY, List.of("AWS", "OpenTofu"))).build();
+
+        Asset updated = incoming.replacingMetadata(Set.of(Asset.TOOLS_METADATA_KEY)).toUpdated(previous);
+
+        assertThat(updated.getMetadata())
+            .containsEntry(Asset.TOOLS_METADATA_KEY, List.of("AWS", "OpenTofu"))
+            .containsEntry("keep", "value");
     }
 
     @Test

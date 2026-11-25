@@ -26,8 +26,8 @@ vi.mock("vue-i18n", () => ({
 }))
 
 vi.mock("../../../../src/stores/flow", async () => {
-    const {reactive} = await import("vue")
-    const flowStore = reactive({
+    const vue = await import("vue")
+    const flowStore = vue.reactive({
         flow: undefined,
         dependenciesCount: undefined,
         loadDependencies: vi.fn(),

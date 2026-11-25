@@ -50,7 +50,7 @@ public class MistralAiAiService extends AiService<MistralAiConfiguration> {
             .customHeaders(getAiConfiguration().customHeaders())
             .timeout(getAiConfiguration().timeout());
 
-        pemHttpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
             .ifPresent(builder::httpClientBuilder);
 
         return builder
@@ -71,7 +71,7 @@ public class MistralAiAiService extends AiService<MistralAiConfiguration> {
             .customHeaders(getAiConfiguration().customHeaders())
             .timeout(getAiConfiguration().timeout());
 
-        pemHttpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
             .ifPresent(builder::httpClientBuilder);
 
         return builder

@@ -2150,7 +2150,7 @@
         "lineage": "Location in the flow",
         "previous_iteration": "Previous iteration",
         "next_iteration": "Next iteration",
-        "open_execution": "Open execution",
+        "open_iteration": "Open iteration",
         "iteration_position": "{position} of {total} in {loop}",
         "first_failure": "First failure",
         "go_to_failure": "Go to failure",
@@ -2170,7 +2170,8 @@
         "loading": "Loading the subflow execution…",
         "load_error": "Failed to load the subflow execution",
         "none": "No execution started yet",
-        "executions": "Subflow task runs | Subflow executions"
+        "executions": "Subflow task runs | Subflow executions",
+        "open": "Open subflow execution"
     },
     "loop_iterations_notice": {
         "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",

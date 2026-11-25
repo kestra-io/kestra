@@ -1,7 +1,10 @@
 <template>
     <div class="panel-subflow">
         <section v-if="entry.children" class="panel-section" data-test="gantt-panel-subflow">
-            <h3>{{ $t("gantt_subflow.executions", children.length) }}</h3>
+            <div class="section-head">
+                <h3>{{ $t("gantt_subflow.executions", children.length) }}</h3>
+                <GanttOpenExecution v-if="child" :execution="child" :label="$t('gantt_subflow.open')" />
+            </div>
             <p v-if="children.length === 0" class="panel-empty">{{ $t("gantt_subflow.none") }}</p>
             <template v-else-if="child">
                 <KsSkeleton v-if="!childEntry?.execution" animated :rows="2" />
@@ -48,6 +51,7 @@
     import GanttTaskIcon from "./GanttTaskIcon.vue"
     import GanttPanelListRow from "./GanttPanelListRow.vue"
     import GanttPanelTaskRun from "./GanttPanelTaskRun.vue"
+    import GanttOpenExecution from "./GanttOpenExecution.vue"
     import {useGanttTimeline} from "../ganttTimeline"
     import {subflowExecutionRoute} from "../../../utils/subflowExecutions"
     import {
@@ -96,11 +100,19 @@
         padding: var(--ks-spacing-3) var(--ks-spacing-4) 0;
 
         h3 {
-            margin: 0 0 var(--ks-spacing-2);
+            margin: 0;
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-semibold);
             color: var(--ks-text-secondary);
         }
+    }
+
+    .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-2);
+        margin-bottom: var(--ks-spacing-2);
     }
 
     .panel-empty {

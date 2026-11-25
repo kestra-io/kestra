@@ -2150,7 +2150,7 @@
       "lineage": "在 flow 中的位置",
       "previous_iteration": "上一次迭代",
       "next_iteration": "下一次迭代",
-      "open_execution": "打开执行",
+      "open_iteration": "打开迭代",
       "iteration_position": "{loop} 中的第 {position} / {total} 个",
       "first_failure": "首次失败",
       "go_to_failure": "转到失败",

@@ -44,7 +44,7 @@
                     <Duration :histories="iteration.row.state.histories" />
                 </template>
                 <template #actions>
-                    <GanttOpenExecution :execution="executionOf(iteration.row)" iconOnly />
+                    <GanttOpenExecution :execution="executionOf(iteration.row)" :label="$t('gantt_panel.open_iteration')" iconOnly />
                 </template>
             </GanttRow>
 

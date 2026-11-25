@@ -2150,7 +2150,7 @@
       "lineage": "flow 内の位置",
       "previous_iteration": "前のイテレーション",
       "next_iteration": "次のイテレーション",
-      "open_execution": "Executionを開く",
+      "open_iteration": "イテレーションを開く",
       "iteration_position": "{loop} の {total} 件中 {position} 件目",
       "first_failure": "最初の失敗",
       "go_to_failure": "失敗へ移動",

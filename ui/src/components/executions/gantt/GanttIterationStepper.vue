@@ -24,6 +24,11 @@
             {{ next ? iterationLabel(next) : $t("next") }}
             <KsIcon size="sm"><ChevronDown /></KsIcon>
         </KsButton>
+        <GanttOpenExecution
+            :execution="{id: iteration.row.id, namespace: iteration.loop.namespace, flowId: iteration.loop.flowId}"
+            :label="$t('gantt_panel.open_iteration')"
+            data-test="gantt-open-iteration"
+        />
     </div>
 </template>
 
@@ -32,6 +37,7 @@
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import {KsButton, KsIcon} from "@kestra-io/design-system"
+    import GanttOpenExecution from "./GanttOpenExecution.vue"
     import {iterationLabel, loadedNeighbour, owningIteration, useGanttTree, type GanttNode} from "./ganttTree"
 
     const props = defineProps<{

@@ -2150,7 +2150,7 @@
       "lineage": "Расположение в flow",
       "previous_iteration": "Предыдущая итерация",
       "next_iteration": "Следующая итерация",
-      "open_execution": "Открыть Execution",
+      "open_iteration": "Открыть итерацию",
       "iteration_position": "{position} из {total} в {loop}",
       "first_failure": "Первый сбой",
       "go_to_failure": "Перейти к сбою",

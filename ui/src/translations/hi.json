@@ -2150,7 +2150,7 @@
       "lineage": "flow में स्थान",
       "previous_iteration": "पिछली पुनरावृत्ति",
       "next_iteration": "अगली पुनरावृत्ति",
-      "open_execution": "Execution खोलें",
+      "open_iteration": "पुनरावृत्ति खोलें",
       "iteration_position": "{loop} में {total} में से {position}",
       "first_failure": "पहली विफलता",
       "go_to_failure": "विफलता पर जाएँ",

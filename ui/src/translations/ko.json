@@ -2150,7 +2150,7 @@
       "lineage": "flow 내 위치",
       "previous_iteration": "이전 반복",
       "next_iteration": "다음 반복",
-      "open_execution": "실행 열기",
+      "open_iteration": "반복 열기",
       "iteration_position": "{loop}의 {total}개 중 {position}번째",
       "first_failure": "첫 번째 실패",
       "go_to_failure": "실패로 이동",

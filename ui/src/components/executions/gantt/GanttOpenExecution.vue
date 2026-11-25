@@ -15,7 +15,6 @@
 
 <script setup lang="ts">
     import {RouterLink} from "vue-router"
-    import {useI18n} from "vue-i18n"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import {KsButton} from "@kestra-io/design-system"
     import {subflowExecutionRoute} from "../../../utils/subflowExecutions"
@@ -23,9 +22,7 @@
 
     defineProps<{
         execution: ExecutionRef;
+        label: string;
         iconOnly?: boolean;
     }>()
-
-    const {t} = useI18n()
-    const label = t("gantt_panel.open_execution")
 </script>

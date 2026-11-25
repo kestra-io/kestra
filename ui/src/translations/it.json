@@ -2150,7 +2150,7 @@
       "lineage": "Posizione nel flow",
       "previous_iteration": "Iterazione precedente",
       "next_iteration": "Iterazione successiva",
-      "open_execution": "Apri esecuzione",
+      "open_iteration": "Apri iterazione",
       "iteration_position": "{position} di {total} in {loop}",
       "first_failure": "Primo errore",
       "go_to_failure": "Vai all'errore",

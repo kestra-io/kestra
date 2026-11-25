@@ -44,7 +44,6 @@
                     <template v-else>{{ offset(histories) }} ·</template>
                     <Duration :histories="histories" />
                 </span>
-                <GanttOpenExecution v-if="ownExecution" :execution="ownExecution" class="open-execution" />
             </div>
 
             <GanttIterationStepper v-if="owningIteration(node)" :node="node" />
@@ -71,9 +70,8 @@
     import GanttPanelIteration from "./GanttPanelIteration.vue"
     import GanttPanelTaskRun from "./GanttPanelTaskRun.vue"
     import GanttPanelSubflow from "./GanttPanelSubflow.vue"
-    import GanttOpenExecution from "./GanttOpenExecution.vue"
     import {useGanttTimeline} from "../ganttTimeline"
-    import {isSubflowNode, iterationLabel, loopRefOf, owningIteration, subflowChildren, useGanttTree, type Ancestor, type ExecutionRef} from "./ganttTree"
+    import {isSubflowNode, iterationLabel, loopRefOf, owningIteration, useGanttTree, type Ancestor} from "./ganttTree"
 
     const tree = useGanttTree()
     const executionsStore = useExecutionsStore()
@@ -104,14 +102,6 @@
         const current = node.value
         if (!current) return []
         return current.kind === "iteration" ? current.row.state.histories : current.taskRun.state.histories
-    })
-    // The execution the selected row stands for, when it is not the one on screen: an iteration, or what a Subflow started.
-    const ownExecution = computed<ExecutionRef | undefined>(() => {
-        const current = node.value
-        if (!current) return undefined
-        if (current.kind === "iteration") return {id: current.row.id, namespace: current.loop.namespace, flowId: current.loop.flowId}
-        const children = isSubflowNode(current) ? subflowChildren(tree, current) : []
-        return children.length === 1 ? children[0] : undefined
     })
     const loopHandle = computed(() => node.value?.kind === "loop" ? tree.loopHandle(loopRefOf(node.value)) : undefined)
     const loopTotal = computed(() => loopHandle.value?.totalCount.value)
@@ -213,13 +203,8 @@
         }
     }
 
-    .open-execution {
-        flex-shrink: 0;
-    }
-
     .title-meta {
         flex-shrink: 0;
-        margin-left: auto;
         font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-2xs);
         color: var(--ks-text-secondary);

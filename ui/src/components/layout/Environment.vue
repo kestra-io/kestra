@@ -1,9 +1,11 @@
 <template>
-    <div v-if="name" id="environment">
-        <span class="dot" />
-        <span class="name" :title="name">{{ name }}</span>
-        <span class="label">{{ $t("environment") }}</span>
-    </div>
+    <KsTooltip v-if="name" :content="name">
+        <div id="environment">
+            <span class="dot" />
+            <span class="name">{{ name }}</span>
+            <span class="label">{{ $t("environment") }}</span>
+        </div>
+    </KsTooltip>
 </template>
 
 <script setup lang="ts">

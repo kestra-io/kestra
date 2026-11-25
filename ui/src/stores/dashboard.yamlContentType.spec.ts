@@ -117,7 +117,14 @@ describe("dashboard store yaml writes", () => {
         await store.update({id: "ops?x", source: "id: \"ops?x\""})
         await store.delete("ops?x")
 
+        await store.generate("ops?x", "c1", {})
+        await store.stateCounts("ops?x", "c1", {})
+
         expect(put.mock.calls[0][0]).toBe("/api/v1/main/dashboards/ops%3Fx")
         expect(del.mock.calls[0][0]).toBe("/api/v1/main/dashboards/ops%3Fx")
+        expect(post.mock.calls.map(([url]) => url)).toEqual([
+            "/api/v1/main/dashboards/ops%3Fx/charts/c1",
+            "/api/v1/main/dashboards/ops%3Fx/charts/c1/state-counts",
+        ])
     })
 })

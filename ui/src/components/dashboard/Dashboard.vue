@@ -132,6 +132,7 @@
         // When the backend cannot serve custom dashboards, ignore any requested id
         // (URL, localStorage, tenant default) and render the bundled default directly.
         if (miscStore.configs?.isCustomDashboardsEnabled === false) {
+            charts.value = []
             await useDefaultDashboardBundledInUI()
             await loadCharts(dashboard.value.charts)
             isRouteSettled.value = true
@@ -198,7 +199,7 @@
         isRouteSettled.value = true
     }
 
-    watch([() => route.params.dashboard, () => route.params.tenant], async () => {
+    watch([() => route.params.dashboard, () => route.params.tenant, () => props.isFlow && `${route.params.namespace}/${route.params.id}`], async () => {
         if(route.params.tenant){
             // at initial load after login tenant is not yet immediately available
             const dashboardId = await dashboardStore.getDashboardId(route)

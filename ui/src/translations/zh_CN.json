@@ -2170,7 +2170,8 @@
       "loading": "正在加载 subflow 执行…",
       "load_error": "无法加载 subflow execution",
       "none": "尚未开始执行",
-      "executions": "Subflow Task 运行 | Subflow 执行"
+      "executions": "Subflow Task 运行 | Subflow 执行",
+      "open": "打开 subflow 执行"
     },
     "loop_iterations_notice": {
       "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",

@@ -2170,7 +2170,8 @@
       "loading": "Carregando a execução do subflow…",
       "load_error": "Falha ao carregar a Execution do subflow",
       "none": "Nenhuma Execution iniciada ainda",
-      "executions": "Execuções de Subflow | Execuções de Subflow"
+      "executions": "Execuções de Subflow | Execuções de Subflow",
+      "open": "Abrir execução de subflow"
     },
     "loop_iterations_notice": {
       "logs": "As iterações de Loop são executadas como sub-execuções separadas, então seus logs não são exibidos aqui.",

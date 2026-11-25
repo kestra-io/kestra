@@ -2170,7 +2170,8 @@
       "loading": "サブフローの実行を読み込み中…",
       "load_error": "subflow Executionの読み込みに失敗しました",
       "none": "まだExecutionが開始されていません",
-      "executions": "Subflow Task実行 | Subflow Execution"
+      "executions": "Subflow Task実行 | Subflow Execution",
+      "open": "サブFlow実行を開く"
     },
     "loop_iterations_notice": {
       "logs": "ループのイテレーションは個別のサブ実行として実行されるため、ログはここに表示されません。",

@@ -2170,7 +2170,8 @@
       "loading": "Ładowanie egzekucji Subflow…",
       "load_error": "Nie udało się załadować egzekucji Subflow",
       "none": "Żadna egzekucja jeszcze się nie rozpoczęła",
-      "executions": "Uruchomienia Tasków Subflow | Egzekucje Subflow | Egzekucje Subflow"
+      "executions": "Uruchomienia Tasków Subflow | Egzekucje Subflow | Egzekucje Subflow",
+      "open": "Otwórz egzekucję Subflow"
     },
     "loop_iterations_notice": {
       "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",

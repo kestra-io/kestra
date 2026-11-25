@@ -2170,7 +2170,8 @@
       "loading": "Chargement de l'exécution du subflow…",
       "load_error": "Échec du chargement de l'exécution du subflow",
       "none": "Aucune exécution n'a encore démarré",
-      "executions": "Exécutions de Subflow | Exécutions de Subflow"
+      "executions": "Exécutions de Subflow | Exécutions de Subflow",
+      "open": "Ouvrir l'exécution du subflow"
     },
     "loop_iterations_notice": {
       "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",

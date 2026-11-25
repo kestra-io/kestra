@@ -2170,7 +2170,8 @@
       "loading": "Загрузка выполнения subflow…",
       "load_error": "Не удалось загрузить выполнение subflow",
       "none": "Ещё не запущено ни одной egzekucji",
-      "executions": "Запуски Subflow Task | Запуски Subflow | Запуски Subflow"
+      "executions": "Запуски Subflow Task | Запуски Subflow | Запуски Subflow",
+      "open": "Открыть выполнение subflow"
     },
     "loop_iterations_notice": {
       "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",

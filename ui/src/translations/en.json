@@ -2587,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "The assistant didn't return a response. Please try again.",
+          "outputLimit": "The assistant ran out of output tokens before it could answer. Shorten your message or start a new chat.",
+          "contentFiltered": "The AI provider blocked the response. Rephrase your message or remove the content that may have triggered the provider's filters.",
           "retry": "Retry"
         },
         "cancelled": "Turn cancelled",

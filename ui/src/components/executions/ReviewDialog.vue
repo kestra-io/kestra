@@ -60,7 +60,7 @@
         execution: Execution;
         taskRun: ApprovalTaskRun;
         task: ApprovalTask;
-    }>()
+    } & /* @vue-ignore */ {onClosed?: () => void}>()
 
     const visible = defineModel<boolean>({default: false})
 

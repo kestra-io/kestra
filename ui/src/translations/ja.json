@@ -594,6 +594,8 @@
         "all-iterations": "すべてのイテレーション",
         "iteration-index": "インデックス {index}",
         "iteration-value-index": "{value} · インデックス {index}",
+        "first-iteration": "最初のイテレーション",
+        "last-iteration": "最終イテレーション",
         "previous-iteration": "前のイテレーション",
         "next-iteration": "次のイテレーション",
         "previous-page": "前のページ",

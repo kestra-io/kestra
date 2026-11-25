@@ -594,6 +594,8 @@
         "all-iterations": "Все итерации",
         "iteration-index": "индекс {index}",
         "iteration-value-index": "{value} · индекс {index}",
+        "first-iteration": "Первая итерация",
+        "last-iteration": "Последняя итерация",
         "previous-iteration": "Предыдущая итерация",
         "next-iteration": "Следующая итерация",
         "previous-page": "Предыдущая страница",

@@ -594,6 +594,8 @@
         "all-iterations": "सभी इटरेशन",
         "iteration-index": "इंडेक्स {index}",
         "iteration-value-index": "{value} · इंडेक्स {index}",
+        "first-iteration": "पहला पुनरावृति",
+        "last-iteration": "अंतिम पुनरावृति",
         "previous-iteration": "पिछला इटरेशन",
         "next-iteration": "अगला इटरेशन",
         "previous-page": "पिछला पृष्ठ",

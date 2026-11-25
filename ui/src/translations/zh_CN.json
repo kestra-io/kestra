@@ -594,6 +594,8 @@
         "all-iterations": "所有迭代",
         "iteration-index": "索引 {index}",
         "iteration-value-index": "{value} · 索引 {index}",
+        "first-iteration": "首次迭代",
+        "last-iteration": "上次迭代",
         "previous-iteration": "上一个迭代",
         "next-iteration": "下一个迭代",
         "previous-page": "上一页",

@@ -48,7 +48,7 @@
 
     const loadExecutions = async () => {
         const baseParams = {
-            "filters[namespace][PREFIX]": props.execution.namespace,
+            "filters[namespace][EQUALS]": props.execution.namespace,
             "filters[flowId][EQUALS]": props.execution.flowId,
             size: 1,
         }

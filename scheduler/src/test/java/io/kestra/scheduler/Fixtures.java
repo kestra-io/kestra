@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.mockito.Mockito;
 
@@ -28,6 +29,14 @@ public interface Fixtures {
         return Mockito.mock(
             FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
                 ? ProcessedFlow.of((FlowWithSource) invocation.getArgument(0))
+                : Mockito.RETURNS_DEFAULTS.answer(invocation)
+        );
+    }
+
+    static FlowParsingService governedAs(Supplier<Function<Schedule.ScheduleBuilder<?, ?>, Schedule>> governed) {
+        return Mockito.mock(
+            FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
+                ? ProcessedFlow.of(defaultFlow(governed.get()).toBuilder().revision(((FlowWithSource) invocation.getArgument(0)).getRevision()).build())
                 : Mockito.RETURNS_DEFAULTS.answer(invocation)
         );
     }

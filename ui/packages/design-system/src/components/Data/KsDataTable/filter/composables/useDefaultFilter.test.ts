@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
 import {mount, type VueWrapper} from "@vue/test-utils"
-import {createMemoryHistory, createRouter, type LocationQuery} from "vue-router"
+import {createMemoryHistory, createRouter, type LocationQuery, type RouteLocationNamedRaw} from "vue-router"
 import {applyDefaultFilters, useDefaultFilter} from "./useDefaultFilter"
 
 let wrapper: VueWrapper | undefined
@@ -82,12 +82,15 @@ describe("applyDefaultFilters", () => {
 })
 
 describe("useDefaultFilter", () => {
-    async function mountWithQuery(query: LocationQuery = {}) {
+    async function mountAt(location: RouteLocationNamedRaw) {
         const router = createRouter({
             history: createMemoryHistory(),
-            routes: [{path: "/:tenant/executions", name: "executions", component: {render: () => null}}],
+            routes: [
+                {path: "/:tenant/executions", name: "executions", component: {render: () => null}},
+                {path: "/:tenant/dashboards/:dashboard", name: "dashboard", component: {render: () => null}},
+            ],
         })
-        await router.push({name: "executions", params: {tenant: "main"}, query})
+        await router.push(location)
         await router.isReady()
         wrapper = mount({
             setup() {
@@ -97,6 +100,8 @@ describe("useDefaultFilter", () => {
         }, {global: {plugins: [router]}})
         return router
     }
+
+    const mountWithQuery = (query: LocationQuery = {}) => mountAt({name: "executions", params: {tenant: "main"}, query})
 
     test("seeds the route with defaults on first load", async () => {
         localStorage.setItem("defaultNamespace", "company.team")
@@ -123,5 +128,13 @@ describe("useDefaultFilter", () => {
             "filters[scope][EQUALS]": "USER",
             q: "flow",
         }))
+    })
+
+    test("keeps a route param holding a reserved character encoded when seeding defaults", async () => {
+        const router = await mountAt({name: "dashboard", params: {tenant: "main", dashboard: "ops?x"}})
+
+        await vi.waitFor(() => expect(router.currentRoute.value.query).toHaveProperty("filters[timeRange][EQUALS]"))
+        expect(router.currentRoute.value.params.dashboard).toBe("ops?x")
+        expect(router.currentRoute.value.path).toBe("/main/dashboards/ops%3Fx")
     })
 })

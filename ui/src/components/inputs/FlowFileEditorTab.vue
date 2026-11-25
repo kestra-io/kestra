@@ -2,7 +2,7 @@
     <div class="editor-tab">
         <img
             v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
-            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+            :src="fileUrl"
             class="image-preview"
         >
         <div v-else-if="bigFile" class="big-file-warning" data-test="big-file-warning">
@@ -111,6 +111,7 @@
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
     import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
     import {useViolationMarkers} from "../../composables/useViolationMarkers"
+    import {safePath} from "../../composables/useBaseNamespaces"
 
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsEditor} from "@kestra-io/design-system"
@@ -290,7 +291,7 @@
     const namespace = computed(() => flowStore.flow?.namespace)
     const fileNamespace = computed(() => (namespace.value ?? route.params?.namespace)?.toString())
     const humanSize = computed(() => fileSize.value === undefined ? "" : humanFileSize(fileSize.value))
-    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=${encodeURI(`/${props.path}`)}`)
+    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=/${safePath(props.path)}`)
     const isCreating = computed(() => flowStore.isCreating)
 
     // shallowRef, not ref: a deep reactive proxy around the editor breaks it.

@@ -43,7 +43,6 @@
     const flowStore = useFlowStore()
     const {haveChange, canSave, hasErrors, isReadOnly, isDraft, publish, saveAsDraft, saveAndExecute} = useFlowEditorActions()
 
-    // A draft is the path put first while there are unsaved changes; once it is saved, publishing it is.
     const isPublishPrimary = computed(() => isDraft.value && !haveChange.value && !flowStore.isCreating)
 </script>
 

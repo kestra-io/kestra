@@ -8,6 +8,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.jupiter.api.Test;
@@ -1147,6 +1149,61 @@ class FlowServiceTest {
         }
 
         assertThat(flowTopologyRepository.findByFlow(flow.getTenantId(), flow.getNamespace(), flow.getId(), false)).isEmpty();
+    }
+
+    @Test
+    void shouldReadAllFlowsOncePerBatchWhenFlowsAreCreatedWhileATopologyUpdateRuns() throws Exception {
+        String tenantId = "topology" + IdUtils.create().toLowerCase();
+        Flow subflow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(tenantId)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+        flowRepository.create(GenericFlow.of(subflow));
+        List<Flow> callers = IntStream.range(0, 4)
+            .<Flow> mapToObj(
+                i -> Flow.builder()
+                    .id(IdUtils.create())
+                    .tenantId(tenantId)
+                    .namespace(TEST_NAMESPACE)
+                    .tasks(List.of(Subflow.builder().id("test").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(subflow.getId()).build()))
+                    .build()
+            )
+            .toList();
+
+        AtomicInteger reads = new AtomicInteger();
+        CountDownLatch firstReadStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirstRead = new CountDownLatch(1);
+        FlowRepositoryInterface realFlowRepository = flowService.flowRepository;
+        FlowRepositoryInterface spiedFlowRepository = spy(realFlowRepository);
+        doAnswer(invocation ->
+        {
+            if (reads.incrementAndGet() == 1) {
+                firstReadStarted.countDown();
+                releaseFirstRead.await(10, TimeUnit.SECONDS);
+            }
+            return invocation.callRealMethod();
+        }).when(spiedFlowRepository).findAllWithSourceWithNoAcl(tenantId);
+        flowService.flowRepository = spiedFlowRepository;
+        try {
+            flowService.create(GenericFlow.of(callers.getFirst()));
+            assertTrue(firstReadStarted.await(10, TimeUnit.SECONDS));
+            for (Flow caller : callers.subList(1, callers.size())) {
+                flowService.create(GenericFlow.of(caller));
+            }
+            releaseFirstRead.countDown();
+
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(
+                () -> assertThat(callers)
+                    .allSatisfy(caller -> assertThat(flowTopologyRepository.findByFlow(tenantId, TEST_NAMESPACE, caller.getId(), false)).hasSize(1))
+            );
+        } finally {
+            releaseFirstRead.countDown();
+            flowService.flowRepository = realFlowRepository;
+        }
+
+        assertThat(reads.get()).isEqualTo(2);
     }
 
     @Test

@@ -780,7 +780,7 @@
             return
         }
         const scope: Record<string, string> = {}
-        if (props.namespace) scope["filters[namespace][PREFIX]"] = props.namespace
+        if (props.namespace) scope[`filters[namespace][${props.flowId ? "EQUALS" : "PREFIX"}]`] = props.namespace
         if (props.flowId) scope["filters[flowId][EQUALS]"] = props.flowId
         navigateToStateFilter(state, scope)
     }

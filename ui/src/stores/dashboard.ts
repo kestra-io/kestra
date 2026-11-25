@@ -123,7 +123,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
-        const res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
+        const res = await axios.get(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`, {validateStatus})
         if (res.status === 404) return []
         return (res.data as Dashboard).charts ?? []
     }
@@ -245,13 +245,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const {data} = await axios.put(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
+        const {data} = await axios.put(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${id}`)
+        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`)
 
         const bookmarksStore = useBookmarksStore()
         const encodedId = encodeURIComponent(id)
@@ -271,7 +271,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
+            const {data} = await axios.post(`${apiUrl()}/dashboards/${encodeURIComponent(id)}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
             return data
         } catch (e: any) {
             if (e.status === 404) return undefined

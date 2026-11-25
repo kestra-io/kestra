@@ -157,6 +157,19 @@ describe("FlowFileEditorTab", () => {
         expect(downloadLink?.attributes("download")).toBe("data.txt")
     })
 
+    it("should address a file whose name holds characters reserved in a query string by its full path", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+
+        const image = mountWithTabContext(FlowFileEditorTab, {...namespaceFileProps, name: "a&b #1.png", extension: "png", path: "dir/a&b #1.png"})
+        fileMetadata.mockResolvedValue({size: 11 * 1024 * 1024})
+        const big = mountWithTabContext(FlowFileEditorTab, {...namespaceFileProps, name: "a&b #1.bin", extension: "bin", path: "dir/a&b #1.bin"})
+        await flushPromises()
+
+        expect(image.find("img").attributes("src")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.png")
+        const downloadLink = big.findAll("button").find((button) => button.attributes("href") !== undefined)
+        expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.bin")
+    })
+
     it("should load the file content when the size stats are unavailable", async () => {
         fileMetadata.mockRejectedValue(new Error("stats unavailable"))
 

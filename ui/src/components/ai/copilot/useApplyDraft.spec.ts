@@ -346,10 +346,10 @@ describe("useApplyDraft", () => {
     it("apply UPDATES the dashboard when create reports it already exists", async () => {
         confirm.mockResolvedValueOnce(true)
         clientPost.mockRejectedValueOnce(dashboardExists)
-        await useApplyDraft().apply(dashboardDraft())
+        await useApplyDraft().apply(dashboardDraft({yaml: "id: \"ops?x\"\ntitle: My dash"}))
         expect(clientPut).toHaveBeenCalledWith(
-            "/api/v1/main/dashboards/my-dash",
-            "id: my-dash\ntitle: My dash",
+            "/api/v1/main/dashboards/ops%3Fx",
+            "id: \"ops?x\"\ntitle: My dash",
             expect.objectContaining({headers: {"Content-Type": "application/x-yaml"}}),
         )
     })

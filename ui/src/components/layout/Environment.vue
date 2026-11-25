@@ -1,13 +1,15 @@
 <template>
-    <div v-if="name" id="environment">
-        <span class="dot" />
-        <span class="name" :title="name">{{ name }}</span>
-        <span class="label">{{ $t("environment") }}</span>
-    </div>
+    <KsTooltip v-if="name" :content="name">
+        <div id="environment">
+            <span class="dot" />
+            <span class="name">{{ name }}</span>
+            <span class="label">{{ $t("environment") }}</span>
+        </div>
+    </KsTooltip>
 </template>
 
 <script setup lang="ts">
-    import {cssVar} from "@kestra-io/design-system"
+    import {cssVar, KsTooltip} from "@kestra-io/design-system"
     import {useLayoutStore} from "../../stores/layout"
     import {useMiscStore} from "override/stores/misc"
     import {computed} from "vue"

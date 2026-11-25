@@ -2,6 +2,7 @@ import type {ComputedRef, InjectionKey} from "vue"
 import type {GraphExecution} from "./utils/vueFlowUtils"
 import type {LodLevel} from "./utils/constants"
 import type {LoopLaneData} from "./utils/loopOutcome"
+import type {TaskDiffStatus} from "./utils/flowDiff"
 
 export const EXECUTION_INJECTION_KEY = Symbol("execution-injection-key") as InjectionKey<ComputedRef<GraphExecution | undefined>>
 export const SUBFLOWS_EXECUTIONS_INJECTION_KEY = Symbol("subflows-executions-injection-key") as InjectionKey<ComputedRef<Record<string, GraphExecution>>>
@@ -14,3 +15,10 @@ export const DRAGGING_NODE_INJECTION_KEY = Symbol("dragging-node-injection-key")
 export const CANVAS_HOVERED_INJECTION_KEY = Symbol("canvas-hovered-injection-key") as InjectionKey<ComputedRef<boolean>>
 export const LOOP_LANES_INJECTION_KEY = Symbol("loop-lanes-injection-key") as InjectionKey<ComputedRef<Record<string, LoopLaneData>>>
 export const ARTIFACT_COUNTS_INJECTION_KEY = Symbol("artifact-counts-injection-key") as InjectionKey<ComputedRef<Record<string, number>>>
+
+export interface DiffContext {
+    statusByUid: Map<string, TaskDiffStatus>;
+    selectedUid?: string;
+    select: (uid: string) => void;
+}
+export const DIFF_INJECTION_KEY = Symbol("diff-injection-key") as InjectionKey<ComputedRef<DiffContext | undefined>>

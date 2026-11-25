@@ -36,7 +36,7 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Purge all flow execution data for flows that ended more than one month ago.",
             code = """
-                id: purge_exections
+                id: purge_executions
                 namespace: system
 
                 tasks:

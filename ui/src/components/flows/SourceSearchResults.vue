@@ -246,7 +246,7 @@
                             >
                                 <span class="result-row-icon"><DatabaseOutline /></span>
                                 <!-- KV matches on query terms server-side, so highlight per term or a legitimate row renders unmarked. -->
-                                <span class="result-key"><HighlightedText :segments="buildTermHighlightSegments(entry.key, query, caseSensitive)" /></span>
+                                <span class="result-key"><template v-for="(segment, index) in buildTermHighlightSegments(entry.key, query, caseSensitive)" :key="index"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></template></span>
                                 <span v-if="entry.updateDate" class="result-row-meta">
                                     <KsDateAgo :date="entry.updateDate" />
                                 </span>
@@ -290,7 +290,7 @@
                                     <template #icon>
                                         <Lock />
                                     </template>
-                                    <span><HighlightedText :segments="buildHighlightSegments(entry.key, query, caseSensitive)" /></span>
+                                    <span><template v-for="(segment, index) in buildHighlightSegments(entry.key, query, caseSensitive)" :key="index"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></template></span>
                                 </KsTag>
                             </div>
                         </div>
@@ -319,7 +319,6 @@
     import Loading from "vue-material-design-icons/Loading.vue"
     import {useI18n} from "vue-i18n"
     import {inlineReplacement, type ReplaceContext, type SourceSearchResult, type SourceMatch} from "../../utils/sourceSearchDiff"
-    import HighlightedText from "../layout/HighlightedText.vue"
     import {
         SEARCH_RESOURCE_TYPES,
         buildPathSegments,
@@ -793,14 +792,14 @@
         overflow-wrap: anywhere;
         color: var(--ks-text-dim);
 
-        & :deep(mark) {
+        & mark {
             background-color: var(--ks-status-background-warning);
             color: var(--ks-text-primary);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        & :deep(.result-match-old) {
+        & .result-match-old {
             background-color: var(--ks-status-background-failed);
             color: var(--ks-text-error);
             text-decoration: line-through;
@@ -808,14 +807,14 @@
             padding: 0 var(--ks-spacing-1);
         }
 
-        & :deep(.result-match-new) {
+        & .result-match-new {
             background-color: var(--ks-status-background-success);
             color: var(--ks-text-success);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        & :deep(.result-match-arrow) {
+        & .result-match-arrow {
             color: var(--ks-text-muted);
         }
     }
@@ -850,7 +849,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
-    & :deep(mark) {
+    & mark {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -867,7 +866,7 @@
     color: var(--ks-text-primary);
     max-width: 100%;
 
-    & :deep(mark) {
+    & mark {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

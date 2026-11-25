@@ -1,6 +1,6 @@
 <template>
-    <div class="d-flex py-3 align-items-center flow-warning-dialog">
-        <AlertCircle class="me-2 icon" />
+    <div class="flow-warning-dialog">
+        <AlertCircle class="icon" />
         <strong>{{ $t("warning") }}</strong>
     </div>
 
@@ -13,7 +13,14 @@
 </script>
 
 <style scoped>
+.flow-warning-dialog {
+    display: flex;
+    align-items: center;
+    padding-block: var(--ks-spacing-4);
+}
+
 .flow-warning-dialog .icon {
+    margin-right: var(--ks-spacing-2);
     font-size: var(--ks-font-size-lg);
     color: var(--ks-status-warning);
 }

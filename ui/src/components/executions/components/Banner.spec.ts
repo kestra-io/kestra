@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
-import {reactive} from "vue"
+import {reactive, type Plugin} from "vue"
 import {setActivePinia} from "pinia"
+import {createMemoryHistory, createRouter} from "vue-router"
 import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import {flushPromises} from "@vue/test-utils"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -31,6 +32,7 @@ const globalConfig = {
         KsTooltip: {template: "<div><slot /></div>"},
         KsIconButton: {template: "<button><slot /></button>"},
         SetLabels: true,
+        ApprovalActions: {props: ["execution", "taskRun"], template: "<span data-test=\"approval-action\">{{ taskRun.id }}</span>"},
         RunTimeline: true,
         Duration: true,
         ChangeExecutionStatus: {
@@ -66,11 +68,11 @@ function buildExecution(current = "SUCCESS"): Execution {
     } as Execution
 }
 
-function mountBanner(execution = buildExecution()) {
+function mountBanner(execution = buildExecution(), plugins: Plugin[] = []) {
     return i18nMount(Banner, {
         messages: {execution_banner: {more_searchable_values: "+{count} more searchable values"}},
         props: {execution},
-        global: globalConfig,
+        global: {...globalConfig, plugins},
     })
 }
 
@@ -89,6 +91,34 @@ describe("Banner", () => {
         logsAllowed.value = false
 
         expect(mountBanner().text()).not.toContain("copy logs")
+    })
+
+    test("leaves copying the logs to the logs toolbar on the Logs tab", async () => {
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [{path: "/:pathMatch(.*)*", component: {render: () => null}, meta: {tab: "logs"}}],
+        })
+        await router.push("/logs")
+
+        expect(mountBanner(buildExecution(), [router]).text()).not.toContain("copy logs")
+    })
+
+    test("hides the labels that repeat the execution id and the user shown above them", () => {
+        const labelled = (correlationId: string) => ({
+            ...buildExecution(),
+            labels: [
+                {key: "system.from", value: "api"},
+                {key: "system.username", value: "someone@yourcompany.com"},
+                {key: "system.correlationId", value: correlationId},
+            ],
+        }) as Execution
+
+        const own = mountBanner(labelled("execution-id")).text()
+        expect(own).toContain("system.from: api")
+        expect(own).not.toContain("system.correlationId")
+        expect(own.match(/someone@yourcompany\.com/g)).toHaveLength(1)
+
+        expect(mountBanner(labelled("parent-id")).text()).toContain("system.correlationId: parent-id")
     })
 
     test("renders no chevron when the state change trigger is disabled", () => {
@@ -229,5 +259,16 @@ describe("Banner", () => {
 
         expect(mountBanner(pausedOn("approval")).find("[data-test='approval-banner']").text()).toContain("approval.banner.paused")
         expect(mountBanner(pausedOn("pause")).find("[data-test='approval-banner']").exists()).toBe(false)
+    })
+
+    test("hands the approval task run to the review actions, while it pauses as once it is paused", () => {
+        useExecutionsStore().flow = {tasks: [{id: "approval", type: "io.kestra.plugin.core.flow.Approval"}]} as never
+        const approvalIn = (state: string) => ({
+            ...buildExecution(state),
+            taskRunList: [{id: `tr-${state}`, taskId: "approval", state: {current: state}}],
+        }) as unknown as Execution
+
+        expect(mountBanner(approvalIn("PAUSING")).find("[data-test='approval-action']").text()).toBe("tr-PAUSING")
+        expect(mountBanner(approvalIn("PAUSED")).find("[data-test='approval-action']").text()).toBe("tr-PAUSED")
     })
 })

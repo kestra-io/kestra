@@ -239,6 +239,27 @@ class McpToolControllerTest {
     }
 
     @Test
+    void shouldIgnoreClientSessionIdWhenInitializing() {
+        // Given
+        String serverId = saveServer(false, null);
+        String clientChosen = IdUtils.create();
+
+        // When — the client sends its own session id with initialize
+        HttpResponse<Map> response = client.toBlocking().exchange(
+            mcpPost(serverId, INITIALIZE_REQUEST, clientChosen), Map.class
+        );
+
+        // Then — the server issues a different one, and the client's id opens nothing
+        String issued = response.getHeaders().get(HttpHeaders.MCP_SESSION_ID);
+        assertThat(issued).isNotBlank().isNotEqualTo(clientChosen);
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(mcpPost(serverId, TOOLS_LIST_REQUEST, clientChosen))
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
     void shouldAcceptInitializedNotificationWhenSessionIsInitialized() {
         // Given
         String serverId = saveServer(false, null);

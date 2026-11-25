@@ -2,7 +2,7 @@ import {computed, h, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import type {RouteLocationNormalizedLoaded} from "vue-router"
 import {useI18n} from "vue-i18n"
-import {KsMessageBox, KsText} from "@kestra-io/design-system"
+import {KsMessageBox} from "@kestra-io/design-system"
 import {useClient} from "@kestra-io/kestra-sdk"
 import type {AxiosLikeConfig} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
@@ -14,7 +14,7 @@ import {useTestSuiteDraftActions} from "override/components/ai/copilot/testSuite
 import {useFlowStore} from "../../../stores/flow"
 import {routeFamily} from "../../../utils/routeFamily"
 import {COPILOT_DRAFT_KEY} from "../../../utils/storageKeys"
-import DiffView from "./DiffView.vue"
+import ApplyFlowConfirm from "./ApplyFlowConfirm.vue"
 import {alertError, confirmApply as confirmApplyDialog, isAlreadyExists, parseArtefactYaml} from "./draftApply"
 import type {ArtefactDraftEvent} from "./types"
 
@@ -110,6 +110,16 @@ export function useApplyDraft() {
         return applyFlow(draft)
     }
 
+    /** What a flow draft is compared with: the open editor, the saved flow, or "" for a new flow. */
+    async function draftBaseSource(draft: ArtefactDraftEvent): Promise<string> {
+        const {namespace, id} = parseArtefactYaml(draft.yaml)
+        if (!namespace || !id) return ""
+        const flowStore = useFlowStore()
+        return isViewingFlow(route, namespace, id)
+            ? (flowStore.flowYaml || "")
+            : persistedFlowSource(namespace, id, flowStore)
+    }
+
     async function applyFlow(draft: ArtefactDraftEvent): Promise<boolean> {
         const {namespace, id} = parseArtefactYaml(draft.yaml)
         if (!namespace || !id) {
@@ -180,12 +190,8 @@ export function useApplyDraft() {
     ): Promise<boolean> {
         const before = onThisFlow ? (flowStore.flowYaml || "") : await persistedFlowSource(namespace, id, flowStore)
         return KsMessageBox({
-            type: "warning",
             title: t("ai.copilot.draft.applyTitle"),
-            message: () => h("div", null, [
-                h(KsText, {tag: "p"}, () => t("ai.copilot.draft.applyConfirm", {namespace, id})),
-                h(DiffView, {oldValue: before, newValue: yaml}),
-            ]),
+            message: () => h(ApplyFlowConfirm, {namespace, id, before, after: yaml}),
             showCancelButton: true,
             confirmButtonText: t("ai.copilot.draft.apply"),
             cancelButtonText: t("cancel"),
@@ -229,7 +235,7 @@ export function useApplyDraft() {
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
                 handled(e)
-                await useClient().put(`${apiUrl()}/dashboards/${id}`, draft.yaml, yaml)
+                await useClient().put(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`, draft.yaml, yaml)
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
             return true
@@ -242,5 +248,5 @@ export function useApplyDraft() {
         }
     }
 
-    return {applying, appSupported, dashboardSupported, testSuiteSupported, openInEditor, apply}
+    return {applying, appSupported, dashboardSupported, testSuiteSupported, openInEditor, apply, draftBaseSource}
 }

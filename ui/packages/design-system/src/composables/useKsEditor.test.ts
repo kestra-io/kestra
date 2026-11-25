@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent, h, ref} from "vue"
+import {defineComponent, h, nextTick, reactive, ref} from "vue"
 import {flushPromises, mount} from "@vue/test-utils"
 import * as monaco from "monaco-editor/editor/editor.api"
 import {useKsEditor} from "./useKsEditor"
@@ -8,15 +8,15 @@ import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "..
 
 const {markerTrigger, onDidChangeMarkers, getModelMarkers, markerDispose} = vi.hoisted(() => {
     let markerCallback: ((uris: {toString(): string}[]) => void) | null = null
-    const markerDispose = vi.fn()
+    const dispose = vi.fn()
     return {
         markerTrigger: (uris: {toString(): string}[]) => markerCallback?.(uris),
         onDidChangeMarkers: vi.fn((cb: (uris: {toString(): string}[]) => void) => {
             markerCallback = cb
-            return {dispose: markerDispose}
+            return {dispose}
         }),
         getModelMarkers: vi.fn(() => [] as unknown[]),
-        markerDispose,
+        markerDispose: dispose,
     }
 })
 
@@ -172,9 +172,9 @@ vi.mock("./PlaceholderContentWidget", () => ({
     },
 }))
 
-function mountEditor(emit: KsEditorEmit) {
-    const props = {
-        modelValue: "",
+function mountEditor(emit: KsEditorEmit, modelValue = ref("")) {
+    const props = reactive({
+        modelValue,
         options: {},
         theme: "vs",
         readOnly: false,
@@ -182,7 +182,7 @@ function mountEditor(emit: KsEditorEmit) {
         navbar: false,
         placeholder: "",
         path: "",
-    } as unknown as ResolvedKsEditorProps
+    }) as unknown as ResolvedKsEditorProps
     const refs: KsEditorTemplateRefs = {
         editorRef: ref(document.createElement("div")),
         container: ref(document.createElement("div")),
@@ -279,6 +279,59 @@ describe("useKsEditor validation listener", () => {
         wrapper.unmount()
 
         expect(markerDispose).toHaveBeenCalledTimes(1)
+    })
+})
+describe("useKsEditor model value sync", () => {
+    async function mountWithContent(modelValue = ref("saved")) {
+        const emit = vi.fn()
+        const wrapper = mountEditor(emit as unknown as KsEditorEmit, modelValue)
+        await flushPromises()
+
+        const editor = vi.mocked(monaco.editor.create).mock.results[0].value
+        const changeContent = (value: string) => {
+            editor.getValue.mockReturnValue(value)
+            editor.onDidChangeModelContent.mock.calls.at(-1)[0]()
+        }
+        const emittedValues = () => emit.mock.calls.filter(([name]) => name === "update:modelValue").map(([, value]) => value)
+
+        return {wrapper, changeContent, emittedValues}
+    }
+
+    it("emits a change that restores the prop value in the tick of the change it undoes", async () => {
+        const {wrapper, changeContent, emittedValues} = await mountWithContent()
+
+        changeContent("")
+        changeContent("saved")
+
+        expect(emittedValues()).toEqual(["", "saved"])
+
+        wrapper.unmount()
+    })
+
+    it("does not emit back content the parent set after an emitted change", async () => {
+        const modelValue = ref("saved")
+        const {wrapper, changeContent, emittedValues} = await mountWithContent(modelValue)
+
+        changeContent("typed")
+        modelValue.value = "set by the parent"
+        await nextTick()
+        changeContent("set by the parent")
+
+        expect(emittedValues()).toEqual(["typed"])
+
+        wrapper.unmount()
+    })
+
+    it("emits a value again when the parent never applied it the first time", async () => {
+        const {wrapper, changeContent, emittedValues} = await mountWithContent()
+
+        changeContent("typed")
+        changeContent("typed more")
+        changeContent("typed")
+
+        expect(emittedValues()).toEqual(["typed", "typed more", "typed"])
+
+        wrapper.unmount()
     })
 })
 describe("useKsEditor suggestions on cursor settle", () => {

@@ -37,7 +37,10 @@ describe("resolveSubflowLinks", () => {
         expect(resolveSubflowLinks(source)).toEqual([])
     })
 
-    it("skips references whose flowId or namespace is a templated expression", () => {
+    it.each([
+        "{{ inputs.target }}",
+        "{% if inputs.prod %}deploy{% else %}deploy_dev{% endif %}",
+    ])("skips references whose flowId is the templated expression %s", (flowId) => {
         const source = [
             "id: parent",
             "namespace: company.team",
@@ -46,7 +49,7 @@ describe("resolveSubflowLinks", () => {
             "  - id: dynamic_subflow",
             "    type: io.kestra.plugin.core.flow.Subflow",
             "    namespace: company.team",
-            "    flowId: \"{{ inputs.target }}\"",
+            `    flowId: "${flowId}"`,
         ].join("\n")
 
         expect(resolveSubflowLinks(source)).toEqual([])
@@ -214,5 +217,27 @@ describe("resolveSubflowLinks", () => {
 
         expect(links).toHaveLength(1)
         expect(links[0].target).toEqual({namespace: "other.namespace", flowId: "child_flow"})
+    })
+
+    it("resolves the parent flow namespace expression", () => {
+        const source = [
+            "id: parent",
+            "namespace: company.team",
+            "",
+            "tasks:",
+            "  - id: child",
+            "    type: io.kestra.plugin.core.flow.Subflow",
+            "    namespace: \"{{ flow.namespace }}\"",
+            "    flowId: child_flow",
+        ].join("\n")
+
+        const links = resolveSubflowLinks(source)
+
+        expect(links).toHaveLength(1)
+        expect(links[0].target).toEqual({
+            namespace: "company.team",
+            flowId: "child_flow",
+        })
+        expect(source.slice(links[0].range[0], links[0].range[1])).toBe("child_flow")
     })
 })

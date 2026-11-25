@@ -23,7 +23,7 @@
                     {{ feed.title }}
                 </h5>
             </div>
-            <OpenInNew class="openInNewIcon" aria-hidden="true" />
+            <OpenInNew class="openInNewIcon" />
         </a>
     </ContextInfoContent>
 </template>
@@ -75,6 +75,7 @@
     .post {
         position: relative;
         display: flex;
+        flex-wrap: wrap;
         gap: 0.75rem;
         align-items: flex-start;
         margin: 0 1rem;
@@ -119,6 +120,7 @@
         .metaBlock {
             display: flex;
             flex-direction: column;
+            flex: 1 1 12rem;
             gap: 0.25rem;
             min-width: 0;
         }
@@ -133,6 +135,10 @@
             aspect-ratio: auto;
             border: none;
             border-radius: var(--kel-border-radius-round);
+        }
+
+        .metaBlock {
+            flex: none;
         }
     }
 
@@ -149,7 +155,7 @@
         transition: opacity 0.15s ease;
     }
 
-    :deep(.news-date) {
+    .news-date {
         font-size: var(--ks-font-size-2xs);
         font-weight: 400;
         color: var(--ks-text-secondary);

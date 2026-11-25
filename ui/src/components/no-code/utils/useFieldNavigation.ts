@@ -1,4 +1,4 @@
-import {ref, computed} from "vue"
+import {ref, computed, type Ref} from "vue"
 import type {Schema} from "../components/tasks/getTaskComponent"
 
 export interface Crumb {
@@ -58,7 +58,7 @@ export function openCollapsedGroups(el: HTMLElement) {
 }
 
 export function useFieldNavigation() {
-    const stack = ref<NavFrame[]>([])
+    const stack: Ref<NavFrame[]> = ref([])
 
     const current = computed<NavFrame | undefined>(() => stack.value[stack.value.length - 1])
 

@@ -100,3 +100,19 @@ export const Disabled: Story = {
         },
     }),
 }
+
+export const Borderless: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        setup() {
+            const value = ref("")
+            return () => (
+                <div style="padding:24px;width:400px">
+                    <div style="border:1px solid var(--ks-border-default);border-radius:8px;background:var(--ks-bg-surface)">
+                        <KsSearch v-model={value.value} borderless placeholder="Jump to..." />
+                    </div>
+                </div>
+            )
+        },
+    }),
+}

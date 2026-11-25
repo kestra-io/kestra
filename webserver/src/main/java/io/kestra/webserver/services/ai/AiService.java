@@ -1,6 +1,7 @@
 package io.kestra.webserver.services.ai;
 
 import java.io.ByteArrayInputStream;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import io.kestra.libs.copilot.models.in.PluginMetadata;
 import io.kestra.libs.copilot.services.ai.*;
 import io.kestra.webserver.services.posthog.PosthogService;
 import io.kestra.webserver.utils.HttpClientUtils;
+import io.kestra.webserver.utils.ProxyAuthorizingHttpClient;
 
 import dev.langchain4j.http.client.HttpClientBuilderLoader;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
@@ -66,27 +68,46 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     /**
-     * Builds an HTTP client configured with the given client PEM certificate (and optional CA), for
-     * providers that support mutual-TLS. Returns empty when no client certificate is configured, so a
-     * caller applies it conditionally: {@code pemHttpClientBuilder(cfg.clientPem(), cfg.caPem()).ifPresent(builder::httpClientBuilder)}.
-     * Extracted here so the identical setup is not repeated in each provider's chat and streaming builders.
+     * Builds the HTTP client of a provider, when it needs anything the langchain4j default does not give:
+     * a client PEM certificate (and optional CA) for mutual-TLS, and/or the JVM proxy credentials, which the
+     * JDK HTTP client never sends on its own. Returns empty when neither applies, so a caller applies it
+     * conditionally: {@code httpClientBuilder(cfg.clientPem(), cfg.caPem()).ifPresent(builder::httpClientBuilder)}.
+     * Shared here so every provider's chat and streaming builders get the same setup.
      *
      * @param clientPem the client certificate PEM, or {@code null} when mutual-TLS is not configured.
      * @param caPem the CA certificate PEM, or {@code null}.
-     * @return the configured HTTP client builder, or empty when {@code clientPem} is {@code null}.
+     * @return the configured HTTP client builder, or empty when the langchain4j default is enough.
      */
-    protected static Optional<JdkHttpClientBuilder> pemHttpClientBuilder(@Nullable String clientPem, @Nullable String caPem) {
-        if (clientPem == null) {
+    protected Optional<JdkHttpClientBuilder> httpClientBuilder(@Nullable String clientPem, @Nullable String caPem) {
+        boolean proxyCredentials = ProxyAuthorizingHttpClient.isConfigured();
+        if (clientPem == null && !proxyCredentials) {
             return Optional.empty();
         }
+
+        HttpClient.Builder httpClientBuilder = clientPem == null ? HttpClient.newBuilder() : pemHttpClient(clientPem, caPem);
+
+        // langchain4j only forces HTTP/1.1 on plain HTTP for its own default client: an "Upgrade: h2c" request
+        // is mishandled by many servers, so keep that behaviour now that the client is ours.
+        String baseUrl = baseUrl();
+        if (baseUrl != null && baseUrl.regionMatches(true, 0, "http:", 0, 5)) {
+            httpClientBuilder.version(HttpClient.Version.HTTP_1_1);
+        }
+
+        if (proxyCredentials) {
+            httpClientBuilder = ProxyAuthorizingHttpClient.builder(httpClientBuilder);
+        }
+
+        return Optional.of(
+            ((JdkHttpClientBuilder) HttpClientBuilderLoader.loadHttpClientBuilder()).httpClientBuilder(httpClientBuilder)
+        );
+    }
+
+    private static HttpClient.Builder pemHttpClient(String clientPem, @Nullable String caPem) {
         try (
             ByteArrayInputStream is = new ByteArrayInputStream(clientPem.getBytes(StandardCharsets.UTF_8));
             ByteArrayInputStream caPemIs = caPem == null ? null : new ByteArrayInputStream(caPem.getBytes(StandardCharsets.UTF_8))
         ) {
-            return Optional.of(
-                ((JdkHttpClientBuilder) HttpClientBuilderLoader.loadHttpClientBuilder())
-                    .httpClientBuilder(HttpClientUtils.withPemCertificate(is, caPemIs))
-            );
+            return HttpClientUtils.withPemCertificate(is, caPemIs);
         } catch (Exception e) {
             throw new IllegalArgumentException("Exception while trying to setup AI Service certificates", e);
         }
@@ -163,12 +184,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     @Override
     public GenerationResult generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
-        AiService.GenerationContext ctx = this.beforeGeneration(
-            userInfo, flowGenerationPrompt.getConversationId(), "FlowGeneration", Map.of(
-                "flowYaml", Optional.ofNullable(flowGenerationPrompt.getYaml()).orElse(""),
-                "userPrompt", flowGenerationPrompt.getUserPrompt()
-            )
-        );
+        AiService.GenerationContext ctx = this.beforeGeneration(userInfo, flowGenerationPrompt.getConversationId(), "FlowGeneration");
 
         String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
 
@@ -182,17 +198,14 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             pebbleExpressions
         );
 
-        return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
+        this.afterGeneration(ctx, "FlowGenerationResult");
+
+        return GenerationResult.of(generatedFlow);
     }
 
     @Override
     public GenerationResult generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
-        AiService.GenerationContext ctx = this.beforeGeneration(
-            userInfo, dashboardGenerationPrompt.getConversationId(), "DashboardGeneration", Map.of(
-                "dashboardYaml", Optional.ofNullable(dashboardGenerationPrompt.getYaml()).orElse(""),
-                "userPrompt", dashboardGenerationPrompt.getUserPrompt()
-            )
-        );
+        AiService.GenerationContext ctx = this.beforeGeneration(userInfo, dashboardGenerationPrompt.getConversationId(), "DashboardGeneration");
 
         String generatedDashboard = dashboardAiCopilot.generateDashboard(
             this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
@@ -202,11 +215,18 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             dashboardGenerationPrompt
         );
 
-        return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
+        this.afterGeneration(ctx, "DashboardGenerationResult");
+
+        return GenerationResult.of(generatedDashboard);
     }
 
     public String displayName() {
         return displayName;
+    }
+
+    @Override
+    public Optional<AiUsageLimitConfiguration> usageLimit() {
+        return Optional.ofNullable(aiConfiguration.usageLimit()).filter(AiUsageLimitConfiguration::enabled);
     }
 
     public ExpressionContextService expressionContextService() {
@@ -257,7 +277,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     @Override
-    public GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName, Map<String, String> inputState) {
+    public GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName) {
         if (conversationId == null) {
 
             return null;
@@ -267,16 +287,14 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.postHogService.capture(
             uid, "$ai_trace", Map.of(
                 "$ai_trace_id", conversationId,
-                "$ai_span_name", spanName + "Session",
-                "$ai_input_state", inputState
+                "$ai_span_name", spanName + "Session"
             )
         );
         this.postHogService.capture(
             uid, "$ai_span", Map.of(
                 "$ai_trace_id", conversationId,
                 "$ai_span_id", parentSpanId,
-                "$ai_span_name", spanName + "Attempt",
-                "$ai_input_state", inputState
+                "$ai_span_name", spanName + "Attempt"
             )
         );
         metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, userInfo.ip(), parentSpanId, uid));
@@ -285,24 +303,18 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     @Override
-    public String afterGeneration(GenerationContext context, String spanName, Map<String, Object> outputState, String result, String outputKey) {
+    public void afterGeneration(GenerationContext context, String spanName) {
         if (context == null || context.conversationId() == null) {
-
-            return result;
+            return;
         }
         metadataByConversationId.remove(context.conversationId());
-        Map<String, Object> aiOutput = (outputState == null || outputState.isEmpty()) ? Map.of(outputKey, result) : outputState;
         this.postHogService.capture(
             context.uid(), "$ai_span", Map.of(
                 "$ai_trace_id", context.conversationId(),
                 "$ai_span_id", IdUtils.create(),
-                "$ai_span_name", spanName,
-                "$ai_input_state", Map.of(),
-                "$ai_output_state", aiOutput
+                "$ai_span_name", spanName
             )
         );
-
-        return result;
     }
 
     public List<PluginMetadata<ReverseOrderVersion>> allPluginsMetadata() {

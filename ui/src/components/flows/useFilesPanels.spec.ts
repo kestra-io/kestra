@@ -3,7 +3,7 @@ import {mount} from "@vue/test-utils"
 import {defineComponent, h, inject, ref, type Ref} from "vue"
 
 import {getTabFromFilesTab, useFilesPanels} from "./useFilesPanels"
-import {FILES_CLOSE_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue"
+import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_MOVE_TABS_INJECTION_KEY} from "../inputs/FileExplorer.vue"
 import {FILES_REFRESH_CONTENT_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/FlowFileEditorTab.vue"
 import type {Panel, TabLive} from "../../utils/multiPanelTypes"
 
@@ -40,13 +40,15 @@ const tabFor = (path: string) => getTabFromFilesTab({
  */
 function mountWithTabs(paths: string[]) {
     const panels: Ref<Panel[]> = ref([])
-    let closeTab!: (tab: {path: string}) => boolean
+    let closeTab!: (tab: {path: string; folder?: boolean}) => boolean
+    let moveTabs!: (move: {from: string; to: string}) => void
     let updateContent!: (payload: {path: string; content: string}) => void
     let refreshedContents!: Ref<Record<string, {content: string}>>
 
     const Child = defineComponent({
         setup() {
             closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)!
+            moveTabs = inject(FILES_MOVE_TABS_INJECTION_KEY)!
             updateContent = inject(FILES_UPDATE_CONTENT_INJECTION_KEY)!
             refreshedContents = inject(FILES_REFRESH_CONTENT_INJECTION_KEY)!
             return () => null
@@ -62,7 +64,7 @@ function mountWithTabs(paths: string[]) {
         },
     }))
 
-    return {panels, closeTab, updateContent, refreshedContents}
+    return {panels, closeTab, moveTabs, updateContent, refreshedContents}
 }
 
 const openPaths = (panels: Ref<Panel[]>) =>
@@ -116,6 +118,51 @@ describe("useFilesPanels close handler", () => {
         expect(openPaths(panels)).toEqual(["code-a.txt", "code-b.txt"])
     })
 
+    it("should close every tab inside a deleted folder, and only those", () => {
+        const {panels, closeTab} = mountWithTabs(["docs/a.py", "docs/sub/b.py", "docs2/c.py", "docs.md"])
+
+        expect(closeTab({path: "docs", folder: true})).toBe(true)
+
+        expect(openPaths(panels)).toEqual(["code-docs2/c.py", "code-docs.md"])
+    })
+})
+
+describe("useFilesPanels move handler", () => {
+    beforeEach(() => {
+        saveOrCreateFile.mockReset().mockResolvedValue(undefined)
+    })
+
+    it("should point a moved file's tab at its new path and keep it active", () => {
+        const {panels, moveTabs} = mountWithTabs(["README.md", "other.md"])
+
+        moveTabs({from: "README.md", to: "docs/README.md"})
+
+        expect(openPaths(panels)).toEqual(["code-docs/README.md", "code-other.md"])
+        expect(panels.value[0].activeTab.uid).toBe("code-docs/README.md")
+    })
+
+    it("should move the tabs of files inside a moved folder, and only those", () => {
+        const {panels, moveTabs} = mountWithTabs(["docs/a.py", "docs/sub/b.py", "docs2/c.py"])
+
+        moveTabs({from: "docs", to: "archive/docs"})
+
+        expect(openPaths(panels)).toEqual(["code-archive/docs/a.py", "code-archive/docs/sub/b.py", "code-docs2/c.py"])
+    })
+
+    it("should keep unsaved edits when a file is renamed, and save them to the new path", async () => {
+        const {panels, moveTabs, updateContent} = mountWithTabs(["notes.md"])
+        updateContent({path: "notes.md", content: "original\nunsaved"})
+        ;(panels.value[0].tabs[0] as TabLive).dirty = true
+
+        moveTabs({from: "notes.md", to: "notes2.md"})
+
+        const moved = panels.value[0].tabs[0] as TabLive
+        expect(moved.uid).toBe("code-notes2.md")
+        expect(moved.dirty).toBe(true)
+        await flowStore.filesSaveAll!()
+        expect(saveOrCreateFile).toHaveBeenCalledTimes(1)
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "notes2.md", content: "original\nunsaved"})
+    })
 })
 
 describe("useFilesPanels save all", () => {

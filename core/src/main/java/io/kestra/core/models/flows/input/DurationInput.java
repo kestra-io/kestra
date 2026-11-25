@@ -25,7 +25,7 @@ public class DurationInput extends Input<Duration> {
     public void validate(Duration input) throws ConstraintViolationException {
         if (min != null && input.compareTo(min) < 0) {
             throw ManualConstraintViolation.toConstraintViolationException(
-                "It must be more than `" + min + "`",
+                "it must be at least `%s`, but received `%s`".formatted(min, input),
                 this,
                 DurationInput.class,
                 getId(),
@@ -35,7 +35,7 @@ public class DurationInput extends Input<Duration> {
 
         if (max != null && input.compareTo(max) > 0) {
             throw ManualConstraintViolation.toConstraintViolationException(
-                "It must be less than `" + max + "`",
+                "it must be at most `%s`, but received `%s`".formatted(max, input),
                 this,
                 DurationInput.class,
                 getId(),

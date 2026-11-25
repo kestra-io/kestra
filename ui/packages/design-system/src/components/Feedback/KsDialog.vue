@@ -22,51 +22,39 @@
     </ElDialog>
 </template>
 
-<script setup lang="ts">
-    import {computed} from "vue"
-    import {ElDialog} from "element-plus"
-    import KsScrollbar from "../Basic/KsScrollbar.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
+<script lang="ts">
+    import type {DialogProps} from "element-plus"
 
-    defineOptions({inheritAttrs: false})
-
-    const model = defineModel<boolean>()
-
-    const props = withDefaults(defineProps<{
-        title?: string
-        destroyOnClose?: boolean
-        lockScroll?: boolean
-        closeOnClickModal?: boolean
-        closeOnPressEscape?: boolean
-        showClose?: boolean
-        appendToBody?: boolean
-        width?: string | number
+    export interface KsDialogProps extends Omit<DialogProps, "modelValue"> {
         large?: boolean
         formLayout?: boolean
         /** Cap the dialog to the viewport so its own body scrolls instead of the overlay dragging the whole dialog around. */
         fill?: boolean
         scrollable?: boolean
-        top?: string
-        beforeClose?: (done: () => void) => void
         /** Asks for confirmation before an overlay, Escape or X close while true. */
         dirty?: boolean
         dirtyMessage?: string
-    }>(), {
-        title: undefined,
-        lockScroll: undefined,
-        closeOnClickModal: undefined,
-        closeOnPressEscape: undefined,
-        showClose: undefined,
-        width: undefined,
+    }
+</script>
+
+<script setup lang="ts">
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
+    import {ElDialog} from "element-plus"
+    import KsScrollbar from "../Basic/KsScrollbar.vue"
+    import {usePassedProps} from "../../utils/filteredProps"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
+
+    defineOptions({inheritAttrs: false})
+
+    const model = defineModel<boolean>({default: false})
+
+    const props = withDefaults(defineProps<KsDialogProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsDialogProps> & {onOpened?: () => void, onClosed?: () => void})>(), {
         large: false,
         formLayout: false,
         fill: false,
         scrollable: false,
-        top: undefined,
-        beforeClose: undefined,
         dirty: false,
-        dirtyMessage: undefined,
     })
 
     const VIEWPORT_WIDTH_CAP = "92vw"
@@ -90,7 +78,7 @@
         footer?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout", "fill", "scrollable", "beforeClose", "dirty", "dirtyMessage"])
+    const filteredProps = usePassedProps(props, ["width", "large", "formLayout", "fill", "scrollable", "beforeClose", "dirty", "dirtyMessage"])
 
     const {guardedClose} = useDiscardGuard(() => props.dirty, {get message() { return props.dirtyMessage }})
     const guardedBeforeClose = (done: () => void) => guardedClose(() => (props.beforeClose ? props.beforeClose(done) : done()))
@@ -112,8 +100,8 @@
         }
 
         & .kel-form-item__label {
-            font-size: var(--ks-font-size-md);
-            font-weight: var(--ks-font-weight-semibold);
+            font-size: var(--ks-form-item-label-font-size, var(--ks-font-size-md));
+            font-weight: var(--ks-form-item-label-font-weight, var(--ks-font-weight-semibold));
         }
 
         & .kel-dialog__header {

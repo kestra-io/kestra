@@ -2,14 +2,23 @@
     <div class="quick-filters">
         <template v-if="hasQuickFilters">
             <button
-                v-for="tab in QUICK_FILTER_TABS"
+                v-for="tab in tabs"
                 :key="tab.key"
                 class="quick-filter-tab"
                 :class="{active: activeTab === tab.key}"
+                :disabled="isTabDisabled(tab.key)"
                 :style="{'--tab-color': `var(${tab.token})`}"
                 @click="selectTab(tab.key)"
             >
                 {{ $t(`dashboards.quick_filters.${tab.key}`) }}
+                <KsBadge
+                    v-if="counts?.[tab.key]"
+                    :value="counts[tab.key]"
+                    :max="MAX_BADGE_COUNT"
+                    type="neutral"
+                    inline
+                    class="tab-count"
+                />
                 <Motion
                     v-if="activeTab === tab.key"
                     as="span"
@@ -31,24 +40,40 @@
     import type {Chart} from "../types.ts"
     import {
         QUICK_FILTER_TABS,
-        QuickFilterTabKey,
+        UPCOMING_TAB,
+        type TabKey,
         hasQuickFilters as chartHasQuickFilters,
         stateFilterForTab,
     } from "./quickFilters"
 
-    const props = defineProps<{chart: Chart}>()
+    const MAX_BADGE_COUNT = 999
 
-    const emit = defineEmits<{change: [filter: QueryFilter | null, tab: QuickFilterTabKey]}>()
+    const props = defineProps<{
+        chart: Chart;
+        showUpcoming?: boolean;
+        /** Number of executions behind each tab. A tab with no entry is still loading and stays selectable. */
+        counts?: Partial<Record<TabKey, number>>;
+    }>()
+
+    const emit = defineEmits<{change: [filter: QueryFilter | null, tab: TabKey]}>()
 
 
     const hasQuickFilters = computed(() => chartHasQuickFilters(props.chart))
 
-    const activeTab = ref<QuickFilterTabKey>("all")
+    const tabs = computed<readonly {key: TabKey; token: string}[]>(() =>
+        props.showUpcoming ? [...QUICK_FILTER_TABS, UPCOMING_TAB] : QUICK_FILTER_TABS,
+    )
 
-    const selectTab = (key: QuickFilterTabKey) => {
+    const activeTab = ref<TabKey>("all")
+
+    // The active tab stays enabled even if a refresh empties it, otherwise the selection would look broken.
+    const isTabDisabled = (key: TabKey) =>
+        activeTab.value !== key && props.counts?.[key] === 0
+
+    const selectTab = (key: TabKey) => {
         if (activeTab.value === key) return
         activeTab.value = key
-        emit("change", stateFilterForTab(props.chart, key), key)
+        emit("change", key === UPCOMING_TAB.key ? null : stateFilterForTab(props.chart, key), key)
     }
 </script>
 
@@ -68,7 +93,7 @@
     .quick-filter-tab {
         display: inline-flex;
         align-items: center;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        padding: var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         font-weight: var(--ks-font-weight-regular);
         color: var(--ks-text-secondary);
@@ -77,11 +102,18 @@
         cursor: pointer;
         white-space: nowrap;
         position: relative;
+        flex-shrink: 0;
+        gap: var(--ks-spacing-1);
         transition: color var(--ks-duration-fast);
 
-        &:hover,
+        &:hover:not(:disabled),
         &.active {
             color: var(--tab-color);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
         }
     }
 

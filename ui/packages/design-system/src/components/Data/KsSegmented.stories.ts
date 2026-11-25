@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
+import {expect} from "storybook/test"
 import Account from "vue-material-design-icons/Account.vue"
 import AccountGroup from "vue-material-design-icons/AccountGroup.vue"
 import Cog from "vue-material-design-icons/Cog.vue"
@@ -7,7 +8,7 @@ import KsSegmented from "./KsSegmented.vue"
 
 const meta: Meta<typeof KsSegmented> = {
     title: "Components/Data/KsSegmented",
-    component: KsSegmented,
+    component: KsSegmented as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         disabled: {control: "boolean"},
@@ -172,4 +173,22 @@ export const Neutral: Story = {
         `,
     }),
     parameters: {controls: {disable: true}},
+}
+
+/** `equalWidth` gives every item the width of the widest one, while the control still shrink-wraps its content */
+export const EqualWidth: Story = {
+    render: () => ({
+        components: {KsSegmented},
+        setup() { return {value: ref("List")} },
+        template: `
+            <div style="padding:24px;display:flex">
+                <ks-segmented v-model="value" size="small" :options="['List', 'Board view']" equalWidth />
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const [first, second] = [...canvasElement.querySelectorAll(".kel-segmented__item")].map(item => item.getBoundingClientRect().width)
+        await expect(first).toBe(second)
+    },
 }

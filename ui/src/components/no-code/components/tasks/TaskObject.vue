@@ -86,7 +86,6 @@
                 "
                 :root
                 :schema="schema ?? {}"
-                :required
             />
         </template>
     </KsForm>
@@ -373,13 +372,6 @@
 
 <!-- eslint-disable-next-line vue/enforce-style-attribute -->
 <style>
-    .kel-form-item__content {
-        display: block !important;
-        .kel-form-item {
-            width: 100%;
-        }
-    }
-
     .kel-popper.ks-tooltip.singleton-tooltip.is-light,
     .kel-popper.ks-tooltip.singleton-tooltip.is-dark {
         max-width: 300px !important;
@@ -396,12 +388,6 @@
 .kel-form-item {
     width: 100%;
     margin-bottom: 0;
-    & > :deep(.kel-form-item__label) {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        padding: 0;
-    }
 }
 
 .inline-wrapper {

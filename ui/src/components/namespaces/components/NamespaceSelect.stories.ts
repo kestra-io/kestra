@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import type {ConcreteComponent} from "vue"
 import {expect, userEvent, waitFor, within} from "storybook/test"
 
 import {mockStoryApiRoutes} from "../../../../.storybook/apiMock"
@@ -8,7 +9,7 @@ const NAMESPACES = Array.from({length: 300}, (_, index) => `company.ns${String(i
 
 const meta: Meta<typeof NamespaceSelect> = {
     title: "Components/Namespaces/NamespaceSelect",
-    component: NamespaceSelect,
+    component: NamespaceSelect as ConcreteComponent,
     beforeEach() {
         mockStoryApiRoutes({
             "POST /namespaces/autocomplete": ({body}: {body?: unknown}) => {

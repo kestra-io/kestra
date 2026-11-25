@@ -8,7 +8,7 @@
                 :label="$t('settings.blocks.configuration.fields.default_namespace')"
                 :description="$t('settings.blocks.configuration.descriptions.default_namespace')"
             >
-                <NamespaceSelect fit :value="settings.defaultNamespace" @update:model-value="onNamespace" />
+                <NamespaceSelect fit :autoDefault="false" :modelValue="settings.defaultNamespace ?? undefined" @update:model-value="onNamespace" />
             </SettingRow>
 
             <SettingRow
@@ -163,7 +163,11 @@
             >
                 <template #description>
                     <span>{{ $t("settings.blocks.theme.descriptions.color_mode") }}</span><br>
-                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
+                    <i18n-t keypath="settings.blocks.theme.descriptions.color_mode_shortcut" tag="span" scope="global">
+                        <template #ctrl><kbd class="shortcut-key">Ctrl</kbd></template>
+                        <template #shift><kbd class="shortcut-key">Shift</kbd></template>
+                        <template #key><kbd class="shortcut-key">L</kbd></template>
+                    </i18n-t>
                 </template>
                 <KsThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
             </SettingRow>
@@ -877,7 +881,7 @@
     margin-left: auto;
 }
 
-:deep(kbd) {
+.shortcut-key {
     display: inline-block;
     padding: 0.1em 0.4em;
     border: 1px solid var(--ks-border-default);

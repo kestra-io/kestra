@@ -5,8 +5,7 @@
         v-bind="tooltipPlacement ? {placement: tooltipPlacement} : {}"
     >
         <ElButton
-            :aria-label="tooltip"
-            v-bind="({...filteredProps(), ...$attrs})"
+            v-bind="({'aria-label': tooltip, ...filteredProps(), ...$attrs})"
             :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone}"
             @click="emit('click', $event)"
             plain
@@ -42,7 +41,24 @@
 </template>
 
 <script lang="ts">
-    export type KsButtonType = "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+    import type {ButtonProps, ButtonType, Placement} from "element-plus"
+    import type {RouteLocationRaw} from "vue-router"
+
+    export type KsButtonType = ButtonType
+
+    export interface KsButtonProps extends ButtonProps {
+        square?: boolean
+        block?: boolean
+        tooltip?: string
+        tooltipPlacement?: Placement
+        /** With `tag="a"`. */
+        href?: string
+        target?: string
+        rel?: string
+        /** With `:tag="RouterLink"` (or `tag="router-link"`). */
+        to?: RouteLocationRaw
+        replace?: boolean
+    }
 
     interface KsButtonTone {
         border: string
@@ -60,7 +76,8 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, type Component} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {computed, type ButtonHTMLAttributes, type AnchorHTMLAttributes} from "vue"
 
     import {ElButton} from "element-plus"
 
@@ -69,26 +86,8 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        type?: KsButtonType
-        size?: "small" | "default" | "large" | ""
-        disabled?: boolean
-        icon?: string | object
-        nativeType?: "button" | "submit" | "reset"
-        loading?: boolean
-        text?: boolean
-        link?: boolean
-        bg?: boolean
-        autofocus?: boolean
-        round?: boolean
-        circle?: boolean
-        square?: boolean
-        block?: boolean
-        color?: string
-        tag?: string | Component
-        tooltip?: string
-        tooltipPlacement?: string
-    }>()
+    // Left undefined so a plain button does not render a replace="false" attribute.
+    const props = withDefaults(defineProps<KsButtonProps & /* @vue-ignore */ Omit<NativeAttributes<ButtonHTMLAttributes & Pick<AnchorHTMLAttributes, "download">>, keyof KsButtonProps>>(), {replace: undefined})
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]
@@ -111,6 +110,10 @@
 </style>
 
 <style>
+    .kel-button + .kel-button {
+        margin-left: var(--ks-button-adjacent-margin, 12px);
+    }
+
     .kel-button {
         --kel-button-font-weight: 600;
         --kel-button-border-color: var(--ks-btn-secondary-border-default);
@@ -190,7 +193,7 @@
         }
 
         &.is-link {
-            --kel-button-text-color: var(--ks-text-secondary);
+            --kel-button-text-color: var(--ks-button-link-color, var(--ks-text-secondary));
             --kel-button-hover-link-text-color: var(--ks-text-primary);
             --kel-button-active-color: var(--ks-text-primary);
 

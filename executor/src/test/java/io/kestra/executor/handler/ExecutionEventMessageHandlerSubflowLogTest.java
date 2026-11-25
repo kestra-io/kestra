@@ -103,25 +103,37 @@ class ExecutionEventMessageHandlerSubflowLogTest {
      * @return true when a subflow execution was produced within the allotted executor passes
      */
     private boolean runParentFlowWithSubflowTask(Level subflowTaskLogLevel) {
-        var childFlow = flowRepository.create(GenericFlow.of(Flow.builder()
-            .tenantId("tenant")
-            .namespace("namespace")
-            .id(IdUtils.create())
-            .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello from child").build()))
-            .build()));
+        var childFlow = flowRepository.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .tenantId("tenant")
+                    .namespace("namespace")
+                    .id(IdUtils.create())
+                    .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello from child").build()))
+                    .build()
+            )
+        );
 
-        var parentFlow = flowRepository.create(GenericFlow.of(Flow.builder()
-            .tenantId("tenant")
-            .namespace("namespace")
-            .id(IdUtils.create())
-            .tasks(List.of(Subflow.builder()
-                .id("subflow")
-                .type(Subflow.class.getName())
-                .namespace(childFlow.getNamespace())
-                .flowId(childFlow.getId())
-                .logLevel(subflowTaskLogLevel)
-                .build()))
-            .build()));
+        var parentFlow = flowRepository.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .tenantId("tenant")
+                    .namespace("namespace")
+                    .id(IdUtils.create())
+                    .tasks(
+                        List.of(
+                            Subflow.builder()
+                                .id("subflow")
+                                .type(Subflow.class.getName())
+                                .namespace(childFlow.getNamespace())
+                                .flowId(childFlow.getId())
+                                .logLevel(subflowTaskLogLevel)
+                                .build()
+                        )
+                    )
+                    .build()
+            )
+        );
 
         var execution = Execution.newExecution(parentFlow, Collections.emptyList());
         executionRepository.save(execution);

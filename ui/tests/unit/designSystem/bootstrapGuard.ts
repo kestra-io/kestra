@@ -62,7 +62,3 @@ export const bootstrapUtilityUses = (base: string, roots: string[] = ["."]): Uti
 /** `path:line` of every `--kbs-*` variable under the roots. */
 export const bootstrapVariableReads = (base: string, roots: string[] = ["."]): string[] =>
     linesOf(base, roots).filter(({text}) => /--kbs-[\w-]+/.test(text)).map(({at}) => at)
-
-/** The class names a stylesheet defines as rules, including those inside media queries. */
-export const definedClasses = (stylesheet: string): Set<string> =>
-    new Set([...readFileSync(stylesheet, "utf8").matchAll(/^\s*\.([a-z0-9-]+) \{/gm)].map(([, name]) => name))

@@ -1,8 +1,8 @@
 package io.kestra.webserver.services.ai.gemini;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
@@ -13,10 +13,8 @@ import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.AiService;
 import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
-import io.kestra.webserver.utils.HttpClientUtils;
 
-import dev.langchain4j.http.client.HttpClientBuilderLoader;
-import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
+import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
@@ -82,30 +80,39 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .thinkingConfig(thinkingConfig())
             .returnThinking(true)
             .sendThinking(true)
-            .customHeaders(getAiConfiguration().customHeaders())
+            .customHeaders(customHeaders())
             .timeout(getAiConfiguration().timeout());
 
-        if (getAiConfiguration().clientPem() != null) {
-            try (
-                ByteArrayInputStream is = new ByteArrayInputStream(getAiConfiguration().clientPem().getBytes(StandardCharsets.UTF_8));
-                ByteArrayInputStream caPem = getAiConfiguration().caPem() == null ? null : new ByteArrayInputStream(getAiConfiguration().caPem().getBytes(StandardCharsets.UTF_8))
-            ) {
-                JdkHttpClientBuilder jdkHttpClientBuilder = ((JdkHttpClientBuilder) HttpClientBuilderLoader.loadHttpClientBuilder()).httpClientBuilder(
-                    HttpClientUtils.withPemCertificate(is, caPem)
-                );
-
-                builder = builder.httpClientBuilder(jdkHttpClientBuilder);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Exception while trying to setup AI Service certificates", e);
-            }
-        }
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+            .ifPresent(builder::httpClientBuilder);
 
         return builder.build();
     }
 
+    /**
+     * The headers attached to every request. A {@link Supplier} because langchain4j evaluates it while
+     * building each request, which lets a subclass send a value not knowable at bean-creation time.
+     */
+    protected Supplier<Map<String, String>> customHeaders() {
+        Map<String, String> configured = getAiConfiguration().customHeaders();
+        return () -> configured;
+    }
+
     @Override
     public StreamingChatModel streamingChatModel(List<ChatModelListener> listeners) {
-        return GoogleAiGeminiStreamingChatModel.builder()
+        return buildStreamingChatModel(customHeaders(), listeners);
+    }
+
+    /**
+     * Builds the streaming model with a given header source, so a subclass can vary headers per turn without
+     * holding per-turn state on the service — services are singletons and turns run concurrently.
+     */
+    protected StreamingChatModel buildStreamingChatModel(
+        Supplier<Map<String, String>> customHeaders,
+        List<ChatModelListener> listeners
+    ) {
+        GoogleAiGeminiStreamingChatModel.GoogleAiGeminiStreamingChatModelBuilder builder =
+            GoogleAiGeminiStreamingChatModel.builder()
             .baseUrl(getAiConfiguration().baseUrl())
             .listeners(listeners)
             .modelName(getAiConfiguration().modelName())
@@ -119,8 +126,12 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .thinkingConfig(thinkingConfig())
             .returnThinking(true)
             .sendThinking(true)
-            .customHeaders(getAiConfiguration().customHeaders())
-            .timeout(getAiConfiguration().timeout())
-            .build();
+            .customHeaders(customHeaders)
+            .timeout(getAiConfiguration().timeout());
+
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+            .ifPresent(builder::httpClientBuilder);
+
+        return builder.build();
     }
 }

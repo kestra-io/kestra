@@ -257,6 +257,27 @@ public class LoopCaseTest {
         }));
     }
 
+    public void loopDynamicConcurrency(Execution execution) throws InternalException {
+        // Then — limits coming from an input, an upstream task output and the parent item all resolve
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        List<Execution> outerExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
+        assertThat(outerExecutions).hasSize(3);
+        for (Execution outerExecution : outerExecutions) {
+            assertThat(outerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+            List<Execution> fromOutputExecutions = executionRepository.findLoopSubExecutions(outerExecution.getTenantId(), outerExecution.getId(), null);
+            assertThat(fromOutputExecutions).hasSize(4);
+            for (Execution fromOutputExecution : fromOutputExecutions) {
+                assertThat(fromOutputExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+                List<Execution> fromItemExecutions = executionRepository.findLoopSubExecutions(fromOutputExecution.getTenantId(), fromOutputExecution.getId(), null);
+                assertThat(fromItemExecutions).hasSize(2);
+                assertThat(fromItemExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+            }
+        }
+    }
+
     public void loopFlowable(Execution execution) throws InternalException {
         // Then
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -572,6 +593,21 @@ public class LoopCaseTest {
     public void loopEmpty(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void loopOutputsEmpty(Execution execution) throws InternalException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+
+        TaskRun loopTaskRun = execution.getTaskRunList().getFirst();
+        Map<String, Object> loopTaskOutputs = taskOutputService.getOutputs(loopTaskRun);
+        assertThat(loopTaskOutputs)
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 0)
+            .containsEntry(Loop.OUTPUTS_OUTPUT, List.of());
+
+        TaskRun endTaskRun = execution.getTaskRunList().getLast();
+        Map<String, Object> endTaskOutputs = taskOutputService.getOutputs(endTaskRun);
+        assertThat(endTaskOutputs).containsEntry("value", "[]");
     }
 
     public void loopWithNull(Execution execution) {

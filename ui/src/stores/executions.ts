@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue"
+import {computed, ref, watch, type Ref} from "vue"
 import {defineStore} from "pinia"
 import {useRoute, type LocationQuery} from "vue-router"
 import {CLUSTER_PREFIX, LOG_LEVELS, isDeepEqual, throttle, type LevelFilterValue} from "@kestra-io/design-system"
@@ -33,6 +33,7 @@ import {useCoreStore} from "./core"
 import {useApiStore} from "./api"
 import {handled, sseData} from "../utils/kestraHttp"
 import {toFlowGraph} from "../utils/flowGraph"
+import {latestRequest} from "../utils/latestRequest"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
@@ -97,6 +98,13 @@ export interface InputMetaData {
     allowRowDuplication?: boolean;
     /** The indexes of the rows of `defaults` matching the rendered filters, set by the server. */
     matchingDefaults?: number[];
+    /** Set on an ASSET input only: the filters of the assets that can be picked, rendered by the server. */
+    assetType?: string;
+    assetId?: string;
+    namespace?: string;
+    metadata?: Record<string, unknown>;
+    multiple?: boolean;
+    status?: string;
 }
 
 export interface TableFilter {
@@ -187,26 +195,30 @@ function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue |
     }
 }
 
-const FOLLOW_MAX_RETRY_ATTEMPTS = 5
 const FOLLOW_RETRY_DELAY_MS = 1000
+const FOLLOW_MAX_RETRY_DELAY_MS = 30_000
+const FOLLOW_MAX_RECONNECTS = 6
+const FOLLOW_RECONNECT_WINDOW_MS = 120_000
+/** 2.5 server heartbeats (ExecutionController.FOLLOW_HEARTBEAT_INTERVAL), so one late heartbeat is not a stall. */
+const FOLLOW_IDLE_TIMEOUT_MS = 75_000
 
 export const useExecutionsStore = defineStore("executions", () => {
-    const executions = ref<Execution[] | undefined>(undefined)
-    const execution = ref<Execution | undefined>(undefined)
+    const executions: Ref<Execution[] | undefined> = ref(undefined)
+    const execution: Ref<Execution | undefined> = ref(undefined)
     const total = ref<number>(0)
     const logs = ref<LogEntry[]>([])
     /** Task runs a playground replay reused rather than ran, with the logs they carry over, keyed by the replay's id. */
     const reusedTaskRuns = ref<Record<string, {taskRunIds: string[]; logs: LogEntry[]}>>({})
-    const subflowsExecutions = ref<Record<string, Execution>>({})
-    const scopedIterations = ref<Record<string, Execution>>({})
+    const subflowsExecutions: Ref<Record<string, Execution>> = ref({})
+    const scopedIterations: Ref<Record<string, Execution>> = ref({})
     /** Lifecycle-step progress plugins report mid-run, read off the follow-logs stream.
      *  Never reset across navigations: a taskRunId is globally unique. */
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
-    const flow = ref<FlowForExecution | undefined>(undefined)
+    const flow: Ref<FlowForExecution | undefined> = ref(undefined)
     const flowGraph = ref<FlowGraph | undefined>(undefined)
     const taskRunSelections = ref<Map<string, string>>(new Map())
     const namespaces = ref<string[]>([])
-    const flowsExecutable = ref<FlowForExecution[]>([])
+    const flowsExecutable: Ref<FlowForExecution[]> = ref([])
 
     watch(execution, (newExecution) => {
         if(!newExecution){
@@ -397,14 +409,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
-    let latestExecutionLoad = 0
+    const startExecutionLoad = latestRequest()
 
     /** A superseded load is dropped, as in `stores/logs.ts`, and cancels the pending throttled update so a
      *  trailing event from the previous execution's stream cannot land on top of this one. */
     const loadExecution = (options: { id: string }) => {
-        const load = ++latestExecutionLoad
+        const isLatestLoad = startExecutionLoad()
         return ExecutionsAPI.execution({executionId: options.id}).then(data => {
-            if (load !== latestExecutionLoad) return data
+            if (!isLatestLoad()) return data
 
             throttledExecutionUpdate.cancel()
             execution.value = data
@@ -423,15 +435,15 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     /** Sequence number for committing searches: a response that is no longer the newest may
      * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
-    let latestExecutionsSearch = 0
+    const startExecutionsSearch = latestRequest()
 
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findExecutions(options: ExecutionSearchOptions & { onlyTotal: true }): Promise<number>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution | number> {
-        const search = options.commit === false ? undefined : ++latestExecutionsSearch
+        const isLatestSearch = options.commit === false ? undefined : startExecutionsSearch()
         return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
-            if (options.commit !== false && search === latestExecutionsSearch) {
+            if (isLatestSearch?.()) {
                 executions.value = response.results
                 total.value = response.total ?? 0
             }
@@ -518,7 +530,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const bulkDeleteExecution = (options: { executionsId: string[] } & DeleteExecutionOptions) => {
         const {executionsId, ...rest} = options
-        return ExecutionsAPI.deleteExecutionsByIds({body: executionsId, ...rest})
+        return ExecutionsAPI.deleteExecutionsByIds({body: executionsId, ...rest, async: true})
     }
 
     const queryDeleteExecution = (options: FilterQuery & DeleteExecutionOptions) => {
@@ -528,6 +540,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             deleteLogs: options.deleteLogs,
             deleteMetrics: options.deleteMetrics,
             deleteStorage: options.deleteStorage,
+            async: true,
         })
     }
 
@@ -561,8 +574,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         }
     }, 500)
 
-    /** Follows an execution through the SDK stream, skipping the first id-only event. `onEnd` fires once,
-     *  and `onError` too when the stream stops before its "end" event (a 404 or a lost connection). */
+    /** Follows an execution through the SDK stream, skipping the id-only start and heartbeat events. `onEnd` fires once,
+     *  and `onError` too when the stream stops before its "end" event and cannot be resumed (a 404 or a lost connection). */
     function subscribeToExecution(
         executionId: string,
         handlers: {
@@ -571,11 +584,14 @@ export const useExecutionsStore = defineStore("executions", () => {
             onEnd?: () => void;
         },
     ): { close: () => void } {
-        const controller = new AbortController()
+        let connection: AbortController | undefined
+        let retryTimer: ReturnType<typeof setTimeout> | undefined
+        let idleTimer: ReturnType<typeof setTimeout> | undefined
         let closed = false
         let finished = false
-        let receivedEnd = false
         let receivedExecution = false
+        let consecutiveFailures = 0
+        const reconnects: number[] = []
 
         const finish = (errored: boolean) => {
             if (finished || closed) return
@@ -587,37 +603,67 @@ export const useExecutionsStore = defineStore("executions", () => {
         const close = () => {
             if (closed) return
             closed = true
-            controller.abort()
+            clearTimeout(retryTimer)
+            clearTimeout(idleTimer)
+            connection?.abort()
         }
 
-        ExecutionsAPI.followExecution(
-            {executionId},
-            {
-                signal: controller.signal,
-                /** The SDK never resets its attempt count, so this caps reconnects per stream. Unbounded ones leaked off-heap Netty buffers (kestra-io/kestra#16982). */
-                sseMaxRetryAttempts: FOLLOW_MAX_RETRY_ATTEMPTS,
-                sseDefaultRetryDelay: FOLLOW_RETRY_DELAY_MS,
-                onSseEvent: (event: { id?: string }) => {
-                    if (event.id === "end") receivedEnd = true
+        /** Unbounded reconnects leaked off-heap Netty buffers (kestra-io/kestra#16982), hence the cap per time window. */
+        const reconnect = () => {
+            const now = Date.now()
+            while (reconnects.length > 0 && now - reconnects[0] > FOLLOW_RECONNECT_WINDOW_MS) reconnects.shift()
+            if (reconnects.length >= FOLLOW_MAX_RECONNECTS) {
+                finish(true)
+                return
+            }
+            reconnects.push(now)
+            const delay = Math.min(FOLLOW_RETRY_DELAY_MS * 2 ** consecutiveFailures, FOLLOW_MAX_RETRY_DELAY_MS)
+            consecutiveFailures++
+            retryTimer = setTimeout(connect, delay)
+        }
+
+        const follow = async (controller: AbortController) => {
+            let receivedEnd = false
+            const armIdleTimeout = () => {
+                clearTimeout(idleTimer)
+                idleTimer = setTimeout(() => controller.abort(), FOLLOW_IDLE_TIMEOUT_MS)
+            }
+            armIdleTimeout()
+            const {stream} = await ExecutionsAPI.followExecution(
+                {executionId},
+                {
+                    signal: controller.signal,
+                    sseMaxRetryAttempts: 1,
+                    onSseEvent: (event: { id?: string }) => {
+                        armIdleTimeout()
+                        if (event.id === "end") receivedEnd = true
+                    },
                 },
-                onSseError: () => {
-                    // a stream that never delivered an execution failed with a 404, which a retry cannot fix
-                    if (receivedExecution) return
-                    finish(true)
-                    controller.abort()
-                },
-            },
-        )
-            .then(async ({stream}) => {
-                for await (const executionEvent of sseData(stream)) {
-                    if (closed) break
-                    if (!executionEvent.state) continue
-                    receivedExecution = true
-                    handlers.onExecution(executionEvent)
-                }
-                finish(!receivedEnd)
-            })
-            .catch(() => finish(true))
+            )
+            for await (const executionEvent of sseData(stream)) {
+                if (closed) break
+                if (!executionEvent.state) continue
+                receivedExecution = true
+                handlers.onExecution(executionEvent)
+            }
+            return receivedEnd
+        }
+
+        const connect = async () => {
+            connection = new AbortController()
+            const connectedAt = Date.now()
+            const receivedEnd = await follow(connection).catch(() => false)
+            clearTimeout(idleTimer)
+            // the server sends progress on every connect, so only a connection that held resets the backoff
+            if (Date.now() - connectedAt > FOLLOW_MAX_RETRY_DELAY_MS) consecutiveFailures = 0
+            if (closed) return
+            if (receivedEnd) finish(false)
+            // no execution ever received is most likely a 404, which a retry cannot fix
+            else if (!receivedExecution) finish(true)
+            else reconnect()
+        }
+
+        connect()
 
         return {close}
     }
@@ -696,10 +742,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const downloadLogsFile = (options: { executionId: string; filters?: QueryFilter[] }) => {
         return downloadLogs(options).then(text => {
-            Utils.downloadUrl(
-                window.URL.createObjectURL(new Blob([text])),
-                executionLogsDownloadFilename(options.executionId, new Date()),
-            )
+            Utils.downloadBlob(new Blob([text]), executionLogsDownloadFilename(options.executionId, new Date()))
         })
     }
 
@@ -948,8 +991,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         return !!executionId && !!reusedTaskRuns.value[executionId]?.taskRunIds.includes(taskRunId)
     }
 
-    const setReusedTaskRuns = (executionId: string, taskRunIds: string[], logs: LogEntry[]) => {
-        reusedTaskRuns.value = {...reusedTaskRuns.value, [executionId]: {taskRunIds, logs}}
+    const setReusedTaskRuns = (executionId: string, taskRunIds: string[], reusedLogs: LogEntry[]) => {
+        reusedTaskRuns.value = {...reusedTaskRuns.value, [executionId]: {taskRunIds, logs: reusedLogs}}
     }
 
     const clearReusedTaskRuns = () => {
@@ -974,14 +1017,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const exportExecutionsAsCSV = async (params: FilterQuery) => {
         const data = await ExecutionsAPI.exportExecutions({filters: routeQueryToQueryFilters(params)}, {headers: {Accept: "text/csv"}, parseAs: "text"})
-        const url = window.URL.createObjectURL(new Blob([data as unknown as string]))
-        const link = document.createElement("a")
-        link.href = url
-        link.setAttribute("download", "executions.csv")
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
+        Utils.downloadBlob(new Blob([data as unknown as string]), "executions.csv")
     }
 
     return {

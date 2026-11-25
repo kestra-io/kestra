@@ -3,11 +3,12 @@
         <KsProgress
             v-if="loopIterationCount > 0"
             :percentage="completedPercentage"
-            :format="formatPercentage"
             :strokeWidth="7"
             :radius="81"
             class="progress-bar"
-        />
+        >
+            <span class="progress-text">{{ formatPercentage() }}</span>
+        </KsProgress>
 
         <div class="pill-list">
             <KsButton
@@ -133,11 +134,11 @@
   .progress-bar {
     margin-block: .3rem;
     flex: 1;
+  }
 
-    & :deep(.kel-progress__text) {
-      font-size: var(--ks-font-size-sm) !important;
-      color: var(--ks-text-secondary);
-    }
+  .progress-text {
+    font-size: var(--ks-font-size-sm);
+    color: var(--ks-text-secondary);
   }
 
   .pill-list{

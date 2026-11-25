@@ -684,8 +684,7 @@ class FlowTriggerServiceTest {
 
         // Then the trigger does not fire and the flow that owns it is told which namespace blocks it
         assertThat(executions).isEmpty();
-        var warnings = blockedTriggerWarnings(logs, listening);
-        assertThat(warnings).hasSize(1);
+        var warnings = awaitBlockedTriggerWarnings(logs, listening, 1);
         assertThat(warnings.getFirst().getFlowId()).isEqualTo(listening.getId());
         assertThat(warnings.getFirst().getMessage()).isEqualTo(
             "Flow trigger 'flowTrigger' does not receive executions from namespace `company.data` and its children: `company.data` does not allow `" + TEST_NAMESPACE
@@ -719,7 +718,7 @@ class FlowTriggerServiceTest {
         );
 
         // Then neither the flow nor the blocked execution gets a warning
-        assertThat(blockedTriggerWarnings(logs, listening)).isEmpty();
+        assertThat(blockedTriggerWarningsDeliveredSoFar(logs, listening)).isEmpty();
         assertThat(logs).noneMatch(log -> execution.getId().equals(log.getExecutionId()));
     }
 
@@ -740,8 +739,7 @@ class FlowTriggerServiceTest {
         flowTriggerServiceBlockedBy("company.data").computeExecutionsFromFlowTriggerConditions(execution, listening);
 
         // Then only the trigger that would have fired is reported
-        var warnings = blockedTriggerWarnings(logs, listening);
-        assertThat(warnings).hasSize(1);
+        var warnings = awaitBlockedTriggerWarnings(logs, listening, 1);
         assertThat(warnings.getFirst().getMessage()).startsWith("Flow trigger 'matching-label'");
     }
 
@@ -773,14 +771,14 @@ class FlowTriggerServiceTest {
         service.computeExecutionsFromFlowTriggerConditions(execution, listening);
 
         // Then it leaves dependsOn triggers to the other route
-        assertThat(blockedTriggerWarnings(logs, listening)).isEmpty();
+        assertThat(blockedTriggerWarningsDeliveredSoFar(logs, listening)).isEmpty();
 
         // When
         var executions = service.computeExecutionsFromFlowTriggerDependsOn(execution, listening, new SatisfiedWindowStateStore());
 
         // Then only the trigger whose dependency matches the execution is reported
         assertThat(executions).isEmpty();
-        assertThat(blockedTriggerWarnings(logs, listening)).hasSize(1);
+        awaitBlockedTriggerWarnings(logs, listening, 1);
     }
 
     private FlowTriggerService flowTriggerServiceBlockedBy(String blockingNamespace) {
@@ -790,17 +788,27 @@ class FlowTriggerServiceTest {
         return new FlowTriggerService(conditionService, runContextFactory, blockingFlowService, flowMetaStore, executionOutputService, executionDepthConfiguration);
     }
 
+    private List<LogEntry> awaitBlockedTriggerWarnings(List<LogEntry> logs, Flow listening, int expectedCount) {
+        List<LogEntry> warnings = TestsUtils.awaitLogs(logs, log -> isBlockedTriggerWarning(log, listening), expectedCount);
+        assertThat(warnings).hasSize(expectedCount);
+        return warnings;
+    }
+
     /**
-     * Logs are delivered through a queue, so a later log line on the same flow proves that every warning
-     * emitted before it has been delivered as well.
+     * Best effort for asserting an absence: logs are emitted asynchronously and may be delivered out of order,
+     * so a warning still in flight can be missed, but a correct run never fails on it.
      */
-    private List<LogEntry> blockedTriggerWarnings(List<LogEntry> logs, Flow listening) {
+    private List<LogEntry> blockedTriggerWarningsDeliveredSoFar(List<LogEntry> logs, Flow listening) {
         String flush = "flush-" + IdUtils.create();
         runContextFactory.of(listening, listening.getTriggers().getFirst()).logger().warn(flush);
         TestsUtils.awaitLogs(logs, log -> flush.equals(log.getMessage()), 1);
-        return logs.stream()
-            .filter(log -> log.getLevel() == Level.WARN && log.getMessage().contains("does not receive executions"))
-            .toList();
+        return logs.stream().filter(log -> isBlockedTriggerWarning(log, listening)).toList();
+    }
+
+    private static boolean isBlockedTriggerWarning(LogEntry log, Flow listening) {
+        return log.getLevel() == Level.WARN
+            && listening.getId().equals(log.getFlowId())
+            && log.getMessage().contains("does not receive executions");
     }
 
     private static Flow blockedUpstreamFlow() {

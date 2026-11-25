@@ -2,12 +2,14 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -50,6 +52,7 @@ class ReadExecutionToolTest {
             )
         );
         TaskRun okRun = TaskRun.builder()
+            .id("extract-run")
             .taskId("extract")
             .state(
                 State.of(
@@ -73,6 +76,9 @@ class ReadExecutionToolTest {
                 .tenantId(MAIN_TENANT)
                 .namespace(NAMESPACE)
                 .flowId("flow-1")
+                .flowRevision(3)
+                .labels(List.of(new Label("team", "data")))
+                .inputs(Map.of("day", "2026-01-01"))
                 .state(failedState)
                 .taskRunList(List.of(okRun, failedRun))
                 .build()
@@ -87,9 +93,14 @@ class ReadExecutionToolTest {
         assertThat(result.flowId()).isEqualTo("flow-1");
         assertThat(result.state()).isEqualTo("FAILED");
         assertThat(result.duration()).isEqualTo("PT5S");
+        assertThat(result.flowRevision()).isEqualTo(3);
+        assertThat(result.endDate()).isEqualTo("2026-01-01T00:00:05Z");
+        assertThat(result.labels()).containsEntry("team", "data");
+        assertThat(result.inputs()).containsEntry("day", "2026-01-01");
 
         assertThat(result.taskRuns()).hasSize(2);
         ReadExecutionTool.TaskRunDetail extract = result.taskRuns().get(0);
+        assertThat(extract.id()).isEqualTo("extract-run");
         assertThat(extract.taskId()).isEqualTo("extract");
         assertThat(extract.state()).isEqualTo("SUCCESS");
         assertThat(extract.attempts()).isEqualTo(1);

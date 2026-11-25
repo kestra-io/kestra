@@ -140,6 +140,50 @@ class LoopTest {
     }
 
     @Test
+    void initFromValues_withBooleanList_shouldReturnStringRepresentations() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+        Loop loop = Loop.builder()
+            .id("loop")
+            .type(Loop.class.getName())
+            .values(List.of(true, false))
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("x")).build()))
+            .concurrencyLimit(Property.ofValue(0))
+            .build();
+
+        // When
+        Loop.ValuesInit result = loop.initFromValues(runContext);
+
+        // Then
+        assertThat(result.totalCount()).isEqualTo(2);
+        assertThat(result.limit()).isEqualTo(2);
+        assertThat(result.values().isLeft()).isTrue();
+        assertThat(result.values().getLeft()).containsExactly("true", "false");
+    }
+
+    @Test
+    void initFromValues_withNestedLists_shouldReturnJsonLists() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+        Loop loop = Loop.builder()
+            .id("loop")
+            .type(Loop.class.getName())
+            .values(List.of(List.of("a", 1), List.of("b", 2)))
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("x")).build()))
+            .concurrencyLimit(Property.ofValue(0))
+            .build();
+
+        // When
+        Loop.ValuesInit result = loop.initFromValues(runContext);
+
+        // Then
+        assertThat(result.totalCount()).isEqualTo(2);
+        assertThat(result.limit()).isEqualTo(2);
+        assertThat(result.values().isLeft()).isTrue();
+        assertThat(result.values().getLeft()).containsExactly("[\"a\",1]", "[\"b\",2]");
+    }
+
+    @Test
     void initFromValues_withStringList_withConcurrencyLimit_shouldCapLimit() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();

@@ -6,6 +6,7 @@ import FlowFileEditorTab from "./FlowFileEditorTab.vue"
 
 const fileMetadata = vi.fn()
 const readFile = vi.fn()
+const lazyLoadSchemaType = vi.fn()
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {namespace: "io.kestra.test"}, query: {}}),
@@ -24,7 +25,7 @@ vi.mock("../../stores/flow", () => ({
     useFlowStore: () => ({flow: undefined, isReadOnly: false, isCreating: false, flowYaml: "", flowYamlOrigin: "", previewSource: undefined}),
 }))
 vi.mock("../../stores/plugins", () => ({
-    usePluginsStore: () => ({lazyLoadSchemaType: vi.fn(), editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
+    usePluginsStore: () => ({lazyLoadSchemaType, editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
 }))
 vi.mock("../../stores/productTour", () => ({
     useProductTourStore: () => ({isGuidedActive: false}),
@@ -123,5 +124,16 @@ describe("FlowFileEditorTab", () => {
 
         expect(readFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt"})
         expect(wrapper.find("[data-test=\"big-file-warning\"]").exists()).toBe(false)
+    })
+
+    // The YAML worker fetches its own schema; a second copy parsed on the main thread only slows the editor down.
+    it("should not load the flow schema when the flow tab opens", async () => {
+        mount(FlowFileEditorTab, {
+            props: {name: "flow.yaml", extension: "yaml", path: "flow.yaml", flow: true, dirty: false},
+            global: {plugins: [i18n]},
+        })
+        await flushPromises()
+
+        expect(lazyLoadSchemaType).not.toHaveBeenCalled()
     })
 })

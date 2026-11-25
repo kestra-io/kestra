@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {ref, computed, toRaw, nextTick} from "vue"
+import {ref, shallowRef, shallowReactive, computed, toRaw, nextTick, markRaw} from "vue"
 import {trackPluginDocumentationView} from "../utils/tabTracking"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
@@ -9,6 +9,7 @@ import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type Pl
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
+import {inflateCompactSchema} from "../utils/compactSchema"
 
 /** Mirrors io.kestra.core.plugins.PluginInstallJob */
 export interface PluginArtifact {
@@ -248,12 +249,15 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
-    const schemaType = ref<Record<string, any>>()
+    // Shallow: a schema is megabytes of read-only JSON, replaced as a whole and never mutated in place.
+    const schemaType = shallowRef<Record<string, any>>()
+    const pendingSchemaLoads = shallowReactive(new Map<string, ReturnType<typeof loadSchemaType>>())
     const forceIncludeProperties = ref<string[]>()
 
     const flowSchema = computed(() => {
         return schemaType.value?.flow ?? InitialFlowSchema
     })
+    const isFlowSchemaLoading = computed(() => pendingSchemaLoads.has("flow"))
     const flowDefinitions = computed(() => {
         return flowSchema.value.definitions
     })
@@ -421,18 +425,30 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     function lazyLoadSchemaType(options: {type: string}) {
-        if(schemaType.value?.[options.type]) {
-            return Promise.resolve(schemaType.value[options.type])
+        const loaded = schemaType.value?.[options.type]
+        if(loaded) {
+            return Promise.resolve(loaded)
         }
 
-        return loadSchemaType(options)
+        let pending = pendingSchemaLoads.get(options.type)
+        if(!pending) {
+            pending = loadSchemaType(options).finally(() => pendingSchemaLoads.delete(options.type))
+            pendingSchemaLoads.set(options.type, pending)
+        }
+        return pending
     }
+
+    // Raw, so that reading it through the store keeps `isLoading` a ref for the components it is provided to.
+    const flowSchemaLoader = markRaw({
+        load: () => void lazyLoadSchemaType({type: "flow"}),
+        isLoading: isFlowSchemaLoading,
+    })
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
-            schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = data
-            return data
+            const schema = inflateCompactSchema(data as {definitions?: Record<string, unknown>})
+            schemaType.value = {...schemaType.value, [options.type]: schema}
+            return schema
         })
     }
 
@@ -604,6 +620,8 @@ export const usePluginsStore = defineStore("plugins", () => {
         forceIncludeProperties,
 
         flowSchema,
+        isFlowSchemaLoading,
+        flowSchemaLoader,
         flowDefinitions,
         flowRootSchema,
         flowRootProperties,
@@ -640,3 +658,4 @@ export const usePluginsStore = defineStore("plugins", () => {
         getInstallJob,
     }
 })
+

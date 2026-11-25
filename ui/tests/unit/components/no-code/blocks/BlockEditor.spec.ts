@@ -123,6 +123,7 @@ vi.mock("../../../../../src/stores/plugins", () => ({
         icons: {},
         plugins: mockPlugins,
         ensurePlugins: mockEnsurePlugins,
+        lazyLoadSchemaType: vi.fn(),
     }),
 }))
 

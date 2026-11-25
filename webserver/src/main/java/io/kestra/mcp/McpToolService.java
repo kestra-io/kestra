@@ -219,7 +219,7 @@ public class McpToolService implements McpToolSource {
             )
         );
 
-        return flowInputOutput.resolveInputs(resolvedFlow.getInputs(), resolvedFlow, forValidation, input).stream()
+        return flowInputOutput.resolveInputsMasked(resolvedFlow.getInputs(), resolvedFlow, forValidation, input).stream()
             .filter(resolved -> resolved.exceptions() != null && !resolved.exceptions().isEmpty())
             .flatMap(resolved -> resolved.exceptions().stream())
             .map(Throwable::getMessage)

@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
 vi.mock("@kestra-io/design-system", () => ({
@@ -29,9 +29,10 @@ vi.mock("vue-i18n", () => ({
 
 const post = vi.fn()
 const put = vi.fn()
+const del = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
-    useClient: () => ({get: vi.fn(), post, put, delete: vi.fn()}),
+    useClient: () => ({get: vi.fn(), post, put, delete: del}),
 }))
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({}))
@@ -50,12 +51,18 @@ vi.mock("override/stores/misc", () => ({
 const TEST_TIMEOUT_MS = 20_000
 
 describe("dashboard store yaml writes", () => {
+    afterEach(() => {
+        localStorage.clear()
+    })
+
     beforeEach(() => {
         vi.resetModules()
         post.mockReset()
         put.mockReset()
         post.mockResolvedValue({data: {}})
         put.mockResolvedValue({data: {}})
+        del.mockReset()
+        del.mockResolvedValue({data: {}})
         localStorage.clear()
         setActivePinia(createPinia())
     })
@@ -94,5 +101,16 @@ describe("dashboard store yaml writes", () => {
             "/api/v1/main/dashboards/validate/chart",
         ])
         expect(post.mock.calls.map(yamlContentType)).toEqual(["application/x-yaml", "application/x-yaml"])
+    })
+
+    it("addresses a dashboard whose id holds a reserved character by its full id", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const store = useDashboardStore()
+
+        await store.update({id: "ops?x", source: "id: \"ops?x\""})
+        await store.delete("ops?x")
+
+        expect(put.mock.calls[0][0]).toBe("/api/v1/main/dashboards/ops%3Fx")
+        expect(del.mock.calls[0][0]).toBe("/api/v1/main/dashboards/ops%3Fx")
     })
 })

@@ -6,6 +6,7 @@ import FlowFileEditorTab from "./FlowFileEditorTab.vue"
 
 const fileMetadata = vi.fn()
 const readFile = vi.fn()
+const lazyLoadSchemaType = vi.fn()
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {namespace: "io.kestra.test"}, query: {}}),
@@ -24,7 +25,7 @@ vi.mock("../../stores/flow", () => ({
     useFlowStore: () => ({flow: undefined, isReadOnly: false, isCreating: false, flowYaml: "", flowYamlOrigin: "", previewSource: undefined}),
 }))
 vi.mock("../../stores/plugins", () => ({
-    usePluginsStore: () => ({lazyLoadSchemaType: vi.fn(), editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
+    usePluginsStore: () => ({lazyLoadSchemaType, editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
 }))
 vi.mock("../../stores/productTour", () => ({
     useProductTourStore: () => ({isGuidedActive: false}),
@@ -68,9 +69,9 @@ const i18n = createI18n({
     },
 })
 
-function mountTab() {
+function mountTab(props: Record<string, unknown> = {}) {
     return mount(FlowFileEditorTab, {
-        props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false},
+        props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false, ...props},
         global: {
             plugins: [i18n],
             stubs: {
@@ -115,6 +116,19 @@ describe("FlowFileEditorTab", () => {
         expect(downloadLink?.attributes("download")).toBe("data.txt")
     })
 
+    it("should address a file whose name holds characters reserved in a query string by its full path", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+
+        const image = mountTab({name: "a&b #1.png", extension: "png", path: "dir/a&b #1.png"})
+        fileMetadata.mockResolvedValue({size: 11 * 1024 * 1024})
+        const big = mountTab({name: "a&b #1.bin", extension: "bin", path: "dir/a&b #1.bin"})
+        await flushPromises()
+
+        expect(image.find("img").attributes("src")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.png")
+        const downloadLink = big.findAll("button").find((button) => button.attributes("href") !== undefined)
+        expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.bin")
+    })
+
     it("should load the file content when the size stats are unavailable", async () => {
         fileMetadata.mockRejectedValue(new Error("stats unavailable"))
 
@@ -123,5 +137,16 @@ describe("FlowFileEditorTab", () => {
 
         expect(readFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt"})
         expect(wrapper.find("[data-test=\"big-file-warning\"]").exists()).toBe(false)
+    })
+
+    // The YAML worker fetches its own schema; a second copy parsed on the main thread only slows the editor down.
+    it("should not load the flow schema when the flow tab opens", async () => {
+        mount(FlowFileEditorTab, {
+            props: {name: "flow.yaml", extension: "yaml", path: "flow.yaml", flow: true, dirty: false},
+            global: {plugins: [i18n]},
+        })
+        await flushPromises()
+
+        expect(lazyLoadSchemaType).not.toHaveBeenCalled()
     })
 })

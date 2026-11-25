@@ -34,6 +34,9 @@ export const FULL_SCHEMA_INJECTION_KEY = Symbol("full-schema-injection-key") as 
             $ref: string,
         }>>
 
+/** For a provided schema that starts as a placeholder: asks for the full one, and tells whether it is on its way. */
+export const SCHEMA_LOADER_INJECTION_KEY = Symbol("schema-loader-injection-key") as InjectionKey<{load: () => void, isLoading: Ref<boolean>}>
+
 export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, any>>>
 
 export const DATA_TYPES_MAP_INJECTION_KEY = Symbol("data-types-injection-key") as InjectionKey<ComputedRef<Record<string, string[] | undefined>>>

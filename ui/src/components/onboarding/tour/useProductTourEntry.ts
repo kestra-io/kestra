@@ -17,11 +17,37 @@ function useTourKey() {
     return (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 }
 
+function useEligibility() {
+    const variant = useTourVariant()
+    const eligible = ref(false)
+
+    const refresh = async () => {
+        try {
+            eligible.value = await variant.eligible()
+        } catch {
+            eligible.value = false
+        }
+    }
+
+    onMounted(refresh)
+    if (variant.entryGate) watch(variant.entryGate.recheckOn, () => void refresh())
+
+    return {eligible, refresh}
+}
+
+/** Whether the variant's in-app tour entries may show: always without an `entryGate`, else only while `eligible()` holds. */
+export function useProductTourEntryGate() {
+    if (!useTourVariant().entryGate) return {open: computed(() => true)}
+
+    const {eligible} = useEligibility()
+    return {open: computed(() => eligible.value)}
+}
+
 export function useProductTourMenuEntry() {
     const tourStore = useProductTourStore()
     const variant = useTourVariant()
 
-    const isNewInstance = ref(false)
+    const {eligible: isNewInstance, refresh} = useEligibility()
 
     const wasSkipped = computed(() => tourStore.state.status === "skipped")
 
@@ -31,17 +57,7 @@ export function useProductTourMenuEntry() {
             && !tourStore.isGuidedActive,
     )
 
-    const refresh = async () => {
-        try {
-            isNewInstance.value = await variant.eligible()
-        } catch {
-            isNewInstance.value = false
-        }
-    }
-
-    onMounted(refresh)
     watch(() => tourStore.state.status, () => void refresh())
-    if (variant.entryGate) watch(variant.entryGate.recheckOn, () => void refresh())
 
     return {
         visible,
@@ -54,9 +70,11 @@ export function useProductTourMenuEntry() {
 
 export function useProductTourNudge() {
     const tourStore = useProductTourStore()
+    const gate = useProductTourEntryGate()
 
     const visible = computed(
-        () => !tourStore.state.tour.blueprintsNudgeDismissed
+        () => gate.open.value
+            && !tourStore.state.tour.blueprintsNudgeDismissed
             && !tourStore.isGuidedActive,
     )
 

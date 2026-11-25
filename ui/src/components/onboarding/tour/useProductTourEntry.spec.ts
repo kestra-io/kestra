@@ -20,7 +20,7 @@ vi.mock("override/components/onboarding/tour/useTourVariant", () => ({
     }),
 }))
 
-import {useProductTourMenuEntry, useProductTourNudge} from "./useProductTourEntry"
+import {useProductTourEntryGate, useProductTourMenuEntry, useProductTourNudge} from "./useProductTourEntry"
 import {useProductTourStore} from "../../../stores/productTour"
 
 // Lets the eligibility promise (and its catch) settle after mount or a status change
@@ -271,5 +271,119 @@ describe("useProductTourNudge", () => {
     it("builds the tour route from the tenant of the current route", () => {
         const nudge = setup(useProductTourNudge)
         expect(nudge.tourRoute.value).toEqual({name: "welcome", params: {tenant: "main"}})
+    })
+})
+
+describe("useProductTourNudge with an entry gate", () => {
+    const recheck = ref(0)
+
+    beforeEach(() => {
+        localStorage.clear()
+        setActivePinia(createPinia())
+        eligible.mockReset()
+        recheck.value = 0
+        gate.entryGate = {recheckOn: () => recheck.value}
+    })
+
+    afterEach(() => {
+        delete gate.entryGate
+    })
+
+    it("is hidden while the variant is not eligible", async () => {
+        eligible.mockResolvedValue(false)
+        const nudge = setup(useProductTourNudge)
+        await settle()
+
+        expect(nudge.visible.value).toBe(false)
+    })
+
+    it("is shown while the variant is eligible", async () => {
+        eligible.mockResolvedValue(true)
+        const nudge = setup(useProductTourNudge)
+        await settle()
+
+        expect(nudge.visible.value).toBe(true)
+    })
+
+    it("hides without a reload when the variant stops being eligible, and shows again when it is back", async () => {
+        eligible.mockResolvedValue(true)
+        const nudge = setup(useProductTourNudge)
+        await settle()
+        expect(nudge.visible.value).toBe(true)
+
+        eligible.mockResolvedValue(false)
+        recheck.value++
+        await settle()
+        expect(nudge.visible.value).toBe(false)
+
+        eligible.mockResolvedValue(true)
+        recheck.value++
+        await settle()
+        expect(nudge.visible.value).toBe(true)
+    })
+
+    it("stays hidden once dismissed, even while the variant is eligible", async () => {
+        eligible.mockResolvedValue(true)
+        const nudge = setup(useProductTourNudge)
+        await settle()
+
+        nudge.dismiss()
+        expect(nudge.visible.value).toBe(false)
+    })
+})
+
+describe("useProductTourEntryGate", () => {
+    const recheck = ref(0)
+
+    beforeEach(() => {
+        localStorage.clear()
+        setActivePinia(createPinia())
+        eligible.mockReset()
+        recheck.value = 0
+    })
+
+    afterEach(() => {
+        delete gate.entryGate
+    })
+
+    it("is open, without checking eligibility, for a variant with no gate", async () => {
+        const entryGate = setup(useProductTourEntryGate)
+        await settle()
+
+        expect(entryGate.open.value).toBe(true)
+        expect(eligible).not.toHaveBeenCalled()
+    })
+
+    it("is closed while the check of a gated variant is pending", async () => {
+        gate.entryGate = {recheckOn: () => recheck.value}
+        eligible.mockReturnValue(new Promise<boolean>(() => {}))
+        const entryGate = setup(useProductTourEntryGate)
+        await settle()
+
+        expect(entryGate.open.value).toBe(false)
+    })
+
+    it("is closed when the check of a gated variant is rejected", async () => {
+        gate.entryGate = {recheckOn: () => recheck.value}
+        eligible.mockRejectedValue(new Error("network down"))
+        const entryGate = setup(useProductTourEntryGate)
+        await settle()
+
+        expect(entryGate.open.value).toBe(false)
+    })
+
+    it("follows the eligibility of a gated variant, checked again on its signal", async () => {
+        gate.entryGate = {recheckOn: () => recheck.value}
+        eligible.mockResolvedValue(true)
+        const entryGate = setup(useProductTourEntryGate)
+        await settle()
+        expect(entryGate.open.value).toBe(true)
+
+        eligible.mockResolvedValue(false)
+        recheck.value++
+        await settle()
+
+        expect(eligible).toHaveBeenCalledTimes(2)
+        expect(entryGate.open.value).toBe(false)
     })
 })

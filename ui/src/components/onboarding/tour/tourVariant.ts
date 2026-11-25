@@ -26,7 +26,7 @@ export interface TourVariant<A = unknown> {
     entryRoute: (tenant?: string) => RouteLocationRaw;
     autoStartRoute: string;
     eligible: () => Promise<boolean>;
-    /** When set, the menu entry shows only while `eligible()` holds, even for a skipped tour, and is re-checked whenever `recheckOn` changes. */
+    /** When set, every in-app tour entry shows only while `eligible()` holds, even for a skipped tour, and is re-checked whenever `recheckOn` changes. */
     entryGate?: {recheckOn: WatchSource};
     useActions: () => A;
     // Method syntax keeps `A` bivariant, so any `TourVariant<X>` still widens to the bare `TourVariant`.

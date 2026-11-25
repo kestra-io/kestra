@@ -348,7 +348,6 @@
     import {useRoute} from "vue-router";
     import {ElMessage} from "element-plus";
     import {useToast} from "../../utils/toast";
-    import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
     import {invisibleSpace} from "../../utils/filters";
     import {storageKeys} from "../../utils/constants";
@@ -392,7 +391,6 @@
     const {t} = useI18n({useScope: "global"});
 
     const authStore = useAuthStore();
-    const flowStore = useFlowStore();
     const triggerStore = useTriggerStore();
     const executionsStore = useExecutionsStore();
 
@@ -796,14 +794,18 @@
         if (backfill.value?.end && backfill.value.start > backfill.value.end) {
             return true;
         }
-        if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs?.map((input: any) => input?.required !== false ? input?.id : null).filter((i: any) => i !== null) || [];
+        if (executionsStore.flow?.inputs) {
+            const requiredInputs = executionsStore.flow.inputs?.map((input: any) => input?.required !== false ? input?.id : null).filter((i: any) => i !== null) || [];
 
             if (requiredInputs.length > 0) {
                 if (!backfill.value?.inputs) {
                     return true;
                 }
-                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value?.inputs?.[i] !== null && backfill.value?.inputs?.[i] !== undefined);
+                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => {
+                    const value = backfill.value?.inputs?.[i];
+                    // a cleared field sends "" or [], which is no value either
+                    return value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0);
+                });
                 if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
                     return true;
                 }

@@ -109,7 +109,6 @@
             :original="revisionLeftText"
             readOnly
             :lang
-            :showDoc="false"
         />
 
         <div v-if="isLoadingRevisions" class="revision-loading">
@@ -140,7 +139,6 @@
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
-    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 
     const flowStore = useFlowStore()
 
@@ -179,10 +177,11 @@
         lang: string,
         revisions: Revision[],
         revisionSource: (revisionNumber: number) => Promise<string | undefined>,
+        deleteRevision?: (revision: number) => Promise<unknown>,
         editRouteQuery?: boolean,
         canDelete?: boolean,
         highlight?: string
-    }>(), {editRouteQuery: true, canDelete: true})
+    }>(), {editRouteQuery: true, canDelete: true, deleteRevision: undefined})
 
     const revealHighlight = (editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined) => {
         if (!props.highlight) return
@@ -234,7 +233,7 @@
     function formatTimestamp(updatedDate?: string): string {
         if (!updatedDate) return ""
 
-        return dateFilter(updatedDate, "YYYY-MM-DD HH:mm")
+        return dateFilter(updatedDate)
     }
 
     function formatRevisionText(revision: number): string {
@@ -318,11 +317,15 @@
 
         toast.confirm(t("delete revision confirm", {revision}), async () => {
             try {
-                await flowStore.deleteRevision({
-                    namespace: route.params.namespace?.toString() || "",
-                    id: route.params.id?.toString() || "",
-                    revision: revision.toString(),
-                })
+                if (props.deleteRevision) {
+                    await props.deleteRevision(revision)
+                } else {
+                    await flowStore.deleteRevision({
+                        namespace: route.params.namespace?.toString() || "",
+                        id: route.params.id?.toString() || "",
+                        revision: revision.toString(),
+                    })
+                }
                 toast.success(t("revision deleted", {revision: revision.toString()}), t("deleted"))
                 emit("deleted", revision)
             } catch (error: unknown) {
@@ -349,7 +352,7 @@
             if (!cancelled) {
                 revisionLeftText.value = undefined
                 revisionRightText.value = undefined
-                if (!isReportedCentrally(error as KestraHttpError)) toast.error(asProblem(error)?.detail ?? t("error"))
+                toast.requestError(error, asProblem(error)?.detail ?? t("error"))
             }
         } finally {
             if (!cancelled) isLoadingRevisions.value = false
@@ -469,6 +472,7 @@
 
         .revision-label {
             display: flex;
+            align-items: center;
             gap: var(--ks-spacing-2);
         }
     }

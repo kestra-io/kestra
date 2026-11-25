@@ -11,8 +11,9 @@
         @back="fieldNav.pop"
     />
 
-    <KsForm v-if="isTaskDefinitionBasedOnType && !navStack.length" labelPosition="top">
-        <KsFormItem>
+    <KsSkeleton v-if="isAwaitingSchema" :rows="5" animated data-test="task-editor-schema-skeleton" />
+    <KsForm v-else-if="isTaskDefinitionBasedOnType && !navStack.length" labelPosition="top">
+        <KsFormItem stacked>
             <template #label>
                 <div class="type-div">
                     <span class="asterisk">*</span>
@@ -27,11 +28,10 @@
             <FieldValidationErrors :errors="typeErrors" />
         </KsFormItem>
     </KsForm>
-    <div @click="() => onTaskEditorClick(taskModel)">
+    <div v-if="!isAwaitingSchema" @click="() => onTaskEditorClick(taskModel)">
         <TaskObject
             v-ks-loading="isLoading || isPluginSchemaLoading"
             v-if="!navStack.length && (selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
-            name="root"
             :modelValue="taskModel"
             @update:model-value="onTaskInput"
             :schema
@@ -61,15 +61,17 @@
     import FieldValidationErrors from "./FieldValidationErrors.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
     import {countUnsetRequiredFields, findRequiredFieldFrames} from "../utils/requiredFields"
-    import {NoCodeElement, Schemas} from "../utils/types"
+    import {NoCodeElement, Schemas, type FieldValue} from "../utils/types"
     import {Schema} from "./tasks/getTaskComponent"
     import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
+        BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
+        SCHEMA_LOADER_INJECTION_KEY,
         DATA_TYPES_MAP_INJECTION_KEY,
         ON_TASK_EDITOR_CLICK_INJECTION_KEY,
         FIELD_NAV_INJECTION_KEY,
@@ -141,7 +143,7 @@
     )
 
     const frameValue = computed({
-        get: () => (navCurrent.value ? getPath(taskModel.value, navCurrent.value.path) : undefined),
+        get: () => (navCurrent.value ? getPath<FieldValue>(taskModel.value, navCurrent.value.path) : undefined),
         set: (value) => {
             if (!navCurrent.value) return
             const next = cloneDeep(toRaw(taskModel.value) ?? {})
@@ -300,6 +302,14 @@
         return resolvedTypes.value.map((type) => definitions.value?.[type])
     })
 
+    // The placeholder schema only knows the core models, so a block it cannot resolve waits for the full schema.
+    const schemaLoader = inject(SCHEMA_LOADER_INJECTION_KEY, undefined)
+    schemaLoader?.load()
+    const isAwaitingSchema = computed(() => Boolean(schemaLoader?.isLoading.value) && (
+        schemaAtBlockPath.value === undefined
+        || (isTaskDefinitionBasedOnType.value && Boolean(selectedTaskType.value) && resolvedTypes.value.length === 0)
+    ))
+
     const dataTypes = computed(() => {
         const types = new Set<string>()
         for(const s of resolvedSchemas.value){
@@ -435,6 +445,8 @@
         }
     }, {immediate: true})
 
+    const blockComponentOverride = inject(BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, undefined)
+
     function onTaskInput(val: PartialNoCodeElement | undefined) {
         taskModel.value = val
         if(fieldName){
@@ -443,7 +455,9 @@
             }
         }
 
-        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)))
+        // A field an edition renders with its own component owns its value, empty cells included.
+        const keepAsIs = (key: string, parent: Record<string, unknown>) => Boolean(blockComponentOverride?.(key, parent))
+        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val), keepAsIs))
     }
 
     function onTaskTypeSelect() {

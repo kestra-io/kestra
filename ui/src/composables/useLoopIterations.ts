@@ -1,5 +1,6 @@
 import {ref, computed} from "vue"
 import {useExecutionsStore} from "../stores/executions"
+import {latestRequest} from "../utils/latestRequest"
 
 export const LOOP_ITERATIONS_PAGE_SIZE = 10
 
@@ -83,7 +84,7 @@ export function useLoopIterations(parentExecutionId: string, taskId: string, opt
         if (position < 0) return undefined
         const response = await executionsStore.findExecutions({...listFilters(), page: position + 1, size: 1})
         const row = response.results?.[0]
-        return row ? toLoopIterationRow(row as unknown as Record<string, unknown>) : undefined
+        return row ? toLoopIterationRow(row) : undefined
     }
 
     async function fetchNeighbour(index: number, delta: -1 | 1, currentPosition?: number): Promise<LoopIterationRow | undefined> {
@@ -124,7 +125,7 @@ export function useLoopIterations(parentExecutionId: string, taskId: string, opt
         return isNeighbour(row) ? row : undefined
     }
 
-    let latestFetch = 0
+    const startFetch = latestRequest()
     let pendingFetch: Promise<void> = Promise.resolve()
 
     function fetchPage(targetPage: number): Promise<void> {
@@ -133,12 +134,12 @@ export function useLoopIterations(parentExecutionId: string, taskId: string, opt
     }
 
     async function runFetch(targetPage: number): Promise<void> {
-        const fetch = ++latestFetch
+        const isLatest = startFetch()
         loading.value = true
         error.value = undefined
         try {
             const response = await executionsStore.findExecutions({...listFilters(), page: targetPage, size: LOOP_ITERATIONS_PAGE_SIZE})
-            if (fetch !== latestFetch) return
+            if (!isLatest()) return
             const rows = (response.results ?? []).map(toLoopIterationRow)
 
             iterations.value = targetPage === 1 ? rows : [...iterations.value, ...rows]
@@ -146,10 +147,10 @@ export function useLoopIterations(parentExecutionId: string, taskId: string, opt
             page.value = targetPage
             loaded.value = true
         } catch (e) {
-            if (fetch !== latestFetch) return
+            if (!isLatest()) return
             error.value = e
         } finally {
-            if (fetch === latestFetch) loading.value = false
+            if (isLatest()) loading.value = false
         }
     }
 

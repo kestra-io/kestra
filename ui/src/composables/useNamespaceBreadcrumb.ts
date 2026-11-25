@@ -2,8 +2,11 @@ import {computed, toValue, type MaybeRefOrGetter} from "vue"
 import {useI18n} from "vue-i18n"
 import type {KsBreadcrumbItem} from "@kestra-io/design-system"
 import FolderOutline from "vue-material-design-icons/FolderOutline.vue"
+import Plus from "vue-material-design-icons/Plus.vue"
 import useNamespaces from "./useNamespaces"
+import {useSystemNamespace} from "./useSystemNamespace"
 import {useAuthStore} from "override/stores/auth"
+import {useMiscStore} from "override/stores/misc"
 import {apiUrl} from "override/utils/route"
 import resource from "../models/resource"
 import action from "../models/action"
@@ -35,11 +38,13 @@ async function namespaceIds(current: string | undefined): Promise<string[]> {
 /**
  * The folder path from `root` down to `namespace`, one breadcrumb item per level. A level's menu lists the
  * namespaces under its parent and every entry with children flies them out the same way, all of it served
- * by one fetch of the namespace tree per tenant. Flows are deliberately not listed: they would cost one
+ * by one fetch of the namespace tree per tenant. Where the user may create a namespace, the fly-out also ends
+ * with a link creating a child of the entry. Flows are deliberately not listed: they would cost one
  * request per level for a rarely used shortcut.
  */
 export function useNamespaceBreadcrumb(namespace: MaybeRefOrGetter<string | undefined>, {tab = "overview", root}: Options = {}) {
     const {t} = useI18n({useScope: "global"})
+    const systemNamespace = useSystemNamespace()
 
     const link = (id: string) => ({name: `${NAMESPACE_PARENT_ROUTE}/${tab}`, params: {id}})
 
@@ -59,6 +64,9 @@ export function useNamespaceBreadcrumb(namespace: MaybeRefOrGetter<string | unde
             return ids.filter((id) => id.startsWith(prefix) && !id.slice(prefix.length).includes("."))
         }
 
+        const canCreateUnder = (id: string) => id !== systemNamespace.value && useMiscStore().configs?.edition !== "OSS"
+            && Boolean(useAuthStore().user?.isAllowed(resource.NAMESPACE, action.CREATE, id))
+
         const entriesUnder = async (parent: string): Promise<KsBreadcrumbItem[]> => {
             const ids = await treeIds()
             return childrenOf(ids, parent).map((id) => ({
@@ -67,9 +75,18 @@ export function useNamespaceBreadcrumb(namespace: MaybeRefOrGetter<string | unde
                 icon: FolderOutline,
                 tooltip: id,
                 current: id === current,
-                children: childrenOf(ids, id).length ? () => entriesUnder(id) : undefined,
+                children: childrenOf(ids, id).length || canCreateUnder(id) ? () => contentOf(id) : undefined,
             }))
         }
+
+        const contentOf = async (id: string): Promise<KsBreadcrumbItem[]> => [
+            ...await entriesUnder(id),
+            ...(canCreateUnder(id) ? [{
+                label: t("create_child_namespace"),
+                link: {name: "namespaces/create", params: {tab: "edit"}, query: {id: `${id}.`}},
+                icon: Plus,
+            }] : []),
+        ]
 
         // A menu that would only repeat the page it is on, with nothing to drill into, is not offered.
         const beside = async (id: string): Promise<KsBreadcrumbItem[]> => {
@@ -87,7 +104,7 @@ export function useNamespaceBreadcrumb(namespace: MaybeRefOrGetter<string | unde
                     icon: FolderOutline,
                     tooltip: id,
                     siblings: () => beside(id),
-                    children: () => entriesUnder(id),
+                    children: () => contentOf(id),
                 }
             }),
         ]

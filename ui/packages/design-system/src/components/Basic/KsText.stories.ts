@@ -6,7 +6,7 @@ const meta: Meta<typeof KsText> = {
     component: KsText,
     tags: ["autodocs"],
     argTypes: {
-        type: {control: "select", options: ["", "primary", "success", "warning", "danger", "info"]},
+        type: {control: "select", options: ["", "primary", "secondary", "success", "warning", "danger", "info"]},
         size: {control: "select", options: ["small", "default", "large"]},
         truncated: {control: "boolean"},
     },
@@ -33,6 +33,7 @@ export const Types: Story = {
             <div style="padding:24px;display:flex;flex-direction:column;gap:8px">
                 <ks-text>Default</ks-text>
                 <ks-text type="primary">Primary</ks-text>
+                <ks-text type="secondary">Secondary</ks-text>
                 <ks-text type="success">Success</ks-text>
                 <ks-text type="info">Info</ks-text>
                 <ks-text type="warning">Warning</ks-text>

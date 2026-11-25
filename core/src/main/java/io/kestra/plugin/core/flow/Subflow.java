@@ -130,7 +130,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     @Builder.Default
     @Schema(
         title = "Flag specifying whether to fail the current execution if the subflow execution fails or is killed.",
-        description = "Note that this option works only if `wait` is set to `true`."
+        description = "Note that this option works only if `wait` is set to `true`. When a subflow execution ends CANCELLED, the Subflow task ends CANCELLED, but the parent continues and runs its next tasks."
     )
     @PluginProperty
     private final Boolean transmitFailed = true;
@@ -228,6 +228,10 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             String log = String
                 .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in FAILED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
             runContext.logger().error(log);
+        } else if (finalState == State.Type.CANCELLED) {
+            String log = String
+                .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in CANCELLED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
+            runContext.logger().warn(log);
         } else if (finalState == State.Type.WARNING) {
             String log = String
                 .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in WARNING state", execution.getId(), execution.getFlowId(), execution.getNamespace());

@@ -512,7 +512,7 @@ If you must write a translation by hand:
    - **Reserved English terms — never translate:** `kv store`, `namespace`, `tenant`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `artifact`, `min`, `max`.
    - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
    - **Preserve `{placeholder}` variables** exactly — vue-i18n uses a **single** pair of braces. Do not translate the name inside the braces, do not rename it, and never write `{{placeholder}}`: double braces are a compile error (`Not allowed nest placeholder`) and make `t()` throw at render time. Each translation must carry exactly the same placeholders as the English source — no invented ones, none dropped.
-   - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).
+   - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Expand → Ausklappen, Creation → Erstellung), and follow the language's glossary in `generateTranslations.ts`, which keeps nouns such as Execution, Status and Theme in English for German.
 3. Insert the translated keys into the correct position in the target language JSON, mirroring the key order of `en.json`.
 4. Re-run `npm run translations:check` to confirm everything is clean before committing.
 

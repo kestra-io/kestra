@@ -5,6 +5,7 @@ import type {FieldNavigation} from "./utils/useFieldNavigation"
 import type {BlockDragContext} from "./blocks/useBlockDragAndDrop"
 import type {UnsetRequiredField} from "./utils/requiredFields"
 import type {Schema} from "./components/tasks/getTaskComponent"
+import type {TaskBlockComponent} from "./components/tasks/useBlockComponent"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
@@ -34,6 +35,9 @@ export const ROOT_SCHEMA_INJECTION_KEY = Symbol("root-schema-injection-key") as 
 
 export const FULL_SCHEMA_INJECTION_KEY = Symbol("full-schema-injection-key") as InjectionKey<Ref<{definitions: Record<string, Schema>, $ref: string}>>
 
+/** For a provided schema that starts as a placeholder: asks for the full one, and tells whether it is on its way. */
+export const SCHEMA_LOADER_INJECTION_KEY = Symbol("schema-loader-injection-key") as InjectionKey<{load: () => void, isLoading: Ref<boolean>}>
+
 export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, Schema>>>
 
 export const DATA_TYPES_MAP_INJECTION_KEY = Symbol("data-types-injection-key") as InjectionKey<ComputedRef<Record<string, string[] | undefined>>>
@@ -53,3 +57,6 @@ export const FIELD_VALIDATION_ERRORS_INJECTION_KEY = Symbol("field-validation-er
 export const BLOCK_DRAG_INJECTION_KEY = Symbol("block-drag-injection-key") as InjectionKey<BlockDragContext>
 export const UNSET_REQUIRED_FIELDS_INJECTION_KEY = Symbol("unset-required-fields-injection-key") as InjectionKey<Ref<UnsetRequiredField[]>>
 export const NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY = Symbol("navigate-to-required-field-injection-key") as InjectionKey<Ref<((path: string) => boolean) | undefined>>
+
+/** `null` hides the field, `undefined` keeps the schema-driven component. */
+export const BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY = Symbol("block-component-override-injection-key") as InjectionKey<(fieldKey: string, task: unknown) => TaskBlockComponent | null | undefined>

@@ -163,12 +163,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     @Override
     public GenerationResult generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
-        AiService.GenerationContext ctx = this.beforeGeneration(
-            userInfo, flowGenerationPrompt.getConversationId(), "FlowGeneration", Map.of(
-                "flowYaml", Optional.ofNullable(flowGenerationPrompt.getYaml()).orElse(""),
-                "userPrompt", flowGenerationPrompt.getUserPrompt()
-            )
-        );
+        AiService.GenerationContext ctx = this.beforeGeneration(userInfo, flowGenerationPrompt.getConversationId(), "FlowGeneration");
 
         String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
 
@@ -182,17 +177,14 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             pebbleExpressions
         );
 
-        return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
+        this.afterGeneration(ctx, "FlowGenerationResult");
+
+        return GenerationResult.of(generatedFlow);
     }
 
     @Override
     public GenerationResult generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
-        AiService.GenerationContext ctx = this.beforeGeneration(
-            userInfo, dashboardGenerationPrompt.getConversationId(), "DashboardGeneration", Map.of(
-                "dashboardYaml", Optional.ofNullable(dashboardGenerationPrompt.getYaml()).orElse(""),
-                "userPrompt", dashboardGenerationPrompt.getUserPrompt()
-            )
-        );
+        AiService.GenerationContext ctx = this.beforeGeneration(userInfo, dashboardGenerationPrompt.getConversationId(), "DashboardGeneration");
 
         String generatedDashboard = dashboardAiCopilot.generateDashboard(
             this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
@@ -202,11 +194,18 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             dashboardGenerationPrompt
         );
 
-        return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
+        this.afterGeneration(ctx, "DashboardGenerationResult");
+
+        return GenerationResult.of(generatedDashboard);
     }
 
     public String displayName() {
         return displayName;
+    }
+
+    @Override
+    public Optional<AiUsageLimitConfiguration> usageLimit() {
+        return Optional.ofNullable(aiConfiguration.usageLimit()).filter(AiUsageLimitConfiguration::enabled);
     }
 
     public ExpressionContextService expressionContextService() {
@@ -257,7 +256,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     @Override
-    public GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName, Map<String, String> inputState) {
+    public GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName) {
         if (conversationId == null) {
 
             return null;
@@ -267,16 +266,14 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.postHogService.capture(
             uid, "$ai_trace", Map.of(
                 "$ai_trace_id", conversationId,
-                "$ai_span_name", spanName + "Session",
-                "$ai_input_state", inputState
+                "$ai_span_name", spanName + "Session"
             )
         );
         this.postHogService.capture(
             uid, "$ai_span", Map.of(
                 "$ai_trace_id", conversationId,
                 "$ai_span_id", parentSpanId,
-                "$ai_span_name", spanName + "Attempt",
-                "$ai_input_state", inputState
+                "$ai_span_name", spanName + "Attempt"
             )
         );
         metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, userInfo.ip(), parentSpanId, uid));
@@ -285,24 +282,18 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     @Override
-    public String afterGeneration(GenerationContext context, String spanName, Map<String, Object> outputState, String result, String outputKey) {
+    public void afterGeneration(GenerationContext context, String spanName) {
         if (context == null || context.conversationId() == null) {
-
-            return result;
+            return;
         }
         metadataByConversationId.remove(context.conversationId());
-        Map<String, Object> aiOutput = (outputState == null || outputState.isEmpty()) ? Map.of(outputKey, result) : outputState;
         this.postHogService.capture(
             context.uid(), "$ai_span", Map.of(
                 "$ai_trace_id", context.conversationId(),
                 "$ai_span_id", IdUtils.create(),
-                "$ai_span_name", spanName,
-                "$ai_input_state", Map.of(),
-                "$ai_output_state", aiOutput
+                "$ai_span_name", spanName
             )
         );
-
-        return result;
     }
 
     public List<PluginMetadata<ReverseOrderVersion>> allPluginsMetadata() {

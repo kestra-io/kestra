@@ -13,11 +13,11 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.Type;
 import io.kestra.core.repositories.ExecutionOutputRepositoryInterface;
-import io.kestra.core.searchable.SearchableOutput;
-import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
@@ -40,7 +40,7 @@ class ExecutionOutputServiceTest {
     private ExecutionOutputRepositoryInterface executionOutputRepository;
 
     @Inject
-    private SearchableOutputRepositoryInterface searchableOutputRepository;
+    private SearchableDataRepositoryInterface searchableDataRepository;
 
     private Flow flow(Output... outputs) {
         return Flow.builder()
@@ -50,7 +50,7 @@ class ExecutionOutputServiceTest {
             .build();
     }
 
-    private Output output(String id, Type type, Boolean searchable) {
+    private Output output(String id, OutputType type, Boolean searchable) {
         return Output.builder().id(id).type(type).searchable(searchable).value("{{ outputs.x }}").build();
     }
 
@@ -173,20 +173,20 @@ class ExecutionOutputServiceTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
         Flow flow = flow(
-            output("name", Type.STRING, true),
-            output("count", Type.INT, true),
-            output("ignored", Type.STRING, false),
-            output("unset", Type.STRING, null)
+            output("name", OutputType.STRING, true),
+            output("count", OutputType.INT, true),
+            output("ignored", OutputType.STRING, false),
+            output("unset", OutputType.STRING, null)
         );
 
         // When
         executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("name", "value", "count", 42, "ignored", "a", "unset", "b"));
 
         // Then
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "name")).contains(new SearchableOutput(tenant, execution.getId(), "name", "value"));
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "count")).contains(new SearchableOutput(tenant, execution.getId(), "count", "42"));
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "ignored")).isEmpty();
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "unset")).isEmpty();
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "name")).contains(new SearchableData(tenant, execution.getId(), "name", "value"));
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "count")).contains(new SearchableData(tenant, execution.getId(), "count", "42"));
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "ignored")).isEmpty();
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "unset")).isEmpty();
     }
 
     @Test
@@ -196,10 +196,10 @@ class ExecutionOutputServiceTest {
         Execution execution = execution(tenant, State.Type.SUCCESS);
 
         // When
-        executionOutputService.saveOutputs(LOGGER, flow(output("name", Type.STRING, false)), execution, Map.of("name", "value"));
+        executionOutputService.saveOutputs(LOGGER, flow(output("name", OutputType.STRING, false)), execution, Map.of("name", "value"));
 
         // Then
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "name")).isEmpty();
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "name")).isEmpty();
     }
 
     @Test
@@ -209,10 +209,10 @@ class ExecutionOutputServiceTest {
         Execution execution = execution(tenant, State.Type.SUCCESS);
 
         // When
-        executionOutputService.saveOutputs(LOGGER, flow(output("name", Type.STRING, true)), execution, Collections.emptyMap());
+        executionOutputService.saveOutputs(LOGGER, flow(output("name", OutputType.STRING, true)), execution, Collections.emptyMap());
 
         // Then
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "name")).isEmpty();
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "name")).isEmpty();
     }
 
     @Test
@@ -222,11 +222,11 @@ class ExecutionOutputServiceTest {
         Execution execution = execution(tenant, State.Type.SUCCESS);
 
         // When
-        executionOutputService.saveOutputs(LOGGER, flow(output("json", Type.JSON, true)), execution, Map.of("json", Map.of("a", "b")));
+        executionOutputService.saveOutputs(LOGGER, flow(output("json", OutputType.JSON, true)), execution, Map.of("json", Map.of("a", "b")));
 
         // Then
         assertThat(executionOutputService.getOutputs(execution)).containsKey("json");
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "json")).isEmpty();
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "json")).isEmpty();
     }
 
     @Test
@@ -248,16 +248,16 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true), output("tags", Type.ARRAY, false));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true), output("tags", OutputType.ARRAY, false));
 
         // When
         executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("orderIds", List.of("ORD-1", 2, true), "tags", List.of("a")));
 
         // Then
-        assertThat(searchableOutputRepository.findByExecutionId(tenant, execution.getId(), Pageable.from(1, 10))).containsExactly(
-            new SearchableOutput(tenant, execution.getId(), "orderIds", 0, "ORD-1"),
-            new SearchableOutput(tenant, execution.getId(), "orderIds", 1, "2"),
-            new SearchableOutput(tenant, execution.getId(), "orderIds", 2, "true")
+        assertThat(searchableDataRepository.findByExecutionId(tenant, execution.getId(), Pageable.from(1, 10))).containsExactly(
+            new SearchableData(tenant, execution.getId(), "orderIds", 0, "ORD-1"),
+            new SearchableData(tenant, execution.getId(), "orderIds", 1, "2"),
+            new SearchableData(tenant, execution.getId(), "orderIds", 2, "true")
         );
     }
 
@@ -266,14 +266,14 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true));
         executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("orderIds", List.of("a", "b")));
 
         // When
         executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("orderIds", List.of("a", "b")));
 
         // Then
-        assertThat(searchableOutputRepository.findByExecutionId(tenant, execution.getId(), Pageable.from(1, 10))).hasSize(2);
+        assertThat(searchableDataRepository.findByExecutionId(tenant, execution.getId(), Pageable.from(1, 10))).hasSize(2);
     }
 
     @Test
@@ -281,13 +281,13 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true), output("count", Type.INT, true));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true), output("count", OutputType.INT, true));
 
         // When
         executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("orderIds", List.of(), "other", "value"));
 
         // Then
-        assertThat(searchableOutputRepository.findByExecutionId(tenant, execution.getId(), Pageable.from(1, 10))).isEmpty();
+        assertThat(searchableDataRepository.findByExecutionId(tenant, execution.getId(), Pageable.from(1, 10))).isEmpty();
     }
 
     @Test
@@ -295,7 +295,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true), output("name", Type.STRING, true));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true), output("name", OutputType.STRING, true));
         Logger logger = mock(Logger.class);
 
         // When
@@ -304,73 +304,7 @@ class ExecutionOutputServiceTest {
         // Then
         assertThat(mockingDetails(logger).getInvocations()).anyMatch(invocation -> "error".equals(invocation.getMethod().getName()));
         assertThat(executionOutputService.getOutputs(execution)).containsKey("orderIds");
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "orderIds")).isEmpty();
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "name")).isPresent();
-    }
-
-    @Test
-    void shouldTruncateASearchableValueLongerThanTheLimit() throws InternalException {
-        // Given
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("text", Type.STRING, true), output("short", Type.STRING, true));
-        String tooLong = "a".repeat(ExecutionOutputService.MAX_SEARCHABLE_VALUE_LENGTH + 10);
-
-        // When
-        executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("text", tooLong, "short", "ok"));
-
-        // Then
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "text").orElseThrow().value())
-            .hasSize(ExecutionOutputService.MAX_SEARCHABLE_VALUE_LENGTH);
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "short").orElseThrow().value()).isEqualTo("ok");
-    }
-
-    @Test
-    void shouldNotCutASurrogatePairWhenTruncatingASearchableValue() throws InternalException {
-        // Given
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("text", Type.STRING, true));
-        // the emoji is 2 chars and starts at the last allowed position
-        String value = "a".repeat(ExecutionOutputService.MAX_SEARCHABLE_VALUE_LENGTH - 1) + "\uD83D\uDE00" + "b";
-
-        // When
-        executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("text", value));
-
-        // Then
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "text").orElseThrow().value())
-            .isEqualTo("a".repeat(ExecutionOutputService.MAX_SEARCHABLE_VALUE_LENGTH - 1));
-    }
-
-    @Test
-    void shouldTruncateASearchableArrayLongerThanTheLimit() throws InternalException {
-        // Given
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true));
-        List<String> items = java.util.stream.IntStream.range(0, ExecutionOutputService.MAX_SEARCHABLE_ARRAY_ITEMS + 5).mapToObj(i -> "ORD-" + i).toList();
-
-        // When
-        executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("orderIds", items));
-
-        // Then
-        var saved = searchableOutputRepository.findByExecutionId(tenant, execution.getId(), Pageable.from(1, 10));
-        assertThat(saved.getTotal()).isEqualTo(ExecutionOutputService.MAX_SEARCHABLE_ARRAY_ITEMS);
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "orderIds").orElseThrow().value()).isEqualTo("ORD-0");
-    }
-
-    @Test
-    void shouldKeepASearchableValueOfExactlyTheLimit() throws InternalException {
-        // Given
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("text", Type.STRING, true));
-        String value = "a".repeat(ExecutionOutputService.MAX_SEARCHABLE_VALUE_LENGTH);
-
-        // When
-        executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("text", value));
-
-        // Then
-        assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "text").orElseThrow().value()).isEqualTo(value);
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "orderIds")).isEmpty();
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "name")).isPresent();
     }
 }

@@ -23,10 +23,28 @@ vi.mock("@kestra-io/design-system", () => {
 })
 
 import type {VNode} from "vue"
-import {KsNotification, KsTableColumn} from "@kestra-io/design-system"
+import {KsMessageBox, KsNotification, KsTableColumn} from "@kestra-io/design-system"
 import {makeToast} from "./toast"
 
 const t = (key: string) => key
+
+describe("toast.confirm", () => {
+    beforeEach(() => {
+        vi.mocked(KsMessageBox.confirm).mockReset().mockResolvedValue("confirm" as never)
+    })
+
+    it("shouldShowTheWarningIconAndCancelButtonByDefault", async () => {
+        await makeToast(t).confirm("Are you sure?", () => {})
+
+        expect(KsMessageBox.confirm).toHaveBeenCalledWith(expect.anything(), "confirmation", {type: "warning", showCancelButton: true})
+    })
+
+    it("shouldDropTheIconAndTheCancelButtonWhenAskedTo", async () => {
+        await makeToast(t).confirm("Are you sure?", () => {}, false, false)
+
+        expect(KsMessageBox.confirm).toHaveBeenCalledWith(expect.anything(), "confirmation", {type: undefined, showCancelButton: false})
+    })
+})
 
 describe("toast.saved", () => {
     beforeEach(() => {
@@ -77,5 +95,25 @@ describe("toast.error", () => {
         const {message} = vi.mocked(KsNotification).mock.lastCall![0] as {message: VNode}
         const column = (message.children as VNode[]).find(child => child.type === KsTableColumn)
         expect(column?.props?.label).toBe("t:toast_message_column")
+    })
+})
+
+describe("toast.requestError", () => {
+    beforeEach(() => {
+        vi.mocked(KsNotification).mockClear()
+    })
+
+    const failure = (status: number) => Object.assign(new Error("Request failed"), {status, response: {data: {detail: "Not found"}}})
+
+    it("should stay silent when the global handler already toasted the failure", () => {
+        makeToast(t).requestError(failure(404), "Could not delete")
+
+        expect(KsNotification).not.toHaveBeenCalled()
+    })
+
+    it("should toast a failure the global handler leaves to the caller", () => {
+        makeToast(t).requestError(failure(400), "Could not delete")
+
+        expect(KsNotification).toHaveBeenCalledTimes(1)
     })
 })

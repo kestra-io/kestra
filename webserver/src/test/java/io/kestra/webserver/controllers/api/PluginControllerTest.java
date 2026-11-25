@@ -414,6 +414,24 @@ class PluginControllerTest {
         assertThat(merged.header("ETag")).isNotEqualTo(local.header("ETag"));
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldHoistTaskSubtypeListsWithOrWithoutTheCatalog() {
+        Map<String, Object> local = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow"), Argument.mapOf(String.class, Object.class));
+        Map<String, Object> merged = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow?includeCatalog=true"), Argument.mapOf(String.class, Object.class));
+
+        assertThat(flowTasksItems(local)).containsOnlyKeys("$ref");
+        assertThat((String) flowTasksItems(local).get("$ref")).startsWith("#/definitions/shared-subtypes");
+        assertThat(flowTasksItems(merged)).isEqualTo(flowTasksItems(local));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> flowTasksItems(Map<String, Object> schema) {
+        Map<String, Map<String, Object>> definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+        Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) definitions.get("io.kestra.core.models.flows.Flow").get("properties");
+        return (Map<String, Object>) properties.get("tasks").get("items");
+    }
+
     @Test
     void inputs() {
         List<InputType> doc = client.toBlocking().retrieve(
@@ -434,7 +452,7 @@ class PluginControllerTest {
 
         assertThat(doc.getSchema().getProperties().size()).isEqualTo(3);
         Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
-        assertThat(properties.size()).isEqualTo(9);
+        assertThat(properties.size()).isEqualTo(10);
     }
 
     @Test

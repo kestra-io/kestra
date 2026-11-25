@@ -1,0 +1,10 @@
+id: notify-users-invalid-url
+namespace: io.kestra.tests
+
+tasks:
+  - id: notify
+    type: io.kestra.plugin.core.notification.Notify
+    users:
+      - alice
+    title: "Never sent: {{ execution.id }}"
+    url: "javascript:alert(1)"

@@ -31,12 +31,19 @@ export function isPosthogEnabled(configs?: PosthogConfig) {
     return !isPosthogDisabled(configs)
 }
 
+function isPostHog(value: unknown): value is PostHog {
+    return typeof value === "object" && value !== null && "capture" in value && typeof value.capture === "function"
+}
+
 async function loadPosthogClient(): Promise<PostHog | undefined> {
     if (posthogClient) return posthogClient
     if (posthogLoadPromise) return posthogLoadPromise
 
     posthogLoadPromise = import("posthog-js")
-        .then((mod) => (mod.default ?? mod) as unknown as PostHog)
+        .then((mod) => {
+            const client: unknown = mod.default ?? mod
+            return isPostHog(client) ? client : undefined
+        })
         .then((client) => {
             posthogClient = client
             return client

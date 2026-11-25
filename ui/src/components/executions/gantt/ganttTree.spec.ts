@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {nextTick, ref} from "vue"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useExecutionsStore} from "../../../stores/executions"
 import type {ExecutionTaskRun} from "../executionTaskRun"
@@ -67,7 +68,7 @@ function iterationsOf(rowsByTask: Record<string, ReturnType<typeof iterationRow>
 let tree: GanttTree
 
 beforeEach(() => {
-    setActivePinia(createPinia())
+    setActivePinia(routedPinia())
     mockExecution.mockReset()
     useExecutionsStore().flow = flow
     tree = createGanttTree({compact: ref(false), levelFilter: ref(undefined)})

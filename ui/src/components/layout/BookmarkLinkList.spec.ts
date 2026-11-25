@@ -1,24 +1,25 @@
 
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { mount } from "@vue/test-utils"
-import { defineComponent, h } from "vue"
+import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
+import {mount} from "@vue/test-utils"
+import {defineComponent, h} from "vue"
+import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 vi.mock("@kestra-io/design-system", () => ({
-    KsMessageBox: { confirm: vi.fn(() => Promise.resolve()) },
+    KsMessageBox: {confirm: vi.fn(() => Promise.resolve())},
 }))
 
 vi.mock("vue-i18n", () => ({
-    useI18n: () => ({ t: (key: string) => key }),
+    useI18n: () => ({t: (key: string) => key}),
 }))
 
-const { createPinia, setActivePinia } = await import("pinia")
+const {createPinia, setActivePinia} = await import("pinia")
 
 const BookmarkLinkList = (await import("./BookmarkLinkList.vue")).default
 
 const KsInput = defineComponent({
     name: "KsInput",
     props: {
-        modelValue: { type: String, default: "" },
+        modelValue: {type: String, default: ""},
     },
     setup: () => () => h("input"),
 })
@@ -27,9 +28,9 @@ const RouterLinkStub = defineComponent({
     name: "RouterLink",
     inheritAttrs: false,
     props: {
-        to: { type: [String, Object], default: undefined },
+        to: {type: [String, Object], default: undefined},
     },
-    setup: (props, { slots, attrs }) => () =>
+    setup: (props, {slots, attrs}) => () =>
         h(
             "a",
             {
@@ -55,10 +56,11 @@ afterEach(() => {
 
 const mountList = (pages: { label?: string; path: string }[]) => {
     wrapper = mount(BookmarkLinkList, {
-        props: { pages },
+        props: {pages},
         global: {
-            stubs: { RouterLink: RouterLinkStub, KsInput },
-            mocks: { $t: (key: string) => key },
+            plugins: [memoryRouter()],
+            stubs: {RouterLink: RouterLinkStub, KsInput},
+            mocks: {$t: (key: string) => key},
         },
     })
 
@@ -68,12 +70,12 @@ const mountList = (pages: { label?: string; path: string }[]) => {
 describe("BookmarkLinkList", () => {
     test("renders one link for each page in the correct order", () => {
         const pages = [
-            { label: "Overview", path: "/overview" },
-            { label: "Settings", path: "/settings" },
+            {label: "Overview", path: "/overview"},
+            {label: "Settings", path: "/settings"},
         ]
 
-        const wrapper = mountList(pages)
-        const links = wrapper.findAll(".bookmark-anchor")
+        const list = mountList(pages)
+        const links = list.findAll(".bookmark-anchor")
 
         expect(links).toHaveLength(2)
         expect(links[0].attributes("href")).toBe("/overview")
@@ -81,18 +83,18 @@ describe("BookmarkLinkList", () => {
     })
 
     test("uses the label as the title when a label exists", () => {
-        const wrapper = mountList([
-            { label: "My Dashboard", path: "/dashboard" },
+        const list = mountList([
+            {label: "My Dashboard", path: "/dashboard"},
         ])
 
-        expect(wrapper.find(".bookmark-anchor").attributes("title"))
+        expect(list.find(".bookmark-anchor").attributes("title"))
             .toBe("My Dashboard")
     })
 
     test("falls back to the path when the label is missing", () => {
-        const wrapper = mountList([{ path: "/reports" }])
+        const list = mountList([{path: "/reports"}])
 
-        expect(wrapper.find(".bookmark-anchor").attributes("title"))
+        expect(list.find(".bookmark-anchor").attributes("title"))
             .toBe("/reports")
     })
 })

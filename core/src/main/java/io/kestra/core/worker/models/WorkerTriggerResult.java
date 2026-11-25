@@ -1,8 +1,10 @@
 package io.kestra.core.worker.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.WorkerTrigger;
@@ -39,5 +41,17 @@ public record WorkerTriggerResult(
             evaluation,
             trigger.getDispatchEpoch()
         );
+    }
+
+    /**
+     * Whether this result ends the trigger's job on the worker, so that the controller releases its running entry. A
+     * realtime trigger keeps running after each execution it emits, and ends only when its stream stops or fails.
+     */
+    @JsonIgnore
+    public boolean isTerminal() {
+        if (type != TriggerType.REALTIME) {
+            return true;
+        }
+        return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
     }
 }

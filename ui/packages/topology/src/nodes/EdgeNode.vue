@@ -70,6 +70,7 @@
     import {
         CANVAS_HOVERED_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
+        DIFF_INJECTION_KEY,
         DROP_EDGE_INJECTION_KEY,
     } from "../injectionKeys"
 
@@ -87,6 +88,8 @@
 
     const props = defineProps({
         id: {type: String, default: undefined},
+        source: {type: String, default: undefined},
+        target: {type: String, default: undefined},
         data: {type: Object as PropType<EdgeData>, default: undefined},
         sourceX: {type: Number, required: true},
         sourceY: {type: Number, required: true},
@@ -128,12 +131,22 @@
     // task — `undefined` when the edge sits on a read-only boundary or a cluster's own wiring.
     const addTarget = computed<AddTaskTarget | undefined>(() => props.data?.haveAdd || undefined)
 
+    const diff = inject(DIFF_INJECTION_KEY, undefined)
+    const diffEdgeStatus = computed(() => {
+        const statuses = [props.source, props.target]
+            .map((uid) => (uid ? diff?.value?.statusByUid.get(uid) : undefined))
+        if (statuses.includes("removed")) return "removed"
+        if (statuses.includes("added")) return "added"
+        return undefined
+    })
+
     const classes = computed(() => {
         return props.data
             ? {
                 "vue-flow__edge-path": true,
-                ["stroke-" + props.data.color]: props.data.color,
+                ["stroke-" + props.data.color]: props.data.color && !diffEdgeStatus.value,
                 "unused-path": props.data.unused,
+                [`edge-diff-${diffEdgeStatus.value}`]: Boolean(diffEdgeStatus.value),
             }
             : {}
     })
@@ -212,6 +225,8 @@
     .stroke-error { stroke: var(--ks-border-error); }
     .stroke-warning { stroke: var(--ks-status-warning); }
     .vue-flow__edge-path { stroke-dasharray: 1.5 3; }
+    .vue-flow__edge-path.edge-diff-added { stroke: var(--ks-border-success); stroke-dasharray: none; }
+    .vue-flow__edge-path.edge-diff-removed { stroke: var(--ks-border-error); stroke-dasharray: 5 4; }
 
     .edge-case-label {
         position: absolute;

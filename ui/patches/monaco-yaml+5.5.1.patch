@@ -1,8 +1,26 @@
 diff --git a/node_modules/monaco-yaml/yaml.worker.js b/node_modules/monaco-yaml/yaml.worker.js
-index beade0d..afe321c 100644
+index beade0d..cd9a295 100644
 --- a/node_modules/monaco-yaml/yaml.worker.js
 +++ b/node_modules/monaco-yaml/yaml.worker.js
-@@ -2982,15 +2982,58 @@ var BaseValidator = class {
+@@ -2610,7 +2610,7 @@ var SchemaCollector2 = class _SchemaCollector {
+     this.schemas.push(schema);
+   }
+   merge(other) {
+-    this.schemas.push(...other.schemas);
++    for (const schema of other.schemas) this.schemas.push(schema);
+   }
+   include(node) {
+     return (this.focusOffset === -1 || contains2(node, this.focusOffset)) && node !== this.exclude;
+@@ -2832,7 +2832,7 @@ var BaseValidator = class {
+   }
+   getMatchingSchemas(root, schema, options, focusOffset, exclude) {
+     const matchingSchemas = new SchemaCollector2(focusOffset, exclude);
+-    this.validateNode(root, schema, schema, new ValidationResult2(options.isKubernetes), matchingSchemas, options);
++    this.validateNode(root, schema, schema, new ValidationResult2(options.isKubernetes), matchingSchemas, { ...options, focusOffset });
+     return matchingSchemas.schemas;
+   }
+   getNoOpCollector() {
+@@ -2982,15 +2982,63 @@ var BaseValidator = class {
          matchingSchemas.add(ms);
        }
      }
@@ -52,8 +70,13 @@ index beade0d..afe321c 100644
 +      const hasTypeDiscriminator = alternatives.some(
 +        (subSchemaRef) => getTypeDiscriminatorSchema(asSchema2(subSchemaRef)) !== null
 +      );
++      // genericComparison drops what a mismatching discriminator yields once one matches, so it is only computed where a caller reads it.
++      const skipMismatchedDiscriminators = discriminatorMatches.includes(true) && !isNodeObserved(node, matchingSchemas, options);
        for (const subSchemaRef of alternatives) {
 +        alternativeIndex++;
++        if (skipMismatchedDiscriminators && !discriminatorMatches[alternativeIndex] && getTypeDiscriminatorSchema(asSchema2(subSchemaRef)) !== null) {
++          continue;
++        }
          const subSchema = { ...asSchema2(subSchemaRef) };
          const subValidationResult = new ValidationResult2(isKubernetes);
          const subMatchingSchemas = matchingSchemas.newSub();
@@ -61,7 +84,7 @@ index beade0d..afe321c 100644
          this.validateNode(node, subSchema, schema, subValidationResult, subMatchingSchemas, options);
          if (!subValidationResult.hasProblems() || callFromAutoComplete) {
            subMatches.push(subSchema);
-@@ -3003,11 +3046,11 @@ var BaseValidator = class {
+@@ -3003,11 +3051,11 @@ var BaseValidator = class {
            validResults.push(subValidationResult);
          }
          if (!bestMatch) {
@@ -75,7 +98,7 @@ index beade0d..afe321c 100644
          }
        }
        if (subMatches.length > 1 && (subMatches.length > 1 || noPropertyMatches.length === 0) && maxOneMatch) {
-@@ -3686,7 +3729,23 @@ var BaseValidator = class {
+@@ -3686,7 +3734,23 @@ var BaseValidator = class {
      }
      return bestMatch;
    }
@@ -100,7 +123,7 @@ index beade0d..afe321c 100644
      if (!maxOneMatch && !subValidationResult.hasProblems() && !bestMatch.validationResult.hasProblems()) {
        bestMatch.matchingSchemas.merge(subMatchingSchemas);
        bestMatch.validationResult.propertiesMatches += subValidationResult.propertiesMatches;
-@@ -3694,8 +3753,9 @@ var BaseValidator = class {
+@@ -3694,8 +3758,9 @@ var BaseValidator = class {
      } else {
        const compareResult = subValidationResult.compareGeneric(bestMatch.validationResult);
        if (compareResult > 0 || compareResult === 0 && maxOneMatch && bestMatch.schema.type === "object" && node.type !== "null" && node.type !== bestMatch.schema.type) {
@@ -112,7 +135,86 @@ index beade0d..afe321c 100644
          this.mergeValidationMatches(bestMatch, subMatchingSchemas, subValidationResult);
        }
      }
-@@ -8448,6 +8508,25 @@ ${indent}`);
+@@ -3711,6 +3776,40 @@ var BaseValidator = class {
+     ]);
+   }
+ };
++function isBlankYaml(text, start, end) {
++  for (let i = start; i < end; i++) {
++    const char = text.charCodeAt(i);
++    if (char === 35) {
++      const lineEnd = text.indexOf("\n", i);
++      if (lineEnd === -1 || lineEnd >= end) {
++        return true;
++      }
++      i = lineEnd;
++    } else if (char !== 32 && char !== 9 && char !== 10 && char !== 13) {
++      return false;
++    }
++  }
++  return true;
++}
++// Validation collects nothing, hover reads the nodes around focusOffset, completion the ones around its cursor.
++function isNodeObserved(node, matchingSchemas, options) {
++  if (matchingSchemas === NoOpSchemaCollector2.instance) {
++    return false;
++  }
++  const cursor = options.completionCursor;
++  const offset = cursor ? cursor.offset : options.focusOffset;
++  if (offset === void 0 || offset < 0) {
++    return true;
++  }
++  const end = node.offset + node.length;
++  if (offset >= node.offset && offset <= end) {
++    return true;
++  }
++  if (!cursor) {
++    return false;
++  }
++  return offset < node.offset ? isBlankYaml(cursor.text, offset, node.offset) : isBlankYaml(cursor.text, end, offset);
++}
+ function asSchema2(schema) {
+   if (schema === void 0)
+     return void 0;
+@@ -4261,7 +4360,8 @@ var JSONDocument2 = class {
+       isKubernetes: this.isKubernetes,
+       disableAdditionalProperties: this.disableAdditionalProperties,
+       uri: this.uri,
+-      callFromAutoComplete: didCallFromAutoComplete
++      callFromAutoComplete: didCallFromAutoComplete,
++      completionCursor: didCallFromAutoComplete ? this.completionCursor : void 0
+     }, focusOffset, exclude);
+   }
+ };
+@@ -7829,6 +7929,7 @@ var YamlCompletion = class {
+       return Promise.resolve(result);
+     }
+     currentDoc = currentDoc.clone();
++    currentDoc.completionCursor = { offset, text };
+     let [node, foundByClosest] = currentDoc.getNodeFromPosition(offset, textBuffer, this.indentation.length);
+     const currentWord = this.getCurrentWord(document, offset);
+     let lineContent = textBuffer.getLineContent(position.line);
+@@ -8311,7 +8412,19 @@ ${indent}`);
+         }
+       });
+     }
++    const typePair = isMap8(node) ? node.items.find((it) => isScalar6(it.key) && it.key.value === "type" && isScalar6(it.value)) : void 0;
++    const currentNodeType = typePair?.value?.value;
++    const discriminatorMatches = (s) => {
++      const discriminator = s.schema?.properties?.type;
++      if (!currentNodeType || !discriminator) return false;
++      if (discriminator.const !== void 0) return discriminator.const === currentNodeType;
++      return Array.isArray(discriminator.enum) && discriminator.enum.includes(currentNodeType);
++    };
++    const isOwnSchema = (s) => s.node.internalNode === node || s.node.internalNode === originalNode;
++    // Branches are merged back for `type:` value completion, so keys must be scoped to the branch the node's `type` selects.
++    const hasDiscriminatedSchema = matchingSchemas.some((s) => isOwnSchema(s) && discriminatorMatches(s));
+     for (const schema2 of matchingSchemas) {
++      if (hasDiscriminatedSchema && isOwnSchema(schema2) && schema2.schema.properties && !discriminatorMatches(schema2)) continue;
+       if ((schema2.node.internalNode === node && !matchOriginal || schema2.node.internalNode === originalNode && !hasColon || schema2.node.parent?.internalNode === originalNode && !hasColon) && !schema2.inverted) {
+         this.collectDefaultSnippets(schema2.schema, separatorAfter, collector, {
+           newLineFirst: false,
+@@ -8448,6 +8561,25 @@ ${indent}`);
      if (node && (parentKey !== null || isSeq7(node))) {
        const separatorAfter = "";
        const matchingSchemas = doc.getMatchingSchemas(schema.schema, -1, null, doComplete);
@@ -138,7 +240,7 @@ index beade0d..afe321c 100644
        for (const s of matchingSchemas) {
          if (s.node.internalNode === node && !s.inverted && s.schema) {
            if (s.schema.items) {
-@@ -8470,6 +8549,7 @@ ${indent}`);
+@@ -8470,6 +8602,7 @@ ${indent}`);
            if (s.schema.properties) {
              const propertySchema = s.schema.properties[parentKey];
              if (propertySchema) {

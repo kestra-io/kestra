@@ -16,6 +16,8 @@ public record TaskRunWithOutput(TaskRun taskRun, Map<String, Object> outputs, As
         /** The declaration rendered but the assets could not be emitted — softened per {@code assetFailureBehavior}. */
         FAILED,
         /** The declaration itself is invalid, so no retry or later execution can make it succeed. */
-        DECLARATION_INVALID
+        DECLARATION_INVALID,
+        /** The locks the task run took could not be released, so the task fails whatever its {@code assetFailureBehavior} and the end of its execution releases them. */
+        LOCKS_NOT_RELEASED
     }
 }

@@ -101,12 +101,12 @@ export const scopeLabel = (
 export const scopeEntriesOf = (chain: ScopeNode[]): LoopScopeEntry[] =>
     chain.map(({taskId, number}) => ({taskId, number}))
 
-type LogFilterSearch = Pick<MergedLogSearch, "kinds" | "levelParams" | "q">
+type LogFilterSearch = Pick<MergedLogSearch, "levelParams" | "q">
 
 const executionIdsFilter = (executionIds: string[]): QueryFilter => ({field: "executionId", operation: "IN", value: executionIds})
 
-function logFilters({kinds, levelParams, q}: LogFilterSearch): QueryFilter[] {
-    const filters: QueryFilter[] = [{field: "kind", operation: "IN", value: kinds}, ...routeQueryToQueryFilters(levelParams)]
+function logFilters({levelParams, q}: LogFilterSearch): QueryFilter[] {
+    const filters: QueryFilter[] = routeQueryToQueryFilters(levelParams)
     if (q) filters.push({field: "q", operation: "EQUALS", value: q})
     return filters
 }
@@ -352,7 +352,6 @@ async function resolveScope(rootId: string, entries: LoopScopeEntry[], deps: Log
 
 export interface MergedLogSearch {
     executionIds: string[];
-    kinds: string[];
     levelParams: Record<string, string>;
     q?: string;
     page: number;

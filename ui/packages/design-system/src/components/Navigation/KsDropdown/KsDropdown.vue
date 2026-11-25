@@ -15,10 +15,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
-    import {ElDropdown, type DropdownInstance} from "element-plus"
+    import {ref, type ExtractPublicPropTypes, type HTMLAttributes} from "vue"
+    import {ElDropdown, dropdownProps, type DropdownInstance} from "element-plus"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
+
+    defineProps</* @vue-ignore */ (NativeAttributes<ExtractPublicPropTypes<typeof dropdownProps> & HTMLAttributes> & {
+        onCommand?: (command: never) => void
+        onVisibleChange?: (visible: boolean) => void
+    })>()
 
     const POPPER_OPTIONS = {
         modifiers: [
@@ -117,8 +123,8 @@
 
             &.is-danger:not(.is-disabled):hover,
             &.is-danger:not(.is-disabled):focus {
-                background-color: var(--ks-bg-error);
-                color: var(--ks-text-error);
+                background-color: var(--ks-dropdown-danger-bg, var(--ks-bg-error));
+                color: var(--ks-dropdown-danger-color, var(--ks-text-error));
 
                 & i {
                     color: var(--ks-icon-error);

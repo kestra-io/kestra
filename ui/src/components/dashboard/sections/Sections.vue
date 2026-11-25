@@ -13,8 +13,27 @@
                     <div class="chart-header">
                         <div id="charts_heading">
                             <p v-if="!isKPIChart(chart.type)">
-                                <span>
-                                    {{ labels(chart).title }}
+                                <span class="chart-title-line">
+                                    <KsIcon
+                                        v-if="titleWarning(chart.id)"
+                                        class="chart-title-warning"
+                                        color="var(--ks-icon-warning)"
+                                        data-test="chart-title-warning"
+                                        :tooltip="titleWarning(chart.id)"
+                                        :aria-label="titleWarning(chart.id)"
+                                    >
+                                        <AlertOutline />
+                                    </KsIcon>
+                                    <span class="chart-title">
+                                        {{ labels(chart).title }}
+                                    </span>
+                                    <small v-if="notices[chart.id]?.metadata" class="chart-metadata">
+                                        <i18n-t keypath="dashboards.dataFrom" scope="global" tag="span">
+                                            <template #date>
+                                                <KsDateAgo :date="notices[chart.id]?.metadata?.date" />
+                                            </template>
+                                        </i18n-t>
+                                    </small>
                                 </span>
                                 <template v-if="labels(chart)?.description">
                                     <br>
@@ -54,24 +73,31 @@
                     </div>
 
                     <div :ref="(el) => observeChartBlock(el, chart.id)" class="chart-content">
-                        <component
-                            v-if="activatedCharts.has(chart.id)"
-                            :ref="(el: Element | ComponentPublicInstance | null) => registerChartComponent(el, chart.id)"
-                            :is="TYPES[chart.type as keyof typeof TYPES]"
-                            :chart
-                            :dashboardId="dashboard.id"
-                            :filters
-                            :showDefault="props.showDefault"
-                            v-bind="chartProps(chart)"
-                        />
-                        <KsSkeleton
-                            v-else
-                            animated
-                            :rows="3"
-                            class="chart-placeholder"
-                            :class="{'is-kpi': isKPIChart(chart.type)}"
-                            :style="placeholderHeight(chart.id) ? {minHeight: `${placeholderHeight(chart.id)}px`} : undefined"
-                        />
+                        <div v-if="notices[chart.id]?.warning" class="chart-warning">
+                            <KsNoData :icon="AlertOutline" :title="$t('dashboards.dataUnavailable')">
+                                {{ notices[chart.id]?.warning }}
+                            </KsNoData>
+                        </div>
+                        <div class="chart-body" :class="{'is-hidden': Boolean(notices[chart.id]?.warning)}">
+                            <component
+                                v-if="activatedCharts.has(chart.id)"
+                                :ref="(el: Element | ComponentPublicInstance | null) => registerChartComponent(el, chart.id)"
+                                :is="TYPES[chart.type as keyof typeof TYPES]"
+                                :chart
+                                :dashboardId="dashboard.id"
+                                :filters
+                                :showDefault="props.showDefault"
+                                v-bind="chartProps(chart)"
+                            />
+                            <KsSkeleton
+                                v-else
+                                animated
+                                :rows="3"
+                                class="chart-placeholder"
+                                :class="{'is-kpi': isKPIChart(chart.type)}"
+                                :style="placeholderHeight(chart.id) ? {minHeight: `${placeholderHeight(chart.id)}px`} : undefined"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -80,10 +106,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, provide, type ComponentPublicInstance} from "vue"
+    import {computed, provide, reactive, type ComponentPublicInstance} from "vue"
 
     import type {Dashboard, Chart} from "../composables/useDashboards"
-    import {IGNORED_FILTERS_INJECTION_KEY, isKPIChart, isCanvasChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
+    import {CHART_NOTICE_INJECTION_KEY, IGNORED_FILTERS_INJECTION_KEY, type ChartNotice, isKPIChart, isCanvasChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
     import {useLazyChartBlocks} from "../composables/useLazyChartBlocks"
     import {TYPES} from "../dashboard-types"
 
@@ -92,7 +118,7 @@
     import type {BrushRange} from "../../../utils/logsBrushMappers"
     const route = useRoute()
 
-    import {decodeSearchParams, KsSkeleton} from "@kestra-io/design-system"
+    import {decodeSearchParams, KsDateAgo, KsNoData, KsSkeleton} from "@kestra-io/design-system"
 
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
@@ -104,15 +130,23 @@
 
     import Download from "vue-material-design-icons/Download.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
+    import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const chartsComponents = new Map<string, {
+    interface ChartComponent {
         refresh(): void;
+        exportChart?(): Chart;
         exportParameters?(): {pageNumber?: number; pageSize?: number; filters?: QueryFilter[]};
-    }>()
+    }
+
+    const chartsComponents = new Map<string, ChartComponent>()
+
+    function isChartComponent(el: Element | ComponentPublicInstance | null): el is ComponentPublicInstance & ChartComponent {
+        return el !== null && typeof Reflect.get(el, "refresh") === "function"
+    }
 
     function registerChartComponent(el: Element | ComponentPublicInstance | null, chartId: string) {
-        if (el) chartsComponents.set(chartId, el as unknown as {refresh(): void})
+        if (isChartComponent(el)) chartsComponents.set(chartId, el)
         else chartsComponents.delete(chartId)
     }
 
@@ -180,6 +214,24 @@
         }
     })
 
+    const notices = reactive<Record<string, ChartNotice>>({})
+
+    const titleWarning = (chartId: string) => {
+        const notice = notices[chartId]
+        if (notice?.warning) {
+            return notice.warning
+        }
+        return notice?.metadata?.truncated ? t("dashboards.dataTruncated", {rows: notice.metadata.rowsRead}) : undefined
+    }
+
+    provide(CHART_NOTICE_INJECTION_KEY, (chartId, notice) => {
+        if (notice.metadata || notice.warning) {
+            notices[chartId] = notice
+        } else {
+            delete notices[chartId]
+        }
+    })
+
     // Make the overview of flows/dashboard/namespace specific
     const filters = computed<QueryFilter[]>(() => {
         const baseFilters: QueryFilter[] = [...(props.baseFilters ?? [])]
@@ -199,9 +251,10 @@
     })
 
     async function exportChart(chart: Chart) {
-        const {filters: chartFilters = [], ...pagination} = chartsComponents.get(chart.id)?.exportParameters?.() ?? {}
+        const component = chartsComponents.get(chart.id)
+        const {filters: chartFilters = [], ...pagination} = component?.exportParameters?.() ?? {}
 
-        await dashboardStore.export(props.dashboard, chart, {
+        await dashboardStore.export(props.dashboard, component?.exportChart?.() ?? chart, {
             ...pagination,
             filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [], chartFilters),
         })
@@ -258,6 +311,23 @@ section#charts {
 
         .chart-content {
             flex-grow: 1;
+            position: relative;
+        }
+
+        .chart-warning {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-body {
+            display: contents;
+
+            &.is-hidden {
+                visibility: hidden;
+            }
         }
 
         .chart-action {
@@ -291,7 +361,7 @@ section#charts {
         }
 
         #charts_heading {
-            span {
+            .chart-title {
                 color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-md);
                 font-weight: var(--ks-font-weight-bold);
@@ -300,6 +370,11 @@ section#charts {
                 color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-xs);
                 font-weight: 300;
+            }
+            .chart-title-line {
+                display: inline-flex;
+                align-items: center;
+                gap: var(--ks-spacing-2);
             }
         }
     }

@@ -2,6 +2,7 @@ package io.kestra.core.topologies;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -178,9 +179,22 @@ public class FlowTopologyService {
                 .stream()
                 .filter(t -> t instanceof ExecutableTask)
                 .map(t -> (ExecutableTask<?>) t)
-                .anyMatch(
-                    t -> t.subflowId() != null && t.subflowId().namespace().equals(child.getNamespace()) && t.subflowId().flowId().equals(child.getId())
-                );
+                .anyMatch(t -> {
+                    var subflowId = t.subflowId();
+
+                    if (subflowId == null) {
+                        return false;
+                    }
+
+                    String namespace = subflowId.namespace();
+
+                    if (namespace != null && namespace.matches("\\{\\{\\s*flow\\.namespace\\s*\\}\\}")) {
+                        namespace = parent.getNamespace();
+                    }
+
+                    return Objects.equals(namespace, child.getNamespace())
+                        && Objects.equals(subflowId.flowId(), child.getId());
+                });
         } catch (Exception e) {
             log.warn("Failed to detect flow task on namespace:'{}', flowId:'{}'", parent.getNamespace(), parent.getId(), e);
             return false;
@@ -236,8 +250,8 @@ public class FlowTopologyService {
     private boolean isSubflowFunctionFor(String expression, Flow child) {
         return expression != null && PebbleUtil.containsOpeningBlockDelimiter(expression) &&
             expression.matches(".*subflow\\s*\\(.*\\).*") &&
-            expression.matches(".*id\\s*=\\s*['\"]?" + child.getId() + "['\"]?\\s*[\\s,)].*") &&
-            expression.matches(".*namespace\\s*=\\s*['\"]?" + child.getNamespace() + "['\"]?\\s*[\\s,)].*");
+            expression.matches(".*id\\s*=\\s*['\"]?" + Pattern.quote(child.getId()) + "['\"]?\\s*[\\s,)].*") &&
+            expression.matches(".*namespace\\s*=\\s*['\"]?" + Pattern.quote(child.getNamespace()) + "['\"]?\\s*[\\s,)].*");
     }
 
     private boolean validateDependsOn(List<io.kestra.plugin.core.trigger.Flow.Dependency> dependsOn, FlowInterface child, Execution execution, RunContext runContext) {

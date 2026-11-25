@@ -5,7 +5,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.webserver.services.ai.AiProviderConfiguration;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
+import io.kestra.webserver.services.ai.agent.internals.ToolResultLimit;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 
@@ -73,7 +75,7 @@ class ToolCatalogTest {
         // how a replacement subclass extends a base tool
         DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
         when(docs.tools()).thenReturn(Map.of());
-        ToolCatalog catalog = new ToolCatalog(List.of(new OverridingEchoTool()), List.of(), docs, ALLOW_ALL);
+        ToolCatalog catalog = new ToolCatalog(List.of(new OverridingEchoTool()), List.of(), docs, ALLOW_ALL, new DefaultAgentToolCallScope(), new ToolResultBudget(100_000, null));
         ToolExecutionRequest request = ToolExecutionRequest.builder().id("c1").name("tenant-echo").arguments("{}").build();
 
         // When — the spec is derived from the inherited @Tool method, execution dispatches virtually
@@ -81,6 +83,23 @@ class ToolCatalogTest {
 
         // Then — the subclass override ran
         assertThat(result).isEqualTo("overridden:unit");
+    }
+
+    @Test
+    void shouldRejectToolResultOverProviderBudgetWhenDispatching() {
+        // Given — a tool result larger than the budget of the provider the turn runs on
+        DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
+        when(docs.tools()).thenReturn(Map.of());
+        AiProviderConfiguration small = new AiProviderConfiguration("small", "Small", "gemini", false, Map.of("maxToolResultChars", 1_000));
+        ToolResultBudget budget = new ToolResultBudget(ToolResultLimit.MAX_CHARS, List.of(small));
+        ToolCatalog catalog = new ToolCatalog(List.of(new TestOversizedResultTool()), List.of(), docs, ALLOW_ALL, new DefaultAgentToolCallScope(), budget);
+        ToolExecutionRequest request = ToolExecutionRequest.builder().id("c1").name("oversized-result").arguments("{}").build();
+
+        // When / Then — the result is refused, not cut down, so the model never reasons on partial data
+        assertThatThrownBy(() -> catalog.dispatch(request, AgentCallContext.Context.builder().tenant("unit").providerId("small").build()))
+            .isInstanceOf(ToolResultTooLargeException.class)
+            .hasMessageContaining("oversized-result")
+            .hasMessageContaining("maximum is 1000");
     }
 
     @Test
@@ -123,7 +142,7 @@ class ToolCatalogTest {
     private static ToolCatalog newCatalog(final AgentToolPermissionEvaluator evaluator) {
         DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
         when(docs.tools()).thenReturn(Map.of());
-        return new ToolCatalog(List.of(new TestMutateTool(), new TestTenantEchoTool()), List.of(new TestDraftTool()), docs, evaluator);
+        return new ToolCatalog(List.of(new TestMutateTool(), new TestTenantEchoTool()), List.of(new TestDraftTool()), docs, evaluator, new DefaultAgentToolCallScope(), new ToolResultBudget(100_000, null));
     }
 
     private static ToolExecutionRequest request(final String name) {

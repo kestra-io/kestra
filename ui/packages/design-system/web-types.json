@@ -17,6 +17,7 @@
                 {"name": "KsButtonGroup", "source": {"symbol": "KsButtonGroup"}},
                 {"name": "KsCard", "source": {"symbol": "KsCard"}},
                 {"name": "KsCascaderPanel", "source": {"symbol": "KsCascaderPanel"}},
+                {"name": "KsChangeReview", "source": {"symbol": "KsChangeReview"}},
                 {"name": "KsCheckbox", "source": {"symbol": "KsCheckbox"}},
                 {"name": "KsCheckboxButton", "source": {"symbol": "KsCheckboxButton"}},
                 {"name": "KsCheckboxGroup", "source": {"symbol": "KsCheckboxGroup"}},

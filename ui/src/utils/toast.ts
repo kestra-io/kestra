@@ -1,6 +1,7 @@
 import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
 import {App, type Component, h} from "vue"
 import {useI18n} from "vue-i18n"
+import {isReportedCentrally, type KestraHttpError} from "./kestraHttp"
 
 // Module-scoped so repeated Ctrl+S collapses earlier "saved" toasts without dismissing
 // unrelated notifications (e.g. the plugin auto-install progress toast).
@@ -48,10 +49,22 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
         return h(KsMarkdown, {content: message})
     }
 
+    function error(message: ToastMessageBody, title?:string, options?: ToastOptions) {
+        KsNotification({
+                title: title ?? t("error"),
+                message: wrapMessage(message),
+                position: "bottom-right",
+                type: "error",
+                duration: 0,
+                customClass: "kel-notification__large",
+            ...options,
+        })
+    }
+
     return {
-        confirm: function(message: string | Component, callback: () => Promise<unknown> | unknown, type = "warning" as const, showCancelButton = true) {
+        confirm: function(message: string | Component, callback: () => Promise<unknown> | unknown, type: "warning" | false = "warning", showCancelButton = true) {
             return KsMessageBox
-                .confirm(typeof message === "string" ? MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton})
+                .confirm(typeof message === "string" ? MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type: type || undefined, showCancelButton})
                 .then(() => callback())
                 .catch(() => {
                     // User cancelled
@@ -97,16 +110,12 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        error: function(message: ToastMessageBody, title?:string, options?: ToastOptions) {
-            KsNotification({
-                    title: title ?? t("error"),
-                    message: wrapMessage(message),
-                    position: "bottom-right",
-                    type: "error",
-                    duration: 0,
-                    customClass: "kel-notification__large",
-                ...options,
-            })
+        error,
+        /** Shows the error only when the global handler did not already toast this failed request. */
+        requestError: function(failure: unknown, message: ToastMessageBody, title?: string, options?: ToastOptions) {
+            if (!isReportedCentrally(failure as KestraHttpError)) {
+                error(message, title, options)
+            }
         },
     }
 }

@@ -86,7 +86,7 @@
             return undefined
         }
 
-        const basePath = ((window as unknown as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH ?? "").replace(/\/$/, "")
+        const basePath = (window.KESTRA_BASE_PATH || "").replace(/\/$/, "")
         const base = `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/icon.svg`
         return icon.value?.hash ? `${base}?v=${encodeURIComponent(icon.value.hash)}` : base
     })
@@ -124,15 +124,6 @@
         width: 100%;
         height: 100%;
         position: relative;
-
-        & :deep(span) {
-            position: absolute;
-            padding: 1px;
-            left: 0;
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
     }
 
     .task-icon__icon {

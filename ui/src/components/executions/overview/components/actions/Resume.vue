@@ -15,7 +15,13 @@
             </i18n-t>
         </template>
         <KsForm :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
-            <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
+            <InputsForm
+                :initialInputs="inputsList"
+                :execution="execution"
+                v-model="inputs"
+                :submitAttempted="submitAttempted"
+                @clear-validation="onClearValidation"
+            />
         </KsForm>
         <template #footer>
             <KsButton :icon="Play" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
@@ -37,6 +43,7 @@
     import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import InputsForm from "../../../../../components/inputs/InputsForm.vue"
     import {inputsToFormData} from "../../../../../utils/submitTask"
+    import {flattenInputs} from "../../../../../utils/inputs"
     import {Execution, InputMetaData, useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../../../../utils/toast"
@@ -55,6 +62,7 @@
     const inputs = ref<Record<string, unknown>>({})
     const isDrawerOpen = ref(false)
     const form = ref<FormInstance | null>(null)
+    const submitAttempted = ref(false)
 
     const enabled = computed(() => {
         if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
@@ -77,6 +85,10 @@
 
     const needInputs = computed(() => inputsList.value?.length > 0)
 
+    function onClearValidation(fieldId: string) {
+        form.value?.clearValidate(fieldId)
+    }
+
     function click() {
         if (needInputs.value) {
             isDrawerOpen.value = true
@@ -84,18 +96,19 @@
         }
 
         toast.confirm(t("resumed confirm", {id: props.execution.id}), () => {
-            return resume() as unknown as Promise<void>
+            return resume()
         })
     }
 
     function resumeWithInputs(formRef: FormInstance | null) {
+        submitAttempted.value = true
         if (formRef) {
             formRef.validate((valid: boolean) => {
                 if (!valid) {
                     return
                 }
 
-                const formData = inputsToFormData(inputsList.value, inputs.value)
+                const formData = inputsToFormData(flattenInputs(inputsList.value), inputs.value)
                 resume(formData)
             })
         }

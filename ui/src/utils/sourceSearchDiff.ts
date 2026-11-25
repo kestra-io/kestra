@@ -64,6 +64,7 @@ export function inlineReplacement(matched: string, context: ReplaceContext): str
     }
     try {
         const pattern = context.wholeWord ? `\\b(?:${context.query})\\b` : context.query
+        // nosemgrep: detect-non-literal-regexp -- regex mode runs the user's own pattern in their own browser, inside a try.
         return matched.replace(new RegExp(pattern, context.caseSensitive ? "" : "i"), context.replacement)
     } catch {
         return context.replacement

@@ -17,6 +17,8 @@ import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Base class for the services managing outputs, either task outputs or execution outputs.
  * It holds the serialization logic and the decision of whether to store an output inside the database or
@@ -25,16 +27,19 @@ import io.kestra.core.storages.StorageInterface;
  * @see TaskOutputService
  * @see ExecutionOutputService
  */
+@Slf4j
 public abstract class AbstractOutputService {
     protected static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
 
     private final StorageInterface storageInterface;
     private final NamespaceFactory namespaceFactory;
+    private final NamespaceService namespaceService;
     private final int limit;
 
-    protected AbstractOutputService(StorageInterface storageInterface, NamespaceFactory namespaceFactory, int limit) {
+    protected AbstractOutputService(StorageInterface storageInterface, NamespaceFactory namespaceFactory, NamespaceService namespaceService, int limit) {
         this.storageInterface = storageInterface;
         this.namespaceFactory = namespaceFactory;
+        this.namespaceService = namespaceService;
         this.limit = limit;
     }
 
@@ -64,7 +69,7 @@ public abstract class AbstractOutputService {
      */
     protected URI storeToInternalStorage(StorageContext context, byte[] outputBytes) throws InternalException {
         try {
-            var storage = new InternalStorage(context, storageInterface, namespaceFactory);
+            var storage = new InternalStorage(log, context, storageInterface, namespaceService, namespaceFactory);
             File file = Files.createTempFile("output-", ".ion").toFile();
             Files.write(file.toPath(), outputBytes);
             return storage.putFile(file);
@@ -89,7 +94,7 @@ public abstract class AbstractOutputService {
                 return null;
             }
 
-            var storage = new InternalStorage(context.get(), storageInterface, namespaceFactory);
+            var storage = new InternalStorage(log, context.get(), storageInterface, namespaceService, namespaceFactory);
             try (var is = storage.getFile(URI.create(uri))) {
                 return ION_MAPPER.readValue(is, JacksonMapper.MAP_TYPE_REFERENCE);
             }

@@ -16,9 +16,11 @@ import org.yaml.snakeyaml.LoaderOptions;
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.system.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.util.JsonRecyclerPools;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.Module;
@@ -51,6 +53,8 @@ public final class JacksonMapper {
     public static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {
     };
 
+    private static final int RECYCLER_POOL_CAPACITY = 100;
+
     private JacksonMapper() {
     }
 
@@ -62,7 +66,13 @@ public final class JacksonMapper {
 
     // Registered the KestraDateTimeModule only for the JSON mapper.
     // YAML should not change the date format as it would break compatibility, and ION has its own date format.
-    private static final ObjectMapper MAPPER = JacksonMapper.configure(new ObjectMapper())
+    private static final ObjectMapper MAPPER = JacksonMapper.configure(new ObjectMapper(
+        JsonFactory.builder()
+            // the default thread-local pool never reuses a buffer on virtual threads, where most of Kestra's serialization runs,
+            // and the lock-free pool is deprecated because it grows without bound under contention (jackson-core#1260)
+            .recyclerPool(JsonRecyclerPools.newBoundedPool(RECYCLER_POOL_CAPACITY))
+            .build()
+    ))
         .registerModule(new KestraDateTimeModule());
 
     private static final ObjectMapper NON_STRICT_MAPPER = MAPPER

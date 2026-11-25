@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {nextTick} from "vue"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import {useExecutionsStore} from "../../../stores/executions"
 import type {LoopRef} from "./ganttTree"
 import {useLoopDrillDown} from "./useLoopDrillDown"
@@ -27,7 +28,7 @@ const lastListCall = () => (findExecutions.mock.calls as Array<[Record<string, u
 
 beforeEach(() => {
     vi.useFakeTimers()
-    setActivePinia(createPinia())
+    setActivePinia(routedPinia())
     findExecutions = vi.spyOn(useExecutionsStore(), "findExecutions")
 })
 

@@ -23,6 +23,7 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.core.services.VersionService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.mcp.PlatformMcpServerProvider;
 import io.kestra.webserver.configuration.CookiesConfiguration;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
@@ -89,7 +90,7 @@ public class MiscController {
     @Inject
     CookiesConfiguration cookiesConfiguration;
 
-    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
+    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:P30D}")
     private String chartDefaultDuration;
 
     @io.micronaut.context.annotation.Value("${kestra.flowTemplate:}")
@@ -164,6 +165,7 @@ public class MiscController {
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .isPluginEndpointsEnabled(applicationContext.containsBean(PluginEndpointController.class))
+            .isMcpServerEnabled(applicationContext.containsBean(PlatformMcpServerProvider.class))
             .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
             .isBasicAuthInitialized(isBasicAuthInitialized())
             .isBasicAuthManagedByConfig(basicAuthService.map(BasicAuthService::isManagedByConfig).orElse(false))
@@ -396,6 +398,8 @@ public class MiscController {
 
         @JsonInclude
         Boolean isPluginEndpointsEnabled;
+
+        Boolean isMcpServerEnabled;
     }
 
     @Value

@@ -26,9 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_COOKIE_NAME;
 
 /**
- * Custom CSRF filter that only enforces token validation on cookie-authenticated requests.
- * SDK/API clients using the Authorization header bypass CSRF since they are not vulnerable
- * to cross-site request forgery (attackers cannot set custom headers cross-origin).
+ * Custom CSRF filter that enforces token validation on requests authenticated by an ambient credential:
+ * the auth cookies, or an {@code Authorization: Basic} header sent by a browser, which caches and replays it
+ * on cross-site requests. Non-browser clients (SDK, CLI, curl) send neither an {@code Origin} nor a
+ * {@code Sec-Fetch-Site} header and bypass CSRF; a browser-hosted client must send the CSRF token.
  */
 @Requires(property = "micronaut.security.csrf.enabled", value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
 @Requires(beans = CsrfTokenValidator.class)
@@ -56,7 +57,7 @@ public class CsrfTokenFilter implements Ordered {
             return null;
         }
 
-        if (!hasCookieAuth(request)) {
+        if (!hasAmbientCredential(request)) {
             return null;
         }
 
@@ -67,7 +68,7 @@ public class CsrfTokenFilter implements Ordered {
         String csrfToken = resolveCsrfToken(request);
         if (StringUtils.isEmpty(csrfToken)) {
             log.debug(
-                "CSRF rejected for {} {}: cookie-authenticated request with no CSRF token (missing X-CSRF-TOKEN header/field)",
+                "CSRF rejected for {} {}: request with an ambient credential and no CSRF token (missing X-CSRF-TOKEN header/field)",
                 request.getMethod(), request.getPath()
             );
             return HttpResponse.status(HttpStatus.FORBIDDEN);
@@ -85,9 +86,22 @@ public class CsrfTokenFilter implements Ordered {
 
     private static final String JWT_COOKIE_NAME = "JWT";
 
-    private boolean hasCookieAuth(@NonNull HttpRequest<?> request) {
+    private boolean hasAmbientCredential(@NonNull HttpRequest<?> request) {
         return request.getCookies().findCookie(BASIC_AUTH_COOKIE_NAME).isPresent()
-            || request.getCookies().findCookie(JWT_COOKIE_NAME).isPresent();
+            || request.getCookies().findCookie(JWT_COOKIE_NAME).isPresent()
+            || (hasBasicAuthorizationHeader(request) && isBrowserRequest(request));
+    }
+
+    private boolean hasBasicAuthorizationHeader(@NonNull HttpRequest<?> request) {
+        String authorization = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
+        return authorization != null && authorization.regionMatches(true, 0, "Basic ", 0, "Basic ".length());
+    }
+
+    // Browsers always send Origin on a cross-site POST and Sec-Fetch-Site on every request, unlike API clients.
+    private boolean isBrowserRequest(@NonNull HttpRequest<?> request) {
+        String secFetchSite = request.getHeaders().get("Sec-Fetch-Site");
+        return request.getHeaders().get(HttpHeaders.ORIGIN) != null
+            || (secFetchSite != null && !"none".equalsIgnoreCase(secFetchSite));
     }
 
     @Nullable

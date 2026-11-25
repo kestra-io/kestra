@@ -2,10 +2,17 @@
 
 import { addTenantToParameters, getDataOrThrow, resolveTenant } from './shared.gen';
 import { _011A9De69, _02187E7C3, _030A1703e, _030B1A670, _032E9A671, _0480965c, _048Aa80Ed, _0494596B6, _0593C8Eb9, _06666E52f, _067435Ac4, _06B60682e, _0715460C9, _0715B9840, _07628391b, _07E3Fae4f, _0Ec51319, _1Ec18Cc3, _1F4344F1, _1F9D50E4, _27Bdb75e, _3De59Ebf, _407247Bb, _41A7Bacb, _4Cc20E8d, _5196384a, _541Dca5a, _562B4060, _579848F4, _5B713B0f, _62Bef13d, _666C64Ed, _69272D79, _6C34C66c, _7D0E1E4, a76C0Db, ae43B0, e83C44b } from '../sdk.gen';
-import type { ConcurrencyLimit, SourceSearchReplaceApplyRequest, SourceSearchReplaceLineRequest, SourceSearchReplacePreviewRequest } from '../types.gen';
+import type { ConcurrencyLimitControllerConcurrencyLimitUpdateRequest, SourceSearchReplaceApplyRequest, SourceSearchReplaceLineRequest, SourceSearchReplacePreviewRequest } from '../types.gen';
 
 /**
- * Search for flow concurrency limits
+ * Update a flow, namespace or tenant concurrency limit
+ */
+export const updateConcurrencyLimit = (parameters: ConcurrencyLimitControllerConcurrencyLimitUpdateRequest & {
+    tenant?: string;
+}, options?: Omit<Parameters<typeof _06666E52f>[1], 'throwOnError'>) => getDataOrThrow(_06666E52f({ tenant: resolveTenant(parameters?.tenant), concurrencyLimitControllerConcurrencyLimitUpdateRequest: parameters }, options));
+
+/**
+ * Search for flow, namespace and tenant concurrency limits
  */
 export const searchConcurrencyLimits = (parameters?: Omit<Parameters<typeof _1Ec18Cc3>[0], 'tenant'> & {
     tenant?: string;
@@ -17,17 +24,6 @@ export const searchConcurrencyLimits = (parameters?: Omit<Parameters<typeof _1Ec
 export const concurrencyLimit = (parameters: Omit<Parameters<typeof _27Bdb75e>[0], 'tenant'> & {
     tenant?: string;
 }, options?: Omit<Parameters<typeof _27Bdb75e>[1], 'throwOnError'>) => getDataOrThrow(_27Bdb75e(addTenantToParameters(parameters), options));
-
-/**
- * Update a flow concurrency limit
- */
-export const updateConcurrencyLimit = (parameters: Omit<Parameters<typeof _06666E52f>[0], 'concurrencyLimit' | 'tenant'> & ConcurrencyLimit & {
-    tenant?: string;
-}, options?: Omit<Parameters<typeof _06666E52f>[1], 'throwOnError'>) => getDataOrThrow(_06666E52f({
-    ...parameters,
-    tenant: resolveTenant(parameters?.tenant),
-    concurrencyLimit: parameters
-}, options));
 
 /**
  * Create a flow from yaml source

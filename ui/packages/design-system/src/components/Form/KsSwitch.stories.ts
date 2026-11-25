@@ -32,7 +32,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {disabled: false, size: "default", activeText: "", inactiveText: "", activeValue: true, inactiveValue: false},
+    args: {disabled: false, size: "default", activeText: "", inactiveText: ""},
 }
 
 export const WithLabels: Story = {

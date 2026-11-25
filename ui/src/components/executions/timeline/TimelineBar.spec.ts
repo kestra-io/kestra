@@ -152,6 +152,26 @@ describe("TimelineBar", () => {
         document.body.innerHTML = ""
     })
 
+    test("omits the end date row for an execution that is still running", async () => {
+        const mountWith = async (candidate: TimelineExecution) => {
+            const wrapper = i18nMount(TimelineBar, {
+                messages: {"end date": "End date"},
+                props: {leftPercent: 0, widthPercent: 10, dimmed: false, execution: candidate},
+                global: {stubs: {KsTooltip: true, KsDateAgo: true}},
+                attachTo: document.body,
+            })
+            await wrapper.get(".timeline-bar").trigger("click")
+            await vi.waitFor(() => expect(document.querySelector(".timeline-bar-popover")).not.toBeNull())
+            const text = document.querySelector(".timeline-bar-popover")!.textContent
+            wrapper.unmount()
+            document.body.innerHTML = ""
+            return text
+        }
+
+        expect(await mountWith({...execution, ongoing: true})).not.toContain("End date")
+        expect(await mountWith(execution)).toContain("End date")
+    })
+
     test("labels the bar with its flow and readable state", () => {
         const wrapper = mountBar({execution: {...execution, state: "KILLED"}})
 

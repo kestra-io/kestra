@@ -5,7 +5,7 @@
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'KsButton'">{{ $t('interrupt') }}</span>
+        <span v-if="labeled || component !== 'KsButton'">{{ $t('interrupt') }}</span>
 
         <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
@@ -38,7 +38,7 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <KsExecutionStatus size="small" :label="true" class="status-badge" :status="item.code" />
+                            <KsExecutionStatus size="small" class="status-badge" :status="item.code" />
                             <i18n-t keypath="mark as" tag="span" scope="global">
                                 <template #status><code>{{ item.code }}</code></template>
                             </i18n-t>
@@ -78,11 +78,13 @@
 
     const props = withDefaults(defineProps<{
         component?: string
+        labeled?: boolean
         execution: Execution
         taskRun: ExecutionTaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",
+        labeled: false,
         attemptIndex: undefined,
     })
 

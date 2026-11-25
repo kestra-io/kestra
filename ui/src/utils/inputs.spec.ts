@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
-import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize, hasMissingRequiredInputs} from "./inputs"
+import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize, hasMissingRequiredInputs, type InputType} from "./inputs"
 import {inputsToFormData} from "./submitTask"
 import type {InputMetaData} from "../stores/executions"
 
@@ -29,6 +29,23 @@ describe("normalize for BOOL always yields a real boolean", () => {
         for (const value of ["true", "false", true, false, undefined, null, "", "TRUE", 1, 0, {}]) {
             expect(typeof normalize("BOOL", value)).toBe("boolean")
         }
+    })
+})
+
+// The validate response carries the resolved assets, but the form must post their ids back: posting the
+// objects would send "[object Object]", and the server re-fetches every asset from its id anyway.
+describe("normalize for ASSET posts asset ids", () => {
+    it("turns a resolved asset into its id", () => {
+        expect(normalize("ASSET" as InputType, {id: "web-01", namespace: "infra", metadata: {region: "eu"}})).toBe("web-01")
+    })
+
+    it("turns resolved assets into a JSON array of their ids", () => {
+        expect(normalize("ASSET" as InputType, [{id: "web-01"}, {id: "web-02"}])).toBe("[\"web-01\",\"web-02\"]")
+    })
+
+    it("keeps an id, and a JSON array of ids as a JSON array", () => {
+        expect(normalize("ASSET" as InputType, "web-01")).toBe("web-01")
+        expect(normalize("ASSET" as InputType, "[\"web-01\"]")).toBe("[\"web-01\"]")
     })
 })
 
@@ -324,8 +341,29 @@ describe("hasMissingRequiredInputs", () => {
         expect(hasMissingRequiredInputs(flowInputs, null)).toBe(true)
     })
 
+    // https://github.com/kestra-io/kestra/issues/22518: a cleared text field sends "" and a cleared multi-select sends []
+    it("reports a required input cleared to an empty string or an empty array", () => {
+        expect(hasMissingRequiredInputs(flowInputs, {region: ""})).toBe(true)
+        expect(hasMissingRequiredInputs(flowInputs, {region: []})).toBe(true)
+        expect(hasMissingRequiredInputs(flowInputs, {region: "EU", batchSize: ""})).toBe(false)
+        expect(hasMissingRequiredInputs(flowInputs, {region: ["EU"]})).toBe(false)
+    })
+
+    it("keeps falsy but filled values", () => {
+        expect(hasMissingRequiredInputs(flowInputs, {region: 0})).toBe(false)
+        expect(hasMissingRequiredInputs(flowInputs, {region: false})).toBe(false)
+    })
+
     it("needs nothing when the flow has no required input", () => {
         expect(hasMissingRequiredInputs([{id: "batchSize", required: false}], null)).toBe(false)
         expect(hasMissingRequiredInputs(undefined, null)).toBe(false)
+    })
+
+    it("checks FORM children by their dotted id", () => {
+        const formInputs = [{id: "env", type: "FORM", inputs: [{id: "region"}, {id: "zone", required: false}]}]
+        expect(hasMissingRequiredInputs(formInputs, {"env.region": "EU"})).toBe(false)
+        expect(hasMissingRequiredInputs(formInputs, {"env.zone": "a"})).toBe(true)
+        expect(hasMissingRequiredInputs(formInputs, {env: "EU"})).toBe(true)
+        expect(hasMissingRequiredInputs(formInputs, {"env.region": ""})).toBe(true)
     })
 })

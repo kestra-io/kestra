@@ -1,6 +1,7 @@
 <template>
     <KsDialog
         v-model="visible"
+        :dirty="isDirty"
         destroyOnClose
         appendToBody
         large
@@ -185,12 +186,17 @@
     }))
 
     const generateId = () => `mytrigger_${Math.floor(10000 + Math.random() * 90000)}`
-    const formModel = ref({
+    const formModel = ref<{namespace: string | undefined; flowId: string; triggerId: string}>({
         namespace: "",
         flowId: "",
         triggerId: generateId(),
     })
     const triggerPropertiesModel = ref<Record<string, unknown>>({})
+    const baseline = ref("")
+    /** The no-code switch writes `false` on mount when the schema default is the string "false", so only a real value counts. */
+    const isDirty = computed(() => JSON.stringify(formModel.value) !== baseline.value || Object.values(triggerPropertiesModel.value).some(value =>
+        value !== undefined && value !== null && value !== "" && value !== false && !(Array.isArray(value) && value.length === 0),
+    ))
 
     // Fields handled by the modal itself, not rendered through the no-code form.
     const RESERVED_FIELDS = new Set(["id", "type", "description"])
@@ -206,13 +212,16 @@
         if (!fields) return {}
         return Object.fromEntries(
             Object.entries(fields).filter(([key]) => !RESERVED_FIELDS.has(key)),
-        ) as unknown as Record<string, Schema>
+        ) as Record<string, Schema>
     })
 
     const triggerSchema = computed<{required?: string[]}>(() => {
-        const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
-        const required = wrapper?.required?.filter(key => !RESERVED_FIELDS.has(key))
-        return required?.length ? {required} : {}
+        const wrapper = triggerPlugin.value?.schema?.properties
+        const declared: unknown = wrapper ? Reflect.get(wrapper, "required") : undefined
+        const required = Array.isArray(declared)
+            ? declared.filter((key: unknown): key is string => typeof key === "string" && !RESERVED_FIELDS.has(key))
+            : []
+        return required.length ? {required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
@@ -291,10 +300,11 @@
     }
 
     const addTriggerToFlow = () => {
-        if (!canSubmit.value) return
+        const namespace = formModel.value.namespace
+        if (!canSubmit.value || !namespace) return
 
         triggerDraftStore.setDraft({
-            namespace: formModel.value.namespace,
+            namespace,
             flowId: formModel.value.flowId,
             triggerYaml: triggerBlock.value,
         })
@@ -302,7 +312,7 @@
         visible.value = false
         router.push({
             name: "flows/update/edit",
-            params: {namespace: formModel.value.namespace, id: formModel.value.flowId},
+            params: {namespace, id: formModel.value.flowId},
             query: {createTrigger: "true"},
         })
     }
@@ -313,6 +323,7 @@
             copied.value = false
             formModel.value = {namespace: "", flowId: "", triggerId: generateId()}
             triggerPropertiesModel.value = {}
+            baseline.value = JSON.stringify(formModel.value)
             loadDocumentation()
         }
     }, {immediate: true})
@@ -350,21 +361,11 @@
     }
 
     .modal-tabs {
-        & :deep(.kel-tabs__header) {
-            margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
-        }
+        --ks-tabs-header-margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
     }
 
     .form {
-        & :deep(.kel-form-item):first-of-type {
-            margin-top: 0;
-        }
-
-        & :deep(.kel-form-item__label) {
-            font-weight: var(--ks-font-weight-semibold);
-        }
-
-        & :deep(.id-input .kel-input__inner) {
+        & .id-input {
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
         }
@@ -391,7 +392,7 @@
         color: var(--ks-text-success);
     }
 
-    .docs :deep(.plugin-doc) {
+    .docs .plugin-doc {
         max-width: 100%;
         background: transparent !important;
     }

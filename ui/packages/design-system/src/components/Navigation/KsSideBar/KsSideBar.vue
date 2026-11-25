@@ -1,5 +1,5 @@
 <template>
-    <nav class="ks-sidebar" :aria-label="ariaLabel">
+    <nav class="ks-sidebar" :aria-label="ariaLabel ?? $t('ks_sidebar.label')">
         <div v-if="$slots.header" class="ks-sidebar__header">
             <slot name="header" />
         </div>
@@ -13,13 +13,13 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import KsScrollbar from "../../Basic/KsScrollbar.vue"
 
-    withDefaults(defineProps<{
+    defineProps<{
         ariaLabel?: string
-    }>(), {
-        ariaLabel: "Sidebar",
-    })
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     defineSlots<{
         header?(): unknown

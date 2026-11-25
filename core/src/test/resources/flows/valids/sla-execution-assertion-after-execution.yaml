@@ -1,0 +1,24 @@
+id: sla-execution-assertion-after-execution
+namespace: io.kestra.tests
+
+sla:
+  - id: low_value
+    type: EXECUTION_ASSERTION
+    behavior: FAIL
+    assert: "{{ (outputs.check.values.value ?? 0) < 10 }}"
+
+tasks:
+  - id: check
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      value: 42
+
+  - id: side_effect
+    type: io.kestra.plugin.core.debug.Return
+    format: should not run
+
+afterExecution:
+  - id: end
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      state: "{{ execution.state }}"

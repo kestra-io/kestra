@@ -12,14 +12,14 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 
 /**
- * Routing requirements for a Flow, Task, or Trigger.
+ * Routing requirements with literal tags: a namespace or tenant default, or a {@link FlowWorkerSelector} once rendered.
  *
  * @param tags required tags (RFC 1123 labels, max 20)
  * @param match matching strategy; defaults to {@link WorkerSelectorMatch#ALL}
  * @param fallback strategy when no worker is available; defaults to {@link WorkerQueueFallback#FAIL}.
  */
 public record WorkerSelector(
-    @Size(max = 20)
+    @Size(max = WorkerSelector.MAX_TAGS)
     @Schema(
         description = "Required tags used to route to a matching Worker Queue. "
             + "Each tag is an RFC 1123 label: lowercase alphanumerics and hyphens, "
@@ -33,6 +33,8 @@ public record WorkerSelector(
     ) WorkerSelectorMatch match,
 
     @Schema(description = "Strategy when no worker is available. Defaults to FAIL when null.") WorkerQueueFallback fallback) {
+
+    public static final int MAX_TAGS = 20;
 
     /**
      * Creates a new {@link WorkerSelector} instance.

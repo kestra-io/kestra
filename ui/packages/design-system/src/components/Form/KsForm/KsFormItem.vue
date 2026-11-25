@@ -32,7 +32,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<KsFormItemProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsFormItemProps>>(), {
+    const props = withDefaults(defineProps<KsFormItemProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsFormItemProps> & {onFocusout?: (event: FocusEvent) => void})>(), {
         inline: false,
         stacked: false,
         wideLabel: false,

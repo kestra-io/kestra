@@ -4,10 +4,16 @@ import {flushPromises, type VueWrapper} from "@vue/test-utils"
 import {createPinia} from "pinia"
 
 const searchLogs = vi.hoisted(() => vi.fn())
+const createBackfill = vi.hoisted(() => vi.fn().mockResolvedValue({}))
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({
     searchLogs,
     deleteLogsFromFlow: vi.fn(),
+}))
+
+vi.mock("@kestra-io/kestra-sdk/triggers", async (importOriginal) => ({
+    ...await importOriginal<typeof import("@kestra-io/kestra-sdk/triggers")>(),
+    createBackfill,
 }))
 
 // The component watches the route, so the stub has to be reactive - a plain object
@@ -300,9 +306,9 @@ describe("FlowTriggers - execute backfill button", () => {
         document.body.innerHTML = ""
     })
 
-    async function openBackfill() {
+    async function openBackfill(inputs = flowInputs) {
         permissions.isAllowed = (resource: string, action: string) => resource === "TRIGGER" && action === "BACKFILL"
-        Object.assign(flowStore.flow, {inputs: flowInputs})
+        Object.assign(flowStore.flow, {inputs})
 
         const wrapper = i18nMount(FlowTriggers, {
             props: {embed: true},
@@ -356,6 +362,36 @@ describe("FlowTriggers - execute backfill button", () => {
         await fillInputs(wrapper, {region: "EU"})
 
         expect(executeButton()?.disabled).toBe(false)
+    })
+
+    it("normalizes DATE and TIME inputs when submitting backfill", async () => {
+        createBackfill.mockClear()
+        const dateInputs = [
+            {id: "day", type: "DATE"},
+            {id: "at", type: "TIME"},
+        ]
+
+        const wrapper = await openBackfill(dateInputs)
+
+        await fillInputs(wrapper, {
+            day: "2026-01-15",
+            at: "2026-01-15T09:30:00",
+        })
+
+        expect(executeButton()?.disabled).toBe(false)
+        executeButton()?.click()
+        await flushPromises()
+
+        expect(createBackfill).toHaveBeenCalledWith(expect.objectContaining({
+            namespace: "company.team",
+            flowId: "my-flow",
+            backfill: expect.objectContaining({
+                inputs: {
+                    day: "2026-01-15",
+                    at: "09:30:00",
+                },
+            }),
+        }))
     })
 })
 

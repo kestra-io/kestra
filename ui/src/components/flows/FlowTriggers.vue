@@ -388,7 +388,8 @@
 
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {hasMissingRequiredInputs} from "../../utils/inputs"
+    import {hasMissingRequiredInputs, flattenInputs} from "../../utils/inputs"
+    import {normalizeInputValues} from "../../utils/submitTask"
     import type {ExecutionLabelInput} from "../../utils/executionLabels"
 
     import {useFlowStore} from "../../stores/flow"
@@ -575,11 +576,14 @@
         const {start} = backfill.value
         if (!start) return undefined
         const labels = backfill.value.labels.filter((label): label is Label => Boolean(label.key && label.value))
+        const inputs = backfill.value.inputs
+            ? normalizeInputValues(flattenInputs(flowStore.flow?.inputs), backfill.value.inputs)
+            : undefined
         return {
             start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
-            inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
+            inputs: inputs as BackfillRequest["inputs"],
             labels: labels.length ? labels : undefined,
         }
     })

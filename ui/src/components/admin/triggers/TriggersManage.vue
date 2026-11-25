@@ -402,7 +402,8 @@
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
     import {usePageSize} from "../../../composables/usePageSize"
-    import {hasMissingRequiredInputs} from "../../../utils/inputs"
+    import {hasMissingRequiredInputs, flattenInputs} from "../../../utils/inputs"
+    import {normalizeInputValues} from "../../../utils/submitTask"
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
     import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
@@ -701,11 +702,14 @@
         const {start} = backfill.value
         if (!start) return undefined
         const labels = backfill.value.labels.filter((label): label is Label => Boolean(label.key && label.value))
+        const inputs = backfill.value.inputs
+            ? normalizeInputValues(flattenInputs(executionsStore.flow?.inputs ?? flowStore.flow?.inputs), backfill.value.inputs)
+            : undefined
         return {
             start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
-            inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
+            inputs: inputs as BackfillRequest["inputs"],
             labels: labels.length ? labels : undefined,
         }
     })
@@ -1043,7 +1047,7 @@
         if (end && start > end) {
             return true
         }
-        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+        if (hasMissingRequiredInputs(executionsStore.flow?.inputs ?? flowStore.flow?.inputs, inputs)) {
             return true
         }
 

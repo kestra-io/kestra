@@ -2,7 +2,7 @@
     <div class="h-100 d-flex flex-column">
         <img
             v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
-            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+            :src="fileUrl"
             class="image-preview"
         >
         <div v-else-if="bigFile" class="big-file-warning" data-test="big-file-warning">
@@ -79,6 +79,7 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute} from "vue-router"
     import {apiUrl} from "override/utils/route"
+    import {safePath} from "../../composables/useBaseNamespaces"
     import type * as monaco from "monaco-editor/editor/editor.api"
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
@@ -242,7 +243,7 @@
     const namespace = computed(() => flowStore.flow?.namespace)
     const fileNamespace = computed(() => (namespace.value ?? route.params?.namespace)?.toString())
     const humanSize = computed(() => fileSize.value === undefined ? "" : humanFileSize(fileSize.value))
-    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=${encodeURI(`/${props.path}`)}`)
+    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=/${safePath(props.path)}`)
     const isCreating = computed(() => flowStore.isCreating)
 
     const timeout = ref<any>(null)

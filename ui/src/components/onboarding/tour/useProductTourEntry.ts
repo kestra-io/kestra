@@ -26,7 +26,7 @@ export function useProductTourMenuEntry() {
     const wasSkipped = computed(() => tourStore.state.status === "skipped")
 
     const visible = computed(
-        () => (isNewInstance.value || wasSkipped.value)
+        () => (isNewInstance.value || (wasSkipped.value && !variant.entryGate))
             && !tourStore.isDismissed
             && !tourStore.isGuidedActive,
     )
@@ -41,6 +41,7 @@ export function useProductTourMenuEntry() {
 
     onMounted(refresh)
     watch(() => tourStore.state.status, () => void refresh())
+    if (variant.entryGate) watch(variant.entryGate.recheckOn, () => void refresh())
 
     return {
         visible,

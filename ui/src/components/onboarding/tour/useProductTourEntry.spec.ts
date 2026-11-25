@@ -1,5 +1,5 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
-import {defineComponent, nextTick} from "vue"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
+import {defineComponent, nextTick, ref} from "vue"
 import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 
@@ -8,13 +8,15 @@ vi.mock("vue-router", () => ({
     useRoute: () => ({name: "home", params: {tenant: "main"}}),
 }))
 
-// A variant whose eligibility check each test controls
+// A variant whose eligibility check and entry gate each test controls
 const eligible = vi.fn<() => Promise<boolean>>()
+const gate: {entryGate?: {recheckOn: () => unknown}} = {}
 vi.mock("override/components/onboarding/tour/useTourVariant", () => ({
     useTourVariant: () => ({
         i18nPrefix: "onboarding.tour",
         entryRoute: (tenant?: string) => ({name: "welcome", params: {tenant}}),
         eligible: () => eligible(),
+        ...gate,
     }),
 }))
 
@@ -165,6 +167,70 @@ describe("useProductTourMenuEntry", () => {
         const entry = setup(useProductTourMenuEntry)
 
         expect(entry.tourRoute.value).toEqual({name: "welcome", params: {tenant: "main"}})
+    })
+})
+
+describe("useProductTourMenuEntry with an entry gate", () => {
+    const recheck = ref(0)
+
+    beforeEach(() => {
+        localStorage.clear()
+        setActivePinia(createPinia())
+        eligible.mockReset()
+        recheck.value = 0
+        gate.entryGate = {recheckOn: () => recheck.value}
+    })
+
+    afterEach(() => {
+        delete gate.entryGate
+    })
+
+    it("is hidden once the tour was skipped while the variant is not eligible", async () => {
+        eligible.mockResolvedValue(false)
+        const store = useProductTourStore()
+        store.state.status = "skipped"
+        const entry = setup(useProductTourMenuEntry)
+        await settle()
+
+        expect(entry.visible.value).toBe(false)
+    })
+
+    it("is shown to resume a skipped tour while the variant is eligible", async () => {
+        eligible.mockResolvedValue(true)
+        const store = useProductTourStore()
+        store.state.status = "skipped"
+        const entry = setup(useProductTourMenuEntry)
+        await settle()
+
+        expect(entry.visible.value).toBe(true)
+        expect(entry.menuKey.value).toBe("menu_resume")
+    })
+
+    it("hides the entry without a reload when the variant stops being eligible", async () => {
+        eligible.mockResolvedValue(true)
+        const entry = setup(useProductTourMenuEntry)
+        await settle()
+        expect(entry.visible.value).toBe(true)
+
+        eligible.mockResolvedValue(false)
+        recheck.value++
+        await settle()
+
+        expect(eligible).toHaveBeenCalledTimes(2)
+        expect(entry.visible.value).toBe(false)
+    })
+
+    it("shows the entry again when the variant becomes eligible", async () => {
+        eligible.mockResolvedValue(false)
+        const entry = setup(useProductTourMenuEntry)
+        await settle()
+        expect(entry.visible.value).toBe(false)
+
+        eligible.mockResolvedValue(true)
+        recheck.value++
+        await settle()
+
+        expect(entry.visible.value).toBe(true)
     })
 })
 

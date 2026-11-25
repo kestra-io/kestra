@@ -2587,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "Asystent nie zwrócił odpowiedzi. Spróbuj ponownie.",
+          "outputLimit": "Asystentowi zabrakło tokenów wyjściowych, zanim mógł odpowiedzieć. Skróć swoją wiadomość lub rozpocznij nowy czat.",
+          "contentFiltered": "Dostawca AI zablokował odpowiedź. Przeformułuj wiadomość lub usuń treść, która mogła uruchomić filtry dostawcy.",
           "retry": "Ponów próbę"
         },
         "cancelled": "Tura anulowana",

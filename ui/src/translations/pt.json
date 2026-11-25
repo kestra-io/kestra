@@ -2587,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "O assistente não retornou uma resposta. Por favor, tente novamente.",
+          "outputLimit": "O assistente ficou sem tokens de saída antes de conseguir responder. Encurte sua mensagem ou inicie um novo chat.",
+          "contentFiltered": "O provedor de IA bloqueou a resposta. Reformule sua mensagem ou remova o conteúdo que pode ter acionado os filtros do provedor.",
           "retry": "Tentar Novamente"
         },
         "cancelled": "Rodada cancelada",

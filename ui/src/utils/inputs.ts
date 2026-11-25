@@ -1,4 +1,4 @@
-import moment from "moment/moment"
+import moment from "moment-timezone"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {storageKeys} from "./constants"
 
@@ -159,6 +159,38 @@ export function buildWizardSteps(inputs: FlowInput[] | undefined): WizardStep[] 
     flushRun()
     result.push({kind: "recap"})
     return result
+}
+
+function currentTimezone(): string {
+    return localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess()
+}
+
+/**
+ * The date picker edits a browser-local `Date`, so the digits it shows are the browser's wall clock.
+ * Turns the instant held by the form into the `Date` whose local fields read as that instant does
+ * in `timezone` (the Time Zone preference), so the picker shows the same zone as the rest of the UI.
+ */
+export function instantToPickerDate(value: unknown, timezone: string = currentTimezone()): Date | undefined {
+    if (value === null || value === undefined || value === "") {
+        return undefined
+    }
+    const zoned = moment(value as moment.MomentInput).tz(timezone)
+    if (!zoned.isValid()) {
+        return undefined
+    }
+    return new Date(zoned.year(), zoned.month(), zoned.date(), zoned.hour(), zoned.minute(), zoned.second(), zoned.millisecond())
+}
+
+/**
+ * Inverse of {@link instantToPickerDate}: reads the picker's local fields as a wall clock in
+ * `timezone` and returns the matching instant.
+ */
+export function pickerDateToInstant(value: Date | null | undefined, timezone: string = currentTimezone()): Date | undefined {
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+        return undefined
+    }
+    const format = "YYYY-MM-DD HH:mm:ss.SSS"
+    return moment.tz(moment(value).format(format), format, timezone).toDate()
 }
 
 export function normalize(type: InputType | undefined, value: any) {

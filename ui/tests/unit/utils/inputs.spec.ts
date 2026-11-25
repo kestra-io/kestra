@@ -1,5 +1,5 @@
-import {describe, expect, it} from "vitest"
-import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "../../../src/utils/inputs"
+import {afterEach, describe, expect, it} from "vitest"
+import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize, instantToPickerDate, pickerDateToInstant} from "../../../src/utils/inputs"
 import {inputsToFormData} from "../../../src/utils/submitTask"
 
 const momentStub = {
@@ -296,5 +296,47 @@ describe("inputsToFormData over flattened FORM inputs (submit contract)", () => 
 
         expect(formData?.get("environment.region")).toBe("EU")
         expect(formData?.get("environment.data_center")).toBeNull()
+    })
+})
+
+// https://github.com/kestra-io/kestra-ee/issues/12807
+describe("DATETIME picker time zone", () => {
+    const original = process.env.TZ
+
+    afterEach(() => {
+        // Assigning undefined would store the string "undefined", so drop the variable when it was unset.
+        if (original === undefined) delete process.env.TZ
+        else process.env.TZ = original
+    })
+
+    it("reads the typed wall clock in the preference zone, whatever the browser zone is", () => {
+        process.env.TZ = "Asia/Kolkata"
+        const typed = new Date(2026, 10, 24, 9, 0, 0)
+
+        expect(pickerDateToInstant(typed, "Europe/Paris")?.toISOString()).toBe("2026-11-24T08:00:00.000Z")
+        expect(pickerDateToInstant(typed, "UTC")?.toISOString()).toBe("2026-11-24T09:00:00.000Z")
+    })
+
+    it("shows an instant as the wall clock of the preference zone", () => {
+        process.env.TZ = "Europe/Dublin"
+
+        expect(instantToPickerDate("2026-11-24T08:00:00.000Z", "Europe/Paris")).toEqual(new Date(2026, 10, 24, 9, 0, 0))
+    })
+
+    it("round-trips across a daylight saving boundary", () => {
+        process.env.TZ = "Asia/Kolkata"
+        const instant = new Date("2026-07-24T07:00:00.000Z")
+        const picked = instantToPickerDate(instant, "Europe/Paris")
+
+        expect(picked).toEqual(new Date(2026, 6, 24, 9, 0, 0))
+        expect(pickerDateToInstant(picked, "Europe/Paris")?.toISOString()).toBe(instant.toISOString())
+    })
+
+    it("returns undefined for empty or invalid values", () => {
+        expect(instantToPickerDate(undefined, "UTC")).toBeUndefined()
+        expect(instantToPickerDate("", "UTC")).toBeUndefined()
+        expect(instantToPickerDate("nope", "UTC")).toBeUndefined()
+        expect(pickerDateToInstant(null, "UTC")).toBeUndefined()
+        expect(pickerDateToInstant(new Date(NaN), "UTC")).toBeUndefined()
     })
 })

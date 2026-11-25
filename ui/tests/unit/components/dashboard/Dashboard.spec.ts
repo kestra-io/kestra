@@ -28,12 +28,23 @@ vi.mock("../../../../src/stores/dashboard", async () => {
 })
 vi.mock("override/stores/misc", () => ({useMiscStore: () => ({configs: {isCustomDashboardsEnabled: false}})}))
 vi.mock("../../../../src/composables/useRestoreUrl", () => ({default: () => ({goToRestoreUrl: () => Promise.resolve()})}))
-vi.mock("../../../../src/components/dashboard/sections/Sections.vue", () => ({
-    default: defineComponent({
-        props: {charts: {type: Array as PropType<Chart[]>, default: () => []}},
-        setup: (props) => () => h("div", {"data-test": "sections"}, props.charts.map((chart) => chart.content)),
-    }),
-}))
+const chartMounts = vi.hoisted(() => ({count: 0}))
+
+vi.mock("../../../../src/components/dashboard/sections/Sections.vue", () => {
+    const ChartBlock = defineComponent({
+        props: {chart: {type: Object as PropType<Chart>, required: true}},
+        setup: (props) => {
+            chartMounts.count++
+            return () => h("div", props.chart.content)
+        },
+    })
+    return {
+        default: defineComponent({
+            props: {charts: {type: Array as PropType<Chart[]>, default: () => []}},
+            setup: (props) => () => h("div", {"data-test": "sections"}, props.charts.map((chart) => h(ChartBlock, {key: chart.id, chart}))),
+        }),
+    }
+})
 vi.mock("@kestra-io/design-system", async (importOriginal) => ({
     ...await importOriginal<typeof import("@kestra-io/design-system")>(),
     KsFilter: defineComponent({render: () => null}),
@@ -51,5 +62,6 @@ describe("Dashboard", () => {
         await flushPromises()
 
         expect(wrapper.get("[data-test=sections]").text()).toContain("flowId: all_inputs")
+        expect(chartMounts.count).toBe(2)
     })
 })

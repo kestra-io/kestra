@@ -1,13 +1,15 @@
 import {describe, it, expect, vi} from "vitest"
 import {createI18n} from "vue-i18n"
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
+import {KsSkeleton} from "@kestra-io/design-system"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({name: "dashboards", params: {}, query: {}}),
 }))
 
+const chartPreview = vi.hoisted(() => vi.fn())
 vi.mock("../../../../src/stores/dashboard", () => ({
-    useDashboardStore: () => ({generate: vi.fn(), chartPreview: vi.fn()}),
+    useDashboardStore: () => ({generate: vi.fn(), chartPreview}),
 }))
 
 import Markdown from "../../../../src/components/dashboard/sections/Markdown.vue"
@@ -15,9 +17,9 @@ import en from "../../../../src/translations/en.json"
 
 const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: en})
 
-function mountMarkdown(chart: any) {
+function mountMarkdown(chart: any, showDefault = false) {
     return mount(Markdown, {
-        props: {chart, filters: [], showDefault: false},
+        props: {chart, filters: [], showDefault},
         global: {plugins: [i18n]},
     })
 }
@@ -54,5 +56,27 @@ describe("dashboard sections/Markdown.vue", () => {
         expect(wrapper.text()).toContain("Export check")
         expect(wrapper.text()).not.toContain("chartOptions")
         expect(wrapper.text()).not.toContain("io.kestra.plugin.core.dashboard.chart.Markdown")
+    })
+
+    it("shows a skeleton, not the empty state, while the flow description loads", async () => {
+        let answer: (value: unknown) => void = () => {}
+        chartPreview.mockReturnValueOnce(new Promise((resolve) => answer = resolve))
+        const wrapper = mountMarkdown({
+            id: "description",
+            type: "io.kestra.plugin.core.dashboard.chart.Markdown",
+            source: {type: "FlowDescription", namespace: "company.team", flowId: "described"},
+            content: "id: description",
+        }, true)
+        await flushPromises()
+
+        expect(wrapper.findComponent(KsSkeleton).exists()).toBe(true)
+        expect(wrapper.text()).not.toContain("No description")
+
+        answer({results: [{description: "## Described flow"}]})
+        await flushPromises()
+        await vi.dynamicImportSettled()
+
+        expect(wrapper.findComponent(KsSkeleton).exists()).toBe(false)
+        expect(wrapper.text()).toContain("Described flow")
     })
 })

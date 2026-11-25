@@ -1489,6 +1489,7 @@
             "flow_default_tab": "Standard-Tab für Flows",
             "triggers_default_tab": "Standard-Tab für Trigger",
             "playground": "Playground",
+            "open_docs_tab": "Docs-Tab öffnen",
             "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
             "task_edit_default_mode": "Standard-Bearbeitungsmodus für Tasks",
             "flow_template": "Standard-Flow-Vorlage"
@@ -1505,6 +1506,7 @@
             "triggers_default_tab": "Tab, der beim Navigieren zur Trigger-Seite ausgewählt wird.",
             "auto_refresh_interval": "Sekunden zwischen automatischen Datenaktualisierungen auf Listenseiten.",
             "playground": "Tasks einzeln im Editor-Playground ausführen.",
+            "open_docs_tab": "Öffne den Docs-Tab neben dem Editor. Gilt für neue Flows und Flows, die du noch nicht geöffnet hast.",
             "task_edit_default_mode": "Wie ein Task standardmäßig aus dem No-Code-Editor geöffnet wird.",
             "flow_template": "YAML, das im Editor geöffnet wird, wenn du einen neuen Flow erstellst. Die ID und der Namespace können weggelassen werden, da sie für dich generiert werden. Wenn das Feld leer ist, wird die für die Instanz konfigurierte Vorlage verwendet."
           },

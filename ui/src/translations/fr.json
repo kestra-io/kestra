@@ -1489,6 +1489,7 @@
             "flow_default_tab": "Onglet Flow par Défaut",
             "triggers_default_tab": "Onglet par défaut des Triggers",
             "playground": "Aire de jeu",
+            "open_docs_tab": "Ouvrir l'onglet Docs",
             "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
             "task_edit_default_mode": "Mode d'édition de Task par défaut",
             "flow_template": "Modèle de flow par défaut"
@@ -1505,6 +1506,7 @@
             "triggers_default_tab": "Onglet sélectionné lors de la navigation vers la page des triggers.",
             "auto_refresh_interval": "Secondes entre les actualisations automatiques des données sur les pages de liste.",
             "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur.",
+            "open_docs_tab": "Ouvrez l'onglet Docs à côté de l'éditeur. S'applique aux nouveaux flows et aux flows que vous n'avez jamais ouverts auparavant.",
             "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code.",
             "flow_template": "Le YAML s'ouvre dans l'éditeur lorsque vous créez un nouveau flow. L'id et le namespace peuvent être omis, car ils sont générés automatiquement. Si ce champ est vide, le template configuré pour l'instance est utilisé."
           },

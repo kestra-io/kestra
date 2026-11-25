@@ -1489,6 +1489,7 @@
             "flow_default_tab": "Domyślna zakładka Flow",
             "triggers_default_tab": "Domyślna zakładka Triggerów",
             "playground": "Playground",
+            "open_docs_tab": "Otwórz zakładkę Docs",
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
             "task_edit_default_mode": "Domyślny tryb edycji Taska",
             "flow_template": "Domyślny szablon Flow"
@@ -1505,6 +1506,7 @@
             "triggers_default_tab": "Zakładka wybierana przy przejściu do strony Triggerów.",
             "auto_refresh_interval": "Sekundy między automatycznymi odświeżeniami danych na stronach list.",
             "playground": "Uruchamiaj Taski pojedynczo w Playground edytora.",
+            "open_docs_tab": "Otwórz zakładkę Docs obok edytora. Dotyczy nowych Flowów i Flowów, których wcześniej nie otwierałeś.",
             "task_edit_default_mode": "Jak domyślnie otwiera się Task z edytora no-code.",
             "flow_template": "YAML otwierany w edytorze, gdy tworzysz nowy Flow. ID i namespace można pominąć, ponieważ są generowane automatycznie. Gdy pole jest puste, używany jest szablon skonfigurowany dla instancji."
           },

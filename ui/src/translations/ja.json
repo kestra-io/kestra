@@ -1489,6 +1489,7 @@
             "flow_default_tab": "デフォルト Flow タブ",
             "triggers_default_tab": "デフォルトトリガーのタブ",
             "playground": "プレイグラウンド",
+            "open_docs_tab": "Docsタブを開く",
             "auto_refresh_interval": "自動更新間隔",
             "task_edit_default_mode": "デフォルトのTask編集モード",
             "flow_template": "デフォルトのflowテンプレート"
@@ -1505,6 +1506,7 @@
             "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。",
             "auto_refresh_interval": "リストページでの自動データ更新の間隔（秒）。",
             "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
+            "open_docs_tab": "エディターの隣にあるDocsタブを開きます。新規Flowおよび以前に開いたことのないFlowに適用されます。",
             "task_edit_default_mode": "ノーコードエディターからタスクがデフォルトで開く方法。",
             "flow_template": "新しいflowを作成すると、エディターでYAMLが開きます。idとnamespaceは自動生成されるため、省略できます。これが空の場合、インスタンスに設定されているテンプレートが使用されます。"
           },

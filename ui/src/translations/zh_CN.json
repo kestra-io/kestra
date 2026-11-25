@@ -2127,7 +2127,6 @@
     "items": "项目",
     "iterations": "迭代次数",
     "load_10_more": "加载更多10项",
-    "show_all_executions": "显示所有执行",
     "open_subflow_execution": "打开 {flow} subflow 执行",
     "loop_iterations_shown": "已显示 {shown} / {total}",
     "loop_iterations_load_error": "加载迭代失败",

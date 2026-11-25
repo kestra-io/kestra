@@ -34,6 +34,7 @@
                     <GanttTaskIcon v-else :taskType="node.taskType" />
                     <h2>{{ title }}</h2>
                     <KsExecutionStatus :status="state" />
+                    <GanttSubflowExecutionLink v-if="node.kind === 'taskRun'" :key="node.key" :node="node" />
                 </span>
                 <span class="title-meta" data-test="gantt-panel-meta">
                     <template v-if="node.kind === 'loop'">
@@ -68,6 +69,7 @@
     import GanttPanelLoop from "./GanttPanelLoop.vue"
     import GanttPanelIteration from "./GanttPanelIteration.vue"
     import GanttPanelTaskRun from "./GanttPanelTaskRun.vue"
+    import GanttSubflowExecutionLink from "./GanttSubflowExecutionLink.vue"
     import {useGanttTimeline} from "../ganttTimeline"
     import {iterationLabel, loopRefOf, owningIteration, useGanttTree, type Ancestor} from "./ganttTree"
 

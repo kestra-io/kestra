@@ -2127,7 +2127,6 @@
     "items": "элементы",
     "iterations": "Итерации",
     "load_10_more": "Загрузить ещё 10",
-    "show_all_executions": "Показать все выполнения",
     "open_subflow_execution": "Открыть выполнение subflow {flow}",
     "loop_iterations_shown": "Показано {shown} из {total}",
     "loop_iterations_load_error": "Не удалось загрузить итерации",

@@ -74,7 +74,7 @@
                 class="tree-link"
                 :to="allExecutionsRoute"
             >
-                {{ $t("show_all_executions") }}
+                {{ $t("gantt_loop_show_all") }}
             </KsButton>
         </GanttMessageRow>
     </div>

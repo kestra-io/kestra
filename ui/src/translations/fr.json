@@ -2127,7 +2127,6 @@
     "items": "éléments",
     "iterations": "Itérations",
     "load_10_more": "Charger 10 de plus",
-    "show_all_executions": "Afficher toutes les exécutions",
     "open_subflow_execution": "Ouvrir l'exécution du subflow {flow}",
     "loop_iterations_shown": "{shown} sur {total} affichés",
     "loop_iterations_load_error": "Échec du chargement des itérations",

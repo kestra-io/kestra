@@ -75,14 +75,14 @@
                     }"
                     :prefix="'executions'"
                     :tableOptions="{
-                        chart: {shown: !hideChart && canViewCharts, value: showChart, callback: onShowChartChange},
+                        chart: {shown: !chartHidden && canViewCharts, value: showChart, callback: onShowChartChange},
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                     :defaultDuration="chartDefaultDuration"
                 >
-                    <template #extra v-if="!hideChart && canViewCharts && showChart">
+                    <template #extra v-if="!chartHidden && canViewCharts && showChart">
                         <KsSegmented
                             :modelValue="chartMode"
                             :options="chartModeOptions"
@@ -557,6 +557,7 @@
 
     import useRouteContext from "../../composables/useRouteContext"
     import {useIterationsListInfo} from "../../composables/useLoopLineage"
+    import {iterationsListFilters} from "../../utils/loopLineage"
     import {sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     import {useFlowStore} from "../../stores/flow"
@@ -904,6 +905,8 @@
     })
 
     const iterationsListInfo = useIterationsListInfo(() => !props.embed && !props.title)
+    // The executions chart cannot filter on a Loop's parent and task, so it would count every iteration of every Loop.
+    const chartHidden = computed(() => props.hideChart || iterationsListFilters(route.query) !== undefined)
     const routeInfo = computed<{title: string; breadcrumb?: KsBreadcrumbItem[]}>(() => iterationsListInfo.value ?? {title: props.title ?? t("executions")})
     useRouteContext(routeInfo, props.embed)
 
@@ -1075,7 +1078,7 @@
     const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
 
     function showStatChart(mode: ChartMode) {
-        return !props.hideChart && canViewCharts.value && isDisplayedTop.value && showChart.value && chartMode.value === mode
+        return !chartHidden.value && canViewCharts.value && isDisplayedTop.value && showChart.value && chartMode.value === mode
     }
 
     const refresh = () => {

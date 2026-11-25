@@ -2127,7 +2127,6 @@
     "items": "items",
     "iterations": "Iterations",
     "load_10_more": "Load 10 more",
-    "show_all_executions": "Show all executions",
     "open_subflow_execution": "Open the {flow} subflow execution",
     "loop_iterations_shown": "{shown} of {total} shown",
     "loop_iterations_load_error": "Failed to load iterations",

@@ -1,0 +1,55 @@
+import {describe, it, expect, vi} from "vitest"
+import {defineComponent, h, type PropType} from "vue"
+import {flushPromises, mount} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
+import {createPinia} from "pinia"
+import type {Chart} from "../../../../src/components/dashboard/composables/useDashboards"
+
+const current = vi.hoisted(() => ({
+    route: {name: "flows/update/overview", params: {tenant: "main", namespace: "company.team", id: "parent"}, query: {}} as {name: string; params: Record<string, string>; query: Record<string, string>},
+}))
+
+vi.mock("vue-router", async (importOriginal) => {
+    const {reactive} = await import("vue")
+    current.route = reactive(current.route)
+    return {...await importOriginal<typeof import("vue-router")>(), useRoute: () => current.route, useRouter: () => ({push: vi.fn(), replace: vi.fn()})}
+})
+
+vi.mock("../../../../src/stores/dashboard", async () => {
+    const {reactive} = await import("vue")
+    const store = reactive({
+        activeDashboard: undefined,
+        getDashboardId: () => Promise.resolve("default"),
+        loadDefaultDefinitions: () => Promise.resolve({
+            flow: "id: default\ncharts:\n  - id: description\n    type: io.kestra.plugin.core.dashboard.chart.Markdown\n    source:\n      type: FlowDescription\n      namespace: --NAMESPACE--\n      flowId: --FLOW--\n",
+        }),
+    })
+    return {DEFAULT_DASHBOARD: {id: "default", charts: []}, useDashboardStore: () => store}
+})
+vi.mock("override/stores/misc", () => ({useMiscStore: () => ({configs: {isCustomDashboardsEnabled: false}})}))
+vi.mock("../../../../src/composables/useRestoreUrl", () => ({default: () => ({goToRestoreUrl: () => Promise.resolve()})}))
+vi.mock("../../../../src/components/dashboard/sections/Sections.vue", () => ({
+    default: defineComponent({
+        props: {charts: {type: Array as PropType<Chart[]>, default: () => []}},
+        setup: (props) => () => h("div", {"data-test": "sections"}, props.charts.map((chart) => chart.content)),
+    }),
+}))
+vi.mock("@kestra-io/design-system", async (importOriginal) => ({
+    ...await importOriginal<typeof import("@kestra-io/design-system")>(),
+    KsFilter: defineComponent({render: () => null}),
+}))
+
+import Dashboard from "../../../../src/components/dashboard/Dashboard.vue"
+
+describe("Dashboard", () => {
+    it("loads the description of the flow it switches to", async () => {
+        const wrapper = mount(Dashboard, {props: {header: false, isFlow: true}, global: {plugins: [createPinia(), createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false})]}})
+        await flushPromises()
+        expect(wrapper.get("[data-test=sections]").text()).toContain("flowId: parent")
+
+        current.route.params = {...current.route.params, id: "all_inputs"}
+        await flushPromises()
+
+        expect(wrapper.get("[data-test=sections]").text()).toContain("flowId: all_inputs")
+    })
+})

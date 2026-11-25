@@ -8,6 +8,9 @@ const meta: Meta<typeof KsMarkdown> = {
     argTypes: {
         content: {control: "text"},
         compact: {control: "boolean"},
+        lead: {control: "boolean"},
+        dense: {control: "boolean"},
+        reference: {control: "boolean"},
     },
     parameters: {
         docs: {
@@ -345,6 +348,43 @@ export const Compact: Story = {
     args: {
         compact: true,
         content: "# H1 — Main title\n\n## H2 — Section\n\n### H3 — Subsection\n\n#### H4 — Detail\n\nBody text under the headings.",
+    },
+}
+
+/** The opening paragraph in bold at a larger size, as docs pages start. */
+export const Lead: Story = {
+    args: {
+        lead: true,
+        content: "Kestra is an open source orchestration platform.\n\nFlows are declared in YAML and run on a schedule or on events.",
+    },
+}
+
+/** Small secondary paragraphs with tight spacing and tag-styled code, for a property description in a list. */
+export const Dense: Story = {
+    args: {
+        dense: true,
+        content: "The commands to run, one per line.\n\nEach one runs in `bash` with the working directory set to the task's files.",
+    },
+}
+
+/** A reference sheet: section labels, a title from the first h3, and tables whose rows stack their cells. */
+export const Reference: Story = {
+    args: {
+        reference: true,
+        content: [
+            "### Flow properties",
+            "",
+            "Every flow needs an `id` and a `namespace`.",
+            "",
+            "| Property | Description |",
+            "|---|---|",
+            "| `id` | The flow identifier, unique in its namespace. |",
+            "| `namespace` | The namespace the flow belongs to. |",
+            "",
+            "### Common expressions",
+            "",
+            "Read an input with `{{ inputs.name }}`.",
+        ].join("\n"),
     },
 }
 

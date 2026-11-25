@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import io.kestra.controller.grpc.JobSync;
 import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.controller.grpc.WorkerConnectionInfo;
 import io.kestra.controller.grpc.WorkerControllerService;
@@ -13,11 +14,11 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormat;
+import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
@@ -72,6 +73,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     @Inject
     private WorkerTenantAccessGuard workerTenantAccessGuard;
+
+    @Inject
+    private WorkerJobReconciler workerJobReconciler;
 
     /**
      * Bidirectional streaming RPC for job distribution using the pull/ack pattern.
@@ -136,6 +140,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                         workerId, workerGroupId, subscriptions, maxConcurrency, responseObserver, capacityPolicy
                     );
                     context.setMaxInboundMessageSize(connInfo.getMaxInboundMessageSize());
+                    context.setStreamGeneration(connInfo.getStreamGeneration());
                     contextRef.set(context);
 
                     // Register with dispatcher
@@ -168,6 +173,10 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 // be gated out here.
                 int permits = request.getPermits();
                 workerJobDispatcher.onPermitsReceived(context, permits);
+
+                if (request.hasSync()) {
+                    onSyncReceived(context, request.getSync());
+                }
             }
 
             @Override
@@ -263,7 +272,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                         // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
                         triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
                     }
-                    if (isTerminalRealtimeResult(evaluation)) {
+                    if (workerTriggerResult.isTerminal()) {
                         workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
                     }
                 }
@@ -275,13 +284,27 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     }
 
     /**
-     * A realtime trigger sends one result per emitted execution while it keeps running on the worker;
-     * those results must not release its WorkerJobRunning entry, which the liveness coordinator relies
-     * on to notify the scheduler when the worker dies. Only a terminal result does — a FAILED
-     * evaluation, or a stream end reported without an evaluation.
+     * Resubmits the jobs the worker left behind on earlier streams, then acknowledges the sync: the worker treats
+     * a stream whose syncs go unacknowledged as dead and reconnects, since its transport keepalive is answered
+     * by any proxy in between.
      */
-    static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
-        return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
+    private void onSyncReceived(WorkerStreamContext<WorkerJobResponse> context, JobSync sync) {
+        try {
+            workerJobReconciler.reconcile(context.getWorkerId(), context.getWorkerGroupId(), context.getStreamGeneration(), sync.getHeldJobIdsList());
+        } catch (RuntimeException e) {
+            log.error("Failed to reconcile the jobs held by worker [{}]: {}", context.getWorkerId(), e.getMessage(), e);
+        }
+
+        try {
+            context.sendResponse(
+                WorkerJobResponse.newBuilder()
+                    .setHeader(RequestOrResponseHeaderFactory.create(context.getWorkerId()))
+                    .setSyncAck(context.getStreamGeneration())
+                    .build()
+            );
+        } catch (RuntimeException e) {
+            log.debug("Failed to acknowledge the sync of worker [{}]: {}", context.getWorkerId(), e.getMessage());
+        }
     }
 
     @Override

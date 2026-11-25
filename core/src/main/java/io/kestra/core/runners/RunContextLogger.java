@@ -207,6 +207,20 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         this.useSecrets.add(index, secret);
     }
 
+    boolean hasSecrets() {
+        return !this.useSecrets.isEmpty();
+    }
+
+    String maskSecrets(String data) {
+        for (String s : this.useSecrets) {
+            if (data.contains(s)) {
+                data = data.replace(s, "******");
+            }
+        }
+
+        return data;
+    }
+
     public org.slf4j.Logger logger() {
         if (this.logger == null) {
             synchronized (this) {
@@ -391,13 +405,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         }
 
         protected String replaceSecret(String data) {
-            for (String s : runContextLogger.useSecrets) {
-                if (data.contains(s)) {
-                    data = data.replace(s, "******");
-                }
-            }
-
-            return data;
+            return runContextLogger.maskSecrets(data);
         }
 
         private Object recursive(@Nullable Object object) {

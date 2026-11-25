@@ -48,9 +48,3 @@
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>
-
-<style scoped>
-:deep(.kel-select__suffix) {
-    display: flex !important;
-}
-</style>

@@ -103,6 +103,8 @@ public class JsonSchemaGenerator {
         .mapToObj(i -> escapeRegex(PebbleUtil.openingBlockDelimiters().get(i)) + ".*" + escapeRegex(PebbleUtil.closingBlockDelimiters().get(i)))
         .collect(Collectors.joining("|", ".*(", ").*"));
 
+    static final String EXAMPLES_HEADING = "##### Examples\n";
+
     private final PluginRegistry pluginRegistry;
 
     @Inject
@@ -1094,7 +1096,7 @@ public class JsonSchemaGenerator {
 
                     String description = collectedTypeAttributes.has("markdownDescription") ? collectedTypeAttributes.get("markdownDescription").asText() : "";
 
-                    description += "##### Examples\n" + doc;
+                    description += EXAMPLES_HEADING + doc;
 
                     collectedTypeAttributes.set("markdownDescription", new TextNode(description));
 
@@ -1408,7 +1410,15 @@ public class JsonSchemaGenerator {
     }
 
     private static boolean isHiddenFromSchema(MemberScope<?, ?> memberScope) {
-        return memberScope.getAnnotation(Hidden.class) != null || memberScope.getAnnotation(ServerOwned.class) != null;
+        return memberScope.getAnnotation(Hidden.class) != null
+            || memberScope.getAnnotation(ServerOwned.class) != null
+            || isPropertyOfVoid(memberScope.getType());
+    }
+
+    private static boolean isPropertyOfVoid(ResolvedType type) {
+        return type != null
+            && type.isInstanceOf(Property.class)
+            && type.getTypeParameters().stream().anyMatch(parameter -> Void.class.equals(parameter.getErasedType()));
     }
 
     private static boolean isAssetAttribute(MethodScope methodScope) {

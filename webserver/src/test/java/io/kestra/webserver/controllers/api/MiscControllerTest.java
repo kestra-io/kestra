@@ -102,6 +102,7 @@ class MiscControllerTest {
         assertThat(response.getUuid()).isNotNull();
         assertThat(response.getIsAnonymousUsageEnabled()).isTrue();
         assertThat(response.getIsAiEnabled()).isTrue();
+        assertThat(response.getIsMcpServerEnabled()).isFalse();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
         assertThat(response.getFlowTemplate()).isEqualTo("tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log\n    message: Configured");
         assertThat(response.getIsAiApiKeyConfigured()).isNotNull();

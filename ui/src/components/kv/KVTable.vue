@@ -13,6 +13,7 @@
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
         selectable
+        :rowSelectable="isRowSelectable"
         :showSelection="!paneView"
         :rowKey="(row: KvEntry) => `${row.namespace}-${row.key}`"
     >
@@ -358,6 +359,8 @@
 
     const namespaceFilter = (namespace: string): QueryFilter[] =>
         [{field: "namespace", operation: "EQUALS", value: namespace}]
+
+    const isRowSelectable = () => true
 
     const startLoad = latestRequest()
 

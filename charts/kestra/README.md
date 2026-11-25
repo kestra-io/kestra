@@ -212,7 +212,17 @@ workerGroups:
   test-002:
     enabled: true
 ```
-The **workerGroups** follow exactly the same pattern you see in deployments key **worker**."
+The **workerGroups** follow exactly the same pattern you see in deployments key **worker**.
+
+Each worker group Deployment has its own selector label `kestra.io/worker-group: <name>`, so worker groups can be
+autoscaled independently (`autoscaler`, your own HPA, or KEDA). Without it, all worker groups share one selector and
+Kubernetes doesn't scale any of them once two are autoscaled.
+
+> **Upgrading from a chart without this label:** `spec.selector` is immutable, so `helm upgrade` can't change the
+> selector of existing worker group Deployments. Delete them before the upgrade (one per worker group; the plain
+> `worker` Deployment is not affected), and the upgrade recreates them:
+> `kubectl delete deployment <fullname>-workergroup-<name>` (e.g. `kestra-workergroup-default` for release `kestra`).
+> Running tasks on those workers are interrupted, so do it when the workers are idle or as part of a maintenance window for your Kestra instance."
 
 ## Kestra 2.0 — gRPC worker-controller
 
@@ -330,7 +340,7 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 |-----|------|---------|-------------|
 | common.affinity | object | `{}` | Affinity rules for pod scheduling. |
 | common.annotations | object | `{}` | Annotations applied to all resources. |
-| common.autoscaler | object | `{"enabled":false,"extra":{},"maxReplicas":3,"metrics":[],"minReplicas":1}` | Enabled or not horizontal autoscaling. |
+| common.autoscaler | object | `{"enabled":false,"external":false,"extra":{},"maxReplicas":3,"metrics":[],"minReplicas":1}` | Enabled or not horizontal autoscaling. |
 | common.configmapReloader | object | `{"enabled":false}` | Application configuration reloader if configmap changed. |
 | common.extraContainers | list | `[]` | Additional sidecar containers. |
 | common.extraEnv | list | `[]` | Extra environment variables for containers. |

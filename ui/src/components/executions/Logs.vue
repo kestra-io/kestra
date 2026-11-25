@@ -123,7 +123,6 @@
                     data-test="logs-scroller"
                     data-scroll-key="raw-logs"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
-                    :buffer="200"
                     :prerender="20"
                     @scroll.capture.passive="rememberLogScroll"
                     :emitUpdate="true"
@@ -133,6 +132,7 @@
                 >
                     <template #default="{item, active}">
                         <DynamicScrollerItem
+                            class="entry"
                             :item="asLog(item)"
                             :active="active"
                             :data-index="asLog(item).index"
@@ -175,7 +175,7 @@
     import ViewList from "vue-material-design-icons/ViewList.vue"
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue"
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue"
-    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
 
     import * as Utils from "../../utils/utils"
@@ -726,7 +726,7 @@
       padding: .5rem;
     }
 
-    & :deep(.vue-recycle-scroller__item-view > div) {
+    & .entry {
       min-height: 2rem;
     }
   }
@@ -773,9 +773,7 @@
   }
 
   .logs-toolbar {
-    & :deep(.kel-button) {
-        margin: 0;
-    }
+    --ks-button-adjacent-margin: 0;
   }
 
   .logs-toolbar__text-btn {

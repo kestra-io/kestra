@@ -57,6 +57,7 @@ public class ToolCatalog {
 
     private final List<AiPlatformTool> platformTools;
     private final List<AiAuthoringTool> authoringTools;
+    @Nullable
     private final DocsMcpToolProvider docsMcpToolProvider;
     private final AgentToolPermissionEvaluator permissionEvaluator;
     private final AgentToolCallScope callScope;
@@ -68,7 +69,7 @@ public class ToolCatalog {
     public ToolCatalog(
         final List<AiPlatformTool> platformTools,
         final List<AiAuthoringTool> authoringTools,
-        final DocsMcpToolProvider docsMcpToolProvider,
+        @Nullable final DocsMcpToolProvider docsMcpToolProvider,
         final AgentToolPermissionEvaluator permissionEvaluator,
         final AgentToolCallScope callScope,
         final ToolResultBudget toolResultBudget) {
@@ -118,13 +119,15 @@ public class ToolCatalog {
             }
 
             // Docs MCP tools are public documentation reads: no permission and no tenant scoping.
-            docsMcpToolProvider.tools().forEach(
-                (spec, executor) -> built.put(
-                    spec.name(), new ToolEntry(
-                        spec.name(), spec, executor, AgentToolCall.Kind.PLATFORM, AgentToolFamily.READ, AgentWritePolicy.AUTO, null
+            if (docsMcpToolProvider != null) {
+                docsMcpToolProvider.tools().forEach(
+                    (spec, executor) -> built.put(
+                        spec.name(), new ToolEntry(
+                            spec.name(), spec, executor, AgentToolCall.Kind.PLATFORM, AgentToolFamily.READ, AgentWritePolicy.AUTO, null
+                        )
                     )
-                )
-            );
+                );
+            }
 
             this.registry = built;
             return built;

@@ -26,11 +26,11 @@
                         <div class="popup-meta">
                             <code v-if="taskType" data-test="task-run-popup-type">{{ taskType }}</code>
                             <span v-if="histories.length" class="popup-meta-item" data-test="task-run-popup-duration">
-                                <KsIcon size="xs"><TimerOutline /></KsIcon>
+                                <KsIcon size="sm"><TimerOutline /></KsIcon>
                                 <Duration :histories="histories" :interval="100" :attemptCount="attemptCount" :subject="taskId" />
                             </span>
                             <span class="popup-meta-item" data-test="task-run-popup-attempt">
-                                <KsIcon size="xs"><SourceBranch /></KsIcon>
+                                <KsIcon size="sm"><SourceBranch /></KsIcon>
                                 {{ $t("attempt") }} {{ attemptCount }}
                             </span>
                         </div>
@@ -41,7 +41,7 @@
                     <KsDropdown v-if="currentTaskRuns.length > 1" trigger="click" :persistent="true">
                         <KsButton data-test="task-run-popup-picker">
                             {{ currentIterationLabel }}
-                            <KsIcon size="xs"><ChevronDown /></KsIcon>
+                            <KsIcon size="sm"><ChevronDown /></KsIcon>
                         </KsButton>
                         <template #dropdown>
                             <KsDropdownMenu>
@@ -62,7 +62,6 @@
                             :execution="execution"
                             :taskRun="currentTaskRun"
                             :attemptIndex="attemptIndex"
-                            @follow="emit('follow', $event)"
                         />
                     </span>
                     <span class="popup-action">
@@ -72,7 +71,6 @@
                             :execution="execution"
                             :taskRun="currentTaskRunWithExecution"
                             :attemptIndex="attemptIndex"
-                            @follow="emit('follow', $event)"
                         />
                     </span>
                     <span class="popup-action">

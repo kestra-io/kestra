@@ -9,6 +9,7 @@
         <ElIcon
             v-bind="{...filteredProps(), ...$attrs}"
             :size="resolvedSize"
+            :class="{'ks-icon--sized': resolvedSize !== undefined}"
             @click="emit('click', $event)"
         >
             <template v-if="$slots.default" #default>
@@ -20,6 +21,7 @@
         v-else
         v-bind="{...filteredProps(), ...$attrs}"
         :size="resolvedSize"
+        :class="{'ks-icon--sized': resolvedSize !== undefined}"
         @click="emit('click', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -64,3 +66,9 @@
         return s
     })
 </script>
+
+<style>
+    .ks-icon--sized {
+        --ks-material-icon-size: 1em;
+    }
+</style>

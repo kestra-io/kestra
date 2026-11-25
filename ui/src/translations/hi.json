@@ -1,5 +1,12 @@
 {
   "hi": {
+    "support_links": {
+      "slack_title": "कम्युनिटी Slack",
+      "slack_description": "अन्य उपयोगकर्ताओं और Kestra टीम के साथ चर्चा करें",
+      "github_description": "हमारे ओपन-सोर्स प्रोजेक्ट को स्टार दें",
+      "help_center_title": "सहायता केंद्र",
+      "help_center_description": "अपने Enterprise खाते में मदद के लिए सहायता टीम से संपर्क करें"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra को {version} में अपग्रेड किया गया था और इसमें ऐसे ब्रेकिंग बदलाव शामिल हो सकते हैं जिनके लिए आपके Flows में अपडेट की आवश्यकता होती है।",
       "cta": "देखें क्या बदला"
@@ -292,6 +299,16 @@
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to": "यहाँ जाएँ",
     "jump to...": "कूदें...",
+    "global_search": {
+      "open_flow": "flow खोलें",
+      "flow_executions": "flow निष्पादन",
+      "move": "ले जाएँ",
+      "menu": "मेनू",
+      "sources": "मेनू + flows + namespaces",
+      "sources_flows": "मेनू + Flows",
+      "sources_namespaces": "मेनू + namespace",
+      "search_failed": "flows या namespaces लोड नहीं हो सके"
+    },
     "contextBar": {
       "ai": "एआई",
       "news": "समाचार",
@@ -552,6 +569,7 @@
     "output": "आउटपुट",
     "flow_outputs": "फ्लो Outputs",
     "eval": {
+      "failed": "एक्सप्रेशन का मूल्यांकन नहीं हो सका",
       "title": "डिबग अभिव्यक्ति",
       "preview": "पूर्वावलोकन",
       "expression": "अभिव्यक्ति"
@@ -573,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
+      "task-details": "{task} का विवरण",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
       "graph-orientation": "ग्राफ़ अभिविन्यास",
       "zoom-in": "ज़ूम इन करें",
@@ -647,6 +666,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "शुरू नहीं हुआ"
+      },
+      "diff": {
+        "added": "जोड़ा गया",
+        "removed": "हटाया गया",
+        "changed": "बदला गया",
+        "renamed": "नाम बदला गया",
+        "moved": "स्थानांतरित"
+      }
+    },
+    "flow_change_review": {
+      "graph": "ग्राफ़",
+      "yaml": "YAML",
+      "unchanged": "{count} अपरिवर्तित",
+      "graph_error": "ग्राफ़ नहीं बनाया जा सका। बदलाव देखने के लिए YAML टैब खोलें।",
+      "status": {
+        "added": "जोड़ा गया",
+        "removed": "हटाया गया",
+        "changed": "बदला गया",
+        "renamed": "नाम बदला गया",
+        "moved": "स्थानांतरित"
       }
     },
     "show task logs": "Task Logs दिखाएं",
@@ -761,7 +800,8 @@
       "dialog_title": "समानांतरता सीमाएँ",
       "warning": "चल रहे काउंटर को बदलने से समवर्तीता दूषित हो सकती है, इसलिए एग्जीक्यूशन अनुमत सीमा से अधिक हो सकते हैं।",
       "queued": "कतारबद्ध",
-      "save_error": "समवर्ती सीमा को अपडेट करने में विफल रहा, पिछला मान रखा गया है।"
+      "save_error": "समवर्ती सीमा को अपडेट करने में विफल रहा, पिछला मान रखा गया है।",
+      "invalid_running_count": "0 और {max} के बीच एक पूर्ण संख्या दर्ज करें।"
     },
     "flowConcurrency": {
       "loadError": "इस flow की समवर्तीता सीमा लोड नहीं हो सकी।",
@@ -1550,7 +1590,7 @@
           },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
-            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> दबाएं।",
+            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए {ctrl}+{shift}+{key} दबाएं।",
             "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।",
             "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
@@ -1760,7 +1800,12 @@
           },
           "flow_generated": {
             "title": "यह एक flow है",
-            "body": "flow YAML में दो tasks के साथ लिखा गया है:<ol><li><code>fetch_orders</code> ऑर्डरों को डाउनलोड करने के लिए</li><li><code>summarize</code> Python में राजस्व की गणना करने के लिए</li></ol>Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
+            "body": "flow YAML में दो tasks के साथ लिखा गया है:",
+            "tasks": {
+              "fetch_orders": "{task} ऑर्डरों को डाउनलोड करने के लिए",
+              "summarize": "{task} Python में राजस्व की गणना करने के लिए"
+            },
+            "after_tasks": "Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
             "next": "सहेजें और निष्पादित करें"
           },
           "first_execution": {
@@ -2109,6 +2154,7 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
+      "unknown_schema": "अज्ञात स्कीमा",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",
@@ -2551,6 +2597,7 @@
           "generic": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
         },
         "emptyHelper": "मैं इस flow को संपादित कर सकता हूँ, टेस्ट जनरेट कर सकता हूँ, संबंधित फ़ाइलें स्केफ़ोल्ड कर सकता हूँ, या यह कैसे काम करता है, समझा सकता हूँ।",
+        "emptyHelperNoFlow": "मैं Flow बना या संपादित कर सकता हूँ, टेस्ट जनरेट कर सकता हूँ, संबंधित फ़ाइलें बना सकता हूँ, या बता सकता हूँ कि Kestra कैसे काम करता है।",
         "suggestions": {
           "errorHandling": "त्रुटि प्रबंधन जोड़ें",
           "unitTest": "इकाई परीक्षण उत्पन्न करें",
@@ -2616,7 +2663,8 @@
           "applied": "लागू किया गया",
           "previewBanner": "AI द्वारा सुझाए गए बदलाव की समीक्षा हो रही है। जब तक आप इसे लागू या खारिज नहीं करते, संपादक केवल पढ़ने के लिए है।",
           "applyTitle": "flow लागू करें",
-          "applyConfirm": "{namespace}.{id} को समीक्षा के लिए ड्राफ्ट रिविज़न के रूप में सहेजें? यह बनाया जाएगा, या यदि पहले से मौजूद है तो एक नया ड्राफ्ट रिविज़न जोड़ा जाएगा। प्रकाशित होने तक ड्राफ्ट को trigger या subflow द्वारा नहीं लिया जाता।",
+          "applyDraftTitle": "लागू करने पर एक ड्राफ्ट रिविज़न सहेजा जाता है।",
+          "applyDraftHint": "अभी कुछ भी लाइव नहीं होता। जब तक आप प्रकाशित नहीं करते, trigger और subflow ड्राफ्ट को अनदेखा करते हैं।",
           "applyConfirmDashboard": "डैशबोर्ड {id} लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
           "applyError": "flow लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
           "applyErrorDashboard": "डैशबोर्ड लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
@@ -3143,7 +3191,7 @@
       "undo": "पूर्ववत करें",
       "upstream_outputs": "अपस्ट्रीम आउटपुट",
       "open_in_tabs": "टैब में खोलें",
-      "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
+      "open_mode_hint": "यह एडिटर डिफ़ॉल्ट रूप से एक modal में खुलता है। आप {settings} में टैब को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
     "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",

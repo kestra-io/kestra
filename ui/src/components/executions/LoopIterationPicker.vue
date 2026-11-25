@@ -33,7 +33,7 @@
                         data-test="loop-picker-all"
                         @click="emit('clear')"
                     >
-                        <KsIcon size="xs" class="loop-picker-check"><Check /></KsIcon>
+                        <KsIcon size="sm" class="loop-picker-check"><Check /></KsIcon>
                         <span class="loop-picker-value">{{ $t("topology-graph.loop.all-iterations") }}</span>
                     </button>
                     <KsAlert v-if="failure" type="error" :closable="false" data-test="loop-picker-failure">
@@ -58,7 +58,7 @@
                                 data-test="loop-picker-option"
                                 @click="select(iteration.number)"
                             >
-                                <KsIcon size="xs" class="loop-picker-check"><Check /></KsIcon>
+                                <KsIcon size="sm" class="loop-picker-check"><Check /></KsIcon>
                                 <span class="loop-picker-value" data-test="loop-picker-value">
                                     {{ iterationLabel($t, iteration.number, iteration.value, isAmbiguous(iteration)) }}
                                 </span>

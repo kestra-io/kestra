@@ -20,7 +20,6 @@
                         :dragOver="dragOverIndex === elementIndex"
                         :runnable="playgroundStore.enabled && hasId(element)"
                         :showDuplicate="hasId(element)"
-                        :showIcon="!isInputs"
                         :icons="pluginsStore.icons"
                         @select="onSelect(elementIndex)"
                         @open-split="onSelect(elementIndex, true)"
@@ -171,8 +170,6 @@
     const {runTask, playgroundStore} = usePlaygroundRun()
     const {dragOverIndex, handleDragStart, handleDragOver, handleDrop, handleDragEnd} = useDragAndDrop()
 
-    const isInputs = computed(() => props.root === "inputs")
-
     const hasId = (element: Task) => displayTaskOf(element).id != null
 
     const cardLabel = (element: Task) => {
@@ -229,7 +226,7 @@
     margin-left: var(--ks-spacing-1);
 }
 
-.merge :deep(.kel-collapse-item__header){
-    cursor: default;
+.merge {
+    --ks-collapse-item-disabled-cursor: default;
 }
 </style>

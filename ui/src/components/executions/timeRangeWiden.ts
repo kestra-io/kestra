@@ -48,8 +48,8 @@ export function timeRangeWidenSequence(start: string): string[] {
     return sequence
 }
 
-export function remainingWidenWindows(current: string, defaultTimeRange: string): string[] {
-    const sequence = timeRangeWidenSequence(defaultTimeRange)
+export function remainingWidenWindows(current: string, baseTimeRange: string): string[] {
+    const sequence = timeRangeWidenSequence(baseTimeRange)
     const index = sequence.findIndex(step => isSameTimeRange(step, current))
     if (index === -1) {
         return []
@@ -94,7 +94,7 @@ export async function widenEmptyTimeRange(options: {
 }): Promise<{timeRange: string | undefined; widened: boolean}> {
     const {
         currentTimeRange,
-        defaultTimeRange,
+        defaultTimeRange: baseTimeRange,
         hasAbsoluteDateFilter,
         alreadyAttempted,
         hasUserFilters,
@@ -106,8 +106,8 @@ export async function widenEmptyTimeRange(options: {
         return {timeRange: currentTimeRange, widened: false}
     }
 
-    const current = currentTimeRange ?? defaultTimeRange
-    const remaining = remainingWidenWindows(current, defaultTimeRange)
+    const current = currentTimeRange ?? baseTimeRange
+    const remaining = remainingWidenWindows(current, baseTimeRange)
 
     let applied = currentTimeRange
     let widened = false

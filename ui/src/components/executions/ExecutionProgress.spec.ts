@@ -58,6 +58,8 @@ describe("ExecutionProgress", () => {
     })
 
     afterEach(() => {
+        // Before useRealTimers, or vitest's end-of-file restore reinstalls the dead fake setInterval for later files.
+        vi.restoreAllMocks()
         vi.useRealTimers()
         vi.resetAllMocks()
     })

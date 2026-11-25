@@ -35,15 +35,15 @@ export default {
     input: specPath,
     parser: {
         patch: {
-            operations: (method: string, path: string, operation: OpenApiOperationObject.V2_0_X | OpenApiOperationObject.V3_0_X | OpenApiOperationObject.V3_1_X) => {
+            operations: (method: string, operationPath: string, operation: OpenApiOperationObject.V2_0_X | OpenApiOperationObject.V3_0_X | OpenApiOperationObject.V3_1_X) => {
                 // hey-api prefers the application/json variant when resolving a request body; force
                 // application/x-yaml for YAML-source bodies (client-sdk issue #340).
-                fixYamlSourceRequestBodyContentType(method, path, operation)
+                fixYamlSourceRequestBodyContentType(method, operationPath, operation)
                 // Make required QueryFilter[] `filters` params optional (fixes hey-api's broken
                 // array serializer + lets callers omit an empty filters array).
-                normalizeQueryFilterParams(method, path, operation)
+                normalizeQueryFilterParams(method, operationPath, operation)
                 // Type SSE events from the event schema, not the array Micronaut 4.10.18 declares around it.
-                unwrapEventStreamArrayResponses(method, path, operation)
+                unwrapEventStreamArrayResponses(method, operationPath, operation)
             },
             schemas: {
                 // Widen QueryFilter.value to `unknown` so callers can assign scalars/arrays directly.

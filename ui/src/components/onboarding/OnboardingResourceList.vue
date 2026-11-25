@@ -88,11 +88,7 @@
         width: 28px;
         height: 28px;
         flex-shrink: 0;
-
-        &:deep(svg) {
-            width: 22px;
-            height: 22px;
-        }
+        --ks-icon-glyph-size: 1.375rem;
 
         &.is-blueprints {
             color: var(--ks-status-info);

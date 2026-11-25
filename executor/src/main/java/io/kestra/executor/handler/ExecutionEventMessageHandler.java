@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Gatherers;
 
-import io.kestra.core.trace.TraceUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
@@ -31,6 +30,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.QuotaService;
+import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.DateUtils;
@@ -173,7 +173,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     List<SLAMonitor> monitors = new ArrayList<>();
                                     for (SLA sla : flow.getSla()) {
                                         if (sla instanceof ExecutionMonitoringSLA monitoringSla) {
-                                            var duration =  slaService.computeSLADuration(execution, monitoringSla);
+                                            var duration = slaService.computeSLADuration(execution, monitoringSla);
                                             if (duration.isEmpty()) {
                                                 continue;
                                             }

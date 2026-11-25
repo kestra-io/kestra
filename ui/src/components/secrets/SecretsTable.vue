@@ -269,13 +269,6 @@
         tags?: {key?: string; value?: string}[];
     }
 
-    interface SecretPayload {
-        key?: string;
-        description?: string;
-        tags?: {key?: string; value?: string}[];
-        value?: string;
-    }
-
     const props = withDefaults(defineProps<{
         addSecretModalVisible?: boolean;
         namespace?: string;
@@ -600,34 +593,30 @@
                 return
             }
 
-            const secretData: SecretPayload = {
-                key: secret.value?.key,
-                description: secret.value?.description,
-                tags: secret.value?.tags
-                    ?.map(item => item.value !== undefined ? item : {key: item.key, value: ""})
-                    ?.filter(item => item.key !== undefined),
-            }
+            const key = secret.value.key
+            if (!key) return
 
-            if (isSecretValueUpdated()) {
-                secretData.value = secret.value?.value
-            }
-
-            const actionMethod = isSecretValueUpdated()
-                ? namespacesStore.createSecrets
-                : namespacesStore.patchSecret
+            const description = secret.value.description
+            const tags = secret.value.tags
+                .filter((tag): tag is {key: string; value?: string} => tag.key !== undefined)
+                .map(tag => ({key: tag.key, value: tag.value ?? ""}))
 
             // Snapshot before the request: resetForm() swaps secret.value out when the drawer closes,
             // and the .then() would then read the flag off a different object.
-            const wasUpdate = secret.value?.update === true
-            const namespace = secret.value?.namespace
+            const wasUpdate = secret.value.update === true
+            const namespace = secret.value.namespace as string
 
-            actionMethod({namespace: namespace as string, secret: secretData})
+            const request = isSecretValueUpdated()
+                ? namespacesStore.createSecrets({namespace, secret: {key, value: secret.value.value, description, tags}})
+                : namespacesStore.patchSecret({namespace, secret: {key, description, tags}})
+
+            request
                 .then(() => {
                     apiStore.posthogEvents({
                         type: wasUpdate ? "SECRET_UPDATED" : "SECRET_CREATED",
                         secret_type: "secret",
                         namespace,
-                        has_tags: (secretData.tags?.length ?? 0) > 0,
+                        has_tags: tags.length > 0,
                     })
 
                     secret.value!.update = true

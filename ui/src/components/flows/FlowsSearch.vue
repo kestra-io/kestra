@@ -635,7 +635,7 @@
                 replacement: replacement.value,
             })
         } catch (e) {
-            toast.error(asProblem(e)?.detail ?? t("source_search.replace_preview_failed"))
+            toast.requestError(e, asProblem(e)?.detail ?? t("source_search.replace_preview_failed"))
         } finally {
             previewLoading.value = false
         }
@@ -666,7 +666,7 @@
                 flows,
             }))
         } catch (e) {
-            toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
+            toast.requestError(e, asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
 
@@ -685,7 +685,7 @@
                 column: value.column,
             }))
         } catch (e) {
-            toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
+            toast.requestError(e, asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
 

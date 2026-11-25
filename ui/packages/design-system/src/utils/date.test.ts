@@ -3,6 +3,8 @@ import {
     currentLocale,
     currentTimezone,
     dateFilter,
+    instantToPickerDate,
+    pickerDateToInstant,
     parseIso,
     setLocale,
     timezonesWithOffset,
@@ -158,5 +160,47 @@ describe("dateFilter timezone", () => {
     test("should format in the browser timezone when none is stored", () => {
         vi.spyOn(dayjs.tz, "guess").mockReturnValue("Pacific/Kiritimati")
         expect(dateFilter("2026-07-24T12:00:00Z", "YYYY-MM-DD HH:mm")).toBe("2026-07-25 02:00")
+    })
+})
+
+describe("picker wall clock in a time zone", () => {
+    const original = process.env.TZ
+
+    afterEach(() => {
+        // Assigning undefined would store the string "undefined", so drop the variable when it was unset.
+        if (original === undefined) delete process.env.TZ
+        else process.env.TZ = original
+    })
+
+    test("reads the typed wall clock in the preference zone, whatever the browser zone is", () => {
+        process.env.TZ = "Asia/Kolkata"
+        const typed = new Date(2026, 10, 24, 9, 0, 0)
+
+        expect(pickerDateToInstant(typed, "Europe/Paris")?.toISOString()).toBe("2026-11-24T08:00:00.000Z")
+        expect(pickerDateToInstant(typed, "UTC")?.toISOString()).toBe("2026-11-24T09:00:00.000Z")
+    })
+
+    test("shows an instant as the wall clock of the preference zone", () => {
+        process.env.TZ = "Europe/Dublin"
+        const picked = instantToPickerDate("2026-11-24T08:00:00.000Z", "Europe/Paris")
+
+        expect(picked).toEqual(new Date(2026, 10, 24, 9, 0, 0))
+    })
+
+    test("round-trips across a daylight saving boundary", () => {
+        process.env.TZ = "Asia/Kolkata"
+        const instant = new Date("2026-07-24T07:00:00.000Z")
+        const picked = instantToPickerDate(instant, "Europe/Paris")
+
+        expect(picked).toEqual(new Date(2026, 6, 24, 9, 0, 0))
+        expect(pickerDateToInstant(picked, "Europe/Paris")?.toISOString()).toBe(instant.toISOString())
+    })
+
+    test("returns undefined for empty or invalid values", () => {
+        expect(instantToPickerDate(undefined, "UTC")).toBeUndefined()
+        expect(instantToPickerDate("", "UTC")).toBeUndefined()
+        expect(instantToPickerDate("nope", "UTC")).toBeUndefined()
+        expect(pickerDateToInstant(null, "UTC")).toBeUndefined()
+        expect(pickerDateToInstant(new Date(NaN), "UTC")).toBeUndefined()
     })
 })

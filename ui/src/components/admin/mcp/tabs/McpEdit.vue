@@ -358,7 +358,7 @@
 
     onMounted(() => {
         if (!authStore.auths) {
-            authStore.loadAuths({})
+            authStore.loadAuths()
         }
     })
 

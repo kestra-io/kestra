@@ -371,7 +371,6 @@
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
-    import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
@@ -409,7 +408,6 @@
     const {t, te} = useI18n({useScope: "global"})
 
     const authStore = useAuthStore()
-    const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
 
     const {loadInit} = useRestoreUrl()
@@ -929,14 +927,18 @@
         if (backfill.value?.end && backfill.value.start > backfill.value.end) {
             return true
         }
-        if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs?.map((input: any) => input?.required !== false ? input?.id : null).filter((i: any) => i !== null) || []
+        if (executionsStore.flow?.inputs) {
+            const requiredInputs = executionsStore.flow.inputs?.map((input: any) => input?.required !== false ? input?.id : null).filter((i: any) => i !== null) || []
 
             if (requiredInputs.length > 0) {
                 if (!backfill.value?.inputs) {
                     return true
                 }
-                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value?.inputs?.[i] !== null && backfill.value?.inputs?.[i] !== undefined)
+                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => {
+                    const value = backfill.value?.inputs?.[i]
+                    // a cleared field sends "" or [], which is no value either
+                    return value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)
+                })
                 if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
                     return true
                 }

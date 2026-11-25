@@ -14,6 +14,7 @@ import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
+import io.kestra.core.notification.AsyncOperationAggregator;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
@@ -41,6 +42,7 @@ import static io.kestra.core.utils.Rethrow.*;
 @Slf4j
 public class DefaultExecutor extends AbstractService implements Executor {
     private static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
+    private static final Duration ASYNC_OPERATION_LEADER_LOOP_PERIOD = Duration.ofSeconds(10);
 
     private final DispatchQueueInterface<Execution> executionQueue;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
@@ -58,6 +60,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     private final MetricRegistry metricRegistry;
 
+    private final AsyncOperationAggregator asyncOperationAggregator;
+
     // The context captured at construction time.
     // The static context returned by KestraContext.getContext() might change if the context is restarted inside the same JVM
     // which can occur at least in tests.
@@ -70,6 +74,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private ScheduledFuture<?> executionDelayFuture;
     private ScheduledFuture<?> monitorSLAFuture;
     private ScheduledFuture<?> multipleConditionPurgeFuture;
+    private ScheduledFuture<?> asyncOperationLeaderFuture;
 
     // Thread-safe: populated by run() but iterated from maintenance listener and shutdown threads.
     private final List<Runnable> receiveCancellations = new CopyOnWriteArrayList<>();
@@ -102,7 +107,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ExecutorCore executorCore,
         MaintenanceService maintenanceService,
         MultipleConditionStateStore multipleConditionStateStore,
-        MetricRegistry metricRegistry) {
+        MetricRegistry metricRegistry,
+        AsyncOperationAggregator asyncOperationAggregator) {
         super(ServiceType.EXECUTOR, eventPublisher);
         this.clock = clock;
         this.scheduledExecutorService = executorsUtils.singleThreadScheduledExecutor("executor-loops");
@@ -122,6 +128,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.maintenanceService = maintenanceService;
         this.multipleConditionStateStore = multipleConditionStateStore;
         this.metricRegistry = metricRegistry;
+        this.asyncOperationAggregator = asyncOperationAggregator;
 
         // By default, we start available processors count threads with a minimum of 8.
         // This executor is shared for the worker task result queue and the execution queue.
@@ -271,6 +278,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
             this::multipleConditionPurgeLoop,
             0,
             executorConfiguration.multipleConditionPurgeLoopPeriodicityMs(),
+            TimeUnit.MILLISECONDS
+        );
+        asyncOperationLeaderFuture = scheduledExecutorService.scheduleAtFixedRate(
+            this::asyncOperationLeaderLoop,
+            0,
+            ASYNC_OPERATION_LEADER_LOOP_PERIOD.toMillis(),
             TimeUnit.MILLISECONDS
         );
 
@@ -452,6 +465,19 @@ public class DefaultExecutor extends AbstractService implements Executor {
         multipleConditionPurgeLoopTimer.record(() -> multipleConditionStateStore.purgeExpired(clock.instant()));
     }
 
+    // Unlike the other loops, a failed election must not end the loop: the next tick retries it.
+    private void asyncOperationLeaderLoop() {
+        if (isStopRequested()) {
+            return;
+        }
+
+        try {
+            asyncOperationAggregator.start();
+        } catch (RuntimeException e) {
+            log.warn("Unable to elect the async operation aggregator leader, retrying in {}", ASYNC_OPERATION_LEADER_LOOP_PERIOD, e);
+        }
+    }
+
     private void enterMaintenance() {
         this.queueSubscribers.forEach(QueueSubscriber::pause);
 
@@ -477,11 +503,16 @@ public class DefaultExecutor extends AbstractService implements Executor {
             // Always stop the scheduled loops: leaving them running after the context is closed makes
             // them fail on the closed datasource and escalate to an application shutdown.
             // The futures are null when stop ran before run() scheduled them.
-            ExecutorsUtils.closeScheduledThreadPool(
-                scheduledExecutorService,
-                Duration.ofSeconds(5),
-                Stream.of(executionDelayFuture, monitorSLAFuture, multipleConditionPurgeFuture).filter(Objects::nonNull).toList()
-            );
+            try {
+                ExecutorsUtils.closeScheduledThreadPool(
+                    scheduledExecutorService,
+                    Duration.ofSeconds(5),
+                    Stream.of(executionDelayFuture, monitorSLAFuture, multipleConditionPurgeFuture, asyncOperationLeaderFuture).filter(Objects::nonNull).toList()
+                );
+            } finally {
+                // Released here rather than on bean destruction, while the lock table can still be reached.
+                asyncOperationAggregator.stop();
+            }
         }
         return ServiceState.TERMINATED_GRACEFULLY;
     }

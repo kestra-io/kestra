@@ -30,6 +30,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+import io.kestra.core.notification.AsyncOperationAggregator;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.repositories.*;
 import io.kestra.core.runners.ApprovalRequestHandler;
@@ -534,7 +535,8 @@ public final class ExecutorTestHarness {
             executorCore,
             new MaintenanceService.NoopMaintenanceService(),
             multipleConditionStateStore,
-            metricRegistry
+            metricRegistry,
+            Mockito.mock(AsyncOperationAggregator.class)
         );
         executor.initMetrics();
         executor.run();

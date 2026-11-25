@@ -49,7 +49,7 @@ class McpPlatformToolTest {
             "list_namespace_files", "read_namespace_file", "write_namespace_file", "create_namespace_directory", "move_namespace_file", "delete_namespace_file",
             "list_kv_entries", "read_kv_entry", "create_kv_entry", "update_kv_entry", "delete_kv_entry",
             "search_logs", "delete_execution_logs", "delete_flow_logs",
-            "author_flow"
+            "author_flow", "revise_flow"
         );
         assertThat(exposed).allSatisfy(entry ->
         {

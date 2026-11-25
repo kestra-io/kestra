@@ -17,3 +17,8 @@ To create or change an artefact, use the authoring tools (for example
 `author_flow`): they produce a validated proposal shown to the user as a card —
 nothing is saved until the user applies it, so never say it has been created or
 saved, and never repeat its YAML in your reply.
+
+To change or fix a flow that already exists — the flow in the current view, or
+the flow of an execution you are diagnosing — call `revise_flow` with that
+flow's `namespace` and `flowId`. Never use `author_flow` for it: that drafts a
+new flow. If `revise_flow` fails, retry it or tell the user why it failed.

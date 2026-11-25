@@ -1,22 +1,10 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import io.kestra.core.ai.agent.models.ArtefactDraft;
 import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.core.mcp.models.McpToolAnnotations;
-import io.kestra.core.models.flows.FlowSource;
-import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.libs.copilot.exceptions.AiException;
-import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
-import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
-import io.kestra.webserver.services.ai.UserInfo;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
 import dev.langchain4j.agent.tool.P;
@@ -65,19 +53,14 @@ public class AuthorFlowTool implements AiAuthoringTool, McpExposedTool {
 
     @Tool(
         name = "author_flow",
-        value = "Draft a Kestra flow (YAML) from a natural-language description, or revise an existing flow when its current YAML is provided. The draft is validated and returned; nothing is saved, so do not tell the user the flow has been created or saved. If the draft comes back invalid, call this tool again passing the draft as `currentFlowYaml` with instructions to fix the reported constraints. "
+        value = "Draft a new Kestra flow (YAML) from a natural-language description. To change or fix a flow that is already saved, use `revise_flow` instead. The draft is validated and returned; nothing is saved, so do not tell the user the flow has been created or saved. If the draft comes back invalid, call this tool again passing the draft as `currentFlowYaml` with instructions to fix the reported constraints. "
             + "Returns an object { draftId, kind, valid, validationError, yaml, assumedNamespace }: `draftId` and `yaml` identify the draft and `valid` reflects validation (`validationError` holds the constraints when invalid). When the flow was authored without a namespace, `assumedNamespace` holds the namespace it defaulted to — tell the user the flow was drafted in that namespace and that they can change it. If generation fails, the tool errors with the reason instead of returning."
     )
     public Result authorFlow(
-        @P(name = "instructions", value = "What the flow should do, or how the current flow should be changed") String instructions,
+        @P(name = "instructions", value = "What the flow should do, or how the current draft should be changed") String instructions,
         @P(name = "namespace", value = "The namespace the flow belongs to; omit if unknown — a new flow authored without one defaults to '" + DEFAULT_NAMESPACE + "'", required = false) String namespace,
-        @P(name = "currentFlowYaml", value = "The full current flow YAML when revising an existing flow; omit when creating a new one", required = false) String currentFlowYaml,
+        @P(name = "currentFlowYaml", value = "The YAML of a flow that is not saved yet: a previous draft to fix, or unsaved editor content. Omit otherwise", required = false) String currentFlowYaml,
         final AgentCallContext.Context context) {
-
-        AiServiceInterface aiService = aiServiceManager.getAiService(context.providerId());
-        if (aiService == null) {
-            throw new IllegalStateException("No AI provider is configured; flow authoring is unavailable.");
-        }
 
         // The generation pipeline requires a non-null namespace (see DEFAULT_NAMESPACE). When the agent
         // omits it, fall back — but only a *creation* with no namespace is an assumption worth surfacing:
@@ -88,34 +71,9 @@ public class AuthorFlowTool implements AiAuthoringTool, McpExposedTool {
         String effectiveNamespace = namespaceMissing ? DEFAULT_NAMESPACE : namespace;
         String assumedNamespace = namespaceMissing && creating ? effectiveNamespace : null;
 
-        FlowGenerationPrompt prompt = new FlowGenerationPrompt(
-            Objects.requireNonNullElseGet(context.conversationId(), IdUtils::create),
-            instructions,
-            currentFlowYaml,
-            effectiveNamespace
-        );
-
-        String yaml;
-        try {
-            yaml = aiService.generateFlow(new UserInfo(null, "copilot-agent"), prompt, context.tenant()).content();
-        } catch (AiException e) {
-            throw new IllegalStateException("Flow generation failed: " + e.getMessage(), e);
-        }
-
-        String constraints = validate(context.tenant(), yaml);
-        ArtefactDraft draft = new ArtefactDraft(IdUtils.create(), ArtefactKind.FLOW, yaml, constraints == null, constraints);
+        ArtefactDraft draft = FlowDrafts.draft(aiServiceManager, flowService, instructions, effectiveNamespace, currentFlowYaml, context);
 
         return Result.drafted(draft, assumedNamespace);
-    }
-
-    /** Run platform validation on the generated source; returns the violations, or null when valid. */
-    private String validate(final String tenant, final String yaml) {
-        List<ValidateConstraintViolation> violations = flowService.validate(tenant, List.of(new FlowSource(null, yaml)));
-        String constraints = violations.stream()
-            .flatMap(violation -> violation.getErrors().stream())
-            .map(ValidationError::toLine)
-            .collect(Collectors.joining("; "));
-        return constraints.isEmpty() ? null : constraints;
     }
 
     /**

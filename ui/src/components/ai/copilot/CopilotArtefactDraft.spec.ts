@@ -53,6 +53,22 @@ describe("CopilotArtefactDraft", () => {
         expect(w.find("[data-test='copilot-draft-constraints']").exists()).toBe(false)
     })
 
+    it("names the flow a flow draft targets", () => {
+        const target = (draft: Partial<ArtefactDraftEvent>) => mountDraft({
+            draftId: "t",
+            kind: "FLOW",
+            yaml: "id: demo\nnamespace: company.team",
+            valid: true,
+            constraints: null,
+            ...draft,
+        }).find("[data-test='copilot-draft-target']")
+
+        expect(target({}).text()).toBe("company.team.demo")
+        // Nothing to name without both a namespace and an id, and other kinds carry no flow target.
+        expect(target({yaml: "id: demo"}).exists()).toBe(false)
+        expect(target({kind: "DASHBOARD"}).exists()).toBe(false)
+    })
+
     it("offers the graph view only for a valid flow draft", () => {
         const hasViewSwitch = (draft: Partial<ArtefactDraftEvent>) => mountDraft({
             draftId: "v",

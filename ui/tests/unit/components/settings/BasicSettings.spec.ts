@@ -36,7 +36,7 @@ describe("BasicSettings", () => {
         mount(BasicSettings, {
             global: {
                 plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false}), KestraDesignSystem, pinia],
-                stubs: {TopNavBar: true, SidebarCustomizeModal: true, KsEditor: true},
+                stubs: {TopNavBar: true, SidebarCustomizeModal: true, KsEditor: {name: "KsEditor", template: "<div />"}},
             },
         })
         await flushPromises()

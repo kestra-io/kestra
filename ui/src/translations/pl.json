@@ -2150,6 +2150,7 @@
       "lineage": "Położenie w Flow",
       "previous_iteration": "Poprzednia iteracja",
       "next_iteration": "Następna iteracja",
+      "open_execution": "Otwórz egzekucję",
       "iteration_position": "{position} z {total} w {loop}",
       "first_failure": "Pierwszy błąd",
       "go_to_failure": "Przejdź do błędu",
@@ -2164,6 +2165,12 @@
       "filter_success": "Udane {count}",
       "search_value": "Szukaj według dokładnego Value",
       "range": "{from}–{to} z {total}"
+    },
+    "gantt_subflow": {
+      "loading": "Ładowanie egzekucji Subflow…",
+      "load_error": "Nie udało się załadować egzekucji Subflow",
+      "none": "Żadna egzekucja jeszcze się nie rozpoczęła",
+      "executions": "Uruchomienia Tasków Subflow | Egzekucje Subflow | Egzekucje Subflow"
     },
     "loop_iterations_notice": {
       "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",

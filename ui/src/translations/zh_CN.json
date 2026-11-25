@@ -2150,6 +2150,7 @@
       "lineage": "在 flow 中的位置",
       "previous_iteration": "上一次迭代",
       "next_iteration": "下一次迭代",
+      "open_execution": "打开执行",
       "iteration_position": "{loop} 中的第 {position} / {total} 个",
       "first_failure": "首次失败",
       "go_to_failure": "转到失败",
@@ -2164,6 +2165,12 @@
       "filter_success": "成功 {count}",
       "search_value": "按精确值搜索",
       "range": "{from}–{to} / {total}"
+    },
+    "gantt_subflow": {
+      "loading": "正在加载 subflow 执行…",
+      "load_error": "无法加载 subflow execution",
+      "none": "尚未开始执行",
+      "executions": "Subflow Task 运行 | Subflow 执行"
     },
     "loop_iterations_notice": {
       "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",

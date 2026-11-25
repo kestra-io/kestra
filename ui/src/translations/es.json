@@ -2150,6 +2150,7 @@
       "lineage": "Ubicación en el flow",
       "previous_iteration": "Iteración anterior",
       "next_iteration": "Iteración siguiente",
+      "open_execution": "Abrir ejecución",
       "iteration_position": "{position} de {total} en {loop}",
       "first_failure": "Primer fallo",
       "go_to_failure": "Ir al fallo",
@@ -2164,6 +2165,12 @@
       "filter_success": "Exitosas {count}",
       "search_value": "Buscar por value exacto",
       "range": "{from}–{to} de {total}"
+    },
+    "gantt_subflow": {
+      "loading": "Cargando la ejecución del subflow…",
+      "load_error": "Error al cargar la ejecución del subflow",
+      "none": "No se ha iniciado ninguna Execution todavía",
+      "executions": "Ejecuciones de Subflow | Ejecuciones de Subflow"
     },
     "loop_iterations_notice": {
       "logs": "Las iteraciones de bucle se ejecutan como subejecuciones separadas, por lo que sus logs no se muestran aquí.",

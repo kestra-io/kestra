@@ -2150,6 +2150,7 @@
       "lineage": "Position im Flow",
       "previous_iteration": "Vorherige Iteration",
       "next_iteration": "Nächste Iteration",
+      "open_execution": "Execution öffnen",
       "iteration_position": "{position} von {total} in {loop}",
       "first_failure": "Erster Fehler",
       "go_to_failure": "Zum Fehler springen",
@@ -2164,6 +2165,12 @@
       "filter_success": "Erfolgreich {count}",
       "search_value": "Nach exaktem Value suchen",
       "range": "{from}–{to} von {total}"
+    },
+    "gantt_subflow": {
+      "loading": "Lade die Subflow-Execution…",
+      "load_error": "Fehler beim Laden der Subflow-Execution",
+      "none": "Noch keine Execution gestartet",
+      "executions": "Subflow Task-Runs | Subflow Executions"
     },
     "loop_iterations_notice": {
       "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",

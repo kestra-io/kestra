@@ -18,6 +18,7 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.utils.MapUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.pebbletemplates.pebble.error.PebbleException;
@@ -161,7 +162,7 @@ public class SubflowFunction implements KestraFunction {
 
         Optional<Integer> revision = Optional.ofNullable(args.get(REVISION_ARG)).map(r -> ((Number) r).intValue());
         Map<String, Object> rawInputs = (Map<String, Object>) args.get(INPUTS_ARG);
-        Map<String, Object> inputs = rawInputs != null ? rawInputs : Map.of();
+        Map<String, Object> inputs = MapUtils.emptyOnNull(rawInputs);
 
         List<Label> labels = buildLabels(args.get(LABELS_ARG), self, lineNumber);
         Duration timeout = resolveTimeout(args.get(TIMEOUT_ARG), self, lineNumber);
@@ -315,7 +316,7 @@ public class SubflowFunction implements KestraFunction {
             return new Result(
                 execution.getId(),
                 execution.getState().getCurrent().name(),
-                outputs != null ? outputs : Map.of(),
+                MapUtils.emptyOnNull(outputs),
                 labels
             );
         }

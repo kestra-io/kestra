@@ -53,6 +53,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -321,6 +322,8 @@ public class WorkingDirectoryTest {
         @Inject
         NamespaceFactory namespaceFactory;
         @Inject
+        NamespaceService namespaceService;
+        @Inject
         TaskOutputService taskOutputService;
         @Inject
         ExecutionRepositoryInterface executionRepository;
@@ -385,7 +388,7 @@ public class WorkingDirectoryTest {
                 null,
                 storageContext,
                 storageInterface,
-                null,
+                namespaceService,
                 namespaceFactory
             );
 
@@ -409,7 +412,7 @@ public class WorkingDirectoryTest {
                 null,
                 storageContext,
                 storageInterface,
-                null,
+                namespaceService,
                 namespaceFactory
             );
 
@@ -438,7 +441,7 @@ public class WorkingDirectoryTest {
                 null,
                 storageContext,
                 storageInterface,
-                null,
+                namespaceService,
                 namespaceFactory
             );
             storage.deleteCacheFile("workingDir", null);

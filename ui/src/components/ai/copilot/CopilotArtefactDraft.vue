@@ -22,20 +22,44 @@
             {{ draft.constraints }}
         </KsAlert>
 
-        <!-- The drafted YAML — read-only, syntax-highlighted preview (nothing is saved).
-             KsMarkdown provides its own copy-to-clipboard control, so no separate copy button. -->
-        <KsMarkdown class="copilot-draft-yaml" data-test="copilot-draft-yaml" :content="yamlBlock" />
+        <div v-if="draft.kind === 'FLOW' && draft.valid" class="copilot-draft-view">
+            <KsTabs v-model="view" type="segmented" data-test="copilot-draft-view">
+                <KsTabPane name="yaml" :label="$t('flow_change_review.yaml')" />
+                <KsTabPane name="graph" :label="$t('flow_change_review.graph')" />
+            </KsTabs>
+        </div>
+        <div
+            v-if="view === 'graph'"
+            v-ks-loading="base === undefined && !baseError"
+            class="copilot-draft-graph"
+            data-test="copilot-draft-graph"
+        >
+            <KsAlert
+                v-if="baseError"
+                type="warning"
+                :closable="false"
+                :title="$t('flow_change_review.graph_error')"
+                data-test="copilot-draft-graph-error"
+            />
+            <FlowChangeReview
+                v-else-if="base !== undefined"
+                :before="base || undefined"
+                :after="draft.yaml"
+            />
+        </div>
+        <KsMarkdown
+            v-else
+            class="copilot-draft-yaml"
+            data-test="copilot-draft-yaml"
+            :content="yamlBlock"
+        />
 
-        <!-- Once dismissed or applied, the card stops locking the editor (CopilotChat.vue excludes it
-             from the pending-draft scan) and the footer no longer offers actions — a quiet status line
-             instead, matching the cancelled-turn treatment in CopilotMessage.vue. -->
         <div v-if="dismissed" class="copilot-draft-footer" data-test="copilot-draft-dismissed">
             <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.dismissed") }}</KsText>
         </div>
         <div v-else-if="applied" class="copilot-draft-footer" data-test="copilot-draft-applied">
             <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.applied") }}</KsText>
         </div>
-        <!-- Dismiss is always offered: it's the only way to decline a draft, even one with no other actions. -->
         <div v-else class="copilot-draft-footer">
             <KsButton
                 text
@@ -66,16 +90,14 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, defineAsyncComponent, ref, watch} from "vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import {useApplyDraft} from "./useApplyDraft"
     import type {ArtefactDraftEvent} from "./types"
 
     const props = defineProps<{
         draft: ArtefactDraftEvent
-        /** True once this draft was dismissed (tracked by `CopilotChat.vue`) — hides the actions. */
         dismissed?: boolean
-        /** True once this draft was applied (tracked by `CopilotChat.vue`) — hides the actions. */
         applied?: boolean
     }>()
 
@@ -84,9 +106,24 @@
         (e: "applied", draftId: string): void
     }>()
 
-    const {applying, appSupported, dashboardSupported, testSuiteSupported, openInEditor, apply} = useApplyDraft()
+    const FlowChangeReview = defineAsyncComponent(
+        () => import("../../flows/changeReview/FlowChangeReview.vue"),
+    )
 
-    // Flow drafts always have actions; the others only when their backend or EE path is present.
+    const {
+        applying,
+        appSupported,
+        dashboardSupported,
+        testSuiteSupported,
+        openInEditor,
+        apply,
+        draftBaseSource,
+    } = useApplyDraft()
+
+    const view = ref<"yaml" | "graph">("yaml")
+    const base = ref<string>()
+    const baseError = ref(false)
+
     const showActions = computed(
         () => props.draft.kind === "FLOW"
             || (props.draft.kind === "DASHBOARD" && dashboardSupported.value)
@@ -94,22 +131,28 @@
             || (props.draft.kind === "TEST_SUITE" && testSuiteSupported),
     )
 
+    watch(view, async (value) => {
+        if (value !== "graph" || base.value !== undefined) {
+            return
+        }
+        baseError.value = false
+        try {
+            base.value = await draftBaseSource(props.draft)
+        } catch {
+            baseError.value = true
+        }
+    })
+
     async function onApply(): Promise<void> {
         if (await apply(props.draft)) emit("applied", props.draft.draftId)
     }
 
-    // Render the YAML as a fenced code block so KsMarkdown syntax-highlights it (matching the
-    // assistant transcript), rather than showing it as flat monospace text.
     const yamlBlock = computed(() => "```yaml\n" + props.draft.yaml + "\n```")
 </script>
 
 <style scoped>
     .copilot-draft {
-        /* Fill the transcript column so the YAML preview uses the available width instead of
-           shrinking to its longest line. */
         width: 100%;
-        /* --ks-border-default, not -subtle: in light theme -subtle is the same gray as the card's
-           --ks-bg-base, so a -subtle border is invisible (it shows fine in dark). */
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-lg);
         overflow: hidden;
@@ -136,7 +179,15 @@
         margin: var(--ks-spacing-2) var(--ks-spacing-3) 0;
     }
 
-    /* Constrain + scroll the highlighted block; KsMarkdown styles the code itself. */
+    .copilot-draft-view {
+        padding: var(--ks-spacing-2) var(--ks-spacing-3) 0;
+    }
+
+    .copilot-draft-graph {
+        min-height: 10rem;
+        padding: var(--ks-spacing-3);
+    }
+
     .copilot-draft-yaml {
         margin: 0;
         max-height: 18rem;
@@ -153,8 +204,6 @@
         background: var(--ks-bg-elevated);
     }
 
-    /* "Dismiss" reads as a subdued secondary link next to the primary Apply, matching
-       ProposedActionCard's "Reply to revise" treatment. */
     .copilot-draft-dismiss {
         --ks-button-text-color: var(--ks-text-secondary);
         color: var(--ks-text-secondary);

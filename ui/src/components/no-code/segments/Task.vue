@@ -56,7 +56,7 @@
         position?: "before" | "after",
     }
 
-    const yaml = ref("")
+    const yaml = ref<string | undefined>("")
 
     /**
      * build the path to extract or replace the task in the flow yaml, depending on the parentPath and refPath
@@ -135,7 +135,7 @@
             }
 
             const task = {
-                newBlock: yaml.value,
+                newBlock: yaml.value ?? "",
                 parentPath,
                 refPath,
                 position,

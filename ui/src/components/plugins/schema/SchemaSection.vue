@@ -2,7 +2,7 @@
     <details :id="href" :open="!collapsed">
         <summary
             class="collapse-button"
-            :class="{collapsed}"
+            :class="{collapsed, heading: compact, row, nested}"
             @click="handleToggle"
         >
             <span class="collapse-button__label">
@@ -12,7 +12,7 @@
             <span v-if="$slots.buttonRight" class="collapse-button__right">
                 <slot name="buttonRight" :collapsed="collapsed" />
             </span>
-            <KsIcon v-if="arrow" size="base" class="collapse-button__chevron">
+            <KsIcon v-if="arrow" size="sm" class="collapse-button__chevron">
                 <component :is="collapsed ? ChevronDown : ChevronUp" />
             </KsIcon>
         </summary>
@@ -37,11 +37,17 @@
         arrow?: boolean;
         initiallyExpanded?: boolean;
         noUrlChange?: boolean;
+        compact?: boolean;
+        row?: boolean;
+        nested?: boolean;
     }>(), {
         href: () => Math.random().toString(36).substring(2, 5),
         arrow: true,
         initiallyExpanded: false,
         noUrlChange: false,
+        compact: false,
+        row: false,
+        nested: false,
     })
 
     const emit = defineEmits<{expand: []}>()
@@ -108,10 +114,46 @@
         background: none;
         font-size: var(--ks-font-size-md);
         font-weight: 600;
+        margin-bottom: var(--ks-spacing-2);
 
         &:focus {
             outline: none;
             box-shadow: none;
+        }
+
+        &.heading {
+            font-size: var(--ks-font-size-xs);
+            font-weight: var(--ks-font-weight-bold);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--ks-text-muted);
+            pointer-events: none;
+            margin-bottom: var(--ks-spacing-3);
+        }
+
+        &.row {
+            padding: .75rem 1rem;
+            margin-bottom: 0;
+            font-size: var(--ks-font-size-xs);
+            font-weight: var(--ks-font-weight-regular);
+
+            &:not(.collapsed) {
+                border-bottom: 1px solid var(--collapsible-border-color, var(--ks-border-default));
+            }
+
+            & .collapse-button__label {
+                color: var(--ks-text-primary);
+            }
+        }
+
+        &.nested {
+            font-size: var(--ks-font-size-xs);
+            font-weight: var(--ks-font-weight-regular);
+        }
+
+        &.nested .collapse-button__chevron {
+            order: -1;
+            margin-left: 0;
         }
     }
 

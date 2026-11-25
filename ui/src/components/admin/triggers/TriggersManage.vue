@@ -11,7 +11,7 @@
             fitHeight
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
-            :rowClassName="getClasses"
+            :expandableRow="(row: TriggerRow) => hasLogsContent(row) || !!row.backfill"
             :rowKey="(row: TriggerRow) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
             :forceExpandedRowKeys="expandedRowKeys"
             :no-data-text="$t('no_results.triggers')"
@@ -155,6 +155,7 @@
                     <template v-else-if="col.prop === 'executionId'">
                         <router-link
                             v-if="scope.row.executionId && scope.row.namespace && scope.row.flowId"
+                            class="execution-link"
                             :to="{name: 'executions/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
                         >
                             <KsId :value="scope.row.executionId" :shrink="true" />
@@ -395,7 +396,7 @@
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, deepMerge} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
-    import {useFlowStore} from "../../../stores/flow"
+    import type {ExecutionLabelInput} from "../../../utils/executionLabels"
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
@@ -435,7 +436,6 @@
     const {t} = useI18n({useScope: "global"})
 
     const authStore = useAuthStore()
-    const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
 
     const {loadInit} = useRestoreUrl()
@@ -481,7 +481,7 @@
         start: Date | null;
         end: Date | null;
         inputs: Record<string, unknown> | null;
-        labels: Label[];
+        labels: ExecutionLabelInput[];
     }>({
         start: null,
         end: null,
@@ -695,10 +695,12 @@
 
     type BackfillRequest = TriggerControllerApiCreateBackfillRequest["backfill"]
 
-    const cleanBackfill = computed<BackfillRequest>(() => {
-        const labels = backfill.value.labels.filter(label => label.key && label.value)
+    const cleanBackfill = computed<BackfillRequest | undefined>(() => {
+        const {start} = backfill.value
+        if (!start) return undefined
+        const labels = backfill.value.labels.filter((label): label is Label => Boolean(label.key && label.value))
         return {
-            start: backfill.value.start?.toISOString(),
+            start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
             inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
@@ -708,13 +710,14 @@
 
     const postBackfill = () => {
         const trigger = selectedTrigger.value
-        if (!trigger) return
+        const request = cleanBackfill.value
+        if (!trigger || !request) return
 
         TriggersAPI.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: cleanBackfill.value,
+            backfill: request,
         })
             .then(() => {
                 toast.saved(trigger.triggerId)
@@ -725,9 +728,6 @@
     }
 
     const hasLogsContent = (row: TriggerRow) => !!row.logs?.length
-
-    const getClasses = ({row}: {row: TriggerRow}) =>
-        hasLogsContent(row) || row.backfill ? "expandable" : "no-expand"
 
     const disabledStartDate = (time: Date): boolean => {
         return new Date() < time || (backfill.value.end !== null && time > backfill.value.end)
@@ -1041,7 +1041,7 @@
         if (end && start > end) {
             return true
         }
-        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+        if (hasMissingRequiredInputs(executionsStore.flow?.inputs, inputs)) {
             return true
         }
 
@@ -1056,15 +1056,7 @@
         flex-direction: column;
         min-height: 0;
 
-        & :deep(tr.no-expand .kel-table__expand-icon) {
-            pointer-events: none;
-
-            .kel-icon {
-                display: none;
-            }
-        }
-
-        & :deep(.kel-table) a {
+        & .execution-link {
             color: var(--ks-text-link);
         }
     }

@@ -592,6 +592,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-dynamic-concurrency.yaml")
+    protected void loopDynamicConcurrency(Execution execution) throws Exception {
+        loopCaseTest.loopDynamicConcurrency(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-flowable.yaml")
     protected void loopFlowable(Execution execution) throws Exception {
         loopCaseTest.loopFlowable(execution);

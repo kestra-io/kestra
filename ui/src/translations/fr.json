@@ -1,5 +1,12 @@
 {
   "fr": {
+    "support_links": {
+      "slack_title": "Slack de la communauté",
+      "slack_description": "Échangez avec d'autres utilisateurs et l'équipe Kestra",
+      "github_description": "Ajoutez une étoile à notre projet open source",
+      "help_center_title": "Centre d'aide",
+      "help_center_description": "Contactez le support pour obtenir de l'aide sur votre compte Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra a été mis à niveau vers la version {version} et cela peut inclure des changements majeurs qui nécessitent des mises à jour de vos Flows.",
       "cta": "Voir les modifications"
@@ -292,6 +299,16 @@
     "last execution status": "Statut de la dernière exécution",
     "jump to": "Aller à",
     "jump to...": "Aller à...",
+    "global_search": {
+      "open_flow": "Ouvrir le flow",
+      "flow_executions": "Exécutions du flow",
+      "move": "Déplacer",
+      "menu": "Menu",
+      "sources": "Menu + flows + namespaces",
+      "sources_flows": "Menu + flows",
+      "sources_namespaces": "Menu + namespaces",
+      "search_failed": "Impossible de charger les flows ou les namespaces"
+    },
     "contextBar": {
       "ai": "IA",
       "news": "Nouvelles",
@@ -552,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Outputs du flow",
     "eval": {
+      "failed": "Impossible d'évaluer l'expression",
       "title": "Expression de débogage",
       "preview": "Aperçu",
       "expression": "Expression"
@@ -573,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Cette tâche a été relancée",
+      "task-details": "Détails de {task}",
       "artifacts": "aucun artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientation du graph",
       "zoom-in": "Zoomer",
@@ -647,6 +666,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "non démarré"
+      },
+      "diff": {
+        "added": "ajouté",
+        "removed": "supprimé",
+        "changed": "modifié",
+        "renamed": "renommé",
+        "moved": "déplacé"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Graphe",
+      "yaml": "YAML",
+      "unchanged": "{count} inchangés",
+      "graph_error": "Le graphe n'a pas pu être dessiné. Ouvrez l'onglet YAML pour voir la modification.",
+      "status": {
+        "added": "Ajouté",
+        "removed": "Supprimé",
+        "changed": "Modifié",
+        "renamed": "Renommé",
+        "moved": "Déplacé"
       }
     },
     "show task logs": "Afficher les journaux de la tâche",
@@ -761,7 +800,8 @@
       "dialog_title": "Limites de Concurrence",
       "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée.",
       "queued": "En file d'attente",
-      "save_error": "Échec de la mise à jour de la limite de Concurrency, la valeur précédente est conservée."
+      "save_error": "Échec de la mise à jour de la limite de Concurrency, la valeur précédente est conservée.",
+      "invalid_running_count": "Saisissez un nombre entier entre 0 et {max}."
     },
     "flowConcurrency": {
       "loadError": "Impossible de charger la limite de concurrence de ce flow.",
@@ -1550,7 +1590,7 @@
           },
           "descriptions": {
             "color_mode": "Choisissez votre thème d'interface préféré.",
-            "color_mode_shortcut": "Astuce : appuyez sur <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>L</kbd> pour changer de thème depuis n'importe où.",
+            "color_mode_shortcut": "Astuce : appuyez sur {ctrl}+{shift}+{key} pour changer de thème depuis n'importe où.",
             "logs_font_size": "Taille de police utilisée dans les visionneuses de log et les terminaux.",
             "editor_font_family": "Police monospace utilisée dans l'éditeur YAML.",
             "editor_font_size": "Taille de police utilisée dans les éditeurs YAML et sans code.",
@@ -1760,7 +1800,12 @@
           },
           "flow_generated": {
             "title": "Ceci est un flow",
-            "body": "Le flow est écrit en YAML avec deux tasks :<ol><li><code>fetch_orders</code> pour télécharger les commandes</li><li><code>summarize</code> pour calculer les revenus en Python</li></ol>Les tasks sont exécutées séquentiellement, dans l'ordre dans lequel elles sont définies.",
+            "body": "Le flow est écrit en YAML avec deux tasks :",
+            "tasks": {
+              "fetch_orders": "{task} pour télécharger les commandes",
+              "summarize": "{task} pour calculer les revenus en Python"
+            },
+            "after_tasks": "Les tasks sont exécutées séquentiellement, dans l'ordre dans lequel elles sont définies.",
             "next": "Enregistrer et exécuter"
           },
           "first_execution": {
@@ -2109,6 +2154,7 @@
     "custom value": "Valeur personnalisée",
     "chart": "Graphique",
     "no_code": {
+      "unknown_schema": "Schéma inconnu",
       "toggle_pebble": "Basculer l'éditeur Pebble",
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins",
       "adding": "+ Ajouter un {what}",
@@ -2541,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "L'assistant n'a pas renvoyé de réponse. Veuillez réessayer.",
+          "outputLimit": "L'assistant a manqué de tokens de sortie avant de pouvoir répondre. Raccourcissez votre message ou démarrez une nouvelle conversation.",
+          "contentFiltered": "Le fournisseur d'IA a bloqué la réponse. Reformulez votre message ou supprimez le contenu qui a pu déclencher les filtres du fournisseur.",
           "retry": "Réessayer"
         },
         "cancelled": "Tour annulé",
@@ -2551,6 +2599,7 @@
           "generic": "Une erreur est survenue. Veuillez réessayer."
         },
         "emptyHelper": "Je peux modifier ce flow, générer des tests, échafauder les fichiers associés, ou expliquer comment il fonctionne.",
+        "emptyHelperNoFlow": "Je peux créer ou modifier des flows, générer des tests, échafauder des fichiers connexes ou expliquer comment Kestra fonctionne.",
         "suggestions": {
           "errorHandling": "Ajouter la gestion des erreurs",
           "unitTest": "Générer un test unitaire",
@@ -2616,7 +2665,8 @@
           "applied": "Appliqué",
           "previewBanner": "Examen d'une modification suggérée par l'IA : l'éditeur est en lecture seule jusqu'à ce que vous l'appliquiez ou l'ignoriez.",
           "applyTitle": "Appliquer le flow",
-          "applyConfirm": "Enregistrer le flow {namespace}.{id} comme révision brouillon pour relecture ? Il sera créé, ou une nouvelle révision brouillon sera ajoutée s'il existe déjà. Les brouillons ne sont pas pris en compte par les triggers ni les subflows tant qu'ils ne sont pas publiés.",
+          "applyDraftTitle": "L'application enregistre une révision brouillon.",
+          "applyDraftHint": "Rien n'est encore en production. Les triggers et les subflows ignorent les brouillons tant que vous n'avez pas publié.",
           "applyConfirmDashboard": "Appliquer le tableau de bord {id} ? Il sera créé, ou écrasé s'il existe déjà.",
           "applyError": "Impossible d'appliquer le flow. Veuillez réessayer.",
           "applyErrorDashboard": "Impossible d'appliquer le tableau de bord. Veuillez réessayer.",
@@ -3143,7 +3193,7 @@
       "undo": "Annuler",
       "upstream_outputs": "Sorties en amont",
       "open_in_tabs": "Ouvrir dans des onglets",
-      "open_mode_hint": "Les tasks s'ouvrent dans une modale par défaut. Vous pouvez définir les onglets par défaut dans les {settings}."
+      "open_mode_hint": "Cet éditeur s'ouvre par défaut dans une modale. Vous pouvez définir les onglets comme valeur par défaut dans les {settings}."
     },
     "blocks": "Blocs",
     "move_panel_to_bottom": "Déplacer le panneau vers le bas",
@@ -3207,6 +3257,8 @@
     "chart mode": {
       "counts": "Décompte",
       "timeline": "Chronologie"
-    }
+    },
+    "search_in_flow_source": "Rechercher « {query} » dans le code source du flux",
+    "flows_matched_query": "{count} flux avec « {query} » dans l’id ou le namespace. | {count} flux avec « {query} » dans l’id ou le namespace."
   }
 }

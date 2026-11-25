@@ -65,7 +65,7 @@
                     :disabledReason="disabledReason"
                     :describedBy="describedBy"
                     :streaming="streaming"
-                    :placeholder="$t('ai.copilot.emptyHelper')"
+                    :placeholder="emptyPlaceholder"
                     :rows="3"
                     @submit="onSubmit"
                     @stop="onStop"
@@ -151,7 +151,7 @@
                 <KsAlert v-else-if="notice" type="warning" role="status" data-test="copilot-notice">
                     <div class="copilot-notice-body">
                         <span>{{ $t(`ai.copilot.notice.${notice}`) }}</span>
-                        <KsButton size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
+                        <KsButton v-if="notice === 'emptyTurn'" size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
                             {{ $t("ai.copilot.notice.retry") }}
                         </KsButton>
                     </div>
@@ -316,6 +316,8 @@
         previousProvider = now
     })
 
+    const emptyPlaceholder = computed(() => t(routeInFocus.value?.kind === "FLOW" ? "ai.copilot.emptyHelper" : "ai.copilot.emptyHelperNoFlow"))
+
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
         t("ai.copilot.suggestions.errorHandling"),
@@ -452,7 +454,7 @@
     const disabledReason = computed(() => noProviderConfigured.value ? t("ai.copilot.unavailable.sendTooltip") : undefined)
 
     /** Where the no-provider notice sends the user: the Copilot docs, on the configuration section. */
-    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configuration"
+    const docsUrl = "https://kestra.io/docs/develop-with-ai/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configure-an-llm-provider"
 
     const restored = restoreThread()
 

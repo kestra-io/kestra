@@ -77,6 +77,11 @@ public class ConcurrencySlotReleaseProcessor {
         }
 
         try {
+            // an execution ended while still queued (SLA, cancel...) must leave the queued store, or a later release would pop it back to RUNNING
+            if (terminatedByThisCycle && isQueuedWithoutRunning(execution)) {
+                executionQueuedStateStore.remove(execution);
+            }
+
             // release the scopes the execution was admitted under — not the currently defined
             // ones: a namespace/tenant limit removed while it ran must still get its slot back
             // (current definitions, when still present, are carried along for the pop). Executions
@@ -153,21 +158,23 @@ public class ConcurrencySlotReleaseProcessor {
      * <p>
      * Two different populations reach this fallback, and only one of them is temporary:
      * <ul>
-     *     <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
-     *     <li>executions moved to RUNNING while bypassing the admission gate, which never
-     *     increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
+     * <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
+     * <li>executions moved to RUNNING while bypassing the admission gate, which never
+     * increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
      * </ul>
      */
     private static boolean claimedASlotAccordingToHistory(Execution execution) {
-        // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
-        boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
-            && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
-            && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
         // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
         boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
             && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
 
-        return !queuedThenKilled && !concurrencyShortCircuitState;
+        // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
+        return !isQueuedWithoutRunning(execution) && !concurrencyShortCircuitState;
+    }
+
+    private static boolean isQueuedWithoutRunning(Execution execution) {
+        return execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
+            && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
     }
 
     private List<String> claimedScopes(Execution queued, List<ScopedConcurrencyLimit> releasedLimits, boolean flowScopedRelease) {

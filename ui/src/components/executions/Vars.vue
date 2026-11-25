@@ -11,7 +11,6 @@
             :items="variables"
             :minItemSize="40"
             keyField="key"
-            :buffer="200"
             :prerender="20"
             class="vars-rows"
         >
@@ -45,7 +44,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
 
     import * as Utils from "../../utils/utils"

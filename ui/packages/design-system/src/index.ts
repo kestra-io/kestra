@@ -66,7 +66,7 @@ import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsDrillRow from "./components/Navigation/KsDrillRow/KsDrillRow.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
-export type {KsButtonType} from "./components/Basic/KsButton/KsButton.vue"
+export type {KsButtonProps, KsButtonType} from "./components/Basic/KsButton/KsButton.vue"
 export type {KsTooltipProps} from "./components/Feedback/KsTooltip.vue"
 export type {NativeAttributes} from "./utils/nativeAttributes"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
@@ -630,10 +630,13 @@ declare module "vue" {
         KsListingPage: typeof KsListingPage
         KsMain: typeof KsMain
         KsDatePicker: typeof KsDatePicker
+        KsDescriptions: typeof KsDescriptions
+        KsDescriptionsItem: typeof KsDescriptionsItem
         KsDialog: typeof KsDialog
         KsDivider: typeof KsDivider
         KsDrawer: typeof KsDrawer
         KsDurationPicker: typeof KsDurationPicker
+        KsEditor: typeof KsEditor
         KsDropdown: typeof KsDropdown
         KsDropdownItem: typeof KsDropdownItem
         KsDropdownMenu: typeof KsDropdownMenu

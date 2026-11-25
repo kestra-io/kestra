@@ -17,14 +17,14 @@
 
                 <KsDropdownMenu>
                     <KsDropdownItem command="tour">
-                        <KsIcon size="base">
+                        <KsIcon size="sm">
                             <RocketLaunchOutline />
                         </KsIcon>
                         {{ $t("product_tour") }}
                     </KsDropdownItem>
 
                     <KsDropdownItem command="slack">
-                        <KsIcon size="base">
+                        <KsIcon size="sm">
                             <Slack />
                         </KsIcon>
                         {{ $t("join_slack") }}
@@ -33,14 +33,14 @@
                     <VersionMenuItem />
 
                     <KsDropdownItem v-if="canChangePassword" command="changePassword" data-test="change-password-menu-item">
-                        <KsIcon size="base">
+                        <KsIcon size="sm">
                             <LockReset />
                         </KsIcon>
                         {{ $t("change_password.title") }}
                     </KsDropdownItem>
 
                     <KsDropdownItem danger command="logout">
-                        <KsIcon size="base">
+                        <KsIcon size="sm">
                             <Logout />
                         </KsIcon>
                         {{ $t("setup.logout") }}

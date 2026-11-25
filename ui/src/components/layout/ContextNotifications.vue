@@ -70,7 +70,7 @@
 <script setup lang="ts">
     import {computed, onMounted, ref, useTemplateRef} from "vue"
     import {useRouter} from "vue-router"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import CheckAll from "vue-material-design-icons/CheckAll.vue"
     import {useMiscStore} from "override/stores/misc"

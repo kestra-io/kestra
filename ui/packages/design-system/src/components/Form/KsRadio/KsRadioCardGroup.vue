@@ -4,15 +4,15 @@
             v-for="option in options"
             :key="`${typeof option.value}:${option.value}`"
             class="card"
-            :class="{selected: model === option.value, disabled: option.disabled}"
+            :class="{selected: modelValue === option.value, disabled: option.disabled}"
         >
             <input
-                v-model="model"
+                :checked="modelValue === option.value"
                 type="radio"
                 :name="name"
                 :value="option.value"
                 :disabled="option.disabled"
-                @change="emit('change', option.value)"
+                @change="select(option.value)"
             >
             <span class="title">{{ option.label }}</span>
             <component
@@ -26,14 +26,13 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string | number | boolean = string">
     import {useId, type Component} from "vue"
 
-    const model = defineModel<string | number | boolean>()
-
     defineProps<{
+        modelValue?: T
         options: {
-            value: string | number | boolean
+            value: T
             label: string
             hint?: string
             disabled?: boolean
@@ -43,8 +42,14 @@
     }>()
 
     const emit = defineEmits<{
-        change: [value: string | number | boolean]
+        "update:modelValue": [value: T]
+        change: [value: T]
     }>()
+
+    function select(value: T) {
+        emit("update:modelValue", value)
+        emit("change", value)
+    }
 
     const name = useId()
 </script>

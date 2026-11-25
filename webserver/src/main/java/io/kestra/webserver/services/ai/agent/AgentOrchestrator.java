@@ -46,6 +46,7 @@ import io.micronaut.core.annotation.Nullable;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.output.FinishReason;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.PartialResponse;
@@ -71,6 +72,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AgentOrchestrator {
     private static final long MODEL_CANCEL_POLL_MS = 50;
+
+    private static final int MAX_MALFORMED_ARGUMENTS_CHARS = 2000;
 
     private final AiServiceManager aiServiceManager;
     private final ToolCatalog catalog;
@@ -317,9 +320,14 @@ public class AgentOrchestrator {
                 // empty model turn on the next turn (see ChatMessageAdaptor.project), which is itself a
                 // documented trigger for more empty responses. End the turn without polluting the thread.
                 if (ai.text() == null || ai.text().isBlank()) {
-                    log.warn("Model returned an empty response (no text, no tool calls) for thread {}; ending turn without persisting.", ctx.thread().uid());
+                    AgentEvents.EmptyTurnReason reason = emptyTurnReason(response.finishReason());
+                    log.warn(
+                        "Model returned an empty response (no text, no tool calls) for thread {}; ending turn without persisting. reason={}, finishReason={}, tokenUsage={}",
+                        ctx.thread().uid(), reason, response.finishReason(), response.tokenUsage()
+                    );
                     finishTurn(ctx);
-                    done(sink, AgentThreadStatus.IDLE);
+                    sink.emit(AgentEvents.DONE, new AgentEvents.DoneEvent(AgentThreadStatus.IDLE.name(), reason));
+                    sink.complete();
                     return;
                 }
 
@@ -344,17 +352,18 @@ public class AgentOrchestrator {
                 return;
             }
 
-            ctx.messages().add(ai);
+            ctx.messages().add(ChatMessageAdaptor.withValidToolArguments(ai));
             ToolExecutionRequest heldAction = null;
             ToolEntry heldEntry = null;
             Map<String, Object> heldArgs = null;
 
-            for (ToolExecutionRequest req : ai.toolExecutionRequests()) {
+            for (ToolExecutionRequest emitted : ai.toolExecutionRequests()) {
                 if (sink.isCancelled()) {
                     abortCancelled(ctx);
                     return;
                 }
 
+                ToolExecutionRequest req = ChatMessageAdaptor.withNormalizedArguments(emitted);
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {
@@ -365,6 +374,16 @@ public class AgentOrchestrator {
                 ToolEntry entry = catalog.byName(req.name()).orElseThrow();
                 threadManager.appendToolCall(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ai.text(),
                     ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family(), ChatMessageAdaptor.thinkingOf(ai)));
+
+                if (ChatMessageAdaptor.hasMalformedArguments(req.arguments())) {
+                    // The arguments are model-written text, so they go to the model but never to the server log.
+                    log.warn(
+                        "Copilot thread {}: tool '{}' was not executed: malformed arguments ({} chars, finish reason {})",
+                        ctx.thread().uid(), req.name(), req.arguments().length(), response.finishReason()
+                    );
+                    recordToolError(ctx, req, entry.kind(), entry.family(), malformedArgumentsMessage(req, response.finishReason()), sink);
+                    continue;
+                }
 
                 if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
                     if (heldAction == null) {
@@ -432,6 +451,11 @@ public class AgentOrchestrator {
     private void failTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
         final AgentToolFamily family, final String message, final TurnEventSink sink) {
         log.warn("Copilot thread {}: tool '{}' failed: {}", ctx.thread().uid(), req.name(), message);
+        recordToolError(ctx, req, kind, family, message, sink);
+    }
+
+    private void recordToolError(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
+        final AgentToolFamily family, final String message, final TurnEventSink sink) {
         // Mark the result as an error so the model (and provider APIs, e.g. Gemini's functionResponse)
         // see it as a failed tool call rather than a normal result — ToolExecutionResultMessage.from(..)
         // leaves isError null.
@@ -443,6 +467,30 @@ public class AgentOrchestrator {
             .build());
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
         emitToolResult(sink, req.name(), "error", message, null);
+    }
+
+    private static String malformedArgumentsMessage(final ToolExecutionRequest req, @Nullable final FinishReason finishReason) {
+        if (finishReason == FinishReason.LENGTH) {
+            return "The tool call was not executed because the output token limit was reached before its arguments were complete. Reissue the call with shorter arguments.";
+        }
+        String raw = req.arguments();
+        String received = raw.length() <= MAX_MALFORMED_ARGUMENTS_CHARS ? raw : raw.substring(0, MAX_MALFORMED_ARGUMENTS_CHARS) + "…";
+        return "Invalid tool arguments, so the call was not executed: %s. Received: %s Reissue the call with valid JSON arguments."
+            .formatted(ChatMessageAdaptor.malformedArgumentsReason(raw), received);
+    }
+
+    /**
+     * Tells the client why a successful model call came back empty, so it can say something more useful
+     * than "no response". Providers report this only through the finish reason.
+     */
+    private static AgentEvents.EmptyTurnReason emptyTurnReason(@Nullable final FinishReason finishReason) {
+        if (finishReason == FinishReason.LENGTH) {
+            return AgentEvents.EmptyTurnReason.OUTPUT_LIMIT;
+        }
+        if (finishReason == FinishReason.CONTENT_FILTER) {
+            return AgentEvents.EmptyTurnReason.CONTENT_FILTERED;
+        }
+        return AgentEvents.EmptyTurnReason.EMPTY_RESPONSE;
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
@@ -551,7 +599,7 @@ public class AgentOrchestrator {
             throw new IllegalStateException("LLM streaming call interrupted", e);
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
-            throw new IllegalStateException("LLM streaming call failed: " + cause.getMessage(), cause);
+            throw new IllegalStateException("LLM streaming call failed: " + ModelCallFailure.reason(cause), cause);
         }
     }
 

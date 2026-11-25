@@ -85,7 +85,8 @@ class ClosedLoopTest {
     void aFailingExecutionTerminatedNotifierDoesNotKeepTheNextOneFromBeingNotified() {
         FlowWithSource flow = Flows.of(Flows.log("a"));
         harness.registerFlow(flow);
-        harness.notifyExecutionTerminatedFirstTo(execution -> {
+        harness.notifyExecutionTerminatedFirstTo(execution ->
+        {
             throw new IllegalStateException("The notifier failed.");
         });
         Execution created = Executions.created(flow);

@@ -43,6 +43,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.TimeLineSearch;
+import io.kestra.webserver.models.api.Pagination;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -59,8 +60,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -122,10 +121,8 @@ public class DashboardController {
     @Get
     @Operation(tags = { "Dashboards" }, summary = "Search for dashboards")
     public PagedResults<DashboardResponse> searchDashboards(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(description = "The filter query") @Nullable @QueryValue String q,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort) throws ConstraintViolationException {
+        @Valid @RequestBean Pagination paging,
+        @Parameter(description = "The filter query") @Nullable @QueryValue String q) throws ConstraintViolationException {
         return PagedResults.of(new ArrayListTotal<>(List.of(), 0));
     }
 
@@ -215,6 +212,14 @@ public class DashboardController {
         return fetchChartData(fetchChartDataQuery);
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "charts/state-counts")
+    @Operation(tags = { "Dashboards" }, summary = "Count the executions of a chart by state")
+    public ChartStateCounts previewChartStateCounts(
+        @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest) throws IOException {
+        return fetchChartStateCounts(buildChartPreviewDataQuery(previewRequest));
+    }
+
     private FetchChartDataQuery buildChartPreviewDataQuery(PreviewRequest previewRequest) {
         String tenantId = tenantService.resolveTenant();
         Chart<?> chart = YamlParser.parse(previewRequest.chart(), Chart.class);
@@ -295,6 +300,21 @@ public class DashboardController {
         throw new IllegalArgumentException("Only data charts can be generated.");
     }
 
+    protected ChartStateCounts fetchChartStateCounts(FetchChartDataQuery fetchChartDataQuery) throws IOException {
+        if (!(fetchChartDataQuery.chart() instanceof DataChart<?, ?> dataChart)) {
+            throw new IllegalArgumentException("Only data charts can be counted by state.");
+        }
+
+        return new ChartStateCounts(this.chartDataService.generateStateCounts(
+            fetchChartDataQuery.tenantId(),
+            dataChart,
+            fetchChartDataQuery.filters(),
+            fetchChartDataQuery.startDate(),
+            fetchChartDataQuery.endDate(),
+            fetchChartDataQuery.queryTimeout()
+        ));
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = { "Dashboards" }, summary = "Export a dashboard chart data")
@@ -368,6 +388,12 @@ public class DashboardController {
         static ChartData of(ArrayListTotal<Map<String, Object>> rows, List<QueryFilter.Field> ignoredFilters) {
             return new ChartData(rows, rows.getTotal(), ignoredFilters, rows instanceof ChartRows chartRows ? chartRows.getMetadata() : null);
         }
+    }
+
+    /**
+     * @param counts the number of executions per state name, without an entry for a state that has none
+     */
+    public record ChartStateCounts(@NotNull Map<String, Long> counts) {
     }
 
     @Getter

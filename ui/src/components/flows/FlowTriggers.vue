@@ -26,10 +26,10 @@
             v-bind="$attrs"
             :data="triggersWithType"
             :total="triggersWithType.length"
+            :pageSizeOptions="[triggersWithType.length || 1]"
             :defaultSort="{prop: 'triggerId', order: 'ascending'}"
             :rowKey="(row: TriggerRow) => row.id"
-            :expandRowKeys="expandedRowKeys"
-            :rowClassName="(arg: {row: TriggerRow}) => arg.row.backfill ? 'force-expanded' : ''"
+            :forceExpandedRowKeys="expandedRowKeys"
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
         >
@@ -48,18 +48,19 @@
                         @resume="unpauseBackfill(props.row as TriggerRow)"
                         @stop="deleteBackfill(props.row as TriggerRow)"
                     />
-                    <LogsWrapper
-                        class="trigger-logs"
-                        :filters="{
-                            'filters[namespace][EQUALS]': props.row.namespace ?? flowStore.flow?.namespace,
-                            'filters[flowId][EQUALS]': props.row.flowId ?? flowStore.flow?.id,
-                            'filters[triggerId][EQUALS]': props.row.id
-                        }"
-                        :logsStoreScope="`trigger-${props.row.namespace ?? flowStore.flow?.namespace}-${props.row.flowId ?? flowStore.flow?.id}-${props.row.id}`"
-                        :withCharts="false"
-                        :reloadLogs
-                        embed
-                    />
+                    <div class="trigger-logs">
+                        <LogsWrapper
+                            :filters="{
+                                'filters[namespace][EQUALS]': props.row.namespace ?? flowStore.flow?.namespace,
+                                'filters[flowId][EQUALS]': props.row.flowId ?? flowStore.flow?.id,
+                                'filters[triggerId][EQUALS]': props.row.id
+                            }"
+                            :logsStoreScope="`trigger-${props.row.namespace ?? flowStore.flow?.namespace}-${props.row.flowId ?? flowStore.flow?.id}-${props.row.id}`"
+                            :withCharts="false"
+                            :reloadLogs
+                            embed
+                        />
+                    </div>
                 </template>
             </KsTableColumn>
             <KsTableColumn
@@ -388,6 +389,7 @@
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import {hasMissingRequiredInputs} from "../../utils/inputs"
+    import type {ExecutionLabelInput} from "../../utils/executionLabels"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -438,7 +440,7 @@
         start: Date | null;
         end: Date | null;
         inputs: Record<string, unknown> | null;
-        labels: Label[];
+        labels: ExecutionLabelInput[];
     }>({
         start: null,
         end: null,
@@ -569,10 +571,12 @@
 
     type BackfillRequest = TriggerControllerApiCreateBackfillRequest["backfill"]
 
-    const cleanBackfill = computed<BackfillRequest>(() => {
-        const labels = backfill.value.labels.filter(label => label.key && label.value)
+    const cleanBackfill = computed<BackfillRequest | undefined>(() => {
+        const {start} = backfill.value
+        if (!start) return undefined
+        const labels = backfill.value.labels.filter((label): label is Label => Boolean(label.key && label.value))
         return {
-            start: backfill.value.start?.toISOString(),
+            start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
             inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
@@ -636,10 +640,11 @@
 
     const postBackfill = () => {
         const trigger = selectedTrigger.value
-        if (!trigger) return
+        const request = cleanBackfill.value
+        if (!trigger || !request) return
 
         const identity = triggerIdentity(trigger)
-        TriggersAPI.createBackfill({...identity, backfill: cleanBackfill.value})
+        TriggersAPI.createBackfill({...identity, backfill: request})
             .then(() => {
                 toast.saved(identity.triggerId)
                 setBackfillModal(null, false)
@@ -924,18 +929,7 @@
     text-transform: uppercase;
 }
 
-:deep(tr.force-expanded .kel-table__expand-icon) {
-    visibility: hidden;
-    pointer-events: none;
-}
-
-:deep(.markdown) {
-    p {
-        margin-bottom: auto;
-    }
-}
-
-:deep(.trigger-logs) {
+.trigger-logs {
     margin: var(--ks-spacing-4);
 }
 

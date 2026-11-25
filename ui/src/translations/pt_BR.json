@@ -1,5 +1,12 @@
 {
   "pt_BR": {
+    "support_links": {
+      "slack_title": "Slack da comunidade",
+      "slack_description": "Converse com outros usuários e com a equipe Kestra",
+      "github_description": "Dê uma estrela ao nosso projeto open source",
+      "help_center_title": "Central de ajuda",
+      "help_center_description": "Entre em contato com o suporte para obter ajuda com sua conta Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "O Kestra foi atualizado para a versão {version} e pode incluir alterações que exigem atualizações nos seus Flows.",
       "cta": "Ver o que mudou"
@@ -292,6 +299,16 @@
     "last execution status": "Último status de execução",
     "jump to": "Ir para",
     "jump to...": "Ir para...",
+    "global_search": {
+      "open_flow": "Abrir flow",
+      "flow_executions": "Execuções do flow",
+      "move": "Mover",
+      "menu": "Menu",
+      "sources": "Menu + flows + namespaces",
+      "sources_flows": "Menu + flows",
+      "sources_namespaces": "Menu + namespaces",
+      "search_failed": "Não foi possível carregar flows ou namespaces"
+    },
     "contextBar": {
       "ai": "IA",
       "news": "Notícias",
@@ -552,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Saídas do Flow",
     "eval": {
+      "failed": "Não foi possível avaliar a expressão",
       "title": "Expressão de Depuração",
       "preview": "Visualizar",
       "expression": "Expressão"
@@ -573,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "Esta Task foi retried",
+      "task-details": "Detalhes de {task}",
       "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientação do gráfico",
       "zoom-in": "Aumentar zoom",
@@ -647,6 +666,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "não iniciado"
+      },
+      "diff": {
+        "added": "adicionado",
+        "removed": "removido",
+        "changed": "alterado",
+        "renamed": "renomeado",
+        "moved": "movido"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "unchanged": "{count} sem alterações",
+      "graph_error": "Não foi possível desenhar o grafo. Abra a aba YAML para ver a alteração.",
+      "status": {
+        "added": "Adicionado",
+        "removed": "Removido",
+        "changed": "Alterado",
+        "renamed": "Renomeado",
+        "moved": "Movido"
       }
     },
     "show task logs": "Mostrar task logs",
@@ -761,7 +800,8 @@
       "dialog_title": "Limites de Concurrency",
       "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido.",
       "queued": "Em fila",
-      "save_error": "Falha ao atualizar o limite de Concurrency, o valor anterior foi mantido."
+      "save_error": "Falha ao atualizar o limite de Concurrency, o valor anterior foi mantido.",
+      "invalid_running_count": "Insira um número inteiro entre 0 e {max}."
     },
     "flowConcurrency": {
       "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
@@ -1550,7 +1590,7 @@
           },
           "descriptions": {
             "color_mode": "Escolha o tema de interface preferido.",
-            "color_mode_shortcut": "Dica: pressione <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> para alternar temas de qualquer lugar.",
+            "color_mode_shortcut": "Dica: pressione {ctrl}+{shift}+{key} para alternar temas de qualquer lugar.",
             "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais.",
             "editor_font_family": "Fonte monoespaçada usada no editor YAML.",
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
@@ -1760,7 +1800,12 @@
           },
           "flow_generated": {
             "title": "Este é um flow",
-            "body": "O flow é escrito em YAML com duas tasks:<ol><li><code>fetch_orders</code> para baixar os pedidos</li><li><code>summarize</code> para calcular a receita em Python</li></ol>Tasks são executadas sequencialmente, na ordem em que são definidas.",
+            "body": "O flow é escrito em YAML com duas tasks:",
+            "tasks": {
+              "fetch_orders": "{task} para baixar os pedidos",
+              "summarize": "{task} para calcular a receita em Python"
+            },
+            "after_tasks": "Tasks são executadas sequencialmente, na ordem em que são definidas.",
             "next": "Salvar e executar"
           },
           "first_execution": {
@@ -2109,6 +2154,7 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
+      "unknown_schema": "Esquema desconhecido",
       "toggle_pebble": "Alternar editor Pebble",
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition",
       "adding": "+ Adicionar um {what}",
@@ -2541,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "O assistente não retornou uma resposta. Tente novamente.",
+          "outputLimit": "O assistente ficou sem tokens de output antes de conseguir responder. Encurte sua mensagem ou inicie um novo chat.",
+          "contentFiltered": "O provedor de AI bloqueou a resposta. Reformule sua mensagem ou remova o conteúdo que pode ter acionado os filtros do provedor.",
           "retry": "Tentar novamente"
         },
         "cancelled": "Vez cancelada",
@@ -2551,6 +2599,7 @@
           "generic": "Algo deu errado. Por favor, tente novamente."
         },
         "emptyHelper": "Posso editar este flow, gerar testes, criar arquivos relacionados ou explicar como funciona.",
+        "emptyHelperNoFlow": "Posso criar ou editar flows, gerar testes, criar arquivos relacionados ou explicar como o Kestra funciona.",
         "suggestions": {
           "errorHandling": "Adicionar tratamento de erros",
           "unitTest": "Gerar um teste de unidade",
@@ -2616,7 +2665,8 @@
           "applied": "Aplicado",
           "previewBanner": "Revisando uma alteração sugerida pela IA. O editor fica somente leitura até você aplicar ou descartar.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Salvar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Ele será criado, ou uma nova revisão de rascunho será adicionada se já existir. Rascunhos não são acionados por triggers nem subflows até serem publicados.",
+          "applyDraftTitle": "Aplicar salva uma revisão de rascunho.",
+          "applyDraftHint": "Nada entra em produção ainda. Triggers e subflows ignoram rascunhos até você publicar.",
           "applyConfirmDashboard": "Aplicar o painel {id}? Ele será criado, ou sobrescrito se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyErrorDashboard": "Não foi possível aplicar o dashboard. Por favor, tente novamente.",
@@ -3143,7 +3193,7 @@
       "undo": "Desfazer",
       "upstream_outputs": "Saídas upstream",
       "open_in_tabs": "Abrir em abas",
-      "open_mode_hint": "As Tasks abrem em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
+      "open_mode_hint": "Este editor abre em um modal por padrão. Você pode definir as abas como padrão em {settings}."
     },
     "blocks": "Blocos",
     "move_panel_to_bottom": "Mover painel para baixo",
@@ -3207,6 +3257,8 @@
     "chart mode": {
       "counts": "Contagens",
       "timeline": "Linha do tempo"
-    }
+    },
+    "search_in_flow_source": "Pesquisar \"{query}\" no código-fonte do fluxo",
+    "flows_matched_query": "{count} fluxo com \"{query}\" no id ou namespace. | {count} fluxos com \"{query}\" no id ou namespace."
   }
 }

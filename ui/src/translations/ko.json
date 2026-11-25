@@ -1,5 +1,12 @@
 {
   "ko": {
+    "support_links": {
+      "slack_title": "커뮤니티 Slack",
+      "slack_description": "다른 사용자 및 Kestra 팀과 토론하세요",
+      "github_description": "오픈 소스 프로젝트에 별을 눌러 주세요",
+      "help_center_title": "도움말 센터",
+      "help_center_description": "Enterprise 계정에 대한 도움이 필요하면 지원팀에 문의하세요"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra가 {version}으로 업그레이드되었습니다. 이 버전에는 Flow 업데이트가 필요한 변경 사항이 포함될 수 있습니다.",
       "cta": "변경 사항 확인"
@@ -292,6 +299,16 @@
     "last execution status": "마지막 실행 상태",
     "jump to": "이동",
     "jump to...": "이동...",
+    "global_search": {
+      "open_flow": "flow 열기",
+      "flow_executions": "flow 실행",
+      "move": "이동",
+      "menu": "메뉴",
+      "sources": "메뉴 + flows + namespaces",
+      "sources_flows": "메뉴 + Flow",
+      "sources_namespaces": "메뉴 + namespace",
+      "search_failed": "flows 또는 namespaces를 불러오지 못했습니다"
+    },
     "contextBar": {
       "ai": "AI",
       "news": "뉴스",
@@ -552,6 +569,7 @@
     "output": "Output",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "표현식을 평가하지 못했습니다",
       "title": "디버그 표현식",
       "preview": "미리보기",
       "expression": "표현식"
@@ -573,6 +591,7 @@
     },
     "topology-graph": {
       "retried": "이 Task는 재시도되었습니다.",
+      "task-details": "{task} 세부 정보",
       "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
       "graph-orientation": "그래프 방향",
       "zoom-in": "확대",
@@ -647,6 +666,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "시작되지 않음"
+      },
+      "diff": {
+        "added": "추가됨",
+        "removed": "제거됨",
+        "changed": "변경됨",
+        "renamed": "이름 변경됨",
+        "moved": "이동됨"
+      }
+    },
+    "flow_change_review": {
+      "graph": "그래프",
+      "yaml": "YAML",
+      "unchanged": "{count}개 변경 없음",
+      "graph_error": "그래프를 그릴 수 없습니다. 변경 내용을 보려면 YAML 탭을 여세요.",
+      "status": {
+        "added": "추가됨",
+        "removed": "제거됨",
+        "changed": "변경됨",
+        "renamed": "이름 변경됨",
+        "moved": "이동됨"
       }
     },
     "show task logs": "Task Logs 보기",
@@ -761,7 +800,8 @@
       "dialog_title": "동시성 제한",
       "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다.",
       "queued": "대기 중",
-      "save_error": "동시성 limit 업데이트에 실패했습니다. 이전 value가 유지됩니다."
+      "save_error": "동시성 limit 업데이트에 실패했습니다. 이전 value가 유지됩니다.",
+      "invalid_running_count": "0에서 {max} 사이의 정수를 입력하세요."
     },
     "flowConcurrency": {
       "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
@@ -1550,7 +1590,7 @@
           },
           "descriptions": {
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
-            "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요.",
+            "color_mode_shortcut": "팁: 어디서나 {ctrl}+{shift}+{key}을 눌러 테마를 전환하세요.",
             "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기.",
             "editor_font_family": "YAML 편집기에서 사용되는 모노스페이스 글꼴.",
             "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",
@@ -1760,7 +1800,12 @@
           },
           "flow_generated": {
             "title": "이것은 flow입니다",
-            "body": "flow는 YAML로 작성되었으며, 두 개의 task를 포함합니다:<ol><li><code>fetch_orders</code>: 주문을 다운로드합니다.</li><li><code>summarize</code>: Python에서 수익을 계산합니다.</li></ol>task는 정의된 순서대로 순차적으로 실행됩니다.",
+            "body": "flow는 YAML로 작성되었으며, 두 개의 task를 포함합니다:",
+            "tasks": {
+              "fetch_orders": "{task}: 주문을 다운로드합니다.",
+              "summarize": "{task}: Python에서 수익을 계산합니다."
+            },
+            "after_tasks": "task는 정의된 순서대로 순차적으로 실행됩니다.",
             "next": "저장 및 실행"
           },
           "first_execution": {
@@ -2109,6 +2154,7 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "no_code": {
+      "unknown_schema": "알 수 없는 스키마",
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",
@@ -2541,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "어시스턴트가 응답을 반환하지 않았습니다. 다시 시도해 주세요.",
+          "outputLimit": "어시스턴트가 답변하기 전에 output 토큰이 부족했습니다. 메시지를 줄이거나 새 채팅을 시작하세요.",
+          "contentFiltered": "AI 공급자가 응답을 차단했습니다. 메시지를 다시 작성하거나 공급자의 필터를 트리거했을 수 있는 콘텐츠를 제거하세요.",
           "retry": "재시도"
         },
         "cancelled": "회차 취소됨",
@@ -2551,6 +2599,7 @@
           "generic": "문제가 발생했습니다. 다시 시도해주세요."
         },
         "emptyHelper": "이 flow를 편집하거나, 테스트를 생성하거나, 관련 파일을 스캐폴드하거나, 작동 방식을 설명할 수 있습니다.",
+        "emptyHelperNoFlow": "Flow를 생성 또는 편집하거나, 테스트를 생성하거나, 관련 파일을 스캐폴드하거나, Kestra 작동 방식을 설명할 수 있습니다.",
         "suggestions": {
           "errorHandling": "오류 처리 추가",
           "unitTest": "단위 테스트 생성",
@@ -2616,7 +2665,8 @@
           "applied": "적용됨",
           "previewBanner": "AI가 제안한 변경 사항을 검토 중입니다. 적용하거나 무시할 때까지 에디터는 읽기 전용입니다.",
           "applyTitle": "flow 적용",
-          "applyConfirm": "{namespace}.{id}를 검토를 위한 드래프트 리비전으로 저장하시겠습니까? 생성되거나, 이미 존재하는 경우 새 드래프트 리비전이 추가됩니다. 드래프트는 게시되기 전까지 trigger나 subflow에서 사용되지 않습니다.",
+          "applyDraftTitle": "적용하면 드래프트 리비전이 저장됩니다.",
+          "applyDraftHint": "아직 아무것도 운영에 반영되지 않습니다. 게시하기 전까지 trigger와 subflow는 드래프트를 무시합니다.",
           "applyConfirmDashboard": "대시보드 {id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
           "applyError": "flow를 적용할 수 없습니다. 다시 시도해주세요.",
           "applyErrorDashboard": "대시보드를 적용할 수 없었습니다. 다시 시도해 주세요.",
@@ -3143,7 +3193,7 @@
       "undo": "실행 취소",
       "upstream_outputs": "업스트림 output",
       "open_in_tabs": "탭에서 열기",
-      "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
+      "open_mode_hint": "이 에디터는 기본적으로 모달로 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
     "blocks": "블록",
     "move_panel_to_bottom": "패널을 하단으로 이동",
@@ -3207,6 +3257,8 @@
     "chart mode": {
       "counts": "카운트",
       "timeline": "타임라인"
-    }
+    },
+    "search_in_flow_source": "플로우 소스에서 \"{query}\" 검색",
+    "flows_matched_query": "ID 또는 네임스페이스에 \"{query}\"이(가) 포함된 {count}개의 플로우. | ID 또는 네임스페이스에 \"{query}\"이(가) 포함된 {count}개의 플로우."
   }
 }

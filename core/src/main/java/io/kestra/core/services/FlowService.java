@@ -163,24 +163,7 @@ public class FlowService {
      */
     public FlowWithSource create(GenericFlow flow) throws FlowProcessingException, QueueException {
         // FIXME validation is done both here and in the repo
-        Objects.requireNonNull(flow, "Cannot create null flow");
-        if (flow.getSource() == null || flow.getSource().isBlank()) {
-            throw new IllegalArgumentException("Cannot create flow with null or blank source");
-        }
-
-        // Strict parsing (unknown / duplicate properties) and constraint validation are both skipped
-        // for drafts: they are allowed to be saved invalid and will fail at execution time instead.
-        // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
-        // since the draft flag is not part of the YAML source.
-        if (!flow.isDraft()) {
-            // Best-effort: installed before validation so a save through any server-side path does
-            // not fail on a not-yet-installed plugin type; a failed install just leaves the
-            // pre-existing "Invalid type" validation error in place.
-            pluginAutoInstallService.installMissingPlugins(flow.getSource());
-            FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
-            modelValidator.validate(flowParsingService.parseForValidation(parsed));
-            throwOnCyclicDependency(parsed);
-        }
+        this.validateFlow(flow);
 
         FlowWithSource created = flowRepository.create(flow);
 
@@ -201,11 +184,26 @@ public class FlowService {
      */
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws FlowProcessingException, QueueException {
         // FIXME validation is done both here and in the repo
+        Objects.requireNonNull(previous, "Cannot update a flow with null previous");
+        this.validateFlow(flow);
+
+        FlowWithSource updated = flowRepository.update(flow, previous);
+
+        // impact downstream consumers: topology, scheduler and flow metastore
+        impactDownstreamConsumers(updated);
+
+        return updated;
+    }
+
+    /**
+     * Validates the given flow the way {@link #create(GenericFlow)} and {@link #update(GenericFlow, FlowInterface)} do,
+     * without writing it. A draft is only checked for a non-blank source. Missing plugins may be installed as a side effect.
+     */
+    public void validateFlow(GenericFlow flow) throws FlowProcessingException {
         Objects.requireNonNull(flow, "Cannot create null flow");
         if (flow.getSource() == null || flow.getSource().isBlank()) {
             throw new IllegalArgumentException("Cannot create flow with null or blank source");
         }
-        Objects.requireNonNull(previous, "Cannot update a flow with null previous");
 
         // Strict parsing (unknown / duplicate properties) and constraint validation are both skipped
         // for drafts: they are allowed to be saved invalid and will fail at execution time instead.
@@ -220,13 +218,6 @@ public class FlowService {
             modelValidator.validate(flowParsingService.parseForValidation(parsed));
             throwOnCyclicDependency(parsed);
         }
-
-        FlowWithSource updated = flowRepository.update(flow, previous);
-
-        // impact downstream consumers: topology, scheduler and flow metastore
-        impactDownstreamConsumers(updated);
-
-        return updated;
     }
 
     /**
@@ -302,20 +293,22 @@ public class FlowService {
     }
 
     private void recomputeTriggers(FlowWithSource flow) {
-        var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
+        var previous = findPreviousPublishedRevision(flow).orElse(null);
+
+        if (flow.isDeleted()) {
+            // The delete marker copies a draft's triggers, so use those of the last published revision.
+            var scheduled = previous != null && !previous.isDeleted() ? previous : flow;
+            ListUtils.emptyOnNull(scheduled.getTriggers()).forEach(
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
+            return;
+        }
 
         // If the previous revision was soft-deleted, the scheduler already dropped its
         // trigger state on TriggerDeleted. Re-creating the flow must emit TriggerCreated
         // so the state is rebuilt; treat it as if there was no previous.
         if (previous != null && previous.isDeleted()) {
             previous = null;
-        }
-
-        if (flow.isDeleted()) {
-            ListUtils.emptyOnNull(flow.getTriggers()).forEach(
-                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
-            );
-            return;
         }
 
         // A draft revision must stay invisible to the scheduler: it is never picked up implicitly.
@@ -329,12 +322,8 @@ public class FlowService {
 
         if (previous != null) {
             FlowService.findRemovedTrigger(flow, previous).forEach(
-                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger), flow.getRevision()))
             );
-
-            if (flow.isDeleted()) {
-                return;
-            }
         }
 
         if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
@@ -375,7 +364,7 @@ public class FlowService {
             return;
         }
 
-        var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
+        var previous = findPreviousPublishedRevision(flow).orElse(null);
 
         // If the previous revision was soft-deleted, its concurrency limit was already removed:
         // treat this as if there was no previous so a new concurrency limit is re-initialized.
@@ -386,6 +375,20 @@ public class FlowService {
         if (previous == null || previous.getConcurrency() == null) {
             initConcurrencyLimit(flow);
         }
+    }
+
+    /**
+     * Returns the closest revision before the given one that is not a draft, which is the revision the
+     * scheduler and the executor currently reflect, since a draft never impacts them.
+     */
+    protected Optional<Flow> findPreviousPublishedRevision(FlowInterface flow) {
+        for (int revision = flow.getRevision() - 1; revision >= 1; revision--) {
+            Optional<Flow> found = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(revision));
+            if (found.isEmpty() || !found.get().isDraft()) {
+                return found;
+            }
+        }
+        return Optional.empty();
     }
 
     private void removeConcurrencyLimit(FlowWithSource flow) {

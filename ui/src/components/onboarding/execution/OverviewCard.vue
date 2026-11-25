@@ -67,11 +67,7 @@
         width: var(--ks-icon-size-xl);
         height: var(--ks-icon-size-lg);
         color: var(--ks-icon-muted);
-
-        & :deep(svg) {
-            width: var(--ks-icon-size-lg);
-            height: var(--ks-icon-size-lg);
-        }
+        --ks-icon-glyph-size: var(--ks-icon-size-lg);
     }
 
     .text {

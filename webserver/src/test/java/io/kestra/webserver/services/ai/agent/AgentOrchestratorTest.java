@@ -19,6 +19,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
@@ -59,6 +61,7 @@ import dev.langchain4j.model.chat.response.PartialResponseContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.chat.response.StreamingHandle;
 import dev.langchain4j.model.googleai.GoogleAiGeminiTokenUsage;
+import dev.langchain4j.model.output.FinishReason;
 import dev.langchain4j.model.output.TokenUsage;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -179,10 +182,56 @@ class AgentOrchestratorTest {
         // Then — the turn ends IDLE, and the empty assistant message is NOT persisted (only the user
         // prompt remains), so it cannot be replayed as an empty model turn on the next turn
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(doneReason(sink)).isEqualTo(AgentEvents.EmptyTurnReason.EMPTY_RESPONSE);
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly("USER/TEXT");
+    }
+
+    @Test
+    void shouldReportOutputLimitWhenEmptyResponseFinishesOnLength() {
+        // Given — the output budget ran out before any visible output (e.g. spent on thinking)
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from(""), FinishReason.LENGTH);
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then
+        assertThat(sink.names()).containsExactly(AgentEvents.DONE);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(doneReason(sink)).isEqualTo(AgentEvents.EmptyTurnReason.OUTPUT_LIMIT);
+    }
+
+    @Test
+    void shouldReportContentFilteredWhenEmptyResponseFinishesOnContentFilter() {
+        // Given — the provider withheld the response
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from(""), FinishReason.CONTENT_FILTER);
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then
+        assertThat(sink.names()).containsExactly(AgentEvents.DONE);
+        assertThat(doneReason(sink)).isEqualTo(AgentEvents.EmptyTurnReason.CONTENT_FILTERED);
+    }
+
+    @Test
+    void shouldNotReportEmptyTurnReasonWhenModelAnswers() {
+        // Given
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("A trigger starts a flow."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then
+        assertThat(doneReason(sink)).isNull();
     }
 
     @Test
@@ -568,6 +617,126 @@ class AgentOrchestratorTest {
                 m -> "error".equals(m.toolResult().get("outcome"))
                     && String.valueOf(m.toolResult().get("error")).contains("Execution not found")
             );
+    }
+
+    @Test
+    void shouldReturnErrorResultAndReplayValidArgumentsWhenToolCallArgumentsAreNotValidJson() {
+        // Given — Ask mode; the model emits a tool call whose arguments are not valid JSON (unquoted value)
+        AgentThread thread = newThread(AgentMode.ASK);
+        String malformed = "{\"executionId\": \"abc\", \"TASK_ID\": my_task}";
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(malformed).build())));
+        scriptedModel.enqueue(AiMessage.from("I could not read the logs."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("why did it fail").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then — the call is not executed: it is a recoverable error result and the loop continues to an answer
+        assertThat(sink.error).isNull();
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE
+        );
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error()).contains("Unrecognized token 'my_task'").contains("line 1, column").contains(malformed);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(AiMessage.class::isInstance)
+            .flatExtracting(m -> ((AiMessage) m).toolExecutionRequests())
+            .extracting(ToolExecutionRequest::arguments)
+            .containsExactly("{}");
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(ToolExecutionResultMessage.class::isInstance)
+            .extracting(m -> ((ToolExecutionResultMessage) m).text())
+            .singleElement()
+            .asString()
+            .contains("Unrecognized token 'my_task'")
+            .contains(malformed);
+        assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "{\"executionId\":\"exec-1\",}",
+        "\"{\\\"executionId\\\":\\\"exec-1\\\"}\""
+    })
+    void shouldExecuteToolAndReplayNormalizedArgumentsWhenArgumentsOnlyNeedNormalizing(final String arguments) {
+        // Given — Ask mode; the arguments have a trailing comma or are an object wrapped in a string
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(arguments).build())));
+        scriptedModel.enqueue(AiMessage.from("The run failed on the load task."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("why did exec-1 fail?").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then — the tool runs, and the call is replayed to the provider as valid JSON
+        assertThat(sink.error).isNull();
+        assertThat(toolResultOutcome(sink)).isEqualTo("ok");
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(AiMessage.class::isInstance)
+            .flatExtracting(m -> ((AiMessage) m).toolExecutionRequests())
+            .extracting(ToolExecutionRequest::arguments)
+            .containsExactly("{\"executionId\":\"exec-1\"}");
+        assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
+    }
+
+    @Test
+    void shouldAskForShorterArgumentsWhenArgumentsAreCutOffByOutputTokenLimit() {
+        // Given — Ask mode; the response hit the output token limit in the middle of the arguments
+        AgentThread thread = newThread(AgentMode.ASK);
+        String truncated = "{\"executionId\": \"exec-";
+        scriptedModel.enqueue(
+            AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(truncated).build())),
+            FinishReason.LENGTH
+        );
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("why did it fail").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then — the model is told about the limit, not handed a parser error it cannot act on
+        assertThat(sink.error).isNull();
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error()).contains("output token limit").doesNotContain(truncated);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
+    void shouldCapReceivedArgumentsWhenMalformedArgumentsAreLong() {
+        // Given — Ask mode; malformed arguments far longer than the cap on what is echoed back
+        AgentThread thread = newThread(AgentMode.ASK);
+        String malformed = "{\"executionId\": " + "x".repeat(5000) + "}";
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("read_execution_logs").arguments(malformed).build())));
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("why did it fail").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then — only the first 2000 characters of the arguments are echoed back
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(toolResult(sink).error())
+            .contains(malformed.substring(0, 2000) + "…")
+            .doesNotContain(malformed.substring(0, 2001));
+    }
+
+    @Test
+    void shouldNotAskForConfirmationWhenConfirmToolArgumentsAreNotValidJson() {
+        // Given — Edit mode; the model proposes a write whose arguments are not valid JSON
+        AgentThread thread = newThread(AgentMode.EDIT);
+        scriptedModel.enqueue(AiMessage.from("", List.of(ToolExecutionRequest.builder().id("c1").name("update-artefact").arguments("{\"namespace\": company}").build())));
+        scriptedModel.enqueue(AiMessage.from("Let me try again."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("do it").mode(AgentMode.EDIT).tenant(TENANT).build(), sink);
+
+        // Then — nothing is held for confirmation; the model gets an error result instead
+        assertThat(sink.error).isNull();
+        assertThat(sink.names()).doesNotContain(AgentEvents.PROPOSED_ACTION);
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
     }
 
     @Test
@@ -963,6 +1132,10 @@ class AgentOrchestratorTest {
             .build();
     }
 
+    private static AgentEvents.EmptyTurnReason doneReason(final CollectingSink sink) {
+        return ((AgentEvents.DoneEvent) sink.first(AgentEvents.DONE)).reason();
+    }
+
     private static String doneStatus(final CollectingSink sink) {
         return ((AgentEvents.DoneEvent) sink.first(AgentEvents.DONE)).status();
     }
@@ -1043,6 +1216,7 @@ class AgentOrchestratorTest {
     private static final class ScriptedStreamingChatModel implements StreamingChatModel {
         private final Deque<AiMessage> responses = new ArrayDeque<>();
         private final Deque<TokenUsage> usages = new ArrayDeque<>();
+        private final Map<AiMessage, FinishReason> finishReasons = new java.util.IdentityHashMap<>();
         private final List<List<ChatMessage>> requestMessages = new java.util.concurrent.CopyOnWriteArrayList<>();
         private volatile boolean hang;
         private CountDownLatch hungChatStarted;
@@ -1056,6 +1230,12 @@ class AgentOrchestratorTest {
         private void enqueue(final AiMessage message, final TokenUsage usage) {
             responses.addLast(message);
             usages.addLast(usage);
+        }
+
+        /** Enqueues a response that ends for the given reason, e.g. the output token limit. */
+        private void enqueue(final AiMessage message, final FinishReason finishReason) {
+            responses.addLast(message);
+            finishReasons.put(message, finishReason);
         }
 
         private int callCount() {
@@ -1078,6 +1258,7 @@ class AgentOrchestratorTest {
         private void clear() {
             responses.clear();
             usages.clear();
+            finishReasons.clear();
             requestMessages.clear();
             this.hang = false;
             this.hungChatStarted = null;
@@ -1111,7 +1292,7 @@ class AgentOrchestratorTest {
             if (ai.text() != null && !ai.text().isEmpty()) {
                 handler.onPartialResponse(new PartialResponse(ai.text()), new PartialResponseContext(lastHandle));
             }
-            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).tokenUsage(usages.pollFirst()).build());
+            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).tokenUsage(usages.pollFirst()).finishReason(finishReasons.get(ai)).build());
         }
     }
 

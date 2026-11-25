@@ -357,4 +357,31 @@ describe("FlowTriggers - execute backfill button", () => {
 
         expect(executeButton()?.disabled).toBe(false)
     })
+
+    // https://github.com/kestra-io/kestra/issues/22518: clearing a text field sends "", which used to count as filled
+    it("goes back to disabled when the required input is cleared to an empty string", async () => {
+        const wrapper = await openBackfill()
+
+        await fillInputs(wrapper, {region: "EU", batchSize: 100})
+        expect(executeButton()?.disabled).toBe(false)
+
+        await fillInputs(wrapper, {region: "", batchSize: 100})
+        expect(executeButton()?.disabled).toBe(true)
+    })
+})
+
+describe("FlowTriggers - many triggers", () => {
+    it("lists every trigger on one page, with no pager whose pages would show the same rows", async () => {
+        const triggers = flowStore.flow.triggers
+        flowStore.flow.triggers = Array.from({length: 11}, (_, i) => ({id: `trigger-${i}`, type: "io.kestra.plugin.core.trigger.Schedule"}))
+        try {
+            const wrapper = mountTriggersTab()
+            await flushPromises()
+
+            expect(wrapper.findComponent({name: "KsDataTable"}).props("data")).toHaveLength(11)
+            expect(wrapper.findComponent({name: "KsPagination"}).exists()).toBe(false)
+        } finally {
+            flowStore.flow.triggers = triggers
+        }
+    })
 })

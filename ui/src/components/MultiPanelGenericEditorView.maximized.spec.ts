@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {nextTick} from "vue"
+import {markRaw, nextTick} from "vue"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import MultiPanelGenericEditorView from "./MultiPanelGenericEditorView.vue"
@@ -11,8 +11,8 @@ vi.mock("vue-router", () => ({
     useRouter: () => ({replace: vi.fn(), push: vi.fn()}),
 }))
 
-const IconStub = {template: "<span />"}
-const PaneStub = {template: "<div />"}
+const IconStub = markRaw({template: "<span />"})
+const PaneStub = markRaw({template: "<div />"})
 
 function makeElement(uid: string, extra: Partial<EditorElement> = {}): EditorElement {
     const tab: Tab = {uid, button: {label: uid, icon: IconStub}, component: PaneStub}

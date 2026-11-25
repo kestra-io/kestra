@@ -337,6 +337,70 @@ class FlowableUtilsTest {
     }
 
     @Test
+    void resolveValues_withListOfBooleans_shouldReturnListOfStrings() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, List.of(true, false));
+
+        // Then
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).containsExactly("true", "false");
+    }
+
+    @Test
+    void resolveValues_withNestedLists_shouldReturnJsonSerializedStrings() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(
+            runContext,
+            List.of(List.of("a", 1), List.of("b", 2))
+        );
+
+        // Then
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).containsExactly("[\"a\",1]", "[\"b\",2]");
+    }
+
+    @Test
+    void resolveValues_withNestedListsContainingExpressions_shouldRenderVariables() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of(Map.of("foo", "bar"));
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(
+            runContext,
+            List.of(List.of("{{ foo }}", 123))
+        );
+
+        // Then
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).containsExactly("[\"bar\",123]");
+    }
+
+    @Test
+    void resolveValues_withMapContainingBooleanAndList_shouldReturnListOfPairs() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(
+            runContext,
+            Map.of("b", true, "l", List.of(1, 2))
+        );
+
+        // Then
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight()).containsExactlyInAnyOrder(
+            Pair.of("b", "true"),
+            Pair.of("l", "[1,2]")
+        );
+    }
+
+    @Test
     void resolveValues_withListContainingNull_shouldThrow() {
         // Given
         RunContext runContext = runContextFactory.of();
@@ -607,7 +671,6 @@ class FlowableUtilsTest {
         assertThat(result.getLeft()).containsExactly("c", "d");
         assertThat(result.getRight()).isEqualTo(4L);
     }
-
 
     @Test
     void resolveSequentialNexts_shouldNotDuplicateTaskRunWhenTaskIsRetrying() {

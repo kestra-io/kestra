@@ -676,7 +676,7 @@
             return
         }
         const scope: Record<string, string> = {}
-        if (props.namespace) scope["filters[namespace][PREFIX]"] = props.namespace
+        if (props.namespace) scope[`filters[namespace][${props.flowId ? "EQUALS" : "PREFIX"}]`] = props.namespace
         if (props.flowId) scope["filters[flowId][EQUALS]"] = props.flowId
         navigateToStateFilter(state, scope)
     }
@@ -862,7 +862,7 @@
         let queryFilter: Record<string, any> = dropUnsupportedFilters(restQuery)
 
         if (props.namespace) {
-            queryFilter["filters[namespace][PREFIX]"] = props.namespace
+            queryFilter[`filters[namespace][${props.flowId ? "EQUALS" : "PREFIX"}]`] = props.namespace
         }
 
         if (props.flowId) {

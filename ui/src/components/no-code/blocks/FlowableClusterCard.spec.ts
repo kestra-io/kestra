@@ -7,9 +7,20 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 const globalConfig = {
     plugins: [KestraDesignSystem],
     stubs: {
-        BranchLane: {name: "BranchLane", props: ["laneName", "tasks"], template: "<div class='branch-lane-stub' :data-lane='laneName' />"},
+        BranchLane: {
+            name: "BranchLane",
+            props: ["laneName", "tasks", "parentPath"],
+            template: "<div class='branch-lane-stub' :data-lane='laneName'><span v-for='task in tasks' :key='task.id' data-test='branch-child'>{{ task.id }}</span></div>",
+        },
         TaskIcon: {name: "TaskIcon", props: ["cls", "icons", "loadIcon", "onlyIcon"], template: "<span class='task-icon-stub' />"},
     },
+}
+
+const FLOWABLE_TYPES = ["Loop", "LoopUntil", "AllowFailure", "WorkingDirectory"] as const
+const branchTasks = {
+    tasks: [{id: "main_task", type: "io.kestra.plugin.core.log.Log"}],
+    errors: [{id: "error_task", type: "io.kestra.plugin.core.log.Log"}],
+    finally: [{id: "finally_task", type: "io.kestra.plugin.core.log.Log"}],
 }
 
 const sequentialBlock = {
@@ -41,6 +52,17 @@ function mountSwitch() {
     })
 }
 
+function mountFlowable(type: string, branches: Record<string, unknown>) {
+    return i18nMount(FlowableClusterCard, {
+        global: globalConfig,
+        props: {
+            block: {id: "container", type: `io.kestra.plugin.core.flow.${type}`, ...branches},
+            path: "tasks[0]",
+            depth: 0,
+        },
+    })
+}
+
 async function typeCaseKey(wrapper: ReturnType<typeof mountSwitch>, key: string) {
     await wrapper.find("[data-test='flowable-add-case-input']").setValue(key)
 }
@@ -58,6 +80,37 @@ describe("FlowableClusterCard", () => {
         const wrapper = mountAt(5)
         expect(wrapper.find(".flowable-cluster-body").exists()).toBe(true)
         expect(wrapper.find(".branch-lane-stub").exists()).toBe(true)
+    })
+
+    test.each(FLOWABLE_TYPES)("renders tasks, errors and finally for %s", (type) => {
+        const wrapper = mountFlowable(type, branchTasks)
+        const lanes = wrapper.findAllComponents({name: "BranchLane"})
+
+        expect(lanes.map(lane => lane.props("laneName"))).toEqual(["tasks", "errors", "finally"])
+        expect(lanes.map(lane => lane.props("tasks"))).toEqual([
+            branchTasks.tasks,
+            branchTasks.errors,
+            branchTasks.finally,
+        ])
+        expect(lanes.map(lane => lane.props("parentPath"))).toEqual([
+            "tasks[0].tasks",
+            "tasks[0].errors",
+            "tasks[0].finally",
+        ])
+        expect(wrapper.findAll("[data-test='branch-child']").map(child => child.text())).toEqual([
+            "main_task",
+            "error_task",
+            "finally_task",
+        ])
+    })
+
+    test.each(FLOWABLE_TYPES)("handles absent errors and finally branches for %s", (type) => {
+        const wrapper = mountFlowable(type, {tasks: branchTasks.tasks})
+        const lanes = wrapper.findAllComponents({name: "BranchLane"})
+
+        expect(lanes.map(lane => lane.props("laneName"))).toEqual(["tasks", "errors", "finally"])
+        expect(lanes.map(lane => lane.props("tasks"))).toEqual([branchTasks.tasks, [], []])
+        expect(wrapper.findAll("[data-test='branch-child']").map(child => child.text())).toEqual(["main_task"])
     })
 
     test("passes a lazy loadIcon to the task icon so real icons resolve", () => {

@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, userEvent} from "storybook/test"
 import KsSideBar from "./KsSideBar.vue"
 import KsSideBarItem from "./KsSideBarItem.vue"
 import KsSideBarSection from "./KsSideBarSection.vue"
@@ -123,6 +124,40 @@ export const States: Story = {
             </div>
         `,
     }),
+}
+
+export const KeyboardFocus: Story = {
+    ...States,
+    play: async ({canvasElement}) => {
+        await userEvent.tab()
+
+        const item = canvasElement.querySelector<HTMLElement>("a[href]")!
+        await expect(item).toHaveFocus()
+        await expect(item.matches(":focus-visible")).toBe(true)
+
+        const {outlineStyle, outlineWidth, outlineOffset} = getComputedStyle(item)
+        await expect(outlineStyle).not.toBe("none")
+        const reach = Math.max(0, parseFloat(outlineWidth) + parseFloat(outlineOffset))
+        const ring = item.getBoundingClientRect()
+        const clip = item.closest(".ks-sidebar-section__body-inner")!.getBoundingClientRect()
+        await expect(ring.left - reach).toBeGreaterThanOrEqual(clip.left)
+        await expect(ring.right + reach).toBeLessThanOrEqual(clip.right)
+    },
+}
+
+export const KeyboardFocusOnFirstSectionTitle: Story = {
+    ...CollapsedSection,
+    play: async ({canvasElement}) => {
+        await userEvent.tab()
+
+        const title = canvasElement.querySelector<HTMLElement>("button[aria-expanded]")!
+        await expect(title).toHaveFocus()
+
+        const {outlineWidth, outlineOffset} = getComputedStyle(title)
+        const reach = Math.max(0, parseFloat(outlineWidth) + parseFloat(outlineOffset))
+        const clip = title.closest(".ks-sidebar__body")!.getBoundingClientRect()
+        await expect(title.getBoundingClientRect().top - reach).toBeGreaterThanOrEqual(clip.top)
+    },
 }
 
 export const LongLabelTruncates: Story = {

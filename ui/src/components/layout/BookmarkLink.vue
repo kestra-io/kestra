@@ -131,6 +131,12 @@
     font-weight: 600;
 }
 
+/* Inset because KsSideBarSection hides overflow, which clips a ring drawn outside the link. */
+.bookmark-anchor:focus-visible {
+    outline: var(--ks-border-width-base) solid var(--ks-border-focus);
+    outline-offset: calc(-1 * var(--ks-border-width-base));
+}
+
 .bookmark-link:not(.editing) .bookmark-anchor:hover .buttons {
     opacity: 1;
     visibility: visible;

@@ -75,6 +75,11 @@
     padding: 0 var(--ks-spacing-4);
 }
 
+/* Room for the title's focus ring, which the scroll area of KsSideBar would otherwise clip. */
+.ks-sidebar-section:first-child {
+    padding-top: var(--ks-border-width-base);
+}
+
 .ks-sidebar-section:first-child .ks-sidebar-section__title {
     padding-top: 0;
 }
@@ -105,6 +110,11 @@
 
     &:hover {
         color: var(--ks-text-primary);
+    }
+
+    &:focus-visible {
+        outline: var(--ks-border-width-base) solid var(--ks-border-focus);
+        outline-offset: 0;
     }
 }
 

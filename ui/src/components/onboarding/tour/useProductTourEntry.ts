@@ -20,13 +20,18 @@ function useTourKey() {
 function useEligibility() {
     const variant = useTourVariant()
     const eligible = ref(false)
+    let latestCheck = 0
 
+    // Re-checks can overlap (add then remove), so only the latest one's answer counts.
     const refresh = async () => {
+        const check = ++latestCheck
+        let answer: boolean
         try {
-            eligible.value = await variant.eligible()
+            answer = await variant.eligible()
         } catch {
-            eligible.value = false
+            answer = false
         }
+        if (check === latestCheck) eligible.value = answer
     }
 
     onMounted(refresh)

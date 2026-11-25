@@ -30,6 +30,15 @@ const settle = async () => {
     await nextTick()
 }
 
+// Two eligibility checks whose answers each test releases, in any order
+function deferTwoChecks() {
+    const answers: ((value: boolean) => void)[] = []
+    for (let i = 0; i < 2; i++) {
+        eligible.mockReturnValueOnce(new Promise<boolean>(resolve => answers.push(resolve)))
+    }
+    return {first: (value: boolean) => answers[0](value), second: (value: boolean) => answers[1](value)}
+}
+
 // The composables use onMounted, so they run inside a component
 function setup<T>(composable: () => T): T {
     let result!: T
@@ -140,6 +149,27 @@ describe("useProductTourMenuEntry", () => {
         await settle()
         expect(eligible).toHaveBeenCalledTimes(3)
         expect(entry.visible.value).toBe(true)
+    })
+
+    it("keeps the answer of the latest status re-check when an older one answers last", async () => {
+        eligible.mockResolvedValue(true)
+        const store = useProductTourStore()
+        const entry = setup(useProductTourMenuEntry)
+        await settle()
+
+        const checks = deferTwoChecks()
+        store.state.status = "completed"
+        await nextTick()
+        store.state.status = "not_started"
+        await nextTick()
+
+        checks.second(false)
+        await settle()
+        checks.first(true)
+        await settle()
+
+        expect(eligible).toHaveBeenCalledTimes(3)
+        expect(entry.visible.value).toBe(false)
     })
 
     it("uses menu_resume once skipped and menu otherwise", async () => {
@@ -384,6 +414,28 @@ describe("useProductTourEntryGate", () => {
         await settle()
 
         expect(eligible).toHaveBeenCalledTimes(2)
+        expect(entryGate.open.value).toBe(false)
+    })
+
+    it("follows the latest check when an older one answers last", async () => {
+        gate.entryGate = {recheckOn: () => recheck.value}
+        eligible.mockResolvedValue(false)
+        const entryGate = setup(useProductTourEntryGate)
+        await settle()
+
+        // examples added, then removed before the first re-check answers
+        const checks = deferTwoChecks()
+        recheck.value++
+        await nextTick()
+        recheck.value++
+        await nextTick()
+
+        checks.second(false)
+        await settle()
+        checks.first(true)
+        await settle()
+
+        expect(eligible).toHaveBeenCalledTimes(3)
         expect(entryGate.open.value).toBe(false)
     })
 })

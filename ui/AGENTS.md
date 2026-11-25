@@ -413,7 +413,7 @@ If your `<style>` block needs to exist:
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
 | `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model`. A `#preview="{option}"` slot replaces the built-in miniature, `columns` lays the options out as a grid, `ariaLabel` names the radiogroup |
-| `KsDatePicker` / `KsTimePicker` | Date and time pickers; follow `KsInput`'s `--ks-input-border-color` |
+| `KsDatePicker` / `KsTimePicker` | Date and time pickers; follow `KsInput`'s `--ks-input-border-color`; `timezone` makes a single `KsDatePicker` show and edit its instant as a wall clock in that zone (pass `dateUtils.currentTimezone()` for the Time Zone preference) and hides "Now" |
 | `KsColorPicker` | Color picker; `alphaOnSurface` shows translucent colours over the page surface instead of a checkerboard |
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
@@ -478,7 +478,7 @@ If your `<style>` block needs to exist:
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants and icons. A state's colour is not a property of the state: read it with `State.getStateColor(name)`, which resolves `--ks-status-*`
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
 - `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
-- `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
+- `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `instantToPickerDate()` / `pickerDateToInstant()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
 - `escapeHtml()`, `cloneDeep()`, `deepMerge()`, `isDeepEqual()`, `isPlainObject()`, `getPath()`, `setPath()`, `groupBy()`, `mapValues()`, `debounce()`, `throttle()` — the general-purpose helpers that replaced lodash. `debounce`/`throttle` return a function carrying `cancel()` and `flush()`. Do not add `lodash` back for any of these

@@ -2127,7 +2127,6 @@
     "items": "items",
     "iterations": "Iterations",
     "load_10_more": "Load 10 more",
-    "open_subflow_execution": "Open the {flow} subflow execution",
     "loop_iterations_shown": "{shown} of {total} shown",
     "loop_iterations_load_error": "Failed to load iterations",
     "retry": "Retry",
@@ -2151,7 +2150,7 @@
         "lineage": "Location in the flow",
         "previous_iteration": "Previous iteration",
         "next_iteration": "Next iteration",
-        "open_iteration": "Open iteration",
+        "open_execution": "Open execution",
         "iteration_position": "{position} of {total} in {loop}",
         "first_failure": "First failure",
         "go_to_failure": "Go to failure",
@@ -2166,6 +2165,12 @@
         "filter_success": "Success {count}",
         "search_value": "Search by exact value",
         "range": "{from}–{to} of {total}"
+    },
+    "gantt_subflow": {
+        "loading": "Loading the subflow execution…",
+        "load_error": "Failed to load the subflow execution",
+        "none": "No execution started yet",
+        "executions": "Subflow task runs | Subflow executions"
     },
     "loop_iterations_notice": {
         "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",

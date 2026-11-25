@@ -34,7 +34,6 @@
                     <GanttTaskIcon v-else :taskType="node.taskType" />
                     <h2>{{ title }}</h2>
                     <KsExecutionStatus :status="state" />
-                    <GanttSubflowExecutionLink v-if="node.kind === 'taskRun'" :key="node.key" :node="node" />
                 </span>
                 <span class="title-meta" data-test="gantt-panel-meta">
                     <template v-if="node.kind === 'loop'">
@@ -45,6 +44,7 @@
                     <template v-else>{{ offset(histories) }} ·</template>
                     <Duration :histories="histories" />
                 </span>
+                <GanttOpenExecution v-if="ownExecution" :execution="ownExecution" class="open-execution" />
             </div>
 
             <GanttIterationStepper v-if="owningIteration(node)" :node="node" />
@@ -53,6 +53,7 @@
         <div class="panel-body">
             <GanttPanelLoop v-if="node.kind === 'loop'" :key="node.key" :node="node" />
             <GanttPanelIteration v-else-if="node.kind === 'iteration'" :key="node.key" :node="node" />
+            <GanttPanelSubflow v-else-if="isSubflowNode(node)" :key="node.key" :node="node" />
             <GanttPanelTaskRun v-else :node="node" />
         </div>
     </aside>
@@ -69,9 +70,10 @@
     import GanttPanelLoop from "./GanttPanelLoop.vue"
     import GanttPanelIteration from "./GanttPanelIteration.vue"
     import GanttPanelTaskRun from "./GanttPanelTaskRun.vue"
-    import GanttSubflowExecutionLink from "./GanttSubflowExecutionLink.vue"
+    import GanttPanelSubflow from "./GanttPanelSubflow.vue"
+    import GanttOpenExecution from "./GanttOpenExecution.vue"
     import {useGanttTimeline} from "../ganttTimeline"
-    import {iterationLabel, loopRefOf, owningIteration, useGanttTree, type Ancestor} from "./ganttTree"
+    import {isSubflowNode, iterationLabel, loopRefOf, owningIteration, subflowChildren, useGanttTree, type Ancestor, type ExecutionRef} from "./ganttTree"
 
     const tree = useGanttTree()
     const executionsStore = useExecutionsStore()
@@ -103,10 +105,21 @@
         if (!current) return []
         return current.kind === "iteration" ? current.row.state.histories : current.taskRun.state.histories
     })
+    // The execution the selected row stands for, when it is not the one on screen: an iteration, or what a Subflow started.
+    const ownExecution = computed<ExecutionRef | undefined>(() => {
+        const current = node.value
+        if (!current) return undefined
+        if (current.kind === "iteration") return {id: current.row.id, namespace: current.loop.namespace, flowId: current.loop.flowId}
+        const children = isSubflowNode(current) ? subflowChildren(tree, current) : []
+        return children.length === 1 ? children[0] : undefined
+    })
     const loopHandle = computed(() => node.value?.kind === "loop" ? tree.loopHandle(loopRefOf(node.value)) : undefined)
     const loopTotal = computed(() => loopHandle.value?.totalCount.value)
 
     watch(loopHandle, (handle) => handle?.loadCounts(), {immediate: true})
+    watch(node, (current) => {
+        if (current && isSubflowNode(current)) tree.loadSubflowExecutions(current.executionId)
+    }, {immediate: true})
 </script>
 
 <style scoped>
@@ -200,8 +213,13 @@
         }
     }
 
+    .open-execution {
+        flex-shrink: 0;
+    }
+
     .title-meta {
         flex-shrink: 0;
+        margin-left: auto;
         font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-2xs);
         color: var(--ks-text-secondary);

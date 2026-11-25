@@ -1,13 +1,12 @@
-import {ref, watch} from "vue"
 import type {RouteLocationRaw} from "vue-router"
 import {useExecutionsStore} from "../stores/executions"
-import {latestRequest} from "../utils/latestRequest"
 
 export interface SubflowExecutionRef {
     id: string;
     namespace: string;
     flowId: string;
-    state: string;
+    flowRevision?: number;
+    state: {current: string; histories: Array<{state: string; date: string}>};
     triggerExecutionId: string;
     taskRunId?: string;
 }
@@ -24,7 +23,8 @@ function toSubflowExecutionRef(execution: {
     id: string;
     namespace: string;
     flowId: string;
-    state: {current?: string};
+    flowRevision?: number;
+    state: {current?: string; histories?: Array<{state?: string; date?: string}>};
     trigger?: {variables?: unknown};
 }): SubflowExecutionRef | undefined {
     const triggerExecutionId = stringVariable(execution.trigger?.variables, "executionId")
@@ -33,7 +33,11 @@ function toSubflowExecutionRef(execution: {
         id: execution.id,
         namespace: execution.namespace,
         flowId: execution.flowId,
-        state: execution.state.current ?? "",
+        flowRevision: execution.flowRevision,
+        state: {
+            current: execution.state.current ?? "",
+            histories: (execution.state.histories ?? []).map(history => ({state: history.state ?? "", date: history.date ?? ""})),
+        },
         triggerExecutionId,
         taskRunId: stringVariable(execution.trigger?.variables, "taskRunId"),
     }
@@ -58,38 +62,5 @@ export function subflowExecutionRoute(execution: Pick<SubflowExecutionRef, "id" 
     return {
         name: "executions/update",
         params: {namespace: execution.namespace, flowId: execution.flowId, id: execution.id},
-    }
-}
-
-/** The subflow executions of each of `executions`, looked up again whenever one of them changes state. */
-export function useSubflowExecutions(executions: () => Array<{id: string; state: {current: string}}>) {
-    const byTriggerExecutionId = ref(new Map<string, SubflowExecutionRef[]>())
-    const startFetch = latestRequest()
-
-    async function load(ids: string[]) {
-        const isLatest = startFetch()
-        try {
-            const found = await findSubflowExecutions(ids)
-            if (!isLatest()) return
-            const grouped = new Map<string, SubflowExecutionRef[]>()
-            for (const execution of found) {
-                grouped.set(execution.triggerExecutionId, [...(grouped.get(execution.triggerExecutionId) ?? []), execution])
-            }
-            byTriggerExecutionId.value = grouped
-        } catch {
-            // A failed lookup only hides the links; the iterations themselves stay usable.
-            if (isLatest()) byTriggerExecutionId.value = new Map()
-        }
-    }
-
-    watch(
-        () => executions().map(execution => `${execution.id}:${execution.state.current}`).join(","),
-        () => load(executions().map(execution => execution.id)),
-        {immediate: true},
-    )
-
-    return {
-        byTriggerExecutionId,
-        subflowExecutionsOf: (executionId: string) => byTriggerExecutionId.value.get(executionId) ?? [],
     }
 }

@@ -154,7 +154,7 @@
     import * as Utils from "../../utils/utils"
     import {findTaskById, LOOP_TASK_TYPE} from "../../utils/flowUtils"
     import {isSubflowTaskType} from "../../services/subflowReferences"
-    import {findSubflowExecutions, subflowExecutionRoute} from "../../composables/useSubflowExecutions"
+    import {findSubflowExecutions, subflowExecutionRoute} from "../../utils/subflowExecutions"
     import {useToast} from "../../utils/toast"
     import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"

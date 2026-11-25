@@ -24,24 +24,13 @@
             {{ next ? iterationLabel(next) : $t("next") }}
             <KsIcon size="sm"><ChevronDown /></KsIcon>
         </KsButton>
-        <KsButton
-            :tag="RouterLink"
-            size="small"
-            :icon="AxisYArrow"
-            :to="iterationRoute"
-            data-test="gantt-open-iteration"
-        >
-            {{ $t("gantt_panel.open_iteration") }}
-        </KsButton>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {RouterLink, useRoute} from "vue-router"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-    import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue"
     import {KsButton, KsIcon} from "@kestra-io/design-system"
     import {iterationLabel, loadedNeighbour, owningIteration, useGanttTree, type GanttNode} from "./ganttTree"
 
@@ -50,7 +39,6 @@
     }>()
 
     const tree = useGanttTree()
-    const route = useRoute()
 
     const iteration = computed(() => owningIteration(props.node)!)
     const handle = computed(() => tree.loopHandle(iteration.value.loop))
@@ -61,16 +49,6 @@
     const next = computed(() => after.value.row)
     const canStepPrevious = computed(() => iteration.value.row.index > 0 && (!before.value.known || previous.value !== undefined))
     const canStepNext = computed(() => !after.value.known || next.value !== undefined)
-
-    const iterationRoute = computed(() => ({
-        name: "executions/update/gantt",
-        params: {
-            namespace: iteration.value.loop.namespace,
-            flowId: iteration.value.loop.flowId,
-            id: iteration.value.row.id,
-            tenant: route.params.tenant,
-        },
-    }))
 
     function step(delta: -1 | 1) {
         return tree.stepIteration(props.node, delta)

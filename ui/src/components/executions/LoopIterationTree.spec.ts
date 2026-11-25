@@ -7,7 +7,6 @@ import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import {useExecutionsStore} from "../../stores/executions"
 import LoopIterationTree from "./LoopIterationTree.vue"
-import SubflowExecutionsLink from "./SubflowExecutionsLink.vue"
 import type {ExecutionTaskRun} from "./executionTaskRun"
 import {GANTT_TREE, LOOP_TYPE, createGanttTree, createTaskRunNode, type GanttTree} from "./gantt/ganttTree"
 
@@ -82,29 +81,41 @@ describe("LoopIterationTree", () => {
         expect(wrapper.find("[data-test='loop-preview-footer']").exists()).toBe(false)
     })
 
-    it("shouldLinkEachIterationRowToTheSubflowExecutionItStartedWhenOneExists", async () => {
-        const iterations = pageOf(2)
+    it("shouldListTheSubflowExecutionTaskRunsUnderTheSubflowTaskWhenItIsExpanded", async () => {
+        useExecutionsStore().flow = {
+            id: "nested_loop_demo",
+            namespace: "company.team",
+            tasks: [{id: "per_region", type: LOOP_TYPE, tasks: [{id: "call_subflow", type: "io.kestra.plugin.core.flow.Subflow"}]}],
+        } as unknown as FlowForExecution
+        const iterations = pageOf(1)
         findExecutions.mockImplementation((async (options: Record<string, unknown>) => {
             if (!options["filters[triggerExecutionId][IN]"]) return iterations(options)
             return {
-                results: [{
-                    id: "child-0",
-                    namespace: "demo.subflows",
-                    flowId: "subflow_add",
-                    state: {current: "SUCCESS"},
-                    trigger: {variables: {executionId: "it-0", taskRunId: "tr-call"}},
-                }],
-                total: 1,
+                results: [
+                    {id: "child-0", namespace: "demo.subflows", flowId: "subflow_add", state: {current: "SUCCESS", histories}, trigger: {variables: {executionId: "it-0", taskRunId: "tr-call"}}},
+                    {id: "sibling", namespace: "demo.subflows", flowId: "other", state: {current: "SUCCESS", histories}, trigger: {variables: {executionId: "it-0", taskRunId: "tr-other"}}},
+                ],
+                total: 2,
             }
         }) as never)
-
+        mockExecution.mockImplementation(async ({executionId}: {executionId: string}) => executionId === "child-0"
+            ? {id: "child-0", taskRunList: [{id: "tr-compute", taskId: "compute", state: {current: "SUCCESS", histories}}]}
+            : {id: "it-0", taskRunList: [{id: "tr-call", taskId: "call_subflow", state: {current: "SUCCESS", histories}}]})
         const wrapper = mountTree()
         await flushPromises()
 
-        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({"filters[triggerExecutionId][IN]": ["it-0", "it-1"]}))
-        const [first, second] = wrapper.findAll("[data-test='loop-iteration-row']")
-        expect(first.findComponent(SubflowExecutionsLink).props("executions")).toEqual([expect.objectContaining({id: "child-0", flowId: "subflow_add"})])
-        expect(second.find("[data-test='subflow-execution-link']").exists()).toBe(false)
+        await wrapper.findAll("[data-test='gantt-row-chevron']")[0].trigger("click")
+        await flushPromises()
+        expect(findExecutions).not.toHaveBeenCalledWith(expect.objectContaining({"filters[triggerExecutionId][IN]": ["it-0"]}))
+        await wrapper.get("[data-test='iteration-task-run'] [data-test='gantt-row-chevron']").trigger("click")
+        await flushPromises()
+
+        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({"filters[triggerExecutionId][IN]": ["it-0"]}))
+        expect(mockExecution).toHaveBeenCalledWith({executionId: "child-0"})
+        expect(wrapper.findAll("[data-test='iteration-task-run']").map(row => row.text())).toEqual([
+            expect.stringContaining("call_subflow"),
+            expect.stringContaining("compute"),
+        ])
     })
 
     it("shouldFetchIterationTaskRunsOnlyForTheRowWhoseChevronIsToggled", async () => {

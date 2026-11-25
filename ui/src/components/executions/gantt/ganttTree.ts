@@ -1,7 +1,10 @@
 import {computed, inject, nextTick, provide, reactive, ref, watch, type ComputedRef, type InjectionKey, type Ref} from "vue"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import {State, type LevelFilterValue} from "@kestra-io/design-system"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useExecutionsStore, type Execution} from "../../../stores/executions"
+import {isSubflowTaskType} from "../../../services/subflowReferences"
+import {findSubflowExecutions, type SubflowExecutionRef} from "../../../utils/subflowExecutions"
 import * as FlowUtils from "../../../utils/flowUtils"
 import {buildTaskRunHierarchy} from "../../../utils/taskRunHierarchy"
 import {firstFailedLeaf, isFailedTaskRunState as isFailed, isHiddenTaskType} from "../../../utils/executionUtils"
@@ -43,6 +46,14 @@ export interface ExecutionRef {
     id: string;
     namespace: string;
     flowId: string;
+    flowRevision?: number;
+}
+
+export type FlowRef = Pick<ExecutionRef, "namespace" | "flowId" | "flowRevision">
+
+export interface SubflowExecutionsEntry {
+    children?: SubflowExecutionRef[];
+    error?: unknown;
 }
 
 export interface IterationNode {
@@ -90,6 +101,12 @@ export interface GanttTree {
     loopHandle: (loop: LoopRef) => LoopHandle;
     executionEntry: (executionId: string) => ExecutionEntry;
     loadExecution: (executionId: string, force?: boolean) => Promise<Execution | undefined>;
+    /** The executions started by the Subflow task runs of an execution, which no parent id points at. */
+    subflowExecutions: (executionId: string) => SubflowExecutionsEntry;
+    loadSubflowExecutions: (executionId: string, force?: boolean) => Promise<void>;
+    flowOf: (flow: FlowRef) => FlowForExecution | undefined;
+    loadFlow: (flow: FlowRef) => Promise<void>;
+    taskTypeIn: (flow: FlowRef, taskId: string) => string | undefined;
     loopOutputs: (taskRunId: string) => LoopOutputsEntry | undefined;
     loadLoopOutputs: (node: TaskRunNode) => Promise<void>;
     taskType: (taskId: string) => string | undefined;
@@ -119,6 +136,7 @@ const ts = (date: string): number => new Date(date).getTime()
 
 export const taskRunKey = (taskRunId: string): string => `tr:${taskRunId}`
 export const iterationKey = (executionId: string): string => `it:${executionId}`
+export const executionKey = (executionId: string): string => `ex:${executionId}`
 export const iterationLabel = (row: LoopIterationRow): string => `#${row.index + 1} ${row.value}`
 
 export function orderTaskRuns(taskRuns: ExecutionTaskRun[], taskType: TaskTypeResolver): Array<{task: ExecutionTaskRun; depth: number}> {
@@ -154,6 +172,13 @@ export function loopRefOf(node: TaskRunNode): LoopRef {
         namespace: node.namespace,
         flowId: node.flowId,
     }
+}
+
+export const isSubflowNode = (node: GanttNode): node is TaskRunNode => node.kind === "taskRun" && isSubflowTaskType(node.taskType)
+
+/** The executions a Subflow task run started: one for a Subflow, one per batch for a ForEachItem. */
+export function subflowChildren(tree: Pick<GanttTree, "subflowExecutions">, node: TaskRunNode): SubflowExecutionRef[] {
+    return (tree.subflowExecutions(node.executionId).children ?? []).filter(child => child.taskRunId === node.taskRun.id)
 }
 
 export function loopAncestors(node: TaskRunNode): Ancestor[] {
@@ -224,11 +249,67 @@ export function createGanttTree(options: {
     const loops = new Map<string, LoopHandle>()
     const executions = reactive(new Map<string, ExecutionEntry>())
     const inFlight = new Map<string, Promise<Execution | undefined>>()
+    const subflows = reactive(new Map<string, SubflowExecutionsEntry>())
+    const subflowsInFlight = new Map<string, Promise<void>>()
+    const flows = reactive(new Map<string, FlowForExecution>())
+    const flowsInFlight = new Map<string, Promise<void>>()
     const loopOutputsByTaskRun = reactive(new Map<string, LoopOutputsEntry>())
     const loopOutputsInFlight = new Map<string, Promise<void>>()
 
     function taskType(taskId: string): string | undefined {
         return FlowUtils.findTaskById(executionsStore.flow, taskId)?.type
+    }
+
+    const flowKey = (flow: FlowRef) => `${flow.namespace}/${flow.flowId}`
+
+    function flowOf(flow: FlowRef): FlowForExecution | undefined {
+        const root = executionsStore.flow
+        return root?.namespace === flow.namespace && root.id === flow.flowId ? root : flows.get(flowKey(flow))
+    }
+
+    function loadFlow(flow: FlowRef): Promise<void> {
+        const key = flowKey(flow)
+        if (flowOf(flow)) return Promise.resolve()
+        const pending = flowsInFlight.get(key)
+        if (pending) return pending
+
+        // A flow the user cannot read leaves its task runs without icons, which is no reason to fail the tree.
+        const request = Promise.resolve()
+            .then(() => executionsStore.loadFlowForExecution({namespace: flow.namespace, flowId: flow.flowId, revision: flow.flowRevision, store: false}))
+            .then((loaded) => { flows.set(key, loaded) }, () => undefined)
+            .finally(() => { flowsInFlight.delete(key) })
+        flowsInFlight.set(key, request)
+        return request
+    }
+
+    function taskTypeIn(flow: FlowRef, taskId: string): string | undefined {
+        return FlowUtils.findTaskById(flowOf(flow), taskId)?.type
+    }
+
+    function subflowExecutions(executionId: string): SubflowExecutionsEntry {
+        let entry = subflows.get(executionId)
+        if (!entry) {
+            subflows.set(executionId, {})
+            entry = subflows.get(executionId)!
+        }
+        return entry
+    }
+
+    function loadSubflowExecutions(executionId: string, force = false): Promise<void> {
+        const entry = subflowExecutions(executionId)
+        if (entry.children && !force) return Promise.resolve()
+        const pending = subflowsInFlight.get(executionId)
+        if (pending) return pending
+
+        const request = findSubflowExecutions([executionId]).then(
+            (children) => {
+                entry.children = children
+                entry.error = undefined
+            },
+            (error: unknown) => { entry.error = error },
+        ).finally(() => { subflowsInFlight.delete(executionId) })
+        subflowsInFlight.set(executionId, request)
+        return request
     }
 
     function hasFailure(node: TaskRunNode): boolean {
@@ -276,6 +357,8 @@ export function createGanttTree(options: {
         loops.clear()
         executions.clear()
         inFlight.clear()
+        subflows.clear()
+        subflowsInFlight.clear()
     }
 
     function refresh(): Promise<void> {
@@ -283,7 +366,10 @@ export function createGanttTree(options: {
             .filter(([, entry]) => entry.execution)
             .map(([executionId]) => loadExecution(executionId, true))
         const loopReloads = [...loops.values()].map(handle => handle.reload())
-        return Promise.all([...executionReloads, ...loopReloads]).then(() => undefined)
+        const subflowReloads = [...subflows.entries()]
+            .filter(([, entry]) => entry.children)
+            .map(([executionId]) => loadSubflowExecutions(executionId, true))
+        return Promise.all([...executionReloads, ...loopReloads, ...subflowReloads]).then(() => undefined)
     }
 
     function loopHandle(loop: LoopRef): LoopHandle {
@@ -410,7 +496,7 @@ export function createGanttTree(options: {
                 return
             }
             const owner = {id: row.id, namespace: current.loop.namespace, flowId: current.loop.flowId}
-            select(createTaskRunNode(owner, match, taskType(match.taskId), taskRunAncestors(indexTaskRuns(candidates), match, iterationAncestors(target))), {reveal: true})
+            select(createTaskRunNode(owner, match, taskTypeIn(owner, match.taskId), taskRunAncestors(indexTaskRuns(candidates), match, iterationAncestors(target))), {reveal: true})
         } finally {
             stepping.value = false
         }
@@ -435,13 +521,14 @@ export function createGanttTree(options: {
             const iteration = createIterationNode(loop, row, loopAncestors(node))
             expanded.add(iteration.key)
             const execution = await loadExecution(row.id)
-            const failed = firstFailedLeaf((execution?.taskRunList ?? []) as ExecutionTaskRun[], taskType)
+            await loadFlow(loop)
+            const failed = firstFailedLeaf((execution?.taskRunList ?? []) as ExecutionTaskRun[], taskId => taskTypeIn(loop, taskId))
             if (!failed) {
                 select(iteration, {reveal: true})
                 return
             }
             const taskRuns = (execution?.taskRunList ?? []) as ExecutionTaskRun[]
-            node = createTaskRunNode({id: row.id, namespace: loop.namespace, flowId: loop.flowId}, failed, taskType(failed.taskId), taskRunAncestors(indexTaskRuns(taskRuns), failed, iterationAncestors(iteration)))
+            node = createTaskRunNode({id: row.id, namespace: loop.namespace, flowId: loop.flowId}, failed, taskTypeIn(loop, failed.taskId), taskRunAncestors(indexTaskRuns(taskRuns), failed, iterationAncestors(iteration)))
         }
         select(node, {reveal: true})
     }
@@ -470,6 +557,11 @@ export function createGanttTree(options: {
         loopHandle,
         executionEntry,
         loadExecution,
+        subflowExecutions,
+        loadSubflowExecutions,
+        flowOf,
+        loadFlow,
+        taskTypeIn,
         loopOutputs: (taskRunId) => loopOutputsByTaskRun.get(taskRunId),
         loadLoopOutputs,
         taskType,

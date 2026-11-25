@@ -28,7 +28,7 @@ export const Blocking: Story = {
             "A load balancer row cannot request vCPU or RAM.",
             "Rows without an owner will be assigned to the requester.",
         ])
-        await expect(canvas.queryByTestId("failing-checks-toggle")).toBeNull()
+        await expect(canvas.queryByRole("button")).toBeNull()
     },
 }
 
@@ -41,7 +41,7 @@ export const NonBlocking: Story = {
 export const NoFailingCheck: Story = {
     args: {checks: []},
     async play({canvasElement}) {
-        await expect(within(canvasElement).queryByTestId("failing-checks")).toBeNull()
+        await expect(canvasElement.querySelector("[data-test='failing-checks']")).toBeNull()
     },
 }
 
@@ -66,7 +66,7 @@ export const ManyCollapsed: Story = {
         await expect(canvas.getAllByRole("alert")).toHaveLength(1)
         await expect(canvas.getByRole("alert").textContent).toContain("4 checks failing")
 
-        const toggle = canvas.getByTestId("failing-checks-toggle")
+        const toggle = canvas.getByRole("button")
         await expect(toggle.getAttribute("aria-expanded")).toBe("false")
         await userEvent.click(toggle)
 

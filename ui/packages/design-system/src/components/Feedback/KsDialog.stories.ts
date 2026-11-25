@@ -258,7 +258,7 @@ export const ScrollableStickyFooter: Story = {
                 <ks-button type="primary" @click="visible = true">Open dialog with a sticky footer</ks-button>
                 <ks-dialog v-model="visible" title="Sticky footer" scrollable destroy-on-close>
                     <p v-for="p in paragraphs" :key="p">{{ p }}</p>
-                    <div data-test="sticky-footer" style="position:sticky;bottom:0;padding:var(--ks-spacing-2) 0;background:var(--ks-bg-surface)">
+                    <div style="position:sticky;bottom:0;padding:var(--ks-spacing-2) 0;background:var(--ks-bg-surface)">
                         Pinned to the bottom of the dialog body while it scrolls
                     </div>
                     <template #footer>
@@ -271,7 +271,7 @@ export const ScrollableStickyFooter: Story = {
     async play({canvasElement}) {
         const canvas = within(canvasElement)
         await userEvent.click(canvas.getByRole("button", {name: "Open dialog with a sticky footer"}))
-        const footer = await within(document.body).findByTestId("sticky-footer")
+        const footer = await within(document.body).findByText("Pinned to the bottom of the dialog body while it scrolls")
         const scrollbar = document.querySelector(".kel-dialog .kel-dialog__scrollable-body .kel-scrollbar__wrap") as HTMLElement
         await waitFor(() => expect(scrollbar.scrollHeight).toBeGreaterThan(scrollbar.clientHeight))
         scrollbar.scrollTop = 0

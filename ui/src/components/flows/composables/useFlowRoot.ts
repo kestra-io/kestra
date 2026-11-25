@@ -106,8 +106,8 @@ export function useFlowRoot() {
     // which tab that navigation lands on.
     watch(() => [route.params.namespace, route.params.id], () => load())
 
-    watch(activeTabName, (newTab) => {
-        if (newTab === "overview") {
+    watch(() => `${activeTabName.value}|${flowKey()}`, () => {
+        if (activeTabName.value === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
                 const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)

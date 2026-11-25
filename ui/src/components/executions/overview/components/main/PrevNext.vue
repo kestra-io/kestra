@@ -50,7 +50,6 @@
         const baseParams = {
             "filters[namespace][PREFIX]": props.execution.namespace,
             "filters[flowId][EQUALS]": props.execution.flowId,
-            sort: "state.startDate:desc",
             size: 1,
         }
 
@@ -59,11 +58,13 @@
             store.findExecutions({
                 ...baseParams,
                 "filters[startDate][GREATER_THAN]": props.execution.state.startDate,
+                sort: "state.startDate:asc",
             }),
             // one execution BEFORE (older than) current startDate
             store.findExecutions({
                 ...baseParams,
                 "filters[startDate][LESS_THAN]": props.execution.state.startDate,
+                sort: "state.startDate:desc",
             }),
         ])
 

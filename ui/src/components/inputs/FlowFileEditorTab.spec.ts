@@ -68,9 +68,9 @@ const i18n = createI18n({
     },
 })
 
-function mountTab() {
+function mountTab(props: Record<string, unknown> = {}) {
     return mount(FlowFileEditorTab, {
-        props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false},
+        props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false, ...props},
         global: {
             plugins: [i18n],
             stubs: {
@@ -113,6 +113,19 @@ describe("FlowFileEditorTab", () => {
         const downloadLink = wrapper.findAll("button").find((button) => button.attributes("href") !== undefined)
         expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/data.txt")
         expect(downloadLink?.attributes("download")).toBe("data.txt")
+    })
+
+    it("should address a file whose name holds characters reserved in a query string by its full path", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+
+        const image = mountTab({name: "a&b #1.png", extension: "png", path: "dir/a&b #1.png"})
+        fileMetadata.mockResolvedValue({size: 11 * 1024 * 1024})
+        const big = mountTab({name: "a&b #1.bin", extension: "bin", path: "dir/a&b #1.bin"})
+        await flushPromises()
+
+        expect(image.find("img").attributes("src")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.png")
+        const downloadLink = big.findAll("button").find((button) => button.attributes("href") !== undefined)
+        expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.bin")
     })
 
     it("should load the file content when the size stats are unavailable", async () => {

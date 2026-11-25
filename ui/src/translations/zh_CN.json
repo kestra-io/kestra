@@ -2587,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "助手未返回响应。请重试。",
+          "outputLimit": "助手在回答之前用尽了输出 token。请缩短您的消息或开始新的聊天。",
+          "contentFiltered": "AI 提供商已阻止响应。请重新措辞您的消息或删除可能触发提供商过滤器的内容。",
           "retry": "重试"
         },
         "cancelled": "轮次已取消",

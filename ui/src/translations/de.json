@@ -2587,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuche es erneut.",
+          "outputLimit": "Der Assistent hat keine Output-Tokens mehr, bevor er antworten konnte. Kürze deine Nachricht oder starte einen neuen Chat.",
+          "contentFiltered": "Der KI-Anbieter hat die Antwort blockiert. Formuliere deine Nachricht um oder entferne Inhalte, die die Filter des Anbieters ausgelöst haben könnten.",
           "retry": "Wiederholen"
         },
         "cancelled": "Turn abgebrochen",

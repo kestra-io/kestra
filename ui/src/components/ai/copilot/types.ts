@@ -202,7 +202,12 @@ export interface ProposedActionEvent {
 export interface DoneEvent {
     /** The resting thread status the stream closed into. */
     status: AgentThreadStatus
+    /** Why the turn ended without any output; absent whenever the turn produced something. */
+    reason?: EmptyTurnReason | null
 }
+
+/** Why a successful model call returned neither text nor a tool call. */
+export type EmptyTurnReason = "EMPTY_RESPONSE" | "OUTPUT_LIMIT" | "CONTENT_FILTERED"
 
 /**
  * A terminal failure delivered as an SSE event (not an HTTP/transport error), so the reason reaches

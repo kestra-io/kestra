@@ -178,14 +178,22 @@
         chartCategories.value = []
 
         try {
-            const response = await MetricsAPI.searchByExecution({
-                executionId: props.execution?.id ?? "",
-                taskRunId: props.taskRunId,
-                taskId: props.taskRunId ? undefined : row.taskId,
-                size: 1000,
-                sort: ["timestamp:asc"],
-            })
-            const entries = (response.results ?? []).filter(
+            const results: MetricEntry[] = []
+            for (let page = 1; ; page++) {
+                const response = await MetricsAPI.searchByExecution({
+                    executionId: props.execution?.id ?? "",
+                    taskRunId: props.taskRunId,
+                    taskId: props.taskRunId ? undefined : row.taskId,
+                    page,
+                    size: 1000,
+                    sort: ["timestamp:asc"],
+                })
+                results.push(...(response.results ?? []))
+                if (!response.results?.length || results.length >= response.total) {
+                    break
+                }
+            }
+            const entries = results.filter(
                 (entry) => entry.name === row.name && entry.taskId === row.taskId,
             )
 

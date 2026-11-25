@@ -86,6 +86,11 @@ const meta: Meta<typeof LoopIterationTree> = {
                 name: "executions/list",
                 component: {template: "<div>executions</div>"},
             },
+            {
+                path: "/executions/:namespace/:flowId/:id",
+                name: "executions/update",
+                component: {template: "<div>execution</div>"},
+            },
         ], {
             initialRoute: "/",
         }),

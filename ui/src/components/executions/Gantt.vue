@@ -697,6 +697,7 @@
         --gantt-bar-width: 12rem;
         --gantt-duration-width: 9rem;
         --gantt-state-width: 8rem;
+        container-type: inline-size;
         --ks-card-header-padding: 0;
         padding: 0;
 
@@ -773,6 +774,21 @@
                 background: var(--ks-border-default);
                 border-radius: 5px;
             }
+        }
+    }
+
+    /* The fixed columns never shrink, so a Gantt narrowed by the side panel would otherwise squeeze the task names to nothing. */
+    @container (max-width: 56rem) {
+        .kel-card:not(.is-compact) :is(.gantt-header, .gantt-scroller) {
+            --gantt-bar-width: 6rem;
+            --gantt-duration-width: 5rem;
+        }
+    }
+
+    @container (max-width: 40rem) {
+        .kel-card:not(.is-compact) :is(.gantt-header, .gantt-scroller) {
+            --gantt-duration-width: 0rem;
+            --gantt-duration-padding: 0;
         }
     }
 

@@ -466,7 +466,7 @@
     const triggers = ref<ApiTriggerAndState[]>([])
     const isBackfillOpen = ref(false)
     const isDetailsOpen = ref(false)
-    const detailsKey = ref<Pick<TriggerRow, "namespace" | "flowId" | "triggerId">>()
+    const detailsKey = ref<TriggerControllerApiTriggerId>()
     const selectedTrigger = ref<TriggerRow | undefined>()
 
     // evaluatedAt/updatedAt are TriggerState JSON fields with no backing column on the triggers table, so they're excluded here.
@@ -601,13 +601,7 @@
             .map(row => `${row.namespace}-${row.flowId}-${row.triggerId}`),
     )
 
-    const detailsTrigger = computed(() =>
-        triggersMerged.value.find(row =>
-            row.namespace === detailsKey.value?.namespace &&
-            row.flowId === detailsKey.value?.flowId &&
-            row.triggerId === detailsKey.value?.triggerId,
-        ),
-    )
+    const detailsTrigger = computed(() => detailsKey.value && findRowBySelection(detailsKey.value))
 
     const detailsData = computed<Record<string, unknown>>(() => {
         const trigger = detailsTrigger.value
@@ -774,7 +768,7 @@
     }
 
     const openDetails = (row: TriggerRow) => {
-        detailsKey.value = {namespace: row.namespace, flowId: row.flowId, triggerId: row.triggerId}
+        detailsKey.value = selectionMapper(row)
         isDetailsOpen.value = true
     }
 

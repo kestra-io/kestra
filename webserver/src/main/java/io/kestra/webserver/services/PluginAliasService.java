@@ -3,8 +3,6 @@ package io.kestra.webserver.services;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
 
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -20,18 +18,30 @@ public class PluginAliasService {
     }
 
     public Optional<PluginTypeAliases> findByType(String type) {
-        return pluginRegistry.plugins().stream()
-            .map(registeredPlugin -> registeredPlugin.findClass(type)
-                .map(pluginType -> new PluginTypeAliases(
-                    pluginType.getName(),
-                    registeredPlugin.getAliases().values().stream()
-                        .filter(alias -> alias.getValue().equals(pluginType))
-                        .map(Map.Entry::getKey)
-                        .sorted()
-                        .toList()
-                )))
-            .flatMap(Optional::stream)
-            .findFirst();
+        for (RegisteredPlugin registeredPlugin : pluginRegistry.plugins()) {
+            Class<?> pluginType = registeredPlugin.allClass().stream()
+                .filter(pluginClass -> pluginClass.getName().equals(type))
+                .findFirst()
+                .orElseGet(() -> registeredPlugin.getAliases().values().stream()
+                    .filter(alias -> alias.getKey().equalsIgnoreCase(type))
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .orElse(null));
+
+            if (pluginType == null) {
+                continue;
+            }
+
+            List<String> aliases = registeredPlugin.getAliases().values().stream()
+                .filter(alias -> alias.getValue().equals(pluginType))
+                .map(Map.Entry::getKey)
+                .sorted()
+                .toList();
+
+            return Optional.of(new PluginTypeAliases(pluginType.getName(), aliases));
+        }
+
+        return Optional.empty();
     }
 
     public record PluginTypeAliases(String type, List<String> aliases) {

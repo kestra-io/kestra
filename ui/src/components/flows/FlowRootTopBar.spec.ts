@@ -14,10 +14,6 @@ vi.mock("../../stores/flow", () => ({
     useFlowStore: () => ({flow: mocks.flow}),
 }))
 
-vi.mock("../../stores/flowAutosave", () => ({
-    useFlowAutosaveStore: () => ({status: "idle"}),
-}))
-
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({
         user: {isAllowed: mocks.isAllowed},
@@ -57,6 +53,7 @@ function mountFlowRootTopBar() {
                         </div>
                     `,
                 },
+                FlowSaveStatus: true,
                 Badge: {
                     props: ["label"],
                     template: "<span class=\"badge\">{{ label }}</span>",
@@ -98,21 +95,21 @@ describe("FlowRootTopBar", () => {
         expect(wrapper.find(".alert-icon").exists()).toBe(false)
     })
 
-    it("shows the draft marker for draft flows", () => {
+    it("shows the draft badge for draft flows", () => {
         mocks.flow.draft = true
 
         const wrapper = mountFlowRootTopBar()
 
-        expect(wrapper.find("[data-test=flow-change-marker]").text()).toBe("flowAutosave.draft.label")
+        expect(wrapper.findAll(".badge").map(badge => badge.text())).toContain("draft")
     })
 
-    it("does not show the draft marker for flows that are not drafts", () => {
+    it("does not show the draft badge for flows that are not drafts", () => {
         const wrapper = mountFlowRootTopBar()
 
-        expect(wrapper.find("[data-test=flow-change-marker]").exists()).toBe(false)
+        expect(wrapper.findAll(".badge").map(badge => badge.text())).not.toContain("draft")
     })
 
-    it("shows the deleted label and draft marker for deleted draft flows", () => {
+    it("shows the deleted label and draft badge for deleted draft flows", () => {
         mocks.flow.deleted = true
         mocks.flow.draft = true
 
@@ -120,7 +117,7 @@ describe("FlowRootTopBar", () => {
 
         expect(wrapper.text()).toContain("deleted_label")
         expect(wrapper.find(".alert-icon").exists()).toBe(true)
-        expect(wrapper.find("[data-test=flow-change-marker]").text()).toBe("flowAutosave.draft.label")
+        expect(wrapper.findAll(".badge").map(badge => badge.text())).toContain("draft")
     })
 
     it("shows the lock icon when the user cannot edit the flow", () => {

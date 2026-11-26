@@ -1216,22 +1216,8 @@
     "export_csv": "导出为CSV",
     "flow_export": "导出flow",
     "flowAutosave": {
-      "draft": {
-        "label": "草稿",
-        "tooltip": "更改尚未发布。点击以与已发布的版本进行比较。"
-      },
-      "modified": {
-        "label": "已修改",
-        "tooltip": "正在将您的更改保存为草稿。点击以与已发布的修订版本进行比较。"
-      },
       "savedLocally": {
-        "banner": "您的 Flow 更改将保存在此浏览器中，并在服务器响应后保存为草稿。完成后此横幅将消失。",
-        "label": "已本地保存",
-        "tooltip": "服务器无法访问。您的更改将保留在此浏览器中，并在服务器恢复后保存为草稿。"
-      },
-      "conflict": {
-        "label": "冲突",
-        "tooltip": "此 flow 在您离线时已在服务器上更改。"
+        "banner": "您的 Flow 更改将保存在此浏览器中，并在服务器响应后保存为草稿。完成后此横幅将消失。"
       },
       "conflictDialog": {
         "title": "Flow 在服务器上已更改",
@@ -1245,12 +1231,6 @@
         "restore": "恢复",
         "discard": "放弃"
       }
-    },
-    "testRun": {
-      "label": "测试运行",
-      "runPublished": "运行已发布版本",
-      "dialogTitle": "{id} 的测试运行",
-      "dialogDescription": "在屏幕上将草稿作为 Playground Execution 运行。调度、webhook 和 Subflow 将继续使用已发布的版本。"
     },
     "flow export": "确定要导出 <code>{flowCount}</code> 个流程吗？",
     "flows exported": "<code>{count}</code> 个 flow 已导出",

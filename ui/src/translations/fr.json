@@ -1216,22 +1216,8 @@
     "export_csv": "Exporter en CSV",
     "flow_export": "Exporter le flow",
     "flowAutosave": {
-      "draft": {
-        "label": "Brouillon",
-        "tooltip": "Modifications non encore publiées. Cliquez pour comparer avec la révision publiée."
-      },
-      "modified": {
-        "label": "Modifié",
-        "tooltip": "Enregistrement de vos modifications en tant que brouillon. Cliquez pour comparer avec la révision publiée."
-      },
       "savedLocally": {
-        "banner": "Vos modifications de flow sont conservées dans ce navigateur et enregistrées en tant que brouillon une fois que le serveur répond. Cette bannière disparaît à ce moment-là.",
-        "label": "Enregistré localement",
-        "tooltip": "Le serveur est inaccessible. Vos modifications sont conservées dans ce navigateur et enregistrées comme brouillon dès qu'il est de nouveau disponible."
-      },
-      "conflict": {
-        "label": "Conflit",
-        "tooltip": "Ce flow a été modifié sur le serveur pendant que vous étiez hors ligne."
+        "banner": "Vos modifications de flow sont conservées dans ce navigateur et enregistrées en tant que brouillon une fois que le serveur répond. Cette bannière disparaît à ce moment-là."
       },
       "conflictDialog": {
         "title": "Le Flow a été modifié sur le serveur",
@@ -1245,12 +1231,6 @@
         "restore": "Restaurer",
         "discard": "Annuler"
       }
-    },
-    "testRun": {
-      "label": "Test d'exécution",
-      "runPublished": "Exécuter la version publiée",
-      "dialogTitle": "Test d'exécution de {id}",
-      "dialogDescription": "Exécute le brouillon à l'écran comme une exécution de Playground. Les planifications, les webhooks et les subflows continuent d'utiliser la version publiée."
     },
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exporté(s)",

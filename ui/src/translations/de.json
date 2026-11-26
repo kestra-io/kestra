@@ -1216,22 +1216,8 @@
     "export_csv": "Als CSV exportieren",
     "flow_export": "Flow exportieren",
     "flowAutosave": {
-      "draft": {
-        "label": "Entwurf",
-        "tooltip": "Änderungen noch nicht veröffentlicht. Klicke, um mit der veröffentlichten Revision zu vergleichen."
-      },
-      "modified": {
-        "label": "Geändert",
-        "tooltip": "Deine Änderungen als Entwurf speichern. Klicke, um mit der veröffentlichten Revision zu vergleichen."
-      },
       "savedLocally": {
-        "banner": "Deine Flow-Änderungen werden in diesem Browser gespeichert und als Entwurf gesichert, sobald der Server antwortet. Dieser Banner verschwindet dann.",
-        "label": "Lokal gespeichert",
-        "tooltip": "Der Server ist nicht erreichbar. Deine Änderungen werden in diesem Browser gespeichert und als Entwurf gesichert, sobald er wieder verfügbar ist."
-      },
-      "conflict": {
-        "label": "Konflikt",
-        "tooltip": "Dieser Flow wurde auf dem Server geändert, während du offline warst."
+        "banner": "Deine Flow-Änderungen werden in diesem Browser gespeichert und als Entwurf gesichert, sobald der Server antwortet. Dieser Banner verschwindet dann."
       },
       "conflictDialog": {
         "title": "Flow auf dem Server geändert",
@@ -1245,12 +1231,6 @@
         "restore": "Wiederherstellen",
         "discard": "Verwerfen"
       }
-    },
-    "testRun": {
-      "label": "Testlauf",
-      "runPublished": "Veröffentlichte Version ausführen",
-      "dialogTitle": "Testlauf von {id}",
-      "dialogDescription": "Führt den Entwurf auf dem Bildschirm als Playground-Execution aus. Zeitpläne, Webhooks und Subflows verwenden weiterhin die veröffentlichte Version."
     },
     "flow export": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich exportieren?",
     "flows exported": "<code>{count}</code> Flow(s) exportiert",

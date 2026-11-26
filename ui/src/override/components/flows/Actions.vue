@@ -72,7 +72,7 @@
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
                 :flowSource="flow?.source"
-                :testRun="editorIsUnpublished"
+                :revision="editorExecuteRevision"
             />
         </template>
     </NavBarActions>
@@ -131,7 +131,7 @@
 
     const {
         canPublish: editorCanPublish,
-        isUnpublished: editorIsUnpublished,
+        executeRevision: editorExecuteRevision,
         createDraft: editorCreateDraft,
         hasErrors: editorHasErrors,
         isReadOnly: editorIsReadOnly,

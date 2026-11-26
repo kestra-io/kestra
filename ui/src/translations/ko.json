@@ -1216,22 +1216,8 @@
     "export_csv": "CSV로 내보내기",
     "flow_export": "flow 내보내기",
     "flowAutosave": {
-      "draft": {
-        "label": "초안",
-        "tooltip": "아직 변경 사항이 게시되지 않았습니다. 게시된 버전과 비교하려면 클릭하세요."
-      },
-      "modified": {
-        "label": "수정됨",
-        "tooltip": "변경 사항을 초안으로 저장 중입니다. 게시된 Revision과 비교하려면 클릭하세요."
-      },
       "savedLocally": {
-        "banner": "Flow 변경 사항은 이 브라우저에 보관되며 서버 응답 시 초안으로 저장됩니다. 응답이 오면 이 배너는 사라집니다.",
-        "label": "로컬에 저장됨",
-        "tooltip": "서버에 연결할 수 없습니다. 변경 사항은 이 브라우저에 보관되며 서버가 다시 연결되면 draft로 저장됩니다."
-      },
-      "conflict": {
-        "label": "충돌",
-        "tooltip": "오프라인 상태일 때 서버에서 이 Flow가 변경되었습니다."
+        "banner": "Flow 변경 사항은 이 브라우저에 보관되며 서버 응답 시 초안으로 저장됩니다. 응답이 오면 이 배너는 사라집니다."
       },
       "conflictDialog": {
         "title": "서버에서 Flow가 변경되었습니다.",
@@ -1245,12 +1231,6 @@
         "restore": "복원",
         "discard": "버리기"
       }
-    },
-    "testRun": {
-      "label": "테스트 실행",
-      "runPublished": "게시된 버전 실행",
-      "dialogTitle": "{id} 테스트 실행",
-      "dialogDescription": "화면에 있는 초안을 Playground execution으로 실행합니다. 스케줄, 웹훅 및 subflow는 게시된 버전을 계속 사용합니다."
     },
     "flow export": "<code>{flowCount}</code> 개의 flow를 내보내시겠습니까?",
     "flows exported": "<code>{count}</code> Flow(s) 내보내기 완료",

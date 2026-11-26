@@ -1216,22 +1216,8 @@
     "export_csv": "CSVとしてエクスポート",
     "flow_export": "フローをエクスポート",
     "flowAutosave": {
-      "draft": {
-        "label": "ドラフト",
-        "tooltip": "まだ変更は公開されていません。公開済みのリビジョンと比較するにはクリックしてください。"
-      },
-      "modified": {
-        "label": "変更済み",
-        "tooltip": "変更を下書きとして保存しています。クリックして公開済みのリビジョンと比較してください。"
-      },
       "savedLocally": {
-        "banner": "Flowの変更はブラウザに保持され、サーバーが応答するとドラフトとして保存されます。応答するとこのバナーは消えます。",
-        "label": "ローカルに保存済み",
-        "tooltip": "サーバーに到達できません。変更はこのブラウザに保持され、サーバーが復旧すると下書きとして保存されます。"
-      },
-      "conflict": {
-        "label": "競合",
-        "tooltip": "オフライン中に、このFlowがサーバー上で変更されました。"
+        "banner": "Flowの変更はブラウザに保持され、サーバーが応答するとドラフトとして保存されます。応答するとこのバナーは消えます。"
       },
       "conflictDialog": {
         "title": "サーバー上でFlowが変更されました",
@@ -1245,12 +1231,6 @@
         "restore": "復元",
         "discard": "破棄"
       }
-    },
-    "testRun": {
-      "label": "テスト実行",
-      "runPublished": "公開済みバージョンを実行",
-      "dialogTitle": "{id} のテスト実行",
-      "dialogDescription": "画面上のドラフトをPlayground executionとして実行します。スケジュール、webhook、およびsubflowは公開バージョンを使用し続けます。"
     },
     "flow export": "<code>{flowCount}</code>件のflowをエクスポートしてもよろしいですか？",
     "flows exported": "<code>{count}</code> Flow(s) エクスポート済み",

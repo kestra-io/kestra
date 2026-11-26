@@ -4,7 +4,7 @@
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </KsAlert>
-        <KsAlert v-if="flow.draft && !testRun" type="warning" showIcon :closable="false">
+        <KsAlert v-if="flow.draft" type="warning" showIcon :closable="false">
             <strong>{{ $t('draft') }}</strong><br>
             {{ $t('draft_flow_warning') }}
             <div v-if="canPublishDraft" class="draft-publish-action">
@@ -188,8 +188,6 @@
         autoPrefill?: boolean
         renderLabels?: string[]
         replay?: {executionId: string; taskRunId?: string; revision?: number}
-        /** Runs the loaded draft revision as a playground execution instead of the published one. */
-        testRun?: boolean
     }>(), {
         replay: undefined,
         redirect: true,
@@ -474,9 +472,8 @@
                                     newTab: newTab.value,
                                     id: flow.value.id,
                                     namespace: flow.value.namespace,
-                                    // Drafts are playground-only: a test run sends the draft revision as one, any other run omits it for the published one.
-                                    revision: flow.value.draft && !props.testRun ? undefined : flow.value.revision,
-                                    kind: props.testRun ? "PLAYGROUND" : "NORMAL",
+                                    // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                    revision: flow.value.draft ? undefined : flow.value.revision,
                                     labels: labelStrings,
                                     scheduleDate: buildScheduleDateParam(
                                         scheduleDate.value,

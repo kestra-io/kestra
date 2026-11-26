@@ -1216,22 +1216,8 @@
     "export_csv": "Exportar como CSV",
     "flow_export": "Exportar flow",
     "flowAutosave": {
-      "draft": {
-        "label": "Rascunho",
-        "tooltip": "Alterações ainda não publicadas. Clique para comparar com a revisão publicada."
-      },
-      "modified": {
-        "label": "Modificado",
-        "tooltip": "Salvando suas alterações como um rascunho. Clique para comparar com a revisão publicada."
-      },
       "savedLocally": {
-        "banner": "Suas alterações no Flow são mantidas neste navegador e salvas como um rascunho assim que o servidor responde. Este banner desaparece quando isso acontece.",
-        "label": "Salvo localmente",
-        "tooltip": "O servidor está inacessível. Suas alterações são mantidas neste navegador e salvas como um rascunho assim que ele voltar."
-      },
-      "conflict": {
-        "label": "Conflito",
-        "tooltip": "Este flow foi alterado no servidor enquanto você estava offline."
+        "banner": "Suas alterações no Flow são mantidas neste navegador e salvas como um rascunho assim que o servidor responde. Este banner desaparece quando isso acontece."
       },
       "conflictDialog": {
         "title": "Flow alterado no servidor",
@@ -1245,12 +1231,6 @@
         "restore": "Restaurar",
         "discard": "Descartar"
       }
-    },
-    "testRun": {
-      "label": "Execução de teste",
-      "runPublished": "Executar versão publicada",
-      "dialogTitle": "Execução de teste de {id}",
-      "dialogDescription": "Executa o rascunho na tela como uma execução de playground. Agendamentos, webhooks e subflows continuam usando a versão publicada."
     },
     "flow export": "Tem certeza de que deseja exportar <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exportado(s)",

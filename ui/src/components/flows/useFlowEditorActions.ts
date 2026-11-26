@@ -8,6 +8,7 @@ import {useExecutionsStore} from "../../stores/executions"
 import {useProductTourStore} from "../../stores/productTour"
 import {usePlaygroundStore} from "../../stores/playground"
 import {useFlowAutosaveStore} from "../../stores/flowAutosave"
+import {useFlowSaveStatus} from "./useFlowSaveStatus"
 import {usePluginsStore} from "../../stores/plugins"
 import {useMiscStore} from "override/stores/misc"
 import {useCoreStore} from "../../stores/core"
@@ -32,8 +33,7 @@ export function useFlowEditorActions() {
     const hasFlowSourceChange = computed(() => flowStore.haveChange)
     const haveChange = computed(() => hasFlowSourceChange.value || flowStore.hasDirtyEditorFiles)
     const canSave = computed(() => haveChange.value || flowStore.isCreating)
-    const canPublish = computed(() => canSave.value || (flowStore.flow?.draft ?? false))
-    const isUnpublished = computed(() => !flowStore.isCreating && ((flowStore.flow?.draft ?? false) || hasFlowSourceChange.value))
+    const {canPublish, executeRevision} = useFlowSaveStatus()
     const hasErrors = computed(() => (flowStore.flowErrors?.length ?? 0) > 0)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
@@ -181,8 +181,11 @@ export function useFlowEditorActions() {
 
     /** The Publish button: pushes the pending autosave first, so the publish is the last write. */
     async function publish() {
-        await useFlowAutosaveStore().settle()
+        const autosave = useFlowAutosaveStore()
+        await autosave.settle()
         await saveFlow(false)
+        const flow = flowStore.flow
+        if (flow?.revision && !flow.draft && !flowStore.haveChange) autosave.notePublished(flow.revision)
     }
 
     /** The Ctrl/Cmd+S shortcut: creates a new flow as a draft, otherwise pushes the pending autosave now. */
@@ -353,7 +356,7 @@ export function useFlowEditorActions() {
         hasFlowSourceChange,
         canSave,
         canPublish,
-        isUnpublished,
+        executeRevision,
         hasErrors,
         isReadOnly,
         isAllowedEdit,

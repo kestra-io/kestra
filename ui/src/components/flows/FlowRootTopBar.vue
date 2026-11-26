@@ -8,10 +8,11 @@
             <span :class="{'body-color': isDeleted}">
                 {{ routeInfo.title }}
                 <Badge v-if="routeInfo.beta" :label="$t('plugins.beta')" />
-                <FlowChangeMarker />
+                <Badge v-if="isDraft" :label="$t('draft')" />
             </span>
         </template>
         <template #actions>
+            <FlowSaveStatus />
             <Actions />
         </template>
     </NavBar>
@@ -23,7 +24,7 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Badge from "../global/Badge.vue"
     import Actions from "override/components/flows/Actions.vue"
-    import FlowChangeMarker from "./FlowChangeMarker.vue"
+    import FlowSaveStatus from "./FlowSaveStatus.vue"
     import NavBar from "../layout/TopNavBar.vue"
     import type {KsBreadcrumbItem} from "@kestra-io/design-system"
     import resource from "../../models/resource"
@@ -44,6 +45,7 @@
     const authStore = useAuthStore()
 
     const isDeleted = computed(() => flowStore.flow?.deleted || false)
+    const isDraft = computed(() => flowStore.flow?.draft || false)
     const isAllowedToEdit = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace),
     )

@@ -77,7 +77,7 @@ export const executeTask = (
     },
     flow: Flow,
     values: ExecutionInputValues,
-    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { kind?: "NORMAL" | "PLAYGROUND"; redirect?: boolean; newTab?: boolean; query?: LocationQueryRaw; nextStep?: boolean },
+    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: LocationQueryRaw; nextStep?: boolean },
 ): Promise<Execution> => {
     const formData = normalizeInputValues(flattenInputs(flow.inputs), values)
     const executionsStore = useExecutionsStore()
@@ -85,7 +85,7 @@ export const executeTask = (
     return executionsStore
         .triggerExecution({
             ...options,
-            kind: options.kind ?? "NORMAL",
+            kind: "NORMAL",
             formData,
         })
         .then(response => {

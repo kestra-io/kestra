@@ -13,14 +13,8 @@ vi.mock("../../stores/playground", () => ({
     usePlaygroundStore: () => ({enabled: false}),
 }))
 
-const flowState: {executeFlow: boolean, flow?: {draft: boolean, revision: number}} = {executeFlow: false}
 vi.mock("../../stores/flow", () => ({
-    useFlowStore: () => flowState,
-}))
-
-const settle = vi.fn().mockResolvedValue(undefined)
-vi.mock("../../stores/flowAutosave", () => ({
-    useFlowAutosaveStore: () => ({settle}),
+    useFlowStore: () => ({executeFlow: false}),
 }))
 
 const toastSuccess = vi.fn()
@@ -118,31 +112,5 @@ describe("TriggerFlow — execution-started feedback", () => {
         await wrapper.vm.$nextTick()
 
         expect(toastSuccess).not.toHaveBeenCalled()
-    })
-})
-
-describe("TriggerFlow — test run", () => {
-    it("runs the draft on screen as a playground execution, once autosave has pushed it", async () => {
-        flowState.flow = {draft: true, revision: 4}
-        loadFlowForExecution.mockClear()
-        settle.mockClear()
-        const wrapper = mountTriggerFlow({testRun: true, lazy: true})
-
-        await wrapper.find("[data-test=flow-test-run]").trigger("click")
-
-        expect(settle).toHaveBeenCalledOnce()
-        expect(loadFlowForExecution).toHaveBeenCalledWith({flowId: "my_flow", namespace: "company.team", revision: 4, store: true})
-        expect(wrapper.findComponent(FlowRun).props("testRun")).toBe(true)
-        expect(wrapper.find("[data-test=test-run-description]").exists()).toBe(true)
-        flowState.flow = undefined
-    })
-
-    it("offers no published run for a flow that was never published", () => {
-        flowState.flow = {draft: true, revision: 1}
-        const wrapper = mountTriggerFlow({testRun: true, lazy: true})
-
-        expect(wrapper.find("[data-test=flow-test-run]").exists()).toBe(false)
-        expect(wrapper.find("#execute-button").exists()).toBe(true)
-        flowState.flow = undefined
     })
 })

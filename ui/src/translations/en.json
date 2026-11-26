@@ -1216,22 +1216,8 @@
     "export_csv": "Export as CSV",
     "flow_export": "Export flow",
     "flowAutosave": {
-      "draft": {
-        "label": "Draft",
-        "tooltip": "Changes not published yet. Click to compare with the published revision."
-      },
-      "modified": {
-        "label": "Modified",
-        "tooltip": "Saving your changes as a draft. Click to compare with the published revision."
-      },
       "savedLocally": {
-        "banner": "Your flow changes are kept in this browser and saved as a draft once the server answers. This banner disappears when it does.",
-        "label": "Saved locally",
-        "tooltip": "The server is unreachable. Your changes are kept in this browser and saved as a draft once it is back."
-      },
-      "conflict": {
-        "label": "Conflict",
-        "tooltip": "This flow changed on the server while you were offline."
+        "banner": "Your flow changes are kept in this browser and saved as a draft once the server answers. This banner disappears when it does."
       },
       "conflictDialog": {
         "title": "Flow changed on the server",
@@ -1246,11 +1232,18 @@
         "discard": "Discard"
       }
     },
-    "testRun": {
-      "label": "Test run",
-      "runPublished": "Run published version",
-      "dialogTitle": "Test run of {id}",
-      "dialogDescription": "Runs the draft on screen as a playground execution. Schedules, webhooks and subflows keep using the published version."
+    "flowSaveStatus": {
+      "upToDate": "Up to date with revision {revision}",
+      "saving": "Saving draft...",
+      "draft": "Draft saved · differs from revision {revision}",
+      "draftUnpublished": "Draft saved · not published yet",
+      "invalid": "Draft saved · {count} error to fix before publishing | Draft saved · {count} errors to fix before publishing",
+      "offline": "Saved in this browser only · retrying",
+      "published": "Published as revision {revision}",
+      "viewChanges": "View changes",
+      "discard": "Discard draft",
+      "discardConfirm": "Discard the draft and go back to revision {revision}? Your unpublished changes are lost.",
+      "executeRevision": "Execute revision {revision}"
     },
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exported",

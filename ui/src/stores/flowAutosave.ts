@@ -9,6 +9,7 @@ import {handled, type KestraHttpError} from "../utils/kestraHttp"
 
 export const AUTOSAVE_DELAY = 1_000
 export const OFFLINE_RETRY_DELAY = 10_000
+export const PUBLISHED_NOTICE_DURATION = 2_500
 
 export type AutosaveStatus = "idle" | "pending" | "syncing" | "offline" | "conflict"
 
@@ -41,6 +42,7 @@ export const useFlowAutosaveStore = defineStore("flowAutosave", () => {
 
     const status = ref<AutosaveStatus>("idle")
     const conflict = ref<AutosaveConflict>()
+    const justPublished = ref<number>()
 
     let debounce: ReturnType<typeof setTimeout> | undefined
     let retry: ReturnType<typeof setTimeout> | undefined
@@ -48,6 +50,7 @@ export const useFlowAutosaveStore = defineStore("flowAutosave", () => {
     let waiters: ((validation: FlowValidations) => void)[] = []
     let stopWatchers: (() => void)[] = []
     let newFlowRestoreOffered = false
+    let publishedNotice: ReturnType<typeof setTimeout> | undefined
 
     const bufferKey = computed(() => {
         const flow = flowStore.flow
@@ -266,6 +269,12 @@ export const useFlowAutosaveStore = defineStore("flowAutosave", () => {
         if (readBuffer() && status.value !== "conflict") await sync().catch(() => undefined)
     }
 
+    function notePublished(revision: number) {
+        clearTimeout(publishedNotice)
+        justPublished.value = revision
+        publishedNotice = setTimeout(() => justPublished.value = undefined, PUBLISHED_NOTICE_DURATION)
+    }
+
     function onOnline() {
         if (status.value === "offline") sync().catch(() => undefined)
     }
@@ -314,6 +323,8 @@ export const useFlowAutosaveStore = defineStore("flowAutosave", () => {
     return {
         status,
         conflict,
+        justPublished,
+        notePublished,
         start,
         stop,
         sync,

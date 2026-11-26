@@ -16,11 +16,13 @@ sourceSets {
     }
 }
 
+def pluginFixtureVersion = '1.0.0-SNAPSHOT'
+
 tasks.register('pluginFixtureJar', Jar) {
     group = "build"
     description = "Packages the external plugin fixture used by the tests."
     archiveBaseName = 'plugin-template-test'
-    archiveVersion = '1.0.0-SNAPSHOT'
+    archiveVersion = ''
     destinationDirectory = layout.buildDirectory.dir('pluginFixture')
     from sourceSets.pluginFixture.output
     preserveFileTimestamps = false
@@ -31,7 +33,7 @@ tasks.register('pluginFixtureJar', Jar) {
             'X-Kestra-Title': 'plugin-template-test',
             'X-Kestra-Group': 'io.kestra.plugin.templates',
             'X-Kestra-Description': 'Plugin template for Kestra',
-            'X-Kestra-Version': '1.0.0-SNAPSHOT',
+            'X-Kestra-Version': pluginFixtureVersion,
             'X-Kestra-License': 'EE'
         )
     }

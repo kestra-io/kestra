@@ -73,17 +73,29 @@
         return message.replace(BACKTICKS_REGEX, "$1")
     }
 
+    const failedAt = (state?: {histories?: {state?: string; date?: string}[]}) =>
+        new Date(state?.histories?.findLast(history => history.state === "FAILED")?.date ?? 0).getTime()
+
+    /** The task run that failed first: errors and finally tasks run after it and would otherwise hide its error. */
+    const firstFailedTaskRunId = props.execution.taskRunList
+        ?.filter(taskRun => taskRun.state?.current === "FAILED")
+        .sort((a, b) => failedAt(a.state) - failedAt(b.state))[0]?.id
+
+    const loadErrorLogs = (taskRunId?: string) => store.loadLogs({
+        store: false,
+        executionId: props.execution.id,
+        params: {
+            "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
+            "filters[kind][IN]": props.execution.kind,
+            ...(taskRunId ? {"filters[taskRunId][EQUALS]": taskRunId} : {}),
+        },
+        showMessageOnError: false,
+    })
+
     onMounted(async () => {
         try {
-            const response = await store.loadLogs({
-                store: false,
-                executionId: props.execution.id,
-                params: {
-                    "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
-                    "filters[kind][IN]": props.execution.kind,
-                },
-                showMessageOnError: false,
-            })
+            let response = firstFailedTaskRunId ? await loadErrorLogs(firstFailedTaskRunId) : []
+            if (!response.length) response = await loadErrorLogs()
 
             if (response.length) logs.value = response as any
         } catch {

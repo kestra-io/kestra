@@ -1,7 +1,6 @@
 package io.kestra.webserver.services.ai;
 
 import java.util.List;
-import java.util.Map;
 
 import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
@@ -25,11 +24,10 @@ public interface AiServiceInterface {
         throw new UnsupportedOperationException("Streaming chat is not supported by this AI provider");
     }
 
-    default AiService.GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName, Map<String, String> inputState) {
+    default AiService.GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName) {
         return null;
     }
 
-    default String afterGeneration(AiService.GenerationContext context, String spanName, Map<String, Object> outputState, String result, String outputKey) {
-        return result;
+    default void afterGeneration(AiService.GenerationContext context, String spanName) {
     }
 }

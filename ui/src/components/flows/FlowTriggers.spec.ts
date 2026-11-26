@@ -128,6 +128,16 @@ afterEach(() => {
     vi.useRealTimers()
 })
 
+describe("FlowTriggers - layout", () => {
+    it("lets a trigger type wrap only at its dots, never mid-word", async () => {
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        const type = wrapper.findAll(".identifier").find(cell => cell.text() === "io.kestra.plugin.core.trigger.Schedule")
+        expect(type?.findAll("wbr")).toHaveLength(5)
+    })
+})
+
 // kestra-ee#10290: a trigger blocked by governance says so in place of its next evaluation date.
 describe("FlowTriggers - governance block", () => {
     const blockedTooltip = (wrapper: VueWrapper, dataTest = "trigger-blocked") =>

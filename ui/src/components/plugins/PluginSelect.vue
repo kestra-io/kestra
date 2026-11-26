@@ -3,6 +3,7 @@
         v-model="modelValue"
         :placeholder="$te(`no_code.select.${blockType}`) ? $t(`no_code.select.${blockType}`) : $t('no_code.select.default')"
         filterable
+        :loading="schemaLoader?.isLoading.value"
         :filterMethod="onFilter"
         clearable
         fitInputWidth
@@ -49,6 +50,7 @@
         FULL_SCHEMA_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
+        SCHEMA_LOADER_INJECTION_KEY,
     } from "../no-code/injectionKeys"
     import {getValueAtJsonPath} from "../../utils/utils"
 
@@ -57,6 +59,7 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
     const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
+    const schemaLoader = inject(SCHEMA_LOADER_INJECTION_KEY, undefined)
 
     const blockType = (parentPath.split(".").pop() ?? "").replace(/\[\d+\]$/, "")
     const isPluginBlock = ["tasks", "triggers", "conditions", "taskRunners"].includes(blockType)

@@ -258,6 +258,9 @@
         emit("createTask", parentPath, blockSchemaPath, refPath, "after")
     }
 
+    // An authoring surface: fetched at once, so the full schema is usually there by the time a block is opened.
+    void pluginsStore.lazyLoadSchemaType({type: "flow"})
+
     useBlockEditorProvides({
         props,
         flowYaml,

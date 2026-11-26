@@ -64,6 +64,7 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
     @Schema(
         title = "Additional environment variables for the current process."
     )
+    @ToString.Exclude
     protected Property<Map<String, String>> env;
 
     @Schema(

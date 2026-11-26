@@ -58,9 +58,7 @@
                 :minWidth="140"
             >
                 <template #default="scope">
-                    <code>
-                        {{ scope.row.id }}
-                    </code>
+                    <code class="identifier"><BreakableText :value="scope.row.id" /></code>
                     <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
                         <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
                             <AlertCircle />
@@ -142,6 +140,7 @@
                             </KsIconButton>
                         </div>
                     </template>
+                    <span v-else-if="col.prop === 'type'" class="identifier"><BreakableText :value="scope.row.type" /></span>
                     <template v-else>
                         {{ scope.row[col.prop] }}
                     </template>
@@ -391,6 +390,7 @@
     import {blockerMessage, searchTriggersForFlow} from "../../utils/triggers"
     import {useProductTourStore} from "../../stores/productTour"
     import TestEventDialog, {type TestEventTarget} from "./TestEventDialog.vue"
+    import BreakableText from "../BreakableText"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
 
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
@@ -440,13 +440,13 @@
             label: t("type"),
             prop: "type",
             default: true,
-            minWidth: 260,
+            minWidth: 150,
         },
         {
             label: t("execution id"),
             prop: "executionId",
             default: true,
-            minWidth: 140,
+            minWidth: 100,
         },
         {
             label: t("last trigger date"),
@@ -561,7 +561,11 @@
                 if (!backfill.value.inputs) {
                     return true
                 }
-                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value.inputs[i] !== null && backfill.value.inputs[i] !== undefined)
+                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => {
+                    const value = backfill.value.inputs[i]
+                    // a cleared field sends "" or [], which is no value either
+                    return value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)
+                })
                 if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
                     return true
                 }
@@ -888,6 +892,11 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--ks-spacing-1);
+}
+
+.identifier {
+    overflow-wrap: normal;
+    word-break: normal;
 }
 
 .execution-cell {

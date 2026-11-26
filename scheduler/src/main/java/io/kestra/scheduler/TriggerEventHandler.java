@@ -542,6 +542,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerDeleted(TriggerDeleted event) {
+        flowStateStore.refresh(FlowId.of(event.id().getTenantId(), event.id().getNamespace(), event.id().getFlowId(), null));
         triggerStateStore.findByIdWithoutAcl(event.id())
             .filter(state -> event.revision() == null || !isStale(state, event, event.revision()))
             .ifPresent(state ->

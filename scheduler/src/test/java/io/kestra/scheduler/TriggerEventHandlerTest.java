@@ -429,6 +429,23 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldRefreshFlowCacheWhenTriggerIsDeleted() {
+        // GIVEN the scheduler cache holds r3 when the flow is deleted in r4
+        FlowWithSource flow = withRevision(Fixtures.defaultFlow(), 3);
+        InMemoryFlowMetaStore delegate = new InMemoryFlowMetaStore(TEST_VNODE_COUNT, List.of(flow));
+        CachedFlowMetaStore flowMetaStore = new CachedFlowMetaStore(delegate, new SchedulerConfiguration(TEST_VNODE_COUNT, Duration.ofSeconds(5), 100));
+        flowMetaStore.init(Set.of(0));
+        delegate.add(flow.toBuilder().revision(4).deleted(true).build());
+        handler = newTriggerEventHandler(flowMetaStore);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, new TriggerDeleted(triggerId, 4));
+
+        // THEN scheduler startup no longer sees the deleted flow
+        assertThat(flowMetaStore.findAllForVNodes(Set.of(0)).isEmpty()).isTrue();
+    }
+
+    @Test
     void shouldNotCreateTriggerStateWhenLatestRevisionNoLongerHasTheTrigger() {
         // GIVEN T added in r4 then removed in r5, with r5's delete consumed first
         handler = newTriggerEventHandler(

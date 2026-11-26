@@ -1233,6 +1233,19 @@
         "discard": "Scarta"
       }
     },
+    "flowSaveStatus": {
+      "upToDate": "Aggiornato alla revisione {revision}",
+      "saving": "Salvataggio bozza...",
+      "draft": "Bozza salvata · differisce dalla revisione {revision}",
+      "draftUnpublished": "Bozza salvata · non ancora pubblicata",
+      "invalid": "Bozza salvata · {count} errore da correggere prima della pubblicazione | Bozza salvata · {count} errori da correggere prima della pubblicazione",
+      "offline": "Salvato solo in questo browser · nuovo tentativo",
+      "published": "Pubblicato come revisione {revision}",
+      "viewChanges": "Visualizza modifiche",
+      "discard": "Scarta bozza",
+      "discardConfirm": "Scartare la bozza e tornare alla revisione {revision}? Le modifiche non pubblicate andranno perse.",
+      "executeRevision": "Esegui revisione {revision}"
+    },
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
     "flows exported": "<code>{count}</code> Flow esportati",
     "import": "Importa",

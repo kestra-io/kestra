@@ -1233,6 +1233,19 @@
         "discard": "Odrzuć"
       }
     },
+    "flowSaveStatus": {
+      "upToDate": "Aktualne z wersją {revision}",
+      "saving": "Zapisywanie szkicu...",
+      "draft": "Szkic zapisany · różni się od wersji {revision}",
+      "draftUnpublished": "Szkic zapisany · jeszcze nieopublikowany",
+      "invalid": "Szkic zapisany · {count} błąd do naprawienia przed publikacją | Szkic zapisany · {count} błędy do naprawienia przed publikacją | Szkic zapisany · {count} błędów do naprawienia przed publikacją",
+      "offline": "Zapisano tylko w tej przeglądarce · ponawianie",
+      "published": "Opublikowano jako wersja {revision}",
+      "viewChanges": "Wyświetl zmiany",
+      "discard": "Odrzuć szkic",
+      "discardConfirm": "Odrzucić szkic i wrócić do wersji {revision}? Twoje nieopublikowane zmiany zostaną utracone.",
+      "executeRevision": "Wykonaj wersję {revision}"
+    },
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> Flowów?",
     "flows exported": "Wyeksportowano <code>{count}</code> Flowów",
     "import": "Importuj",

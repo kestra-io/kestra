@@ -1233,6 +1233,19 @@
         "discard": "放弃"
       }
     },
+    "flowSaveStatus": {
+      "upToDate": "与 revision {revision} 同步",
+      "saving": "正在保存草稿...",
+      "draft": "草稿已保存 · 与版本 {revision} 不同",
+      "draftUnpublished": "草稿已保存 · 尚未发布",
+      "invalid": "草稿已保存 · 发布前需修复 {count} 个错误",
+      "offline": "仅在此浏览器中保存 · 正在重试",
+      "published": "以修订版 {revision} 发布",
+      "viewChanges": "查看更改",
+      "discard": "放弃草稿",
+      "discardConfirm": "放弃草稿并返回版本 {revision}？您未发布的更改将丢失。",
+      "executeRevision": "执行修订版 {revision}"
+    },
     "flow export": "确定要导出 <code>{flowCount}</code> 个流程吗？",
     "flows exported": "<code>{count}</code> 个 flow 已导出",
     "import": "导入",

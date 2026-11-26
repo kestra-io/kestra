@@ -1,0 +1,19 @@
+id: loop-outputs-empty
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: 1
+    values: '[]'
+    outputs:
+      - id: v
+        type: STRING
+        value: "{{ outputs.ret.value }}"
+    tasks:
+      - id: ret
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ item.value }}"
+  - id: end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.loop.outputs }}"

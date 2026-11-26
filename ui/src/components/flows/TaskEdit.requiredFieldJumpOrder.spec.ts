@@ -64,8 +64,8 @@ vi.mock("../../composables/playground/usePlaygroundRun", () => ({
 }))
 
 vi.mock("../../composables/useContextSections", async () => {
-    const {ref} = await import("vue")
-    return {useContextSections: () => ({sections: ref([])})}
+    const {ref: vueRef} = await import("vue")
+    return {useContextSections: () => ({sections: vueRef([])})}
 })
 
 vi.mock("./TaskEditData.vue", () => ({
@@ -125,7 +125,7 @@ function mountTaskEdit(task: Record<string, unknown>) {
 }
 
 async function mountAndSettle(task: Record<string, unknown>) {
-    Element.prototype.scrollIntoView = vi.fn()
+    vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
     const wrapper = mountTaskEdit(task)
     await flushPromises()
     await wrapper.vm.$nextTick()

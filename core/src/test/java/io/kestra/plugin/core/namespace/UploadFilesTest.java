@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -39,6 +41,45 @@ public class UploadFilesTest {
 
     @Inject
     RunContextFactory runContextFactory;
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "/reports, report.txt, reports/report.txt",
+            "/reports/, report.txt, reports/report.txt",
+            "/reports, /report.txt, reports/report.txt",
+            "/reports/, /report.txt, reports/report.txt",
+            "/reports, nested/report.txt, reports/nested/report.txt",
+            "/reports/, nested/report.txt, reports/nested/report.txt",
+            "/, report.txt, report.txt",
+            ", report.txt, report.txt"
+        }
+    )
+    void shouldUploadFilesMapToDestinationGivenFilename(String destination, String filename, String expectedPath) throws Exception {
+        String namespace = "io.kestra." + IdUtils.create();
+        URI fileStorage = addToStorage("application-test.yml");
+        var builder = UploadFiles.builder()
+            .id(UploadFiles.class.getSimpleName())
+            .type(UploadFiles.class.getName())
+            .filesMap(Map.of(filename, fileStorage.toString()))
+            .namespace(Property.ofValue(namespace));
+        if (destination != null) {
+            builder.destination(Property.ofValue(destination));
+        }
+        UploadFiles uploadFile = builder.build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
+
+        uploadFile.run(runContext);
+
+        Namespace namespaceStorage = runContext.storage().namespace(namespace);
+        assertThat(namespaceStorage.all()).extracting(NamespaceFile::path).containsExactly(expectedPath);
+        try (
+            var source = storageInterface.get(MAIN_TENANT, null, fileStorage);
+            var uploaded = namespaceStorage.getFileContent(Path.of(expectedPath))
+        ) {
+            assertThat(uploaded).hasSameContentAs(source);
+        }
+    }
 
     @Test
     void shouldThrowExceptionGivenAlreadyExistingFileWhenConflictError() throws Exception {

@@ -18,10 +18,10 @@ describe("KsOptionGroup", () => {
 
     test("renders the default slot when supplied", () => {
         const wrapper = mount(KsOptionGroup, {
-            slots: {default: '<span data-test="option-content">Option content</span>'},
+            slots: {default: "<span data-test=\"option-content\">Option content</span>"},
         })
 
-        expect(wrapper.find('[data-test="option-content"]').text()).toBe("Option content")
+        expect(wrapper.find("[data-test=\"option-content\"]").text()).toBe("Option content")
     })
 
     test("does not forward a default slot when absent", () => {

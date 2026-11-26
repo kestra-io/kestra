@@ -131,7 +131,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Execution
             .withPluginConfiguration(Map.of())
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory, StorageContext.triggeringExecutionPrefix(variables)))
             .withVariableRenderer(variableRenderer)
             .withVariables(variables)
             .withDecryptVariables(decryptVariables)
@@ -163,7 +163,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Task
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()))
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory, StorageContext.triggeringExecutionPrefix(variables)))
             .withVariables(variables)
             .withDecryptVariables(decryptVariables)
             .withTask(task)
@@ -251,8 +251,8 @@ public class RunContextFactory {
     }
 
     /**
-     * Loads the flow-level outputs of an execution. For a loop sub-execution, the outputs of the parent execution are
-     * used as the parent is the execution exposed inside the run variables.
+     * Loads the flow-level outputs of an execution. For a loop sub-execution, the outputs of the root execution are
+     * used because it is the execution exposed inside the run variables.
      *
      * @return the execution outputs or null if no outputs are defined in the flow or already computed in the execution
      */
@@ -262,7 +262,7 @@ public class RunContextFactory {
             return null;
         }
 
-        Execution realExecution = execution != null && execution.getLoopRun() != null ? execution.getLoopRun().parent() : execution;
+        Execution realExecution = execution == null ? null : execution.rootExecution();
 
         try {
             return executionOutputServiceProvider.get().getOutputs(realExecution);

@@ -205,4 +205,26 @@ class LocalStorageTest extends StorageTestSuite {
         assertFalse(Files.exists(orphanMetadata1));
         assertFalse(Files.exists(orphanMetadata2));
     }
+
+    @Test
+    void existsInstanceResourceShouldDetectDirectories() throws IOException {
+        var dir = "/exists-instance-" + IdUtils.create();
+        storageInterface.createInstanceDirectory(null, URI.create(dir));
+
+        assertTrue(storageInterface.existsInstanceResource(null, URI.create(dir)));
+        assertTrue(storageInterface.existsInstanceResource(null, URI.create(dir + "/")));
+    }
+
+    @Test
+    void existsInstanceResourceShouldReturnFalseWhenMissing() {
+        assertFalse(storageInterface.existsInstanceResource(null, URI.create("/missing-" + IdUtils.create())));
+    }
+
+    @Test
+    void existsInstanceResourceShouldRejectParentTraversal() {
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> storageInterface.existsInstanceResource(null, URI.create("kestra:///a/../../etc/passwd"))
+        );
+    }
 }

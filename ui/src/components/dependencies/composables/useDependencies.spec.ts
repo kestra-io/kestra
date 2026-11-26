@@ -470,9 +470,20 @@ describe("useDependencies composable", () => {
         vi.useRealTimers()
         const mountCalls = [...chartMock.setOption.mock.calls]
         chartMock.setOption.mockClear()
-        const {selectNode, selectedNodeID} = wrapper.vm.composable as ReturnType<typeof useDependencies>
-        return {selectNode, selectedNodeID, chartMock, mountCalls}
+        const {selectNode, selectedNodeID, chartNodes, chartLayout} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+        return {selectNode, selectedNodeID, chartNodes, chartLayout, chartMock, mountCalls}
     }
+
+    it("pins the settled positions in the KsGraph props so a re-applied option cannot restart the force layout", async () => {
+        const {chartNodes, chartLayout} = await mountWithChart()
+
+        expect(chartLayout.value).toBe("none")
+        expect(chartNodes.value?.map(({id, x, y}) => ({id, x, y}))).toEqual([
+            {id: "A", x: 100, y: 200},
+            {id: "B", x: 300, y: 400},
+            {id: "C", x: 200, y: 100},
+        ])
+    })
 
     it("centres on the initially selected node at zoom=1.8 on mount", async () => {
         // center = [pos.x, pos.y] — ECharts graph center is in data coordinates.
@@ -580,6 +591,45 @@ describe("useDependencies composable", () => {
       await expandNode("hub")
       expect(getElements()).toHaveLength(3)
       expect(expandAssetNode).toHaveBeenCalledTimes(2)
+    })
+
+    it("lays the merged graph out again, seeded with the settled positions, when an expand adds nodes", async () => {
+      const chartMock = makeChartMock({"hub": {x: 10, y: 20}, "peer-1": {x: 30, y: 40}})
+      const graphRef = makeGraphRef()
+      graphRef.value.getEchartsInstance = vi.fn(() => chartMock as unknown as EChartsType)
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "hub", type: "NODE", flow: "hub", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-1", type: "NODE", flow: "peer-1", namespace: "ns", metadata: {subtype: "ASSET"}}},
+        ],
+        count: 2,
+      })
+      const expandAssetNode = vi.fn().mockResolvedValue({
+        data: [{data: {id: "peer-2", type: "NODE", flow: "peer-2", namespace: "ns", metadata: {subtype: "ASSET"}}}],
+        count: 1,
+      })
+      vi.useFakeTimers()
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          return {composable: useDependencies(graphRef, FLOW, "hub", {}, fetchAssetDependencies, undefined, true, expandAssetNode)}
+        },
+      })
+      await nextTick()
+      await nextTick()
+      await vi.runAllTimersAsync()
+      vi.useRealTimers()
+      const {expandNode, chartNodes, chartLayout} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+      expect(chartLayout.value).toBe("none")
+
+      await expandNode("hub")
+
+      expect(chartLayout.value).toBe("force")
+      expect(chartNodes.value?.map(({id, x, y}) => ({id, x, y}))).toEqual([
+        {id: "hub", x: 10, y: 20},
+        {id: "peer-1", x: 30, y: 40},
+        {id: "peer-2", x: undefined, y: undefined},
+      ])
     })
 
     function mountWithHubs(expandResult: unknown) {

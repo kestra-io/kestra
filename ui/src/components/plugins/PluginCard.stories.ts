@@ -14,7 +14,7 @@ const meta: Meta<typeof PluginCard> = {
         docs: {
             description: {
                 component:
-                    "PluginCard renders a plugin / subgroup / task / blueprint card with optional icon, categories, and task/blueprint counts. The card is clickable as a whole and emits `@click`. Slots: `#icon` overrides the header icon, `#footer-content` overrides the counts area in the footer (chevron stays). Information shown adapts to the props provided — missing counts, categories, or description are simply omitted.",
+                    "PluginCard renders a plugin / subgroup / task / blueprint card with optional icon, categories, and task/blueprint counts. The card is clickable as a whole and emits `@click`. Slots: `#icon` overrides the header icon, `#footer-content` overrides the counts area in the footer (chevron stays), `#status` adds a row above the footer (the Enterprise Edition shows the installed version and update state there). Information shown adapts to the props provided — missing counts, categories, or description are simply omitted.",
             },
         },
     },

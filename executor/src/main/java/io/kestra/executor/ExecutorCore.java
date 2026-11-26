@@ -7,16 +7,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -26,13 +21,13 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LoopExecutionEvent;
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
-import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -44,7 +39,6 @@ import io.kestra.core.runners.ExecutionTerminatedNotifier;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.MultipleConditionEvent;
-import io.kestra.core.runners.NoTransactionContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.SubflowExecutionEnd;
@@ -65,14 +59,12 @@ import io.kestra.executor.handler.SubflowExecutionEndMessageHandler;
 import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 import io.kestra.plugin.core.flow.Loop;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micrometer.core.instrument.Timer;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 /**
@@ -104,8 +96,7 @@ public class ExecutorCore {
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
     private final TriggerEventQueue triggerEventQueue;
-    private final ExecutionTerminatedNotifier executionTerminatedNotifier;
-    private final WorkerJobRunningStateStore workerJobRunningStateStore;
+    private final List<ExecutionTerminatedNotifier> executionTerminatedNotifiers;
     private final ExecutionCommandMessageHandler executionCommandMessageHandler;
     private final ExecutionEventMessageHandler executionEventMessageHandler;
     private final WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
@@ -141,8 +132,7 @@ public class ExecutorCore {
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         TriggerEventQueue triggerEventQueue,
-        ExecutionTerminatedNotifier executionTerminatedNotifier,
-        WorkerJobRunningStateStore workerJobRunningStateStore,
+        List<ExecutionTerminatedNotifier> executionTerminatedNotifiers,
         ExecutionCommandMessageHandler executionCommandMessageHandler,
         ExecutionEventMessageHandler executionEventMessageHandler,
         WorkerTaskResultMessageHandler workerTaskResultMessageHandler,
@@ -171,8 +161,7 @@ public class ExecutorCore {
         this.loopExecutionEventQueue = loopExecutionEventQueue;
         this.executionStatisticQueue = executionStatisticQueue;
         this.triggerEventQueue = triggerEventQueue;
-        this.executionTerminatedNotifier = executionTerminatedNotifier;
-        this.workerJobRunningStateStore = workerJobRunningStateStore;
+        this.executionTerminatedNotifiers = executionTerminatedNotifiers;
         this.executionCommandMessageHandler = executionCommandMessageHandler;
         this.executionEventMessageHandler = executionEventMessageHandler;
         this.workerTaskResultMessageHandler = workerTaskResultMessageHandler;
@@ -198,7 +187,7 @@ public class ExecutorCore {
 
         EvaluationType evaluationType = killSwitchService.evaluate(execution);
         if (evaluationType.isKillSwitched(execution)) {
-            killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
+            killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId()).ifPresent(this::toExecution);
             return;
         }
 
@@ -339,10 +328,6 @@ public class ExecutorCore {
                     processFlowTriggers(executor.getFlow(), popped);
                 }
 
-                if (terminatedByThisCycle) {
-                    releaseWorkingDirectoryLeases(executor);
-                }
-
                 // Send a SubflowExecutionEnd if there is a parent execution.
                 // Exclude RETRIED executions as they are replaced by a new one with the same trigger, which will report to the parent itself.
                 if (State.Type.RETRIED != execution.getState().getCurrent() && ExecutableUtils.isSubflow(execution)) {
@@ -448,32 +433,6 @@ public class ExecutorCore {
     }
 
     /**
-     * A WorkingDirectory reports the results of its children only, so the controller never sees a terminal result under
-     * its own key. Its lease is released once the execution ends, whatever path ended the WorkingDirectory. Until then, a
-     * lease left on an ended task run is discarded instead of resubmitted, so a failure here is only logged.
-     */
-    private void releaseWorkingDirectoryLeases(ExecutorContext executor) {
-        Set<String> workingDirectoryTaskIds = executor.getFlow().allTasksWithChilds().stream()
-            .filter(WorkingDirectory.class::isInstance)
-            .map(Task::getId)
-            .collect(Collectors.toSet());
-        if (workingDirectoryTaskIds.isEmpty()) {
-            return;
-        }
-
-        for (TaskRun taskRun : ListUtils.emptyOnNull(executor.getExecution().getTaskRunList())) {
-            if (!workingDirectoryTaskIds.contains(taskRun.getTaskId())) {
-                continue;
-            }
-            try {
-                workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, taskRun.getId());
-            } catch (Exception e) {
-                log.error("Failed to release the lease of task run '{}' of execution '{}'.", taskRun.getId(), taskRun.getExecutionId(), e);
-            }
-        }
-    }
-
-    /**
      * Asynchronously emits a raw execution-statistic row for the indexer to persist for every terminal NORMAL-kind execution.
      */
 
@@ -486,10 +445,12 @@ public class ExecutorCore {
     }
 
     private void notifyExecutionTerminated(Execution execution) {
-        try {
-            this.executionTerminatedNotifier.executionTerminated(execution);
-        } catch (Exception e) {
-            log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
+        for (ExecutionTerminatedNotifier notifier : executionTerminatedNotifiers) {
+            try {
+                notifier.executionTerminated(execution);
+            } catch (Exception e) {
+                log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
+            }
         }
     }
 

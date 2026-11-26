@@ -296,6 +296,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/flow-trigger-pausing-listen.yaml", "flows/valids/flow-trigger-pausing-flow.yaml" })
+    void flowTriggerOnPausing() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerOnPausing();
+    }
+
+    @Test
     @LoadFlows(
         { "flows/valids/flow-trigger-depends-on-flow-listen.yaml",
             "flows/valids/flow-trigger-depends-on-flow-a.yaml",
@@ -586,6 +592,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-dynamic-concurrency.yaml")
+    protected void loopDynamicConcurrency(Execution execution) throws Exception {
+        loopCaseTest.loopDynamicConcurrency(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-flowable.yaml")
     protected void loopFlowable(Execution execution) throws Exception {
         loopCaseTest.loopFlowable(execution);
@@ -661,6 +673,12 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-empty.yaml")
     protected void loopEmpty(Execution execution) {
         loopCaseTest.loopEmpty(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-outputs-empty.yaml")
+    protected void loopOutputsEmpty(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsEmpty(execution);
     }
 
     @Test
@@ -771,6 +789,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml" })
     void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-execution-assertion-after-execution.yaml" })
+    void shouldStopTasksButRunAfterExecutionWhenExecutionAssertionFails() throws Exception {
+        slaTestCase.shouldStopTasksButRunAfterExecutionWhenExecutionAssertionFails();
     }
 
     @Test

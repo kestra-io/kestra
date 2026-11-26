@@ -26,7 +26,8 @@ const ASYNC_LOADER = "__asyncLoader"
 type AsyncWrapper = Component & {[ASYNC_LOADER]?: () => Promise<unknown>}
 const STARTED_LOADS_KEY = Symbol.for("kestra.designSystem.startedAsyncComponents")
 const startedAsyncComponents: Set<AsyncWrapper> = ((globalThis as Record<symbol, unknown>)[STARTED_LOADS_KEY] ??= new Set<AsyncWrapper>()) as Set<AsyncWrapper>
-const asyncComponent = (name: string, loader: AsyncComponentLoader) => {
+// Pure so a consumer that never renders these components drops their lazy chunks from its build.
+const asyncComponent = /* @__NO_SIDE_EFFECTS__ */ (name: string, loader: AsyncComponentLoader) => {
     const wrapper: AsyncWrapper = defineAsyncComponent(() => {
         startedAsyncComponents.add(wrapper)
         return loader()
@@ -65,14 +66,19 @@ import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsDrillRow from "./components/Navigation/KsDrillRow/KsDrillRow.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
-export type {KsButtonType} from "./components/Basic/KsButton/KsButton.vue"
+export type {KsButtonProps, KsButtonType} from "./components/Basic/KsButton/KsButton.vue"
+export type {KsTooltipProps} from "./components/Feedback/KsTooltip.vue"
+export type {NativeAttributes} from "./utils/nativeAttributes"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
 import KsTopologyDetails from "./components/Data/KsTopologyDetails.vue"
 import KsDateAgo from "./components/Data/KsDateAgo.vue"
 import KsDataTable from "./components/Data/KsDataTable/KsDataTable.vue"
-export type {SortItem} from "./components/Data/KsDataTable/KsDataTable.vue"
+export type {SortItem, KsDataTableInstance} from "./components/Data/KsDataTable/KsDataTable.vue"
 import KsCascaderPanel from "./components/Form/KsCascaderPanel.vue"
+import KsChangeReview from "./components/Data/KsChangeReview.vue"
+export type {KsChangeReviewTone, KsChangeReviewSegment, KsChangeReviewTab} from "./components/Data/KsChangeReview.vue"
+export {KS_CHANGE_REVIEW_ALL} from "./components/Data/KsChangeReview.vue"
 import KsCheckbox from "./components/Form/KsCheckbox/KsCheckbox.vue"
 import KsCheckboxButton from "./components/Form/KsCheckbox/KsCheckboxButton.vue"
 import KsCheckboxGroup from "./components/Form/KsCheckbox/KsCheckboxGroup.vue"
@@ -199,6 +205,7 @@ export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
 export {rowKey} from "./utils/rowKey"
+export {sortFromQuery} from "./utils/tableSort"
 export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
 export {
@@ -344,6 +351,7 @@ const components: Record<string, Component> = {
     KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
+    KsChangeReview,
     KsCheckbox,
     KsCheckboxButton,
     KsCheckboxGroup,
@@ -457,6 +465,7 @@ export {
     KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
+    KsChangeReview,
     KsCheckbox,
     KsCheckboxButton,
     KsCheckboxGroup,
@@ -605,6 +614,7 @@ declare module "vue" {
         KsDateAgo: typeof KsDateAgo
         KsDataTable: typeof KsDataTable
         KsCascaderPanel: typeof KsCascaderPanel
+        KsChangeReview: typeof KsChangeReview
         KsCheckbox: typeof KsCheckbox
         KsCheckboxButton: typeof KsCheckboxButton
         KsCheckboxGroup: typeof KsCheckboxGroup
@@ -620,10 +630,13 @@ declare module "vue" {
         KsListingPage: typeof KsListingPage
         KsMain: typeof KsMain
         KsDatePicker: typeof KsDatePicker
+        KsDescriptions: typeof KsDescriptions
+        KsDescriptionsItem: typeof KsDescriptionsItem
         KsDialog: typeof KsDialog
         KsDivider: typeof KsDivider
         KsDrawer: typeof KsDrawer
         KsDurationPicker: typeof KsDurationPicker
+        KsEditor: typeof KsEditor
         KsDropdown: typeof KsDropdown
         KsDropdownItem: typeof KsDropdownItem
         KsDropdownMenu: typeof KsDropdownMenu
@@ -687,5 +700,9 @@ declare module "vue" {
         KsTree: typeof KsTree
         KsJsonTree: typeof KsJsonTree
         KsUpload: typeof KsUpload
+    }
+
+    interface GlobalDirectives {
+        vKsLoading: typeof vKsLoading
     }
 }

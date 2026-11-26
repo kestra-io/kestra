@@ -8,6 +8,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.server.multipart.MultipartBody;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +50,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -231,6 +235,72 @@ class WebhookBodyServiceTest {
         assertThat(body.storedUri()).isNull();
         assertThat(((ByteArrayRequestBody) body.requestBody()).getContent()).isEqualTo(content);
         verifyNoInteractions(storage);
+    }
+
+    @Test
+    void shouldDeleteStoredPartsWhenALaterPartFails() throws IOException {
+        // Given
+        StorageInterface storage = mock(StorageInterface.class);
+        when(storage.put(eq(FLOW.getTenantId()), eq(FLOW.getNamespace()), any(URI.class), any(InputStream.class)))
+            .thenReturn(URI.create("kestra:///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/ok.txt"))
+            .thenThrow(new IOException("Storage failure"));
+        WebhookBodyService service = new WebhookBodyService(storage);
+        MultipartBody body = body(
+            fileUpload("first", "ok.txt", MediaType.TEXT_PLAIN, new byte[] { 1 }),
+            fileUpload("second", "second.txt", MediaType.TEXT_PLAIN, new byte[] { 2 })
+        );
+
+        // When
+        assertThatThrownBy(() -> service.collect(body, FLOW, EXECUTION_ID, MediaType.MULTIPART_FORM_DATA).block())
+            .hasRootCauseInstanceOf(IOException.class);
+
+        // Then
+        verify(storage).deleteByPrefix(
+            FLOW.getTenantId(),
+            FLOW.getNamespace(),
+            URI.create("///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook")
+        );
+    }
+
+    @Test
+    void shouldKeepStoredPartsWhenCancelledOnceTheBodyIsEmitted() throws Exception {
+        // Given
+        StorageInterface storage = storage();
+        WebhookBodyService service = new WebhookBodyService(storage);
+        MultipartBody body = body(fileUpload("photo", "result.jpg", MediaType.IMAGE_JPEG, new byte[] { 1 }));
+        CountDownLatch emitted = new CountDownLatch(1);
+
+        // When - cancelled within onNext, as the flatMap the controller's answer goes through does
+        service.collect(body, FLOW, EXECUTION_ID, MediaType.MULTIPART_FORM_DATA).subscribe(new BaseSubscriber<>() {
+            @Override
+            protected void hookOnNext(MultipartFormDataRequestBody value) {
+                cancel();
+                emitted.countDown();
+            }
+        });
+
+        // Then
+        assertThat(emitted.await(5, TimeUnit.SECONDS)).isTrue();
+        verify(storage, after(500).never()).deleteByPrefix(any(), any(), any());
+    }
+
+    @Test
+    void shouldStoreFilePartWhenItsFilenameHoldsCharactersAURIRejects() throws IOException {
+        // Given
+        StorageInterface storage = storage();
+        WebhookBodyService service = new WebhookBodyService(storage);
+        MultipartBody body = body(fileUpload("file", "bad%.txt", MediaType.TEXT_PLAIN, new byte[] { 1 }));
+
+        // When
+        List<MultipartFormDataRequestBody.Part> parts = service
+            .collect(body, FLOW, EXECUTION_ID, MediaType.MULTIPART_FORM_DATA)
+            .block()
+            .getContent();
+
+        // Then
+        MultipartFormDataRequestBody.FilePart part = (MultipartFormDataRequestBody.FilePart) parts.getFirst();
+        assertThat(part.filename()).isEqualTo("bad%.txt");
+        assertThat(part.uri().getPath()).endsWith("/webhook/0/bad%.txt");
     }
 
     @Test
@@ -491,7 +561,7 @@ class WebhookBodyServiceTest {
             .thenAnswer(invocation ->
             {
                 invocation.getArgument(3, InputStream.class).transferTo(captured);
-                return URI.create("kestra://" + invocation.getArgument(2, URI.class).getPath());
+                return URI.create("kestra://" + invocation.getArgument(2, URI.class).getRawPath());
             });
         return storage;
     }

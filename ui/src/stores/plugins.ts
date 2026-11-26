@@ -1,15 +1,16 @@
 import {defineStore} from "pinia"
-import {ref, computed, toRaw, nextTick} from "vue"
+import {ref, shallowRef, shallowReactive, computed, toRaw, nextTick, markRaw} from "vue"
 import {trackPluginDocumentationView} from "../utils/tabTracking"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
 import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
-import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
+import {isEntryAPluginElementPredicate, latestVersionEntries, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient, type PluginArtifact, type PluginControllerApiTriggerPlugin, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {handledIf} from "../utils/kestraHttp"
+import {inflateCompactSchema} from "../utils/compactSchema"
 
 export type {PluginArtifact, PluginInstallJob, PluginInstallJobArtifactProgress as ArtifactProgress} from "@kestra-io/kestra-sdk"
 
@@ -236,15 +237,19 @@ export const usePluginsStore = defineStore("plugins", () => {
     const plugin = ref<PluginComponent>()
     const versions = ref<Record<string, string[]>>({})
     const plugins = ref<Plugin[]>()
+    const latestPlugins = computed<Plugin[]>(() => latestVersionEntries(plugins.value ?? []))
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
-    const schemaType = ref<Record<string, RootJsonSchema>>()
+    // Shallow: a schema is megabytes of read-only JSON, replaced as a whole and never mutated in place.
+    const schemaType = shallowRef<Record<string, RootJsonSchema>>()
+    const pendingSchemaLoads = shallowReactive(new Map<string, Promise<RootJsonSchema>>())
     const forceIncludeProperties = ref<string[]>()
 
     const flowSchema = computed<RootJsonSchema>(() => {
         return schemaType.value?.flow ?? InitialFlowSchema
     })
+    const isFlowSchemaLoading = computed(() => pendingSchemaLoads.has("flow"))
     const flowDefinitions = computed(() => {
         return flowSchema.value.definitions
     })
@@ -415,18 +420,29 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     function lazyLoadSchemaType(options: {type: string}) {
-        if(schemaType.value?.[options.type]) {
-            return Promise.resolve(schemaType.value[options.type])
+        const loaded = schemaType.value?.[options.type]
+        if(loaded) {
+            return Promise.resolve(loaded)
         }
 
-        return loadSchemaType(options)
+        let pending = pendingSchemaLoads.get(options.type)
+        if(!pending) {
+            pending = loadSchemaType(options).finally(() => pendingSchemaLoads.delete(options.type))
+            pendingSchemaLoads.set(options.type, pending)
+        }
+        return pending
     }
+
+    // Raw, so that reading it through the store keeps `isLoading` a ref for the components it is provided to.
+    const flowSchemaLoader = markRaw({
+        load: () => void lazyLoadSchemaType({type: "flow"}),
+        isLoading: isFlowSchemaLoading,
+    })
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
-            const schema = data as RootJsonSchema
-            schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = schema
+            const schema = inflateCompactSchema(data as RootJsonSchema)
+            schemaType.value = {...schemaType.value, [options.type]: schema}
             return schema
         })
     }
@@ -520,24 +536,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (!cls || !plugins.value) return null
         // A declared class, then a declared alias, then the package-prefix guess: an alias such as
         // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it.
-        const declaring = plugins.value.filter(p => Object.entries(p)
+        return findDeclaringPlugin(latestPlugins.value, cls)
+            ?? findDeclaringPlugin(plugins.value, cls)
+            ?? latestPlugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))
+            ?? null
+    }
+
+    function findDeclaringPlugin(candidates: Plugin[], cls: string): Plugin | undefined {
+        const declaring = candidates.filter(p => Object.entries(p)
             .some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)))
         if (declaring.length) return declaring.find(p => p.subGroup) ?? declaring[0]
-        const aliasing = plugins.value.filter(p => p.aliases?.includes(cls))
-        if (aliasing.length) return aliasing.find(p => !p.subGroup) ?? aliasing[0]
-        return plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + ".")) ?? null
+        const aliasing = candidates.filter(p => p.aliases?.includes(cls))
+        return aliasing.find(p => !p.subGroup) ?? aliasing[0]
     }
 
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {
         if (!name || !plugins.value) return null
         if (subGroup) {
-            return plugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
+            return latestPlugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
         }
-        return plugins.value.find(p => p.name === name && !p.subGroup) ?? null
+        return latestPlugins.value.find(p => p.name === name && !p.subGroup) ?? null
     }
 
     function sidebarPluginsFor(context: {cls?: string | null; owner?: Plugin | null}): Plugin[] {
-        const all = plugins.value ?? []
+        const all = latestPlugins.value
         let ownerGroup: string | undefined
         if (context.owner) {
             ownerGroup = context.owner.group
@@ -604,6 +626,8 @@ export const usePluginsStore = defineStore("plugins", () => {
         forceIncludeProperties,
 
         flowSchema,
+        isFlowSchemaLoading,
+        flowSchemaLoader,
         flowDefinitions,
         flowRootSchema,
         flowRootProperties,
@@ -615,6 +639,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         findPluginByCls,
         findPluginByName,
         sidebarPluginsFor,
+        latestPlugins,
         list,
         listTriggers,
         listWithSubgroup,
@@ -640,3 +665,4 @@ export const usePluginsStore = defineStore("plugins", () => {
         getInstallJob,
     }
 })
+

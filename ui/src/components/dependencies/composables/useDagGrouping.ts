@@ -78,7 +78,7 @@ const accessorFor = (field: typeof GROUP_FIELDS[number]) => (node: Node) =>
 export function useDagGrouping(getNodes: () => Node[], getEdges: () => Edge[] = () => []) {
     const {t} = useI18n({useScope: "global"})
 
-    const groupField = ref("")
+    const groupField = ref<string | undefined>("")
 
     const nodes = computed(() => getNodes())
 

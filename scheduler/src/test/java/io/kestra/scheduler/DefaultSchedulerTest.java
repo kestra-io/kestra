@@ -27,29 +27,30 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodeController;
-import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.services.FlowGovernanceNotifier;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.vnodes.VNodeController;
+import io.kestra.core.vnodes.internals.DefaultVNodesAssigner;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
+import io.kestra.scheduler.pubsub.TriggerKillPublisher;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.stores.CachedFlowMetaStore;
 import io.kestra.scheduler.stores.CachedTriggerStateStore;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
-import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
+import io.kestra.scheduler.utils.InMemoryVNodesAssignmentChannel;
 import io.kestra.scheduler.utils.InMemoryTriggerEventQueue;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
@@ -102,15 +103,16 @@ class DefaultSchedulerTest {
     private FlowMetaStore flowMetaStore;
 
     // Queues
-    private SchedulerEventQueue schedulerEventQueue;
     private TriggerEventQueue triggerEventQueue;
 
     // Others
+    private InMemoryVNodesAssignmentChannel vNodesAssignmentChannel;
     private DefaultVNodesAssigner vNodesAssigner;
     private VNodeController vNodeController;
     private TriggerSchedulingLoopFactory triggerSchedulingLoopFactory;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
     private TestingMaintenanceService maintenanceService;
+    private FlowGovernanceNotifier flowGovernanceNotifier;
 
     @BeforeEach
     void beforeEach() {
@@ -120,23 +122,23 @@ class DefaultSchedulerTest {
         this.serviceLivenessStore = new InMemoryServiceLivenessStore();
 
         // Queues
-        this.schedulerEventQueue = new InMemorySchedulerEventQueue();
         this.triggerEventQueue = new InMemoryTriggerEventQueue(SCHEDULER_CONFIGURATION.vnodes());
 
         // Others
-        this.vNodesAssigner = new DefaultVNodesAssigner(this.schedulerEventQueue);
+        this.vNodesAssignmentChannel = new InMemoryVNodesAssignmentChannel();
+        this.vNodesAssigner = new DefaultVNodesAssigner(this.vNodesAssignmentChannel);
         this.vNodesAssigner.start();
 
         this.vNodeController = createVNodeController();
         this.triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
         this.triggerSchedulingLoopFactory = new TriggerSchedulingLoopFactory(newTriggerScheduler(), newTriggerEventHandler(), metricRegistry);
         this.maintenanceService = new TestingMaintenanceService();
+        this.flowGovernanceNotifier = new FlowGovernanceNotifier();
     }
 
     @AfterEach
     void afterEach() throws IOException {
         this.vNodeController.close();
-        this.schedulerEventQueue.close();
         this.triggerEventQueue.close();
         this.vNodesAssigner.stop();
     }
@@ -310,6 +312,26 @@ class DefaultSchedulerTest {
         }
     }
 
+    @Test
+    void shouldApplyGovernanceChangeOnSchedulingLoopsWhenGovernanceChanged() {
+        // GIVEN
+        TriggerScheduler triggerScheduler = Mockito.spy(newTriggerScheduler());
+        this.triggerSchedulingLoopFactory = new TriggerSchedulingLoopFactory(triggerScheduler, newTriggerEventHandler(), metricRegistry);
+        try (DefaultScheduler scheduler = createDefaultScheduler();) {
+            scheduler.start(2);
+            serviceLivenessStore.put(scheduler);
+            vNodeController.checkServicesAndRebalanceVNodes();
+
+            // WHEN - THEN
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
+                flowGovernanceNotifier.notifyChangedAll();
+                Mockito.verify(triggerScheduler, Mockito.timeout(500).atLeastOnce())
+                    .onGovernanceChanged(Mockito.any(), Mockito.anySet(), Mockito.any());
+            });
+        }
+    }
+
     private TriggerScheduler newTriggerScheduler() {
         return new TriggerScheduler(
             triggerStateStore,
@@ -321,6 +343,7 @@ class DefaultSchedulerTest {
             schedulableEvaluator,
             new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, flowParsingService),
             triggerWorkerJobPublisher,
+            new TriggerKillPublisher(Mockito.mock(BroadcastQueueInterface.class)),
             triggerExecutionPublisher,
             SCHEDULER_CONFIGURATION
         );
@@ -336,6 +359,7 @@ class DefaultSchedulerTest {
             triggerStateStore,
             metricRegistry,
             maintenanceService,
+            flowGovernanceNotifier,
             SchedulerClock.getClock()
         );
     }
@@ -344,8 +368,9 @@ class DefaultSchedulerTest {
         return new VNodeController(
             lockService,
             serviceLivenessStore,
-            schedulerEventQueue,
-            SCHEDULER_CONFIGURATION
+            vNodesAssignmentChannel,
+            SCHEDULER_CONFIGURATION.vnodes(),
+            SCHEDULER_CONFIGURATION.vnodesRebalanceTimeout()
         );
     }
 
@@ -356,8 +381,9 @@ class DefaultSchedulerTest {
             triggerExecutionPublisher,
             runContextFactory,
             conditionService,
-            Mockito.mock(BroadcastQueueInterface.class),
-            Mockito.mock(AsyncOperationService.class)
+            new TriggerKillPublisher(Mockito.mock(BroadcastQueueInterface.class)),
+            Mockito.mock(AsyncOperationService.class),
+            Fixtures.passThroughFlowParsingService()
         );
     }
 

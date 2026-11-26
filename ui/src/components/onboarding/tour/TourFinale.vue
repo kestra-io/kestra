@@ -126,7 +126,7 @@
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
 
-        & :deep(a) {
+        & a {
             color: var(--ks-text-link);
             text-decoration: none;
 

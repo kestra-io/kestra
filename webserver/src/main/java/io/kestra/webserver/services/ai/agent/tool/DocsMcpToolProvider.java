@@ -1,6 +1,7 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.kestra.webserver.services.ai.agent.AgentConfiguration;
@@ -12,12 +13,19 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutor;
+import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
+@Requires(property = "kestra.ai.agent.docs-mcp-enabled", notEquals = "false")
 @Slf4j
 public class DocsMcpToolProvider {
+    // The server's plugin tools describe its own catalog, which the model cannot tell apart from the local plugin tools.
+    private static final Set<String> ALLOWED_TOOLS = Set.of(
+        "search_docs", "get_doc", "list_doc_children", "search_blueprints", "get_blueprint_flow", "plugin_release_history"
+    );
+
     private final String url;
 
     private volatile Map<ToolSpecification, ToolExecutor> tools;
@@ -28,7 +36,7 @@ public class DocsMcpToolProvider {
     }
 
     /**
-     * Lazily connect and list the remote docs tools, mapping each to an executor that calls back to
+     * Lazily connect and list the allowed remote docs tools, mapping each to an executor that calls back to
      * the same MCP client. Best-effort: on failure logs a warning and returns an empty map so the
      * loop degrades to no docs grounding rather than failing the turn.
      *
@@ -51,6 +59,7 @@ public class DocsMcpToolProvider {
                 .autoHealthCheck(false)
                 .build();
             this.tools = client.listTools().stream()
+                .filter(spec -> ALLOWED_TOOLS.contains(spec.name()))
                 .collect(Collectors.toMap(spec -> spec, spec -> new McpToolExecutor(client)));
             log.info("Connected to Kestra docs MCP server at {} ({} tools)", url, tools.size());
         } catch (Exception e) {

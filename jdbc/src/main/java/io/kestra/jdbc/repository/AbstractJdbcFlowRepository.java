@@ -899,7 +899,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         if (QueryFilter.Field.FLOW_ID.equals(field)) {
             return DSL.quotedName("id");
         } else {
-            return DSL.quotedName(field.name().toLowerCase());
+            return DSL.quotedName(field.name().toLowerCase(Locale.ROOT));
         }
     }
 

@@ -2,7 +2,7 @@
     <div class="dot-node" :class="classes">
         <Handle type="source" class="custom-handle" :position="sourcePosition" />
         <div class="dot" :class="classes">
-            <CircleIcon :class="{'error-branch': data.node.branchType === 'ERROR'}" class="circle" alt="circle" :size="5" />
+            <CircleIcon :class="{'error-branch': data.node.branchType === 'ERROR'}" class="circle" :size="5" />
         </div>
         <Handle type="target" class="custom-handle" :position="targetPosition" />
     </div>

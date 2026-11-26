@@ -1,9 +1,7 @@
 import {describe, expect, it} from "vitest"
 import {
-    buildTermHighlightHtml,
     buildTermHighlightSegments,
     splitQueryTerms,
-    buildHighlightHtml,
     buildHighlightSegments,
     buildPathSegments,
     crossSearchResultKey,
@@ -127,20 +125,6 @@ describe("groupByNamespace", () => {
     })
 })
 
-describe("buildHighlightHtml", () => {
-    it("wraps the matched segment in a mark tag", () => {
-        expect(buildHighlightHtml("landing-bucket-us-east-1", "us-east-1")).toBe("landing-bucket-<mark>us-east-1</mark>")
-    })
-
-    it("escapes html in both matched and unmatched segments", () => {
-        expect(buildHighlightHtml("<script>us-east-1</script>", "us-east-1")).toBe("&lt;script&gt;<mark>us-east-1</mark>&lt;/script&gt;")
-    })
-
-    it("returns the escaped text unmarked when there is no query", () => {
-        expect(buildHighlightHtml("<b>hello</b>", "")).toBe("&lt;b&gt;hello&lt;/b&gt;")
-    })
-})
-
 describe("term highlighting (KV and namespace files)", () => {
     it("splits a query into terms on any non-alphanumeric separator", () => {
         expect(splitQueryTerms("landing.bucket")).toEqual(["landing", "bucket"])
@@ -152,8 +136,12 @@ describe("term highlighting (KV and namespace files)", () => {
         const key = "landing-bucket-us-east-1"
 
         // What the user sees today: the literal query never occurs, so nothing is highlighted.
-        expect(buildTermHighlightHtml(key, "landing.bucket"))
-            .toBe("<mark>landing</mark>-<mark>bucket</mark>-us-east-1")
+        expect(buildTermHighlightSegments(key, "landing.bucket")).toEqual([
+            {text: "landing", matched: true},
+            {text: "-", matched: false},
+            {text: "bucket", matched: true},
+            {text: "-us-east-1", matched: false},
+        ])
     })
 
     it("merges overlapping and adjacent term matches into one segment", () => {
@@ -164,20 +152,23 @@ describe("term highlighting (KV and namespace files)", () => {
     })
 
     it("highlights every occurrence of each term", () => {
-        expect(buildTermHighlightHtml("log-a-log", "log")).toBe("<mark>log</mark>-a-<mark>log</mark>")
+        expect(buildTermHighlightSegments("log-a-log", "log")).toEqual([
+            {text: "log", matched: true},
+            {text: "-a-", matched: false},
+            {text: "log", matched: true},
+        ])
     })
 
     it("honours case sensitivity", () => {
-        expect(buildTermHighlightHtml("LANDING_BUCKET", "landing")).toBe("<mark>LANDING</mark>_BUCKET")
-        expect(buildTermHighlightHtml("LANDING_BUCKET", "landing", true)).toBe("LANDING_BUCKET")
-    })
-
-    it("escapes the text it marks", () => {
-        expect(buildTermHighlightHtml("<b>x</b>", "b")).toBe("&lt;<mark>b</mark>&gt;x&lt;/<mark>b</mark>&gt;")
+        expect(buildTermHighlightSegments("LANDING_BUCKET", "landing")).toEqual([
+            {text: "LANDING", matched: true},
+            {text: "_BUCKET", matched: false},
+        ])
+        expect(buildTermHighlightSegments("LANDING_BUCKET", "landing", true)).toEqual([{text: "LANDING_BUCKET", matched: false}])
     })
 
     it("leaves text untouched when the query has no terms", () => {
-        expect(buildTermHighlightHtml("anything", "---")).toBe("anything")
+        expect(buildTermHighlightSegments("anything", "---")).toEqual([{text: "anything", matched: false}])
     })
 })
 

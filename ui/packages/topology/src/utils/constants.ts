@@ -96,12 +96,29 @@ export const LOOP_RETURN_INSET = 12
 // How far from its start marker's centre a loop's return arrowhead stops, so it does not cover the marker.
 export const LOOP_RETURN_HEAD_GAP = 12
 
-// Below PILL, only a minimal glanceable pill renders; above EXPANDED, the node also renders the
-// `details` slot as an overlay. Neither ever changes `NODE_SIZES`, so crossing either threshold
-// only repaints the node — it never re-runs dagre.
+// Crossing either threshold leaves `NODE_SIZES` untouched, so a node is repainted and dagre never re-runs.
 export const ZOOM_LOD = {
     PILL: 0.5,
     EXPANDED: 1.3,
+} as const
+
+export const PILL_COMPENSATION = {
+    STEP: 1,
+    RING_MAX: 4,
+    GLYPH_MAX: 2.5,
+} as const
+
+export function pillZoomCompensation(zoom: number): number {
+    if (!Number.isFinite(zoom) || zoom <= 0) return 1
+    const bounded = Math.min(1 / zoom, PILL_COMPENSATION.RING_MAX)
+    return Math.max(1, Math.round(bounded / PILL_COMPENSATION.STEP) * PILL_COMPENSATION.STEP)
+}
+
+export const NODE_DETAILS_PEEK = {
+    HOVER_INTENT_MS: 300,
+    CLOSE_GRACE_MS: 150,
+    WIDTH_PX: 255,
+    GAP_PX: 16,
 } as const
 
 export type LodLevel = "pill" | "default" | "expanded"

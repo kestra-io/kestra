@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.services.FlowService;
@@ -21,7 +22,7 @@ import jakarta.inject.Singleton;
  * deprecated paths and infos.
  */
 @Singleton
-public class ValidateFlowTool implements AiPlatformTool {
+public class ValidateFlowTool implements McpPlatformTool {
     private final FlowService flowService;
 
     @Inject
@@ -37,6 +38,11 @@ public class ValidateFlowTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.AUTO;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
     }
 
     @Tool(

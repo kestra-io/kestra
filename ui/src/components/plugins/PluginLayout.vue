@@ -63,7 +63,7 @@
                         :content="longDescription"
                     />
                 </div>
-                <aside v-if="hasOverviewContent" class="plugin-detail__aside">
+                <aside v-if="$slots.versions || hasOverviewContent" class="plugin-detail__aside">
                     <PluginOverview
                         :versions="enrichedVersions"
                         :currentVersion
@@ -77,7 +77,11 @@
                         :currentVersionDate
                         :minKestraVersion
                         @select-version="onSelectVersion"
-                    />
+                    >
+                        <template v-if="$slots.versions" #versions>
+                            <slot name="versions" />
+                        </template>
+                    </PluginOverview>
                 </aside>
             </div>
         </div>
@@ -86,7 +90,6 @@
 
 <script setup lang="ts">
     import {computed, onMounted, watch} from "vue"
-    import semver from "semver"
     import {useRoute, useRouter} from "vue-router"
     import {KsIconButton, KsMarkdown, KsTag, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
@@ -97,7 +100,7 @@
     import PluginOverview, {type VersionItem} from "./PluginOverview.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
-    import {getPluginReleaseUrl, isEntryAPluginElementPredicate, type Plugin, type PluginAuthor, type PluginIconMap} from "../../utils/pluginUtils"
+    import {compareVersionsDesc, getPluginReleaseUrl, isEntryAPluginElementPredicate, type Plugin, type PluginAuthor, type PluginIconMap} from "../../utils/pluginUtils"
 
     const KESTRA_TEAM: PluginAuthor = {name: "Kestra Core Team"}
 
@@ -174,12 +177,6 @@
         return enrichmentStore.loaded ? KESTRA_TEAM : null
     })
 
-    const sortVersionsDesc = (a: string, b: string): number => {
-        const va = semver.coerce(a)?.version
-        const vb = semver.coerce(b)?.version
-        return va && vb ? semver.rcompare(va, vb) : b.localeCompare(a)
-    }
-
     const routeCls = computed<string | undefined>(() => route.params.cls as string | undefined)
 
     function firstElementClsOf(plugin: Plugin): string | undefined {
@@ -204,7 +201,7 @@
     const canSwitchVersion = computed<boolean>(() => Boolean(routeCls.value))
 
     const installedVersions = computed<string[]>(() =>
-        versionProbeCls.value ? [...(pluginsStore.versions?.[versionProbeCls.value] ?? [])].sort(sortVersionsDesc) : [],
+        versionProbeCls.value ? [...(pluginsStore.versions?.[versionProbeCls.value] ?? [])].sort(compareVersionsDesc) : [],
     )
 
     const publicVersions = computed(() => enrichmentStore.getVersions(versionProbeCls.value))
@@ -226,7 +223,7 @@
                 byVersion.set(v, {version: v, publishedAt: null, minKestraCompatibilityVersion: null, releaseNotesUrl: null, installed: true})
             }
         }
-        return [...byVersion.values()].sort((a, b) => sortVersionsDesc(a.version, b.version))
+        return [...byVersion.values()].sort((a, b) => compareVersionsDesc(a.version, b.version))
     })
 
     const currentVersion = computed<string | undefined>(() => {

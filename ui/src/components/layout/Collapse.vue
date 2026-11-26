@@ -19,45 +19,6 @@
 </script>
 
 <style scoped>
-    @media only screen and (min-width: 768px) {
-        :deep(.kel-form--inline) {
-            .kel-form-item {
-                margin-right: 5px;
-
-                .kel-radio-group {
-                    margin-right: 5px;
-                }
-
-                .kel-form-item__content {
-                    & > *:not(.kel-button-group) {
-                        width: 200px;
-                    }
-
-                    & > .kel-button-group {
-                        max-width: 200px;
-                    }
-                }
-            }
-        }
-    }
-
-    @media only screen and (max-width: 767px) {
-        :deep(.kel-form--inline) {
-            .kel-form-item {
-                display: block;
-                margin-right: 0;
-
-                .kel-input {
-                    margin: 0;
-                }
-
-                &:last-child {
-                    margin-bottom: 0;
-                }
-            }
-        }
-    }
-
     .collapse {
         /* Bootstrap's sm breakpoint; the query below starts at 768px */
         @media (min-width: 576px) {

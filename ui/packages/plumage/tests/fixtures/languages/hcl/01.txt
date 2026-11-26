@@ -1,0 +1,67 @@
+variable "airbyte_connections" {
+  description = "List of Airbyte connections to trigger : id (can be found in URL), name is whatever makes sense"
+  type = list(object({
+    name = string
+    id   = string
+  }))
+
+  validation {
+    condition = length(var.airbyte_connections) > 0 && length([
+      for o in var.airbyte_connections : true
+      if length(regexall("^[A-Za-z_]+$", o.name)) > 0
+    ]) == length(var.airbyte_connections)
+    error_message = "At least one connection should be provided, and connection names should not contain hyphens."
+  }
+}
+
+variable "flow_id" {
+  type = string
+}
+
+variable "description" {
+  type = string
+}
+
+variable "namespace" {
+  type    = string
+  default = "blueprint"
+}
+
+variable "airbyte_url" {
+  type = string
+}
+
+variable "trigger" {
+  type        = string
+  description = "String containing triggers sections of the flow"
+  default     = ""
+}
+
+variable "max_sync_duration" {
+  type        = string
+  description = "Tell Kestra to wait logs for this max duration"
+  default     = ""
+}
+
+variable "labels" {
+  type        = map(string)
+  default     = null
+  description = "Labels to apply to the flow"
+}
+
+variable "priority" {
+  type        = string
+  default     = null
+  description = "Priority tag to apply to the flow"
+}
+
+variable "cron_expression" {
+  type        = string
+  description = "Cron expression or supported expression like : @hourly"
+  default     = null
+}
+
+variable "late_maximum_delay" {
+  type        = string
+  description = "Allow to disable auto-backfill : if the schedule didn't start after this delay, the execution will be skip."
+}

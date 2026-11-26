@@ -7,7 +7,6 @@ import java.util.Arrays;
 
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.*;
-import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
 import io.kestra.core.models.executions.metrics.Counter;
@@ -21,10 +20,7 @@ public class RunContextResponseInterceptor implements HttpResponseInterceptor {
 
     @Override
     public void process(HttpResponse response, EntityDetails entity, HttpContext context) throws HttpException, IOException {
-        if (
-            context instanceof HttpClientContext httpClientContext &&
-                response instanceof BasicClassicHttpResponse httpResponse
-        ) {
+        if (context instanceof HttpClientContext httpClientContext) {
             try {
                 runContext.logger().debug(
                     "Request '{}' from '{}' with the response code '{}'",
@@ -36,12 +32,12 @@ public class RunContextResponseInterceptor implements HttpResponseInterceptor {
                 throw new IOException(e);
             }
 
-            String[] tags = this.tags(httpClientContext.getRequest(), httpResponse);
+            String[] tags = this.tags(httpClientContext.getRequest(), response);
 
-            if (httpResponse.getEntity() != null) {
+            if (entity != null) {
                 runContext.metric(
                     Counter.of(
-                        "response.length", httpResponse.getEntity().getContentLength(),
+                        "response.length", entity.getContentLength(),
                         tags
                     )
                 );
@@ -85,7 +81,7 @@ public class RunContextResponseInterceptor implements HttpResponseInterceptor {
         }
     }
 
-    protected String[] tags(HttpRequest request, ClassicHttpResponse response) {
+    protected String[] tags(HttpRequest request, HttpResponse response) {
         ArrayList<String> tags = new ArrayList<>(
             Arrays.asList(
                 "request.method", request.getMethod(),

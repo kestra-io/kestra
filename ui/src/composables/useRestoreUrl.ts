@@ -3,12 +3,13 @@
  * can be restored when the user navigates back to that page with no query. The page
  * number is excluded (PY-1529) from restoration so returning lands on the first page.
  *
- * Auto-saves on every same-path query change and auto-restores on mount when the
- * URL has no query but a saved state exists. Exposes `loadInit` so consumers can
- * gate their initial data fetch and avoid racing the in-flight restore navigation.
+ * Auto-saves on every same-path query change. `restoreUrlGuard` restores the saved
+ * query while the route is entered; a page that still mounts with no query but a saved
+ * state restores on mount, and exposes `loadInit` so consumers can gate their initial
+ * data fetch and avoid racing the in-flight restore navigation.
  */
 import {computed, onMounted, ref, Ref, watch} from "vue"
-import {isNavigationFailure, NavigationFailureType, RouteLocation, Router, useRoute, useRouter} from "vue-router"
+import {isNavigationFailure, NavigationFailureType, RouteLocation, RouteLocationNormalized, RouteLocationRaw, Router, useRoute, useRouter} from "vue-router"
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
@@ -57,6 +58,14 @@ export function getRestoredQuery(route: RouteLocation, scope?: string) {
     }
 
     return {query, change, localStorageValue}
+}
+
+/** Puts a page's saved query back while its route is entered, so the page sets up and makes its first load from it rather than from an empty URL. */
+export function restoreUrlGuard(to: RouteLocationNormalized, from: RouteLocationNormalized): RouteLocationRaw | undefined {
+    if (to.path === from.path || Object.keys(to.query).length > 0) return undefined
+
+    const {query, change} = getRestoredQuery(to)
+    return change ? {path: to.path, query, hash: to.hash} : undefined
 }
 
 /**

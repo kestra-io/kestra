@@ -16,11 +16,11 @@ export const DEFAULT_EMAIL_TO = "team@your-domain.com"
 
 export interface RecipeState {
     triggerType: TriggerType
-    watchNamespace: string
+    watchNamespace: string | undefined
     includeSub: boolean
     states: string[]
     cron: string
-    timezone: string
+    timezone: string | undefined
     webhookKey: string
     otherTriggerType: string
     notify: {

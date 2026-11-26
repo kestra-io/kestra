@@ -15,7 +15,13 @@
             </i18n-t>
         </template>
         <KsForm :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
-            <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
+            <InputsForm
+                :initialInputs="inputsList"
+                :execution="execution"
+                v-model="inputs"
+                :submitAttempted="submitAttempted"
+                @clear-validation="onClearValidation"
+            />
         </KsForm>
         <template #footer>
             <KsButton :icon="Play" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
@@ -56,6 +62,7 @@
     const inputs = ref<Record<string, unknown>>({})
     const isDrawerOpen = ref(false)
     const form = ref<FormInstance | null>(null)
+    const submitAttempted = ref(false)
 
     const enabled = computed(() => {
         if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
@@ -78,6 +85,10 @@
 
     const needInputs = computed(() => inputsList.value?.length > 0)
 
+    function onClearValidation(fieldId: string) {
+        form.value?.clearValidate(fieldId)
+    }
+
     function click() {
         if (needInputs.value) {
             isDrawerOpen.value = true
@@ -90,6 +101,7 @@
     }
 
     function resumeWithInputs(formRef: FormInstance | null) {
+        submitAttempted.value = true
         if (formRef) {
             formRef.validate((valid: boolean) => {
                 if (!valid) {

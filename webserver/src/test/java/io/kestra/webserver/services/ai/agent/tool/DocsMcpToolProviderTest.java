@@ -76,6 +76,29 @@ class DocsMcpToolProviderTest {
     }
 
     @Test
+    void shouldKeepOnlyAllowedToolsWhenServerListsMore(WireMockRuntimeInfo wmRuntimeInfo) {
+        // Given
+        stubDocsServer();
+        stubFor(post(urlPathMatching("/v1/mcp.*"))
+            .withRequestBody(containing("tools/list"))
+            .willReturn(okJson("""
+                {"jsonrpc":"2.0","id":2,"result":{"tools":[
+                    {"name":"search_docs","description":"docs","inputSchema":{"type":"object","properties":{}}},
+                    {"name":"task_schema","description":"schema","inputSchema":{"type":"object","properties":{}}}
+                ]}}
+            """)));
+        AgentConfiguration configuration = AgentConfiguration.builder()
+            .docsMcpUrl(wmRuntimeInfo.getHttpBaseUrl() + "/v1/mcp")
+            .build();
+
+        // When
+        Map<ToolSpecification, ToolExecutor> tools = new DocsMcpToolProvider(configuration).tools();
+
+        // Then
+        assertThat(tools.keySet()).extracting(ToolSpecification::name).containsExactly("search_docs");
+    }
+
+    @Test
     void shouldDegradeGracefullyWhenUnreachable() {
         // Given
         AgentConfiguration configuration = AgentConfiguration.builder()

@@ -45,6 +45,15 @@ public interface Service extends AutoCloseable {
     }
 
     /**
+     * Gets the properties to publish with this service on each heartbeat.
+     *
+     * @return the properties, or {@code null} to keep the ones set at registration.
+     */
+    default Map<String, Object> getProps() {
+        return null;
+    }
+
+    /**
      * Specify whether to skip graceful termination on shutdown.
      *
      * @param skipGracefulTermination {@code true} to skip graceful termination on shutdown.

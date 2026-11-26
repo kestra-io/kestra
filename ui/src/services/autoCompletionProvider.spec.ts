@@ -1,5 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {
+    DashboardAutoCompletion,
     PebbleAutoCompletion,
     YamlAutoCompletion,
     fillExpressionCache,
@@ -152,6 +154,34 @@ describe("autoCompletionProvider", () => {
             expect(await provider.functionAutoCompletion(undefined, "", {})).toEqual([])
             expect(await provider.functionAutoCompletion({}, "secret", {namespace: "'company.team'"})).toEqual([])
             expect(axiosGet).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("DashboardAutoCompletion", () => {
+        it("suggests state and log level names only for the color of a colorByValues entry", async () => {
+            const provider = new DashboardAutoCompletion()
+            const dashboard = [
+                "id: priorities",
+                "charts:",
+                "  - id: by_priority",
+                "    type: io.kestra.plugin.core.dashboard.chart.Pie",
+                "    chartOptions:",
+                "      colorByValues:",
+                "        - value: critical",
+                "          label: Critical",
+                "          color: failed",
+                "      legend:",
+                "        color: x",
+            ].join("\n")
+            const suggestionsAfter = (key: string) => provider.valueAutoCompletion(dashboard, undefined, YAML_UTILS.localizeElementAtIndex(dashboard, dashboard.indexOf(key) + key.length))
+
+            const colorNames = await suggestionsAfter("color: ")
+
+            expect(colorNames).toEqual(expect.arrayContaining(["failed", "warning", "success", "warn", "info"]))
+            expect(colorNames).not.toEqual(expect.arrayContaining(["submitted"]))
+            expect(new Set(colorNames).size).toBe(colorNames.length)
+            expect(await suggestionsAfter("label: ")).toEqual([])
+            expect(await suggestionsAfter("legend:\n        color: ")).toEqual([])
         })
     })
 })

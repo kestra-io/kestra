@@ -76,9 +76,10 @@
                     @section-counts="onSectionCounts"
                     @definition-navigate="selectSection('definitions')"
                 >
-                    <template #markdown="{content}">
+                    <template #markdown="{content, dense}">
                         <KsMarkdown
                             :content="content"
+                            :dense="dense"
                         />
                     </template>
                 </SchemaToHtml>
@@ -193,7 +194,7 @@
                     </template>
                     <KsMarkdown
                         v-else
-                        class="dp-intro-md"
+                        reference
                         :content="filteredFlowContent"
                     />
                 </template>
@@ -209,7 +210,7 @@
                     </template>
                     <KsMarkdown
                         v-else
-                        class="dp-intro-md"
+                        reference
                         :content="filteredTaskContent"
                     />
                 </template>
@@ -225,7 +226,7 @@
                     </template>
                     <KsMarkdown
                         v-else
-                        class="dp-intro-md"
+                        reference
                         :content="filteredInputContent"
                     />
                 </template>
@@ -246,8 +247,8 @@
                                     :key="row.name"
                                     class="dp-intro-fn"
                                 >
-                                    <span class="dp-intro-fn-name" v-html="row.nameHtml" />
-                                    <div class="dp-intro-fn-desc" v-html="row.descHtml" />
+                                    <span class="dp-intro-fn-name"><HighlightedText :segments="row.nameSegments" /></span>
+                                    <div class="dp-intro-fn-desc"><HighlightedText :segments="row.descSegments" /></div>
                                     <code v-if="row.example" class="dp-intro-fn-ex">{{ row.example }}</code>
                                 </div>
                             </div>
@@ -255,14 +256,14 @@
                     </template>
                     <KsMarkdown
                         v-else
-                        class="dp-intro-md"
+                        reference
                         :content="pebbleContent"
                     />
                 </template>
 
                 <template v-else-if="introSection === 'examples'">
                     <KsMarkdown
-                        class="dp-intro-md"
+                        reference
                         :content="examplesContent"
                     />
                 </template>
@@ -276,7 +277,8 @@
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
     import {KsButton, KsInput, KsMarkdown, KsTag, KsText, KsTooltip} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
-    import {buildHighlightHtml} from "../../utils/crossResourceSearch"
+    import {buildHighlightSegments, type HighlightSegment} from "../../utils/crossResourceSearch"
+    import HighlightedText from "../layout/HighlightedText.vue"
     import {getPluginReleaseUrl, pluginElementType} from "../../utils/pluginUtils"
     import {copy} from "../../utils/utils"
     import {useTheme} from "../../composables/useTheme"
@@ -468,9 +470,9 @@
 
     interface PebbleRow {
         name: string;
-        nameHtml: string;
+        nameSegments: HighlightSegment[];
         desc: string;
-        descHtml: string;
+        descSegments: HighlightSegment[];
         example: string;
     }
 
@@ -485,7 +487,7 @@
             const exMatch = rest.match(/`([^`]+)`\s*(?:—|-)/)
             const example = exMatch ? exMatch[1] : ""
             const desc = rest.replace(/`[^`]+`\s*(?:—|-)\s*/, "").replace(/\\\|/g, "|").trim()
-            rows.push({name, nameHtml: buildHighlightHtml(name, ""), desc, descHtml: buildHighlightHtml(desc, ""), example})
+            rows.push({name, nameSegments: buildHighlightSegments(name, ""), desc, descSegments: buildHighlightSegments(desc, ""), example})
         }
         return rows
     })
@@ -497,8 +499,8 @@
             .filter(r => r.name.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.example.toLowerCase().includes(q))
             .map(r => ({
                 ...r,
-                nameHtml: buildHighlightHtml(r.name, q),
-                descHtml: buildHighlightHtml(r.desc, q),
+                nameSegments: buildHighlightSegments(r.name, q),
+                descSegments: buildHighlightSegments(r.desc, q),
             }))
     })
 
@@ -1056,111 +1058,6 @@
     margin-top: var(--ks-spacing-1);
     white-space: pre-wrap;
     overflow-x: auto;
-  }
-
-  .dp-intro-md :deep(h1),
-  .dp-intro-md :deep(h2),
-  .dp-intro-md :deep(h3) {
-    font-size: var(--ks-font-size-2xs);
-    font-weight: var(--ks-font-weight-bold);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--ks-text-muted);
-    margin: var(--ks-spacing-6) 0 var(--ks-spacing-3);
-  }
-
-  .dp-intro-md :deep(> *:first-child),
-  .dp-intro-md :deep(h3:first-child) {
-    margin-top: 0;
-  }
-
-  .dp-intro-md :deep(h3:first-of-type) {
-    font-size: var(--ks-font-size-xl);
-    font-weight: var(--ks-font-weight-bold);
-    text-transform: none;
-    letter-spacing: -0.01em;
-    color: var(--ks-text-primary);
-    margin-top: 0;
-  }
-
-  .dp-intro-md :deep(p),
-  .dp-intro-md :deep(li) {
-    font-size: var(--ks-font-size-base);
-    line-height: var(--ks-line-height-base);
-    color: var(--ks-text-secondary);
-  }
-
-  .dp-intro-md :deep(p) {
-    margin: 0 0 var(--ks-spacing-3);
-  }
-
-  .dp-intro-md :deep(table) {
-    display: block;
-    width: 100%;
-    margin: 0 0 var(--ks-spacing-4);
-  }
-
-  .dp-intro-md :deep(thead) {
-    display: none;
-  }
-
-  .dp-intro-md :deep(tbody) {
-    display: block;
-  }
-
-  .dp-intro-md :deep(tr) {
-    display: block;
-    padding: var(--ks-spacing-3) 0;
-    border-top: 1px solid var(--ks-border-subtle);
-  }
-
-  .dp-intro-md :deep(tr:first-child) {
-    border-top: none;
-    padding-top: 0;
-  }
-
-  .dp-intro-md :deep(td) {
-    display: block;
-    padding: 0;
-    border: none;
-    color: var(--ks-text-secondary);
-    font-size: var(--ks-font-size-base);
-    line-height: var(--ks-line-height-base);
-  }
-
-  .dp-intro-md :deep(td:first-child) {
-    margin-bottom: var(--ks-spacing-2);
-  }
-
-  .dp-intro-md :deep(code) {
-    font-family: var(--ks-font-family-mono);
-    font-size: 0.9em;
-    background: var(--ks-bg-tag);
-    color: var(--ks-text-primary);
-    padding: 1px 6px;
-    border-radius: var(--ks-radius-xs);
-  }
-
-  .dp-intro-md :deep(a) {
-    color: var(--ks-text-link);
-    text-decoration: none;
-  }
-
-  .dp-intro-md :deep(a:hover) {
-    text-decoration: underline;
-  }
-
-  .dp-intro-md :deep(pre) {
-    border: 1px solid var(--ks-border-default);
-    border-radius: var(--ks-radius-base);
-    padding: var(--ks-spacing-3);
-    overflow-x: auto;
-  }
-
-  .dp-intro-md :deep(pre code) {
-    background: none;
-    padding: 0;
-    font-size: var(--ks-font-size-xs);
   }
 
   .dp-intro-fn-name mark,

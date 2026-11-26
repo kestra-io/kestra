@@ -40,9 +40,9 @@ export async function streamSse({url, body, onFrame, signal}: StreamSseOptions):
     if (!response.ok) {
         // The body is read as text because an SSE stream can also fail mid-flight with no body at all.
         // When it is a problem document, show its detail rather than the raw JSON.
-        const body = await response.text().catch(() => "")
-        const problem = parseProblem(body, response.status, response.headers?.get?.("content-type"))
-        throw new SseHttpError(response.status, problem?.detail ?? problem?.title ?? body, problem?.type)
+        const text = await response.text().catch(() => "")
+        const problem = parseProblem(text, response.status, response.headers?.get?.("content-type"))
+        throw new SseHttpError(response.status, problem?.detail ?? problem?.title ?? text, problem?.type)
     }
     if (!response.body) {
         throw new Error("SSE response has no readable body")

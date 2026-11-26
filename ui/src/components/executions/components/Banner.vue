@@ -98,11 +98,11 @@
             <div class="execution-banner__actions">
                 <RunTimeline :histories="execution.state.histories ?? []" />
 
-                <KsButton v-if="canAccessLogs" :icon="ContentCopy" @click="copyLogs" link>
+                <KsButton v-if="canAccessLogs && route.meta.tab !== 'logs'" class="action" :icon="ContentCopy" @click="copyLogs" link>
                     {{ $t("copy logs") }}
                 </KsButton>
 
-                <KsButton v-if="isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
+                <KsButton v-if="aiEnabled && isFailed" class="action fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
                     {{ $t("fix_with_ai") }}
                 </KsButton>
             </div>
@@ -115,7 +115,7 @@
                     <div class="list">
                         <SetLabels :execution />
                         <span
-                            v-for="(label, idx) in execution.labels"
+                            v-for="(label, idx) in shownLabels"
                             :key="idx"
                             class="label-tag"
                         >{{ label.key }}: {{ label.value }}</span>
@@ -164,13 +164,18 @@
             :title="$t(approvalBanner)"
             :closable="false"
             data-test="approval-banner"
-        />
+        >
+            <template v-if="approvalTaskRun" #action>
+                <ApprovalActions :execution :taskRun="approvalTaskRun" />
+            </template>
+        </KsAlert>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
     import * as SearchableDataAPI from "@kestra-io/kestra-sdk/searchable-data"
@@ -183,6 +188,7 @@
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
+    import {useAiEnabled} from "../../../composables/useAiEnabled"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
     import {handledIf} from "../../../utils/kestraHttp"
@@ -194,6 +200,7 @@
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
     import ParentExecutionLink from "../overview/components/ParentExecutionLink.vue"
+    import ApprovalActions from "./ApprovalActions.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
@@ -215,8 +222,13 @@
     const props = defineProps<{execution: Execution}>()
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const executionsStore = useExecutionsStore()
     const toast = useToast()
+
+    const approvalTaskRun = computed(() =>
+        (findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ?? findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSING))?.taskRun,
+    )
 
     const approvalBanner = computed(() => {
         // the generated SDK StateType does not list PAUSING until the SDK is regenerated
@@ -227,6 +239,7 @@
         return findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ? "approval.banner.paused" : undefined
     })
 
+    const aiEnabled = useAiEnabled()
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
     const {statusLabel, replayed, restarted, createdDate, replaysLink, copyId} = useExecutionSummary(() => props.execution)
@@ -247,6 +260,13 @@
         useMiscStore().configs?.edition === "OSS"
             ? undefined
             : props.execution.labels?.find((label) => label.key === "system.username")?.value,
+    )
+
+    const shownLabels = computed(() =>
+        props.execution.labels?.filter((label) =>
+            !(label.key === "system.username" && username.value)
+            && !(label.key === "system.correlationId" && label.value === props.execution.id),
+        ) ?? [],
     )
 
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
@@ -448,13 +468,7 @@
             overflow-wrap: anywhere;
         }
 
-        & :deep(.kel-button) {
-            color: var(--ks-text-secondary);
-
-            &:hover {
-                color: var(--ks-text-primary);
-            }
-        }
+        --ks-icon-button-color: var(--ks-text-secondary);
     }
 
     .execution-banner__replay, .execution-banner__restart {
@@ -485,7 +499,7 @@
         gap: var(--ks-spacing-2);
         flex-shrink: 0;
 
-        & :deep(.kel-button) {
+        & .action {
             color: var(--ks-text-secondary);
             font-weight: 600;
             font-size: var(--ks-font-size-sm);
@@ -495,13 +509,9 @@
             }
         }
 
-        & :deep(.fix-with-ai.kel-button) {
+        & .action.fix-with-ai {
             color: var(--ks-text-link);
             box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
-
-            .material-design-icon {
-                color: var(--ks-text-link);
-            }
         }
     }
 

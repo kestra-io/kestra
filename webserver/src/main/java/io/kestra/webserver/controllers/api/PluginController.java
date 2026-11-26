@@ -319,6 +319,48 @@ public class PluginController {
         return PagedResults.of(pluginSearchable.filter(items, page, size, sort, filters));
     }
 
+    @Get(uri = "aliases/{type}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a plugin type and all of its aliases",
+        description = "Accepts either the canonical plugin class name or one of its aliases and returns the canonical type with every registered alias."
+    )
+    @ApiResponse(responseCode = "404", description = "Plugin type not found")
+    public HttpResponse<ApiPluginAliases> getPluginTypeAliases(
+        @Parameter(description = "The canonical plugin type or one of its aliases") @PathVariable String type) {
+        String canonicalType = null;
+        Set<String> aliases = new TreeSet<>();
+
+        for (RegisteredPlugin registeredPlugin : pluginRegistry.plugins()) {
+            Class<?> pluginType = registeredPlugin.allClass().stream()
+                .filter(pluginClass -> pluginClass.getName().equals(type))
+                .findFirst()
+                .orElseGet(() -> registeredPlugin.getAliases().values().stream()
+                    .filter(alias -> alias.getKey().equalsIgnoreCase(type))
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .orElse(null));
+
+            if (pluginType == null) {
+                continue;
+            }
+
+            canonicalType = pluginType.getName();
+            registeredPlugin.getAliases().values().stream()
+                .filter(alias -> alias.getValue().equals(pluginType))
+                .map(Map.Entry::getKey)
+                .forEach(aliases::add);
+        }
+
+        if (canonicalType == null) {
+            return HttpResponse.notFound();
+        }
+
+        return HttpResponse.ok(new ApiPluginAliases(canonicalType, List.copyOf(aliases)))
+            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
     @Get(uri = "triggers")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -841,6 +883,11 @@ public class PluginController {
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    public record ApiPluginAliases(
+        String type,
+        List<String> aliases) {
     }
 
     /**

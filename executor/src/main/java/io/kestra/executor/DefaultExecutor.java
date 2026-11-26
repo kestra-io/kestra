@@ -64,10 +64,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final ScheduledExecutorService scheduledExecutorService;
     private final Clock clock;
     private final ExecutorCore executorCore;
-    private ScheduledFuture<?> executionDelayFuture;
-    private ScheduledFuture<?> monitorSLAFuture;
 
     // Thread-safe: populated by run() but iterated from maintenance listener and shutdown threads.
+    private final List<ScheduledFuture<?>> loopFutures = new CopyOnWriteArrayList<>();
     private final List<Runnable> receiveCancellations = new CopyOnWriteArrayList<>();
     private final List<QueueSubscriber<?>> queueSubscribers = new CopyOnWriteArrayList<>();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
@@ -246,64 +245,35 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        // Start delay and monitoring loops
-        executionDelayFuture = scheduledExecutorService.scheduleAtFixedRate(
-            this::executionDelayLoop,
-            0,
-            1,
-            TimeUnit.SECONDS
-        );
-        monitorSLAFuture = scheduledExecutorService.scheduleAtFixedRate(
-            this::executionSLAMonitorLoop,
-            0,
-            1,
-            TimeUnit.SECONDS
-        );
+        watchForFatalFailure("delay", scheduleLoop(this::executionDelayLoop, 1000));
+        watchForFatalFailure("sla-monitor", scheduleLoop(this::executionSLAMonitorLoop, 1000));
+    }
 
-        // look at exceptions on the scheduledDelay thread
-        Thread.ofVirtual().name("executor-delay-exception-watcher").start(
-            () ->
-            {
-                Await.until(executionDelayFuture::isDone);
+    private ScheduledFuture<?> scheduleLoop(Runnable loop, long periodMs) {
+        ScheduledFuture<?> future = scheduledExecutorService.scheduleAtFixedRate(loop, 0, periodMs, TimeUnit.MILLISECONDS);
+        loopFutures.add(future);
+        return future;
+    }
 
-                try {
-                    executionDelayFuture.get();
-                } catch (CancellationException ignored) {
+    private void watchForFatalFailure(String loopName, ScheduledFuture<?> future) {
+        Thread.ofVirtual().name("executor-" + loopName + "-exception-watcher").start(() ->
+        {
+            Await.until(future::isDone);
 
-                } catch (ExecutionException | InterruptedException e) {
-                    // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
-                    // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
-                    if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
-                        log.error("Executor fatal exception in the scheduledDelay thread", e);
-                        close();
-                        kestraContext.shutdown();
-                    }
+            try {
+                future.get();
+            } catch (CancellationException ignored) {
+
+            } catch (ExecutionException | InterruptedException e) {
+                // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
+                // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
+                if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
+                    log.error("Executor fatal exception in the {} loop", loopName, e);
+                    close();
+                    kestraContext.shutdown();
                 }
             }
-        );
-
-        // look at exceptions on the scheduledSLAMonitorFuture thread
-        Thread.ofVirtual().name("executor-sla-monitor-exception-watcher").start(
-            () ->
-            {
-                Await.until(monitorSLAFuture::isDone);
-
-                try {
-                    monitorSLAFuture.get();
-                } catch (CancellationException ignored) {
-
-                } catch (ExecutionException | InterruptedException e) {
-                    // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
-                    // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
-                    if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
-                        log.error("Executor fatal exception in the scheduledSLAMonitor thread", e);
-                        close();
-                        kestraContext.shutdown();
-                    }
-                }
-            }
-        );
-
+        });
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {
@@ -432,11 +402,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
         } finally {
             // Always stop the scheduled loops: leaving them running after the context is closed makes
             // them fail on the closed datasource and escalate to an application shutdown.
-            // The futures are null when stop ran before run() scheduled them.
             ExecutorsUtils.closeScheduledThreadPool(
                 scheduledExecutorService,
                 Duration.ofSeconds(5),
-                Stream.of(executionDelayFuture, monitorSLAFuture).filter(Objects::nonNull).toList()
+                loopFutures
             );
         }
         return ServiceState.TERMINATED_GRACEFULLY;

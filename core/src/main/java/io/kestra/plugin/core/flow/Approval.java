@@ -206,7 +206,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
      * only once they all succeeded, so both can read their outputs.
      */
     protected List<Task> beforeDecision() {
-        return null;
+        return List.of();
     }
 
     /** The tasks run once approved, {@code onApprove} unless a subclass runs its own first. */

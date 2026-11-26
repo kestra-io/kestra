@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble.functions;
 
 import java.util.Collections;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -165,5 +166,20 @@ class IsDayWeekInMonthFunctionTest {
                 "{{ isDayWeekInMonth('not-a-date', 'MONDAY', 'FIRST') }}", Collections.emptyMap()
             )
         ).isInstanceOf(IllegalVariableEvaluationException.class);
+    }
+
+    @Test
+    void shouldAcceptLowerCaseArgumentsUnderTurkishLocale() throws IllegalVariableEvaluationException {
+        Locale previous = Locale.getDefault();
+        Locale.setDefault(Locale.of("tr", "TR"));
+
+        try {
+            String result = variableRenderer.render(
+                "{{ isDayWeekInMonth('2025-01-03', 'friday', 'first') }}", Collections.emptyMap()
+            );
+            assertThat(result).isEqualTo("true");
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 }

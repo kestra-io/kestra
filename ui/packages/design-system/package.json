@@ -31,6 +31,7 @@
     "./src/styleBase.ts",
     "./src/date/dayjs.ts",
     "./src/composables/useKsEditor.ts",
+    "./src/utils/monacoFeatures.ts",
     "./dist/styleBase.js",
     "./dist/date-*.js",
     "./dist/components/Form/KsEditor.js"

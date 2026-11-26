@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
@@ -87,7 +88,7 @@ public class ConcurrencyLimitController {
 
         Optional<ConcurrencyLimit> existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
         if (existing.isEmpty()) {
-            return HttpResponse.notFound();
+            throw new NotFoundException("No concurrency limit was found for namespace '%s' and flow '%s'.".formatted(namespace, flowId));
         }
 
         ConcurrencyLimit updated = concurrencyLimitRepository.update(

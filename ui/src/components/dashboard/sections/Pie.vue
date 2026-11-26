@@ -132,6 +132,7 @@
 
     const pieOptions = computed(() => ({
         tooltip: {
+            valueFormatter: (v: unknown) => isDuration ? durationUtils.humanDuration(Number(v)) : formatNumber(Number(v)),
             formatter: (params: EchartsParams) =>
                 isDuration
                     ? `${params.name}: ${durationUtils.humanDuration(Number(params.value))} (${params.percent}%)`

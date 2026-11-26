@@ -4,7 +4,7 @@ import {useI18n} from "vue-i18n"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
-import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
+import {useFlowSiblings, useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {useLoopLineage} from "../../../composables/useLoopLineage"
 import {executionLineage} from "../../../utils/loopLineage"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
@@ -27,6 +27,8 @@ export function useExecutionRoot() {
         root: {label: t("executions"), link: {name: "executions/list"}, scope: t("namespaces")},
     })
 
+    const flowSiblings = useFlowSiblings(() => route.params.namespace?.toString(), () => route.params.flowId?.toString())
+
     const loopLevels = useLoopLineage(() => executionsStore.execution?.id === route.params.id ? executionsStore.execution : undefined)
 
     const routeInfo = computed(() => {
@@ -46,6 +48,7 @@ export function useExecutionRoot() {
                 ...namespaceBreadcrumb.value,
                 {
                     label: flowId,
+                    siblings: flowSiblings.value,
                     link: {
                         name: "flows/update",
                         params: {

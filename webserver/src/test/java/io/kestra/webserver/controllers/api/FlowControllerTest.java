@@ -1256,6 +1256,24 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldReportAnUnknownTaskTypeOnceWithoutJacksonInternalsWhenSaving() {
+        String valid = generateFlowAsString("unknown-type-on-save", "io.kestra.unittest", "a");
+        client.toBlocking().retrieve(POST("/api/v1/main/flows", valid).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+        String invalid = valid.replace("io.kestra.plugin.core.debug.Return", "io.kestra.plugin.core.debug.UnknownTask");
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
+            PUT("/api/v1/main/flows/io.kestra.unittest/unknown-type-on-save", invalid).contentType(MediaType.APPLICATION_YAML),
+            Argument.of(Flow.class),
+            Argument.of(JsonError.class)
+        ));
+
+        String problem = e.getResponse().getBody(String.class).orElseThrow();
+        assertThat(e.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(problem).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
+        assertThat(problem).doesNotContain("Could not resolve type id");
+    }
+
+    @Test
     void updateFlowInvalidFlowFromJsonFromString() throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleFlow.yaml");
         assert resource != null;

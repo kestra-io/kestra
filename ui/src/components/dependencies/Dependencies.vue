@@ -201,7 +201,9 @@
         }],
     }))
 
+    // An Enterprise tenant type can mount the asset graph under its own route name, such as the Infrastructure inventory.
     const SUBTYPE: Types = ((): Types => {
+        if (props.fetchAssetDependencies) return ASSET
         switch (routeFamily(route.name)) {
         case "flows/update": return FLOW
         case "namespaces/update": return NAMESPACE

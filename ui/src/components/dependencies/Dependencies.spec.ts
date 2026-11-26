@@ -75,12 +75,12 @@ const KsGraphStub = defineComponent({
     setup: () => () => h("div", {class: "ks-graph-stub"}),
 })
 
-function mountGraphView(dagView: boolean) {
+function mountGraphView(dagView: boolean, fetchAssetDependencies?: () => Promise<{data: []; count: number}>) {
     routerPush.mockClear()
 
     return i18nMount(Dependencies, {
         locales: en,
-        props: {dagView},
+        props: {dagView, fetchAssetDependencies},
         global: {
             plugins: [KestraDesignSystem],
             stubs: {
@@ -125,5 +125,13 @@ describe("dependencies Dependencies.vue — asset-view gating", () => {
             name: "flows/update",
             params: {tenant: undefined, namespace: "qa.topology", id: "my-flow"},
         })
+    })
+})
+
+describe("dependencies Dependencies.vue — asset view under another route", () => {
+    it("treats a graph built from asset dependencies as the asset view, whatever the route is called", () => {
+        const wrapper = mountGraphView(true, async () => ({data: [], count: 0}))
+
+        expect(wrapper.findComponent({name: "Table"}).props("subtype")).toBe("ASSET")
     })
 })

@@ -28,5 +28,5 @@ export function assetTools(metadata: Record<string, unknown> | undefined): strin
 }
 
 export function toolIconGroup(tool: string, installedGroups: Record<string, unknown>): string | undefined {
-    return TOOL_ICON_GROUPS[tool]?.find(group => group in installedGroups)
+    return (Object.prototype.hasOwnProperty.call(TOOL_ICON_GROUPS, tool) ? TOOL_ICON_GROUPS[tool] : undefined)?.find(group => group in installedGroups)
 }

@@ -46,6 +46,14 @@ describe("TableFilters", () => {
         expect(wrapper.find("[role=switch]").exists()).toBe(assetView)
     })
 
+    test.each([
+        {assetView: true, tools: ["Terraform"], shown: true},
+        {assetView: true, tools: [], shown: false},
+        {assetView: false, tools: ["Terraform"], shown: false},
+    ])("offers the tool filter only in asset view with tools (assetView=$assetView, tools=$tools)", ({assetView, tools, shown}) => {
+        expect(mountFilters({assetView, tools}).find("[data-test=tool-filter]").exists()).toBe(shown)
+    })
+
     test("renders one option per namespace and selects its value by label", async () => {
         const wrapper = mountFilters({namespace: undefined})
 

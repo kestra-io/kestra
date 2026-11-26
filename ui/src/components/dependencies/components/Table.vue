@@ -170,6 +170,11 @@
 
     const tools = computed(() => [...new Set(props.elements.filter(isNodeElement).flatMap(({data}) => toolsOf(data)))].sort())
 
+    // The select disappears with the last asset of its tool, which would leave a filter nobody can clear.
+    watch(tools, (available) => {
+        if (tool.value && !available.includes(tool.value)) tool.value = undefined
+    })
+
     /** All rows the include-flows switch leaves visible; the result count uses it as its denominator. */
     const visibleRows = computed(() => props.elements
         .filter(isNodeElement)

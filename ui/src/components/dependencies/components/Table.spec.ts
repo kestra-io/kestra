@@ -72,7 +72,7 @@ describe("dependencies Table.vue — tool filter", () => {
         const wrapper = i18nMount(Table, {
             locales: en,
             props: {
-                elements: [asset("vm", ["GCP", "Terraform", "Ansible"]), asset("orders", ["PostgreSQL", "dbt"]), asset("raw"), {
+                elements: [asset("vm", ["GCP", "Terraform", "Ansible"]), asset("orders", ["PostgreSQL", "dbt"]), asset("customers", ["PostgreSQL", "dbt"]), asset("raw"), {
                     data: {id: "flow", type: NODE, flow: "deploy", namespace: "company.infra", metadata: {subtype: FLOW}},
                 }],
                 selected: undefined,
@@ -89,5 +89,21 @@ describe("dependencies Table.vue — tool filter", () => {
         await nextTick()
 
         expect(shown.at(-1)).toEqual(["vm"])
+    })
+
+    it("drops the tool filter once no asset of that tool is left in the graph", async () => {
+        const shown: string[][] = []
+        const wrapper = i18nMount(Table, {
+            locales: en,
+            props: {elements: [asset("vm", ["Terraform"]), asset("raw")], selected: undefined, subtype: ASSET, highlightShown: (ids: string[]) => shown.push(ids)},
+            global: {plugins: [KestraDesignSystem], stubs: {RouterLink: RouterLinkStub, AssetTools: true}},
+        })
+        wrapper.findComponent(TableFilters).vm.$emit("update:tool", "Terraform")
+        await nextTick()
+
+        await wrapper.setProps({elements: [asset("raw")]})
+        await nextTick()
+
+        expect(shown.at(-1)).toEqual(["raw"])
     })
 })

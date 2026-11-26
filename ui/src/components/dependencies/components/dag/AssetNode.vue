@@ -18,7 +18,15 @@
         </div>
 
         <div class="body">
-            <span class="name" :title="id">{{ data.name }}</span>
+            <div class="title">
+                <span class="name" :title="id">{{ data.name }}</span>
+                <AssetTools
+                    v-if="tools.length"
+                    :tools="tools"
+                    compact
+                    class="tools"
+                />
+            </div>
 
             <div v-if="!data.isFlow" class="meta">
                 <KsIcon
@@ -35,12 +43,6 @@
                     size="small"
                     class="age"
                 >{{ statusLabel }}</KsText>
-                <AssetTools
-                    v-if="tools.length"
-                    :tools="tools"
-                    compact
-                    class="tools"
-                />
                 <KsText
                     v-if="typeName"
                     size="small"
@@ -202,7 +204,16 @@
             min-width: 0;
         }
 
+        .title {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            min-width: 0;
+        }
+
         .name {
+            flex: 1 1 auto;
+            min-width: 0;
             font-family: var(--ks-font-family-mono);
             font-size: var(--ks-font-size-sm);
             color: var(--ks-text-primary);

@@ -3,8 +3,10 @@
         v-model:search="search"
         v-model:namespace="namespace"
         v-model:flow="flow"
+        v-model:tool="tool"
         :assetView="isAssetView"
         :namespaces="namespaces"
+        :tools="tools"
         :shown="results.length"
         :total="nodeCount"
     />
@@ -51,6 +53,11 @@
                     </section>
 
                     <section id="right">
+                        <AssetTools
+                            v-if="isAssetView && toolsOf(row.data).length"
+                            :tools="toolsOf(row.data)"
+                            compact
+                        />
                         <span
                             v-if="isAssetView && compactAge(updatedOf(row.data))"
                             class="row-age"
@@ -84,6 +91,8 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import Link from "./Link.vue"
     import TableFilters from "./TableFilters.vue"
+    import AssetTools from "../../assets/AssetTools.vue"
+    import {assetTools} from "../../assets/assetTools"
     import {statusIconOf, statusColorOf, compactAge, normalizeStatus} from "../utils/assetStatus"
     import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
     import type {Types, Node, Element} from "../utils/types"
@@ -135,6 +144,7 @@
     const search = ref("")
     const namespace = ref<string | undefined>(undefined)
     const flow = ref(true)
+    const tool = ref<string | undefined>(undefined)
 
     const NO_NAMESPACE_VALUE = "__NO_NAMESPACE__"
 
@@ -154,6 +164,12 @@
         ]
     })
 
+    const toolsOf = (node: Node): string[] => (node.metadata.subtype === ASSET
+        ? assetTools((node.metadata as {assetMetadata?: Record<string, unknown>}).assetMetadata)
+        : [])
+
+    const tools = computed(() => [...new Set(props.elements.filter(isNodeElement).flatMap(({data}) => toolsOf(data)))].sort())
+
     /** All rows the include-flows switch leaves visible; the result count uses it as its denominator. */
     const visibleRows = computed(() => props.elements
         .filter(isNodeElement)
@@ -168,6 +184,7 @@
                 if (namespace.value === NO_NAMESPACE_VALUE) return data.namespace === undefined
                 return data.namespace === namespace.value
             })
+            .filter(({data}) => !tool.value || toolsOf(data).includes(tool.value))
             .filter(({data}) => {
                 if (!query) return true
                 return data.flow?.toLowerCase().includes(query) || data.namespace?.toLowerCase().includes(query)

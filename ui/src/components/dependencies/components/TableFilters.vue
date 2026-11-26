@@ -20,6 +20,22 @@
             />
         </KsSelect>
 
+        <KsSelect
+            v-if="assetView && tools?.length"
+            v-model="tool"
+            :placeholder="$t('dependency.search.tool.select')"
+            clearable
+            filterable
+            data-test="tool-filter"
+        >
+            <KsOption
+                v-for="item in tools"
+                :key="item"
+                :label="item"
+                :value="item"
+            />
+        </KsSelect>
+
         <div class="filter-row">
             <KsSwitch
                 v-if="assetView"
@@ -36,6 +52,7 @@
     defineProps<{
         assetView: boolean;
         namespaces: {label: string; value: string}[];
+        tools?: string[];
         shown: number;
         total: number;
     }>()
@@ -43,6 +60,7 @@
     const search = defineModel<string>("search", {required: true})
     const namespace = defineModel<string | undefined>("namespace", {required: true})
     const flow = defineModel<boolean>("flow", {required: true})
+    const tool = defineModel<string | undefined>("tool")
 </script>
 
 <style scoped>

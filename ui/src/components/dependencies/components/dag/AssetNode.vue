@@ -35,6 +35,12 @@
                     size="small"
                     class="age"
                 >{{ statusLabel }}</KsText>
+                <AssetTools
+                    v-if="tools.length"
+                    :tools="tools"
+                    compact
+                    class="tools"
+                />
                 <KsText
                     v-if="typeName"
                     size="small"
@@ -65,6 +71,8 @@
     import Sitemap from "vue-material-design-icons/Sitemap.vue"
     import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
+    import AssetTools from "../../../assets/AssetTools.vue"
+    import {assetTools} from "../../../assets/assetTools"
     import {statusIconOf, statusColorOf, normalizeStatus} from "../../utils/assetStatus"
     import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN, DAG_CARD_FOOTER} from "../../utils/dagConstants"
 
@@ -93,6 +101,7 @@
     const footer = inject(DAG_CARD_FOOTER, undefined)
 
     const status = computed(() => normalizeStatus(props.data.status))
+    const tools = computed(() => assetTools(props.data.metadata))
     const typeName = computed(() => (props.data.assetType ? stringUtils.afterLastDot(props.data.assetType) : undefined))
     const statusLabel = computed(() => t(`dependency.dag.status.${status.value}`))
 
@@ -222,6 +231,10 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+        .tools {
+            flex: 0 0 auto;
         }
 
         .kind {

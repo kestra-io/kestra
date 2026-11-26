@@ -2700,6 +2700,7 @@
         "force": "Tree",
         "layered": "DAG",
         "system": "System",
+        "tools": "Tools",
         "last_update": "Last update",
         "status": {
           "fresh": "Fresh",
@@ -2749,6 +2750,9 @@
         },
         "flow": {
           "display": "Include flow dependencies"
+        },
+        "tool": {
+          "select": "Filter by tool"
         },
         "no_results": "No results found for {term}"
       }

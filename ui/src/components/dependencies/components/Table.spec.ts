@@ -6,6 +6,7 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 import KestraDesignSystem from "@kestra-io/design-system"
 import Table from "./Table.vue"
 import Link from "./Link.vue"
+import TableFilters from "./TableFilters.vue"
 import en from "../../../translations/en.json"
 import {NODE, FLOW, EXECUTION, ASSET} from "../utils/types"
 import type {Element, Types} from "../utils/types"
@@ -58,5 +59,35 @@ describe("dependencies Table.vue — asset-view gating", () => {
         expect(wrapper.findAllComponents(Link)).toHaveLength(0)
         expect(wrapper.findAll("code.name").map((code) => code.text())).toEqual(["db.schema.customers", "my-flow"])
         expect(arrowsPerRow(wrapper)).toEqual([1, 1])
+    })
+})
+
+describe("dependencies Table.vue — tool filter", () => {
+    const asset = (id: string, tools?: string[]): Element => ({
+        data: {id, type: NODE, flow: id, metadata: {subtype: ASSET, assetMetadata: tools ? {"system.tools": tools} : {}}},
+    })
+
+    it("narrows the graph to the assets a tool wrote, and offers each tool once", async () => {
+        const shown: string[][] = []
+        const wrapper = i18nMount(Table, {
+            locales: en,
+            props: {
+                elements: [asset("vm", ["GCP", "Terraform", "Ansible"]), asset("orders", ["PostgreSQL", "dbt"]), asset("raw"), {
+                    data: {id: "flow", type: NODE, flow: "deploy", namespace: "company.infra", metadata: {subtype: FLOW}},
+                }],
+                selected: undefined,
+                subtype: ASSET,
+                highlightShown: (ids: string[]) => shown.push(ids),
+            },
+            global: {plugins: [KestraDesignSystem], stubs: {RouterLink: RouterLinkStub, AssetTools: true}},
+        })
+        const filters = wrapper.findComponent(TableFilters)
+
+        expect(filters.props("tools")).toEqual(["Ansible", "GCP", "PostgreSQL", "Terraform", "dbt"])
+
+        filters.vm.$emit("update:tool", "Terraform")
+        await nextTick()
+
+        expect(shown.at(-1)).toEqual(["vm"])
     })
 })

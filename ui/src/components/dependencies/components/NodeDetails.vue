@@ -59,6 +59,14 @@
                     </template>
                 </dd>
             </template>
+            <template v-if="tools.length">
+                <dt class="label">
+                    {{ $t("dependency.dag.tools") }}
+                </dt>
+                <dd class="value" data-test="node-tools">
+                    <AssetTools :tools="tools" />
+                </dd>
+            </template>
         </dl>
 
         <section v-if="runs.length" class="runs">
@@ -95,6 +103,8 @@
     import {stringUtils} from "@kestra-io/design-system"
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
     import Link from "./Link.vue"
+    import AssetTools from "../../assets/AssetTools.vue"
+    import {assetTools} from "../../assets/assetTools"
     import {normalizeStatus, statusIconOf, statusColorOf} from "../utils/assetStatus"
     import {ASSET, FLOW} from "../utils/types"
     import type {Types, Node, AssetRun} from "../utils/types"
@@ -117,11 +127,14 @@
         updated?: string;
         status?: string;
         runs?: AssetRun[];
+        assetMetadata?: Record<string, unknown>;
         collapsed?: boolean;
         totalDegree?: number;
         expandable?: boolean;
         exhausted?: boolean;
     })
+
+    const tools = computed(() => (metadata.value.subtype === ASSET ? assetTools(metadata.value.assetMetadata) : []))
 
     const shortName = computed(() => stringUtils.afterLastDot(props.node.flow) || props.node.flow)
 

@@ -208,6 +208,7 @@
                 : {
                     trigger: "axis",
                     axisPointer: {type: "none"},
+                    valueFormatter: (v: unknown) => isDurationAgg() ? durationUtils.humanDuration(Number(v)) : formatNumber(Number(v)),
                     formatter: (params: EchartsParams[]) => {
                         if (!params?.length) return ""
                         const isOthers = parsedData.value.othersCount > 0 && params[0].dataIndex === categories.value.length - 1

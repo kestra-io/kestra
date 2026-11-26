@@ -94,7 +94,7 @@
                         :data-scroll-key="asTaskRun(currentTaskRun).id"
                         :class="{'single-line': currentTaskRuns.length === 1, 'full-height': fullHeight}"
                         :emitUpdate="true"
-                        @update="emit('scroller-update')"
+                        @update="handleLogScrollerUpdate"
                         @visible="emit('scroller-update')"
                         :ref="
                             (el) =>
@@ -1192,6 +1192,12 @@
                 }
             })
         }
+    }
+
+    function handleLogScrollerUpdate() {
+        if (disposed) return
+        scrollToBottomFailedTask()
+        emit("scroller-update")
     }
 
     function handleLogScrollerResize() {

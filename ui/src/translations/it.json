@@ -183,7 +183,6 @@
     "publish_draft": "Pubblica bozza",
     "draft": "Bozza",
     "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
-    "save_draft": "Salva bozza",
     "flow_publish": {
       "description": "Rende questa revisione attiva: i trigger la avviano, altri Flow possono chiamarla e i suoi fallimenti raggiungono i Flow di avviso.",
       "done_title": "Pubblicato",
@@ -1216,6 +1215,40 @@
     "export": "Esporta",
     "export_csv": "Esporta come CSV",
     "flow_export": "Esporta flow",
+    "flowAutosave": {
+      "draft": {
+        "label": "Bozza",
+        "tooltip": "Modifiche non ancora pubblicate. Clicca per confrontare con la revisione pubblicata."
+      },
+      "modified": {
+        "label": "Modificato",
+        "tooltip": "Salvataggio delle modifiche come bozza. Clicca per confrontare con la revisione pubblicata."
+      },
+      "savedLocally": {
+        "label": "Salvato localmente",
+        "tooltip": "Il server è irraggiungibile. Le tue modifiche sono conservate in questo browser e salvate come bozza una volta che sarà di nuovo disponibile."
+      },
+      "conflict": {
+        "label": "Conflitto",
+        "tooltip": "Questo flow è cambiato sul server mentre eri offline."
+      },
+      "conflictDialog": {
+        "title": "Flow modificato sul server",
+        "description": "Qualcuno ha salvato questo flow mentre le tue modifiche erano mantenute localmente. Scegli quale versione mantenere: l'altra verrà scartata.",
+        "keepLocal": "Mantieni le mie modifiche",
+        "takeServer": "Usa la versione del server"
+      },
+      "restoreNew": {
+        "title": "Ripristinare il flow non salvato?",
+        "message": "Un flow che stavi scrivendo in questo browser non è mai stato creato. Ripristinalo, oppure inizia da questo e scartalo.",
+        "restore": "Ripristina",
+        "discard": "Scarta"
+      }
+    },
+    "testRun": {
+      "label": "Test run",
+      "runPublished": "Esegui la versione pubblicata"
+    },
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
     "flows exported": "<code>{count}</code> Flow esportati",
     "import": "Importa",
@@ -2820,7 +2853,6 @@
     "delete revision error": "Errore durante l'eliminazione della revisione {revision} con errore {error}",
     "no_history": "Nessuna cronologia disponibile",
     "export_as": "Esporta come .{format}",
-    "save_and_execute": "Salva & Esegui",
     "welcome_copilot": {
       "button_cta": "Crea flow da zero",
       "need_help": "Hai bisogno di aiuto?",

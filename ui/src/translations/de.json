@@ -183,7 +183,6 @@
     "publish_draft": "Entwurf veröffentlichen",
     "draft": "Entwurf",
     "draft_flow_warning": "Die neueste Revision dieses Flows ist ein Entwurf. Die Execution verwendet stattdessen die neueste veröffentlichte Revision. Veröffentliche den Entwurf (oder führe ihn im Playground aus), um deine letzten Änderungen auszuführen.",
-    "save_draft": "Entwurf speichern",
     "flow_publish": {
       "description": "Macht diese Revision live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows.",
       "done_title": "Veröffentlicht",
@@ -1216,6 +1215,40 @@
     "export": "Exportieren",
     "export_csv": "Als CSV exportieren",
     "flow_export": "Flow exportieren",
+    "flowAutosave": {
+      "draft": {
+        "label": "Entwurf",
+        "tooltip": "Änderungen noch nicht veröffentlicht. Klicke, um mit der veröffentlichten Revision zu vergleichen."
+      },
+      "modified": {
+        "label": "Geändert",
+        "tooltip": "Deine Änderungen als Entwurf speichern. Klicke, um mit der veröffentlichten Revision zu vergleichen."
+      },
+      "savedLocally": {
+        "label": "Lokal gespeichert",
+        "tooltip": "Der Server ist nicht erreichbar. Deine Änderungen werden in diesem Browser gespeichert und als Entwurf gesichert, sobald er wieder verfügbar ist."
+      },
+      "conflict": {
+        "label": "Konflikt",
+        "tooltip": "Dieser Flow wurde auf dem Server geändert, während du offline warst."
+      },
+      "conflictDialog": {
+        "title": "Flow auf dem Server geändert",
+        "description": "Jemand hat diesen Flow gespeichert, während deine Änderungen lokal gespeichert wurden. Wähle aus, welche Version du behalten möchtest: die andere wird verworfen.",
+        "keepLocal": "Meine Änderungen behalten",
+        "takeServer": "Serverversion verwenden"
+      },
+      "restoreNew": {
+        "title": "Deinen ungespeicherten Flow wiederherstellen?",
+        "message": "Ein Flow, den du in diesem Browser geschrieben hast, wurde nie erstellt. Stelle ihn wieder her oder beginne mit diesem und verwerfe ihn.",
+        "restore": "Wiederherstellen",
+        "discard": "Verwerfen"
+      }
+    },
+    "testRun": {
+      "label": "Testlauf",
+      "runPublished": "Veröffentlichte Version ausführen"
+    },
     "flow export": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich exportieren?",
     "flows exported": "<code>{count}</code> Flow(s) exportiert",
     "import": "Importieren",
@@ -2820,7 +2853,6 @@
     "delete revision error": "Fehler beim Löschen der Revision {revision}: {error}",
     "no_history": "Keine Historie verfügbar",
     "export_as": "Als .{format} exportieren",
-    "save_and_execute": "Speichern & Ausführen",
     "welcome_copilot": {
       "button_cta": "Flow von Grund auf erstellen",
       "need_help": "Brauchst du Hilfe?",

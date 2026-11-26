@@ -183,7 +183,6 @@
     "publish_draft": "초안 게시",
     "draft": "초안",
     "draft_flow_warning": "이 flow의 최신 리비전은 초안입니다. 실행은 대신 최신 게시된 리비전을 기준으로 수행됩니다. 최신 변경 사항을 실행하려면 초안을 게시하거나 Playground에서 실행하세요.",
-    "save_draft": "초안 저장",
     "flow_publish": {
       "description": "이 버전을 활성화합니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다.",
       "done_title": "게시됨",
@@ -1216,6 +1215,40 @@
     "export": "내보내기",
     "export_csv": "CSV로 내보내기",
     "flow_export": "flow 내보내기",
+    "flowAutosave": {
+      "draft": {
+        "label": "초안",
+        "tooltip": "아직 변경 사항이 게시되지 않았습니다. 게시된 버전과 비교하려면 클릭하세요."
+      },
+      "modified": {
+        "label": "수정됨",
+        "tooltip": "변경 사항을 초안으로 저장 중입니다. 게시된 Revision과 비교하려면 클릭하세요."
+      },
+      "savedLocally": {
+        "label": "로컬에 저장됨",
+        "tooltip": "서버에 연결할 수 없습니다. 변경 사항은 이 브라우저에 보관되며 서버가 다시 연결되면 draft로 저장됩니다."
+      },
+      "conflict": {
+        "label": "충돌",
+        "tooltip": "오프라인 상태일 때 서버에서 이 Flow가 변경되었습니다."
+      },
+      "conflictDialog": {
+        "title": "서버에서 Flow가 변경되었습니다.",
+        "description": "누군가 이 Flow를 저장했지만 변경 사항은 로컬에 유지되었습니다. 유지할 버전을 선택하세요. 다른 버전은 폐기됩니다.",
+        "keepLocal": "내 변경 사항 유지",
+        "takeServer": "서버 버전 사용"
+      },
+      "restoreNew": {
+        "title": "저장되지 않은 Flow를 복원하시겠습니까?",
+        "message": "이 브라우저에서 작성 중이던 Flow가 생성되지 않았습니다. 복원하거나 이 Flow에서 시작하여 폐기하세요.",
+        "restore": "복원",
+        "discard": "버리기"
+      }
+    },
+    "testRun": {
+      "label": "테스트 실행",
+      "runPublished": "게시된 버전 실행"
+    },
     "flow export": "<code>{flowCount}</code> 개의 flow를 내보내시겠습니까?",
     "flows exported": "<code>{count}</code> Flow(s) 내보내기 완료",
     "import": "가져오기",
@@ -2820,7 +2853,6 @@
     "delete revision error": "{error} 오류로 인해 {revision} 수정본 삭제 오류 발생",
     "no_history": "기록 없음",
     "export_as": ".{format}로 내보내기",
-    "save_and_execute": "저장 및 실행",
     "welcome_copilot": {
       "button_cta": "새 flow 생성",
       "need_help": "도움이 필요하신가요?",

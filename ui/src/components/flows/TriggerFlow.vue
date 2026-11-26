@@ -1,8 +1,26 @@
 <template>
     <div class="trigger-flow-wrapper">
         <span data-onboarding-target="flow-execute-button">
-            <slot name="button" :execute="runAction" :disabled="actionDisabled">
+            <slot name="button" :execute="() => runAction()" :disabled="actionDisabled">
+                <KsDropdown
+                    v-if="testRun && !playgroundStore.enabled && hasPublishedRevision"
+                    splitButton
+                    :type="type"
+                    :disabled="actionDisabled"
+                    data-test="flow-test-run"
+                    @click="runAction()"
+                >
+                    {{ actionLabel }}
+                    <template #dropdown>
+                        <KsDropdownMenu>
+                            <KsDropdownItem :icon="PlayIcon" data-test="flow-run-published" @click="runAction({published: true})">
+                                {{ $t("testRun.runPublished") }}
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
+                    </template>
+                </KsDropdown>
                 <KsButton
+                    v-else
                     :id="actionId"
                     :icon="PlayIcon"
                     :type="type"
@@ -30,11 +48,14 @@
             large
         >
             <template #header>
-                <i18n-t keypath="execute the flow" tag="span" scope="global">
+                <i18n-t :keypath="isTestRunning ? 'testRun.dialogTitle' : 'execute the flow'" tag="span" scope="global">
                     <template #id><code>{{ flowId }}</code></template>
                 </i18n-t>
             </template>
-            <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <KsText v-if="isTestRunning" tag="p" type="secondary" class="test-run-description" data-test="test-run-description">
+                {{ $t("testRun.dialogDescription") }}
+            </KsText>
+            <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" :testRun="isTestRunning" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
                 <FlowRunActions :flowRun="flowRunRef" />
             </template>
@@ -103,6 +124,7 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
+    import {useFlowAutosaveStore} from "../../stores/flowAutosave"
     import FlowRun, {type ReplaySubmitOptions} from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
     import {useIsMobile} from "../../composables/useIsMobile"
@@ -120,6 +142,8 @@
         lazy?: boolean
         renderLabels?: string[]
         compact?: boolean
+        /** The flow on screen is not the published one: the action runs its draft as a playground execution. */
+        testRun?: boolean
     }>(), {
         disabled: false,
         type: "primary",
@@ -128,6 +152,7 @@
         lazy: false,
         renderLabels: undefined,
         compact: false,
+        testRun: false,
     })
 
     const {t} = useI18n({useScope: "global"})
@@ -140,6 +165,10 @@
     const flowStore = useFlowStore()
 
     const isOpen = ref(false)
+    const runPublished = ref(false)
+    const isTestRunning = computed(() => props.testRun && !runPublished.value)
+    // A publish takes over the draft's revision, so a draft above revision 1 sits on a published one.
+    const hasPublishedRevision = computed(() => !flowStore.flow?.draft || (flowStore.flow?.revision ?? 1) > 1)
     const isSelectFlowOpen = ref(false)
     const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
@@ -169,6 +198,7 @@
         await executionsStore.loadFlowForExecution({
             flowId: props.flowId!,
             namespace: props.namespace!,
+            revision: isTestRunning.value ? flowStore.flow?.revision : undefined,
             store: true,
         })
     }
@@ -194,6 +224,7 @@
             newValue = !isOpen.value
         }
         if (newValue) {
+            if (isTestRunning.value) await useFlowAutosaveStore().settle()
             // wait for flow to be set before opening the dialog
             await loadDefinition()
         }
@@ -212,7 +243,8 @@
         }
     }
 
-    function runAction() {
+    function runAction(options?: {published?: boolean}) {
+        runPublished.value = options?.published ?? false
         if (playgroundStore.enabled) {
             playgroundStore.runUntilTask()
         } else {
@@ -231,11 +263,10 @@
         return isDisabled()
     })
 
-    const actionLabel = computed(() =>
-        playgroundStore.enabled
-            ? t("playground.run_all_tasks")
-            : t("execute"),
-    )
+    const actionLabel = computed(() => {
+        if (playgroundStore.enabled) return t("playground.run_all_tasks")
+        return props.testRun ? t("testRun.label") : t("execute")
+    })
 
     const computedFlowId = computed(() =>
         props.flowId ?? localFlow.value?.id,
@@ -307,5 +338,9 @@
 
     .flow-inputs {
         width: 100%;
+    }
+
+    .test-run-description {
+        margin: 0 0 var(--ks-spacing-4);
     }
 </style>

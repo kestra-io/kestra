@@ -183,7 +183,6 @@
     "publish_draft": "Publish draft",
     "draft": "Draft",
     "draft_flow_warning": "The latest revision of this flow is a draft. The execution will run against the latest published revision instead - publish the draft (or run it from the playground) to execute your latest changes.",
-    "save_draft": "Save draft",
     "flow_publish": {
       "description": "Makes this revision live: triggers start it, other flows can call it, and its failures reach alert flows.",
       "done_title": "Published",
@@ -1216,6 +1215,43 @@
     "export": "Export",
     "export_csv": "Export as CSV",
     "flow_export": "Export flow",
+    "flowAutosave": {
+      "draft": {
+        "label": "Draft",
+        "tooltip": "Changes not published yet. Click to compare with the published revision."
+      },
+      "modified": {
+        "label": "Modified",
+        "tooltip": "Saving your changes as a draft. Click to compare with the published revision."
+      },
+      "savedLocally": {
+        "banner": "Your flow changes are kept in this browser and saved as a draft once the server answers. This banner disappears when it does.",
+        "label": "Saved locally",
+        "tooltip": "The server is unreachable. Your changes are kept in this browser and saved as a draft once it is back."
+      },
+      "conflict": {
+        "label": "Conflict",
+        "tooltip": "This flow changed on the server while you were offline."
+      },
+      "conflictDialog": {
+        "title": "Flow changed on the server",
+        "description": "Someone saved this flow while your changes were kept locally. Choose which version to keep: the other one is discarded.",
+        "keepLocal": "Keep my changes",
+        "takeServer": "Use the server version"
+      },
+      "restoreNew": {
+        "title": "Restore your unsaved flow?",
+        "message": "A flow you were writing in this browser was never created. Restore it, or start from this one and discard it.",
+        "restore": "Restore",
+        "discard": "Discard"
+      }
+    },
+    "testRun": {
+      "label": "Test run",
+      "runPublished": "Run published version",
+      "dialogTitle": "Test run of {id}",
+      "dialogDescription": "Runs the draft on screen as a playground execution. Schedules, webhooks and subflows keep using the published version."
+    },
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exported",
     "import": "Import",
@@ -2820,7 +2856,6 @@
     "delete revision error": "Error deleting revision {revision} with error {error}",
     "no_history": "No history available",
     "export_as": "Export as .{format}",
-    "save_and_execute": "Save & Execute",
     "welcome_copilot": {
       "button_cta": "Create flow from scratch",
       "need_help": "Need Help?",

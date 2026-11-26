@@ -1231,6 +1231,12 @@ export type FlowAction = {
     when?: Array<FieldCondition> | null;
 };
 
+export type FlowControllerDraftSaveResult = {
+    flow?: FlowWithSource;
+    validation?: ValidateConstraintViolation;
+    conflict?: boolean;
+};
+
 export type FlowControllerFlowWithDeprecatedTasks = {
     namespace?: string;
     flowId?: string;
@@ -10009,6 +10015,57 @@ export type GetFlowDependenciesResponses = {
 };
 
 export type GetFlowDependenciesResponse = GetFlowDependenciesResponses[keyof GetFlowDependenciesResponses];
+
+export type SaveDraftData = {
+    /**
+     * The flow source code
+     */
+    body: string;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        id: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * Java `String.hashCode()` of the head revision's source the edit started from; omit it to overwrite whatever is there.
+         */
+        baseSourceHash?: number | null;
+    };
+    url: '/api/v1/{tenant}/flows/{namespace}/{id}/draft';
+};
+
+export type SaveDraftErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SaveDraftError = SaveDraftErrors[keyof SaveDraftErrors];
+
+export type SaveDraftResponses = {
+    /**
+     * saveDraft 200 response
+     */
+    200: FlowControllerDraftSaveResult;
+};
+
+export type SaveDraftResponse = SaveDraftResponses[keyof SaveDraftResponses];
 
 export type GenerateFlowGraphData = {
     body?: never;

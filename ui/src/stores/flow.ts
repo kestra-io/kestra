@@ -195,7 +195,12 @@ export const useFlowStore = defineStore("flow", () => {
         saveAttempted.value = false
     })
 
-    watch(() => haveChange.value || hasDirtyEditorFiles.value, (newValue) => {
+    // Set while the editor autosaves: a buffered change is not lost on leaving, so it does not ask.
+    const autosaveActive = ref(false)
+    /** Registered by the autosave store: saves the draft and resolves with its validation, in one request. */
+    const autosaveHandler = ref<((source: string) => Promise<FlowValidations> | undefined) | null>(null)
+
+    watch(() => (haveChange.value && !autosaveActive.value) || hasDirtyEditorFiles.value, (newValue) => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
@@ -316,9 +321,14 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
-        return validateFlow({
+        const autosaved = !isCreating.value && flowYaml.value !== flowYamlOrigin.value
+            ? autosaveHandler.value?.(flowYaml.value)
+            : undefined
+        const validation = autosaved ?? validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? "",
         })
+
+        return validation
             .then((value: FlowValidations) => {
                 if (
                     topologyVisible &&
@@ -901,6 +911,23 @@ function deleteFlowAndDependencies(router: Router) {
 
     const startValidation = latestRequest()
 
+    async function saveDraft(options: { source: string, baseSourceHash?: number }) {
+        const isLatestValidation = startValidation()
+        const result = await FlowsAPI.saveDraft({
+            namespace: flow.value?.namespace ?? "",
+            id: flow.value?.id ?? "",
+            body: options.source,
+            baseSourceHash: options.baseSourceHash,
+        })
+        if (isLatestValidation() && flowYaml.value === options.source) {
+            flowValidation.value = (result.validation ?? {}) as FlowValidations
+        }
+        if (!result.conflict && result.flow) {
+            flow.value = result.flow as Flow
+        }
+        return result
+    }
+
     function validateFlow(options: { flow: string }) {
         const isLatestValidation = startValidation()
         let creationDenied: string | undefined
@@ -1136,6 +1163,9 @@ function deleteFlowAndDependencies(router: Router) {
         isCreating,
         flowYaml,
         flowYamlOrigin,
+        autosaveActive,
+        autosaveHandler,
+        saveDraft,
         saveAttempted,
         previewSource,
         declinePreview,

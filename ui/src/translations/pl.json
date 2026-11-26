@@ -183,7 +183,6 @@
     "publish_draft": "Opublikuj szkic",
     "draft": "Wersja robocza",
     "draft_flow_warning": "Najnowsza wersja tego Flow jest szkicem. Egzekucja zostanie uruchomiona na najnowszej opublikowanej wersji. Opublikuj szkic (lub uruchom go w Playground), aby wykonać swoje najnowsze zmiany.",
-    "save_draft": "Zapisz szkic",
     "flow_publish": {
       "description": "Ustawia tę wersję jako aktywną: Trigger uruchamia ją, inne Flowy mogą ją wywoływać, a jej błędy docierają do Flowów alertów.",
       "done_title": "Opublikowano",
@@ -1216,6 +1215,40 @@
     "export": "Eksportuj",
     "export_csv": "Eksportuj jako CSV",
     "flow_export": "Eksportuj Flow",
+    "flowAutosave": {
+      "draft": {
+        "label": "Szkic",
+        "tooltip": "Zmiany nie zostały jeszcze opublikowane. Kliknij, aby porównać z opublikowaną wersją."
+      },
+      "modified": {
+        "label": "Zmodyfikowano",
+        "tooltip": "Zapisywanie zmian jako szkic. Kliknij, aby porównać z opublikowaną wersją."
+      },
+      "savedLocally": {
+        "label": "Zapisano lokalnie",
+        "tooltip": "Serwer jest nieosiągalny. Twoje zmiany są przechowywane w tej przeglądarce i zostaną zapisane jako szkic, gdy serwer będzie ponownie dostępny."
+      },
+      "conflict": {
+        "label": "Konflikt",
+        "tooltip": "Ten Flow zmienił się na serwerze, gdy byłeś offline."
+      },
+      "conflictDialog": {
+        "title": "Flow zmieniony na serwerze",
+        "description": "Ktoś zapisał ten Flow, podczas gdy Twoje zmiany zostały zachowane lokalnie. Wybierz wersję do zachowania: druga zostanie odrzucona.",
+        "keepLocal": "Zachowaj moje zmiany",
+        "takeServer": "Użyj wersji serwerowej"
+      },
+      "restoreNew": {
+        "title": "Przywrócić niezapisany Flow?",
+        "message": "Flow, który pisałeś w tej przeglądarce, nigdy nie został utworzony. Przywróć go lub zacznij od tego i odrzuć go.",
+        "restore": "Przywróć",
+        "discard": "Odrzuć"
+      }
+    },
+    "testRun": {
+      "label": "Testowy run",
+      "runPublished": "Uruchom opublikowaną wersję"
+    },
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> Flowów?",
     "flows exported": "Wyeksportowano <code>{count}</code> Flowów",
     "import": "Importuj",
@@ -2820,7 +2853,6 @@
     "delete revision error": "Błąd podczas usuwania wersji {revision}: {error}",
     "no_history": "Brak dostępnej historii",
     "export_as": "Eksportuj jako .{format}",
-    "save_and_execute": "Zapisz i Wykonaj",
     "welcome_copilot": {
       "button_cta": "Utwórz Flow od podstaw",
       "need_help": "Potrzebujesz pomocy?",

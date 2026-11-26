@@ -7,6 +7,7 @@ import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow"
 import {useExecutionsStore} from "../../stores/executions"
 import {useProductTourStore} from "../../stores/productTour"
 import {usePlaygroundStore} from "../../stores/playground"
+import {useFlowAutosaveStore} from "../../stores/flowAutosave"
 import {usePluginsStore} from "../../stores/plugins"
 import {useMiscStore} from "override/stores/misc"
 import {useCoreStore} from "../../stores/core"
@@ -31,6 +32,8 @@ export function useFlowEditorActions() {
     const hasFlowSourceChange = computed(() => flowStore.haveChange)
     const haveChange = computed(() => hasFlowSourceChange.value || flowStore.hasDirtyEditorFiles)
     const canSave = computed(() => haveChange.value || flowStore.isCreating)
+    const canPublish = computed(() => canSave.value || (flowStore.flow?.draft ?? false))
+    const isUnpublished = computed(() => !flowStore.isCreating && ((flowStore.flow?.draft ?? false) || hasFlowSourceChange.value))
     const hasErrors = computed(() => (flowStore.flowErrors?.length ?? 0) > 0)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
@@ -176,14 +179,28 @@ export function useFlowEditorActions() {
         }
     }
 
-    /** Publishes the editor's content, unsaved changes included, without saving a draft first. */
+    /** The Publish button: pushes the pending autosave first, so the publish is the last write. */
     async function publish() {
+        await useFlowAutosaveStore().settle()
         await saveFlow(false)
     }
 
-    /** Saves the editor's content as a draft, the Ctrl/Cmd+S shortcut; a no-op without unsaved changes. */
+    /** The Ctrl/Cmd+S shortcut: creates a new flow as a draft, otherwise pushes the pending autosave now. */
     async function saveAsDraft() {
-        await saveFlow(true)
+        if (flowStore.isCreating) {
+            await saveFlow(true)
+            return
+        }
+        try {
+            const autosave = useFlowAutosaveStore()
+            await autosave.sync()
+            await flushDirtyFiles()
+            if (autosave.status === "idle" && flowStore.flow?.draft) {
+                toast.success(t("saved as draft done", {name: flowStore.flow.id}), t("saved as draft"))
+            }
+        } catch (error) {
+            reportSaveError(error)
+        }
     }
 
     async function saveFlow(draft: boolean) {
@@ -193,6 +210,15 @@ export function useFlowEditorActions() {
             const outcome = await triggerPluginInstallIfNeeded()
             if (outcome === "failed" || outcome === "timeout") return
             await persistAll(draft)
+        } catch (error) {
+            reportSaveError(error)
+        }
+    }
+
+    /** The Create button: creates the flow as a draft, which fixes its id and hands it to autosave. */
+    async function createDraft() {
+        try {
+            await persistAll(true)
         } catch (error) {
             reportSaveError(error)
         }
@@ -326,6 +352,8 @@ export function useFlowEditorActions() {
         haveChange,
         hasFlowSourceChange,
         canSave,
+        canPublish,
+        isUnpublished,
         hasErrors,
         isReadOnly,
         isAllowedEdit,
@@ -337,6 +365,7 @@ export function useFlowEditorActions() {
         /** @deprecated since 2.1, use `publish` instead. */
         save: publish,
         saveAsDraft,
+        createDraft,
         publishDraft,
         saveAndExecute,
         exportYaml,

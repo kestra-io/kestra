@@ -438,7 +438,7 @@
             t("schema warning", {line: w.line, message: w.message}),
         )
     }
-    // Delegate to the shared action so Ctrl+S goes through the same path as Save draft, auto-install of missing plugins included.
+    // Ctrl+S pushes the pending autosave draft; only Publish takes a flow out of draft.
     const saveFlowYaml = async () => {
         if (timeout.value) {
             clearTimeout(timeout.value)

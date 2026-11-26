@@ -33,7 +33,22 @@
         />
 
         <template #secondary>
-            <FlowSaveActions v-if="isEditTab && editorIsAllowedEdit && !deleted" />
+            <NavBarAction
+                v-if="(isEditTab && editorIsAllowedEdit && !deleted) && flowStore.isCreating"
+                :icon="Plus"
+                :label="$t('create')"
+                :disabled="editorIsReadOnly"
+                data-test="flow-create"
+                @click="editorCreateDraft"
+            />
+            <NavBarAction
+                v-else-if="isEditTab && editorIsAllowedEdit && !deleted"
+                :icon="Publish"
+                :label="$t('publish')"
+                :disabled="editorIsReadOnly || editorHasErrors || !editorCanPublish"
+                data-test="flow-publish"
+                @click="editorPublish"
+            />
             <NavBarAction
                 v-else-if="flow && canEdit && !deleted && !flowStore.isCreating"
                 :icon="Pencil"
@@ -57,6 +72,7 @@
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
                 :flowSource="flow?.source"
+                :testRun="editorIsUnpublished"
             />
         </template>
     </NavBarActions>
@@ -73,11 +89,12 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
+    import Publish from "vue-material-design-icons/Publish.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
     import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
-    import FlowSaveActions from "../../../components/flows/FlowSaveActions.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
     import {useDashboardSelection} from "../../../components/dashboard/composables/useDashboardSelection"
@@ -113,8 +130,14 @@
     const authStore = useAuthStore()
 
     const {
+        canPublish: editorCanPublish,
+        isUnpublished: editorIsUnpublished,
+        createDraft: editorCreateDraft,
+        hasErrors: editorHasErrors,
+        isReadOnly: editorIsReadOnly,
         isAllowedEdit: editorIsAllowedEdit,
         isPlaygroundAllowed,
+        publish: editorPublish,
         exportYaml: editorExportYaml,
         copyFlow: editorCopyFlow,
         deleteFlow: editorDeleteFlow,

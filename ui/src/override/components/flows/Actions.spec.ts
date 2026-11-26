@@ -54,18 +54,14 @@ vi.mock("../../../utils/toast", () => ({
 // stub the composable so this test targets that wiring in isolation.
 vi.mock("../../../components/flows/useFlowEditorActions", () => ({
     useFlowEditorActions: () => ({
-        haveChange: computed(() => false),
-        canSave: computed(() => false),
-        hasErrors: computed(() => false),
-        isReadOnly: computed(() => false),
+        canPublish: computed(() => true),
+        hasErrors: false,
+        isReadOnly: false,
         get isAllowedEdit() {
             return editorState.isAllowedEdit
         },
-        isDraft: computed(() => true),
         isPlaygroundAllowed: false,
         publish,
-        saveAsDraft: vi.fn(),
-        saveAndExecute: vi.fn(),
         exportYaml: vi.fn(),
         copyFlow: vi.fn(),
         deleteFlow: vi.fn(),
@@ -80,11 +76,9 @@ const messages = {
     restore: "Restore",
     "edit flow": "Edit flow",
     "delete logs": "Delete logs",
-    save_and_execute: "Save & Execute",
     copy: "Copy",
     flow_export: "Export flow",
     delete: "Delete",
-    save_draft: "Save draft",
     publish: "Publish",
     actions: "Actions",
 }
@@ -118,6 +112,29 @@ function findExecute(wrapper: ReturnType<typeof mountActions>) {
     return wrapper.find("trigger-flow-stub")
 }
 
+describe("Actions.vue — publish a draft flow", () => {
+    // publish is module-level, so its call count carries between tests.
+    beforeEach(() => {
+        vi.clearAllMocks()
+        routeState.tab = "edit"
+        flowState.deleted = false
+        flowState.exists = true
+        flowState.isCreating = false
+        editorState.isAllowedEdit = true
+    })
+
+    it("shows an enabled Publish action for an unchanged draft flow, and clicking it publishes", async () => {
+        const wrapper = mountActions()
+
+        const publishButton = findButtonByText(wrapper, "Publish")
+        expect(publishButton).toBeDefined()
+        expect(publishButton!.attributes("disabled")).toBeUndefined()
+
+        await publishButton!.trigger("click")
+
+        expect(publish).toHaveBeenCalledTimes(1)
+    })
+})
 
 describe("Actions.vue — the quick action pair is the same shape on every tab", () => {
     beforeEach(() => {
@@ -131,7 +148,7 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
         editorState.isAllowedEdit = true
     })
 
-    it("pairs the save-family control with Execute on the editor tab", () => {
+    it("pairs Publish with Execute on the editor tab", () => {
         const wrapper = mountActions()
 
         expect(findButtonByText(wrapper, "Publish")).toBeDefined()

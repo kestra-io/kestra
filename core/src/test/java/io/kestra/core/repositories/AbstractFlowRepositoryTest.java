@@ -570,6 +570,33 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void shouldCollapseDraftsAndPublishIntoOneRevision() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String flowId = IdUtils.create();
+        final List<Flow> toDelete = new ArrayList<>();
+
+        try {
+            FlowWithSource published = flowRepository.create(createTestingLogFlow(tenant, flowId, "published", false));
+            toDelete.add(published);
+            FlowWithSource firstDraft = flowRepository.update(createTestingLogFlow(tenant, flowId, "wip 1", true), published);
+            FlowWithSource secondDraft = flowRepository.update(createTestingLogFlow(tenant, flowId, "wip 2", true), firstDraft);
+            toDelete.add(secondDraft);
+
+            assertThat(secondDraft.getRevision()).isEqualTo(firstDraft.getRevision()).isEqualTo(published.getRevision() + 1);
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, false)).hasSize(2);
+            assertThat(flowRepository.findByIdWithSource(tenant, TEST_NAMESPACE, flowId).orElseThrow().getSource()).contains("wip 2");
+
+            FlowWithSource republished = flowRepository.update(createTestingLogFlow(tenant, flowId, "wip 2", false), secondDraft);
+            toDelete.add(republished);
+            assertThat(republished.getRevision()).isEqualTo(secondDraft.getRevision());
+            assertThat(republished.isDraft()).isFalse();
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, false)).hasSize(2);
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
     void findByIdForExecution_shouldFallBackToLastNonDraftWhenLatestIsDraft() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String flowId = IdUtils.create();

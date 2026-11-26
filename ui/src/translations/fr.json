@@ -183,7 +183,6 @@
     "publish_draft": "Publier le brouillon",
     "draft": "Brouillon",
     "draft_flow_warning": "La dernière révision de ce flow est un brouillon. L'exécution utilisera la dernière révision publiée ; publiez le brouillon (ou exécutez-le depuis le Playground) pour exécuter vos derniers changements.",
-    "save_draft": "Enregistrer le brouillon",
     "flow_publish": {
       "description": "Rend cette révision active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte.",
       "done_title": "Publié",
@@ -1216,6 +1215,40 @@
     "export": "Exporter",
     "export_csv": "Exporter en CSV",
     "flow_export": "Exporter le flow",
+    "flowAutosave": {
+      "draft": {
+        "label": "Brouillon",
+        "tooltip": "Modifications non encore publiées. Cliquez pour comparer avec la révision publiée."
+      },
+      "modified": {
+        "label": "Modifié",
+        "tooltip": "Enregistrement de vos modifications en tant que brouillon. Cliquez pour comparer avec la révision publiée."
+      },
+      "savedLocally": {
+        "label": "Enregistré localement",
+        "tooltip": "Le serveur est inaccessible. Vos modifications sont conservées dans ce navigateur et enregistrées comme brouillon dès qu'il est de nouveau disponible."
+      },
+      "conflict": {
+        "label": "Conflit",
+        "tooltip": "Ce flow a été modifié sur le serveur pendant que vous étiez hors ligne."
+      },
+      "conflictDialog": {
+        "title": "Le Flow a été modifié sur le serveur",
+        "description": "Quelqu'un a enregistré ce flow pendant que vos modifications étaient conservées localement. Choisissez la version à conserver : l'autre sera ignorée.",
+        "keepLocal": "Conserver mes modifications",
+        "takeServer": "Utiliser la version serveur"
+      },
+      "restoreNew": {
+        "title": "Restaurer votre flow non enregistré ?",
+        "message": "Un flow que vous écriviez dans ce navigateur n'a jamais été créé. Restaurez-le, ou partez de celui-ci et supprimez-le.",
+        "restore": "Restaurer",
+        "discard": "Annuler"
+      }
+    },
+    "testRun": {
+      "label": "Test d'exécution",
+      "runPublished": "Exécuter la version publiée"
+    },
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exporté(s)",
     "import": "Importer",
@@ -2820,7 +2853,6 @@
     "delete revision error": "Erreur lors de la suppression de la révision {revision} avec l'erreur {error}",
     "no_history": "Aucun historique disponible",
     "export_as": "Exporter en .{format}",
-    "save_and_execute": "Enregistrer & Exécuter",
     "welcome_copilot": {
       "button_cta": "Créer un flow à partir de zéro",
       "need_help": "Besoin d'aide ?",

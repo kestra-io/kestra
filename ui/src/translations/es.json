@@ -183,7 +183,6 @@
     "publish_draft": "Publicar borrador",
     "draft": "Borrador",
     "draft_flow_warning": "La última revisión de este flow es un borrador. La ejecución se realizará sobre la última revisión publicada; publica el borrador (o ejecútalo desde el Playground) para ejecutar tus últimos cambios.",
-    "save_draft": "Guardar borrador",
     "flow_publish": {
       "description": "Hace que esta revisión esté activa: los triggers la inician, otros flows pueden llamarla y sus fallos llegan a los flows de alerta.",
       "done_title": "Publicado",
@@ -1216,6 +1215,40 @@
     "export": "Exportar",
     "export_csv": "Exportar como CSV",
     "flow_export": "Exportar flow",
+    "flowAutosave": {
+      "draft": {
+        "label": "Borrador",
+        "tooltip": "Cambios aún no publicados. Haz clic para comparar con la revisión publicada."
+      },
+      "modified": {
+        "label": "Modificado",
+        "tooltip": "Guardando tus cambios como borrador. Haz clic para comparar con la revisión publicada."
+      },
+      "savedLocally": {
+        "label": "Guardado localmente",
+        "tooltip": "El servidor es inalcanzable. Tus cambios se guardan en este navegador y se guardarán como borrador una vez que vuelva a estar en línea."
+      },
+      "conflict": {
+        "label": "Conflicto",
+        "tooltip": "Este Flow cambió en el servidor mientras estabas desconectado."
+      },
+      "conflictDialog": {
+        "title": "El Flow ha cambiado en el servidor",
+        "description": "Alguien guardó este flow mientras tus cambios se mantenían localmente. Elige qué versión conservar: la otra se descartará.",
+        "keepLocal": "Mantener mis cambios",
+        "takeServer": "Usar la versión del servidor"
+      },
+      "restoreNew": {
+        "title": "¿Restaurar tu flow sin guardar?",
+        "message": "Un flow que estabas escribiendo en este navegador nunca fue creado. Restáuralo, o empieza desde este y descártalo.",
+        "restore": "Restaurar",
+        "discard": "Descartar"
+      }
+    },
+    "testRun": {
+      "label": "Ejecución de prueba",
+      "runPublished": "Ejecutar versión publicada"
+    },
     "flow export": "¿Estás seguro de que quieres exportar <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exportado(s)",
     "import": "Importar",
@@ -2820,7 +2853,6 @@
     "delete revision error": "Error al eliminar la revisión {revision} con el error {error}",
     "no_history": "No hay historial disponible",
     "export_as": "Exportar como .{format}",
-    "save_and_execute": "Guardar y Ejecutar",
     "welcome_copilot": {
       "button_cta": "Crear flow desde cero",
       "need_help": "¿Necesitas ayuda?",

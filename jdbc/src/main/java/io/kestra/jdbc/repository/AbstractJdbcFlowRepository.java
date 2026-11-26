@@ -1030,14 +1030,18 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         if (previous != null && !previous.isDeleted() && last != null && last.isDeleted()) {
             throw new ConflictException("Flow '%s' in namespace '%s' was deleted while it was being updated.".formatted(flow.getId(), flow.getNamespace()));
         }
-        final int revision = last == null ? 1 : last.getRevision() + 1;
+        // A save over a draft head replaces it: autosave keeps one draft on top, and publishing turns that draft into the revision.
+        final boolean collapseDraft = last != null && last.isDraft() && !last.isDeleted();
+        final int revision = last == null ? 1 : collapseDraft ? last.getRevision() : last.getRevision() + 1;
 
         flow = flow.toBuilder().revision(revision).updated(Instant.now()).build();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
         fields.put(field("source_code"), flow.getSource());
 
-        if (!this.insertRevision(flow, fields)) {
+        if (collapseDraft) {
+            this.replaceRevision(flow, fields);
+        } else if (!this.insertRevision(flow, fields)) {
             throw CrudEventType.CREATE == crudEventType
                 ? AlreadyExistsException.of("Flow", flow.getId(), flow.getNamespace())
                 : concurrentWrite(flow);
@@ -1135,6 +1139,16 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             log.debug("Revision {} of flow '{}' in namespace '{}' already exists: {}", flow.getRevision(), flow.getId(), flow.getNamespace(), e.getMessage());
             return false;
         }
+    }
+
+    private void replaceRevision(FlowInterface flow, Map<Field<Object>, Object> fields) {
+        String key = this.jdbcRepository.key(flow);
+        this.jdbcRepository.getDslContextWrapper().transaction(configuration -> DSL.using(configuration)
+            .update(this.jdbcRepository.getTable())
+            .set(fields)
+            .where(KEY_FIELD.eq(key))
+            .execute()
+        );
     }
 
     private boolean keyExists(String key) {

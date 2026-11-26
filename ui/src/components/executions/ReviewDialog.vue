@@ -23,7 +23,6 @@
                 :submitAttempted="submitAttempted"
                 @validation="validateInputs"
                 @ready="baseline = snapshot()"
-                @clear-validation="onClearValidation"
             />
             <KsFormItem :label="$t('approval.comment')">
                 <KsInput v-model="comment" type="textarea" :rows="3" data-test="review-comment" />
@@ -76,10 +75,6 @@
     const comment = ref("")
     const submitting = ref(false)
     const submitAttempted = ref(false)
-
-    function onClearValidation(fieldId: string) {
-        form.value?.clearValidate(fieldId)
-    }
 
     const inputsList = computed(() => props.task.inputs ?? [])
 

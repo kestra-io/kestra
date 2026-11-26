@@ -443,7 +443,6 @@
         "validation": [payload: ValidationEventPayload];
         "update:onRecap": [value: boolean];
         "ready": [];
-        "clearValidation": [fieldId: string];
     }>()
 
     const executionsStore = useExecutionsStore()
@@ -456,6 +455,8 @@
     const inputsMetaData: Ref<InputMetaData[]> = ref([])
     const multiSelectInputs = reactive<Record<string, unknown[]>>({})
     const inputsValidated = ref<Set<string>>(new Set())
+    // Blanking an edited input's error until the server answers lets KsFormItem show it again even when the message is unchanged.
+    const revalidatingInputs = ref<Set<string>>(new Set())
     const editingArrayId = ref<string | null>(null)
     const editableItems = reactive<Record<string, string[]>>({})
     const isComputingValues = ref(false)
@@ -556,7 +557,7 @@
     }
 
     function inputError(id: string): string | undefined {
-        if (isLoadingInput(id)) {
+        if (isLoadingInput(id) || revalidatingInputs.value.has(id)) {
             return undefined
         }
         const meta = inputsMetaData.value.find((it) => it.id === id && it.errors && it.errors.length > 0)
@@ -627,9 +628,7 @@
         input.isDefault = false
         modelValue.value = {...inputsValues}
         emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
-        if (!inputError(input.id)) {
-            emit("clearValidation", input.id)
-        }
+        revalidatingInputs.value.add(input.id)
     }
 
     function onSubmit(): void {
@@ -824,6 +823,7 @@
         const signature = formData ? formDataSignature(formData) : ""
 
         if (signature === lastValidatedSignature) {
+            revalidatingInputs.value.clear()
             return
         }
         if (pendingValidation?.signature === signature) {
@@ -837,6 +837,7 @@
                 return
             }
             emit("update:checks", response.checks || [])
+            revalidatingInputs.value.clear()
             inputsMetaData.value = response.inputs.reduce((acc: InputMetaData[], it) => {
                 if (it.enabled) {
                     acc.push({
@@ -1071,6 +1072,8 @@
                     modelValue.value = {...inputsValues}
                     emit("update:modelValueNoDefault", inputsValuesWithNoDefault.value)
                     persistValues()
+                } else {
+                    revalidatingInputs.value.clear()
                 }
                 previousInputsValues.value = JSON.parse(JSON.stringify(val))
             },
@@ -1113,6 +1116,7 @@
     function invalidateValidationCache(): void {
         lastValidatedSignature = undefined
         pendingValidation = undefined
+        revalidatingInputs.value.clear()
         // A newly selected flow or execution brings its own inputs, which must take their defaults again.
         userEditedInputs.clear()
     }

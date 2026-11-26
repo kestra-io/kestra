@@ -613,6 +613,8 @@
         "all-iterations": "Todas las iteraciones",
         "iteration-index": "índice {index}",
         "iteration-value-index": "{value} · índice {index}",
+        "first-iteration": "Primera iteración",
+        "last-iteration": "Última iteración",
         "previous-iteration": "Iteración anterior",
         "next-iteration": "Iteración siguiente",
         "previous-page": "Página anterior",

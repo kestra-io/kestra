@@ -613,6 +613,8 @@
         "all-iterations": "모든 반복",
         "iteration-index": "인덱스 {index}",
         "iteration-value-index": "{value} · 인덱스 {index}",
+        "first-iteration": "첫 번째 반복",
+        "last-iteration": "마지막 반복",
         "previous-iteration": "이전 반복",
         "next-iteration": "다음 반복",
         "previous-page": "이전 페이지",

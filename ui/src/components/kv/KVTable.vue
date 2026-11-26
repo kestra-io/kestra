@@ -595,12 +595,18 @@
 
     const total = ref(0)
 
+    /** The table only holds the current page, so a key missing from it is looked up on the server before a create overwrites it. */
     function kvKeyDuplicate(_rule: any, value: string, callback: (error?: Error) => void) {
-        if (kv.value.update === undefined && kvs.value && kvs.value.find(r => r.namespace === kv.value.namespace && r.key === value)) {
-            return callback(new Error(t("kv.duplicate")))
-        } else {
-            callback()
+        const namespace = kv.value.namespace
+        if (kv.value.update !== undefined || !value || !namespace) {
+            return callback()
         }
+        if (kvs.value?.some(r => r.namespace === namespace && r.key === value)) {
+            return callback(new Error(t("kv.duplicate")))
+        }
+        KvAPI.keyValue({namespace, key: value}, {showMessageOnError: false} as Parameters<typeof KvAPI.keyValue>[1])
+            .then(() => callback(new Error(t("kv.duplicate"))))
+            .catch(() => callback())
     }
 
     async function updateKvModal(entry: any) {

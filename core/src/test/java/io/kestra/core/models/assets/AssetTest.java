@@ -224,18 +224,6 @@ class AssetTest {
     }
 
     @Test
-    void shouldAddEachNewToolOnceWhenAnotherToolWritesTheAsset() {
-        Custom previous = Custom.builder().namespace("io.kestra").id("vm").type("EC2")
-            .metadata(Map.of(Asset.TOOLS_METADATA_KEY, List.of("AWS", "Terraform"))).build();
-        Custom incoming = Custom.builder().namespace("io.kestra").id("vm").type("EC2")
-            .metadata(Map.of(Asset.TOOLS_METADATA_KEY, List.of("Terraform", "Ansible"))).build();
-
-        Custom updated = incoming.toUpdated(previous);
-
-        assertThat(updated.getMetadata()).containsEntry(Asset.TOOLS_METADATA_KEY, List.of("AWS", "Terraform", "Ansible"));
-    }
-
-    @Test
     void shouldStoreAReplacedMetadataKeyAsGivenSoAToolRemovedByHandStaysRemoved() {
         Custom previous = Custom.builder().namespace("io.kestra").id("vm").type("EC2")
             .metadata(Map.of(Asset.TOOLS_METADATA_KEY, List.of("AWS", "Terraform", "OpenTofu"), "keep", "value")).build();

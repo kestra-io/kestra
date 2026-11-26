@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent, h, ref} from "vue"
+import {computed, defineComponent, h, ref} from "vue"
 import {useI18n} from "vue-i18n"
 import {i18nMount} from "../../tests/unit/i18nMount"
 
@@ -12,6 +12,12 @@ vi.mock("../components/flows/contextSections/providers", () => ({
     OSS_CONTEXT_SECTION_PROVIDERS: [kvProvider],
 }))
 
+const flowSections = vi.hoisted(() => ({value: [] as {key: string; label: string; chips: {label: string}[]}[]}))
+
+vi.mock("override/components/flows/flowContextSections", () => ({
+    useFlowContextSections: () => computed(() => flowSections.value),
+}))
+
 vi.mock("override/components/flows/contextSectionsExtension", () => ({
     useContextSectionsExtension: () => [extraProvider],
 }))
@@ -20,6 +26,7 @@ import {useContextSections} from "./useContextSections"
 import {resetContextSectionsCache} from "../components/flows/contextSections/fetchContextSections"
 
 beforeEach(() => {
+    flowSections.value = []
     kvProvider.mockClear()
     extraProvider.mockClear()
     resetContextSectionsCache()
@@ -72,5 +79,13 @@ describe("useContextSections", () => {
         locale.value = "fr"
         await vi.waitFor(() => expect(api.sections.value[0].label).toBe("Clés KV"))
         expect(kvProvider).toHaveBeenCalledTimes(1)
+    })
+
+    it("appends the flow-aware sections after the namespace ones without caching them per namespace", async () => {
+        flowSections.value = [{key: "flowPolicies", label: "Policies", chips: [{label: "enforce-oracle-user"}]}]
+        const {sections} = setup()
+        await vi.waitFor(() => expect(sections.value).toHaveLength(3))
+
+        expect(sections.value.map((section) => section.key)).toEqual(["namespaceKv", "credentials", "flowPolicies"])
     })
 })

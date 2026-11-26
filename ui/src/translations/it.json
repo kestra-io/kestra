@@ -1,5 +1,12 @@
 {
   "it": {
+    "support_links": {
+      "slack_title": "Slack della community",
+      "slack_description": "Discuti con altri utenti e con il team di Kestra",
+      "github_description": "Metti una stella al nostro progetto open source",
+      "help_center_title": "Centro assistenza",
+      "help_center_description": "Contatta il supporto per ricevere aiuto con il tuo account Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra è stato aggiornato alla versione {version} e potrebbe includere modifiche che richiedono aggiornamenti ai tuoi Flow.",
       "cta": "Vedi cosa è cambiato"
@@ -176,6 +183,23 @@
     "publish_draft": "Pubblica bozza",
     "draft": "Bozza",
     "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
+    "save_draft": "Salva bozza",
+    "flow_publish": {
+      "description": "Rende questa revisione attiva: i trigger la avviano, altri Flow possono chiamarla e i suoi fallimenti raggiungono i Flow di avviso.",
+      "done_title": "Pubblicato",
+      "failed": "Impossibile pubblicare questa bozza.",
+      "done": "La Revisione {revision} di {name} è attiva: i Trigger la avviano, altri Flow possono richiamarla e i suoi errori raggiungono i Flow di avviso."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Questo flow è una bozza",
+        "description": "Non ha revisioni pubblicate, quindi i trigger e altri Flow non lo avviano. Eseguilo dal Playground o pubblicalo per renderlo attivo."
+      },
+      "over_published": {
+        "title": "L'ultima revisione è una bozza",
+        "description": "Pianificazioni, webhook e altri flow eseguono ancora la revisione pubblicata finché non pubblichi questa bozza. I trigger del Flow non avviano il flow nel frattempo."
+      }
+    },
     "save task": "Salva Task",
     "saved": "Salvato con successo",
     "saved as draft": "Salvato come bozza con successo",
@@ -562,6 +586,7 @@
     "output": "Output",
     "flow_outputs": "Output del Flow",
     "eval": {
+      "failed": "Impossibile valutare l'espressione",
       "title": "Espressione di Debug",
       "preview": "Anteprima",
       "expression": "Espressione"
@@ -583,6 +608,7 @@
     },
     "topology-graph": {
       "retried": "Questo Task è stato ritentato",
+      "task-details": "Dettagli di {task}",
       "artifacts": "nessun artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientamento del grafico",
       "zoom-in": "Zoom avanti",
@@ -604,6 +630,8 @@
         "all-iterations": "Tutte le iterazioni",
         "iteration-index": "indice {index}",
         "iteration-value-index": "{value} · indice {index}",
+        "first-iteration": "Prima iterazione",
+        "last-iteration": "Ultima iterazione",
         "previous-iteration": "Iterazione precedente",
         "next-iteration": "Iterazione successiva",
         "previous-page": "Pagina precedente",
@@ -791,7 +819,8 @@
       "dialog_title": "Limiti di Concorrenza",
       "warning": "La modifica del contatore in esecuzione potrebbe corrompere la concurrency, quindi le esecuzioni potrebbero superare il limite consentito.",
       "queued": "In coda",
-      "save_error": "Impossibile aggiornare il limite di Concurrency, il valore precedente è stato mantenuto."
+      "save_error": "Impossibile aggiornare il limite di Concurrency, il valore precedente è stato mantenuto.",
+      "invalid_running_count": "Inserisci un numero intero tra 0 e {max}."
     },
     "flowConcurrency": {
       "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",
@@ -1164,6 +1193,12 @@
     "bulk force run": "Sei sicuro di voler forzare l'esecuzione di `{executionCount}` esecuzione/i?\n\nATTENZIONE: l'esecuzione forzata di un'esecuzione non è garantita e potrebbe creare esecuzioni di task duplicate.\n\nVerranno effettuate le seguenti transizioni:\n\n- I task CREATED verranno spostati nello stato RUNNING.\n- I task RUNNING verranno nuovamente inviati.\n- I task QUEUED verranno rimossi dalla coda.\n- I task PAUSED verranno ripresi.",
     "bulk restart": "Sei sicuro di voler riavviare {executionCount} esecuzione/i?",
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
+    "bulk action ineligible change state": "{count} di {total} esecuzioni selezionate non possono cambiare stato.",
+    "bulk action ineligible not state": "{count} di {total} esecuzioni selezionate non sono nello stato {state}.",
+    "bulk action ineligible not pausable": "{count} di {total} esecuzioni selezionate non possono essere messe in pausa.",
+    "bulk action ineligible not resumable": "{count} di {total} esecuzioni selezionate non possono essere riprese.",
+    "bulk action ineligible not terminated": "{count} di {total} esecuzioni selezionate non sono terminate.",
+    "bulk action ineligible already terminated": "{count} di {total} esecuzioni selezionate sono già terminate.",
     "cancel": "Annulla",
     "errorLogs": "Log di errore",
     "product_tour": "Tour del prodotto",
@@ -1424,6 +1459,7 @@
     "execution-include-non-terminated": "Includere esecuzioni non terminate?",
     "execution-warn-title": "Avviso Importante!",
     "execution-warn-deleting-still-running": "Raccomandiamo vivamente di annullare questa azione e terminare eventuali esecuzioni in corso prima. Eliminare esecuzioni non terminate può portare a problemi di concorrenza, incoerenze nella gestione delle dipendenze del flow e processi zombie sulla tua istanza, che possono degradare le prestazioni del sistema. Assicurati di comprendere appieno questi rischi prima di procedere con l'eliminazione.",
+    "execution-warn-non-terminated-count": "{count} di {total} execution selezionate non sono terminate.",
     "pluginPage": {
       "search": "Cerca tra {count}+ plugin",
       "searchTasks": "Cerca {count} task",
@@ -1519,6 +1555,7 @@
             "flow_default_tab": "Scheda Flow Predefinita",
             "triggers_default_tab": "Scheda Trigger Predefiniti",
             "playground": "Playground",
+            "open_docs_tab": "Apri la scheda Docs",
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
             "task_edit_default_mode": "Modalità di Modifica Task Predefinita",
             "flow_template": "Modello di flow predefinito"
@@ -1535,6 +1572,7 @@
             "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger.",
             "auto_refresh_interval": "Secondi tra gli aggiornamenti automatici dei dati nelle pagine elenco.",
             "playground": "Esegui i task singolarmente nel playground dell'editor.",
+            "open_docs_tab": "Apri la scheda Docs accanto all'editor. Si applica ai nuovi flow e ai flow che non hai mai aperto prima.",
             "task_edit_default_mode": "Come un task si apre di default dall'editor no-code.",
             "flow_template": "YAML aperto nell'editor quando crei un nuovo flow. L'id e il namespace possono essere omessi, poiché vengono generati automaticamente. Quando è vuoto, viene utilizzato il template configurato per l'istanza."
           },
@@ -2053,6 +2091,7 @@
       "title": "Inizia ad automatizzare con Kestra",
       "sub_title": "Fai clic sul pulsante Esegui per avviare l'esecuzione del tuo primo workflow.",
       "namespace_sub_title": "Esegui uno o più flow da questo namespace per popolare questa dashboard.",
+      "draft_sub_title": "Questo flow ha solo bozze: eseguilo dal Playground nell'editor, oppure pubblicalo per eseguirlo.",
       "need_help": "Hai bisogno di aiuto?"
     },
     "execution_guide": {
@@ -2144,6 +2183,7 @@
     "custom value": "Valore personalizzato",
     "chart": "Grafico",
     "no_code": {
+      "unknown_schema": "Schema sconosciuto",
       "toggle_pebble": "Attiva/disattiva editor Pebble",
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition",
       "adding": "+ Aggiungi un {what}",
@@ -2243,7 +2283,7 @@
       "label": "Scorciatoie da tastiera",
       "trigger_autocompletion": "Attiva autocompletamento",
       "command_palette": "Mostra la palette dei comandi",
-      "save_flow": "Salva flow",
+      "save_flow": "Salva bozza",
       "execute_flow": "Esegui flow",
       "toggle_ai_agent": "Attiva/disattiva agente AI",
       "move_line": "Sposta linea",
@@ -2576,6 +2616,8 @@
         },
         "notice": {
           "emptyTurn": "L'assistente non ha restituito una risposta. Per favore, riprova.",
+          "outputLimit": "L'assistente ha esaurito i token di output prima di poter rispondere. Accorcia il tuo messaggio o inizia una nuova chat.",
+          "contentFiltered": "Il provider AI ha bloccato la risposta. Riformula il tuo messaggio o rimuovi il contenuto che potrebbe aver attivato i filtri del provider.",
           "retry": "Riprova"
         },
         "cancelled": "Giro annullato",
@@ -3054,7 +3096,7 @@
         "no_match": "Nessuna corrispondenza",
         "open": "Apri {name}",
         "paste": "Incolla",
-        "save": "Salva il flow",
+        "save": "Salva bozza",
         "search_placeholder": "Digita un comando o cerca un task...",
         "title": "Menu comandi"
       },
@@ -3162,7 +3204,7 @@
         "paste": "Incolla",
         "redo": "Ripeti",
         "reorder": "Riordina su / giù",
-        "save": "Salva il flow",
+        "save": "Salva bozza",
         "step_into": "Espandi / entra in un gruppo",
         "step_out": "Comprimi / esci al genitore",
         "title": "Scorciatoie da tastiera",
@@ -3180,7 +3222,7 @@
       "undo": "Annulla",
       "upstream_outputs": "Output upstream",
       "open_in_tabs": "Apri in schede",
-      "open_mode_hint": "I task si aprono in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
+      "open_mode_hint": "Questo editor si apre in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
     },
     "blocks": "Blocchi",
     "move_panel_to_bottom": "Sposta il pannello in basso",
@@ -3244,6 +3286,8 @@
     "chart mode": {
       "counts": "Conteggi",
       "timeline": "Timeline"
-    }
+    },
+    "search_in_flow_source": "Cerca \"{query}\" nel codice sorgente del flusso",
+    "flows_matched_query": "{count} flusso con \"{query}\" nell'id o namespace. | {count} flussi con \"{query}\" nell'id o namespace."
   }
 }

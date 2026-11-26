@@ -106,8 +106,8 @@ export function useFlowRoot() {
     // which tab that navigation lands on.
     watch(() => [route.params.namespace, route.params.id], () => load())
 
-    watch(activeTabName, (newTab) => {
-        if (newTab === "overview") {
+    watch(() => `${activeTabName.value}|${flowKey()}`, () => {
+        if (activeTabName.value === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
                 const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
@@ -126,6 +126,16 @@ export function useFlowRoot() {
         },
         // Immediate because the route guard loads the flow before this page mounts, so the source may never change.
         {debounce: 1000, immediate: true},
+    )
+
+    watch(
+        () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision, flowStore.flow?.draft] as const,
+        () => {
+            if (flowStore.flow) {
+                flowStore.loadHasPublishedRevision(flowStore.flow).catch(() => undefined)
+            }
+        },
+        {immediate: true},
     )
 
     function setupLifecycle() {

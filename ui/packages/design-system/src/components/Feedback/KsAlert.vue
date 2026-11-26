@@ -47,7 +47,7 @@
         banner?: boolean
         /** Stretch the content across the row with no gap under the title, and clip a description that would widen the alert. */
         fill?: boolean
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
+    } & /* @vue-ignore */ (NativeAttributes<HTMLAttributes> & {onClose?: (event: MouseEvent) => void})>(), {
         closable: false,
         showIcon: true,
         banner: false,
@@ -99,6 +99,11 @@
 
         & .kel-alert__title {
             line-height: var(--ks-line-height-base);
+        }
+
+        /* Element Plus positions the close button absolutely, over the end of the content. */
+        &:has(.kel-alert__close-btn) .kel-alert__content {
+            padding-inline-end: var(--ks-spacing-6);
         }
 
         &:has(.ks-alert-action:not(:empty)) {

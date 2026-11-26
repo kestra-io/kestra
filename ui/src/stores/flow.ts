@@ -199,9 +199,9 @@ export const useFlowStore = defineStore("flow", () => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
-    // Publishing a draft, or demoting a flow to a draft, is a save even when the source is unchanged.
+    // Publishing a draft is a save even when the source is unchanged; a draft of an unchanged flow keeps nothing.
     function hasPendingSave(draft: boolean) {
-        return isCreating.value || haveChange.value || draft !== (flow.value?.draft ?? false)
+        return isCreating.value || haveChange.value || (!draft && (flow.value?.draft ?? false))
     }
 
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
@@ -263,8 +263,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (target) {
             const data = await loadFlow({namespace: target.namespace, id: target.id, store: false})
             if (!data?.source) return "blocked"
-            await saveFlow({flow: data.source, draft: false})
-            notifySaved(data.id, false)
+            notifySaved(await saveFlow({flow: data.source, draft: false}), false)
             return "saved"
         }
         if (!flowYaml.value && flow.value?.source) {
@@ -335,14 +334,17 @@ export const useFlowStore = defineStore("flow", () => {
 
     const toast = makeToast(t)
 
-    function notifySaved(name: string, draft: boolean) {
+    function notifySaved(saved: Flow, draft: boolean) {
         if (draft) {
             toast.success(
-                t("saved as draft done", {name}),
+                t("saved as draft done", {name: saved.id}),
                 t("saved as draft"),
             )
         } else {
-            toast.saved(name)
+            toast.success(
+                t("flow_publish.done", {name: saved.id, revision: saved.revision}),
+                t("flow_publish.done_title"),
+            )
         }
     }
 
@@ -402,7 +404,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (isCreating.value && !overrideFlow) {
             try {
                 const response = await createFlow({flow: flowSource ?? "", draft})
-                notifySaved(response.id, draft)
+                notifySaved(response, draft)
                 isCreating.value = false
             } catch (error: unknown) {
                 // Branch on the problem type alone. The status is deliberately not checked, so this keeps
@@ -416,7 +418,7 @@ export const useFlowStore = defineStore("flow", () => {
                         showCancelButton: true,
                     }).then(async () => {
                         const response = await saveFlow({flow: flowSource, draft})
-                        notifySaved(response.id, draft)
+                        notifySaved(response, draft)
                         isCreating.value = false
                         return true
                     })
@@ -434,7 +436,7 @@ export const useFlowStore = defineStore("flow", () => {
         } else {
             await saveFlow({flow: flowSource, draft})
                 .then((response: Flow) => {
-                    notifySaved(response.id, draft)
+                    notifySaved(response, draft)
                 })
         }
 
@@ -744,13 +746,11 @@ function deleteFlowAndDependencies(router: Router) {
 
                 if (deps.length) {
                     warning =
-                        "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
-                        "<p style=\"margin: 0;\">\n" +
+                        "\n\n<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n\n" +
                         t("dependencies delete flow") +
-                        "<ul>\n" +
+                        "\n\n<ul>\n" +
                         deps +
-                        "</ul>\n" +
-                        "</p>\n" +
+                        "\n</ul>\n\n" +
                         "</div>"
                 }
             }
@@ -860,6 +860,31 @@ function deleteFlowAndDependencies(router: Router) {
             revisionsCount.value = Array.isArray(data) ? data.length : 0
             return flowRevisions
         })
+    }
+
+    const hasPublishedRevision = ref<boolean>()
+    const publishedRevisionFlowKey = ref<string>()
+    const isDraftOnly = computed(() => Boolean(flow.value?.draft) && hasPublishedRevision.value === false)
+    const startPublishedRevisionCheck = latestRequest()
+
+    async function loadHasPublishedRevision(target: Flow) {
+        const isLatest = startPublishedRevisionCheck()
+        const key = `${target.namespace}/${target.id}`
+        const setHasPublishedRevision = (value: boolean | undefined) => {
+            hasPublishedRevision.value = value
+            publishedRevisionFlowKey.value = key
+        }
+        // a new draft of the same flow keeps the published revision under it, so there is nothing to refetch
+        if (publishedRevisionFlowKey.value === key && (hasPublishedRevision.value || (hasPublishedRevision.value === false && target.draft))) return
+        if (!target.draft || target.revision === 1) {
+            setHasPublishedRevision(!target.draft)
+            return
+        }
+        setHasPublishedRevision(undefined)
+        const flowRevisions = await loadRevisions({namespace: target.namespace, id: target.id, store: false})
+        if (isLatest()) {
+            setHasPublishedRevision(flowRevisions.some(revision => !revision.draft))
+        }
     }
 
     function loadFlowStats(options: { namespace: string, id: string }) {
@@ -1098,6 +1123,8 @@ function deleteFlowAndDependencies(router: Router) {
         invalidGraph,
         revisions,
         revisionsCount,
+        hasPublishedRevision,
+        isDraftOnly,
         dependenciesCount,
         filesSaveAll,
         hasDirtyEditorFiles,
@@ -1141,6 +1168,7 @@ function deleteFlowAndDependencies(router: Router) {
         fetchGraph,
         getGraphFromSourceResponse,
         loadRevisions,
+        loadHasPublishedRevision,
         loadFlowStats,
         clearFlowStats,
         validateFlow,

@@ -229,8 +229,36 @@ This is pure JSON — **no plugin JAR is ever downloaded here.**
 
 ### (c) Serve — merge on the fly
 
-`GET /api/v1/plugins/schemas/{type}?includeCatalog=true` (`PluginController`) starts from the
-**local** schema (installed plugins) and enriches it with the bundle via
+`GET /api/v1/plugins/schemas/{type}` (`PluginController`) serves the **compact local** schema
+(installed plugins, `JsonSchemaCache.getSchemaForType`) to every caller; `includeCatalog=true` only
+adds the bundle merge below. `JsonSchemaCompactor` produces it in four steps:
+
+- the `##### Examples` section of each description is dropped (catalog stubs included), so hover no
+  longer shows examples; the plugin documentation still does. `$dynamic` and `$group` are kept: the
+  no-code editors read them and the YAML language service ignores them;
+- the generator inlines the full subtype list at every `tasks` / `errors` / `finally` site, 17 of
+  them in the flow schema, so each type costs one `$ref` branch per site. Every bare `anyOf` that
+  repeats a list becomes a `$ref` to a `shared-subtypes` definition, which is an alias of the
+  definition already holding that list when there is one (`Task`);
+- a property typed as a single subtype (`Dag.tasks[].task`, `Pause.onPause`, `retry`) is emitted as
+  one `allOf: [$ref, annotation]` branch per subtype, repeating the property's title and
+  description each time. It becomes the annotation plus a one-branch `anyOf` referencing the list;
+- every task definition carries its own copy of the properties it inherits (`retry`, `timeout`,
+  `errors`, ...). A property schema that occurs more than once moves to one
+  `shared-property-<name>` definition, referenced from each site.
+
+The YAML language service merges a `$ref` target into the referencing node, so validation and
+completion are unchanged. Hover shows no examples, and differs in one more place: on a
+single-subtype property it shows the property's own title, where the inline form showed the
+parent's description once per subtype. The no-code editors read a schema without resolving `$ref`,
+so the UI store passes what it loads through `inflateCompactSchema` (`ui/src/utils/compactSchema.ts`),
+which puts every `shared-*` definition back at its sites by reference. A hoisted list never
+references its holding definition directly, since a property such as `Switch.cases` does in the
+generated schema and must stay a reference. An edition that overrides `isCatalogMergeAllowed()` to
+`false` (EE) never merges the bundle.
+
+The compact schema is then enriched with the bundle, once per generated schema (the merge is cached
+until the plugin registry changes), via
 `PluginSchemaBundleService.mergeWithBundle` — `mergeLightweightSubtypes`:
 
 - for **every occurrence** of a polymorphic subtype list in the local schema, it adds, for each
@@ -280,7 +308,7 @@ same discriminator layout. To keep that alignment (and shrink the bundle), `sche
 single-use `<Class>` + `<Class>-2` discriminator-wrapper pair into one definition, applied identically
 on both sides.
 
-The merged response uses the same **ETag revalidation** as the plain schema endpoint (the tag also
+The merged response uses the same **ETag revalidation** as the unmerged one (the tag also
 covers the bundle fingerprint): the browser re-downloads the big merged JSON only when the installed
 plugin set or the bundle changed, gets a cheap 304 otherwise, and a newly-installed plugin shows up
 on the next request.

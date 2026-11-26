@@ -58,21 +58,34 @@
                 </button>
 
                 <div v-if="isExpanded(section.key)" class="task-edit-data-chips">
-                    <template v-for="chip in section.chips" :key="chip.label">
+                    <template v-for="chip in section.chips" :key="`${chip.groupKey ?? ''}|${chip.label}`">
+                        <a
+                            v-if="chip.href"
+                            class="task-edit-data-chip task-edit-data-chip--link"
+                            :href="chip.href"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            :title="chip.detail"
+                        >
+                            <span class="task-edit-data-chip-label">{{ chip.label }}</span>
+                            <span v-if="chip.detail" class="task-edit-data-chip-detail">{{ chip.detail }}</span>
+                            <OpenInNew class="task-edit-data-chip-open" />
+                        </a>
                         <button
-                            v-if="interactive"
+                            v-else-if="interactive && chip.expr"
                             class="task-edit-data-chip"
                             type="button"
                             draggable="true"
                             :title="chip.expr"
                             @mousedown.prevent
-                            @click="chip.expr && emit('chip-activate', chip.expr, section.key)"
-                            @dragstart="chip.expr && onDragStart($event, chip.expr, section.key)"
+                            @click="emit('chip-activate', chip.expr, section.key)"
+                            @dragstart="onDragStart($event, chip.expr, section.key)"
                         >
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
                         </button>
-                        <div v-else class="task-edit-data-chip task-edit-data-chip--static">
+                        <div v-else class="task-edit-data-chip task-edit-data-chip--static" :title="chip.detail">
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
+                            <span v-if="chip.detail" class="task-edit-data-chip-detail">{{ chip.detail }}</span>
                             <span v-if="chip.type" class="task-edit-data-chip-type">{{ chip.type }}</span>
                         </div>
                     </template>
@@ -91,6 +104,7 @@
     import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME} from "./chipInsertion"
     import {KsNewBadge} from "@kestra-io/design-system"
     import Magnify from "vue-material-design-icons/Magnify.vue"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
@@ -131,7 +145,7 @@
         const q = filter.value.trim().toLowerCase()
         return props.sections
             .map(section => q
-                ? {...section, chips: section.chips.filter(c => c.label.toLowerCase().includes(q) || (c.expr ?? "").toLowerCase().includes(q))}
+                ? {...section, chips: section.chips.filter(c => c.label.toLowerCase().includes(q) || (c.expr ?? "").toLowerCase().includes(q) || (c.detail ?? "").toLowerCase().includes(q))}
                 : section)
             .filter(section => section.chips.length > 0)
     })
@@ -374,6 +388,29 @@
         font-size: var(--ks-font-size-xs);
         font-family: var(--ks-font-family-mono);
         color: var(--ks-text-primary);
+    }
+
+    .task-edit-data-chip--link {
+        text-decoration: none;
+    }
+
+    .task-edit-data-chip-detail {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: right;
+        font-size: var(--ks-font-size-xs);
+        font-family: var(--ks-font-family-mono);
+        color: var(--ks-text-muted);
+    }
+
+    .task-edit-data-chip-open {
+        display: flex;
+        flex-shrink: 0;
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-muted);
     }
 
     .task-edit-data-chip-type {

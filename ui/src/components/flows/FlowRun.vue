@@ -31,12 +31,13 @@
                         mode="wizard"
                         :hideRecapNavigation="!embed"
                         v-model="inputs"
-                        :executeClicked="executeClicked"
+                        :submitAttempted="executeClicked"
                         @confirm="onSubmit"
                         @ready="onInputsFormReady"
                         @update:model-value-no-default="values => inputsNoDefaults=values"
                         @update:checks="onChecksUpdate"
                         @update:on-recap="value => inputsOnRecap = value"
+                        @clear-validation="onClearValidation"
                     />
                     <KsText v-else type="info">
                         {{ $t('no inputs') }}
@@ -139,7 +140,7 @@
     import action from "../../models/action"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
-    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys} from "../../utils/executionLabels"
+    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys, type ExecutionLabelInput} from "../../utils/executionLabels"
     import {executeTask, normalizeInputValues} from "../../utils/submitTask"
     import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
@@ -204,7 +205,7 @@
         executionTrigger: []
         updateInputs: [inputs: Record<string, unknown>]
         updateInputsNoDefault: [inputs: Record<string, unknown>]
-        updateLabels: [labels: Label[]]
+        updateLabels: [labels: ExecutionLabelInput[]]
     }>()
 
     const {t} = useI18n({useScope: "global"})
@@ -222,7 +223,7 @@
     const openTab = ref("inputs")
     const inputs = ref<Record<string, unknown>>({})
     const inputsNoDefaults = ref<Record<string, unknown>>({})
-    const executionLabels = ref<Label[]>([])
+    const executionLabels = ref<ExecutionLabelInput[]>([])
     const scheduleDate = ref<string | undefined>(undefined)
     const breakpoints = ref<string[]>([])
     const taskIds = computed(() => {
@@ -372,6 +373,10 @@
 
     function onChecksUpdate(values: Check[]) {
         checks.value = values
+    }
+
+    function onClearValidation(fieldId: string) {
+        form.value?.clearValidate(fieldId)
     }
 
     let autoPrefilled = false

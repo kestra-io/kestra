@@ -53,7 +53,7 @@
         select: () => elInputRef.value?.select(),
     })
 
-    const props = defineProps<KsInputProps & /* @vue-ignore */ Omit<NativeAttributes<InputHTMLAttributes>, keyof KsInputProps>>()
+    const props = defineProps<KsInputProps & /* @vue-ignore */ (Omit<NativeAttributes<InputHTMLAttributes>, keyof KsInputProps> & {onInput?: (value: string) => void})>()
 
     // ElInput emits strings only, whatever type the bound value has.
     const emit = defineEmits<{

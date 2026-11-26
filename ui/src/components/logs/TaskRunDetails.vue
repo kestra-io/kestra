@@ -382,7 +382,7 @@
         fullHeight?: boolean
     }
 
-    const props = withDefaults(defineProps<Props>(), {
+    const props = withDefaults(defineProps<Props & /* @vue-ignore */ {onScroll?: (event: Event) => void}>(), {
         logCursor: undefined,
         levelToHighlight: undefined,
         levelFilter: () => ({value: "INFO", direction: "min" as const}),

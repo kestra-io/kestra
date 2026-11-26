@@ -113,6 +113,9 @@ export function latestVersionEntries(plugins: Plugin[]): Plugin[] {
 export const isEnterpriseEditionPlugin = (classOrGroup?: string | null): boolean =>
     Boolean(classOrGroup?.includes(".ee."))
 
+export const isPluginClass = (type?: string | null): boolean =>
+    Boolean(type?.includes("."))
+
 export const getPluginReleaseUrl = (pluginClass?: string): string | null => {
     const [, , groupId, pluginType] = pluginClass?.split(".") ?? []
 

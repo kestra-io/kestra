@@ -53,6 +53,8 @@ public final class TriggerState implements TriggerId {
     private final Blocker blockedBy;
     // the flow revision the trigger definition was last applied from, null for a state written before it existed.
     private final Integer flowRevision;
+    // a hash of the governed trigger definition the state was last computed from, null for a state written before it existed.
+    private final String definitionHash;
 
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -90,7 +92,7 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public static TriggerState of(TriggerId id, AbstractTrigger trigger, Integer vnode) {
-        return of(id, TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vnode);
+        return of(id, TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vnode, TriggerDefinitions.hash(trigger));
     }
 
     /**
@@ -99,10 +101,10 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, Integer vnode) {
-        return of(id, type, stopAfter, false, vnode);
+        return of(id, type, stopAfter, false, vnode, null);
     }
 
-    private static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, boolean sourceDisabled, Integer vnode) {
+    private static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, boolean sourceDisabled, Integer vnode, String definitionHash) {
         return new TriggerState(
             id.getTenantId(),
             id.getNamespace(),
@@ -124,7 +126,8 @@ public final class TriggerState implements TriggerId {
             null,
             0L,
             null,
-            null
+            null,
+            definitionHash
         );
     }
 
@@ -140,7 +143,34 @@ public final class TriggerState implements TriggerId {
             .sourceDisabled(trigger.isDisabled())
             .type(TriggerType.from(trigger))
             .flowRevision(flowRevision)
+            .definitionHash(TriggerDefinitions.hash(trigger))
             .build();
+    }
+
+    /**
+     * Records the given trigger as the definition this state was computed from, leaving the state itself unchanged.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState definitionHash(final Clock clock, final AbstractTrigger trigger) {
+        return update(clock).definitionHash(TriggerDefinitions.hash(trigger)).build();
+    }
+
+    /**
+     * Checks whether this state was computed from a definition other than the given trigger. A state with no
+     * recorded definition is never reported as changed.
+     */
+    public boolean hasDefinitionChanged(final AbstractTrigger trigger) {
+        return definitionHash != null && !definitionHash.equals(TriggerDefinitions.hash(trigger));
+    }
+
+    /**
+     * Checks whether this state is known to be computed from the given trigger. A state with no recorded definition
+     * is not, since its definition cannot be compared.
+     */
+    public boolean isDefinedBy(final AbstractTrigger trigger) {
+        return definitionHash != null && definitionHash.equals(TriggerDefinitions.hash(trigger));
     }
 
     public TriggerState flowRevision(final Clock clock, final int flowRevision) {
@@ -445,7 +475,8 @@ public final class TriggerState implements TriggerId {
             .executionId(executionId)
             .dispatchEpoch(dispatchEpoch)
             .blockedBy(blockedBy)
-            .flowRevision(flowRevision);
+            .flowRevision(flowRevision)
+            .definitionHash(definitionHash);
     }
 
     // Lombok hack to properly generate Javadoc

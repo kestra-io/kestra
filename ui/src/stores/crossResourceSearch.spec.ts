@@ -197,8 +197,9 @@ describe("useCrossResourceSearchStore", () => {
             ...flowFilters,
         })
 
-        await store.searchFlowSuggestion(
+        await store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -226,8 +227,9 @@ describe("useCrossResourceSearchStore", () => {
             ...flowFilters,
         })
 
-        await store.searchFlowSuggestion(
+        await store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -260,8 +262,9 @@ describe("useCrossResourceSearchStore", () => {
             ...flowFilters,
         })
 
-        await store.searchFlowSuggestion(
+        await store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -270,8 +273,9 @@ describe("useCrossResourceSearchStore", () => {
 
         expect(store.suggestedQuery).toBe("my_flow")
 
-        await store.searchFlowSuggestion(
+        await store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -292,7 +296,8 @@ describe("useCrossResourceSearchStore", () => {
 
         mockSearchFlowsBySourceCode.mockClear()
 
-        await store.searchFlowSuggestion({
+        await store.searchSuggestion({
+                types: ["flows"],
                 query: "myflow",
                 ...flowFilters,
         }, gen)
@@ -312,7 +317,8 @@ describe("useCrossResourceSearchStore", () => {
 
         mockSearchFlowsBySourceCode.mockClear()
 
-        await store.searchFlowSuggestion({
+        await store.searchSuggestion({
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
                 regex: true,
@@ -339,8 +345,9 @@ describe("useCrossResourceSearchStore", () => {
             ...flowFilters,
         })
 
-        const suggestionPromise = store.searchFlowSuggestion(
+        const suggestionPromise = store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -358,6 +365,221 @@ describe("useCrossResourceSearchStore", () => {
         })
         await suggestionPromise
         expect(store.suggestedQuery).toBeNull()
+    })
+
+    it("sets a separator suggestion when the alternative query matches a secret but no flow", async () => {
+        mockSearchFlowsBySourceCode
+            .mockResolvedValueOnce({results: []})
+            .mockResolvedValueOnce({results: []})
+        mockListSecrets
+            .mockResolvedValueOnce({results: []})
+            .mockResolvedValueOnce({results: [{key: "EU_WEST_2_ACCESS_KEY", namespace: "default"}]})
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["flows", "secrets"],
+            query: "eu-west-2",
+            ...flowFilters,
+        })
+
+        await store.searchSuggestion(
+            {
+                types: ["flows", "secrets"],
+                query: "eu-west-2",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBe("eu_west_2")
+        expect(mockListSecrets).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                filters: expect.arrayContaining([
+                    expect.objectContaining({
+                        field: "q",
+                        operation: "EQUALS",
+                        value: "eu_west_2",
+                    }),
+                ]),
+                page: 1,
+                size: 1,
+            }),
+        )
+    })
+
+    it("sets a separator suggestion when only secrets is selected", async () => {
+        mockListSecrets
+            .mockResolvedValueOnce({results: []})
+            .mockResolvedValueOnce({results: [{key: "MY_SECRET"}]})
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["secrets"],
+            query: "my-secret",
+            ...flowFilters,
+        })
+
+        await store.searchSuggestion(
+            {
+                types: ["secrets"],
+                query: "my-secret",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBe("my_secret")
+        expect(mockSearchFlowsBySourceCode).not.toHaveBeenCalled()
+    })
+
+    it("sets a separator suggestion when the alternative query matches KV", async () => {
+        mockListAllKeys
+            .mockResolvedValueOnce({results: []})
+            .mockResolvedValueOnce({results: [{key: "MY_KEY", namespace: "default"}]})
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["kv"],
+            query: "my-key",
+            ...flowFilters,
+        })
+
+        await store.searchSuggestion(
+            {
+                types: ["kv"],
+                query: "my-key",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBe("my_key")
+        expect(mockListAllKeys).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                filters: expect.arrayContaining([
+                    expect.objectContaining({
+                        field: "q",
+                        operation: "EQUALS",
+                        value: "my_key",
+                    }),
+                ]),
+                page: 1,
+                size: 1,
+            }),
+        )
+    })
+
+    it("sets a separator suggestion for namespace files when namespace filter is present", async () => {
+        mockSearchNamespaceFiles
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce(["script.py"])
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["files"],
+            query: "my-script",
+            namespace: "prod",
+            ...flowFilters,
+        })
+
+        await store.searchSuggestion(
+            {
+                types: ["files"],
+                query: "my-script",
+                namespace: "prod",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBe("my_script")
+        expect(mockSearchNamespaceFiles).toHaveBeenLastCalledWith({
+            namespace: "prod",
+            q: "my_script",
+        })
+    })
+
+    it("sets a separator suggestion for namespace files across namespaces when no namespace filter is present", async () => {
+        mockAutocompleteNamespaces.mockResolvedValue(["ns-a", "ns-b"])
+        mockSearchNamespaceFiles
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce(["script.py"])
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["files"],
+            query: "my-script",
+            ...flowFilters,
+        })
+
+        await store.searchSuggestion(
+            {
+                types: ["files"],
+                query: "my-script",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBe("my_script")
+        expect(mockSearchNamespaceFiles).toHaveBeenCalledWith({
+            namespace: "ns-b",
+            q: "my_script",
+        })
+    })
+
+    it("does not set a separator suggestion when no namespace files match across namespaces", async () => {
+        mockAutocompleteNamespaces.mockResolvedValue(["ns-a"])
+        mockSearchNamespaceFiles
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([])
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["files"],
+            query: "my-script",
+            ...flowFilters,
+        })
+
+        await store.searchSuggestion(
+            {
+                types: ["files"],
+                query: "my-script",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBeNull()
+    })
+
+    it("does not check namespace files for suggestions when namespaces count exceeds limit", async () => {
+        mockAutocompleteNamespaces.mockResolvedValue(
+            Array.from({length: 15}, (_, i) => `ns-${i}`),
+        )
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["files"],
+            query: "my-script",
+            ...flowFilters,
+        })
+
+        mockSearchNamespaceFiles.mockClear()
+
+        await store.searchSuggestion(
+            {
+                types: ["files"],
+                query: "my-script",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBeNull()
+        expect(mockSearchNamespaceFiles).not.toHaveBeenCalled()
     })
 
     it("discards a namespace-file retry once the query has moved on", async () => {

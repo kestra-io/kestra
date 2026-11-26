@@ -62,7 +62,7 @@ function mountList(root = "then") {
                 Creation: {template: "<div class='creation-stub' />"},
                 LeafBlockCard: {
                     name: "LeafBlockCard",
-                    props: ["block", "path", "label", "draggable", "dragOver", "runnable", "showDuplicate", "showIcon", "icons"],
+                    props: ["block", "path", "label", "draggable", "dragOver", "runnable", "showDuplicate", "icons"],
                     emits: ["select", "open-split", "delete", "duplicate", "run", "drag-start", "drag-over", "drop", "drag-end"],
                     template: "<div class='leaf-card' :data-path='path' />",
                 },
@@ -81,13 +81,6 @@ describe("TaskList (properties-panel sub-task list)", () => {
         expect(cards).toHaveLength(2)
         expect(cards[0].props("path")).toBe("tasks[0].then[0]")
         expect(cards[1].props("path")).toBe("tasks[0].then[1]")
-    })
-
-    test("hides the card icon for inputs only", () => {
-        const inputs = mountList("inputs").wrapper.findAllComponents({name: "LeafBlockCard"})
-        const subTasks = mountList().wrapper.findAllComponents({name: "LeafBlockCard"})
-        expect(inputs.every(card => card.props("showIcon") === false)).toBe(true)
-        expect(subTasks.every(card => card.props("showIcon") === true)).toBe(true)
     })
 
     test("select opens the task editor at the computed path and index", async () => {

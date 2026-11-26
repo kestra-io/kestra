@@ -1,4 +1,4 @@
-import {isScalar, parseDocument, Scalar, visit, type Node, type YAMLMap} from "yaml"
+import {isMap, isScalar, parseDocument, Scalar, visit, type Node, type YAMLMap} from "yaml"
 
 const SUBFLOW_TASK_TYPES = new Set<string>([
     "io.kestra.plugin.core.flow.Subflow",
@@ -45,9 +45,14 @@ export function resolveSubflowLinks(source: string): SubflowLink[] {
     } catch {
         return links
     }
+
     if (!document?.contents) {
         return links
     }
+
+    const parentNamespace = isMap(document.contents)
+        ? scalarString(document.contents.get("namespace", true))
+        : undefined
 
     visit(document, {
         Map(_key, node: YAMLMap) {
@@ -57,12 +62,20 @@ export function resolveSubflowLinks(source: string): SubflowLink[] {
             }
 
             const flowIdNode = node.get("flowId", true) as Node
-            const namespace = scalarString(node.get("namespace", true) as Node)
+            const namespaceValue = scalarString(node.get("namespace", true) as Node)
             const flowId = scalarString(flowIdNode)
-            if (!namespace || !flowId) {
+
+            if (!namespaceValue || !flowId) {
                 return
             }
-            if (isTemplated(namespace) || isTemplated(flowId)) {
+
+            // Resolve only the flow.namespace expression.
+            // Other dynamic namespace expressions remain unsupported.
+            const namespace = /^\{\{\s*flow\.namespace\s*\}\}$/.test(namespaceValue)
+                ? parentNamespace
+                : namespaceValue
+
+            if (!namespace || isTemplated(namespace) || isTemplated(flowId)) {
                 return
             }
 

@@ -49,7 +49,7 @@
 
     const model = defineModel<boolean>({default: false})
 
-    const props = withDefaults(defineProps<KsDialogProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsDialogProps>>(), {
+    const props = withDefaults(defineProps<KsDialogProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsDialogProps> & {onOpened?: () => void, onClosed?: () => void})>(), {
         large: false,
         formLayout: false,
         fill: false,

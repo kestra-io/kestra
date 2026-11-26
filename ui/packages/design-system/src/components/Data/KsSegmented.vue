@@ -1,9 +1,10 @@
 <template>
     <ElSegmented
-        v-model="model"
+        :modelValue="props.modelValue"
+        @update:modelValue="(value: string | number | boolean) => emit('update:modelValue', value as T)"
         :class="[props.disabled ? 'is-disabled' : undefined, props.variant === 'neutral' ? 'ks-segmented-neutral' : undefined, {'ks-segmented-equal': props.equalWidth}]"
         v-bind="({...filteredProps(), ...$attrs} as SegmentedProps)"
-        @change="emit('change', $event)"
+        @change="(value: string | number | boolean) => emit('change', value as T)"
     >
         <template v-if="$slots.default" #default="scope">
             <slot v-bind="scope" />
@@ -17,7 +18,7 @@
     </ElSegmented>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string | number | boolean = string">
     import type {NativeAttributes} from "../../utils/nativeAttributes"
     import {computed, type Component, type HTMLAttributes} from "vue"
     import {ElSegmented, type SegmentedProps} from "element-plus"
@@ -26,11 +27,10 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string | number | boolean>()
-
     type SegmentedObjectOption = {label: string; value: string | number | boolean; disabled?: boolean; icon?: Component}
 
     const props = defineProps<{
+        modelValue?: T
         options?: Array<string | number | SegmentedObjectOption>
         size?: "large" | "default" | "small"
         disabled?: boolean
@@ -41,10 +41,11 @@
     } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
-        change: [value: string | number | boolean]
+        "update:modelValue": [value: T]
+        change: [value: T]
     }>()
 
-    const filteredProps = useFilteredProps(props, ["variant", "equalWidth"])
+    const filteredProps = useFilteredProps(props, ["variant", "equalWidth", "modelValue"])
 
     // Only take over the item rendering when an icon is actually in play, so options without one
     // keep Element Plus's own markup.

@@ -65,6 +65,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 
 - Component styles are plain CSS. A component that needs Element Plus's base styles keeps them in a `<style lang="scss">` block holding only the `el-ns` and `theme-chalk` `@use` lines, placed before the plain `<style>` with its own rules, so each published component entry still ships its chalk CSS. Palette colours are `var(--ks-<family>-<step>)`, not `palette.$base-*`.
 - Don't write one rule per variant. When the tokens follow the variant's name (`--ks-status-<status>`), bind them with `v-bind()` and add a test that every name has its token, since the token lint cannot see a built name (`KsExecutionStatus`, `KsAlert`). When they don't, keep a typed table of `var(--ks-*)` strings in the component's `<script>`, where `kestra-tokens/no-undeclared-ks-token` still checks them, and bind that (`KsTag`, `KsButton`).
+- A control Element Plus positions absolutely (an alert's close button, a textarea's word count) gets room reserved for it, and the story combining it with neighbouring content asserts in `play` that their boxes do not overlap. `KsAlert`'s `#action` button sat under its close button while the story rendered exactly that pair without checking it.
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
 - Type a wrapper's props by extending the Element Plus interface (`interface KsInputProps extends Omit<InputProps, "modelValue">`) instead of copying them, and forward them with `usePassedProps`: Vue casts an omitted boolean to `false`, which would override defaults such as `validateEvent` or `teleported`. A default the wrapper sets in `withDefaults` was not passed, so bind it explicitly (`KsTag`'s `:effect`). Omit the `on*` keys some interfaces declare (`PopoverProps`): declared as props, they stop reaching the parent as listeners. In a `generic` wrapper, write the props as a local `type` alias, since an interface there cannot be exported and breaks declaration emit.
@@ -259,6 +260,8 @@ Rules:
 
 **A prop the component does not declare is a type error.** `vueCompilerOptions.checkUnknownProps` is on, with `data-*` and `aria-*` accepted everywhere. When vue-tsc rejects a prop, it is either dead (remove it) or forwarded through `$attrs` without a type (type it, as in "When extending the design system"). A library component missing a prop it forwards gets a typed re-export, like `DynamicScroller` below.
 
+**Keep `v-model`; fit the bound state to the child's model type.** When the model type rejects a binding (`undefined` from a cleared field, a wider union), widen the parent's ref (`ref<number | undefined>(0)`, read with `?? 0`) instead of splitting it into `:modelValue` + `@update:modelValue` with a conversion. Only a wrapper's binding to the Element Plus component it wraps stays split, since widening the wrapper's model would break every caller's `v-model` (`KsCheckbox`).
+
 **Import `DynamicScroller` from `src/utils/virtualScroller.ts`**, not from `vue-virtual-scroller`. `no-restricted-imports` rejects the direct import. Its 3.0.5 types (the latest) leave out what it forwards to `RecycleScroller` (`buffer`, `prerender`, `emitUpdate`, `updateInterval`, HTML attributes), and the re-export adds them.
 
 **Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`, in the `<script>` block and in template expressions alike.
@@ -411,7 +414,7 @@ If your `<style>` block needs to exist:
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
 | `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model`. A `#preview="{option}"` slot replaces the built-in miniature, `columns` lays the options out as a grid, `ariaLabel` names the radiogroup |
-| `KsDatePicker` / `KsTimePicker` | Date and time pickers; follow `KsInput`'s `--ks-input-border-color` |
+| `KsDatePicker` / `KsTimePicker` | Date and time pickers; follow `KsInput`'s `--ks-input-border-color`; `timezone` makes a single `KsDatePicker` show and edit its instant as a wall clock in that zone (pass `dateUtils.currentTimezone()` for the Time Zone preference) and hides "Now" |
 | `KsColorPicker` | Color picker; `alphaOnSurface` shows translucent colours over the page surface instead of a checkerboard |
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
@@ -476,7 +479,7 @@ If your `<style>` block needs to exist:
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants and icons. A state's colour is not a property of the state: read it with `State.getStateColor(name)`, which resolves `--ks-status-*`
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
 - `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
-- `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
+- `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `instantToPickerDate()` / `pickerDateToInstant()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
 - `escapeHtml()`, `cloneDeep()`, `deepMerge()`, `isDeepEqual()`, `isPlainObject()`, `getPath()`, `setPath()`, `groupBy()`, `mapValues()`, `debounce()`, `throttle()` — the general-purpose helpers that replaced lodash. `debounce`/`throttle` return a function carrying `cancel()` and `flush()`. Do not add `lodash` back for any of these

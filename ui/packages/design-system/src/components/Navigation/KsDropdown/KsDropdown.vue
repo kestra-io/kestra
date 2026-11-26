@@ -21,7 +21,10 @@
 
     defineOptions({inheritAttrs: false})
 
-    defineProps</* @vue-ignore */ NativeAttributes<ExtractPublicPropTypes<typeof dropdownProps> & HTMLAttributes>>()
+    defineProps</* @vue-ignore */ (NativeAttributes<ExtractPublicPropTypes<typeof dropdownProps> & HTMLAttributes> & {
+        onCommand?: (command: never) => void
+        onVisibleChange?: (visible: boolean) => void
+    })>()
 
     const POPPER_OPTIONS = {
         modifiers: [

@@ -169,4 +169,24 @@ describe("product tour store", () => {
         expect(restored.state.tour.introSeen).toBe(true)
         expect(restored.isGuidedActive).toBe(true)
     })
+
+    it("auto-starts only a tour that never ran and was never dismissed", async () => {
+        const {useProductTourStore} = await import("./productTour")
+        const store = useProductTourStore()
+
+        expect(store.canAutoStart).toBe(true)
+
+        store.dismissMenuEntry()
+        expect(store.canAutoStart).toBe(false)
+
+        store.reset()
+        store.startGuided(TOUR)
+        expect(store.canAutoStart).toBe(false)
+
+        store.skip()
+        expect(store.canAutoStart).toBe(false)
+
+        store.complete()
+        expect(store.canAutoStart).toBe(false)
+    })
 })

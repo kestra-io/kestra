@@ -207,3 +207,43 @@ describe("TaskEditData section count", () => {
         expect(count.text()).toBe("2")
     })
 })
+
+describe("TaskEditData chips without an expression", () => {
+    const policySections: DataSection[] = [
+        {key: "flowPolicies", label: "Policies", chips: [
+            {label: "enforce-oracle-user", href: "/ui/main/admin/policies/enforce-oracle-user", detail: "Tenant", groupKey: "p1"},
+            {label: "extract · username", detail: "svc_reporting", groupKey: "p1"},
+        ]},
+    ]
+
+    it("renders a chip with an href as a link opening in a new tab", () => {
+        const link = render({sections: policySections}).get("a.task-edit-data-chip--link")
+
+        expect(link.attributes("href")).toBe("/ui/main/admin/policies/enforce-oracle-user")
+        expect(link.attributes("target")).toBe("_blank")
+        expect(link.attributes("rel")).toContain("noopener")
+        expect(link.text()).toContain("Tenant")
+    })
+
+    it("renders a chip without an expr as static text even in interactive mode", async () => {
+        const wrapper = render({sections: policySections})
+        const staticChip = wrapper.get(".task-edit-data-chip--static")
+
+        expect(staticChip.text()).toContain("extract · username")
+        expect(staticChip.text()).toContain("svc_reporting")
+        await staticChip.trigger("click")
+        expect(wrapper.emitted("chip-activate")).toBeUndefined()
+    })
+
+    it("counts a section's entries by groupKey so a policy and its values count once", () => {
+        expect(render({sections: policySections}).get(".task-edit-data-count").text()).toBe("1")
+    })
+
+    it("matches the filter against a chip's detail", async () => {
+        const wrapper = render({sections: policySections})
+        await wrapper.get("input").setValue("svc_reporting")
+
+        expect(wrapper.text()).toContain("extract · username")
+        expect(wrapper.text()).not.toContain("enforce-oracle-user")
+    })
+})

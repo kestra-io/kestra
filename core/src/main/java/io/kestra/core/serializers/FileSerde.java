@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
+import com.google.common.annotations.VisibleForTesting;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -302,6 +304,42 @@ public final class FileSerde {
             sink.complete();
         }, FluxSink.OverflowStrategy.BUFFER)
             .doFinally(throwConsumer(ignored -> mappingIterator.close()));
+    }
+
+    /**
+     * Reads one record per request, for the first subscription only, instead of the whole stream up front, and closes the stream when the Flux completes, fails or is cancelled.
+     * A later subscription completes empty, without any error, and a Flux that is never subscribed leaves the stream open.
+     */
+    public static <T> Flux<T> readOnDemand(InputStream inputStream, Class<T> type) throws IOException {
+        return readOnDemand(createMappingIterator(DEFAULT_OBJECT_MAPPER, inputStream, type), inputStream);
+    }
+
+    @VisibleForTesting
+    static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator, Closeable source) {
+        var subscribed = new AtomicBoolean();
+        var records = Flux.<T, MappingIterator<T>> generate(
+            () -> mappingIterator,
+            (iterator, sink) ->
+            {
+                if (iterator.hasNext()) {
+                    sink.next(iterator.next());
+                }
+                if (!iterator.hasNext()) {
+                    sink.complete();
+                }
+                return iterator;
+            },
+            iterator ->
+            {
+                try (source) {
+                    iterator.close();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        );
+        // Only the first subscription reads, as with readAll; fusion would let a cancel close the parser during a read.
+        return Flux.defer(() -> subscribed.compareAndSet(false, true) ? records : Flux.<T> empty()).hide();
     }
 
     public static <T> Mono<Long> writeAll(Flux<T> values, SequenceWriter seqWriter) throws IOException {

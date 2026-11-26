@@ -14,6 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import io.kestra.webserver.services.posthog.PosthogService;
 
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -25,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -49,11 +52,9 @@ class PosthogChatModelListenerTest {
         ChatRequest chatRequest = mock(ChatRequest.class);
         when(chatRequest.modelName()).thenReturn("gemini-2.0-flash");
         when(chatRequest.parameters()).thenReturn(params);
-        when(chatRequest.messages()).thenReturn(List.of());
 
         AiMessage aiMessage = mock(AiMessage.class);
         when(aiMessage.hasToolExecutionRequests()).thenReturn(false);
-        when(aiMessage.text()).thenReturn("some response");
 
         ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
         when(metadata.id()).thenReturn("resp-id");
@@ -86,11 +87,9 @@ class PosthogChatModelListenerTest {
         ChatRequest chatRequest = mock(ChatRequest.class);
         when(chatRequest.modelName()).thenReturn("gemini-2.0-flash");
         when(chatRequest.parameters()).thenReturn(params);
-        when(chatRequest.messages()).thenReturn(List.of());
 
         AiMessage aiMessage = mock(AiMessage.class);
         when(aiMessage.hasToolExecutionRequests()).thenReturn(false);
-        when(aiMessage.text()).thenReturn("generated yaml");
 
         ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
         when(metadata.id()).thenReturn("resp-id");
@@ -146,11 +145,9 @@ class PosthogChatModelListenerTest {
         ChatRequest chatRequest = mock(ChatRequest.class);
         when(chatRequest.modelName()).thenReturn("gemini-2.0-flash");
         when(chatRequest.parameters()).thenReturn(params);
-        when(chatRequest.messages()).thenReturn(List.of());
 
         AiMessage aiMessage = mock(AiMessage.class);
         when(aiMessage.hasToolExecutionRequests()).thenReturn(false);
-        when(aiMessage.text()).thenReturn("generated yaml");
 
         ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
         when(metadata.id()).thenReturn("resp-id");
@@ -188,11 +185,9 @@ class PosthogChatModelListenerTest {
         ChatRequest chatRequest = mock(ChatRequest.class);
         when(chatRequest.modelName()).thenReturn("gemini-2.0-flash");
         when(chatRequest.parameters()).thenReturn(params);
-        when(chatRequest.messages()).thenReturn(List.of());
 
         AiMessage aiMessage = mock(AiMessage.class);
         when(aiMessage.hasToolExecutionRequests()).thenReturn(false);
-        when(aiMessage.text()).thenReturn("generated yaml");
 
         ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
         when(metadata.id()).thenReturn("resp-id");
@@ -214,5 +209,50 @@ class PosthogChatModelListenerTest {
         ArgumentCaptor<Map<String, Object>> propsCaptor = ArgumentCaptor.captor();
         verify(posthogService, times(1)).capture(eq("user-uid"), eq("$ai_generation"), propsCaptor.capture());
         assertThat(propsCaptor.getValue()).containsEntry("$ip", "1.2.3.4");
+    }
+
+    @Test
+    void shouldNotSendPromptOrResponseContentWhenCapturingGeneration() {
+        // Given
+        Map<Object, Object> attributes = new HashMap<>();
+        attributes.put(MetadataAppenderChatModelListener.PARENT_ID, "parent-id");
+        attributes.put(MetadataAppenderChatModelListener.SPAN_NAME, "FlowYamlBuilder");
+        attributes.put(MetadataAppenderChatModelListener.CONVERSATION_ID, "conv-id");
+        attributes.put(MetadataAppenderChatModelListener.USER_UID, "user-uid");
+
+        ChatRequestParameters params = mock(ChatRequestParameters.class);
+        ChatRequest chatRequest = mock(ChatRequest.class);
+        when(chatRequest.modelName()).thenReturn("gemini-2.0-flash");
+        when(chatRequest.parameters()).thenReturn(params);
+        lenient().when(chatRequest.messages()).thenReturn(List.of(
+            SystemMessage.from("confidential system prompt"),
+            UserMessage.from("confidential user prompt")
+        ));
+
+        AiMessage aiMessage = mock(AiMessage.class);
+        when(aiMessage.hasToolExecutionRequests()).thenReturn(false);
+        lenient().when(aiMessage.text()).thenReturn("confidential generated yaml");
+
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        when(metadata.id()).thenReturn("resp-id");
+
+        ChatResponse chatResponse = mock(ChatResponse.class);
+        when(chatResponse.aiMessage()).thenReturn(aiMessage);
+        when(chatResponse.metadata()).thenReturn(metadata);
+        when(chatResponse.tokenUsage()).thenReturn(null);
+
+        ChatModelResponseContext responseContext = mock(ChatModelResponseContext.class);
+        when(responseContext.chatRequest()).thenReturn(chatRequest);
+        when(responseContext.chatResponse()).thenReturn(chatResponse);
+        when(responseContext.attributes()).thenReturn(attributes);
+
+        // When
+        listener.onResponse(responseContext);
+
+        // Then
+        ArgumentCaptor<Map<String, Object>> propsCaptor = ArgumentCaptor.captor();
+        verify(posthogService, times(1)).capture(eq("user-uid"), eq("$ai_generation"), propsCaptor.capture());
+        assertThat(propsCaptor.getValue()).doesNotContainKeys("$ai_input", "$ai_output_choices");
+        assertThat(propsCaptor.getValue().toString()).doesNotContain("confidential");
     }
 }

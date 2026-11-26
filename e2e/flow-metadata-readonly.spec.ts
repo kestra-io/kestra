@@ -82,7 +82,7 @@ test.describe("Flow editor — immutable id and namespace", () => {
     async function createFlow(page: Page) {
         await seedEditor(page)
 
-        await page.getByRole("button", {name: "Save", exact: true}).click()
+        await page.getByRole("button", {name: "Save draft", exact: true}).click()
         await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
 
         // Land on the saved flow's editor explicitly, so the store is in the

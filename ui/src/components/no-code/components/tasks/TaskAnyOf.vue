@@ -58,6 +58,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue"
+    import {useI18n} from "vue-i18n"
     import {Schema} from "./getTaskComponent"
     import {isPlainObject} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -89,6 +90,7 @@
             : undefined,
     )
     const emit = defineEmits(["update:selectedSchema"])
+    const {t} = useI18n()
 
     const selectedSchema = ref<string>()
     const delayedSelectedSchema = ref<string>()
@@ -299,7 +301,7 @@
 
             if (!schemaRef) {
                 return {
-                    label: "Unknown Schema",
+                    label: t("no_code.unknown_schema"),
                     value: "",
                     id: "",
                 }

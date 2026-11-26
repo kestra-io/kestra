@@ -1,5 +1,12 @@
 {
   "ja": {
+    "support_links": {
+      "slack_title": "コミュニティSlack",
+      "slack_description": "他のユーザーやKestraチームと話し合う",
+      "github_description": "オープンソースプロジェクトにスターを付ける",
+      "help_center_title": "ヘルプセンター",
+      "help_center_description": "Enterpriseアカウントについてサポートに問い合わせる"
+    },
     "versionUpgradeNotice": {
       "message": "Kestraが{version}にアップグレードされました。これには、Flowの更新が必要となる破壊的変更が含まれている可能性があります。",
       "cta": "変更点を確認"
@@ -176,6 +183,23 @@
     "publish_draft": "下書きを公開",
     "draft": "下書き",
     "draft_flow_warning": "この flow の最新リビジョンは下書きです。実行は代わりに最新の公開済みリビジョンに対して行われます。最新の変更を実行するには、下書きを公開するか Playground から実行してください。",
+    "save_draft": "ドラフトを保存",
+    "flow_publish": {
+      "description": "このリビジョンを有効にします: Triggerが開始し、他のFlowが呼び出すことができ、その失敗はアラートFlowに到達します。",
+      "done_title": "公開済み",
+      "failed": "このドラフトを公開できませんでした。",
+      "done": "{name} のリビジョン {revision} が稼働中です: Trigger が開始し、他の Flow が呼び出すことができ、その障害はアラート Flow に到達します。"
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "このFlowはドラフトです",
+        "description": "公開されたリビジョンがないため、トリガーや他のFlowは開始しません。Playgroundから実行するか、公開してライブにしてください。"
+      },
+      "over_published": {
+        "title": "最新のリビジョンはドラフトです",
+        "description": "スケジュール、Webhook、その他のFlowは、このドラフトを公開するまで公開済みのリビジョンを実行します。その間、Flow triggerはFlowを開始しません。"
+      }
+    },
     "save task": "Taskを保存",
     "saved": "正常に保存されました",
     "saved as draft": "下書きとして保存しました",
@@ -562,6 +586,7 @@
     "output": "Output",
     "flow_outputs": "フロー出力",
     "eval": {
+      "failed": "式を評価できませんでした",
       "title": "デバッグ式",
       "preview": "プレビュー",
       "expression": "式"
@@ -583,6 +608,7 @@
     },
     "topology-graph": {
       "retried": "このTaskはリトライされました",
+      "task-details": "{task} の詳細",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",
       "graph-orientation": "グラフの向き",
       "zoom-in": "ズームイン",
@@ -604,6 +630,8 @@
         "all-iterations": "すべてのイテレーション",
         "iteration-index": "インデックス {index}",
         "iteration-value-index": "{value} · インデックス {index}",
+        "first-iteration": "最初のイテレーション",
+        "last-iteration": "最終イテレーション",
         "previous-iteration": "前のイテレーション",
         "next-iteration": "次のイテレーション",
         "previous-page": "前のページ",
@@ -791,7 +819,8 @@
       "dialog_title": "同時実行制限",
       "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。",
       "queued": "キュー済み",
-      "save_error": "Concurrency limit の更新に失敗しました。以前の値が保持されます。"
+      "save_error": "Concurrency limit の更新に失敗しました。以前の値が保持されます。",
+      "invalid_running_count": "0から{max}までの整数を入力してください。"
     },
     "flowConcurrency": {
       "loadError": "この flow の同時実行制限を読み込めませんでした。",
@@ -1164,6 +1193,12 @@
     "bulk force run": "`{executionCount}`件のExecutionを強制実行してもよろしいですか？\n\n警告：Executionの強制実行は保証されておらず、重複するTaskのExecutionが作成される可能性があります。\n\n以下の遷移が実行されます。\n\n- CREATED TaskはRUNNING状態に移行します。\n- RUNNING Taskは再送信されます。\n- QUEUED Taskはキューから削除されます。\n- PAUSED Taskは再開されます。",
     "bulk restart": "{executionCount}件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
+    "bulk action ineligible change state": "選択した実行{total}件のうち{count}件は状態を変更できません。",
+    "bulk action ineligible not state": "選択した実行{total}件のうち{count}件は{state}状態ではありません。",
+    "bulk action ineligible not pausable": "選択した実行{total}件のうち{count}件は一時停止できません。",
+    "bulk action ineligible not resumable": "選択した実行{total}件のうち{count}件は再開できません。",
+    "bulk action ineligible not terminated": "選択した実行{total}件のうち{count}件は終了していません。",
+    "bulk action ineligible already terminated": "選択した実行{total}件のうち{count}件はすでに終了しています。",
     "cancel": "キャンセル",
     "errorLogs": "エラーログ",
     "product_tour": "プロダクトツアー",
@@ -1424,6 +1459,7 @@
     "execution-include-non-terminated": "終了していない実行を含めますか？",
     "execution-warn-title": "重要なWarning!",
     "execution-warn-deleting-still-running": "この操作をキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。未終了のexecutionを削除すると、concurrencyの問題、flow依存関係管理の不整合、インスタンス上のゾンビプロセスを引き起こし、システムパフォーマンスを低下させる可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
+    "execution-warn-non-terminated-count": "選択したexecution {total}件のうち{count}件は終了していません。",
     "pluginPage": {
       "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
@@ -1519,6 +1555,7 @@
             "flow_default_tab": "デフォルト Flow タブ",
             "triggers_default_tab": "デフォルトトリガーのタブ",
             "playground": "プレイグラウンド",
+            "open_docs_tab": "Docsタブを開く",
             "auto_refresh_interval": "自動更新間隔",
             "task_edit_default_mode": "デフォルトのTask編集モード",
             "flow_template": "デフォルトのflowテンプレート"
@@ -1535,6 +1572,7 @@
             "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。",
             "auto_refresh_interval": "リストページでの自動データ更新の間隔（秒）。",
             "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
+            "open_docs_tab": "エディターの隣にあるDocsタブを開きます。新規Flowおよび以前に開いたことのないFlowに適用されます。",
             "task_edit_default_mode": "ノーコードエディターからタスクがデフォルトで開く方法。",
             "flow_template": "新しいflowを作成すると、エディターでYAMLが開きます。idとnamespaceは自動生成されるため、省略できます。これが空の場合、インスタンスに設定されているテンプレートが使用されます。"
           },
@@ -2053,6 +2091,7 @@
       "title": "Kestraで自動化を始めましょう",
       "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
       "namespace_sub_title": "このダッシュボードを埋めるために、このnamespaceから1つ以上のflowを実行します。",
+      "draft_sub_title": "このFlowにはドラフトしかありません。エディターのPlaygroundから実行するか、公開して実行してください。",
       "need_help": "お困りですか？"
     },
     "execution_guide": {
@@ -2144,6 +2183,7 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
+      "unknown_schema": "不明なスキーマ",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",
@@ -2243,7 +2283,7 @@
       "label": "キーボードショートカット",
       "trigger_autocompletion": "オートコンプリートをトリガー",
       "command_palette": "コマンドパレットを表示",
-      "save_flow": "フローを保存",
+      "save_flow": "ドラフトを保存",
       "execute_flow": "フローを実行",
       "toggle_ai_agent": "AIエージェントを切り替える",
       "move_line": "行を移動",
@@ -2576,6 +2616,8 @@
         },
         "notice": {
           "emptyTurn": "アシスタントが応答を返しませんでした。もう一度お試しください。",
+          "outputLimit": "アシスタントは回答する前に出力トークンを使い果たしました。メッセージを短くするか、新しいチャットを開始してください。",
+          "contentFiltered": "AIプロバイダーが応答をブロックしました。メッセージを言い換えるか、プロバイダーのフィルターをトリガーした可能性のあるコンテンツを削除してください。",
           "retry": "再試行"
         },
         "cancelled": "ターンがキャンセルされました",
@@ -3054,7 +3096,7 @@
         "no_match": "一致なし",
         "open": "{name}を開く",
         "paste": "貼り付け",
-        "save": "flowを保存",
+        "save": "ドラフトを保存",
         "search_placeholder": "コマンドを入力するか、taskを検索…",
         "title": "コマンドメニュー"
       },
@@ -3162,7 +3204,7 @@
         "paste": "貼り付け",
         "redo": "やり直し",
         "reorder": "並べ替え (上 / 下)",
-        "save": "flowを保存",
+        "save": "ドラフトを保存",
         "step_into": "グループを展開 / ステップイン",
         "step_out": "折りたたむ / 親にステップアウト",
         "title": "キーボードショートカット",
@@ -3180,7 +3222,7 @@
       "undo": "元に戻す",
       "upstream_outputs": "アップストリームのoutput",
       "open_in_tabs": "タブで開く",
-      "open_mode_hint": "タスクはデフォルトでモーダルで開きます。{settings}でタブをデフォルトに設定できます。"
+      "open_mode_hint": "このエディターはデフォルトでモーダルで開きます。{settings}でタブをデフォルトにできます。"
     },
     "blocks": "ブロック",
     "move_panel_to_bottom": "パネルを下に移動",
@@ -3244,6 +3286,8 @@
     "chart mode": {
       "counts": "カウント",
       "timeline": "タイムライン"
-    }
+    },
+    "search_in_flow_source": "フローソースで「{query}」を検索",
+    "flows_matched_query": "IDまたは名前空間に「{query}」を含む {count} 件のフロー。 | IDまたは名前空間に「{query}」を含む {count} 件のフロー。"
   }
 }

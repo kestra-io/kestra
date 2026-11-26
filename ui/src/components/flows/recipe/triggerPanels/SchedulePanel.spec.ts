@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {KsInput, KsSegmented, KsSelect} from "@kestra-io/design-system"
+import {KsInput, KsSelect} from "@kestra-io/design-system"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import {DEFAULT_CRON} from "../../../../utils/recipeToYaml"
@@ -15,7 +15,7 @@ describe("SchedulePanel", () => {
     it.each(presets)("recognizes the $frequency cron and displays its hint", ({frequency, cron}) => {
         const wrapper = i18nMount(SchedulePanel, {props: {cron}})
 
-        expect(wrapper.getComponent(KsSegmented).props("modelValue")).toBe(frequency)
+        expect(wrapper.getComponent({name: "KsSegmented"}).props("modelValue")).toBe(frequency)
         expect(wrapper.get(".hint").text()).toBe(`recipe.schedule.${frequency}_hint`)
         expect(wrapper.emitted("update:cron")).toBeUndefined()
     })
@@ -24,7 +24,7 @@ describe("SchedulePanel", () => {
         const cron = "*/15 8-18 * * 1-5"
         const wrapper = i18nMount(SchedulePanel, {props: {cron}})
 
-        expect(wrapper.getComponent(KsSegmented).props("modelValue")).toBe("custom")
+        expect(wrapper.getComponent({name: "KsSegmented"}).props("modelValue")).toBe("custom")
         expect(wrapper.getComponent(KsInput).props("modelValue")).toBe(cron)
         expect(wrapper.find(".hint").exists()).toBe(false)
         expect(wrapper.emitted("update:cron")).toBeUndefined()
@@ -33,7 +33,7 @@ describe("SchedulePanel", () => {
     it.each(presets)("writes the $frequency cron when that frequency is selected", async ({frequency, cron}) => {
         const wrapper = i18nMount(SchedulePanel, {props: {cron: "*/15 * * * *"}})
 
-        wrapper.getComponent(KsSegmented).vm.$emit("update:modelValue", frequency)
+        wrapper.getComponent({name: "KsSegmented"}).vm.$emit("update:modelValue", frequency)
         await wrapper.vm.$nextTick()
 
         expect(wrapper.emitted("update:cron")).toEqual([[cron]])
@@ -44,7 +44,7 @@ describe("SchedulePanel", () => {
     it.each(["0 9 * * *", "*/15 * * * *"])("leaves %s untouched when custom is selected", async (cron) => {
         const wrapper = i18nMount(SchedulePanel, {props: {cron}})
 
-        wrapper.getComponent(KsSegmented).vm.$emit("update:modelValue", "custom")
+        wrapper.getComponent({name: "KsSegmented"}).vm.$emit("update:modelValue", "custom")
         await wrapper.vm.$nextTick()
 
         expect(wrapper.getComponent(KsInput).props("modelValue")).toBe(cron)
@@ -58,13 +58,13 @@ describe("SchedulePanel", () => {
         await input.setValue("0 * * * *")
 
         expect(wrapper.emitted("update:cron")).toEqual([["0 * * * *"]])
-        expect(wrapper.getComponent(KsSegmented).props("modelValue")).toBe("hourly")
+        expect(wrapper.getComponent({name: "KsSegmented"}).props("modelValue")).toBe("hourly")
         expect(wrapper.get(".hint").text()).toBe("recipe.schedule.hourly_hint")
 
         await input.setValue("*/15 * * * *")
 
         expect(wrapper.emitted("update:cron")?.at(-1)).toEqual(["*/15 * * * *"])
-        expect(wrapper.getComponent(KsSegmented).props("modelValue")).toBe("custom")
+        expect(wrapper.getComponent({name: "KsSegmented"}).props("modelValue")).toBe("custom")
         expect(wrapper.find(".hint").exists()).toBe(false)
     })
 

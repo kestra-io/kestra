@@ -3,9 +3,9 @@ import {defineComponent, h, ref} from "vue"
 import {i18nMount} from "../../tests/unit/i18nMount"
 import {useBulkAction} from "./useBulkAction"
 
-const {success, error} = vi.hoisted(() => ({success: vi.fn(), error: vi.fn()}))
+const {success, requestError} = vi.hoisted(() => ({success: vi.fn(), requestError: vi.fn()}))
 
-vi.mock("../utils/toast", () => ({useToast: () => ({success, error})}))
+vi.mock("../utils/toast", () => ({useToast: () => ({success, requestError})}))
 
 const BULK_REFUSED = {
     type: "https://kestra.io/problems/bulk-validation-failed",
@@ -86,19 +86,7 @@ describe("useBulkAction", () => {
 
         await runBulkAction({byQuery: refused, byIds: refused, success: () => "done"})
 
-        expect(error).toHaveBeenCalledWith([{message: "flow not found"}, {message: "flow not found"}], "Bulk validation failed")
-        expect(success).not.toHaveBeenCalled()
-        expect(table.toggleAllUnselected).not.toHaveBeenCalled()
-        expect(table.reload).not.toHaveBeenCalled()
-    })
-
-    it("adds no second toast for a failure the global error toast already reports", async () => {
-        const {table, runBulkAction} = mountBulkAction(false)
-        const failed = () => Promise.reject(httpError(500, {type: "about:blank", title: "Internal Server Error", status: 500}))
-
-        await runBulkAction({byQuery: failed, byIds: failed, success: () => "done"})
-
-        expect(error).not.toHaveBeenCalled()
+        expect(requestError).toHaveBeenCalledWith(expect.objectContaining({status: 400}), [{message: "flow not found"}, {message: "flow not found"}], "Bulk validation failed")
         expect(success).not.toHaveBeenCalled()
         expect(table.toggleAllUnselected).not.toHaveBeenCalled()
         expect(table.reload).not.toHaveBeenCalled()

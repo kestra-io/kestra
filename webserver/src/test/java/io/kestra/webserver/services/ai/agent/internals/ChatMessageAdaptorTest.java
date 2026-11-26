@@ -5,6 +5,8 @@ import java.util.List;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Map;
 
@@ -133,6 +135,37 @@ class ChatMessageAdaptorTest {
         assertThat(ai.thinking()).isNull();
         assertThat(ai.attribute(ChatMessageAdaptor.THINKING_SIGNATURE_KEY, String.class)).isNull();
         assertThat(ChatMessageAdaptor.thinkingOf(ai)).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "null", "[]", "\"text\"", "42" })
+    void shouldReportArgumentsAsMalformedWhenTheyAreNotAJsonObject(final String arguments) {
+        assertThat(ChatMessageAdaptor.hasMalformedArguments(arguments)).isTrue();
+        assertThat(ChatMessageAdaptor.malformedArgumentsReason(arguments)).isEqualTo("the arguments must be a JSON object");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "  ", "{}", "{\"executionId\":\"abc\"}" })
+    void shouldNotReportArgumentsAsMalformedWhenTheyAreBlankOrAJsonObject(final String arguments) {
+        assertThat(ChatMessageAdaptor.hasMalformedArguments(arguments)).isFalse();
+    }
+
+    @Test
+    void shouldReplaceOnlyUnrecoverableArgumentsWhenMakingToolArgumentsValid() {
+        // Given — one valid call, one that only needs normalizing, and one that cannot be recovered
+        AiMessage ai = AiMessage.from("", List.of(
+            ToolExecutionRequest.builder().id("c1").name("read_execution").arguments("{\"executionId\":\"a\"}").build(),
+            ToolExecutionRequest.builder().id("c2").name("read_execution").arguments("{\"executionId\":\"b\",}").build(),
+            ToolExecutionRequest.builder().id("c3").name("read_execution").arguments("{\"executionId\": c}").build()
+        ));
+
+        // When
+        AiMessage valid = ChatMessageAdaptor.withValidToolArguments(ai);
+
+        // Then
+        assertThat(valid.toolExecutionRequests())
+            .extracting(ToolExecutionRequest::arguments)
+            .containsExactly("{\"executionId\":\"a\"}", "{\"executionId\":\"b\"}", "{}");
     }
 
     @Test

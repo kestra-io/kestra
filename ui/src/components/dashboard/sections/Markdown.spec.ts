@@ -1,10 +1,13 @@
 import {describe, it, expect, vi} from "vitest"
+import {flushPromises} from "@vue/test-utils"
+import {KsSkeleton} from "@kestra-io/design-system"
 vi.mock("vue-router", () => ({
     useRoute: () => ({name: "dashboards", params: {}, query: {}}),
 }))
 
+const chartPreview = vi.hoisted(() => vi.fn())
 vi.mock("../../../stores/dashboard", () => ({
-    useDashboardStore: () => ({generate: vi.fn(), chartPreview: vi.fn()}),
+    useDashboardStore: () => ({generate: vi.fn(), chartPreview}),
 }))
 
 import Markdown from "./Markdown.vue"
@@ -12,10 +15,10 @@ import en from "../../../translations/en.json"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 import type {Chart} from "../types"
 
-function mountMarkdown(chart: Chart) {
+function mountMarkdown(chart: Chart, showDefault = false) {
     return i18nMount(Markdown, {
         locales: en,
-        props: {chart, filters: [], showDefault: false},
+        props: {chart, filters: [], showDefault},
     })
 }
 
@@ -51,5 +54,27 @@ describe("dashboard sections/Markdown.vue", () => {
         expect(wrapper.text()).toContain("Export check")
         expect(wrapper.text()).not.toContain("chartOptions")
         expect(wrapper.text()).not.toContain("io.kestra.plugin.core.dashboard.chart.Markdown")
+    })
+
+    it("shows a skeleton, not the empty state, while the flow description loads", async () => {
+        let answer: (value: unknown) => void = () => {}
+        chartPreview.mockReturnValueOnce(new Promise((resolve) => answer = resolve))
+        const wrapper = mountMarkdown({
+            id: "description",
+            type: "io.kestra.plugin.core.dashboard.chart.Markdown",
+            source: {type: "FlowDescription", namespace: "company.team", flowId: "described"},
+            content: "id: description",
+        }, true)
+        await flushPromises()
+
+        expect(wrapper.findComponent(KsSkeleton).exists()).toBe(true)
+        expect(wrapper.text()).not.toContain("No description")
+
+        answer({results: [{description: "## Described flow"}]})
+        await flushPromises()
+        await vi.dynamicImportSettled()
+
+        expect(wrapper.findComponent(KsSkeleton).exists()).toBe(false)
+        expect(wrapper.text()).toContain("Described flow")
     })
 })

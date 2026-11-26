@@ -23,6 +23,7 @@ import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
+import io.kestra.core.services.FlowGovernanceNotifier;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -65,12 +66,14 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     private final MetricRegistry metricRegistry;
 
     private final MaintenanceService maintenanceService;
+    private final FlowGovernanceNotifier flowGovernanceNotifier;
 
     // Consumers
     // Thread-safe: mutated by the vNodes rebalance listener thread and iterated from doStop().
     private final List<Disposable> consumerDisposables = new CopyOnWriteArrayList<>();
 
     private Disposable maintenanceListener;
+    private Disposable governanceListener;
 
     // Published as an immutable snapshot: written by the vNodes-assignment consumer and by the
     // teardown, while the scheduler endpoint and the trigger monitor read it from their own threads.
@@ -86,8 +89,20 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         final TriggerEventQueue triggerEventQueue,
         @Named("cached") final TriggerStateStore triggerStateStore,
         final MetricRegistry metricRegistry,
-        final MaintenanceService maintenanceService) {
-        this(schedulerEventLoopFactory, vNodesAssigner, executorsUtils, eventPublisher, triggerEventQueue, triggerStateStore, metricRegistry, maintenanceService, SchedulerClock.getClock());
+        final MaintenanceService maintenanceService,
+        final FlowGovernanceNotifier flowGovernanceNotifier) {
+        this(
+            schedulerEventLoopFactory,
+            vNodesAssigner,
+            executorsUtils,
+            eventPublisher,
+            triggerEventQueue,
+            triggerStateStore,
+            metricRegistry,
+            maintenanceService,
+            flowGovernanceNotifier,
+            SchedulerClock.getClock()
+        );
     }
 
     @VisibleForTesting
@@ -99,6 +114,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         final TriggerStateStore triggerStateStore,
         final MetricRegistry metricRegistry,
         final MaintenanceService maintenanceService,
+        final FlowGovernanceNotifier flowGovernanceNotifier,
         final Clock clock) {
         super(ServiceType.SCHEDULER, eventPublisher);
         this.schedulerEventLoopFactory = schedulerEventLoopFactory;
@@ -108,6 +124,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         this.triggerStateStore = triggerStateStore;
         this.metricRegistry = metricRegistry;
         this.maintenanceService = maintenanceService;
+        this.flowGovernanceNotifier = flowGovernanceNotifier;
         this.clock = clock;
         this.setState(ServiceState.CREATED);
     }
@@ -221,6 +238,8 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                 setState(ServiceState.RUNNING);
             }
         });
+
+        governanceListener = flowGovernanceNotifier.listen(inScope -> schedulingLoops.forEach(schedulingLoop -> schedulingLoop.onGovernanceChanged(inScope)));
 
     }
 
@@ -361,6 +380,9 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         // recreate consumers or resubmit scheduling loops concurrently with the teardown below.
         if (this.maintenanceListener != null) {
             this.maintenanceListener.dispose();
+        }
+        if (this.governanceListener != null) {
+            this.governanceListener.dispose();
         }
         if (rebalanceDisposable != null) {
             rebalanceDisposable.dispose();

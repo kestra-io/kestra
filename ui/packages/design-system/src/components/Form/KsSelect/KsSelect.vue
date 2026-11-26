@@ -77,7 +77,7 @@
         singleLineTags?: boolean
     }
 
-    const props = withDefaults(defineProps<KsSelectProps & /* @vue-ignore */ Omit<NativeAttributes<SelectPropsPublic & HTMLAttributes>, keyof KsSelectProps>>(), {
+    const props = withDefaults(defineProps<KsSelectProps & /* @vue-ignore */ (Omit<NativeAttributes<SelectPropsPublic & HTMLAttributes>, keyof KsSelectProps> & {onVisibleChange?: (visible: boolean) => void})>(), {
         placeholder: undefined,
         size: undefined,
         clearable: undefined,

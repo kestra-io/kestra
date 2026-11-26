@@ -139,7 +139,6 @@
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
-    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 
     const flowStore = useFlowStore()
 
@@ -353,7 +352,7 @@
             if (!cancelled) {
                 revisionLeftText.value = undefined
                 revisionRightText.value = undefined
-                if (!isReportedCentrally(error as KestraHttpError)) toast.error(asProblem(error)?.detail ?? t("error"))
+                toast.requestError(error, asProblem(error)?.detail ?? t("error"))
             }
         } finally {
             if (!cancelled) isLoadingRevisions.value = false
@@ -473,6 +472,7 @@
 
         .revision-label {
             display: flex;
+            align-items: center;
             gap: var(--ks-spacing-2);
         }
     }

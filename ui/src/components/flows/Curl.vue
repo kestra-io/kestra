@@ -35,7 +35,7 @@
     import {dayjs, KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {Flow} from "../../stores/flow"
-    import {Label} from "../../stores/executions"
+    import type {ExecutionLabelInput} from "../../utils/executionLabels"
     import {flattenInputs} from "../../utils/inputs"
 
     type DateInput = Parameters<typeof dayjs>[0]
@@ -45,7 +45,7 @@
     const props = withDefaults(defineProps<{
         flow: Flow;
         inputs?: Record<string, unknown>;
-        executionLabels?: Label[];
+        executionLabels?: ExecutionLabelInput[];
         verbose?: boolean;
         replay?: {executionId: string; taskRunId?: string; revision?: number};
     }>(),{
@@ -129,7 +129,7 @@
         }
 
         const queryParams = (props.executionLabels || [])
-            .filter((label) => label.key && label.value)
+            .filter((label): label is {key: string; value: string} => Boolean(label.key && label.value))
             .map((label) => generateExecutionLabel(label.key, label.value))
 
         let ret = `${origin}/executions/${props.flow.namespace}/${props.flow.id}`

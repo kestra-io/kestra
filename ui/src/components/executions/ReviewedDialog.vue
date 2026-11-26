@@ -48,7 +48,7 @@
     const props = defineProps<{
         execution: Execution;
         taskRun: ApprovalTaskRun;
-    }>()
+    } & /* @vue-ignore */ {onClosed?: () => void}>()
 
     const visible = defineModel<boolean>({default: false})
 

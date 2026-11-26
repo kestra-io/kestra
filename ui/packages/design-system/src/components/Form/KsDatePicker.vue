@@ -1,24 +1,24 @@
 <template>
     <span ref="host" class="ks-picker-host">
         <ElDatePicker
-            :modelValue="(model as DatePickerPropsPublic['modelValue'])"
-            v-bind="({...filteredProps(), ...pickerAttrs()} as DatePickerPropsPublic)"
-            @update:modelValue="(value: T) => (model = value)"
-            @change="emit('change', $event)"
+            :modelValue="(shown as DatePickerPropsPublic['modelValue'])"
+            v-bind="({...filteredProps(), ...pickerAttrs(), ...zonedAttrs} as DatePickerPropsPublic)"
+            @update:modelValue="(value: T) => emit('update:modelValue', fromPicker(value))"
+            @change="(value: DatePickerPropsPublic['modelValue']) => emit('change', fromPicker(value as T))"
         />
     </span>
 </template>
 
 <script setup lang="ts" generic="T">
-    import {ElDatePicker, type DatePickerPropsPublic, type ElTooltipContentProps} from "element-plus"
+    import {type DatePickerPropsPublic, type ElTooltipContentProps} from "element-plus"
+    import {ElDatePicker} from "../../utils/elementPlusListeners"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {useInputAttrs} from "../../composables/useInputAttrs"
     import type {NativeAttributes} from "../../utils/nativeAttributes"
-    import type {HTMLAttributes} from "vue"
+    import {computed, type HTMLAttributes} from "vue"
+    import {instantToPickerDate, pickerDateToInstant} from "../../utils/date"
 
     defineOptions({inheritAttrs: false})
-
-    const model = defineModel<T>()
 
     type KsDatePickerProps = {
         type?: string
@@ -30,11 +30,13 @@
         size?: "large" | "default" | "small"
         startPlaceholder?: string
         endPlaceholder?: string
+        /** Shows and edits a single date as a wall clock in this IANA zone instead of the browser's; the model stays an instant. */
+        timezone?: string
     }
 
     type PickerTooltipProps = Pick<ElTooltipContentProps, "teleported">
 
-    const props = withDefaults(defineProps<KsDatePickerProps & /* @vue-ignore */ Omit<NativeAttributes<DatePickerPropsPublic & PickerTooltipProps & HTMLAttributes>, keyof KsDatePickerProps | "modelValue">>(), {
+    const props = withDefaults(defineProps<KsDatePickerProps & {modelValue?: T} & /* @vue-ignore */ Omit<NativeAttributes<DatePickerPropsPublic & PickerTooltipProps & HTMLAttributes>, keyof KsDatePickerProps | "modelValue">>(), {
         type: undefined,
         placeholder: undefined,
         clearable: undefined,
@@ -42,14 +44,25 @@
         size: undefined,
         startPlaceholder: undefined,
         endPlaceholder: undefined,
+        timezone: undefined,
     })
 
     const emit = defineEmits<{
+        "update:modelValue": [value: T]
         change: [value: T]
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["modelValue", "timezone"])
     const {pickerAttrs} = useInputAttrs("host")
+
+    const shown = computed(() => props.timezone ? instantToPickerDate(props.modelValue, props.timezone) : props.modelValue)
+
+    // Element Plus fills "Now" with the browser's wall clock, which would then be read in the other zone.
+    const zonedAttrs = computed(() => props.timezone ? {showNow: false} : {})
+
+    function fromPicker(value: T): T {
+        return props.timezone ? pickerDateToInstant(value as Date | null, props.timezone) as T : value
+    }
 </script>
 
 <style lang="scss">

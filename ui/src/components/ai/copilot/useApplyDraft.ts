@@ -235,7 +235,7 @@ export function useApplyDraft() {
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
                 handled(e)
-                await useClient().put(`${apiUrl()}/dashboards/${id}`, draft.yaml, yaml)
+                await useClient().put(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`, draft.yaml, yaml)
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
             return true

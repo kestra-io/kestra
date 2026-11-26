@@ -15,7 +15,7 @@
                 v-if="showLegend"
                 :items="legendItems"
                 :chart="ksBarRef"
-                :formatValue="isDurationAgg() ? durationUtils.humanDuration : undefined"
+                :formatValue="isDurationAgg() ? durationUtils.humanDuration : formatNumber"
                 @toggle="onLegendToggle"
             />
             <KsBar
@@ -54,7 +54,7 @@
     import {ChartFeature, KsBar, KsSkeleton, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, rankStackedBars, useLegendToggle, toEchartsParams, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, formatNumber, rankStackedBars, useLegendToggle, toEchartsParams, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -187,7 +187,7 @@
                 axisLine: {show: true, lineStyle: {color: cssVar("--ks-border-default")}},
                 axisLabel: {
                     ...axisLabelStyle,
-                    ...(isDurationAgg() ? {formatter: (v: number) => durationUtils.humanDuration(v)} : {}),
+                    formatter: isDurationAgg() ? (v: number) => durationUtils.humanDuration(v) : formatNumber,
                 },
             },
             yAxis: {
@@ -219,7 +219,7 @@
                         const rows = nonZero
                             .map((p) => {
                                 const val = typeof p.value === "number" ? p.value : (p.value as {value?: number} | undefined)?.value ?? 0
-                                const formatted = isDurationAgg() ? durationUtils.humanDuration(val) : val
+                                const formatted = isDurationAgg() ? durationUtils.humanDuration(val) : formatNumber(val)
                                 return `<span style="color:${cssVar("--ks-text-secondary")}">${escapeHtml(p.seriesName ?? "")}</span>: ${formatted}`
                             })
                             .join("<br/>")
@@ -227,7 +227,7 @@
                             const val = typeof p.value === "number" ? p.value : (p.value as {value?: number} | undefined)?.value ?? 0
                             return acc + val
                         }, 0)
-                        const formattedTotal = isDurationAgg() ? durationUtils.humanDuration(total) : total
+                        const formattedTotal = isDurationAgg() ? durationUtils.humanDuration(total) : formatNumber(total)
                         return `<b>${escapeHtml(categoryName)}</b><br/>${rows}<br/><span style="color:${cssVar("--ks-text-secondary")}">${t("Total")}</span>: ${formattedTotal}`
                     },
                 },

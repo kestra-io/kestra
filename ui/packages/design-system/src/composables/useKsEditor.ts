@@ -313,6 +313,7 @@ export function useKsEditor(
                 model.setValue(await valueSupplier())
             }
         }
+        emittedValue = undefined
         localEditor.value?.setModel(model)
         return model
     }
@@ -619,6 +620,7 @@ export function useKsEditor(
     }
 
     function destroy() {
+        emittedValue = undefined
         markerListenerDisposable?.dispose()
         suggestWidgetIcons.teardown()
         disposeCompletions.value?.()

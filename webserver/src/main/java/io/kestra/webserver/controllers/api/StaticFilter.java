@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,6 +43,8 @@ public class StaticFilter implements HttpServerFilter {
     @Value("${kestra.webserver.html-head}")
     protected String htmlHead;
 
+    private volatile String indexHtml;
+
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         return Publishers
@@ -53,25 +56,26 @@ public class StaticFilter implements HttpServerFilter {
                             // jar mode
                             response.getBody(StreamedFile.class)
                                 .filter(n -> n.getMediaType().getName().equals(MediaType.TEXT_HTML))
-                                .map(throwFunction(n -> IOUtils.toString(n.getInputStream(), StandardCharsets.UTF_8))),
+                                .map(throwFunction(n ->
+                                {
+                                    try (InputStream in = n.getInputStream()) {
+                                        return indexHtml(in);
+                                    }
+                                })),
                             // debug mode
                             response.getBody(SystemFile.class)
                                 .filter(n -> n.getFile().getAbsoluteFile().toString().endsWith("ui/index.html"))
-                                .map(
-                                    throwFunction(
-                                        n -> IOUtils.toString(
-                                            Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
-                                            StandardCharsets.UTF_8
-                                        )
-                                    )
-                                )
+                                .map(throwFunction(n ->
+                                {
+                                    try (InputStream in = Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html"))) {
+                                        return indexHtml(in);
+                                    }
+                                }))
                         )
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .map(s ->
+                        .map(finalBody ->
                         {
-                            String finalBody = replace(s);
-
                             return (MutableHttpResponse<?>) HttpResponse
                                 .ok()
                                 .body(finalBody)
@@ -85,6 +89,16 @@ public class StaticFilter implements HttpServerFilter {
                     throw new RuntimeException(e);
                 }
             });
+    }
+
+    // index.html never changes at runtime: inflate it from the jar once, not on every /ui/** request
+    private String indexHtml(InputStream in) throws IOException {
+        String html = indexHtml;
+        if (html == null) {
+            html = replace(IOUtils.toString(in, StandardCharsets.UTF_8));
+            indexHtml = html;
+        }
+        return html;
     }
 
     private String replace(String line) {

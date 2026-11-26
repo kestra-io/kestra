@@ -1231,7 +1231,9 @@
       "published": "Publié en tant que révision {revision}",
       "viewChanges": "Voir les modifications",
       "discard": "Supprimer le brouillon",
-      "discardConfirm": "Annuler le brouillon et revenir à la révision {revision} ? Vos modifications non publiées seront perdues."
+      "discardConfirm": "Annuler le brouillon et revenir à la révision {revision} ? Vos modifications non publiées seront perdues.",
+      "executeBlocked": "Exécuter lance la révision publiée. Publiez d'abord vos modifications, ou essayez-les dans le Playground.",
+      "executeBlockedInvalid": "Corrigez {count} erreur, puis publiez pour appliquer vos modifications. | Corrigez {count} erreurs, puis publiez pour appliquer vos modifications."
     },
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exporté(s)",

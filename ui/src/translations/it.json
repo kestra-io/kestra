@@ -1231,7 +1231,9 @@
       "published": "Pubblicato come revisione {revision}",
       "viewChanges": "Visualizza modifiche",
       "discard": "Scarta bozza",
-      "discardConfirm": "Scartare la bozza e tornare alla revisione {revision}? Le modifiche non pubblicate andranno perse."
+      "discardConfirm": "Scartare la bozza e tornare alla revisione {revision}? Le modifiche non pubblicate andranno perse.",
+      "executeBlocked": "Esegui avvia la revisione pubblicata. Pubblica prima le tue modifiche, oppure provale nel Playground.",
+      "executeBlockedInvalid": "Correggi {count} errore, quindi pubblica per eseguire le tue modifiche. | Correggi {count} errori, quindi pubblica per eseguire le tue modifiche."
     },
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
     "flows exported": "<code>{count}</code> Flow esportati",

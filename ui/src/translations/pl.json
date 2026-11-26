@@ -1231,7 +1231,9 @@
       "published": "Opublikowano jako wersja {revision}",
       "viewChanges": "Wyświetl zmiany",
       "discard": "Odrzuć szkic",
-      "discardConfirm": "Odrzucić szkic i wrócić do wersji {revision}? Twoje nieopublikowane zmiany zostaną utracone."
+      "discardConfirm": "Odrzucić szkic i wrócić do wersji {revision}? Twoje nieopublikowane zmiany zostaną utracone.",
+      "executeBlocked": "Egzekucja uruchamia opublikowaną wersję. Najpierw opublikuj swoje zmiany lub wypróbuj je w trybie Playground.",
+      "executeBlockedInvalid": "Napraw {count} błąd, a następnie opublikuj, aby uruchomić zmiany. | Napraw {count} błędy, a następnie opublikuj, aby uruchomić zmiany. | Napraw {count} błędów, a następnie opublikuj, aby uruchomić zmiany."
     },
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> Flowów?",
     "flows exported": "Wyeksportowano <code>{count}</code> Flowów",

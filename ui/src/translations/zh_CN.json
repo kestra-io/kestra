@@ -1231,7 +1231,9 @@
       "published": "以修订版 {revision} 发布",
       "viewChanges": "查看更改",
       "discard": "放弃草稿",
-      "discardConfirm": "放弃草稿并返回版本 {revision}？您未发布的更改将丢失。"
+      "discardConfirm": "放弃草稿并返回版本 {revision}？您未发布的更改将丢失。",
+      "executeBlocked": "执行将运行已发布的修订版本。请先发布您的更改，或在 Playground 中尝试。",
+      "executeBlockedInvalid": "修复 {count} 个错误，然后发布以运行您的更改。"
     },
     "flow export": "确定要导出 <code>{flowCount}</code> 个流程吗？",
     "flows exported": "<code>{count}</code> 个 flow 已导出",

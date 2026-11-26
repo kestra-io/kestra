@@ -1231,7 +1231,9 @@
       "published": "Publicado como revisão {revision}",
       "viewChanges": "Ver alterações",
       "discard": "Descartar rascunho",
-      "discardConfirm": "Descartar o rascunho e voltar para a revisão {revision}? Suas alterações não publicadas serão perdidas."
+      "discardConfirm": "Descartar o rascunho e voltar para a revisão {revision}? Suas alterações não publicadas serão perdidas.",
+      "executeBlocked": "Executar executa a revisão publicada. Publique suas alterações primeiro ou teste-as no Playground.",
+      "executeBlockedInvalid": "Corrija {count} erro e publique para executar suas alterações. | Corrija {count} erros e publique para executar suas alterações."
     },
     "flow export": "Tem certeza de que deseja exportar <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exportado(s)",

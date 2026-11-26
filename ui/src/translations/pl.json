@@ -1225,6 +1225,7 @@
         "tooltip": "Zapisywanie zmian jako szkic. Kliknij, aby porównać z opublikowaną wersją."
       },
       "savedLocally": {
+        "banner": "Zmiany w Flow są przechowywane w tej przeglądarce i zapisywane jako szkic, gdy serwer odpowie. Ten baner zniknie, gdy to nastąpi.",
         "label": "Zapisano lokalnie",
         "tooltip": "Serwer jest nieosiągalny. Twoje zmiany są przechowywane w tej przeglądarce i zostaną zapisane jako szkic, gdy serwer będzie ponownie dostępny."
       },
@@ -1247,7 +1248,9 @@
     },
     "testRun": {
       "label": "Testowy run",
-      "runPublished": "Uruchom opublikowaną wersję"
+      "runPublished": "Uruchom opublikowaną wersję",
+      "dialogTitle": "Testowy run {id}",
+      "dialogDescription": "Uruchamia szkic na ekranie jako egzekucję Playground. Harmonogramy, webhooki i Subflowy nadal używają opublikowanej wersji."
     },
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> Flowów?",
     "flows exported": "Wyeksportowano <code>{count}</code> Flowów",

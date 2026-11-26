@@ -1225,6 +1225,7 @@
         "tooltip": "Guardando tus cambios como borrador. Haz clic para comparar con la revisión publicada."
       },
       "savedLocally": {
+        "banner": "Tus cambios en el Flow se guardan en este navegador y se guardan como un borrador una vez que el servidor responde. Este banner desaparecerá cuando lo haga.",
         "label": "Guardado localmente",
         "tooltip": "El servidor es inalcanzable. Tus cambios se guardan en este navegador y se guardarán como borrador una vez que vuelva a estar en línea."
       },
@@ -1247,7 +1248,9 @@
     },
     "testRun": {
       "label": "Ejecución de prueba",
-      "runPublished": "Ejecutar versión publicada"
+      "runPublished": "Ejecutar versión publicada",
+      "dialogTitle": "Ejecución de prueba de {id}",
+      "dialogDescription": "Ejecuta el borrador en pantalla como una ejecución de Playground. Los Schedules, webhooks y subflows siguen utilizando la versión publicada."
     },
     "flow export": "¿Estás seguro de que quieres exportar <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exportado(s)",

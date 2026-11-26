@@ -1225,6 +1225,7 @@
         "tooltip": "Salvataggio delle modifiche come bozza. Clicca per confrontare con la revisione pubblicata."
       },
       "savedLocally": {
+        "banner": "Le modifiche al tuo flow sono conservate in questo browser e salvate come bozza una volta che il server risponde. Questo banner scomparirà quando ciò avverrà.",
         "label": "Salvato localmente",
         "tooltip": "Il server è irraggiungibile. Le tue modifiche sono conservate in questo browser e salvate come bozza una volta che sarà di nuovo disponibile."
       },
@@ -1247,7 +1248,9 @@
     },
     "testRun": {
       "label": "Test run",
-      "runPublished": "Esegui la versione pubblicata"
+      "runPublished": "Esegui la versione pubblicata",
+      "dialogTitle": "Esecuzione di test di {id}",
+      "dialogDescription": "Esegue la bozza sullo schermo come un'esecuzione Playground. Le pianificazioni, i webhook e i subflow continuano a utilizzare la versione pubblicata."
     },
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
     "flows exported": "<code>{count}</code> Flow esportati",

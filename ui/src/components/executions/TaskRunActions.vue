@@ -20,7 +20,7 @@
                 />
 
                 <KsDropdownItem
-                    v-if="aiEnabled && selectedAttempt?.state.current === 'FAILED'"
+                    v-if="aiEnabled && canUseCopilot && selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
                     <span class="fix-with-ai">
@@ -236,6 +236,8 @@
     const hasWorkerId = computed<boolean>(() =>
         currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId != null) !== undefined,
     )
+
+    const canUseCopilot = computed(() => authStore.user?.hasAny(resource.COPILOT) ?? true)
 
     const canReadFlow = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.VIEW, String(route.params.namespace)),

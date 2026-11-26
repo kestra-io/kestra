@@ -2017,6 +2017,7 @@
       "add": "생성",
       "update": "키 '{key}'의 값을 업데이트하세요",
       "duplicate": "이 키는 이미 존재합니다",
+      "description_latin1": "설명에는 라틴 문자만 사용할 수 있으며 이모지는 사용할 수 없습니다.",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>",

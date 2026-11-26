@@ -2017,6 +2017,7 @@
       "add": "Erstellen",
       "update": "Wert für Key '{key}' aktualisieren",
       "duplicate": "Dieser Key existiert bereits",
+      "description_latin1": "Die Beschreibung darf nur lateinische Zeichen enthalten, ohne Emoji.",
       "delete multiple": {
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
         "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>",

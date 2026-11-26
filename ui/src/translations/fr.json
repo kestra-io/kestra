@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "Rend cette révision active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte.",
       "done_title": "Publié",
+      "failed": "Impossible de publier ce brouillon.",
       "done": "La révision {revision} de {name} est active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte."
     },
     "flow_draft_banner": {

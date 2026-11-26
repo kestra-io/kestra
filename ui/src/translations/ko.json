@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "이 버전을 활성화합니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다.",
       "done_title": "게시됨",
+      "failed": "이 초안을 게시할 수 없습니다.",
       "done": "{name}의 리비전 {revision}이 활성화되었습니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다."
     },
     "flow_draft_banner": {

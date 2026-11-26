@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "Torna esta revisão ativa: triggers a iniciam, outros flows podem chamá-la e suas falhas alcançam flows de alerta.",
       "done_title": "Publicado",
+      "failed": "Não foi possível publicar este rascunho.",
       "done": "A Revision {revision} de {name} está ativa: triggers a iniciam, outros Flows podem chamá-la e suas falhas chegam aos Flows de alerta."
     },
     "flow_draft_banner": {

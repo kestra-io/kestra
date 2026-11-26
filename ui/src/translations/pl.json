@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "Ustawia tę wersję jako aktywną: Trigger uruchamia ją, inne Flowy mogą ją wywoływać, a jej błędy docierają do Flowów alertów.",
       "done_title": "Opublikowano",
+      "failed": "Nie można opublikować tego szkicu.",
       "done": "Wersja {revision} Flow {name} jest aktywna: Triggery go uruchamiają, inne Flowy mogą go wywoływać, a jego błędy docierają do Flowów alertów."
     },
     "flow_draft_banner": {

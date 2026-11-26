@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "Hace que esta revisión esté activa: los triggers la inician, otros flows pueden llamarla y sus fallos llegan a los flows de alerta.",
       "done_title": "Publicado",
+      "failed": "No se pudo publicar este borrador.",
       "done": "La revisión {revision} de {name} está activa: los triggers la inician, otros flows pueden llamarla y sus fallos llegan a los flows de alerta."
     },
     "flow_draft_banner": {

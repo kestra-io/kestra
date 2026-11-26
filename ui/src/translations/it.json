@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "Rende questa revisione attiva: i trigger la avviano, altri Flow possono chiamarla e i suoi fallimenti raggiungono i Flow di avviso.",
       "done_title": "Pubblicato",
+      "failed": "Impossibile pubblicare questa bozza.",
       "done": "La Revisione {revision} di {name} è attiva: i Trigger la avviano, altri Flow possono richiamarla e i suoi errori raggiungono i Flow di avviso."
     },
     "flow_draft_banner": {

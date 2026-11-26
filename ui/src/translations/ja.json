@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "このリビジョンを有効にします: Triggerが開始し、他のFlowが呼び出すことができ、その失敗はアラートFlowに到達します。",
       "done_title": "公開済み",
+      "failed": "このドラフトを公開できませんでした。",
       "done": "{name} のリビジョン {revision} が稼働中です: Trigger が開始し、他の Flow が呼び出すことができ、その障害はアラート Flow に到達します。"
     },
     "flow_draft_banner": {

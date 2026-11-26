@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "Macht diese Revision live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows.",
       "done_title": "Veröffentlicht",
+      "failed": "Dieser Entwurf konnte nicht veröffentlicht werden.",
       "done": "Revision {revision} von {name} ist live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows."
     },
     "flow_draft_banner": {

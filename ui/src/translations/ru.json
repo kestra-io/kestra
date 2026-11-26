@@ -1231,8 +1231,7 @@
       "published": "Опубликовано как ревизия {revision}",
       "viewChanges": "Просмотреть изменения",
       "discard": "Отменить черновик",
-      "discardConfirm": "Отменить черновик и вернуться к ревизии {revision}? Ваши неопубликованные изменения будут утеряны.",
-      "executeRevision": "Выполнить ревизию {revision}"
+      "discardConfirm": "Отменить черновик и вернуться к ревизии {revision}? Ваши неопубликованные изменения будут утеряны."
     },
     "flow export": "Вы уверены, что хотите экспортировать <code>{flowCount}</code> flow(ы)?",
     "flows exported": "<code>{count}</code> Flow(s) экспортировано",

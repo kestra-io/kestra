@@ -1231,8 +1231,7 @@
       "published": "リビジョン {revision} として公開済み",
       "viewChanges": "変更を表示",
       "discard": "ドラフトを破棄",
-      "discardConfirm": "下書きを破棄してリビジョン {revision} に戻しますか？未公開の変更は失われます。",
-      "executeRevision": "リビジョン {revision} を実行"
+      "discardConfirm": "下書きを破棄してリビジョン {revision} に戻しますか？未公開の変更は失われます。"
     },
     "flow export": "<code>{flowCount}</code>件のflowをエクスポートしてもよろしいですか？",
     "flows exported": "<code>{count}</code> Flow(s) エクスポート済み",

@@ -1232,7 +1232,8 @@
       "viewChanges": "View changes",
       "discard": "Discard draft",
       "discardConfirm": "Discard the draft and go back to revision {revision}? Your unpublished changes are lost.",
-      "executeRevision": "Execute revision {revision}"
+      "executeBlocked": "Execute runs the published revision. Publish your changes first, or try them in the Playground.",
+      "executeBlockedInvalid": "Fix {count} error, then publish to run your changes. | Fix {count} errors, then publish to run your changes."
     },
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exported",

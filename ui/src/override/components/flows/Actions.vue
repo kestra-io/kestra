@@ -46,6 +46,8 @@
                 :icon="Publish"
                 :label="$t('publish')"
                 :disabled="editorIsReadOnly || editorHasErrors || !editorCanPublish"
+                :type="isEditTab && editorExecuteBlockedReason ? 'primary' : undefined"
+                :highlight="editorPublishHighlighted"
                 data-test="flow-publish"
                 @click="editorPublish"
             />
@@ -72,7 +74,8 @@
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
                 :flowSource="flow?.source"
-                :revision="editorExecuteRevision"
+                :blockedReason="isEditTab ? editorExecuteBlockedReason : undefined"
+                @blocked="editorPointToPublish"
             />
         </template>
     </NavBarActions>
@@ -131,7 +134,9 @@
 
     const {
         canPublish: editorCanPublish,
-        executeRevision: editorExecuteRevision,
+        executeBlockedReason: editorExecuteBlockedReason,
+        publishHighlighted: editorPublishHighlighted,
+        pointToPublish: editorPointToPublish,
         createDraft: editorCreateDraft,
         hasErrors: editorHasErrors,
         isReadOnly: editorIsReadOnly,

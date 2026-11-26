@@ -1231,8 +1231,7 @@
       "published": "Veröffentlicht als Revision {revision}",
       "viewChanges": "Änderungen anzeigen",
       "discard": "Entwurf verwerfen",
-      "discardConfirm": "Entwurf verwerfen und zu Revision {revision} zurückkehren? Deine unveröffentlichten Änderungen gehen verloren.",
-      "executeRevision": "Revision {revision} ausführen"
+      "discardConfirm": "Entwurf verwerfen und zu Revision {revision} zurückkehren? Deine unveröffentlichten Änderungen gehen verloren."
     },
     "flow export": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich exportieren?",
     "flows exported": "<code>{count}</code> Flow(s) exportiert",

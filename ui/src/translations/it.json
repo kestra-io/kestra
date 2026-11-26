@@ -1231,8 +1231,7 @@
       "published": "Pubblicato come revisione {revision}",
       "viewChanges": "Visualizza modifiche",
       "discard": "Scarta bozza",
-      "discardConfirm": "Scartare la bozza e tornare alla revisione {revision}? Le modifiche non pubblicate andranno perse.",
-      "executeRevision": "Esegui revisione {revision}"
+      "discardConfirm": "Scartare la bozza e tornare alla revisione {revision}? Le modifiche non pubblicate andranno perse."
     },
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
     "flows exported": "<code>{count}</code> Flow esportati",

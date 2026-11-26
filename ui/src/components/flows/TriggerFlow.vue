@@ -5,11 +5,15 @@
                 <KsButton
                     :id="actionId"
                     :icon="PlayIcon"
-                    :type="type"
+                    :type="isBlocked ? 'default' : type"
                     :disabled="actionDisabled"
+                    :softDisabled="isBlocked"
+                    :tooltip="isBlocked ? blockedReason : undefined"
                     :square="iconOnly"
                     :aria-label="iconOnly ? actionLabel : undefined"
                     @click="runAction()"
+                    @mouseenter="isBlocked && emit('blocked')"
+                    @focus="isBlocked && emit('blocked')"
                 >
                     <template v-if="!iconOnly" #default>
                         {{ actionLabel }}
@@ -120,8 +124,8 @@
         lazy?: boolean
         renderLabels?: string[]
         compact?: boolean
-        /** Names the published revision the button runs, when the editor holds a draft above it. */
-        revision?: number
+        /** Greys the button out and explains why: it would run something other than what is on screen. */
+        blockedReason?: string
     }>(), {
         disabled: false,
         type: "primary",
@@ -130,8 +134,10 @@
         lazy: false,
         renderLabels: undefined,
         compact: false,
-        revision: undefined,
+        blockedReason: undefined,
     })
+
+    const emit = defineEmits<{blocked: []}>()
 
     const {t} = useI18n({useScope: "global"})
     const isMobile = useIsMobile()
@@ -216,6 +222,10 @@
     }
 
     function runAction() {
+        if (isBlocked.value) {
+            emit("blocked")
+            return
+        }
         if (playgroundStore.enabled) {
             playgroundStore.runUntilTask()
         } else {
@@ -234,10 +244,14 @@
         return isDisabled()
     })
 
-    const actionLabel = computed(() => {
-        if (playgroundStore.enabled) return t("playground.run_all_tasks")
-        return props.revision === undefined ? t("execute") : t("flowSaveStatus.executeRevision", {revision: props.revision})
-    })
+    // The Playground runs what is on screen, so only a regular execution waits on Publish.
+    const isBlocked = computed(() => Boolean(props.blockedReason) && !playgroundStore.enabled)
+
+    const actionLabel = computed(() =>
+        playgroundStore.enabled
+            ? t("playground.run_all_tasks")
+            : t("execute"),
+    )
 
     const computedFlowId = computed(() =>
         props.flowId ?? localFlow.value?.id,

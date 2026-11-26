@@ -1231,8 +1231,7 @@
       "published": "Publié en tant que révision {revision}",
       "viewChanges": "Voir les modifications",
       "discard": "Supprimer le brouillon",
-      "discardConfirm": "Annuler le brouillon et revenir à la révision {revision} ? Vos modifications non publiées seront perdues.",
-      "executeRevision": "Exécuter la révision {revision}"
+      "discardConfirm": "Annuler le brouillon et revenir à la révision {revision} ? Vos modifications non publiées seront perdues."
     },
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exporté(s)",

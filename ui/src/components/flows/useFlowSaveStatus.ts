@@ -35,10 +35,10 @@ export function useFlowSaveStatus() {
         !flowStore.isReadOnly && (state.value === "draft" || (state.value === "upToDate" && flowStore.hasDirtyEditorFiles)),
     )
 
-    /** The revision Execute names while the editor holds changes it would not run. */
-    const executeRevision = computed(() =>
-        state.value === undefined || state.value === "upToDate" || state.value === "published" ? undefined : publishedRevision.value,
+    /** True while the editor holds changes that Execute, which runs the published revision, would not run. */
+    const hasUnpublishedChanges = computed(() =>
+        state.value !== undefined && state.value !== "upToDate" && state.value !== "published",
     )
 
-    return {state, publishedRevision, errorCount, canPublish, executeRevision}
+    return {state, publishedRevision, errorCount, canPublish, hasUnpublishedChanges}
 }

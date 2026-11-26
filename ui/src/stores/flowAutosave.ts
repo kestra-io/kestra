@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue"
+import {computed, nextTick, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import {useRoute} from "vue-router"
 import {KsMessageBox} from "@kestra-io/design-system"
@@ -43,6 +43,7 @@ export const useFlowAutosaveStore = defineStore("flowAutosave", () => {
     const status = ref<AutosaveStatus>("idle")
     const conflict = ref<AutosaveConflict>()
     const justPublished = ref<number>()
+    const publishHighlighted = ref(false)
 
     let debounce: ReturnType<typeof setTimeout> | undefined
     let retry: ReturnType<typeof setTimeout> | undefined
@@ -51,6 +52,7 @@ export const useFlowAutosaveStore = defineStore("flowAutosave", () => {
     let stopWatchers: (() => void)[] = []
     let newFlowRestoreOffered = false
     let publishedNotice: ReturnType<typeof setTimeout> | undefined
+    let publishHighlight: ReturnType<typeof setTimeout> | undefined
 
     const bufferKey = computed(() => {
         const flow = flowStore.flow
@@ -275,6 +277,15 @@ export const useFlowAutosaveStore = defineStore("flowAutosave", () => {
         publishedNotice = setTimeout(() => justPublished.value = undefined, PUBLISHED_NOTICE_DURATION)
     }
 
+    /** Pulses the Publish button, the step an action waiting on unpublished changes needs first. */
+    async function pointToPublish() {
+        clearTimeout(publishHighlight)
+        publishHighlighted.value = false
+        await nextTick()
+        publishHighlighted.value = true
+        publishHighlight = setTimeout(() => publishHighlighted.value = false, 2 * PUBLISHED_NOTICE_DURATION)
+    }
+
     function onOnline() {
         if (status.value === "offline") sync().catch(() => undefined)
     }
@@ -325,6 +336,8 @@ export const useFlowAutosaveStore = defineStore("flowAutosave", () => {
         conflict,
         justPublished,
         notePublished,
+        publishHighlighted,
+        pointToPublish,
         start,
         stop,
         sync,

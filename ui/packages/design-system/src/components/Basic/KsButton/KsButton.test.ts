@@ -39,6 +39,19 @@ describe("KsButton", () => {
         expect(wrapper.find(".kel-button.is-disabled").exists()).toBe(true)
     })
 
+    test("softDisabled looks disabled but stays focusable and still emits click", async () => {
+        const wrapper = mount(KsButton, {
+            props: {softDisabled: true},
+            global: globalConfig,
+        })
+        const button = wrapper.find(".kel-button")
+        expect(button.classes()).toContain("is-disabled")
+        expect(button.attributes("aria-disabled")).toBe("true")
+        expect(button.attributes("disabled")).toBeUndefined()
+        await button.trigger("click")
+        expect(wrapper.emitted("click")).toHaveLength(1)
+    })
+
     test("loading applies is-loading class", () => {
         const wrapper = mount(KsButton, {
             props: {loading: true},

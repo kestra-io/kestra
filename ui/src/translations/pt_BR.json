@@ -1231,8 +1231,7 @@
       "published": "Publicado como revisão {revision}",
       "viewChanges": "Ver alterações",
       "discard": "Descartar rascunho",
-      "discardConfirm": "Descartar o rascunho e voltar para a revisão {revision}? Suas alterações não publicadas serão perdidas.",
-      "executeRevision": "Executar revisão {revision}"
+      "discardConfirm": "Descartar o rascunho e voltar para a revisão {revision}? Suas alterações não publicadas serão perdidas."
     },
     "flow export": "Tem certeza de que deseja exportar <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exportado(s)",

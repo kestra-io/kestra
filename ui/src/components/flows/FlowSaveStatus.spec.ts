@@ -75,10 +75,10 @@ describe("FlowSaveStatus", () => {
 })
 
 describe("useFlowSaveStatus", () => {
-    it("publishes only a valid saved draft, and names the published revision Execute runs meanwhile", () => {
-        const {canPublish, executeRevision} = useFlowSaveStatus()
+    it("publishes only a valid saved draft, and holds Execute back while changes are unpublished", () => {
+        const {canPublish, hasUnpublishedChanges} = useFlowSaveStatus()
         expect(canPublish.value).toBe(true)
-        expect(executeRevision.value).toBe(4)
+        expect(hasUnpublishedChanges.value).toBe(true)
 
         flowStore.flowErrors = ["broken"]
         expect(canPublish.value).toBe(false)
@@ -86,11 +86,11 @@ describe("useFlowSaveStatus", () => {
         flowStore.flowErrors = undefined
         autosaveStore.status = "syncing"
         expect(canPublish.value).toBe(false)
-        expect(executeRevision.value).toBe(4)
+        expect(hasUnpublishedChanges.value).toBe(true)
 
         autosaveStore.status = "idle"
         flowStore.flow = {id: "f", namespace: "ns", revision: 4, draft: false}
         expect(canPublish.value).toBe(false)
-        expect(executeRevision.value).toBeUndefined()
+        expect(hasUnpublishedChanges.value).toBe(false)
     })
 })

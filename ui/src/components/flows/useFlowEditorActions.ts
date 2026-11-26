@@ -33,7 +33,15 @@ export function useFlowEditorActions() {
     const hasFlowSourceChange = computed(() => flowStore.haveChange)
     const haveChange = computed(() => hasFlowSourceChange.value || flowStore.hasDirtyEditorFiles)
     const canSave = computed(() => haveChange.value || flowStore.isCreating)
-    const {canPublish, executeRevision} = useFlowSaveStatus()
+    const {canPublish, hasUnpublishedChanges, state: saveState, errorCount} = useFlowSaveStatus()
+    const executeBlockedReason = computed(() => {
+        if (!hasUnpublishedChanges.value) return undefined
+        return saveState.value === "invalid"
+            ? t("flowSaveStatus.executeBlockedInvalid", {count: errorCount.value}, errorCount.value)
+            : t("flowSaveStatus.executeBlocked")
+    })
+    const publishHighlighted = computed(() => useFlowAutosaveStore().publishHighlighted)
+    const pointToPublish = () => useFlowAutosaveStore().pointToPublish()
     const hasErrors = computed(() => (flowStore.flowErrors?.length ?? 0) > 0)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
@@ -356,7 +364,9 @@ export function useFlowEditorActions() {
         hasFlowSourceChange,
         canSave,
         canPublish,
-        executeRevision,
+        executeBlockedReason,
+        publishHighlighted,
+        pointToPublish,
         hasErrors,
         isReadOnly,
         isAllowedEdit,

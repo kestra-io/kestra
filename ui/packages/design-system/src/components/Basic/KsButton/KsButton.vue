@@ -5,8 +5,8 @@
         v-bind="tooltipPlacement ? {placement: tooltipPlacement} : {}"
     >
         <ElButton
-            v-bind="({'aria-label': tooltip, ...filteredProps(), ...$attrs})"
-            :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone}"
+            v-bind="({'aria-label': tooltip, ...filteredProps(), ...softDisabledAttrs, ...$attrs})"
+            :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone, 'is-disabled': softDisabled, 'is-highlight': highlight}"
             @click="emit('click', $event)"
             plain
         >
@@ -23,8 +23,8 @@
     </KsTooltip>
     <ElButton
         v-else
-        v-bind="({...filteredProps(), ...$attrs})"
-        :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone}"
+        v-bind="({...filteredProps(), ...softDisabledAttrs, ...$attrs})"
+        :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone, 'is-disabled': softDisabled, 'is-highlight': highlight}"
         @click="emit('click', $event)"
         plain
     >
@@ -58,6 +58,10 @@
         /** With `:tag="RouterLink"` (or `tag="router-link"`). */
         to?: RouteLocationRaw
         replace?: boolean
+        /** Looks disabled but keeps hover, focus and its tooltip, and still emits `click`, so the caller can explain why. */
+        softDisabled?: boolean
+        /** Pulses the focus ring once, to point at the button another control depends on. */
+        highlight?: boolean
     }
 
     interface KsButtonTone {
@@ -99,7 +103,9 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square", "block"])
+    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square", "block", "softDisabled", "highlight"])
+
+    const softDisabledAttrs = computed(() => (props.softDisabled ? {"aria-disabled": "true"} : {}))
 
     const tone = computed(() => (props.type ? KS_BUTTON_TONES[props.type] : undefined))
 </script>
@@ -134,6 +140,14 @@
         &.is-block {
             display: flex;
             width: 100%;
+        }
+
+        &.is-highlight {
+            animation: ks-button-highlight 1.2s ease-out 2;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
         }
 
         &.is-square {
@@ -222,6 +236,16 @@
             background-color: var(--ks-btn-primary-bg-inactive);
             border-color: var(--ks-btn-primary-bg-inactive);
             color: var(--ks-text-inactive);
+        }
+    }
+
+    @keyframes ks-button-highlight {
+        from {
+            box-shadow: 0 0 0 3px var(--ks-border-focus);
+        }
+
+        to {
+            box-shadow: 0 0 0 0 var(--ks-border-focus);
         }
     }
 </style>

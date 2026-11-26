@@ -1231,8 +1231,7 @@
       "published": "Opublikowano jako wersja {revision}",
       "viewChanges": "Wyświetl zmiany",
       "discard": "Odrzuć szkic",
-      "discardConfirm": "Odrzucić szkic i wrócić do wersji {revision}? Twoje nieopublikowane zmiany zostaną utracone.",
-      "executeRevision": "Wykonaj wersję {revision}"
+      "discardConfirm": "Odrzucić szkic i wrócić do wersji {revision}? Twoje nieopublikowane zmiany zostaną utracone."
     },
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> Flowów?",
     "flows exported": "Wyeksportowano <code>{count}</code> Flowów",

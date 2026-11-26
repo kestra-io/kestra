@@ -68,7 +68,7 @@
         danger?: boolean;
     }
 
-    const props = defineProps<NavBarActionProps & /* @vue-ignore */ Omit<Pick<KsButtonProps, "loading" | "tooltip"> & NativeAttributes<HTMLAttributes>, keyof NavBarActionProps>>()
+    const props = defineProps<NavBarActionProps & /* @vue-ignore */ Omit<Pick<KsButtonProps, "loading" | "tooltip" | "highlight"> & NativeAttributes<HTMLAttributes>, keyof NavBarActionProps>>()
 
     const emit = defineEmits<{(e: "click"): void}>()
 

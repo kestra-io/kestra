@@ -234,6 +234,27 @@ export const Disabled: Story = {
     parameters: {controls: {disable: true}},
 }
 
+/** Soft-disabled: looks disabled, keeps its tooltip, and still reports a click; the highlighted button is the step it waits on. */
+export const SoftDisabledWithHighlight: Story = {
+    render: () => ({
+        components: {KsButton},
+        template: `
+            <div style="padding:24px;display:flex;gap:12px;align-items:center">
+                <ks-button type="primary" highlight>Publish</ks-button>
+                <ks-button soft-disabled tooltip="Publish your changes first">Execute</ks-button>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const execute = canvas.getByRole("button", {name: "Publish your changes first"})
+        await expect(execute).not.toBeDisabled()
+        await expect(execute).toHaveAttribute("aria-disabled", "true")
+        await expect(canvas.getByRole("button", {name: "Publish"})).toHaveClass("is-highlight")
+    },
+    parameters: {controls: {disable: true}},
+}
+
 /** Loading state – spinner shown while an async action is in progress */
 export const Loading: Story = {
     render: (args) => ({

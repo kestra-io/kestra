@@ -51,7 +51,7 @@ test.describe("Flow Page", () => {
 
             await page.getByRole("button", {name: "Create", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved as draft"})).toBeVisible()
-            await page.getByRole("button", {name: "Publish", exact: true}).click()
+            await page.locator("[data-test=\"flow-publish\"]").click()
             await expect(page.getByRole("heading", {name: "Successfully saved", exact: true})).toBeVisible()
             await page.getByRole("tab", {name: "Overview"}).click()
         })
@@ -91,7 +91,7 @@ test.describe("Flow Page", () => {
 
             await page.getByRole("button", {name: "Create", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved as draft"})).toBeVisible()
-            await page.getByRole("button", {name: "Publish", exact: true}).click()
+            await page.locator("[data-test=\"flow-publish\"]").click()
             await expect(page.getByRole("heading", {name: "Successfully saved", exact: true})).toBeVisible()
             await page.getByRole("tab", {name: "Overview"}).click()
             // Scoped to the topnav title, not #app: the Monaco editor (still disposing during

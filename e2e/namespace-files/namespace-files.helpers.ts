@@ -182,6 +182,6 @@ export class FilesEditor {
     }
 
     async clickPublish() {
-        await this.page.getByRole("button", {name: "Publish", exact: true}).click()
+        await this.page.locator("[data-test=\"flow-publish\"]").click()
     }
 }

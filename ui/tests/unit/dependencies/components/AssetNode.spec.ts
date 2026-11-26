@@ -49,3 +49,13 @@ describe("AssetNode plugin footer", () => {
         expect(footer.text()).toBe("io.kestra.plugin.dbt.cli.DbtCLI|warehouse.dim_customers|{\"rows\":3}")
     })
 })
+
+describe("AssetNode tools", () => {
+    beforeEach(() => setActivePinia(createPinia()))
+
+    it("lists every tool of the asset on the card, whatever the tool is called", () => {
+        const tools = mountCard({metadata: {"system.tools": ["GCP", "Terraform", "constructor"]}}).findAll("[data-test=asset-tool]")
+
+        expect(tools.map((tool) => tool.text())).toEqual(["GCP", "Terraform", "constructor"])
+    })
+})

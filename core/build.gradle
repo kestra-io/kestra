@@ -1,6 +1,50 @@
 configurations {
     tests
     implementation.extendsFrom(micronaut)
+
+    pluginFixture {
+        canBeConsumed = true
+        canBeResolved = false
+    }
+}
+
+// Fixture for the tests that load an external plugin from a JAR, compiled against the current core on every build.
+sourceSets {
+    pluginFixture {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        annotationProcessorPath += sourceSets.main.annotationProcessorPath
+    }
+}
+
+tasks.register('pluginFixtureJar', Jar) {
+    group = "build"
+    description = "Packages the external plugin fixture used by the tests."
+    archiveBaseName = 'plugin-template-test'
+    archiveVersion = '1.0.0-SNAPSHOT'
+    destinationDirectory = layout.buildDirectory.dir('pluginFixture')
+    from sourceSets.pluginFixture.output
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    manifest {
+        attributes(
+            'X-Kestra-Name': 'plugin-template-test',
+            'X-Kestra-Title': 'plugin-template-test',
+            'X-Kestra-Group': 'io.kestra.plugin.templates',
+            'X-Kestra-Description': 'Plugin template for Kestra',
+            'X-Kestra-Version': '1.0.0-SNAPSHOT',
+            'X-Kestra-License': 'EE'
+        )
+    }
+}
+
+artifacts {
+    pluginFixture(tasks.named('pluginFixtureJar'))
+}
+
+processTestResources {
+    from(tasks.named('pluginFixtureJar')) {
+        into 'plugins'
+    }
 }
 
 tasks.register('copyGradleProperties', Copy) {

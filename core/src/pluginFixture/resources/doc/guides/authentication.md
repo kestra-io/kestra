@@ -1,0 +1,7 @@
+# Authentication
+
+This is how to authenticate for this plugin:
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla a massa sagittis erat viverra pharetra sit amet quis metus. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Fusce ex ex, tempor nec nulla at, interdum tempus nunc. Sed sapien nisi, blandit sit amet pharetra et, molestie vel lacus. Integer nec vehicula nibh. Phasellus varius enim tellus, egestas fermentum nulla eleifend a. Nulla elementum laoreet rhoncus. Quisque quis imperdiet odio. Duis volutpat porttitor leo, vel fermentum tellus. Curabitur mauris leo, mollis eu diam id, tincidunt aliquet lectus. Nam feugiat, tortor et faucibus elementum, ligula elit mattis ante, eu convallis purus tortor nec justo. Sed luctus semper massa in viverra.
+
+Phasellus non tristique turpis. Curabitur mollis auctor posuere. Nam placerat massa blandit, lacinia mi at, luctus ligula. Ut auctor semper luctus. Donec fringilla massa eget augue semper suscipit. Integer aliquam ipsum ex, in efficitur nibh tempor in. Ut arcu diam, auctor at euismod sed, feugiat vel justo. Maecenas tincidunt dapibus convallis. Proin eu elit sit amet augue sodales posuere. Quisque magna odio, gravida lacinia dignissim eu, convallis vitae nisi. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aliquam vel convallis felis.

@@ -2587,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "L'assistant n'a pas renvoyé de réponse. Veuillez réessayer.",
+          "outputLimit": "L'assistant a manqué de tokens de sortie avant de pouvoir répondre. Raccourcissez votre message ou démarrez une nouvelle conversation.",
+          "contentFiltered": "Le fournisseur d'IA a bloqué la réponse. Reformulez votre message ou supprimez le contenu qui a pu déclencher les filtres du fournisseur.",
           "retry": "Réessayer"
         },
         "cancelled": "Tour annulé",

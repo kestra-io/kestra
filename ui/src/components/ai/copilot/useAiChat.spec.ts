@@ -383,6 +383,26 @@ describe("useAiChat", () => {
         expect(chat.status.value).toBe("IDLE")
     })
 
+    it.each([
+        ["OUTPUT_LIMIT", "outputLimit"],
+        ["CONTENT_FILTERED", "contentFiltered"],
+        ["EMPTY_RESPONSE", "emptyTurn"],
+    ])("maps the %s done reason of an empty turn to the %s notice", async (reason, expected) => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE", reason}}]
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.notice.value).toBe(expected)
+    })
+
+    it("does not carry an empty-turn reason over to the next empty turn", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE", reason: "OUTPUT_LIMIT"}}]
+        await chat.sendChat({prompt: "hi"})
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "again"})
+        expect(chat.notice.value).toBe("emptyTurn")
+    })
+
     it("does not set the emptyTurn notice when the turn produced output", async () => {
         const chat = useAiChat()
         nextFrames = [

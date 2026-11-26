@@ -101,6 +101,11 @@
             line-height: var(--ks-line-height-base);
         }
 
+        /* Element Plus positions the close button absolutely, over the end of the content. */
+        &:has(.kel-alert__close-btn) .kel-alert__content {
+            padding-inline-end: var(--ks-spacing-6);
+        }
+
         &:has(.ks-alert-action:not(:empty)) {
             align-items: center;
 

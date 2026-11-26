@@ -2587,6 +2587,8 @@
         },
         "notice": {
           "emptyTurn": "L'assistente non ha restituito una risposta. Per favore, riprova.",
+          "outputLimit": "L'assistente ha esaurito i token di output prima di poter rispondere. Accorcia il tuo messaggio o inizia una nuova chat.",
+          "contentFiltered": "Il provider AI ha bloccato la risposta. Riformula il tuo messaggio o rimuovi il contenuto che potrebbe aver attivato i filtri del provider.",
           "retry": "Riprova"
         },
         "cancelled": "Giro annullato",

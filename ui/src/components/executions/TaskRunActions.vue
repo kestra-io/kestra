@@ -154,7 +154,7 @@
     import * as Utils from "../../utils/utils"
     import {findTaskById, LOOP_TASK_TYPE} from "../../utils/flowUtils"
     import {isSubflowTaskType} from "../../services/subflowReferences"
-    import {findSubflowExecutions, subflowExecutionRoute} from "../../utils/subflowExecutions"
+    import {findSubflowExecutions} from "../../utils/subflowExecutions"
     import {useToast} from "../../utils/toast"
     import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
@@ -253,9 +253,10 @@
         if (children.length === 0) {
             toast.warning(t("gantt_subflow.none"))
         } else if (children.length === 1) {
-            router.push(subflowExecutionRoute(children[0]))
+            const {id, namespace, flowId} = children[0]
+            router.push({name: "executions/update", params: {tenant: route.params.tenant, namespace, flowId, id}})
         } else {
-            router.push({name: "executions/list", query: {"filters[triggerExecutionId][EQUALS]": props.execution.id}})
+            router.push({name: "executions/list", params: {tenant: route.params.tenant}, query: {"filters[triggerExecutionId][EQUALS]": props.execution.id}})
         }
     }
 

@@ -96,6 +96,8 @@ describe("TaskRunActions overflow", () => {
         // When
         await wrapper.findAllComponents(KsDropdownItem).find((item) => item.text() === "sub flow")!.get("[role=\"menuitem\"]").trigger("click")
 
+        await flushPromises()
+
         // Then
         expect(wrapper.emitted("dismiss")).toHaveLength(1)
         wrapper.unmount()

@@ -613,6 +613,8 @@
         "all-iterations": "すべてのイテレーション",
         "iteration-index": "インデックス {index}",
         "iteration-value-index": "{value} · インデックス {index}",
+        "first-iteration": "最初のイテレーション",
+        "last-iteration": "最終イテレーション",
         "previous-iteration": "前のイテレーション",
         "next-iteration": "次のイテレーション",
         "previous-page": "前のページ",
@@ -1174,6 +1176,12 @@
     "bulk force run": "`{executionCount}`件のExecutionを強制実行してもよろしいですか？\n\n警告：Executionの強制実行は保証されておらず、重複するTaskのExecutionが作成される可能性があります。\n\n以下の遷移が実行されます。\n\n- CREATED TaskはRUNNING状態に移行します。\n- RUNNING Taskは再送信されます。\n- QUEUED Taskはキューから削除されます。\n- PAUSED Taskは再開されます。",
     "bulk restart": "{executionCount}件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
+    "bulk action ineligible change state": "選択した実行{total}件のうち{count}件は状態を変更できません。",
+    "bulk action ineligible not state": "選択した実行{total}件のうち{count}件は{state}状態ではありません。",
+    "bulk action ineligible not pausable": "選択した実行{total}件のうち{count}件は一時停止できません。",
+    "bulk action ineligible not resumable": "選択した実行{total}件のうち{count}件は再開できません。",
+    "bulk action ineligible not terminated": "選択した実行{total}件のうち{count}件は終了していません。",
+    "bulk action ineligible already terminated": "選択した実行{total}件のうち{count}件はすでに終了しています。",
     "cancel": "キャンセル",
     "errorLogs": "エラーログ",
     "product_tour": "プロダクトツアー",
@@ -1434,6 +1442,7 @@
     "execution-include-non-terminated": "終了していない実行を含めますか？",
     "execution-warn-title": "重要なWarning!",
     "execution-warn-deleting-still-running": "この操作をキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。未終了のexecutionを削除すると、concurrencyの問題、flow依存関係管理の不整合、インスタンス上のゾンビプロセスを引き起こし、システムパフォーマンスを低下させる可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
+    "execution-warn-non-terminated-count": "選択したexecution {total}件のうち{count}件は終了していません。",
     "pluginPage": {
       "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
@@ -1529,6 +1538,7 @@
             "flow_default_tab": "デフォルト Flow タブ",
             "triggers_default_tab": "デフォルトトリガーのタブ",
             "playground": "プレイグラウンド",
+            "open_docs_tab": "Docsタブを開く",
             "auto_refresh_interval": "自動更新間隔",
             "task_edit_default_mode": "デフォルトのTask編集モード",
             "flow_template": "デフォルトのflowテンプレート"
@@ -1545,6 +1555,7 @@
             "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。",
             "auto_refresh_interval": "リストページでの自動データ更新の間隔（秒）。",
             "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
+            "open_docs_tab": "エディターの隣にあるDocsタブを開きます。新規Flowおよび以前に開いたことのないFlowに適用されます。",
             "task_edit_default_mode": "ノーコードエディターからタスクがデフォルトで開く方法。",
             "flow_template": "新しいflowを作成すると、エディターでYAMLが開きます。idとnamespaceは自動生成されるため、省略できます。これが空の場合、インスタンスに設定されているテンプレートが使用されます。"
           },
@@ -2587,6 +2598,8 @@
         },
         "notice": {
           "emptyTurn": "アシスタントが応答を返しませんでした。もう一度お試しください。",
+          "outputLimit": "アシスタントは回答する前に出力トークンを使い果たしました。メッセージを短くするか、新しいチャットを開始してください。",
+          "contentFiltered": "AIプロバイダーが応答をブロックしました。メッセージを言い換えるか、プロバイダーのフィルターをトリガーした可能性のあるコンテンツを削除してください。",
           "retry": "再試行"
         },
         "cancelled": "ターンがキャンセルされました",
@@ -3255,6 +3268,8 @@
     "chart mode": {
       "counts": "カウント",
       "timeline": "タイムライン"
-    }
+    },
+    "search_in_flow_source": "フローソースで「{query}」を検索",
+    "flows_matched_query": "IDまたは名前空間に「{query}」を含む {count} 件のフロー。 | IDまたは名前空間に「{query}」を含む {count} 件のフロー。"
   }
 }

@@ -1,7 +1,6 @@
 package io.kestra.webserver.services.ai;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import io.kestra.core.ai.agent.models.AgentPrincipal;
@@ -45,11 +44,10 @@ public interface AiServiceInterface {
         return Optional.empty();
     }
 
-    default AiService.GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName, Map<String, String> inputState) {
+    default AiService.GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName) {
         return null;
     }
 
-    default String afterGeneration(AiService.GenerationContext context, String spanName, Map<String, Object> outputState, String result, String outputKey) {
-        return result;
+    default void afterGeneration(AiService.GenerationContext context, String spanName) {
     }
 }

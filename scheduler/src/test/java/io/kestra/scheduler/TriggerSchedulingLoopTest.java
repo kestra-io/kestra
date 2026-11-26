@@ -119,6 +119,58 @@ class TriggerSchedulingLoopTest {
     }
 
     @Test
+    void shouldApplyGovernanceChangeToAssignedVNodesWhenGovernanceChanged() throws Exception {
+        // GIVEN
+        TriggerSchedulingLoop loop = createLoop();
+        loop.setAssignments(Set.of(1));
+        Thread thread = new Thread(loop);
+        thread.start();
+
+        try {
+            // WHEN
+            awaitFirstIteration(loop);
+            loop.onGovernanceChanged(flow -> true);
+
+            // THEN
+            verify(triggerScheduler, Mockito.timeout(5_000)).onGovernanceChanged(any(), eq(Set.of(1)), any());
+        } finally {
+            loop.stop();
+            thread.join();
+        }
+    }
+
+    @Test
+    void shouldLogErrorWhenGovernanceChangeFails() throws Exception {
+        // GIVEN
+        Logger logger = (Logger) LoggerFactory.getLogger(TriggerSchedulingLoop.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        Mockito.doThrow(new IllegalStateException("boom")).when(triggerScheduler).onGovernanceChanged(any(), eq(Set.of(1)), any());
+        TriggerSchedulingLoop loop = createLoop();
+        loop.setAssignments(Set.of(1));
+        Thread thread = new Thread(loop);
+        thread.start();
+
+        try {
+            // WHEN
+            awaitFirstIteration(loop);
+            loop.onGovernanceChanged(flow -> true);
+
+            // THEN
+            Await.until(
+                () -> appender.list.stream().anyMatch(event -> event.getFormattedMessage().contains("failed to apply a flow governance change")),
+                Duration.ofMillis(10),
+                Duration.ofSeconds(5)
+            );
+        } finally {
+            loop.stop();
+            thread.join();
+            logger.detachAppender(appender);
+        }
+    }
+
+    @Test
     void shouldWarnOnEveryEvaluationButTheColdOneWhenEvaluationOverrunsTheInterval() throws Exception {
         // GIVEN
         Logger logger = (Logger) LoggerFactory.getLogger(TriggerSchedulingLoop.class);

@@ -19,10 +19,23 @@ const SEARCH_PAGE_SIZE = 200
  */
 const NAMESPACE_FETCH_CONCURRENCY = 8
 
+/**
+ * Searching files across all namespaces requires one HTTP request per namespace. For suggestions
+ * without a namespace filter, skip the check if the namespace count exceeds this limit to avoid
+ * high request volume.
+ */
+const MAX_SUGGESTION_NAMESPACES = 10
+
 const isTruncated = (total: number | undefined, shown: number) => total !== undefined && shown < total
 
 function searchErrorMessage(error: unknown): string | undefined {
     return asProblem(error)?.detail ?? (error instanceof Error ? error.message : undefined)
+}
+
+function buildQueryFilters(q: string, namespace?: string): QueryFilter[] {
+    const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: q}]
+    if (namespace) filters.push({field: "namespace", operation: "EQUALS", value: namespace})
+    return filters
 }
 
 async function runBounded<T>(items: T[], limit: number, task: (item: T) => Promise<void>) {
@@ -96,6 +109,16 @@ export interface FlowsSearchParams {
     scope: SourceSearchScope;
 }
 
+export interface SuggestionSearchParams {
+    query: string;
+    namespace?: string;
+    types?: SearchResourceType[];
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    scope?: SourceSearchScope;
+}
+
 export interface CrossResourceSearchParams {
     types: SearchResourceType[];
     query: string;
@@ -157,7 +180,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
-    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<void> {
+    async function searchSuggestion(params: SuggestionSearchParams, gen: number): Promise<void> {
         if (!isCurrent(gen)) return
 
         suggestedQuery.value = null
@@ -168,22 +191,80 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         if (!alternativeQuery) return
 
+        const types = params.types ?? ["flows", "files", "kv", "secrets"]
+
+        const checkFlows = async (): Promise<boolean> => {
+            if (!types.includes("flows")) return false
+            try {
+                const response = await FlowsAPI.searchFlowsBySourceCode({
+                    caseSensitive: params.caseSensitive,
+                    wholeWord: params.wholeWord,
+                    regex: params.regex,
+                    scope: params.scope,
+                    page: 1,
+                    size: 1,
+                    q: alternativeQuery,
+                    namespace: params.namespace,
+                })
+                return (response.results ?? []).length > 0
+            } catch {
+                return false
+            }
+        }
+
+        const checkSecrets = async (): Promise<boolean> => {
+            if (!types.includes("secrets") || params.regex) return false
+            try {
+                const filters = buildQueryFilters(alternativeQuery, params.namespace)
+                const response = await SecretsAPI.listSecrets({filters, page: 1, size: 1})
+                return (response.results ?? []).length > 0
+            } catch {
+                return false
+            }
+        }
+
+        const checkKv = async (): Promise<boolean> => {
+            if (!types.includes("kv") || params.regex) return false
+            try {
+                const filters = buildQueryFilters(alternativeQuery, params.namespace)
+                const response = await KvAPI.listAllKeys({filters, page: 1, size: 1})
+                return (response.results ?? []).length > 0
+            } catch {
+                return false
+            }
+        }
+
+        const checkFiles = async (): Promise<boolean> => {
+            if (!types.includes("files") || params.regex) return false
+            try {
+                const namespaces = params.namespace
+                    ? [params.namespace]
+                    : (files.value.namespaces.length > 0
+                        ? files.value.namespaces.map((n) => n.namespace)
+                        : (await NamespacesAPI.autocompleteNamespaces({existingOnly: true}) ?? []))
+                if (namespaces.length === 0 || namespaces.length > MAX_SUGGESTION_NAMESPACES) return false
+
+                let found = false
+                await runBounded(namespaces, NAMESPACE_FETCH_CONCURRENCY, async (namespace) => {
+                    if (found) return
+                    try {
+                        const paths = await FilesAPI.searchNamespaceFiles({namespace, q: alternativeQuery})
+                        if ((paths ?? []).length > 0) {
+                            found = true
+                        }
+                    } catch {}
+                })
+                return found
+            } catch {
+                return false
+            }
+        }
+
         try {
-            const response = await FlowsAPI.searchFlowsBySourceCode({
-                caseSensitive: params.caseSensitive,
-                wholeWord: params.wholeWord,
-                regex: params.regex,
-                scope: params.scope,
-                page: 1,
-                size: 1,
-                q: alternativeQuery,
-                namespace: params.namespace,
-            })
-
+            const results = await Promise.all([checkFlows(), checkSecrets(), checkKv(), checkFiles()])
             if (!isCurrent(gen)) return
-            if ((response.results ?? []).length === 0) return
 
-            suggestedQuery.value = alternativeQuery
+            suggestedQuery.value = results.some(Boolean) ? alternativeQuery : null
         } catch {
             if (!isCurrent(gen)) return
             suggestedQuery.value = null
@@ -267,8 +348,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         kv.value = {status: "counting", groups: kv.value.groups}
         try {
-            const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: params.query}]
-            if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
+            const filters = buildQueryFilters(params.query, params.namespace)
 
             const response = await KvAPI.listAllKeys({filters, page: 1, size: SEARCH_PAGE_SIZE})
             if (!isCurrent(gen)) return
@@ -297,8 +377,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         secrets.value = {status: "counting", groups: secrets.value.groups}
         try {
-            const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: params.query}]
-            if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
+            const filters = buildQueryFilters(params.query, params.namespace)
 
             const response = await SecretsAPI.listSecrets({filters, page: 1, size: SEARCH_PAGE_SIZE})
             if (!isCurrent(gen)) return
@@ -466,7 +545,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         secrets,
         search,
         searchFlows,
-        searchFlowSuggestion,
+        searchSuggestion,
         suggestedQuery,
         searchFiles,
         searchKv,

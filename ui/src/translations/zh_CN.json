@@ -613,6 +613,8 @@
         "all-iterations": "所有迭代",
         "iteration-index": "索引 {index}",
         "iteration-value-index": "{value} · 索引 {index}",
+        "first-iteration": "首次迭代",
+        "last-iteration": "上次迭代",
         "previous-iteration": "上一个迭代",
         "next-iteration": "下一个迭代",
         "previous-page": "上一页",
@@ -1174,6 +1176,12 @@
     "bulk force run": "您确定要强制运行 `{executionCount}` 个执行吗？\n\n警告：强制运行执行不保证成功，并可能创建重复的 Task 执行。\n\n将进行以下转换：\n\n- CREATED Task 将移至 RUNNING 状态。\n- RUNNING Task 将重新提交。\n- QUEUED Task 将取消排队。\n- PAUSED Task 将恢复。",
     "bulk restart": "确定要重新开始 {executionCount} 个执行吗？",
     "bulk kill": "确定要终止 <code>{executionCount}</code> 个执行吗？",
+    "bulk action ineligible change state": "所选 {total} 个执行中有 {count} 个不符合状态更改条件。",
+    "bulk action ineligible not state": "所选 {total} 个执行中有 {count} 个不处于 {state} 状态。",
+    "bulk action ineligible not pausable": "所选 {total} 个执行中有 {count} 个无法暂停。",
+    "bulk action ineligible not resumable": "所选 {total} 个执行中有 {count} 个无法恢复。",
+    "bulk action ineligible not terminated": "所选 {total} 个执行中有 {count} 个尚未终止。",
+    "bulk action ineligible already terminated": "所选 {total} 个执行中有 {count} 个已经终止。",
     "cancel": "取消",
     "errorLogs": "错误 logs",
     "product_tour": "产品导览",
@@ -1434,6 +1442,7 @@
     "execution-include-non-terminated": "包括未终止的执行？",
     "execution-warn-title": "重要警告！",
     "execution-warn-deleting-still-running": "我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能导致并发性问题、flow依赖管理不一致以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全了解这些风险。",
+    "execution-warn-non-terminated-count": "所选 {total} 个执行中有 {count} 个尚未终止。",
     "pluginPage": {
       "search": "搜索 {count}+ 插件",
       "searchTasks": "搜索 {count} 个 task",
@@ -1529,6 +1538,7 @@
             "flow_default_tab": "默认 Flow 标签页",
             "triggers_default_tab": "默认 Trigger 标签页",
             "playground": "游乐场",
+            "open_docs_tab": "打开文档选项卡",
             "auto_refresh_interval": "自动刷新间隔",
             "task_edit_default_mode": "默认 Task 编辑模式",
             "flow_template": "默认 flow 模板"
@@ -1545,6 +1555,7 @@
             "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。",
             "auto_refresh_interval": "列表页面上自动数据刷新的秒数。",
             "playground": "在编辑器游乐场中单独运行任务。",
+            "open_docs_tab": "打开编辑器旁边的 Docs 选项卡。适用于新的 flow 和您以前未打开过的 flow。",
             "task_edit_default_mode": "无代码编辑器中 task 的默认打开方式。",
             "flow_template": "当您创建新的 flow 时，YAML 会在编辑器中打开。id 和 namespace 可以省略，因为它们是为您生成的。当此处为空时，将使用为实例配置的模板。"
           },
@@ -2587,6 +2598,8 @@
         },
         "notice": {
           "emptyTurn": "助手未返回响应。请重试。",
+          "outputLimit": "助手在回答之前用尽了输出 token。请缩短您的消息或开始新的聊天。",
+          "contentFiltered": "AI 提供商已阻止响应。请重新措辞您的消息或删除可能触发提供商过滤器的内容。",
           "retry": "重试"
         },
         "cancelled": "轮次已取消",
@@ -3255,6 +3268,8 @@
     "chart mode": {
       "counts": "计数",
       "timeline": "时间线"
-    }
+    },
+    "search_in_flow_source": "在流程源码中搜索 \"{query}\"",
+    "flows_matched_query": "ID 或命名空间中包含 \"{query}\" 的 {count} 个流程。 | ID 或命名空间中包含 \"{query}\" 的 {count} 个流程。"
   }
 }

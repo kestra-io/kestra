@@ -357,6 +357,17 @@ describe("FlowTriggers - execute backfill button", () => {
 
         expect(executeButton()?.disabled).toBe(false)
     })
+
+    // https://github.com/kestra-io/kestra/issues/22518: clearing a text field sends "", which used to count as filled
+    it("goes back to disabled when the required input is cleared to an empty string", async () => {
+        const wrapper = await openBackfill()
+
+        await fillInputs(wrapper, {region: "EU", batchSize: 100})
+        expect(executeButton()?.disabled).toBe(false)
+
+        await fillInputs(wrapper, {region: "", batchSize: 100})
+        expect(executeButton()?.disabled).toBe(true)
+    })
 })
 
 describe("FlowTriggers - many triggers", () => {

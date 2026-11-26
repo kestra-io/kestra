@@ -341,6 +341,19 @@ describe("hasMissingRequiredInputs", () => {
         expect(hasMissingRequiredInputs(flowInputs, null)).toBe(true)
     })
 
+    // https://github.com/kestra-io/kestra/issues/22518: a cleared text field sends "" and a cleared multi-select sends []
+    it("reports a required input cleared to an empty string or an empty array", () => {
+        expect(hasMissingRequiredInputs(flowInputs, {region: ""})).toBe(true)
+        expect(hasMissingRequiredInputs(flowInputs, {region: []})).toBe(true)
+        expect(hasMissingRequiredInputs(flowInputs, {region: "EU", batchSize: ""})).toBe(false)
+        expect(hasMissingRequiredInputs(flowInputs, {region: ["EU"]})).toBe(false)
+    })
+
+    it("keeps falsy but filled values", () => {
+        expect(hasMissingRequiredInputs(flowInputs, {region: 0})).toBe(false)
+        expect(hasMissingRequiredInputs(flowInputs, {region: false})).toBe(false)
+    })
+
     it("needs nothing when the flow has no required input", () => {
         expect(hasMissingRequiredInputs([{id: "batchSize", required: false}], null)).toBe(false)
         expect(hasMissingRequiredInputs(undefined, null)).toBe(false)
@@ -351,5 +364,6 @@ describe("hasMissingRequiredInputs", () => {
         expect(hasMissingRequiredInputs(formInputs, {"env.region": "EU"})).toBe(false)
         expect(hasMissingRequiredInputs(formInputs, {"env.zone": "a"})).toBe(true)
         expect(hasMissingRequiredInputs(formInputs, {env: "EU"})).toBe(true)
+        expect(hasMissingRequiredInputs(formInputs, {"env.region": ""})).toBe(true)
     })
 })

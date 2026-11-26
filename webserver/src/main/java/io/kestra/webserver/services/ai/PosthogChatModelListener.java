@@ -1,6 +1,5 @@
 package io.kestra.webserver.services.ai;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -9,10 +8,6 @@ import com.google.common.collect.Maps;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.posthog.PosthogService;
 
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.ToolExecutionResultMessage;
-import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
@@ -40,22 +35,9 @@ public class PosthogChatModelListener implements ChatModelListener {
         properties.put("$ai_http_status", 200);
         properties.put("$ai_response_id", response.metadata().id());
 
-        AiMessage aiMessage = response.aiMessage();
-        // Intermediate tool-call responses are captured in the inputs of the final generation — skip them.
-        if (aiMessage.hasToolExecutionRequests()) {
+        if (response.aiMessage().hasToolExecutionRequests()) {
             return;
         }
-
-        properties.put("$ai_input", inputs(request));
-        properties.put(
-            "$ai_output_choices", Map.of(
-                "content", Map.of(
-                    "text", Optional.ofNullable(aiMessage.text()).orElse(""),
-                    "type", "text"
-                ),
-                "role", "assistant"
-            )
-        );
 
         if (response.tokenUsage() != null) {
             properties.put("$ai_input_tokens", response.tokenUsage().inputTokenCount());
@@ -151,40 +133,5 @@ public class PosthogChatModelListener implements ChatModelListener {
         final long endTime = Clock.SYSTEM.monotonicTime();
 
         return Optional.of((endTime - startTime) / 1_000_000_000.0);
-    }
-
-    private static List<? extends Map<String, String>> inputs(ChatRequest request) {
-        return request.messages()
-            .stream()
-            .map(chatMessage ->
-            {
-                if (chatMessage instanceof AiMessage msg) {
-                    String content = msg.hasToolExecutionRequests()
-                        ? msg.toolExecutionRequests().stream()
-                            .map(req -> req.name() + "(" + req.arguments() + ")")
-                            .reduce((a, b) -> a + ", " + b)
-                            .orElse("")
-                        : Optional.ofNullable(msg.text()).orElse("");
-                    return Map.of("role", "assistant", "content", content);
-                } else if (chatMessage instanceof ToolExecutionResultMessage msg) {
-                    return Map.of("role", "tool", "content", Optional.ofNullable(msg.text()).orElse(""));
-                } else if (chatMessage instanceof UserMessage userMessage) {
-                    return Map.of(
-                        "role", "user",
-                        "content", userMessage.singleText()
-                    );
-                } else if (chatMessage instanceof SystemMessage systemMessage) {
-                    return Map.of(
-                        "role", "system",
-                        "content", systemMessage.text()
-                    );
-                } else {
-                    return Map.of(
-                        "role", "unknown",
-                        "content", chatMessage.type().toString()
-                    );
-                }
-            })
-            .toList();
     }
 }

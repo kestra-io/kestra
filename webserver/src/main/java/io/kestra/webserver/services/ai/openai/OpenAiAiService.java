@@ -64,7 +64,7 @@ public class OpenAiAiService extends AiService<OpenAiConfiguration> {
             .returnThinking(thinking)
             .customHeaders(getAiConfiguration().customHeaders());
 
-        pemHttpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
             .ifPresent(builder::httpClientBuilder);
 
         return builder.build();
@@ -88,7 +88,7 @@ public class OpenAiAiService extends AiService<OpenAiConfiguration> {
             .returnThinking(thinking)
             .customHeaders(getAiConfiguration().customHeaders());
 
-        pemHttpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
             .ifPresent(builder::httpClientBuilder);
 
         return builder.build();

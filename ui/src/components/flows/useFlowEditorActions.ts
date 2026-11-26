@@ -44,7 +44,7 @@ export function useFlowEditorActions() {
         }
     }
 
-    async function persistAll(draft?: boolean) {
+    async function persistAll(draft: boolean) {
         const isCreating = flowStore.isCreating
         const outcome = await flowStore.saveAll(draft)
 
@@ -176,31 +176,23 @@ export function useFlowEditorActions() {
         }
     }
 
-    /** The Save button: publishes, so on a draft, where it sits in the menu behind Publish, it is an explicit way out of draft mode. */
-    async function save() {
+    /** Publishes the editor's content, unsaved changes included, without saving a draft first. */
+    async function publish() {
         await saveFlow(false)
     }
 
-    /** The Ctrl/Cmd+S shortcut: a draft stays a draft and a published flow stays published. */
-    async function saveKeepingDraftState() {
-        await saveFlow(undefined)
+    /** Saves the editor's content as a draft, the Ctrl/Cmd+S shortcut; a no-op without unsaved changes. */
+    async function saveAsDraft() {
+        await saveFlow(true)
     }
 
-    async function saveFlow(draft: boolean | undefined) {
+    async function saveFlow(draft: boolean) {
         try {
             // Skip the save when the install did not succeed: it would only fail downstream as an
             // unknown type, burying the real cause under a second, unrelated-looking error.
             const outcome = await triggerPluginInstallIfNeeded()
             if (outcome === "failed" || outcome === "timeout") return
             await persistAll(draft)
-        } catch (error) {
-            reportSaveError(error)
-        }
-    }
-
-    async function saveAsDraft() {
-        try {
-            await persistAll(true)
         } catch (error) {
             reportSaveError(error)
         }
@@ -341,8 +333,9 @@ export function useFlowEditorActions() {
         isPlaygroundEnabled,
         isPlaygroundAllowed,
         // actions
-        save,
-        saveKeepingDraftState,
+        publish,
+        /** @deprecated since 2.1, use `publish` instead. */
+        save: publish,
         saveAsDraft,
         publishDraft,
         saveAndExecute,

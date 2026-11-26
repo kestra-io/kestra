@@ -41,6 +41,13 @@ public interface FlowMetaStoreInterface {
     }
 
     /**
+     * Returns the latest revision of a flow, a draft included, or empty if the flow does not exist.
+     * WARNING: this method will NOT check if the namespace is allowed, so the flow itself must then be resolved
+     * with {@link #findByIdFromTask(String, String, String, Optional, String, String, String)}.
+     */
+    Optional<Integer> findLatestRevision(String tenantId, String namespace, String id);
+
+    /**
      * Find a flow from an execution.
      * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
      */

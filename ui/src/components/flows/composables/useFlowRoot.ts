@@ -7,7 +7,7 @@ import {useFlowStore} from "../../../stores/flow"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 import {useActiveTab} from "../../../composables/useActiveTab"
-import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
+import {useFlowSiblings, useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
 import {isFlowTabEnabled} from "override/components/flows/flowTabsExtension"
 import {defaultTimeRange} from "../../executions/timeRangeWiden"
@@ -93,9 +93,12 @@ export function useFlowRoot() {
         root: {label: t("flows"), link: {name: "flows/list"}, scope: t("namespaces")},
     })
 
+    const flowSiblings = useFlowSiblings(() => route.params.namespace?.toString(), () => route.params.id?.toString())
+
     const routeInfo = computed(() => ({
         title: route.params.id.toString(),
         breadcrumb: namespaceBreadcrumb.value,
+        titleSiblings: flowSiblings.value,
         bookmarkLabel: `${route.params.namespace}: ${route.params.id}`,
         beta: route.meta?.beta as boolean | undefined,
     }))
@@ -126,6 +129,16 @@ export function useFlowRoot() {
         },
         // Immediate because the route guard loads the flow before this page mounts, so the source may never change.
         {debounce: 1000, immediate: true},
+    )
+
+    watch(
+        () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision, flowStore.flow?.draft] as const,
+        () => {
+            if (flowStore.flow) {
+                flowStore.loadHasPublishedRevision(flowStore.flow).catch(() => undefined)
+            }
+        },
+        {immediate: true},
     )
 
     function setupLifecycle() {

@@ -415,7 +415,7 @@
     const inlineTaskEditRef = ref<InstanceType<typeof TaskEdit>>()
     async function saveFlowWithPendingEdits() {
         inlineTaskEditRef.value?.flushPendingEdit()
-        const outcome = await flowStore.save?.(flowStore.flow?.draft ?? false)
+        const outcome = await flowStore.save?.(true)
         if (outcome === "blocked") {
             coreStore.message = {
                 variant: "error",

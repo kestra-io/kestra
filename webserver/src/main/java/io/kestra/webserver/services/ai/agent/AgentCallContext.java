@@ -1,9 +1,11 @@
 package io.kestra.webserver.services.ai.agent;
 
+import java.util.List;
 import java.util.Map;
 
 import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.core.events.Actor;
+import io.kestra.core.models.Label;
 
 import dev.langchain4j.invocation.InvocationContext;
 import dev.langchain4j.invocation.LangChain4jManaged;
@@ -28,13 +30,18 @@ public final class AgentCallContext {
     private AgentCallContext() {
     }
 
+    /**
+     * @param originLabels the system labels the channel the call came through stamps on the executions it starts,
+     *        replacing the defaults of the same key; null when the channel has none
+     */
     @Builder
     public record Context(
         String tenant,
         @Nullable AgentPrincipal principal,
         @Nullable String providerId,
         @Nullable String conversationId,
-        @Nullable Actor actor) implements LangChain4jManaged {
+        @Nullable Actor actor,
+        @Nullable List<Label> originLabels) implements LangChain4jManaged {
 
         public static Context ofTenant(final String tenant) {
             return Context.builder().tenant(tenant).build();

@@ -320,9 +320,14 @@ public class AgentOrchestrator {
                 // empty model turn on the next turn (see ChatMessageAdaptor.project), which is itself a
                 // documented trigger for more empty responses. End the turn without polluting the thread.
                 if (ai.text() == null || ai.text().isBlank()) {
-                    log.warn("Model returned an empty response (no text, no tool calls) for thread {}; ending turn without persisting.", ctx.thread().uid());
+                    AgentEvents.EmptyTurnReason reason = emptyTurnReason(response.finishReason());
+                    log.warn(
+                        "Model returned an empty response (no text, no tool calls) for thread {}; ending turn without persisting. reason={}, finishReason={}, tokenUsage={}",
+                        ctx.thread().uid(), reason, response.finishReason(), response.tokenUsage()
+                    );
                     finishTurn(ctx);
-                    done(sink, AgentThreadStatus.IDLE);
+                    sink.emit(AgentEvents.DONE, new AgentEvents.DoneEvent(AgentThreadStatus.IDLE.name(), reason));
+                    sink.complete();
                     return;
                 }
 
@@ -474,6 +479,20 @@ public class AgentOrchestrator {
             .formatted(ChatMessageAdaptor.malformedArgumentsReason(raw), received);
     }
 
+    /**
+     * Tells the client why a successful model call came back empty, so it can say something more useful
+     * than "no response". Providers report this only through the finish reason.
+     */
+    private static AgentEvents.EmptyTurnReason emptyTurnReason(@Nullable final FinishReason finishReason) {
+        if (finishReason == FinishReason.LENGTH) {
+            return AgentEvents.EmptyTurnReason.OUTPUT_LIMIT;
+        }
+        if (finishReason == FinishReason.CONTENT_FILTER) {
+            return AgentEvents.EmptyTurnReason.CONTENT_FILTERED;
+        }
+        return AgentEvents.EmptyTurnReason.EMPTY_RESPONSE;
+    }
+
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
         threadManager.appendProposedAction(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), planText, null);
         String confirmationId = IdUtils.create();
@@ -580,7 +599,7 @@ public class AgentOrchestrator {
             throw new IllegalStateException("LLM streaming call interrupted", e);
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
-            throw new IllegalStateException("LLM streaming call failed: " + cause.getMessage(), cause);
+            throw new IllegalStateException("LLM streaming call failed: " + ModelCallFailure.reason(cause), cause);
         }
     }
 

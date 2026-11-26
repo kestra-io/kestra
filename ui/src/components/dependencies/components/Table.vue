@@ -168,7 +168,7 @@
         ? assetTools((node.metadata as {assetMetadata?: Record<string, unknown>}).assetMetadata)
         : [])
 
-    const tools = computed(() => [...new Set(props.elements.filter(isNodeElement).flatMap(({data}) => toolsOf(data)))].sort())
+    const tools = computed(() => [...new Set(props.elements.filter(isNodeElement).flatMap(({data}) => toolsOf(data)))].sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"})))
 
     // The select disappears with the last asset of its tool, which would leave a filter nobody can clear.
     watch(tools, (available) => {

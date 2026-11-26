@@ -83,7 +83,7 @@ describe("dependencies Table.vue — tool filter", () => {
         })
         const filters = wrapper.findComponent(TableFilters)
 
-        expect(filters.props("tools")).toEqual(["Ansible", "GCP", "PostgreSQL", "Terraform", "dbt"])
+        expect(filters.props("tools")).toEqual(["Ansible", "dbt", "GCP", "PostgreSQL", "Terraform"])
 
         filters.vm.$emit("update:tool", "Terraform")
         await nextTick()

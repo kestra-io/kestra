@@ -2169,8 +2169,10 @@
     "gantt_subflow": {
       "loading": "Cargando la ejecución del subflow…",
       "load_error": "Error al cargar la ejecución del subflow",
-      "none": "No se ha iniciado ninguna Execution todavía",
-      "executions": "Ejecuciones de Subflow | Ejecuciones de Subflow"
+      "none": "No se encontró ninguna ejecución de subflow",
+      "no_tasks": "Aún no hay Task Runs en esta ejecución de Subflow",
+      "task_runs": "Ejecuciones de Task de Subflow",
+      "executions": "Ejecuciones de Subflow"
     },
     "loop_iterations_notice": {
       "logs": "Las iteraciones de bucle se ejecutan como subejecuciones separadas, por lo que sus logs no se muestran aquí.",

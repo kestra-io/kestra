@@ -2169,8 +2169,10 @@
     "gantt_subflow": {
       "loading": "Ładowanie egzekucji Subflow…",
       "load_error": "Nie udało się załadować egzekucji Subflow",
-      "none": "Żadna egzekucja jeszcze się nie rozpoczęła",
-      "executions": "Uruchomienia Tasków Subflow | Egzekucje Subflow | Egzekucje Subflow"
+      "none": "Nie znaleziono egzekucji Subflow",
+      "no_tasks": "Brak uruchomionych Tasków w tej egzekucji Subflow",
+      "task_runs": "Uruchomienia Tasków Subflow",
+      "executions": "Egzekucje Subflow"
     },
     "loop_iterations_notice": {
       "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",

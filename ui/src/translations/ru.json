@@ -2169,8 +2169,10 @@
     "gantt_subflow": {
       "loading": "Загрузка выполнения subflow…",
       "load_error": "Не удалось загрузить выполнение subflow",
-      "none": "Ещё не запущено ни одной egzekucji",
-      "executions": "Запуски Subflow Task | Запуски Subflow | Запуски Subflow"
+      "none": "Subflow Execution не найден",
+      "no_tasks": "В этом выполнении subflow пока нет Task Run'ов",
+      "task_runs": "Запуски Subflow Task'ов",
+      "executions": "Subflow-выполнения"
     },
     "loop_iterations_notice": {
       "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",

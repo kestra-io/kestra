@@ -2169,8 +2169,10 @@
     "gantt_subflow": {
       "loading": "subflow Execution 로드 중…",
       "load_error": "subflow 실행을 로드하지 못했습니다.",
-      "none": "아직 실행된 execution이 없습니다",
-      "executions": "Subflow Task 실행 | Subflow Execution"
+      "none": "subflow 실행을 찾을 수 없습니다.",
+      "no_tasks": "이 subflow Execution에는 아직 Task Run이 없습니다.",
+      "task_runs": "Subflow Task 실행",
+      "executions": "Subflow 실행"
     },
     "loop_iterations_notice": {
       "logs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 로그는 여기에 표시되지 않습니다.",

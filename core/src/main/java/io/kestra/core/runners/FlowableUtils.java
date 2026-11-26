@@ -28,7 +28,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class FlowableUtils {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson(true);
@@ -90,7 +89,9 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
+                .anyMatch(
+                    taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying()
+                )
         ) {
             return Collections.emptyList();
         }
@@ -131,7 +132,9 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
+                .anyMatch(
+                    taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying()
+                )
         ) {
             return Collections.emptyList();
         }
@@ -432,6 +435,9 @@ public class FlowableUtils {
                         List<Pair<String, String>> resolvedValues = new ArrayList<>(valuesNode.size());
                         Map<String, Object> mapValues = MAPPER.convertValue(valuesNode, JacksonMapper.MAP_TYPE_REFERENCE);
                         for (var entry : mapValues.entrySet()) {
+                            if (entry.getValue() == null) {
+                                continue;
+                            }
                             resolvedValues.add(Pair.of(entry.getKey(), valueAsString(runContext, values, entry.getValue())));
                         }
                         return Either.right(resolvedValues);
@@ -457,6 +463,10 @@ public class FlowableUtils {
             case Map<?, ?> mapValue -> {
                 List<Pair<String, String>> resolvedValues = new ArrayList<>();
                 for (var entry : ((Map<String, Object>) mapValue).entrySet()) {
+                    // Inline maps and JSON-object strings omit null map values; null list elements are rejected.
+                    if (entry.getValue() == null) {
+                        continue;
+                    }
                     resolvedValues.add(Pair.of(entry.getKey(), valueAsString(runContext, values, entry.getValue())));
                 }
                 return Either.right(resolvedValues);

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -140,6 +142,40 @@ class JacksonMapperTest {
         assertThat(value.getLeft().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":null}]");
         // Revert
         assertThat(value.getRight().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":{\"value\":\"value\"}}]");
+    }
+
+    @Test
+    void shouldKeepNullMapEntriesAndListElementsButOmitNullBeanPropertiesWhenUsingNullKeepingMappers() throws IOException {
+        Map<String, Object> mapWithNull = new LinkedHashMap<>();
+        mapWithNull.put("value", "present");
+        mapWithNull.put("nullable", null);
+
+        List<Object> listWithNull = new ArrayList<>();
+        listWithNull.add("present");
+        listWithNull.add(null);
+
+        ObjectMapper json = JacksonMapper.ofJsonWithNullValues(false);
+        assertThat(json.writeValueAsString(mapWithNull)).isEqualTo("{\"value\":\"present\",\"nullable\":null}");
+        assertThat(json.writeValueAsString(listWithNull)).isEqualTo("[\"present\",null]");
+        assertThat(json.writeValueAsString(new NullableBean("present", null))).isEqualTo("{\"value\":\"present\"}");
+
+        ObjectMapper yaml = JacksonMapper.ofYamlWithNullValues();
+        assertThat(yaml.writeValueAsString(mapWithNull)).contains("nullable: null");
+        assertThat(yaml.writeValueAsString(listWithNull)).contains("- null");
+        assertThat(yaml.writeValueAsString(new NullableBean("present", null))).doesNotContain("nullable");
+    }
+
+    @Test
+    void shouldDropNullMapEntriesWhenUsingDefaultJsonAndYamlMappers() throws IOException {
+        Map<String, Object> mapWithNull = new LinkedHashMap<>();
+        mapWithNull.put("value", "present");
+        mapWithNull.put("nullable", null);
+
+        assertThat(JacksonMapper.ofJson().writeValueAsString(mapWithNull)).isEqualTo("{\"value\":\"present\"}");
+        assertThat(JacksonMapper.ofYaml().writeValueAsString(mapWithNull)).doesNotContain("nullable");
+    }
+
+    private record NullableBean(String value, String nullable) {
     }
 
     private record DummyObject(String value) {

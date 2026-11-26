@@ -13,7 +13,7 @@ import io.pebbletemplates.pebble.extension.writer.SpecializedWriter;
 import lombok.SneakyThrows;
 
 public class JsonWriter extends OutputWriter implements SpecializedWriter {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJsonWithNullValues(false);
 
     private final StringWriter stringWriter = new StringWriter();
     private boolean hasOutput = false;

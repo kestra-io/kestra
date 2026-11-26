@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.SystemUtils;
 
@@ -174,9 +175,10 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
     }
 
     protected CommandsWrapper commands(RunContext runContext) throws IllegalVariableEvaluationException {
-        Map<String, String> renderedEnv = runContext.render(this.getEnv()).asMap(String.class, String.class);
+        Map<String, String> renderedEnv = new HashMap<>(runContext.render(this.getEnv()).asMap(String.class, String.class));
+        renderedEnv.values().removeIf(Objects::isNull);
         return new CommandsWrapper(runContext)
-            .withEnv(renderedEnv.isEmpty() ? new HashMap<>() : renderedEnv)
+            .withEnv(renderedEnv)
             .withContainerImage(runContext.render(this.getContainerImage()).as(String.class).orElse(null))
             .withTaskRunner(this.getTaskRunner())
             .withNamespaceFiles(this.getNamespaceFiles())

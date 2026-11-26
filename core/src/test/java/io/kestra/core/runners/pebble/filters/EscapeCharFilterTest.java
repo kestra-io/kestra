@@ -1,8 +1,12 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -31,6 +35,28 @@ class EscapeCharFilterTest {
         );
 
         assertThat(render).isEqualTo(expected);
+    }
+
+    @Test
+    void mapWithNullValue() throws IllegalVariableEvaluationException {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("first", "hello");
+        map.put("empty", null);
+
+        String render = variableRenderer.render("{{ map | escapeChar('single') }}", Map.of("map", map));
+
+        assertThat(render).isEqualTo("{\"first\":\"hello\"}");
+    }
+
+    @Test
+    void listWithNullValue() throws IllegalVariableEvaluationException {
+        List<Object> list = new ArrayList<>();
+        list.add("hello");
+        list.add(null);
+
+        String render = variableRenderer.render("{{ list | escapeChar('single') }}", Map.of("list", list));
+
+        assertThat(render).isEqualTo("[\"hello\"]");
     }
 
     @ParameterizedTest

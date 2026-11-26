@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks.metrics;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -48,5 +49,14 @@ public abstract class AbstractMetric {
     private String type;
 
     public abstract AbstractMetricEntry<?> toMetric(RunContext runContext) throws IllegalVariableEvaluationException;
+
+    protected String[] tagsAsArray(RunContext runContext) throws IllegalVariableEvaluationException {
+        return runContext.render(this.tags).asMap(String.class, String.class)
+            .entrySet()
+            .stream()
+            .filter(e -> e.getValue() != null)
+            .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
+            .toArray(String[]::new);
+    }
 
 }

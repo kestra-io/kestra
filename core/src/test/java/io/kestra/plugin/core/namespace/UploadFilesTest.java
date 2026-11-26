@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -205,6 +206,31 @@ public class UploadFilesTest {
         Namespace namespaceStorage = runContext.storage().namespace(namespace);
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldSkipNullValueInFilesMap() throws Exception {
+        String namespace = "io.kestra." + IdUtils.create();
+        URI fileStorage = addToStorage("application-test.yml");
+
+        Map<String, Object> filesMap = new LinkedHashMap<>();
+        filesMap.put("report.txt", fileStorage.toString());
+        filesMap.put("ignored", null);
+
+        UploadFiles uploadFile = UploadFiles.builder()
+            .id(UploadFiles.class.getSimpleName())
+            .type(UploadFiles.class.getName())
+            .filesMap(filesMap)
+            .namespace(Property.ofValue(namespace))
+            .destination(Property.ofValue("/"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
+        uploadFile.run(runContext);
+
+        assertThat(runContext.storage().namespace(namespace).all())
+            .extracting(NamespaceFile::path)
+            .containsExactly("report.txt");
     }
 
     private URI addToStorage(String fileToLoad) throws IOException, URISyntaxException {

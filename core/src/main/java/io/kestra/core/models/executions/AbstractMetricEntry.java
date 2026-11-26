@@ -75,6 +75,7 @@ abstract public class AbstractMetricEntry<T> {
             Optional.ofNullable(this.tags).map(Map::entrySet).stream().flatMap(Collection::stream),
             others.entrySet().stream()
         )
+            .filter(e -> e.getValue() != null)
             .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
             .toList()
             .toArray(String[]::new);

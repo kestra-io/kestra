@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -154,6 +155,16 @@ class PebbleVariableRendererTest {
         assertThat(render.get("string")).isEqualTo("top");
         assertThat((List<String>) render.get("list")).containsExactlyInAnyOrder("top", "awesome");
         assertThat(render.get("int")).isEqualTo(1);
+    }
+
+    @Test
+    void shouldKeepNullMapEntryWhenRenderingMapExpression() throws IllegalVariableEvaluationException {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("hello", "world");
+        map.put("other", null);
+
+        assertThat(variableRenderer.render("{{ map }}", Map.of("map", map)))
+            .isEqualTo("{\"hello\":\"world\",\"other\":null}");
     }
 
     @Test

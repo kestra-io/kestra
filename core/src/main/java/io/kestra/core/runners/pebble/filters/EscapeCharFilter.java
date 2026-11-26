@@ -47,6 +47,10 @@ public class EscapeCharFilter implements Filter {
         Map<String, Object> resultMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
             Object value = entry.getValue();
+            // Null map values were omitted from parsed maps before nulls were preserved, so they stay omitted.
+            if (value == null) {
+                continue;
+            }
             if (value instanceof String stringValue) {
                 resultMap.put(entry.getKey(), escapeString(stringValue, args, self, lineNumber));
             } else if (value instanceof Map) {
@@ -64,6 +68,10 @@ public class EscapeCharFilter implements Filter {
     private Object processList(List<Object> inputList, Map<String, Object> args, PebbleTemplate self, int lineNumber) {
         List<Object> resultList = new ArrayList<>();
         for (Object item : inputList) {
+            // Skip null items rather than throwing on toString().
+            if (item == null) {
+                continue;
+            }
             if (item instanceof String stringValue) {
                 resultList.add(escapeString(stringValue, args, self, lineNumber));
             } else if (item instanceof Map) {

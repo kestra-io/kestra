@@ -278,6 +278,18 @@ class PropertyTest {
     }
 
     @Test
+    void shouldKeepNullMapValuesWhenRendering() throws Exception {
+        Property<Map<String, Object>> property = Property.ofExpression("{\"billing\":\"Payments\",\"other\":null}");
+        var runContext = runContextFactory.of();
+
+        Map<String, Object> rendered = runContext.render(property).asMap(String.class, Object.class);
+
+        assertThat(rendered).containsEntry("billing", "Payments");
+        assertThat(rendered).containsKey("other");
+        assertThat(rendered.get("other")).isNull();
+    }
+
+    @Test
     void arrayAndMapToRender() throws Exception {
         var task = DynamicPropertyExampleTask.builder()
             .items(Property.ofExpression("{{renderOnce(listToRender)}}"))

@@ -128,7 +128,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
             .concat(
                 this.defaults != null ? this.defaults.stream() : Stream.empty(),
                 Stream.concat(
-                    this.cases != null ? this.cases.values().stream().flatMap(Collection::stream) : Stream.empty(),
+                    this.cases != null ? this.cases.values().stream().filter(tasks -> tasks != null).flatMap(Collection::stream) : Stream.empty(),
                     Stream.concat(
                         this.errors != null ? this.errors.stream() : Stream.empty(),
                         this._finally != null ? this._finally.stream() : Stream.empty()
@@ -147,7 +147,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
             Stream
                 .concat(
                     this.defaults != null ? ImmutableMap.of("defaults", this.defaults).entrySet().stream() : Stream.empty(),
-                    this.cases != null ? this.cases.entrySet().stream() : Stream.empty()
+                    this.cases != null ? this.cases.entrySet().stream().filter(entry -> entry.getValue() != null) : Stream.empty()
                 )
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
             this.errors,
@@ -164,6 +164,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
         final String value = rendererValue(runContext);
         return MapUtils.emptyOnNull(this.cases).entrySet()
             .stream()
+            .filter(entry -> entry.getValue() != null)
             .filter(throwPredicate(entry -> entry.getKey().equals(value)))
             .map(Map.Entry::getValue)
             .map(tasks -> FlowableUtils.resolveTasks(tasks, parentTaskRun))
@@ -201,7 +202,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
         final String value = rendererValue(runContext);
         return Output.builder()
             .value(value)
-            .defaults(MapUtils.emptyOnNull(this.cases).keySet().stream().noneMatch(value::equals))
+            .defaults(MapUtils.emptyOnNull(this.cases).entrySet().stream().filter(entry -> entry.getValue() != null).noneMatch(entry -> value.equals(entry.getKey())))
             .build();
     }
 

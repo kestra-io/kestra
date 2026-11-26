@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.metric;
 
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +55,38 @@ public class PublishTest {
         publish.run(runContext);
 
         assertThat(runContext.metrics().size()).isEqualTo(3);
+    }
+
+    @Test
+    void shouldIgnoreNullTagValuesWhenPublishingMetric() throws Exception {
+        Map<String, String> tags = new LinkedHashMap<>();
+        tags.put("env", "test");
+        tags.put("ignored", null);
+
+        var publish = Publish.builder()
+            .id(Publish.class.getSimpleName() + "NullTags")
+            .type(Publish.class.getName())
+            .metrics(
+                Property.ofValue(
+                    List.of(
+                        CounterMetric.builder()
+                            .value(Property.ofValue(1.0))
+                            .name(Property.ofValue("counter"))
+                            .tags(Property.ofValue(tags))
+                            .build()
+                    )
+                )
+            )
+            .build();
+
+        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, publish, Map.of());
+
+        publish.run(runContext);
+
+        assertThat(runContext.metrics()).hasSize(1);
+        assertThat(runContext.metrics().getFirst().getTags())
+            .containsEntry("env", "test")
+            .doesNotContainKey("ignored");
     }
 
 }

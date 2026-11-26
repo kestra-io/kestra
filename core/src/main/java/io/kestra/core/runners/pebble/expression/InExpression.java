@@ -26,13 +26,18 @@ public class InExpression extends BinaryExpression<Object> {
             return false;
         }
 
+        // A null entry never matched before, so keep skipping it instead of throwing on toString().
         switch (rightValue) {
             case Collection<?> objects -> {
-                return objects.stream().map(Object::toString).toList().contains(leftValue.toString());
+                return objects.stream()
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .toList()
+                    .contains(leftValue.toString());
             }
             case Iterable<?> objects -> {
                 for (Object item : objects) {
-                    if (Objects.equals(item.toString(), leftValue.toString())) {
+                    if (item != null && Objects.equals(item.toString(), leftValue.toString())) {
                         return true;
                     }
                 }
@@ -42,7 +47,7 @@ public class InExpression extends BinaryExpression<Object> {
                 for (Map.Entry<?, ?> entry : map.entrySet()) {
                     if (
                         Objects.equals(entry.getKey().toString(), leftValue.toString()) ||
-                            Objects.equals(entry.getValue().toString(), leftValue.toString())
+                            (entry.getValue() != null && Objects.equals(entry.getValue().toString(), leftValue.toString()))
                     ) {
                         return true;
                     }

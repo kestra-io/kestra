@@ -56,7 +56,7 @@ class FlowInputOutputAssetTest {
     void shouldResolveTheSubmittedAssetIdThroughTheResolver() {
         AssetInput input = AssetInput.builder().id("vm").type(Type.ASSET).assetType("io.kestra.plugin.ee.assets.VM").build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of("vm", "web-01"));
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(List.of(input), null, EXECUTION, Map.of("vm", "web-01"));
 
         assertThat(values.getFirst().exceptions()).isNullOrEmpty();
         assertThat(values.getFirst().value()).isEqualTo("web-01");
@@ -67,7 +67,7 @@ class FlowInputOutputAssetTest {
     void shouldResolveTheDefaultAssetIdWhenNoValueIsSubmitted() {
         AssetInput input = AssetInput.builder().id("vm").type(Type.ASSET).defaults(Property.ofValue("web-01")).build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of());
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(List.of(input), null, EXECUTION, Map.of());
 
         assertThat(values.getFirst().value()).isEqualTo("web-01");
     }
@@ -76,7 +76,7 @@ class FlowInputOutputAssetTest {
     void shouldResolveAListOfAssetIdsWhenTheInputIsMultiple() {
         AssetInput input = AssetInput.builder().id("vms").type(Type.ASSET).multiple(true).build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of("vms", List.of("web-01", "web-02")));
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(List.of(input), null, EXECUTION, Map.of("vms", List.of("web-01", "web-02")));
 
         assertThat(values.getFirst().exceptions()).isNullOrEmpty();
         assertThat(values.getFirst().value()).isEqualTo(List.of("web-01", "web-02"));
@@ -86,7 +86,7 @@ class FlowInputOutputAssetTest {
     void shouldResolveEveryDefaultAssetIdWhenTheInputIsMultiple() {
         AssetInput input = AssetInput.builder().id("vms").type(Type.ASSET).multiple(true).defaults(Property.ofValue(List.of("web-01", "web-02"))).build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of());
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(List.of(input), null, EXECUTION, Map.of());
 
         assertThat(values.getFirst().value()).isEqualTo(List.of("web-01", "web-02"));
     }
@@ -95,7 +95,7 @@ class FlowInputOutputAssetTest {
     void shouldRejectAListGivenToASingleAssetInput() {
         AssetInput input = AssetInput.builder().id("vm").type(Type.ASSET).build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of("vm", List.of("web-01", "web-02")));
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(List.of(input), null, EXECUTION, Map.of("vm", List.of("web-01", "web-02")));
 
         assertThat(values.getFirst().exceptions()).isNotEmpty();
         assertThat(values.getFirst().exceptions().iterator().next().getMessage()).contains("it must be a single asset");
@@ -112,7 +112,7 @@ class FlowInputOutputAssetTest {
             .dependsOn(new DependsOn(List.of("deployment"), null))
             .build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(deployment, vm), null, EXECUTION, Map.of("deployment", "prod", "vm", "web-01"));
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(List.of(deployment, vm), null, EXECUTION, Map.of("deployment", "prod", "vm", "web-01"));
 
         assertThat(values.get(1).exceptions()).isNullOrEmpty();
         AssetInput rendered = RESOLVED_FOR.getFirst();

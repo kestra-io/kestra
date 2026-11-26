@@ -20,6 +20,7 @@ import io.kestra.core.validations.DashboardValidation;
 import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -43,24 +44,30 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     @TenantId
     private String tenantId;
 
+    @Schema(title = "Identifier of the dashboard.")
     @NotNull
     @NotBlank
     private String id;
 
+    @Schema(title = "Title shown at the top of the dashboard.")
     @NotNull
     @NotBlank
     private String title;
 
+    @Schema(title = "Description of the dashboard.")
     private String description;
 
+    @Schema(title = "Time range the charts show when the dashboard opens, and its upper bound.")
     @Valid
     @Builder.Default
     private TimeWindow timeWindow = TimeWindow.builder().build();
 
     /** Overrides {@code kestra.dashboards.query-timeout} for this dashboard's charts, up to the configured maximum. */
+    @Schema(title = "Longest time a chart's query may run on this dashboard.", description = "Overrides `kestra.dashboards.query-timeout`, up to the configured maximum.")
     @DashboardQueryTimeoutValidation
     private Duration queryTimeout;
 
+    @Schema(title = "Charts of the dashboard, laid out in order on a 12-column grid.")
     @Valid
     private List<Chart<?>> charts;
 

@@ -23,10 +23,11 @@ public class NotIn<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.NOT_IN;
 
     @NotNull
     @NotEmpty
-    @Schema(anyOf = { Number[].class, String[].class, ZonedDateTime[].class })
+    @Schema(anyOf = { Number[].class, String[].class, ZonedDateTime[].class }, title = "Values the field must equal none of.")
     private List<Object> values;
 }

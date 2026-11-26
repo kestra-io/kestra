@@ -25,9 +25,11 @@ public class Or<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.OR;
 
     @NotNull
     @NotEmpty
+    @Schema(title = "Conditions of which at least one must match.")
     private List<AbstractFilter<F>> values;
 }

@@ -19,9 +19,10 @@ public class NotContains<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.NOT_CONTAINS;
 
     @NotNull
-    @Schema(anyOf = { Number.class, String.class })
+    @Schema(anyOf = { Number.class, String.class }, title = "Text the field must not contain.")
     private Object value;
 }

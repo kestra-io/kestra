@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Schema
 public class TableColumnDescriptor<F extends Enum<F>> extends ColumnDescriptor<F> {
+    @Schema(title = "Alignment of the column's cells: `LEFT`, `RIGHT` or `CENTER`.")
     @Builder.Default
     private Alignment columnAlignment = Alignment.LEFT;
 

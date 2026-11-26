@@ -3,7 +3,7 @@ import type {Component} from "vue"
 import type {TaskBlockComponent} from "./useBlockComponent"
 import {resolve$ref} from "../../../../utils/utils"
 import {SECTIONS_IDS} from "../../utils/useFlowFields"
-import {isImplementationPicker} from "./discriminatedUnion"
+import {isDocumentedRef, isImplementationPicker} from "./discriminatedUnion"
 
 type TaskComponent = Component & {
     ksTaskName?: string
@@ -71,11 +71,8 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
         return "complex"
     }
 
-    const allOf = property.allOf
-    if (allOf && allOf.length === 2) {
-        if (allOf[0].$ref && !allOf[1].properties) {
-            return "complex"
-        }
+    if (isDocumentedRef(property)) {
+        return isImplementationPicker(property, definitions) ? "plugin-implementation" : "complex"
     }
 
     const anyOf = property.anyOf

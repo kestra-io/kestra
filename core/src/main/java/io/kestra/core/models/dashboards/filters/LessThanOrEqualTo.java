@@ -21,9 +21,10 @@ public class LessThanOrEqualTo<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.LESS_THAN_OR_EQUAL_TO;
 
     @NotNull
-    @Schema(anyOf = { Number.class, ZonedDateTime.class })
+    @Schema(anyOf = { Number.class, ZonedDateTime.class }, title = "Value the field must be less than or equal to.")
     private Object value;
 }

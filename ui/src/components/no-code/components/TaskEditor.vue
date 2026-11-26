@@ -84,6 +84,7 @@
     import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins"
     import {usePlaygroundStore} from "../../../stores/playground"
     import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils"
+    import {chartDataType} from "../utils/chartDataType"
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue"
     import {useMiscStore} from "override/stores/misc"
 
@@ -313,10 +314,7 @@
     const dataTypes = computed(() => {
         const types = new Set<string>()
         for(const s of resolvedSchemas.value){
-            const dataResolved = s?.properties?.data?.$ref
-                ? getValueAtJsonPath<Schema | undefined>(fullSchema.value, s.properties.data.$ref)
-                : s?.properties?.data as Schema | undefined
-            const typeConst = dataResolved?.properties?.type?.const
+            const typeConst = chartDataType(s, fullSchema.value)
             if(typeConst){
                 types.add(typeConst)
             }
@@ -351,12 +349,7 @@
             const dataType = taskModel.value?.data?.type
             if(dataType){
                 for(const typeLocal of resolvedTypes.value){
-                    const schema = definitions.value?.[typeLocal]
-                    const dataResolved = schema.properties?.data?.$ref
-                        ? getValueAtJsonPath<Schema | undefined>(fullSchema.value, schema.properties?.data.$ref)
-                        : schema.properties?.data as Schema | undefined
-                    const typeConst = dataResolved?.properties?.type?.const
-                    if(typeConst === dataType){
+                    if(chartDataType(definitions.value?.[typeLocal], fullSchema.value) === dataType){
                         return typeLocal
                     }
                 }

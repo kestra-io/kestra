@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.ChartOption;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.validations.DataChartValidation;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -22,6 +23,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @DataChartValidation
 public abstract class DataChart<P extends ChartOption, D extends DataFilter<?, ?>> extends Chart<P> implements io.kestra.core.models.Plugin {
+    @Schema(title = "Data source the chart queries, with its columns, conditions and sort order.")
     @NotNull
     @Valid
     private D data;

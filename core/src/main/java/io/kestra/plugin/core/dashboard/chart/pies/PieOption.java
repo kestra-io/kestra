@@ -24,15 +24,19 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode
 public class PieOption extends ChartOption implements WithLegend, WithTooltip, WithColorByValues {
+    @Schema(title = WithTooltip.TOOLTIP_TITLE)
     @Builder.Default
     private TooltipBehaviour tooltip = TooltipBehaviour.ALL;
 
+    @Schema(title = WithLegend.LEGEND_TITLE)
     @Builder.Default
     private LegendOption legend = LegendOption.builder().build();
 
+    @Schema(title = "Shape of the chart: a full pie (`PIE`) or a ring (`DONUT`).")
     @Builder.Default
     private PieGraphStyle graphStyle = PieGraphStyle.DONUT;
 
+    @Schema(title = "Column, from `data.columns`, whose values form the slices.")
     private String colorByColumn;
 
     @Schema(title = WithColorByValues.COLOR_BY_VALUES_TITLE, description = WithColorByValues.COLOR_BY_VALUES_DESCRIPTION)

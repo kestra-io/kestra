@@ -102,10 +102,15 @@ function discriminatedBranch(branch: Schema, definitions: Record<string, Schema>
     }
 }
 
+/** A `$ref` the schema wraps in `allOf` only to give it a title or description: it still points at one definition. */
+export function isDocumentedRef(property: Schema): boolean {
+    return property.allOf?.length === 2 && Boolean(property.allOf[0].$ref) && !property.allOf[1].properties
+}
+
 function branchesOf(property: Schema): Schema[] | undefined {
     if (property.anyOf) return property.anyOf
     if (property.type === "array" && property.items?.anyOf) return property.items.anyOf
-    if (property.$ref) return [property]
+    if (property.$ref || isDocumentedRef(property)) return [property]
     return undefined
 }
 

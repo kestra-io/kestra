@@ -21,9 +21,11 @@ public class Regex<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.REGEX;
 
     @NotNull
     @SafeRegexValidation
+    @Schema(title = "Regular expression the field must match.")
     private String value;
 }

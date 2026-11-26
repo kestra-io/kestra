@@ -1164,19 +1164,15 @@ public class JsonSchemaGenerator {
                         }
                     }
 
+                    ObjectNode typeNode = withDocumentationOf(properties.get("type"), context.getGeneratorConfig().createObjectNode());
                     if (allowedTypeValues.size() == 1) {
-                        properties.set(
-                            "type", context.getGeneratorConfig().createObjectNode()
-                                .put("const", allowedTypeValues.iterator().next())
-                        );
+                        typeNode.put("const", allowedTypeValues.iterator().next());
                     } else {
                         ArrayNode enumNode = context.getGeneratorConfig().createArrayNode();
                         allowedTypeValues.forEach(enumNode::add);
-
-                        ObjectNode typeNode = context.getGeneratorConfig().createObjectNode();
                         typeNode.set("enum", enumNode);
-                        properties.set("type", typeNode);
                     }
+                    properties.set("type", typeNode);
                 }
             }
         });
@@ -1236,10 +1232,28 @@ public class JsonSchemaGenerator {
             }
 
             properties.set(
-                property, context.getGeneratorConfig().createObjectNode()
+                property, withDocumentationOf(properties.get(property), context.getGeneratorConfig().createObjectNode())
                     .put("const", defaultValue)
             );
         });
+    }
+
+    private static ObjectNode withDocumentationOf(JsonNode property, ObjectNode target) {
+        if (property == null) {
+            return target;
+        }
+        List<JsonNode> nodes = new ArrayList<>(List.of(property));
+        if (property.get("allOf") instanceof ArrayNode allOf) {
+            allOf.forEach(nodes::add);
+        }
+        for (JsonNode node : nodes) {
+            for (String key : List.of("title", "description")) {
+                if (node.has(key)) {
+                    target.set(key, node.get(key));
+                }
+            }
+        }
+        return target;
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {

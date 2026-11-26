@@ -1,15 +1,20 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {reactive} from "vue"
-import {type VueWrapper} from "@vue/test-utils"
+import {flushPromises, type VueWrapper} from "@vue/test-utils"
 import KestraDesignSystem from "@kestra-io/design-system"
 import type {Flow} from "../../stores/flow"
 
+const requestError = vi.fn()
 const publishDraft = vi.fn(() => Promise.resolve("saved"))
 const flowStore = reactive<{flow?: Flow, hasPublishedRevision?: boolean, publishDraft: typeof publishDraft}>({publishDraft})
 const permission = {canUpdate: true}
 
 vi.mock("../../stores/flow", () => ({
     useFlowStore: () => flowStore,
+}))
+
+vi.mock("../../utils/toast", () => ({
+    useToast: () => ({requestError}),
 }))
 
 vi.mock("override/stores/auth", () => ({
@@ -75,5 +80,17 @@ describe("FlowDraftBanner", () => {
 
         expect(banner.find("[data-test='flow-draft-banner']").exists()).toBe(true)
         expect(banner.find("[data-test='flow-draft-banner-publish']").exists()).toBe(false)
+    })
+
+    it("reports a failed publish instead of leaving an unhandled rejection", async () => {
+        const failure = new Error("boom")
+        publishDraft.mockRejectedValueOnce(failure)
+        const banner = mountBanner()
+
+        await banner.get("[data-test='flow-draft-banner-publish']").trigger("click")
+        await flushPromises()
+
+        expect(requestError).toHaveBeenCalledExactlyOnceWith(failure, "flow_publish.failed")
+        expect(banner.get("[data-test='flow-draft-banner-publish']").classes()).not.toContain("is-loading")
     })
 })

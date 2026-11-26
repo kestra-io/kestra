@@ -17,7 +17,7 @@ const openEditor = async (page: Page) => {
 }
 
 const publishFlow = async (page: Page) => {
-    await page.locator(".kel-dropdown__caret-button").click()
+    await page.getByRole("button", {name: "Toggle Dropdown"}).click()
     await page.locator("[data-test=\"flow-publish\"]").click()
     await expect(page.getByRole("heading", {name: "Published"})).toBeVisible()
 }

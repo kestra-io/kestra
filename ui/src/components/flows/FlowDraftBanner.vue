@@ -24,9 +24,13 @@
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
     import action from "../../models/action"
+    import {useToast} from "../../utils/toast"
+    import {useI18n} from "vue-i18n"
 
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
+    const toast = useToast()
+    const {t} = useI18n()
     const publishing = ref(false)
 
     const wording = computed(() => {
@@ -44,6 +48,8 @@
         publishing.value = true
         try {
             await flowStore.publishDraft(flowStore.flow)
+        } catch (error) {
+            toast.requestError(error, t("flow_publish.failed"))
         } finally {
             publishing.value = false
         }

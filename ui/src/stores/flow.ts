@@ -875,7 +875,7 @@ function deleteFlowAndDependencies(router: Router) {
             publishedRevisionFlowKey.value = key
         }
         // a new draft of the same flow keeps the published revision under it, so there is nothing to refetch
-        if (hasPublishedRevision.value && publishedRevisionFlowKey.value === key) return
+        if (publishedRevisionFlowKey.value === key && (hasPublishedRevision.value || (hasPublishedRevision.value === false && target.draft))) return
         if (!target.draft || target.revision === 1) {
             setHasPublishedRevision(!target.draft)
             return

@@ -187,6 +187,7 @@
     "flow_publish": {
       "description": "Makes this revision live: triggers start it, other flows can call it, and its failures reach alert flows.",
       "done_title": "Published",
+      "failed": "Could not publish this draft.",
       "done": "Revision {revision} of {name} is live: triggers start it, other flows can call it, and its failures reach alert flows."
     },
     "flow_draft_banner": {

@@ -255,6 +255,21 @@ describe("flow draft save — draft resolution per entry point", () => {
         expect(listFlowRevisions).toHaveBeenCalledTimes(2)
     })
 
+    it("keeps a draft-only flow draft-only across each further Save draft, without listing revisions again", async () => {
+        const store = await freshStore()
+        store.flow = {...makeFlow(true), id: "drafts-only", revision: 2}
+        listFlowRevisions.mockResolvedValueOnce([{...makeFlow(true), revision: 1}, {...makeFlow(true), revision: 2}])
+        await store.loadHasPublishedRevision(store.flow)
+        expect(store.hasPublishedRevision).toBe(false)
+
+        store.flow = {...makeFlow(true), id: "drafts-only", revision: 3}
+        await store.loadHasPublishedRevision(store.flow)
+
+        expect(store.hasPublishedRevision).toBe(false)
+        expect(store.isDraftOnly).toBe(true)
+        expect(listFlowRevisions).toHaveBeenCalledTimes(1)
+    })
+
     it("publishDraft() with no target publishes the store's own in-progress source", async () => {
         const store = await freshStore()
         await store.publishDraft()

@@ -1,0 +1,33 @@
+id: approval-before-decision-errors
+namespace: io.kestra.tests
+
+inputs:
+  - id: auto
+    type: BOOL
+    defaults: false
+  - id: fail
+    type: BOOL
+    defaults: false
+  - id: failOpen
+    type: BOOL
+    defaults: false
+
+tasks:
+  - id: approval
+    type: io.kestra.core.tasks.test.ApprovalAfterTask
+    allowFailure: true
+    onApprove:
+      - id: approved
+        type: io.kestra.plugin.core.log.Log
+        message: "Approved"
+    errors:
+      - id: openFailed
+        type: io.kestra.plugin.core.log.Log
+        message: "The request could not be opened"
+    finally:
+      - id: cleanup
+        type: io.kestra.plugin.core.log.Log
+        message: "Cleanup"
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "After"

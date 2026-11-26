@@ -2,6 +2,8 @@ package io.kestra.plugin.core.flow;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.verify;
 
 @KestraTest(startRunner = true)
 class ApprovalBeforeDecisionTest {
+    private static final Set<String> FAILED_ONCE = ConcurrentHashMap.newKeySet();
 
     @Inject
     TestRunnerUtils runnerUtils;
@@ -47,6 +50,9 @@ class ApprovalBeforeDecisionTest {
             Execution execution = invocation.getArgument(1);
             if (Boolean.TRUE.equals(MapUtils.emptyOnNull(execution.getInputs()).get("failOpen"))) {
                 throw new IllegalArgumentException("The assignment names a user that does not exist.");
+            }
+            if (Boolean.TRUE.equals(MapUtils.emptyOnNull(execution.getInputs()).get("failOpenOnce")) && FAILED_ONCE.add(execution.getId())) {
+                throw new IllegalStateException("The case service is unavailable.");
             }
             if (execution.findTaskRunsByTaskId("approval_prepare").stream().noneMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.SUCCESS)) {
                 throw new IllegalStateException("The request was opened before approval_prepare succeeded.");
@@ -102,5 +108,49 @@ class ApprovalBeforeDecisionTest {
         assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getState().getHistories().stream().map(State.History::getState)).doesNotContain(State.Type.PAUSED);
         assertThat(execution.findTaskRunsByTaskId("approved")).isEmpty();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-before-decision-errors.yaml" })
+    void shouldRunErrorsAndFinallyAndAllowTheFailureWhenTheRequestCannotBeOpened() throws Exception {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests", "approval-before-decision-errors", null,
+            (flow, e) -> Map.of("failOpen", true),
+            Duration.ofSeconds(15)
+        );
+
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(execution.findTaskRunsByTaskId("openFailed")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("cleanup")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("after")).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        verify(approvalRequestHandler, times(1)).open(any(), argThat(e -> e.getId().equals(execution.getId())), any(), any(), any());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-before-decision.yaml" })
+    void shouldPauseWhenTheRequestOpensOnRestartAfterFailingToOpen() throws Exception {
+        Execution failed = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests", "approval-before-decision", null,
+            (flow, e) -> Map.of("failOpenOnce", true),
+            Duration.ofSeconds(15)
+        );
+        assertThat(failed.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        verify(approvalRequestHandler, times(1)).open(any(), argThat(e -> e.getId().equals(failed.getId())), any(), any(), any());
+
+        Execution restarted = executionService.restart(failed, flowRepository.findByExecution(failed), null);
+        Execution paused = runnerUtils.restartExecution(e -> e.getId().equals(failed.getId()) && e.getState().getCurrent() == State.Type.PAUSED, restarted);
+
+        Execution decided = executionService.decide(
+            paused,
+            flowRepository.findByExecution(paused),
+            paused.findTaskRunsByTaskId("approval").getFirst().getId(),
+            new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, null),
+            Map.of()
+        );
+        Execution done = runnerUtils.emitAndAwaitExecution(e -> e.getId().equals(failed.getId()) && e.getState().isTerminated(), decided);
+
+        assertThat(done.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(done.findTaskRunsByTaskId("approved")).hasSize(1);
     }
 }

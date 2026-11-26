@@ -292,8 +292,19 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
                         parentTaskRun
                     );
                 }
-                if (parentTaskRun.getState().getCurrent() == State.Type.RUNNING && !this.openRequest(execution, parentTaskRun, runContext)) {
-                    return List.of();
+                // errors and finally only start once the open failed, so they mark a failed open that must not be retried.
+                if (parentTaskRun.getState().getCurrent() == State.Type.RUNNING && !this.hasErrorsOrFinallyStarted(execution, parentTaskRun)) {
+                    this.openRequest(execution, parentTaskRun, runContext);
+                }
+                if (this.hasOpenFailed(runContext, parentTaskRun)) {
+                    return FlowableUtils.resolveSequentialNexts(
+                        execution,
+                        FlowableUtils.resolveTasks(this.beforeDecision(), parentTaskRun),
+                        FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+                        FlowableUtils.resolveTasks(this.finallyTasks(), parentTaskRun),
+                        parentTaskRun,
+                        State.Type.FAILED
+                    );
                 }
             }
 
@@ -345,7 +356,17 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
                     );
                 }
                 if (this.hasOpenFailed(runContext, parentTaskRun)) {
-                    return Optional.of(State.Type.FAILED);
+                    return FlowableUtils.resolveState(
+                        execution,
+                        FlowableUtils.resolveTasks(this.beforeDecision(), parentTaskRun),
+                        FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+                        FlowableUtils.resolveTasks(this.finallyTasks(), parentTaskRun),
+                        parentTaskRun,
+                        runContext,
+                        this.isAllowFailure(),
+                        this.isAllowWarning(),
+                        State.Type.FAILED
+                    );
                 }
             }
             return this.resolveWaitState(runContext, execution, parentTaskRun);
@@ -382,8 +403,12 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         this.mergeOutputs(taskRun, runContext, Map.of("decision", Decision.Type.APPROVED.name(), "auto", true));
     }
 
+    private boolean hasErrorsOrFinallyStarted(Execution execution, TaskRun parentTaskRun) {
+        return !execution.findTaskRunByTasks(FlowableUtils.resolveTasks(ListUtils.concat(this.errors, this.finallyTasks()), parentTaskRun), parentTaskRun).isEmpty();
+    }
+
     /** Records a failure instead of throwing it, since the executor only logs what {@link #resolveNexts} throws and the task would stay paused. */
-    private boolean openRequest(Execution execution, TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
+    private void openRequest(Execution execution, TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
         Services services = ((DefaultRunContext) runContext).services();
         try {
             FlowInterface flow = services.additionalService(FlowMetaStoreInterface.class).findByExecution(execution).orElseThrow();
@@ -397,11 +422,9 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
                 runContext.logger().info("Approval {} opened.", opened.caseId());
             }
             this.mergeOutputs(taskRun, runContext, outputs);
-            return true;
         } catch (Exception e) {
             runContext.logger().error("Unable to open the approval request: {}", e.getMessage(), e);
             this.mergeOutputs(taskRun, runContext, Map.of(OPEN_FAILED_OUTPUT, true));
-            return false;
         }
     }
 

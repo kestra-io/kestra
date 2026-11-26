@@ -11,6 +11,9 @@ inputs:
   - id: failOpen
     type: BOOL
     defaults: false
+  - id: failOpenOnce
+    type: BOOL
+    defaults: false
 
 tasks:
   - id: approval

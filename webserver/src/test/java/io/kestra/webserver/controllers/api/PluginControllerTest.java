@@ -121,6 +121,37 @@ class PluginControllerTest {
     }
 
     @Test
+    void pluginTypeAliasesResolveCanonicalAndAliasTypes() {
+        PluginController.ApiPluginAliases fromCanonicalType = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/aliases/io.kestra.core.runners.test.TaskWithAlias"),
+            PluginController.ApiPluginAliases.class
+        );
+
+        assertThat(fromCanonicalType.type()).isEqualTo("io.kestra.core.runners.test.TaskWithAlias");
+        assertThat(fromCanonicalType.aliases()).containsExactly("io.kestra.core.runners.test.task.Alias");
+
+        PluginController.ApiPluginAliases fromAlias = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/aliases/io.kestra.core.runners.test.task.Alias"),
+            PluginController.ApiPluginAliases.class
+        );
+
+        assertThat(fromAlias).isEqualTo(fromCanonicalType);
+    }
+
+    @Test
+    void pluginTypeAliasesReturnNotFoundForUnknownTypes() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET(PATH + "/aliases/io.kestra.unknown.DoesNotExist"),
+                PluginController.ApiPluginAliases.class
+            )
+        );
+
+        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
     void icons() {
         Map<String, PluginIcon> list = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/icons"),

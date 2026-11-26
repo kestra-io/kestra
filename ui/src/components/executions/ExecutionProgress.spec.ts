@@ -58,6 +58,7 @@ describe("ExecutionProgress", () => {
     })
 
     afterEach(() => {
+        vi.restoreAllMocks()
         vi.useRealTimers()
         vi.resetAllMocks()
     })

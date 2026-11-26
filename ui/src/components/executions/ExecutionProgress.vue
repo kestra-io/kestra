@@ -86,7 +86,6 @@
             // the backend omits the field entirely when there is no history (non_null serialization)
             averageDurationMs.value = avgDurationMs ?? null
         } catch {
-            // Retry after 10s if the execution is still running and baseline has not arrived yet.
             if (isRunning.value && !retryTimeout) {
                 retryTimeout = setTimeout(() => {
                     retryTimeout = undefined

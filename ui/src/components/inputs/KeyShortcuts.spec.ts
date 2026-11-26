@@ -27,7 +27,7 @@ describe("KeyShortcuts", () => {
         hideKeyShortcuts()
     })
 
-    it("renders the header and all 14 keyboard shortcut commands", () => {
+    it("renders the header and all 15 keyboard shortcut commands", () => {
         const {showKeyShortcuts} = useKeyShortcuts()
         showKeyShortcuts()
 
@@ -37,7 +37,7 @@ describe("KeyShortcuts", () => {
         expect(wrapper.find(".commands-list").exists()).toBe(true)
 
         const rows = wrapper.findAll(".command-row")
-        expect(rows.length).toBe(14)
+        expect(rows.length).toBe(15)
 
         const firstRow = rows[0]
         expect(firstRow.find(".keys").exists()).toBe(true)

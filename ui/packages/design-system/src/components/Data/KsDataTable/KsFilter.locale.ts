@@ -403,6 +403,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Search MCP tools",
                 "search_executions": "Search executions",
+                "search_tasks": "Search tasks",
                 "search_dashboards": "Search dashboards...",
                 "search_flows": "Search flows",
                 "search_logs": "Search logs",
@@ -819,6 +820,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "MCP-Tools durchsuchen",
                 "search_executions": "Executions durchsuchen",
+                "search_tasks": "Tasks durchsuchen",
                 "search_dashboards": "Dashboards durchsuchen…",
                 "search_flows": "Flows durchsuchen",
                 "search_logs": "Logs durchsuchen",
@@ -1235,6 +1237,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Buscar herramientas MCP",
                 "search_executions": "Buscar ejecuciones",
+                "search_tasks": "Buscar tasks",
                 "search_dashboards": "Buscar dashboards...",
                 "search_flows": "Buscar flows",
                 "search_logs": "Buscar logs",
@@ -1651,6 +1654,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Rechercher des outils MCP",
                 "search_executions": "Rechercher des exécutions",
+                "search_tasks": "Rechercher des tasks",
                 "search_dashboards": "Rechercher des tableaux de bord...",
                 "search_flows": "Rechercher des flows",
                 "search_logs": "Rechercher des logs",
@@ -2067,6 +2071,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "MCP टूल खोजें",
                 "search_executions": "निष्पादन खोजें",
+                "search_tasks": "tasks खोजें",
                 "search_dashboards": "डैशबोर्ड खोजें...",
                 "search_flows": "फ्लो खोजें",
                 "search_logs": "लॉग खोजें",
@@ -2483,6 +2488,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Cerca strumenti MCP",
                 "search_executions": "Cerca esecuzioni",
+                "search_tasks": "Cerca task",
                 "search_dashboards": "Cerca dashboard...",
                 "search_flows": "Cerca flow",
                 "search_logs": "Cerca log",
@@ -2899,6 +2905,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "MCPツールを検索",
                 "search_executions": "実行を検索",
+                "search_tasks": "taskを検索",
                 "search_dashboards": "ダッシュボードを検索...",
                 "search_flows": "フローを検索",
                 "search_logs": "ログを検索",
@@ -3315,6 +3322,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "MCP 도구 검색",
                 "search_executions": "실행 검색",
+                "search_tasks": "task 검색",
                 "search_dashboards": "대시보드 검색...",
                 "search_flows": "flow 검색",
                 "search_logs": "로그 검색",
@@ -3731,6 +3739,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Wyszukaj narzędzia MCP",
                 "search_executions": "Szukaj egzekucji",
+                "search_tasks": "Wyszukaj taski",
                 "search_dashboards": "Szukaj Dashboardów…",
                 "search_flows": "Szukaj Flowów",
                 "search_logs": "Wyszukaj logi",
@@ -4147,6 +4156,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_executions": "Pesquisar execuções",
+                "search_tasks": "Pesquisar tasks",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_flows": "Pesquisar flows",
                 "search_logs": "Pesquisar logs",
@@ -4563,6 +4573,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_executions": "Pesquisar execuções",
+                "search_tasks": "Pesquisar tasks",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_flows": "Pesquisar flows",
                 "search_logs": "Pesquisar logs",
@@ -4979,6 +4990,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Поиск инструментов MCP",
                 "search_executions": "Поиск выполнений",
+                "search_tasks": "Поиск task",
                 "search_dashboards": "Искать панели...",
                 "search_flows": "Поиск flow",
                 "search_logs": "Поиск logs",
@@ -5395,6 +5407,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "搜索 MCP 工具",
                 "search_executions": "搜索执行",
+                "search_tasks": "搜索 task",
                 "search_dashboards": "搜索仪表板...",
                 "search_flows": "搜索 flows",
                 "search_logs": "搜索日志",

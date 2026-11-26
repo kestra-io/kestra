@@ -11,7 +11,7 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     return computed(() => {
         return {
             title: t("filter.titles.execution_filters"),
-            searchPlaceholder: t("filter.search_placeholders.search_executions"),
+            searchPlaceholder: t("filter.search_placeholders.search_tasks"),
             keys: [
                 {
                     key: "level",

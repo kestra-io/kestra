@@ -239,13 +239,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const {data} = await axios.put<Dashboard>(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
+        const {data} = await axios.put<Dashboard>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${id}`)
+        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`)
 
         const bookmarksStore = useBookmarksStore()
         const encodedId = encodeURIComponent(id)
@@ -279,7 +279,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
+            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}/charts/${chartId}`, parameters)
             return data
         } catch (e: unknown) {
             if (handledIf(e, [404])) return undefined
@@ -290,7 +290,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function stateCounts(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post<ChartStateCounts>(`${apiUrl()}/dashboards/${id}/charts/${chartId}/state-counts`, parameters)
+            const {data} = await axios.post<ChartStateCounts>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}/charts/${chartId}/state-counts`, parameters)
             return data
         } catch (e: unknown) {
             if (handledIf(e, [404])) return undefined

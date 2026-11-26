@@ -8,7 +8,7 @@ import fixtureS from "../../../tests/storybook/components/executions/Executions-
 import {setMockClient, type AxiosLikeClient, type PagedResultsApiLightExecution} from "@kestra-io/kestra-sdk"
 import {mockResponse, mockStoryApiRoutes} from "../../../.storybook/apiMock"
 import {useFlowStore} from "../../stores/flow"
-import {expect, within} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 
 function getDecorators(data: PagedResultsApiLightExecution, initialRoute = "/executions/123/645") {
     return [
@@ -99,6 +99,40 @@ export const SmallData: Story = {
         embed: true,
         topbar: false,
         filter: false,
+    },
+}
+
+export const BulkActionEligibility: Story = {
+    decorators: getDecorators(fixtureS as unknown as PagedResultsApiLightExecution),
+    args: {
+        hidden: [],
+        statuses: [],
+        isReadOnly: false,
+        embed: true,
+        topbar: false,
+        filter: false,
+    },
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        const runningRow = (await canvas.findByText("Running", {exact: true})).closest<HTMLTableRowElement>("tr")
+        const failedRow = (await canvas.findByText("Failed", {exact: true})).closest<HTMLTableRowElement>("tr")
+
+        if (!runningRow || !failedRow) {
+            throw new Error("Expected execution rows were not rendered")
+        }
+
+        const runningCheckbox = within(runningRow).getByRole("checkbox")
+        await userEvent.click(runningCheckbox)
+        await userEvent.click(within(failedRow).getByRole("checkbox"))
+
+        const restart = await canvas.findByRole("button", {name: "Restart"})
+        await expect(restart).toBeDisabled()
+        await userEvent.hover(restart)
+        await waitFor(() => expect(within(document.body).getByText("1 of 2 selected executions are not in FAILED state.")).toBeVisible())
+        await userEvent.unhover(restart)
+
+        await userEvent.click(runningCheckbox)
+        await waitFor(() => expect(restart).toBeEnabled())
     },
 }
 

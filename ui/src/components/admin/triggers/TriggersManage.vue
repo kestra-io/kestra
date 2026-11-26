@@ -179,14 +179,14 @@
                             </KsTag>
                         </KsTooltip>
                         <KsTag
-                            v-else-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate && scope.row.kind !== 'UNSCHEDULED'"
                             type="warning"
                             size="small"
                             effect="light"
                         >
                             {{ $t("datepicker.never") }}
                         </KsTag>
-                        <KsDateAgo v-else :inverted="true" :date="scope.row.nextEvaluationDate" />
+                        <KsDateAgo v-else-if="scope.row.nextEvaluationDate" :inverted="true" :date="scope.row.nextEvaluationDate" />
                     </template>
                     <template v-else-if="col.prop === 'evaluatedAt'">
                         <KsDateAgo :inverted="true" :date="scope.row.evaluatedAt" />
@@ -397,7 +397,6 @@
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
     import type {ExecutionLabelInput} from "../../../utils/executionLabels"
-    import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
@@ -437,7 +436,6 @@
     const {t} = useI18n({useScope: "global"})
 
     const authStore = useAuthStore()
-    const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
 
     const {loadInit} = useRestoreUrl()
@@ -1043,7 +1041,7 @@
         if (end && start > end) {
             return true
         }
-        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+        if (hasMissingRequiredInputs(executionsStore.flow?.inputs, inputs)) {
             return true
         }
 

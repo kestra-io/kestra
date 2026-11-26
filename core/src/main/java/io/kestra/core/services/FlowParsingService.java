@@ -81,6 +81,7 @@ public class FlowParsingService {
         }
 
         try {
+            // the draft flag is not part of the source, so parsing it would lose the flag
             return parseFlow(
                 flow.getTenantId(),
                 flow.getNamespace(),
@@ -88,7 +89,7 @@ public class FlowParsingService {
                 flow.isDeleted(),
                 source,
                 strictParsing
-            );
+            ).toBuilder().draft(flow.isDraft()).build();
         } catch (ConstraintViolationException e) {
             throw new FlowProcessingException(e);
         } catch (JsonProcessingException e) {

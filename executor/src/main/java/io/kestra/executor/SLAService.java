@@ -12,7 +12,6 @@ import io.kestra.core.models.flows.sla.*;
 import io.kestra.core.models.flows.sla.types.AvgDurationSLA;
 import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
@@ -72,7 +71,9 @@ public class SLAService {
             case MaxDurationSLA maxDurationSLA -> Optional.of(maxDurationSLA.getDuration());
             case AvgDurationSLA avgDurationSLA -> {
                 var startDate = Instant.now().minus(avgDurationSLA.getLookbackPeriod());
-                var statistics = executionStatisticsRepository.statistics(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), avgDurationSLA.getAverageOverStates(), startDate, Instant.now(), DateUtils.GroupType.MONTH);
+                var statistics = executionStatisticsRepository.statistics(
+                    execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), avgDurationSLA.getAverageOverStates(), startDate, Instant.now(), DateUtils.GroupType.MONTH
+                );
 
                 var sum = 0L;
                 var count = 0L;

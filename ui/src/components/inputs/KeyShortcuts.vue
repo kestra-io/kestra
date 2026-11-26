@@ -60,6 +60,10 @@
             description: "editor_shortcuts.save_flow",
         },
         {
+            keys: ["⌘ Cmd/Ctrl", "⌥ Option/Alt", "s"],
+            description: "publish",
+        },
+        {
             keys: ["⌘ Cmd/Ctrl", "e"],
             description: "editor_shortcuts.execute_flow",
         },

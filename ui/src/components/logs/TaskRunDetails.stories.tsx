@@ -307,6 +307,8 @@ export const OpensFailedTaskLogsAtTheirLastLine: Story = {
             {timeout: 3000},
         );
         await new Promise((resolve) => setTimeout(resolve, 500));
-        expect(scroller.scrollTop).toBeGreaterThan(0);
+        await waitFor(() => {
+            expect(scroller.scrollTop).toBeGreaterThan(0);
+        });
     },
 };

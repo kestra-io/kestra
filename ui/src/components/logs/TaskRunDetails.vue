@@ -1125,7 +1125,7 @@
         return `${taskRunId}-${attemptNumber}`
     }
 
-    const MAX_SCROLL_ATTEMPTS = 15
+    const MAX_SCROLL_ATTEMPTS = 30
     const SCROLL_BOTTOM_TOLERANCE_PX = 5
 
     function scrollScrollerToEnd(uid: string, targetIndex: number, attempt = 0) {

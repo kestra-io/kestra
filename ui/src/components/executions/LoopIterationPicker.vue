@@ -92,6 +92,14 @@
         </KsPopover>
         <span v-if="lane.scopedNumber !== undefined" class="loop-stepper" data-test="loop-stepper">
             <KsIconButton
+                :ariaLabel="$t('topology-graph.loop.first-iteration')"
+                :disabled="lane.scopedNumber <= 1"
+                data-test="loop-step-first"
+                @click.stop="emit('select', 1)"
+            >
+                <PageFirst />
+            </KsIconButton>
+            <KsIconButton
                 :ariaLabel="$t('topology-graph.loop.previous-iteration')"
                 :disabled="lane.scopedNumber <= 1"
                 data-test="loop-step-previous"
@@ -107,6 +115,14 @@
             >
                 <ChevronRight />
             </KsIconButton>
+            <KsIconButton
+                :ariaLabel="$t('topology-graph.loop.last-iteration')"
+                :disabled="lane.scopedNumber >= startedIterations"
+                data-test="loop-step-last"
+                @click.stop="emit('select', startedIterations)"
+            >
+                <PageLast />
+            </KsIconButton>
         </span>
     </span>
 </template>
@@ -120,6 +136,8 @@
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import PageFirst from "vue-material-design-icons/PageFirst.vue"
+    import PageLast from "vue-material-design-icons/PageLast.vue"
     import {ambiguousValues, iterationLabel, iterationNumber} from "../../utils/loopScope"
     import {latestRequest} from "../../utils/latestRequest"
     import {

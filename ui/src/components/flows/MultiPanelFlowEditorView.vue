@@ -36,7 +36,8 @@
     import NoCode from "../no-code/NoCode.vue"
     import BlockEditor from "../no-code/blocks/BlockEditor.vue"
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
-    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
+    import {EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
+    import {getDefaultActiveTabs} from "./defaultActiveTabs"
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
     import {useTopologyPanels} from "./useTopologyPanels"
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
@@ -186,7 +187,7 @@
         source: computed(() => flowStore.flowYaml),
     })
 
-    const tabs = computed(() => DEFAULT_ACTIVE_TABS)
+    const tabs = getDefaultActiveTabs()
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
 

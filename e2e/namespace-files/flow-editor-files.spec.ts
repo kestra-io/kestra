@@ -103,7 +103,7 @@ test.describe("Flow editor with namespace files open", () => {
         await editor.typeAtEnd(fileTabId("b.txt"), " edited in b")
 
         await editor.selectTab(FLOW_TAB)
-        await expect(editor.page.getByRole("button", {name: "Save", exact: true})).toBeEnabled()
+        await expect(editor.page.getByRole("button", {name: "Save draft", exact: true})).toBeEnabled()
         await editor.clickSave()
 
         await expect.poll(() => filesApi.readFile("a.txt")).toBe("alpha edited in a")

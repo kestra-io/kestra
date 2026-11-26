@@ -40,6 +40,11 @@ public class InMemoryFlowMetaStore implements FlowMetaStoreInterface {
     }
 
     @Override
+    public Optional<Integer> findLatestRevision(String tenantId, String namespace, String id) {
+        return Optional.ofNullable(flows.get(key(tenantId, namespace, id))).map(FlowInterface::getRevision);
+    }
+
+    @Override
     public Optional<FlowInterface> findByExecution(Execution execution) {
         // unlike the interface default, does not require a flow revision on the execution:
         // fixture flows are registered as single latest versions

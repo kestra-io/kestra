@@ -35,6 +35,7 @@ public class FlowWithException extends FlowWithSource {
             .namespace(flow.getNamespace())
             .revision(flow.getRevision())
             .deleted(flow.isDeleted())
+            .draft(flow.isDraft())
             .disabled(flow.isDisabled())
             .exception(exception.getMessage())
             .tasks(List.of())

@@ -2150,7 +2150,7 @@
       "lineage": "flow में स्थान",
       "previous_iteration": "पिछली पुनरावृत्ति",
       "next_iteration": "अगली पुनरावृत्ति",
-      "open_iteration": "पुनरावृत्ति खोलें",
+      "open_execution": "Execution खोलें",
       "iteration_position": "{loop} में {total} में से {position}",
       "first_failure": "पहली विफलता",
       "go_to_failure": "विफलता पर जाएँ",
@@ -2170,8 +2170,7 @@
       "loading": "सबफ्लो execution लोड हो रहा है…",
       "load_error": "सबफ़्लो execution लोड करने में विफल रहा",
       "none": "अभी तक कोई execution शुरू नहीं हुई है",
-      "executions": "Subflow Task रन | Subflow execution",
-      "open": "सबफ़्लो execution खोलें"
+      "executions": "Subflow Task रन | Subflow execution"
     },
     "loop_iterations_notice": {
       "logs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके logs यहाँ प्रदर्शित नहीं होते हैं।",

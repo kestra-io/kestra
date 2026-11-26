@@ -44,7 +44,7 @@
                     <Duration :histories="child.state.histories" />
                 </template>
                 <template #actions>
-                    <GanttOpenExecution :execution="child" :label="$t('gantt_subflow.open')" iconOnly />
+                    <GanttOpenExecution :execution="child" iconOnly />
                 </template>
             </GanttRow>
             <ExecutionTaskRuns

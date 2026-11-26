@@ -44,6 +44,10 @@
                     <template v-else>{{ offset(histories) }} ·</template>
                     <Duration :histories="histories" />
                 </span>
+                <GanttOpenExecution
+                    v-if="node.kind === 'iteration'"
+                    :execution="{id: node.row.id, namespace: node.loop.namespace, flowId: node.loop.flowId}"
+                />
             </div>
 
             <GanttIterationStepper v-if="owningIteration(node)" :node="node" />
@@ -70,6 +74,7 @@
     import GanttPanelIteration from "./GanttPanelIteration.vue"
     import GanttPanelTaskRun from "./GanttPanelTaskRun.vue"
     import GanttPanelSubflow from "./GanttPanelSubflow.vue"
+    import GanttOpenExecution from "./GanttOpenExecution.vue"
     import {useGanttTimeline} from "../ganttTimeline"
     import {isSubflowNode, iterationLabel, loopRefOf, owningIteration, useGanttTree, type Ancestor} from "./ganttTree"
 

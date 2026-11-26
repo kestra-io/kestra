@@ -2150,7 +2150,7 @@
       "lineage": "Расположение в flow",
       "previous_iteration": "Предыдущая итерация",
       "next_iteration": "Следующая итерация",
-      "open_iteration": "Открыть итерацию",
+      "open_execution": "Открыть Execution",
       "iteration_position": "{position} из {total} в {loop}",
       "first_failure": "Первый сбой",
       "go_to_failure": "Перейти к сбою",
@@ -2170,8 +2170,7 @@
       "loading": "Загрузка выполнения subflow…",
       "load_error": "Не удалось загрузить выполнение subflow",
       "none": "Ещё не запущено ни одной egzekucji",
-      "executions": "Запуски Subflow Task | Запуски Subflow | Запуски Subflow",
-      "open": "Открыть выполнение subflow"
+      "executions": "Запуски Subflow Task | Запуски Subflow | Запуски Subflow"
     },
     "loop_iterations_notice": {
       "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",

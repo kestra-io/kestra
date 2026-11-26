@@ -4,12 +4,12 @@
         :to="subflowExecutionRoute(execution)"
         size="small"
         :icon="OpenInNew"
-        :aria-label="iconOnly ? label : undefined"
-        :title="iconOnly ? label : undefined"
+        :aria-label="iconOnly ? $t('gantt_panel.open_execution') : undefined"
+        :title="iconOnly ? $t('gantt_panel.open_execution') : undefined"
         data-test="gantt-open-execution"
         @click.stop
     >
-        <template v-if="!iconOnly">{{ label }}</template>
+        <template v-if="!iconOnly">{{ $t("gantt_panel.open_execution") }}</template>
     </KsButton>
 </template>
 
@@ -22,7 +22,6 @@
 
     defineProps<{
         execution: ExecutionRef;
-        label: string;
         iconOnly?: boolean;
     }>()
 </script>

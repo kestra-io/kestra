@@ -3,7 +3,7 @@
         <section v-if="entry.children" class="panel-section" data-test="gantt-panel-subflow">
             <div class="section-head">
                 <h3>{{ $t("gantt_subflow.executions", children.length) }}</h3>
-                <GanttOpenExecution v-if="child" :execution="child" :label="$t('gantt_subflow.open')" />
+                <GanttOpenExecution v-if="child" :execution="child" />
             </div>
             <p v-if="children.length === 0" class="panel-empty">{{ $t("gantt_subflow.none") }}</p>
             <template v-else-if="child">

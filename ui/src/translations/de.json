@@ -183,6 +183,23 @@
     "publish_draft": "Entwurf veröffentlichen",
     "draft": "Entwurf",
     "draft_flow_warning": "Die neueste Revision dieses Flows ist ein Entwurf. Die Execution verwendet stattdessen die neueste veröffentlichte Revision. Veröffentliche den Entwurf (oder führe ihn im Playground aus), um deine letzten Änderungen auszuführen.",
+    "save_draft": "Entwurf speichern",
+    "flow_publish": {
+      "description": "Macht diese Revision live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows.",
+      "done_title": "Veröffentlicht",
+      "failed": "Dieser Entwurf konnte nicht veröffentlicht werden.",
+      "done": "Revision {revision} von {name} ist live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Dieser Flow ist ein Entwurf",
+        "description": "Es hat keine veröffentlichte Revision, daher starten Trigger und andere Flows es nicht. Führe es im Playground aus oder veröffentliche es, um es live zu schalten."
+      },
+      "over_published": {
+        "title": "Die neueste Revision ist ein Entwurf",
+        "description": "Zeitpläne, Webhooks und andere Flows führen weiterhin die veröffentlichte Revision aus, bis du diesen Entwurf veröffentlichst. Flow Trigger starten den Flow in der Zwischenzeit nicht."
+      }
+    },
     "save task": "Task speichern",
     "saved": "Erfolgreich gespeichert",
     "saved as draft": "Erfolgreich als Entwurf gespeichert",
@@ -2074,6 +2091,7 @@
       "title": "Mit Kestra automatisieren",
       "sub_title": "Klicke auf „Ausführen“, um deine erste Workflow-Execution zu starten.",
       "namespace_sub_title": "Führe einen oder mehrere Flows aus diesem Namespace aus, um dieses Dashboard zu füllen.",
+      "draft_sub_title": "Dieser Flow hat nur Entwürfe: Führe ihn im Playground im Editor aus oder veröffentliche ihn, um ihn zu starten.",
       "need_help": "Brauchst du Hilfe?"
     },
     "execution_guide": {
@@ -2265,7 +2283,7 @@
       "label": "Tastenkombinationen",
       "trigger_autocompletion": "Autovervollständigung auslösen",
       "command_palette": "Befehlspalette anzeigen",
-      "save_flow": "Flow speichern",
+      "save_flow": "Entwurf speichern",
       "execute_flow": "Flow ausführen",
       "toggle_ai_agent": "AI-Agent umschalten",
       "move_line": "Zeile verschieben",
@@ -3078,7 +3096,7 @@
         "no_match": "Keine Übereinstimmung",
         "open": "{name} öffnen",
         "paste": "Einfügen",
-        "save": "Flow speichern",
+        "save": "Entwurf speichern",
         "search_placeholder": "Befehl eingeben oder Task suchen…",
         "title": "Befehlsmenü"
       },
@@ -3186,7 +3204,7 @@
         "paste": "Einfügen",
         "redo": "Wiederholen",
         "reorder": "Neu anordnen nach oben / unten",
-        "save": "Flow speichern",
+        "save": "Entwurf speichern",
         "step_into": "Gruppe ausklappen / betreten",
         "step_out": "Einklappen / zum übergeordneten Element zurückkehren",
         "title": "Tastenkombinationen",

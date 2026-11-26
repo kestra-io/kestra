@@ -183,6 +183,23 @@
     "publish_draft": "Publier le brouillon",
     "draft": "Brouillon",
     "draft_flow_warning": "La dernière révision de ce flow est un brouillon. L'exécution utilisera la dernière révision publiée ; publiez le brouillon (ou exécutez-le depuis le Playground) pour exécuter vos derniers changements.",
+    "save_draft": "Enregistrer le brouillon",
+    "flow_publish": {
+      "description": "Rend cette révision active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte.",
+      "done_title": "Publié",
+      "failed": "Impossible de publier ce brouillon.",
+      "done": "La révision {revision} de {name} est active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Ce flow est un brouillon",
+        "description": "Il n'a pas de révision publiée, donc les triggers et autres flows ne le démarrent pas. Exécutez-le depuis le Playground, ou publiez-le pour le rendre actif."
+      },
+      "over_published": {
+        "title": "La dernière révision est un brouillon",
+        "description": "Les planifications, les webhooks et les autres flows exécutent toujours la révision publiée jusqu'à ce que vous publiiez ce brouillon. Les triggers de Flow ne démarrent pas le flow pendant ce temps."
+      }
+    },
     "save task": "Enregistrer la tâche",
     "saved": "Enregistrement réussi",
     "saved as draft": "Enregistré comme brouillon",
@@ -2074,6 +2091,7 @@
       "title": "Commencez à automatiser avec Kestra",
       "sub_title": "Cliquez sur le bouton Exécuter pour démarrer l'exécution de votre premier workflow.",
       "namespace_sub_title": "Exécutez un ou plusieurs flows de ce namespace pour remplir ce tableau de bord.",
+      "draft_sub_title": "Ce flow n'a que des brouillons : exécutez-le depuis le Playground dans l'éditeur, ou publiez-le pour l'exécuter.",
       "need_help": "Besoin d'aide ?"
     },
     "execution_guide": {
@@ -2265,7 +2283,7 @@
       "label": "Raccourcis clavier",
       "trigger_autocompletion": "Déclencher l'autocomplétion",
       "command_palette": "Afficher la palette de commandes",
-      "save_flow": "Enregistrer le flow",
+      "save_flow": "Enregistrer le brouillon",
       "execute_flow": "Exécuter le flow",
       "toggle_ai_agent": "Basculer l'agent AI",
       "move_line": "Déplacer la ligne",
@@ -3078,7 +3096,7 @@
         "no_match": "Aucune correspondance",
         "open": "Ouvrir {name}",
         "paste": "Coller",
-        "save": "Enregistrer le flow",
+        "save": "Enregistrer le brouillon",
         "search_placeholder": "Saisir une commande ou rechercher une task…",
         "title": "Menu de commandes"
       },
@@ -3186,7 +3204,7 @@
         "paste": "Coller",
         "redo": "Rétablir",
         "reorder": "Réorganiser vers le haut / vers le bas",
-        "save": "Enregistrer le flow",
+        "save": "Enregistrer le brouillon",
         "step_into": "Développer / entrer dans un groupe",
         "step_out": "Réduire / sortir vers le parent",
         "title": "Raccourcis clavier",

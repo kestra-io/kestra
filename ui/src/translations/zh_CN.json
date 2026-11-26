@@ -1611,6 +1611,7 @@
       "add": "创建",
       "update": "更新键 '{key}' 的值",
       "duplicate": "此键已存在",
+      "description_latin1": "描述只能包含拉丁字符，不能包含表情符号。",
       "delete multiple": {
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"

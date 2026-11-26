@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.util.Objects;
 
+import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
@@ -54,7 +55,7 @@ public class ConcurrencyLimitController {
         String tenantId = tenantService.resolveTenant();
         var existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
         if (existing.isEmpty()) {
-            return HttpResponse.notFound();
+            throw new NotFoundException("No concurrency limit was found for namespace '%s' and flow '%s'.".formatted(namespace, flowId));
         }
 
         // The path identifies the resource; a body naming another flow must not retarget it.
@@ -78,7 +79,7 @@ public class ConcurrencyLimitController {
         String namespace = Objects.requireNonNullElse(request.namespace(), "");
         String flowId = Objects.requireNonNullElse(request.flowId(), "");
         if (concurrencyLimitRepository.findById(tenantId, namespace, flowId).isEmpty()) {
-            return HttpResponse.notFound();
+            throw new NotFoundException("No concurrency limit was found for namespace '%s' and flow '%s'.".formatted(namespace, flowId));
         }
 
         return HttpResponse.ok(

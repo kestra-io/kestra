@@ -64,6 +64,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -478,13 +479,13 @@ public class TriggerController {
     }
 
     public record ApiCreateBackfillRequest(
-        @Parameter(description = "The namespace.") String namespace,
-        @Parameter(description = "The ID of the flow.") String flowId,
-        @Parameter(description = "The ID of the trigger.") String triggerId,
-        @Parameter(description = "The backfill configuration") @NotNull Backfill backfill) {
+        @Parameter(description = "The namespace.") @NotBlank String namespace,
+        @Parameter(description = "The ID of the flow.") @NotBlank String flowId,
+        @Parameter(description = "The ID of the trigger.") @NotBlank String triggerId,
+        @Parameter(description = "The backfill configuration") @NotNull @Valid Backfill backfill) {
 
         public record Backfill(
-            ZonedDateTime start,
+            @NotNull ZonedDateTime start,
             ZonedDateTime end,
             Map<String, Object> inputs,
             @JsonSerialize(using = ListOrMapOfLabelSerializer.class)

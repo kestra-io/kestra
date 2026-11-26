@@ -289,7 +289,7 @@
 
         <KsDrawer v-if="isDetailsOpen" v-model="isDetailsOpen">
             <template #header>
-                <code>{{ detailsTriggerId }}</code>
+                <code>{{ detailsKey?.triggerId }}</code>
             </template>
             <KsMarkdown v-if="detailsTrigger?.description" :content="detailsTrigger.description" />
             <Vars :data="detailsData" />
@@ -418,7 +418,7 @@
     const triggers = ref<any[]>([])
     const isBackfillOpen = ref(false)
     const isDetailsOpen = ref(false)
-    const detailsTriggerId = ref<string | undefined>()
+    const detailsKey = ref<{namespace?: string; flowId?: string; triggerId?: string}>()
     const selectedTrigger = ref<SelectedTrigger | undefined>()
 
     // evaluatedAt/updatedAt are TriggerState JSON fields with no backing column on the triggers table, so they're excluded here.
@@ -546,9 +546,7 @@
             .map((row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`),
     )
 
-    const detailsTrigger = computed(() =>
-        triggersMerged.value.find((row: any) => row.triggerId === detailsTriggerId.value),
-    )
+    const detailsTrigger = computed(() => detailsKey.value && findRowBySelection(detailsKey.value))
 
     const detailsData = computed(() => {
         const trigger = detailsTrigger.value
@@ -702,7 +700,7 @@
     }
 
     const openDetails = (row: any) => {
-        detailsTriggerId.value = row.triggerId
+        detailsKey.value = selectionMapper(row)
         isDetailsOpen.value = true
     }
 

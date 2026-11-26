@@ -1,0 +1,27 @@
+id: "dag-flowable-graph-task"
+namespace: "io.kestra.tests"
+description: "DAG containing a FlowableTask whose tasksTree() returns a GraphTask (Pause without errors/finally) — both as a dependency of another task and as a leaf node."
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: task1
+          type: io.kestra.plugin.core.log.Log
+          message: "{{ task.id }}"
+      - task:
+          id: pause1
+          type: io.kestra.plugin.core.flow.Pause
+        dependsOn:
+          - task1
+      - task:
+          id: task2
+          type: io.kestra.plugin.core.log.Log
+          message: "{{ task.id }}"
+        dependsOn:
+          - pause1
+      - task:
+          id: pause2
+          type: io.kestra.plugin.core.flow.Pause
+        dependsOn:
+          - task1

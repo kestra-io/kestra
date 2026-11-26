@@ -640,7 +640,7 @@ public class GraphUtils {
                     } else {
                         for (String dependsOn : currentTask.getDependsOn()) {
                             GraphTask previousNode = nodeTaskCreated.stream().filter(node -> node.getTask().getId().equals(dependsOn)).findFirst().orElse(null);
-                            if (previousNode != null && !((Task) previousNode.getTask()).isFlowable()) {
+                            if (previousNode != null) {
                                 graph.addEdge(
                                     previousNode,
                                     toEdgeTarget(currentGraph),
@@ -665,7 +665,7 @@ public class GraphUtils {
                     }
                     // link to last one if task isn't a dependency
                     if (!dependencies.contains(currentTask.getTask().getId())) {
-                        if (currentTask.getTask() instanceof FlowableTask<?>) {
+                        if (currentGraph instanceof GraphCluster) {
                             graph.addEdge(
                                 ((GraphCluster) currentGraph).getEnd(),
                                 graph.getFinally(),

@@ -399,6 +399,7 @@
     "create": "Criar",
     "create_flow": "Criar Flow",
     "create_child_namespace": "Criar namespace filho",
+    "view_all_flows": "Ver todos os {count} flows",
     "from": "De",
     "to": "Para",
     "steps": "Passos",

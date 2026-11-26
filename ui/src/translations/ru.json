@@ -399,6 +399,7 @@
     "create": "Создать",
     "create_flow": "Создать Flow",
     "create_child_namespace": "Создать дочерний namespace",
+    "view_all_flows": "Показать все flow ({count})",
     "from": "От",
     "to": "До",
     "steps": "Шаги",

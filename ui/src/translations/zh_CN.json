@@ -399,6 +399,7 @@
     "create": "创建",
     "create_flow": "创建Flow",
     "create_child_namespace": "创建子 namespace",
+    "view_all_flows": "查看全部 {count} 个 flow",
     "from": "从",
     "to": "到",
     "steps": "步骤",

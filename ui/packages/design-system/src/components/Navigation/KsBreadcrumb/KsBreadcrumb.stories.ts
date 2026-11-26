@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect, screen, userEvent, waitFor, within} from "storybook/test"
+import {expect, fn, screen, userEvent, waitFor, within} from "storybook/test"
 import CogOutline from "vue-material-design-icons/CogOutline.vue"
 import FolderOutline from "vue-material-design-icons/FolderOutline.vue"
 import KsBreadcrumb from "./KsBreadcrumb.vue"
@@ -202,6 +202,48 @@ export const EmptySiblings: Story = {
         const canvas = within(canvasElement)
         await waitFor(() => expect(canvas.getAllByTestId("breadcrumb-menu-trigger")).toHaveLength(1))
         await expect(within(canvas.getByRole("heading")).queryByTestId("breadcrumb-menu-trigger")).toBeNull()
+    },
+}
+
+const flowsBeside = Object.assign(fn(() => after<KsBreadcrumbItem[]>([
+    {label: "daily-report", onClick: () => {}, current: true},
+    {label: "hourly-sync", onClick: () => {}},
+    {label: "View all 40 flows", onClick: () => {}, divided: true},
+], 100)), {lazy: true})
+
+/**
+ * A lazy menu is offered without being fetched: its loader runs when the menu opens, and again the next
+ * time it does. An entry with `divided` starts a group, ruled off from the entries above it.
+ */
+export const LazySiblings: Story = {
+    parameters: {controls: {disable: true}},
+    beforeEach: () => {
+        flowsBeside.mockClear()
+    },
+    render: () => ({
+        components: {KsBreadcrumb},
+        setup() {
+            return {items: [{label: "Flows", onClick: () => {}}, {label: "company", onClick: () => {}}], titleSiblings: flowsBeside}
+        },
+        template: `
+            <div style="padding:24px 24px 160px">
+                <ks-breadcrumb :items="items" title="daily-report" :titleSiblings="titleSiblings" />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const segment = within(within(canvasElement).getByRole("heading")).getByTestId("breadcrumb-segment")
+        await expect(within(segment).getByTestId("breadcrumb-menu-trigger")).toBeVisible()
+        await expect(flowsBeside).not.toHaveBeenCalled()
+
+        await userEvent.hover(segment)
+        await waitFor(() => expect(screen.getByText("hourly-sync")).toBeVisible())
+        await expect(screen.getAllByTestId("breadcrumb-divider")).toHaveLength(1)
+
+        await userEvent.unhover(segment)
+        await waitFor(() => expect(screen.queryByText("hourly-sync")).toBeNull())
+        await userEvent.hover(segment)
+        await waitFor(() => expect(flowsBeside).toHaveBeenCalledTimes(2))
     },
 }
 

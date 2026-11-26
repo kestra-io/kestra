@@ -399,6 +399,7 @@
     "create": "생성",
     "create_flow": "Flow 생성",
     "create_child_namespace": "하위 namespace 생성",
+    "view_all_flows": "{count}개 flow 모두 보기",
     "from": "시작",
     "to": "종료",
     "steps": "단계",

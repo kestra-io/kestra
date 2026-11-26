@@ -29,7 +29,7 @@ const mountSummary = (labels?: {key: string; value: string}[]) => i18nMount(Mobi
             ChangeExecutionStatus: true,
             SetLabels: true,
             Duration: true,
-            KsTooltip: {template: "<div><slot /></div>"},
+            KsTooltip: {props: ["content"], template: "<div :data-tooltip=\"content\"><slot /></div>"},
         },
     },
 })
@@ -65,5 +65,15 @@ describe("MobileSummary", () => {
 
         // Then
         expect(wrapper.findAll(".labels-list .kel-tag")).toHaveLength(2)
+    })
+
+    it("puts each label in the part of the tag that ellipsizes, with the full text in a tooltip", () => {
+        const label = "system.correlationId: 2raAjVYwthisTFH32QXzqh"
+
+        const wrapper = mountSummary([{key: "system.correlationId", value: "2raAjVYwthisTFH32QXzqh"}])
+
+        expect(wrapper.find(".labels-list .kel-tag").classes()).toContain("kel-tag--truncate")
+        expect(wrapper.find(".labels-list .kel-tag__label").text()).toBe(label)
+        expect(wrapper.find(".labels-list [data-tooltip]").attributes("data-tooltip")).toBe(label)
     })
 })

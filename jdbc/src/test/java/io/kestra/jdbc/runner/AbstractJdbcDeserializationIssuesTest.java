@@ -104,6 +104,11 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
             }
 
             @Override
+            public Optional<Integer> findLatestRevision(String tenantId, String namespace, String id) {
+                return Optional.empty();
+            }
+
+            @Override
             public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
                 return Optional.empty();
             }

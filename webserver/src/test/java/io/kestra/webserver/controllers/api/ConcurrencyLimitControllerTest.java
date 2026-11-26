@@ -1,5 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -13,12 +19,14 @@ import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.BasicAuthService;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.GET;
@@ -36,6 +44,12 @@ class ConcurrencyLimitControllerTest {
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
+    @Inject
+    private EmbeddedServer embeddedServer;
+
+    @Inject
+    private BasicAuthService.BasicAuthConfiguration basicAuthConfiguration;
+
     @Test
     void shouldReturnBadRequestWhenUpdatingWithInvalidConcurrencyLimit() {
         // Given - a request without the required running count
@@ -51,6 +65,34 @@ class ConcurrencyLimitControllerTest {
 
         // Then - Micronaut returns 422 for @Body @Valid bean validation failures
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBodyArrivesAfterHeaders() throws Exception {
+        byte[] body = "{\"namespace\":\"missing.namespace\",\"flowId\":\"missing\",\"running\":1}".getBytes(StandardCharsets.UTF_8);
+        String credentials = Base64.getEncoder()
+            .encodeToString((basicAuthConfiguration.getUsername() + ":" + basicAuthConfiguration.getPassword()).getBytes(StandardCharsets.UTF_8));
+        String headers = "PUT /api/v1/main/concurrency-limit HTTP/1.1\r\n"
+            + "Host: localhost\r\n"
+            + "Authorization: Basic " + credentials + "\r\n"
+            + "Content-Type: application/json\r\n"
+            + "Content-Length: " + body.length + "\r\n"
+            + "Connection: close\r\n\r\n";
+
+        try (Socket socket = new Socket(embeddedServer.getHost(), embeddedServer.getPort())) {
+            socket.setTcpNoDelay(true);
+            socket.setSoTimeout(10_000);
+            OutputStream out = socket.getOutputStream();
+            out.write(headers.getBytes(StandardCharsets.UTF_8));
+            out.flush();
+            // a raw 404 returned while the body is still pending sent Micronaut's status route into an endless loop (kestra-ee#12895)
+            Thread.sleep(300);
+            out.write(body);
+            out.flush();
+
+            String statusLine = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8)).readLine();
+            assertThat(statusLine).startsWith("HTTP/1.1 404");
+        }
     }
 
     @Test

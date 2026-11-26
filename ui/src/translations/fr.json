@@ -398,6 +398,7 @@
     "create": "Créer",
     "create_flow": "Créer Flow",
     "create_child_namespace": "Créer un namespace enfant",
+    "view_all_flows": "Voir tous les flows",
     "from": "De",
     "to": "à",
     "steps": "Étapes",
@@ -2033,6 +2034,7 @@
       "add": "Créer",
       "update": "Mettre à jour la valeur pour la clé '{key}'",
       "duplicate": "Cette clé existe déjà",
+      "description_latin1": "La description ne peut contenir que des caractères latins, sans emoji.",
       "delete multiple": {
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>",

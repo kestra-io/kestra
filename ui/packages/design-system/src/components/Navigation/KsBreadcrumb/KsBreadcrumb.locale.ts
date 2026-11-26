@@ -5,6 +5,7 @@ export default {
         "breadcrumb_hidden": "Show hidden levels",
         "breadcrumb_in": "In {label}",
         "breadcrumb_empty": "Nothing here yet",
+        "breadcrumb_loading": "Loading...",
     },
     "de": {
         "breadcrumb_home": "Startseite",
@@ -12,6 +13,7 @@ export default {
         "breadcrumb_hidden": "Versteckte Ebenen anzeigen",
         "breadcrumb_in": "In {label}",
         "breadcrumb_empty": "Noch nichts hier",
+        "breadcrumb_loading": "Wird geladen...",
     },
     "es": {
         "breadcrumb_home": "Inicio",
@@ -19,6 +21,7 @@ export default {
         "breadcrumb_hidden": "Mostrar niveles ocultos",
         "breadcrumb_in": "En {label}",
         "breadcrumb_empty": "Nada por aquí todavía",
+        "breadcrumb_loading": "Cargando...",
     },
     "fr": {
         "breadcrumb_home": "Accueil",
@@ -26,6 +29,7 @@ export default {
         "breadcrumb_hidden": "Afficher les niveaux masqués",
         "breadcrumb_in": "Dans {label}",
         "breadcrumb_empty": "Rien ici pour l'instant",
+        "breadcrumb_loading": "Chargement...",
     },
     "hi": {
         "breadcrumb_home": "होम",
@@ -33,6 +37,7 @@ export default {
         "breadcrumb_hidden": "छिपे हुए स्तर दिखाएँ",
         "breadcrumb_in": "{label} में",
         "breadcrumb_empty": "अभी तक कुछ भी नहीं है",
+        "breadcrumb_loading": "लोड हो रहा है...",
     },
     "it": {
         "breadcrumb_home": "Home",
@@ -40,6 +45,7 @@ export default {
         "breadcrumb_hidden": "Mostra livelli nascosti",
         "breadcrumb_in": "In {label}",
         "breadcrumb_empty": "Niente qui ancora",
+        "breadcrumb_loading": "Caricamento...",
     },
     "ja": {
         "breadcrumb_home": "ホーム",
@@ -47,6 +53,7 @@ export default {
         "breadcrumb_hidden": "非表示レベルを表示",
         "breadcrumb_in": "{label} 内",
         "breadcrumb_empty": "まだ何もありません",
+        "breadcrumb_loading": "読み込み中...",
     },
     "ko": {
         "breadcrumb_home": "홈",
@@ -54,6 +61,7 @@ export default {
         "breadcrumb_hidden": "숨겨진 레벨 표시",
         "breadcrumb_in": "{label}에서",
         "breadcrumb_empty": "아직 아무것도 없습니다.",
+        "breadcrumb_loading": "불러오는 중...",
     },
     "pl": {
         "breadcrumb_home": "Strona główna",
@@ -61,6 +69,7 @@ export default {
         "breadcrumb_hidden": "Pokaż ukryte poziomy",
         "breadcrumb_in": "W {label}",
         "breadcrumb_empty": "Nic tu jeszcze nie ma",
+        "breadcrumb_loading": "Ładowanie...",
     },
     "pt": {
         "breadcrumb_home": "Início",
@@ -68,6 +77,7 @@ export default {
         "breadcrumb_hidden": "Mostrar níveis ocultos",
         "breadcrumb_in": "Em {label}",
         "breadcrumb_empty": "Nada aqui ainda",
+        "breadcrumb_loading": "A carregar...",
     },
     "pt_BR": {
         "breadcrumb_home": "Início",
@@ -75,6 +85,7 @@ export default {
         "breadcrumb_hidden": "Mostrar níveis ocultos",
         "breadcrumb_in": "Em {label}",
         "breadcrumb_empty": "Nada aqui ainda",
+        "breadcrumb_loading": "Carregando...",
     },
     "ru": {
         "breadcrumb_home": "Главная",
@@ -82,6 +93,7 @@ export default {
         "breadcrumb_hidden": "Показать скрытые уровни",
         "breadcrumb_in": "В {label}",
         "breadcrumb_empty": "Здесь пока ничего нет",
+        "breadcrumb_loading": "Загрузка...",
     },
     "zh_CN": {
         "breadcrumb_home": "主页",
@@ -89,5 +101,6 @@ export default {
         "breadcrumb_hidden": "显示隐藏级别",
         "breadcrumb_in": "在 {label} 中",
         "breadcrumb_empty": "暂无内容",
+        "breadcrumb_loading": "加载中...",
     },
 }

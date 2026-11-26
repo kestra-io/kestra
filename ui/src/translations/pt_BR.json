@@ -398,6 +398,7 @@
     "create": "Criar",
     "create_flow": "Criar Flow",
     "create_child_namespace": "Criar namespace filho",
+    "view_all_flows": "Ver todos os flows",
     "from": "De",
     "to": "Para",
     "steps": "Passos",
@@ -2033,6 +2034,7 @@
       "add": "Criar",
       "update": "Atualizar valor para a key '{key}'",
       "duplicate": "Esta key já existe",
+      "description_latin1": "A descrição só pode conter caracteres latinos, sem emojis.",
       "delete multiple": {
         "confirm": "Tem certeza de que deseja excluir: <code>{name}</code> KV(s)?",
         "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>",

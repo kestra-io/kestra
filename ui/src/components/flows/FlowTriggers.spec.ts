@@ -143,6 +143,17 @@ describe("FlowTriggers - governance block", () => {
     })
 })
 
+describe("FlowTriggers - next evaluation date", () => {
+    it("warns about a missing next evaluation only for a trigger the scheduler evaluates", async () => {
+        triggerBState.extra = {kind: "UNSCHEDULED"}
+
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-test=\"trigger-never-evaluated\"]")).toHaveLength(1)
+    })
+})
+
 // Issue #12784: each trigger row links to the flow executions tab pre-filtered
 // on that trigger, so the list shows every execution the trigger created.
 describe("FlowTriggers - executions link", () => {

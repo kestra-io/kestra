@@ -179,14 +179,14 @@
                             </KsTag>
                         </KsTooltip>
                         <KsTag
-                            v-else-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate && scope.row.kind !== 'UNSCHEDULED'"
                             type="warning"
                             size="small"
                             effect="light"
                         >
                             {{ $t("datepicker.never") }}
                         </KsTag>
-                        <KsDateAgo v-else :inverted="true" :date="scope.row.nextEvaluationDate" />
+                        <KsDateAgo v-else-if="scope.row.nextEvaluationDate" :inverted="true" :date="scope.row.nextEvaluationDate" />
                     </template>
                     <template v-else-if="col.prop === 'evaluatedAt'">
                         <KsDateAgo :inverted="true" :date="scope.row.evaluatedAt" />
@@ -303,7 +303,7 @@
 
         <KsDrawer v-if="isDetailsOpen" v-model="isDetailsOpen">
             <template #header>
-                <code>{{ detailsTriggerId }}</code>
+                <code>{{ detailsKey?.triggerId }}</code>
             </template>
             <KsMarkdown v-if="detailsTrigger?.description" :content="detailsTrigger.description" />
             <Vars :data="detailsData" />
@@ -466,7 +466,7 @@
     const triggers = ref<ApiTriggerAndState[]>([])
     const isBackfillOpen = ref(false)
     const isDetailsOpen = ref(false)
-    const detailsTriggerId = ref<string | undefined>()
+    const detailsKey = ref<TriggerControllerApiTriggerId>()
     const selectedTrigger = ref<TriggerRow | undefined>()
 
     // evaluatedAt/updatedAt are TriggerState JSON fields with no backing column on the triggers table, so they're excluded here.
@@ -601,9 +601,7 @@
             .map(row => `${row.namespace}-${row.flowId}-${row.triggerId}`),
     )
 
-    const detailsTrigger = computed(() =>
-        triggersMerged.value.find(row => row.triggerId === detailsTriggerId.value),
-    )
+    const detailsTrigger = computed(() => detailsKey.value && findRowBySelection(detailsKey.value))
 
     const detailsData = computed<Record<string, unknown>>(() => {
         const trigger = detailsTrigger.value
@@ -770,7 +768,7 @@
     }
 
     const openDetails = (row: TriggerRow) => {
-        detailsTriggerId.value = row.triggerId
+        detailsKey.value = selectionMapper(row)
         isDetailsOpen.value = true
     }
 

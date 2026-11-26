@@ -4,6 +4,7 @@ import {createPinia, setActivePinia} from "pinia"
 import type {State, StateType} from "@kestra-io/kestra-sdk"
 import type {Execution} from "../../stores/executions"
 import {useExecutionsStore} from "../../stores/executions"
+import {useAuthStore} from "override/stores/auth"
 import TaskRunActions from "./TaskRunActions.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
@@ -281,6 +282,17 @@ describe("TaskRunActions", () => {
         const wrapper2 = mountActions(props2)
         // Defaults to the first task run since it's a clean execution id
         expect((wrapper2.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-1")
+    })
+
+    it("does not offer fix with AI to a user who cannot use the copilot", () => {
+        useAuthStore().user = {hasAny: () => false, isAllowed: () => true} as never
+
+        const wrapper = mountActions({
+            taskRun: {id: "tr-failed", taskId: "task-failed", state: state("FAILED"), attempts: [{state: state("FAILED")}]},
+            execution: executionProps("ex-failed"),
+        })
+
+        expect(wrapper.find(".fix-with-ai").exists()).toBe(false)
     })
 
     it("requests 100 logs when triggering fix with AI", async () => {

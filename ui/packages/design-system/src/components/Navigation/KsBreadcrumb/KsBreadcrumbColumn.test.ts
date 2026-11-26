@@ -26,6 +26,13 @@ function createDeferredLoader<T = KsBreadcrumbItem[]>(result: T) {
     }
 }
 
+// A row opens its fly-out once the pointer has rested on it, not while it only crosses it.
+const hover = async (row: {trigger: (event: string) => Promise<void>}) => {
+    await row.trigger("mouseenter")
+    await new Promise((resolve) => setTimeout(resolve, 170))
+    await flushPromises()
+}
+
 describe("KsBreadcrumbColumn", () => {
     afterEach(() => {
         document.body.innerHTML = ""
@@ -244,8 +251,7 @@ describe("KsBreadcrumbColumn", () => {
         expect(wrapper.find(".flyout").exists()).toBe(false)
 
         // Hover entry with children
-        await renderedEntries[0].trigger("mouseenter")
-        await flushPromises()
+        await hover(renderedEntries[0])
 
         const flyout = wrapper.find(".flyout")
         expect(flyout.exists()).toBe(true)
@@ -257,8 +263,7 @@ describe("KsBreadcrumbColumn", () => {
         expect(childLabels).toEqual(["Child 1", "Child 2"])
 
         // Hover entry without children -> flyout unmounts
-        await renderedEntries[1].trigger("mouseenter")
-        await flushPromises()
+        await hover(renderedEntries[1])
 
         expect(wrapper.find(".flyout").exists()).toBe(false)
         expect(renderedEntries[0].classes()).not.toContain("open")
@@ -293,8 +298,7 @@ describe("KsBreadcrumbColumn", () => {
         expect(selectEvents![0][0]).toEqual(directItem)
 
         // 2. Open flyout and click nested entry
-        await renderedEntries[1].trigger("mouseenter")
-        await flushPromises()
+        await hover(renderedEntries[1])
 
         const flyout = wrapper.find(".flyout")
         expect(flyout.exists()).toBe(true)
@@ -307,5 +311,46 @@ describe("KsBreadcrumbColumn", () => {
         expect(selectEvents![1][0]).toEqual(nestedItem)
 
         wrapper.unmount()
+    })
+
+    test("rules off an entry that starts a group, except when it is the first one", () => {
+        const wrapper = i18nMount(KsBreadcrumbColumn, {
+            locales,
+            props: {entries: [{label: "data", divided: true}, {label: "daily", divided: true}, {label: "hourly"}]},
+            global: globalConfig,
+        })
+
+        const rows = wrapper.findAll("[data-testid=\"breadcrumb-divider\"], [data-testid=\"breadcrumb-entry\"]").map((row) => row.attributes("data-testid"))
+
+        expect(rows).toEqual(["breadcrumb-entry", "breadcrumb-divider", "breadcrumb-entry", "breadcrumb-entry"])
+    })
+
+    test("opens nothing and runs no loader for a row the pointer only crosses", async () => {
+        const children = vi.fn().mockResolvedValue([{label: "Child"}])
+        const wrapper = i18nMount(KsBreadcrumbColumn, {
+            locales,
+            props: {entries: [{label: "Parent", children}, {label: "Leaf"}]},
+            global: globalConfig,
+        })
+        const row = wrapper.find("[data-testid=\"breadcrumb-entry\"]")
+
+        await row.trigger("mouseenter")
+        await row.trigger("mouseleave")
+        await new Promise((resolve) => setTimeout(resolve, 170))
+
+        expect(children).not.toHaveBeenCalled()
+        expect(wrapper.find(".flyout").exists()).toBe(false)
+    })
+
+    test("says it is loading until the loader resolves", async () => {
+        const deferred = createDeferredLoader([{label: "daily"}])
+        const wrapper = i18nMount(KsBreadcrumbColumn, {locales, props: {load: deferred.loader}, global: globalConfig})
+
+        expect(wrapper.find("[data-testid=\"breadcrumb-loading\"]").text()).toBe("Loading...")
+
+        deferred.resolve()
+        await flushPromises()
+
+        expect(wrapper.find("[data-testid=\"breadcrumb-loading\"]").exists()).toBe(false)
     })
 })

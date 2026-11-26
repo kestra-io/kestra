@@ -56,9 +56,9 @@
 
             <div class="mobile-summary-labels">
                 <div ref="labelsList" class="labels-list" :style="collapsedStyle">
-                    <KsTag v-for="label in execution.labels" :key="`${label.key}-${label.value}`" size="small" truncate>
-                        {{ label.key }}: {{ label.value }}
-                    </KsTag>
+                    <KsTooltip v-for="label in execution.labels" :key="`${label.key}-${label.value}`" :content="`${label.key}: ${label.value}`">
+                        <KsTag size="small" truncate :label="`${label.key}: ${label.value}`" />
+                    </KsTooltip>
                 </div>
                 <div class="labels-actions">
                     <KsButton v-if="hiddenLabels > 0" link size="small" data-test="toggle-labels" @click="expanded = !expanded">

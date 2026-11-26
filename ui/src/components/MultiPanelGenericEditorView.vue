@@ -126,10 +126,13 @@
             return
         }
 
+        const isShown = panels.value.some((p, i) => p.activeTab?.uid === tabValue
+            && (maximizedPanelIndex.value === null || maximizedPanelIndex.value === i))
+
         leaveFullscreenUnlessTabIsShown(tabValue)
 
         if(openTabs.value.includes(tabValue)){
-            if(hasMainView.value){
+            if(hasMainView.value && !isShown){
                 focusTab(tabValue)
             } else {
                 onRemoveTab(tabValue)

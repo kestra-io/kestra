@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -22,18 +21,22 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.plugin.core.flow.Sleep;
 
@@ -44,6 +47,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -83,6 +87,15 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
     @Inject
     private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private JdbcExecutor jdbcExecutor;
+
+    @Inject
+    private JooqDSLContextWrapper dslContextWrapper;
 
     @BeforeAll
     void init() {
@@ -289,6 +302,61 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         newWorker.close();
     }
 
+    @Test
+    void shouldDiscardTriggerOfDeletedFlowInsteadOfReEmittingIt() {
+        WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5));
+        FlowWithSource flow = flowRepository.findByIdWithSource(MAIN_TENANT, workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId()).orElseThrow();
+        flowRepository.delete(flow);
+
+        String workerId = saveRunningOnDeadWorker(workerTrigger);
+        dslContextWrapper.transaction(configuration -> jdbcExecutor.reEmitWorkerJobsForWorkers(configuration, List.of(workerId)));
+
+        assertThat(workerJobRunningRepository.findByKey(workerTrigger.getTriggerContext().uid())).isEmpty();
+    }
+
+    @Test
+    void shouldDiscardTriggerRemovedFromItsFlowInsteadOfReEmittingIt() {
+        WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5));
+        FlowWithSource flow = flowRepository.findByIdWithSource(MAIN_TENANT, workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId()).orElseThrow();
+        flowRepository.update(GenericFlow.of(flow.toFlow().toBuilder().triggers(List.of()).build()), flow);
+
+        String workerId = saveRunningOnDeadWorker(workerTrigger);
+        dslContextWrapper.transaction(configuration -> jdbcExecutor.reEmitWorkerJobsForWorkers(configuration, List.of(workerId)));
+
+        assertThat(workerJobRunningRepository.findByKey(workerTrigger.getTriggerContext().uid())).isEmpty();
+    }
+
+    @Test
+    void shouldKeepTriggerOfExistingFlowWhenReEmittingIt() {
+        WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5));
+
+        String workerId = saveRunningOnDeadWorker(workerTrigger);
+        dslContextWrapper.transaction(configuration -> jdbcExecutor.reEmitWorkerJobsForWorkers(configuration, List.of(workerId)));
+
+        assertThat(workerJobRunningRepository.findByKey(workerTrigger.getTriggerContext().uid())).isPresent();
+    }
+
+    @Test
+    void shouldKeepTriggerOfDisabledFlowWhenReEmittingIt() {
+        WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5));
+        FlowWithSource flow = flowRepository.findByIdWithSource(MAIN_TENANT, workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId()).orElseThrow();
+        flowRepository.update(GenericFlow.of(flow.toFlow().toBuilder().disabled(true).build()), flow);
+
+        String workerId = saveRunningOnDeadWorker(workerTrigger);
+        dslContextWrapper.transaction(configuration -> jdbcExecutor.reEmitWorkerJobsForWorkers(configuration, List.of(workerId)));
+
+        assertThat(workerJobRunningRepository.findByKey(workerTrigger.getTriggerContext().uid())).isPresent();
+    }
+
+    private String saveRunningOnDeadWorker(WorkerTrigger workerTrigger) {
+        String workerId = IdUtils.create();
+        dslContextWrapper.transaction(configuration -> workerJobRunningRepository.save(
+            WorkerTriggerRunning.of(workerTrigger, new WorkerInstance(workerId), 0),
+            configuration.dsl()
+        ));
+        return workerId;
+    }
+
     @MockBean(WorkerGroupService.class)
     WorkerGroupService workerGroupService() {
         return new WorkerGroupService() {
@@ -334,12 +402,20 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
             .workerGroup(workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null)
             .build();
 
-        Map.Entry<ConditionContext, Trigger> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);
+        // The executor only re-emits a trigger whose flow still defines it.
+        Flow flow = flowBuilder(sleep).toBuilder().tenantId(MAIN_TENANT).triggers(List.of(trigger)).build();
+        flowRepository.create(GenericFlow.of(flow));
+        Trigger triggerContext = Trigger.of(flow, trigger);
 
         return WorkerTrigger.builder()
             .trigger(trigger)
-            .triggerContext(mockedTrigger.getValue())
-            .conditionContext(mockedTrigger.getKey())
+            .triggerContext(triggerContext)
+            .conditionContext(
+                ConditionContext.builder()
+                    .runContext(runContextFactory.initializer().forScheduler((DefaultRunContext) runContextFactory.of(flow, trigger), triggerContext, trigger))
+                    .flow(flow)
+                    .build()
+            )
             .build();
     }
 

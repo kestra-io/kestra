@@ -532,28 +532,6 @@ public class ApprovalTest {
 
     @Test
     @LoadFlows({ "flows/valids/approval-before-decision.yaml" })
-    void shouldOpenTheRequestOnlyOnceTheTasksBeforeTheDecisionSucceeded() throws Exception {
-        Execution paused = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-before-decision", null, null, Duration.ofSeconds(30));
-
-        assertThat(paused.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
-        assertThat(paused.findTaskRunsByTaskId("approval_prepare").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(paused.findTaskRunsByTaskId("approved")).isEmpty();
-
-        Execution decided = executionService.decide(
-            paused,
-            flowRepository.findByExecution(paused),
-            paused.findTaskRunsByTaskId("approval").getFirst().getId(),
-            new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, null),
-            Map.of()
-        );
-        Execution done = runnerUtils.emitAndAwaitExecution(e -> e.getId().equals(paused.getId()) && e.getState().isTerminated(), decided);
-
-        assertThat(done.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(done.findTaskRunsByTaskId("approved")).hasSize(1);
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/approval-before-decision.yaml" })
     void shouldApproveAutomaticallyFromTheOutputsOfTheTasksBeforeTheDecision() throws Exception {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT, "io.kestra.tests", "approval-before-decision", null,

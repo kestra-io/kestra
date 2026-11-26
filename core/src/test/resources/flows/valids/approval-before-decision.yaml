@@ -8,6 +8,9 @@ inputs:
   - id: fail
     type: BOOL
     defaults: false
+  - id: failOpen
+    type: BOOL
+    defaults: false
 
 tasks:
   - id: approval

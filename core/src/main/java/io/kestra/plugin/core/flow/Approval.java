@@ -89,6 +89,8 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class Approval extends Task implements FlowableTask<Approval.Output>, PausableTask {
+    private static final String OPEN_FAILED_OUTPUT = "openFailed";
+
     @Schema(
         title = "Fields on the review dialog, in the same shape as flow inputs."
     )
@@ -290,8 +292,8 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
                         parentTaskRun
                     );
                 }
-                if (parentTaskRun.getState().getCurrent() == State.Type.RUNNING) {
-                    this.openRequest(execution, parentTaskRun, runContext);
+                if (parentTaskRun.getState().getCurrent() == State.Type.RUNNING && !this.openRequest(execution, parentTaskRun, runContext)) {
+                    return List.of();
                 }
             }
 
@@ -342,6 +344,9 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
                         this.isAllowWarning()
                     );
                 }
+                if (this.hasOpenFailed(runContext, parentTaskRun)) {
+                    return Optional.of(State.Type.FAILED);
+                }
             }
             return this.resolveWaitState(runContext, execution, parentTaskRun);
         }
@@ -377,8 +382,8 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         this.mergeOutputs(taskRun, runContext, Map.of("decision", Decision.Type.APPROVED.name(), "auto", true));
     }
 
-    /** Opens the request {@link #created} left for later, since beforeDecision had to succeed first. */
-    private void openRequest(Execution execution, TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
+    /** Records a failure instead of throwing it, since the executor only logs what {@link #resolveNexts} throws and the task would stay paused. */
+    private boolean openRequest(Execution execution, TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
         Services services = ((DefaultRunContext) runContext).services();
         try {
             FlowInterface flow = services.additionalService(FlowMetaStoreInterface.class).findByExecution(execution).orElseThrow();
@@ -389,11 +394,23 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             }
             if (opened.caseId() != null) {
                 outputs.put("caseId", opened.caseId());
+                runContext.logger().info("Approval {} opened.", opened.caseId());
             }
             this.mergeOutputs(taskRun, runContext, outputs);
-        } catch (IllegalVariableEvaluationException e) {
-            throw e;
+            return true;
         } catch (Exception e) {
+            runContext.logger().error("Unable to open the approval request: {}", e.getMessage(), e);
+            this.mergeOutputs(taskRun, runContext, Map.of(OPEN_FAILED_OUTPUT, true));
+            return false;
+        }
+    }
+
+    /** Read from the stored outputs, since the run context's outputs predate what {@link #openRequest} saved in the same pass. */
+    private boolean hasOpenFailed(RunContext runContext, TaskRun taskRun) throws IllegalVariableEvaluationException {
+        TaskOutputService taskOutputService = ((DefaultRunContext) runContext).services().additionalService(TaskOutputService.class);
+        try {
+            return Boolean.TRUE.equals(taskOutputService.getOutputs(taskRun).get(OPEN_FAILED_OUTPUT));
+        } catch (InternalException e) {
             throw new IllegalVariableEvaluationException(e);
         }
     }

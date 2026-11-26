@@ -184,20 +184,8 @@
     "draft": "Brouillon",
     "draft_flow_warning": "La dernière révision de ce flow est un brouillon. L'exécution utilisera la dernière révision publiée ; publiez le brouillon (ou exécutez-le depuis le Playground) pour exécuter vos derniers changements.",
     "flow_publish": {
-      "description": "Rend cette révision active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte.",
       "done_title": "Publié",
-      "failed": "Impossible de publier ce brouillon.",
       "done": "La révision {revision} de {name} est active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Ce flow est un brouillon",
-        "description": "Il n'a pas de révision publiée, donc les triggers et autres flows ne le démarrent pas. Exécutez-le depuis le Playground, ou publiez-le pour le rendre actif."
-      },
-      "over_published": {
-        "title": "La dernière révision est un brouillon",
-        "description": "Les planifications, les webhooks et les autres flows exécutent toujours la révision publiée jusqu'à ce que vous publiiez ce brouillon. Les triggers de Flow ne démarrent pas le flow pendant ce temps."
-      }
     },
     "save task": "Enregistrer la tâche",
     "saved": "Enregistrement réussi",

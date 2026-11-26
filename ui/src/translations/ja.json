@@ -184,20 +184,8 @@
     "draft": "下書き",
     "draft_flow_warning": "この flow の最新リビジョンは下書きです。実行は代わりに最新の公開済みリビジョンに対して行われます。最新の変更を実行するには、下書きを公開するか Playground から実行してください。",
     "flow_publish": {
-      "description": "このリビジョンを有効にします: Triggerが開始し、他のFlowが呼び出すことができ、その失敗はアラートFlowに到達します。",
       "done_title": "公開済み",
-      "failed": "このドラフトを公開できませんでした。",
       "done": "{name} のリビジョン {revision} が稼働中です: Trigger が開始し、他の Flow が呼び出すことができ、その障害はアラート Flow に到達します。"
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "このFlowはドラフトです",
-        "description": "公開されたリビジョンがないため、トリガーや他のFlowは開始しません。Playgroundから実行するか、公開してライブにしてください。"
-      },
-      "over_published": {
-        "title": "最新のリビジョンはドラフトです",
-        "description": "スケジュール、Webhook、その他のFlowは、このドラフトを公開するまで公開済みのリビジョンを実行します。その間、Flow triggerはFlowを開始しません。"
-      }
     },
     "save task": "Taskを保存",
     "saved": "正常に保存されました",

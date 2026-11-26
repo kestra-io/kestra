@@ -184,20 +184,8 @@
     "draft": "Entwurf",
     "draft_flow_warning": "Die neueste Revision dieses Flows ist ein Entwurf. Die Execution verwendet stattdessen die neueste veröffentlichte Revision. Veröffentliche den Entwurf (oder führe ihn im Playground aus), um deine letzten Änderungen auszuführen.",
     "flow_publish": {
-      "description": "Macht diese Revision live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows.",
       "done_title": "Veröffentlicht",
-      "failed": "Dieser Entwurf konnte nicht veröffentlicht werden.",
       "done": "Revision {revision} von {name} ist live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Dieser Flow ist ein Entwurf",
-        "description": "Es hat keine veröffentlichte Revision, daher starten Trigger und andere Flows es nicht. Führe es im Playground aus oder veröffentliche es, um es live zu schalten."
-      },
-      "over_published": {
-        "title": "Die neueste Revision ist ein Entwurf",
-        "description": "Zeitpläne, Webhooks und andere Flows führen weiterhin die veröffentlichte Revision aus, bis du diesen Entwurf veröffentlichst. Flow Trigger starten den Flow in der Zwischenzeit nicht."
-      }
     },
     "save task": "Task speichern",
     "saved": "Erfolgreich gespeichert",

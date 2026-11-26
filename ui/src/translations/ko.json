@@ -184,20 +184,8 @@
     "draft": "초안",
     "draft_flow_warning": "이 flow의 최신 리비전은 초안입니다. 실행은 대신 최신 게시된 리비전을 기준으로 수행됩니다. 최신 변경 사항을 실행하려면 초안을 게시하거나 Playground에서 실행하세요.",
     "flow_publish": {
-      "description": "이 버전을 활성화합니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다.",
       "done_title": "게시됨",
-      "failed": "이 초안을 게시할 수 없습니다.",
       "done": "{name}의 리비전 {revision}이 활성화되었습니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "이 Flow는 초안입니다.",
-        "description": "게시된 revision이 없으므로 trigger 및 다른 flow가 시작하지 않습니다. Playground에서 실행하거나 게시하여 활성화하세요."
-      },
-      "over_published": {
-        "title": "최신 버전은 초안입니다.",
-        "description": "일정, 웹훅 및 기타 flow는 이 초안을 게시할 때까지 게시된 revision을 계속 실행합니다. Flow trigger는 그동안 flow를 시작하지 않습니다."
-      }
     },
     "save task": "Task 저장",
     "saved": "성공적으로 저장됨",

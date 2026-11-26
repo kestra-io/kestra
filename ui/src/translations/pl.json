@@ -184,20 +184,8 @@
     "draft": "Wersja robocza",
     "draft_flow_warning": "Najnowsza wersja tego Flow jest szkicem. Egzekucja zostanie uruchomiona na najnowszej opublikowanej wersji. Opublikuj szkic (lub uruchom go w Playground), aby wykonać swoje najnowsze zmiany.",
     "flow_publish": {
-      "description": "Ustawia tę wersję jako aktywną: Trigger uruchamia ją, inne Flowy mogą ją wywoływać, a jej błędy docierają do Flowów alertów.",
       "done_title": "Opublikowano",
-      "failed": "Nie można opublikować tego szkicu.",
       "done": "Wersja {revision} Flow {name} jest aktywna: Triggery go uruchamiają, inne Flowy mogą go wywoływać, a jego błędy docierają do Flowów alertów."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Ten Flow to szkic",
-        "description": "Nie ma opublikowanej wersji, więc triggery i inne Flowy go nie uruchamiają. Uruchom go z Playground lub opublikuj, aby był aktywny."
-      },
-      "over_published": {
-        "title": "Najnowsza wersja to szkic",
-        "description": "Harmonogramy, webhooki i inne Flowy nadal uruchamiają opublikowaną wersję, dopóki nie opublikujesz tego szkicu. Trigery Flow nie uruchamiają Flow w międzyczasie."
-      }
     },
     "save task": "Zapisz Task",
     "saved": "Pomyślnie zapisano",

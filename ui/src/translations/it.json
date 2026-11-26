@@ -184,20 +184,8 @@
     "draft": "Bozza",
     "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
     "flow_publish": {
-      "description": "Rende questa revisione attiva: i trigger la avviano, altri Flow possono chiamarla e i suoi fallimenti raggiungono i Flow di avviso.",
       "done_title": "Pubblicato",
-      "failed": "Impossibile pubblicare questa bozza.",
       "done": "La Revisione {revision} di {name} è attiva: i Trigger la avviano, altri Flow possono richiamarla e i suoi errori raggiungono i Flow di avviso."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Questo flow è una bozza",
-        "description": "Non ha revisioni pubblicate, quindi i trigger e altri Flow non lo avviano. Eseguilo dal Playground o pubblicalo per renderlo attivo."
-      },
-      "over_published": {
-        "title": "L'ultima revisione è una bozza",
-        "description": "Pianificazioni, webhook e altri flow eseguono ancora la revisione pubblicata finché non pubblichi questa bozza. I trigger del Flow non avviano il flow nel frattempo."
-      }
     },
     "save task": "Salva Task",
     "saved": "Salvato con successo",

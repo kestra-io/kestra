@@ -583,6 +583,18 @@
         ttl: [
             {validator: durationValidator, trigger: "change"},
         ],
+        description: [
+            {
+                validator: (_rule: FormItemRule, value: string | undefined, callback: (error?: Error) => void) => {
+                    if ([...(value ?? "")].some(char => (char.codePointAt(0) ?? 0) > 0xff)) {
+                        callback(new Error(t("kv.description_latin1")))
+                    } else {
+                        callback()
+                    }
+                },
+                trigger: "change",
+            },
+        ],
     })
 
     function canUpdate(kvItem: KvEntry) {

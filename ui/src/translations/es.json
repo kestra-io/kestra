@@ -2018,6 +2018,7 @@
       "add": "Crear",
       "update": "Actualizar value para key '{key}'",
       "duplicate": "Esta key ya existe",
+      "description_latin1": "La descripción solo puede contener caracteres latinos, sin emojis.",
       "delete multiple": {
         "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
         "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>",

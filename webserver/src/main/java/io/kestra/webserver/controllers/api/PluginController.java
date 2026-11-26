@@ -36,6 +36,7 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.PluginAliasService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
 
@@ -84,6 +85,9 @@ public class PluginController {
 
     @Inject
     protected PluginRegistry pluginRegistry;
+
+    @Inject
+    protected PluginAliasService pluginAliasService;
 
     @Inject
     protected JsonSchemaCache jsonSchemaCache;
@@ -329,36 +333,10 @@ public class PluginController {
     @ApiResponse(responseCode = "404", description = "Plugin type not found")
     public HttpResponse<ApiPluginAliases> getPluginTypeAliases(
         @Parameter(description = "The canonical plugin type or one of its aliases") @PathVariable String type) {
-        String canonicalType = null;
-        Set<String> aliases = new TreeSet<>();
-
-        for (RegisteredPlugin registeredPlugin : pluginRegistry.plugins()) {
-            Class<?> pluginType = registeredPlugin.allClass().stream()
-                .filter(pluginClass -> pluginClass.getName().equals(type))
-                .findFirst()
-                .orElseGet(() -> registeredPlugin.getAliases().values().stream()
-                    .filter(alias -> alias.getKey().equalsIgnoreCase(type))
-                    .map(Map.Entry::getValue)
-                    .findFirst()
-                    .orElse(null));
-
-            if (pluginType == null) {
-                continue;
-            }
-
-            canonicalType = pluginType.getName();
-            registeredPlugin.getAliases().values().stream()
-                .filter(alias -> alias.getValue().equals(pluginType))
-                .map(Map.Entry::getKey)
-                .forEach(aliases::add);
-        }
-
-        if (canonicalType == null) {
-            return HttpResponse.notFound();
-        }
-
-        return HttpResponse.ok(new ApiPluginAliases(canonicalType, List.copyOf(aliases)))
-            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return pluginAliasService.findByType(type)
+            .map(aliases -> HttpResponse.ok(new ApiPluginAliases(aliases.type(), aliases.aliases()))
+                .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE))
+            .orElseGet(HttpResponse::notFound);
     }
 
     @Get(uri = "triggers")

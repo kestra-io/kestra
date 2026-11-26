@@ -148,6 +148,7 @@
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|search_placeholders|search_blueprints": "ded68bb532eb",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|search_placeholders|search_dashboards": "5ae9c1e0e91f",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|search_placeholders|search_executions": "ab540c5b42fe",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|search_placeholders|search_tasks": "46c6f1dea7e9",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|search_placeholders|search_flows": "08a347051eeb",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|search_placeholders|search_kv": "27416eeef21c",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|search_placeholders|search_logs": "82e10d7fa547",

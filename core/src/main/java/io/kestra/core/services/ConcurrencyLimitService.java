@@ -39,7 +39,7 @@ public class ConcurrencyLimitService {
         executionQueuedStateStore.remove(execution);
 
         // the execution bypasses the concurrency gate, so it claims no slot: an empty claim keeps its end from
-        // giving one back, as a missing claim makes the release fall back to the state history, which counts it
+        // giving one back, as a missing claim makes the release fall back to the state history, which sees it RUNNING
         return execution.withState(state).withMetadata(execution.getMetadata().withConcurrencyScopes(List.of()));
     }
 }

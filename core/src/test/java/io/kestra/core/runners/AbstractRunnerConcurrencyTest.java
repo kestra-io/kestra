@@ -67,6 +67,12 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-forced.yml" }, tenantId = "concurrency-queue-replayed-after-success")
+    void concurrencyQueueReplayedAfterSuccess() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueReplayedAfterSuccess("concurrency-queue-replayed-after-success");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/flow-concurrency-queue-forced.yml" }, tenantId = "concurrency-queue-force-run")
     void concurrencyQueueForceRun() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueForced("concurrency-queue-force-run", ForceRun::from);

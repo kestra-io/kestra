@@ -455,9 +455,10 @@ class ExecutionServiceTest {
         // When
         Execution restart = executionService.restart(execution, flow, null);
 
-        // Then: the restarted attempt holds no slot until the concurrency gate admits it again
+        // Then: the claim of the previous attempt is dropped, the concurrency gate evaluates the restarted attempt again
+        assertThat(restart.getState().restartedAfterTermination()).isTrue();
         assertThat(restart.getMetadata().getAttemptNumber()).isEqualTo(2);
-        assertThat(restart.getMetadata().getConcurrencyScopes()).isNotNull().isEmpty();
+        assertThat(restart.getMetadata().getConcurrencyScopes()).isNull();
     }
 
     @Test
@@ -471,9 +472,11 @@ class ExecutionServiceTest {
         Execution fromBeginning = executionService.replay(execution, flow, null, null, Optional.empty());
         Execution fromTask = executionService.replay(execution, flow, execution.getTaskRunList().get(1).getId(), null, Optional.empty());
 
-        // Then
-        assertThat(fromBeginning.getMetadata().getConcurrencyScopes()).isNotNull().isEmpty();
-        assertThat(fromTask.getMetadata().getConcurrencyScopes()).isNotNull().isEmpty();
+        // Then: both go through the concurrency gate again, from CREATED and from a RESTARTED after termination
+        assertThat(fromBeginning.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+        assertThat(fromTask.getState().restartedAfterTermination()).isTrue();
+        assertThat(fromBeginning.getMetadata().getConcurrencyScopes()).isNull();
+        assertThat(fromTask.getMetadata().getConcurrencyScopes()).isNull();
     }
 
     @Test
@@ -487,8 +490,9 @@ class ExecutionServiceTest {
         // When
         Execution changed = executionService.changeTaskRunState(execution, flow, failed.getId(), State.Type.SUCCESS);
 
-        // Then: like a restart, it holds no slot until the concurrency gate admits it again
-        assertThat(changed.getMetadata().getConcurrencyScopes()).isNotNull().isEmpty();
+        // Then: like a restart, the concurrency gate evaluates it again
+        assertThat(changed.getState().restartedAfterTermination()).isTrue();
+        assertThat(changed.getMetadata().getConcurrencyScopes()).isNull();
     }
 
     @Test
@@ -502,6 +506,7 @@ class ExecutionServiceTest {
         Execution resume = executionService.resume(execution, flow, State.Type.RUNNING, Pause.Resumed.now());
 
         // Then
+        assertThat(resume.getState().restartedAfterTermination()).isFalse();
         assertThat(resume.getMetadata().getConcurrencyScopes()).isEqualTo(execution.getMetadata().getConcurrencyScopes());
     }
 

@@ -306,11 +306,13 @@ public class State {
     }
 
     /**
-     * Return true if the execution has failed, then was restarted.
-     * This is to disambiguate between a RESTARTED after PAUSED and RESTARTED after FAILED state.
+     * Return true if the execution was terminated, then restarted (by a restart, a replay from a task, or a task run
+     * state change), so it starts a new attempt that runs again.
+     * This is to disambiguate between a RESTARTED after PAUSED, which resumes the same attempt, and a RESTARTED after
+     * a terminated state.
      */
-    public boolean failedThenRestarted() {
-        return this.current == Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
+    public boolean restartedAfterTermination() {
+        return this.current == Type.RESTARTED && this.histories.size() >= 2 && this.histories.get(this.histories.size() - 2).state.isTerminated();
     }
 
     public enum Type {

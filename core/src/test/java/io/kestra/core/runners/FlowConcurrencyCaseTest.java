@@ -243,6 +243,37 @@ public class FlowConcurrencyCaseTest {
         }
     }
 
+    public void flowConcurrencyQueueReplayedAfterSuccess(String tenantId) throws Exception {
+        // a successful execution: it gave its slot back when it ended
+        Execution succeeded = runnerUtils.runOne(tenantId, NAMESPACE, "flow-concurrency-queue-forced");
+        assertThat(succeeded.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-forced", Optional.empty())
+            .orElseThrow();
+        Execution running = runnerUtils.runOneUntilRunning(
+            tenantId, NAMESPACE, "flow-concurrency-queue-forced", null,
+            (f, e) -> Map.of("sleep", "PT30S"), Duration.ofSeconds(30)
+        );
+        Execution replay = executionService.replay(succeeded, flow, succeeded.findTaskRunsByTaskId("sleep").getFirst().getId(), null, Optional.empty());
+        try {
+            // replayed from a task while the only slot is taken: it runs again, so it must wait for a slot
+            Execution queued = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), replay);
+            assertThat(queued.getState().getHistories().stream().map(History::getState).toList())
+                .containsSubsequence(Type.SUCCESS, Type.RESTARTED, Type.QUEUED);
+            assertThat(concurrencyLimitRepository.findById(tenantId, NAMESPACE, "flow-concurrency-queue-forced").orElseThrow().getRunning()).isEqualTo(1);
+        } finally {
+            runnerUtils.killExecution(running);
+        }
+
+        // once the slot is given back, the replay takes it and runs
+        Execution replayed = runnerUtils.awaitExecution(e -> e.getState().getCurrent() == Type.SUCCESS, replay, Duration.ofSeconds(30));
+        assertThat(replayed.getState().getHistories().stream().map(History::getState).toList())
+            .containsSubsequence(Type.RESTARTED, Type.QUEUED, Type.RUNNING, Type.SUCCESS);
+        Await.await()
+            .atMost(Duration.ofSeconds(5))
+            .until(() -> concurrencyLimitRepository.findById(tenantId, NAMESPACE, "flow-concurrency-queue-forced").orElseThrow().getRunning() == 0);
+    }
+
     public void flowConcurrencyQueueForced(String tenantId, Function<Execution, ExecutionCommand> force) throws Exception {
         Flow flow = flowRepository
             .findById(tenantId, NAMESPACE, "flow-concurrency-queue-forced", Optional.empty())

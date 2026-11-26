@@ -183,6 +183,23 @@
     "publish_draft": "Publicar borrador",
     "draft": "Borrador",
     "draft_flow_warning": "La última revisión de este flow es un borrador. La ejecución se realizará sobre la última revisión publicada; publica el borrador (o ejecútalo desde el Playground) para ejecutar tus últimos cambios.",
+    "save_draft": "Guardar borrador",
+    "flow_publish": {
+      "description": "Hace que esta revisión esté activa: los triggers la inician, otros flows pueden llamarla y sus fallos llegan a los flows de alerta.",
+      "done_title": "Publicado",
+      "failed": "No se pudo publicar este borrador.",
+      "done": "La revisión {revision} de {name} está activa: los triggers la inician, otros flows pueden llamarla y sus fallos llegan a los flows de alerta."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Este Flow es un borrador",
+        "description": "No tiene una revisión publicada, por lo que los triggers y otros flows no lo inician. Ejecútalo desde el Playground o publícalo para activarlo."
+      },
+      "over_published": {
+        "title": "La última revisión es un borrador",
+        "description": "Los Schedules, webhooks y otros Flows seguirán ejecutando la revisión publicada hasta que publiques este draft. Los Trigger de Flow no iniciarán el Flow mientras tanto."
+      }
+    },
     "save task": "Guardar tarea",
     "saved": "Guardado exitosamente",
     "saved as draft": "Guardado como borrador correctamente",
@@ -2074,6 +2091,7 @@
       "title": "Empieza a automatizar con Kestra",
       "sub_title": "Haz clic en el botón Ejecutar para iniciar la ejecución de tu primer flujo de trabajo.",
       "namespace_sub_title": "Ejecuta uno o más flows de este namespace para llenar este panel.",
+      "draft_sub_title": "Este flow solo tiene borradores: ejecútalo desde el Playground en el editor, o publícalo para ejecutarlo.",
       "need_help": "¿Necesitas ayuda?"
     },
     "execution_guide": {
@@ -2265,7 +2283,7 @@
       "label": "Atajos de teclado",
       "trigger_autocompletion": "Activar autocompletado",
       "command_palette": "Mostrar paleta de comandos",
-      "save_flow": "Guardar flow",
+      "save_flow": "Guardar borrador",
       "execute_flow": "Ejecutar flow",
       "toggle_ai_agent": "Alternar agente de AI",
       "move_line": "Mover línea",
@@ -3078,7 +3096,7 @@
         "no_match": "Sin coincidencias",
         "open": "Abrir {name}",
         "paste": "Pegar",
-        "save": "Guardar flow",
+        "save": "Guardar borrador",
         "search_placeholder": "Escribe un comando o busca una task…",
         "title": "Menú de comandos"
       },
@@ -3186,7 +3204,7 @@
         "paste": "Pegar",
         "redo": "Rehacer",
         "reorder": "Reordenar arriba / abajo",
-        "save": "Guardar flow",
+        "save": "Guardar borrador",
         "step_into": "Expandir / entrar en un grupo",
         "step_out": "Contraer / salir al padre",
         "title": "Atajos de teclado",

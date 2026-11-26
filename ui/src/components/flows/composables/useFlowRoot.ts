@@ -128,6 +128,16 @@ export function useFlowRoot() {
         {debounce: 1000, immediate: true},
     )
 
+    watch(
+        () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision, flowStore.flow?.draft] as const,
+        () => {
+            if (flowStore.flow) {
+                flowStore.loadHasPublishedRevision(flowStore.flow).catch(() => undefined)
+            }
+        },
+        {immediate: true},
+    )
+
     function setupLifecycle() {
         // since this component is only used in edition
         // we need to set the flag as editing in the store.

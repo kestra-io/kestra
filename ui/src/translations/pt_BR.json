@@ -183,6 +183,23 @@
     "publish_draft": "Publicar rascunho",
     "draft": "Rascunho",
     "draft_flow_warning": "A revisão mais recente deste flow é um rascunho. A execução será feita na revisão publicada mais recente; publique o rascunho (ou execute-o no Playground) para executar suas alterações mais recentes.",
+    "save_draft": "Salvar rascunho",
+    "flow_publish": {
+      "description": "Torna esta revisão ativa: triggers a iniciam, outros flows podem chamá-la e suas falhas alcançam flows de alerta.",
+      "done_title": "Publicado",
+      "failed": "Não foi possível publicar este rascunho.",
+      "done": "A Revision {revision} de {name} está ativa: triggers a iniciam, outros Flows podem chamá-la e suas falhas chegam aos Flows de alerta."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Este flow é um rascunho",
+        "description": "Não possui nenhuma revisão publicada, então triggers e outros flows não o iniciam. Execute-o no Playground ou publique-o para ativá-lo."
+      },
+      "over_published": {
+        "title": "A última revisão é um rascunho",
+        "description": "Agendamentos, webhooks e outros Flows ainda executam a revisão publicada até que você publique este rascunho. Os Triggers do Flow não iniciam o Flow nesse meio tempo."
+      }
+    },
     "save task": "Salvar Task",
     "saved": "Salvo com sucesso",
     "saved as draft": "Salvo como rascunho com sucesso",
@@ -2074,6 +2091,7 @@
       "title": "Comece a automatizar com Kestra",
       "sub_title": "Clique no botão Executar para iniciar a execução do seu primeiro fluxo de trabalho.",
       "namespace_sub_title": "Execute um ou mais flows deste namespace para preencher este dashboard.",
+      "draft_sub_title": "Este flow possui apenas rascunhos: execute-o no Playground do editor ou publique-o para executá-lo.",
       "need_help": "Precisa de Ajuda?"
     },
     "execution_guide": {
@@ -2265,7 +2283,7 @@
       "label": "Atalhos de teclado",
       "trigger_autocompletion": "Acionar autocompletar",
       "command_palette": "Mostrar paleta de comandos",
-      "save_flow": "Salvar flow",
+      "save_flow": "Salvar rascunho",
       "execute_flow": "Executar flow",
       "toggle_ai_agent": "Alternar agente de IA",
       "move_line": "Mover linha",
@@ -3078,7 +3096,7 @@
         "no_match": "Nenhuma correspondência",
         "open": "Abrir {name}",
         "paste": "Colar",
-        "save": "Salvar flow",
+        "save": "Salvar rascunho",
         "search_placeholder": "Digite um comando ou pesquise uma task…",
         "title": "Menu de comandos"
       },
@@ -3186,7 +3204,7 @@
         "paste": "Colar",
         "redo": "Refazer",
         "reorder": "Reordenar para cima / para baixo",
-        "save": "Salvar flow",
+        "save": "Salvar rascunho",
         "step_into": "Expandir / entrar em um grupo",
         "step_out": "Recolher / sair para o pai",
         "title": "Atalhos de teclado",

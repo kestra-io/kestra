@@ -179,14 +179,14 @@
                             </KsTag>
                         </KsTooltip>
                         <KsTag
-                            v-else-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate && scope.row.kind !== 'UNSCHEDULED'"
                             type="warning"
                             size="small"
                             effect="light"
                         >
                             {{ $t("datepicker.never") }}
                         </KsTag>
-                        <KsDateAgo v-else :inverted="true" :date="scope.row.nextEvaluationDate" />
+                        <KsDateAgo v-else-if="scope.row.nextEvaluationDate" :inverted="true" :date="scope.row.nextEvaluationDate" />
                     </template>
                     <template v-else-if="col.prop === 'evaluatedAt'">
                         <KsDateAgo :inverted="true" :date="scope.row.evaluatedAt" />

@@ -183,6 +183,23 @@
     "publish_draft": "Pubblica bozza",
     "draft": "Bozza",
     "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
+    "save_draft": "Salva bozza",
+    "flow_publish": {
+      "description": "Rende questa revisione attiva: i trigger la avviano, altri Flow possono chiamarla e i suoi fallimenti raggiungono i Flow di avviso.",
+      "done_title": "Pubblicato",
+      "failed": "Impossibile pubblicare questa bozza.",
+      "done": "La Revisione {revision} di {name} è attiva: i Trigger la avviano, altri Flow possono richiamarla e i suoi errori raggiungono i Flow di avviso."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Questo flow è una bozza",
+        "description": "Non ha revisioni pubblicate, quindi i trigger e altri Flow non lo avviano. Eseguilo dal Playground o pubblicalo per renderlo attivo."
+      },
+      "over_published": {
+        "title": "L'ultima revisione è una bozza",
+        "description": "Pianificazioni, webhook e altri flow eseguono ancora la revisione pubblicata finché non pubblichi questa bozza. I trigger del Flow non avviano il flow nel frattempo."
+      }
+    },
     "save task": "Salva Task",
     "saved": "Salvato con successo",
     "saved as draft": "Salvato come bozza con successo",
@@ -2074,6 +2091,7 @@
       "title": "Inizia ad automatizzare con Kestra",
       "sub_title": "Fai clic sul pulsante Esegui per avviare l'esecuzione del tuo primo workflow.",
       "namespace_sub_title": "Esegui uno o più flow da questo namespace per popolare questa dashboard.",
+      "draft_sub_title": "Questo flow ha solo bozze: eseguilo dal Playground nell'editor, oppure pubblicalo per eseguirlo.",
       "need_help": "Hai bisogno di aiuto?"
     },
     "execution_guide": {
@@ -2265,7 +2283,7 @@
       "label": "Scorciatoie da tastiera",
       "trigger_autocompletion": "Attiva autocompletamento",
       "command_palette": "Mostra la palette dei comandi",
-      "save_flow": "Salva flow",
+      "save_flow": "Salva bozza",
       "execute_flow": "Esegui flow",
       "toggle_ai_agent": "Attiva/disattiva agente AI",
       "move_line": "Sposta linea",
@@ -3078,7 +3096,7 @@
         "no_match": "Nessuna corrispondenza",
         "open": "Apri {name}",
         "paste": "Incolla",
-        "save": "Salva il flow",
+        "save": "Salva bozza",
         "search_placeholder": "Digita un comando o cerca un task...",
         "title": "Menu comandi"
       },
@@ -3186,7 +3204,7 @@
         "paste": "Incolla",
         "redo": "Ripeti",
         "reorder": "Riordina su / giù",
-        "save": "Salva il flow",
+        "save": "Salva bozza",
         "step_into": "Espandi / entra in un gruppo",
         "step_out": "Comprimi / esci al genitore",
         "title": "Scorciatoie da tastiera",

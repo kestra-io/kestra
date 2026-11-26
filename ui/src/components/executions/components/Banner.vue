@@ -24,9 +24,10 @@
             </div>
 
             <div class="execution-banner__top">
-                <router-link class="execution-banner__flow" :to="createLink('flows', execution)">
+                <router-link v-if="canViewFlow" class="execution-banner__flow" :to="createLink('flows', execution)">
                     {{ execution.flowId }}
                 </router-link>
+                <span v-else class="execution-banner__flow">{{ execution.flowId }}</span>
 
                 <span class="execution-banner__id">
                     <code>{{ execution.id }}</code>
@@ -102,7 +103,7 @@
                     {{ $t("copy logs") }}
                 </KsButton>
 
-                <KsButton v-if="aiEnabled && isFailed" class="action fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
+                <KsButton v-if="aiEnabled && isFailed && canUseCopilot" class="action fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
                     {{ $t("fix_with_ai") }}
                 </KsButton>
             </div>
@@ -311,6 +312,8 @@
 
     const authStore = useAuthStore()
     const canAccessLogs = computed(() => authStore.user?.isAllowed(resource.EXECUTION, action.ACCESS_LOGS, props.execution.namespace) ?? true)
+    const canViewFlow = computed(() => authStore.user?.isAllowed(resource.FLOW, action.VIEW, props.execution.namespace) ?? true)
+    const canUseCopilot = computed(() => authStore.user?.hasAny(resource.COPILOT) ?? true)
 
     const copyLogs = () => {
         executionsStore
@@ -449,7 +452,7 @@
         color: var(--ks-text-primary);
         text-decoration: none;
 
-        &:hover {
+        &:is(a):hover {
             color: var(--ks-text-link);
             text-decoration: underline;
         }

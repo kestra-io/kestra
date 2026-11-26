@@ -113,6 +113,7 @@ public class PlatformMcpToolSource implements McpToolSource {
                 .tenant(tenant)
                 .principal(principalResolver.resolve(context.getUserId(), tenant))
                 .actor(context.getActor())
+                .originLabels(McpExecutionLabels.of(context))
                 .build();
             ToolExecutionRequest execution = ToolExecutionRequest.builder()
                 .id(IdUtils.create())

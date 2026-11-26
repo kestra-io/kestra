@@ -1,5 +1,4 @@
 import {h, markRaw} from "vue"
-import {storageKeys} from "../../../utils/constants"
 
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue"
 import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
@@ -15,8 +14,6 @@ import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrappe
 import FileExplorerWrapper from "../../../components/inputs/FileExplorerWrapper.vue"
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue"
 import {EditorElement} from "../../../utils/multiPanelTypes"
-
-export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
 
 export const EDITOR_ELEMENTS: EditorElement[] = [
     {

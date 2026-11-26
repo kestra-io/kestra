@@ -172,7 +172,8 @@ class FlowableRetryErrorsTest {
                 message: handler
             """);
 
-        Execution created = runUntilQuiet(flow, task -> {
+        Execution created = runUntilQuiet(flow, task ->
+        {
             dispatched.add(task);
             WorkerTaskResult result = "child".equals(task.getTaskRun().getTaskId())
                 ? Results.failed(task, ATTEMPT_END)
@@ -212,7 +213,8 @@ class FlowableRetryErrorsTest {
                         message: child
             """);
 
-        Execution created = runUntilQuiet(flow, task -> {
+        Execution created = runUntilQuiet(flow, task ->
+        {
             dispatched.add(task);
             return ranOnOneWorker(task);
         });
@@ -243,7 +245,8 @@ class FlowableRetryErrorsTest {
                     message: child
             """);
 
-        Execution created = runUntilQuiet(flow, task -> {
+        Execution created = runUntilQuiet(flow, task ->
+        {
             dispatched.add(task);
             return ranOnOneWorker(task);
         });
@@ -274,7 +277,8 @@ class FlowableRetryErrorsTest {
             """);
         AtomicBoolean closeFailed = new AtomicBoolean();
 
-        Execution created = runUntilQuiet(flow, task -> {
+        Execution created = runUntilQuiet(flow, task ->
+        {
             dispatched.add(task);
             boolean fail = "working-directory_close".equals(task.getTaskRun().getTaskId()) && !closeFailed.getAndSet(true);
             return onWorker(fail ? Results.failed(task, ATTEMPT_END) : Results.success(task, ATTEMPT_END));
@@ -288,9 +292,11 @@ class FlowableRetryErrorsTest {
     }
 
     private static WorkerTaskResult ranOnOneWorker(WorkerTask task) {
-        return onWorker("child".equals(task.getTaskRun().getTaskId())
-            ? Results.failed(task, ATTEMPT_END)
-            : Results.success(task, ATTEMPT_END));
+        return onWorker(
+            "child".equals(task.getTaskRun().getTaskId())
+                ? Results.failed(task, ATTEMPT_END)
+                : Results.success(task, ATTEMPT_END)
+        );
     }
 
     private static WorkerTaskResult onWorker(WorkerTaskResult result) {

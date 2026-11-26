@@ -9,11 +9,7 @@
                 {{ $t("no-executions-view.title") }}
             </h2>
             <p class="desc">
-                {{
-                    isNamespace
-                        ? $t("no-executions-view.namespace_sub_title")
-                        : $t("no-executions-view.sub_title")
-                }}
+                {{ $t(subTitleKey) }}
             </p>
         </div>
         <div class="bottom">
@@ -25,11 +21,20 @@
     </EmptyTemplate>
 </template>
 <script setup lang="ts">
+    import {computed} from "vue"
     import OverviewBottom from "../onboarding/execution/OverviewBottom.vue"
     import EmptyTemplate from "../layout/EmptyTemplate.vue"
     import executeimg from "../../assets/onboarding/execute.svg"
+    import {useFlowStore} from "../../stores/flow"
 
-    defineProps<{isNamespace?: boolean}>()
+    const props = defineProps<{isNamespace?: boolean}>()
+
+    const flowStore = useFlowStore()
+
+    const subTitleKey = computed(() => {
+        if (props.isNamespace) return "no-executions-view.namespace_sub_title"
+        return flowStore.isDraftOnly ? "no-executions-view.draft_sub_title" : "no-executions-view.sub_title"
+    })
 </script>
 
 <style scoped>

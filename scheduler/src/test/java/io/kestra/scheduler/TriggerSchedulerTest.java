@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -18,19 +20,28 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
 
+import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.*;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.events.SetDisableTrigger;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
@@ -38,6 +49,7 @@ import io.kestra.core.services.FlowParsingService;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
+import io.kestra.scheduler.pubsub.TriggerKillPublisher;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher.PublishedExecution;
@@ -54,12 +66,15 @@ import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @MicronautTest
 class TriggerSchedulerTest {
 
     private static final Set<Integer> NODES_ASSIGNMENTS = Set.of(0);
     private static final String TEST_TZ = "Europe/Paris";
+    // UTC+14: no 11:00 or 13:00 UTC tick is an 11:00 or 13:00 tick there.
+    private static final ZoneId FAR_ZONE = ZoneId.of("Pacific/Kiritimati");
 
     @Inject
     MetricRegistry metricRegistry;
@@ -82,6 +97,7 @@ class TriggerSchedulerTest {
     private Clock initialSchedulerClock;
     private InMemoryTriggerStateStore triggerStateStore;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
+    private BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
 
     @BeforeEach
     void beforeEach() {
@@ -90,6 +106,7 @@ class TriggerSchedulerTest {
         SchedulerClock.setClock(initialSchedulerClock);
         triggerStateStore = new InMemoryTriggerStateStore();
         triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
+        executionKilledQueue = Mockito.mock(BroadcastQueueInterface.class);
     }
 
     @AfterEach
@@ -115,6 +132,295 @@ class TriggerSchedulerTest {
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(state.getEvaluatedAt()).isNull();
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateWhenGovernedDefinitionChangedGivenGovernanceChange() {
+        // GIVEN
+        AtomicReference<String> governedTimezone = new AtomicReference<>("UTC");
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.defaultFlow()), governedScheduleIn(governedTimezone));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        governedTimezone.set(FAR_ZONE.getId());
+
+        // WHEN
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+
+        // THEN
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
+        assertThat(state.getNextEvaluationDate().atZone(FAR_ZONE).getHour()).isIn(11, 13);
+    }
+
+    @Test
+    void shouldKeepPendingBackfillSlotWhenGovernedDefinitionChangedGivenGovernanceChange() {
+        // GIVEN
+        AtomicReference<String> governedTimezone = new AtomicReference<>("UTC");
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.defaultFlow()), governedScheduleIn(governedTimezone));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        ZonedDateTime pendingSlot = SchedulerClock.now().withZoneSameInstant(ZoneOffset.UTC).minusDays(2).withHour(11).withMinute(0).withSecond(0).withNano(0);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
+        triggerStateStore.save(
+            state
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(pendingSlot.minusDays(1)).end(SchedulerClock.now().minusHours(1)).build())
+                .updateForNextEvaluationDate(SchedulerClock.getClock(), pendingSlot)
+        );
+        governedTimezone.set(FAR_ZONE.getId());
+
+        // WHEN
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+
+        // THEN
+        TriggerState updated = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
+        assertThat(updated.getNextEvaluationDate()).isEqualTo(pendingSlot.toInstant());
+        assertThat(updated.getBackfill()).isNotNull();
+    }
+
+    @Test
+    void shouldNotSaveStateWhenGovernedDefinitionIsUnchangedGivenGovernanceChange() {
+        // GIVEN
+        triggerStateStore = Mockito.spy(triggerStateStore);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.defaultFlow()), governedScheduleIn(new AtomicReference<>("UTC")));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        Mockito.clearInvocations(triggerStateStore);
+
+        // WHEN
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+
+        // THEN
+        Mockito.verify(triggerStateStore, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldNotSaveStateOfFlowOutOfScopeGivenGovernanceChange() {
+        // GIVEN
+        AtomicReference<String> governedTimezone = new AtomicReference<>("UTC");
+        triggerStateStore = Mockito.spy(triggerStateStore);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.defaultFlow()), governedScheduleIn(governedTimezone));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        governedTimezone.set(FAR_ZONE.getId());
+        Mockito.clearInvocations(triggerStateStore);
+
+        // WHEN
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> false);
+
+        // THEN
+        Mockito.verify(triggerStateStore, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldApplyEventCreatedBeforeGovernanceChangeWhenHandledAfterIt() {
+        // GIVEN
+        AtomicReference<String> governedTimezone = new AtomicReference<>("UTC");
+        FlowParsingService governance = governedScheduleIn(governedTimezone);
+        InMemoryFlowMetaStore flowMetaStore = new InMemoryFlowMetaStore(1, List.of(Fixtures.defaultFlow()));
+        TriggerScheduler scheduler = newTriggerScheduler(flowMetaStore, triggerWorkerJobPublisher, governance);
+        TriggerEventHandler handler = new TriggerEventHandler(
+            triggerStateStore,
+            flowMetaStore,
+            triggerExecutionPublisher,
+            runContextFactory,
+            conditionService,
+            new TriggerKillPublisher(executionKilledQueue),
+            new AsyncOperationService(Mockito.mock(BroadcastQueueInterface.class)),
+            governance
+        );
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        SetDisableTrigger inFlight = new SetDisableTrigger(Fixtures.triggerId(), true);
+        governedTimezone.set(FAR_ZONE.getId());
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+
+        // WHEN
+        handler.handle(SchedulerClock.getClock(), 0, inFlight);
+
+        // THEN
+        assertThat(triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow().isDisabled()).isTrue();
+    }
+
+    @Test
+    void shouldKillRunningRealtimeTriggerWhenGovernedDefinitionChangedGivenGovernanceChange() throws Exception {
+        // GIVEN
+        AtomicReference<String> governedValue = new AtomicReference<>("a");
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(realtimeFlow("a")), governedRealtimeWith(governedValue));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        TriggerState running = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime")).orElseThrow();
+        governedValue.set("b");
+
+        // WHEN
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+
+        // THEN
+        ArgumentCaptor<ExecutionKilled> killed = ArgumentCaptor.forClass(ExecutionKilled.class);
+        Mockito.verify(executionKilledQueue).emit(killed.capture());
+        assertThat(killed.getValue()).isInstanceOfSatisfying(
+            ExecutionKilledTrigger.class,
+            kill -> assertThat(kill.getDispatchEpoch()).isEqualTo(running.getDispatchEpoch())
+        );
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateOnStartWhenGovernedDefinitionChangedWhileStopped() {
+        // GIVEN
+        AtomicReference<String> governedTimezone = new AtomicReference<>("UTC");
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.defaultFlow()), governedScheduleIn(governedTimezone));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        governedTimezone.set(FAR_ZONE.getId());
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
+        assertThat(state.getNextEvaluationDate().atZone(FAR_ZONE).getHour()).isIn(11, 13);
+    }
+
+    @Test
+    void shouldNotReplayMissedSchedulesOnStartWhenGovernedDefinitionChangedGivenRecoverNone() {
+        // GIVEN
+        AtomicReference<String> governedTimezone = new AtomicReference<>("UTC");
+        FlowParsingService governance = Fixtures.governedAs(
+            () -> builder -> builder.cron("0 11,13 * * *").timezone(governedTimezone.get()).recoverMissedSchedules(RecoverMissedSchedules.NONE).build()
+        );
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.defaultFlow()), governance);
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        Instant threeDaysAgo = SchedulerClock.now().toInstant().minus(Duration.ofDays(3));
+        TriggerState stale = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
+        triggerStateStore.save(stale.evaluatedAt(SchedulerClock.getClock(), threeDaysAgo).updateForNextEvaluationDate(SchedulerClock.getClock(), threeDaysAgo));
+        governedTimezone.set(FAR_ZONE.getId());
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
+        assertThat(state.getNextEvaluationDate()).isAfterOrEqualTo(SchedulerClock.now().toInstant());
+    }
+
+    @Test
+    void shouldRecordGovernedDefinitionWhenStateHasNoRecordedDefinitionGivenGovernanceChange() {
+        // GIVEN
+        triggerStateStore = Mockito.spy(triggerStateStore);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.defaultFlow()), governedScheduleIn(new AtomicReference<>("UTC")));
+        triggerStateStore.save(TriggerState.of(Fixtures.triggerId(), TriggerType.SCHEDULE, null, 0));
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+        Mockito.clearInvocations(triggerStateStore);
+
+        // WHEN
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+
+        // THEN
+        Mockito.verify(triggerStateStore, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldRecordGovernedDefinitionOnStartGivenStateWrittenBeforeDefinitionsWereRecorded() {
+        // GIVEN
+        triggerStateStore.save(TriggerState.of(Fixtures.triggerId(), TriggerType.SCHEDULE, null, 0));
+        triggerStateStore = Mockito.spy(triggerStateStore);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.defaultFlow()), governedScheduleIn(new AtomicReference<>("UTC")));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        Mockito.clearInvocations(triggerStateStore);
+
+        // WHEN
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+
+        // THEN
+        Mockito.verify(triggerStateStore, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldInitializeOtherTriggersOnStartWhenOneTriggerFails() {
+        // GIVEN
+        FlowWithSource defaultFlow = Fixtures.defaultFlow();
+        AbstractTrigger failing = defaultFlow.getTriggers().getFirst();
+        AbstractTrigger healthy = Fixtures.defaultFlow(builder -> builder.id("healthy").build()).getTriggers().getFirst();
+        FlowWithSource flow = defaultFlow.toBuilder().triggers(List.of(failing, healthy)).build();
+        triggerStateStore.save(TriggerState.of(Fixtures.triggerId(), TriggerType.SCHEDULE, null, 0));
+        triggerStateStore = Mockito.spy(triggerStateStore);
+        Mockito.doThrow(new IllegalStateException("The store is unavailable."))
+            .when(triggerStateStore).save(Mockito.argThat(state -> state != null && failing.getId().equals(state.getTriggerId())));
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        assertThat(triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId(healthy.getId()))).isPresent();
+    }
+
+    @Test
+    void shouldKillRunningRealtimeTriggerOnStartWhenGovernedDefinitionChangedWhileStopped() throws Exception {
+        // GIVEN
+        AtomicReference<String> governedValue = new AtomicReference<>("a");
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(realtimeFlow("a")), governedRealtimeWith(governedValue));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        TriggerState running = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime")).orElseThrow();
+        governedValue.set("b");
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        ArgumentCaptor<ExecutionKilled> killed = ArgumentCaptor.forClass(ExecutionKilled.class);
+        Mockito.verify(executionKilledQueue).emit(killed.capture());
+        assertThat(killed.getValue()).isInstanceOfSatisfying(ExecutionKilledTrigger.class, kill ->
+        {
+            assertThat(kill.getTriggerId()).isEqualTo("realtime");
+            assertThat(kill.getDispatchEpoch()).isEqualTo(running.getDispatchEpoch());
+        });
+    }
+
+    @Test
+    void shouldNotKillRunningRealtimeTriggerOnStartWhenGovernedDefinitionIsUnchanged() {
+        // GIVEN
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(realtimeFlow("a")), governedRealtimeWith(new AtomicReference<>("a")));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        Mockito.verifyNoInteractions(executionKilledQueue);
+    }
+
+    @Test
+    void shouldKillRunningRealtimeTriggerWhenFlowBlockedGivenGovernanceChange() throws Exception {
+        // GIVEN
+        AtomicBoolean blocked = new AtomicBoolean(false);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(realtimeFlow("a")), governedRealtimeBlockedWhen(blocked));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        TriggerState running = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime")).orElseThrow();
+        blocked.set(true);
+
+        // WHEN
+        scheduler.onGovernanceChanged(SchedulerClock.getClock(), NODES_ASSIGNMENTS, flow -> true);
+
+        // THEN
+        ArgumentCaptor<ExecutionKilled> killed = ArgumentCaptor.forClass(ExecutionKilled.class);
+        Mockito.verify(executionKilledQueue).emit(killed.capture());
+        assertThat(killed.getValue()).isInstanceOfSatisfying(
+            ExecutionKilledTrigger.class,
+            kill -> assertThat(kill.getDispatchEpoch()).isEqualTo(running.getDispatchEpoch())
+        );
+    }
+
+    @Test
+    void shouldRecomputeNextPollOnStartWhenGovernedIntervalShortenedWhileStopped() {
+        // GIVEN
+        AtomicReference<Duration> governedInterval = new AtomicReference<>(Duration.ofHours(1));
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(pollingFlow(Duration.ofHours(1))), governedPollingEvery(governedInterval));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        governedInterval.set(Duration.ofMinutes(1));
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("polling")).orElseThrow();
+        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(1).toInstant());
     }
 
     @Test
@@ -989,6 +1295,14 @@ class TriggerSchedulerTest {
     }
 
     private TriggerScheduler newTriggerScheduler(InMemoryFlowMetaStore flowMetaStore, TriggerWorkerJobPublisher workerJobPublisher) {
+        return newTriggerScheduler(flowMetaStore, workerJobPublisher, flowParsingService);
+    }
+
+    private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows, FlowParsingService flowParsingService) {
+        return newTriggerScheduler(new InMemoryFlowMetaStore(1, flows), triggerWorkerJobPublisher, flowParsingService);
+    }
+
+    private TriggerScheduler newTriggerScheduler(InMemoryFlowMetaStore flowMetaStore, TriggerWorkerJobPublisher workerJobPublisher, FlowParsingService flowParsingService) {
         return new TriggerScheduler(
             triggerStateStore,
             flowMetaStore,
@@ -999,9 +1313,65 @@ class TriggerSchedulerTest {
             schedulableEvaluator,
             new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, flowParsingService),
             workerJobPublisher,
+            new TriggerKillPublisher(executionKilledQueue),
             triggerExecutionPublisher,
             new SchedulerConfiguration(1, Duration.ZERO, 100)
         );
+    }
+
+    private static FlowParsingService governedRealtimeWith(AtomicReference<String> value) {
+        return Mockito.mock(
+            FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
+                ? ProcessedFlow.of(realtimeFlow(value.get()))
+                : Mockito.RETURNS_DEFAULTS.answer(invocation)
+        );
+    }
+
+    private static FlowParsingService governedRealtimeBlockedWhen(AtomicBoolean blocked) {
+        return Mockito.mock(
+            FlowParsingService.class, invocation ->
+            {
+                if (!"parseForRuntime".equals(invocation.getMethod().getName())) {
+                    return Mockito.RETURNS_DEFAULTS.answer(invocation);
+                }
+                if (blocked.get()) {
+                    throw new FlowBlockedException(Blocker.Reason.POLICY, "Realtime trigger is not allowed by policy", List.of("deny-realtime"), null);
+                }
+                return ProcessedFlow.of(realtimeFlow("a"));
+            }
+        );
+    }
+
+    private static FlowParsingService governedPollingEvery(AtomicReference<Duration> interval) {
+        return Mockito.mock(
+            FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
+                ? ProcessedFlow.of(pollingFlow(interval.get()))
+                : Mockito.RETURNS_DEFAULTS.answer(invocation)
+        );
+    }
+
+    private static FlowWithSource pollingFlow(Duration interval) {
+        return Fixtures.flowWithTrigger(
+            TestPollingTrigger.builder()
+                .id("polling")
+                .type(TestPollingTrigger.class.getName())
+                .interval(interval)
+                .build()
+        );
+    }
+
+    private static FlowWithSource realtimeFlow(String value) {
+        return Fixtures.flowWithTrigger(
+            TestRealTimeTrigger.builder()
+                .id("realtime")
+                .type(TestRealTimeTrigger.class.getName())
+                .value(Property.ofValue(value))
+                .build()
+        );
+    }
+
+    private static FlowParsingService governedScheduleIn(AtomicReference<String> timezone) {
+        return Fixtures.governedAs(() -> builder -> builder.cron("0 11,13 * * *").timezone(timezone.get()).build());
     }
 
     @Plugin(internal = true)

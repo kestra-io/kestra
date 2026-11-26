@@ -3,12 +3,12 @@ import {computed} from "vue"
 import {type VueWrapper} from "@vue/test-utils"
 import KestraDesignSystem from "@kestra-io/design-system"
 
-const publishDraft = vi.fn().mockResolvedValue("saved")
-const saveAsDraft = vi.fn()
+const publish = vi.fn().mockResolvedValue(undefined)
 
 const routeState = {tab: "edit"}
-const flowState = {deleted: false, exists: true, isCreating: false}
-const editorState = {isAllowedEdit: true, hasBlockingErrors: false}
+const flowState = {deleted: false, exists: true, isCreating: false, isDraftOnly: false}
+const editorState = {isAllowedEdit: true}
+const playgroundState = {enabled: false}
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {tab: routeState.tab}, query: {}}),
@@ -25,8 +25,13 @@ vi.mock("../../../stores/flow", () => ({
             ? {id: "f", namespace: "ns", draft: true, deleted: flowState.deleted, source: "id: f\nnamespace: ns\n"}
             : undefined,
         isCreating: flowState.isCreating,
+        isDraftOnly: flowState.isDraftOnly,
         createFlow: vi.fn(),
     }),
+}))
+
+vi.mock("../../../stores/playground", () => ({
+    usePlaygroundStore: () => playgroundState,
 }))
 
 vi.mock("../../../stores/unsavedChanges", () => ({
@@ -49,25 +54,17 @@ vi.mock("../../../utils/toast", () => ({
 // stub the composable so this test targets that wiring in isolation.
 vi.mock("../../../components/flows/useFlowEditorActions", () => ({
     useFlowEditorActions: () => ({
-        haveChange: false,
-        hasFlowSourceChange: false,
-        canSave: false,
-        hasErrors: false,
-        get hasBlockingErrors() {
-            return editorState.hasBlockingErrors
-        },
-        isReadOnly: false,
+        haveChange: computed(() => false),
+        canSave: computed(() => false),
+        hasErrors: computed(() => false),
+        isReadOnly: computed(() => false),
         get isAllowedEdit() {
             return editorState.isAllowedEdit
         },
-        // The real composable returns computed refs; `isDraft` is read from script (not just
-        // auto-unwrapped in a template), so the mock has to be a ref for that read to work.
         isDraft: computed(() => true),
-        isPlaygroundEnabled: false,
         isPlaygroundAllowed: false,
-        save: vi.fn(),
-        saveAsDraft,
-        publishDraft,
+        publish,
+        saveAsDraft: vi.fn(),
         saveAndExecute: vi.fn(),
         exportYaml: vi.fn(),
         copyFlow: vi.fn(),
@@ -87,11 +84,9 @@ const messages = {
     copy: "Copy",
     flow_export: "Export flow",
     delete: "Delete",
-    save: "Save",
-    save_as_draft: "Save as draft",
+    save_draft: "Save draft",
     publish: "Publish",
     actions: "Actions",
-    ks_dropdown: {toggle: "Toggle dropdown"},
 }
 
 // The unit project shares one jsdom per worker, so a wrapper left mounted keeps the teleported
@@ -123,50 +118,6 @@ function findExecute(wrapper: ReturnType<typeof mountActions>) {
     return wrapper.find("trigger-flow-stub")
 }
 
-describe("Actions.vue — publish a draft flow", () => {
-    // publishDraft is module-level, so its call count carries between tests.
-    beforeEach(() => {
-        vi.clearAllMocks()
-        routeState.tab = "edit"
-        flowState.deleted = false
-        flowState.exists = true
-        flowState.isCreating = false
-        editorState.isAllowedEdit = true
-        editorState.hasBlockingErrors = false
-    })
-
-    it("shows an enabled Publish action for an unchanged draft flow, and clicking it publishes", async () => {
-        const wrapper = mountActions()
-
-        const publishButton = findButtonByText(wrapper, "Publish")
-        expect(publishButton).toBeDefined()
-        expect(publishButton!.attributes("disabled")).toBeUndefined()
-
-        await publishButton!.trigger("click")
-
-        expect(publishDraft).toHaveBeenCalledTimes(1)
-    })
-
-    it("blocks Publish on a flow with validation errors, and keeps Save as draft reachable", async () => {
-        editorState.hasBlockingErrors = true
-        const wrapper = mountActions()
-
-        const publishButton = findButtonByText(wrapper, "Publish")
-        expect(publishButton!.attributes("disabled")).toBeDefined()
-        await publishButton!.trigger("click")
-        expect(publishDraft).not.toHaveBeenCalled()
-
-        await wrapper.find("button[aria-label='Toggle dropdown']").trigger("mouseenter")
-        const saveAsDraftItem = await vi.waitFor(() => {
-            const item = Array.from(document.body.querySelectorAll("li")).find(li => li.textContent?.trim() === "Save as draft")
-            expect(item).toBeDefined()
-            return item!
-        })
-        saveAsDraftItem.click()
-
-        expect(saveAsDraft).toHaveBeenCalledTimes(1)
-    })
-})
 
 describe("Actions.vue — the quick action pair is the same shape on every tab", () => {
     beforeEach(() => {
@@ -175,8 +126,9 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
         flowState.deleted = false
         flowState.exists = true
         flowState.isCreating = false
+        flowState.isDraftOnly = false
+        playgroundState.enabled = false
         editorState.isAllowedEdit = true
-        editorState.hasBlockingErrors = false
     })
 
     it("pairs the save-family control with Execute on the editor tab", () => {
@@ -198,6 +150,21 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
             expect(findExecute(wrapper).exists()).toBe(true)
         },
     )
+
+    it.each(["edit", "overview", "executions"])("offers no Execute on the %s tab of a flow with only drafts", (tab) => {
+        routeState.tab = tab
+        flowState.isDraftOnly = true
+
+        expect(findExecute(mountActions()).exists()).toBe(false)
+    })
+
+    it("keeps the Playground's Run all tasks on a flow with only drafts", () => {
+        routeState.tab = "edit"
+        flowState.isDraftOnly = true
+        playgroundState.enabled = true
+
+        expect(findExecute(mountActions()).exists()).toBe(true)
+    })
 
     it("offers no Edit flow on the create page, where there is no flow to edit yet", () => {
         // Given — the create-flow landing: creation started, but no flow exists yet

@@ -14,7 +14,6 @@ import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
 import {asProblem} from "@kestra-io/kestra-sdk"
 import type {KestraHttpError} from "../../utils/kestraHttp"
-import {validationErrorLines} from "../../utils/validationErrors"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
 import {storageKeys} from "../../utils/constants"
@@ -33,8 +32,6 @@ export function useFlowEditorActions() {
     const haveChange = computed(() => hasFlowSourceChange.value || flowStore.hasDirtyEditorFiles)
     const canSave = computed(() => haveChange.value || flowStore.isCreating)
     const hasErrors = computed(() => (flowStore.flowErrors?.length ?? 0) > 0)
-    // On a create, "flow already exists" is in flowErrors too, but saving is its remedy (the override prompt).
-    const hasBlockingErrors = computed(() => validationErrorLines(flowStore.flowValidation?.errors).length > 0)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
     const isDraft = computed(() => flowStore.flow?.draft ?? false)
@@ -47,7 +44,7 @@ export function useFlowEditorActions() {
         }
     }
 
-    async function persistAll(draft?: boolean) {
+    async function persistAll(draft: boolean) {
         const isCreating = flowStore.isCreating
         const outcome = await flowStore.saveAll(draft)
 
@@ -179,31 +176,23 @@ export function useFlowEditorActions() {
         }
     }
 
-    /** The Save button: publishes, so on a draft, where it sits in the menu behind Publish, it is an explicit way out of draft mode. */
-    async function save() {
+    /** Publishes the editor's content, unsaved changes included, without saving a draft first. */
+    async function publish() {
         await saveFlow(false)
     }
 
-    /** The Ctrl/Cmd+S shortcut: a draft stays a draft and a published flow stays published. */
-    async function saveKeepingDraftState() {
-        await saveFlow(undefined)
+    /** Saves the editor's content as a draft, the Ctrl/Cmd+S shortcut; a no-op without unsaved changes. */
+    async function saveAsDraft() {
+        await saveFlow(true)
     }
 
-    async function saveFlow(draft: boolean | undefined) {
+    async function saveFlow(draft: boolean) {
         try {
             // Skip the save when the install did not succeed: it would only fail downstream as an
             // unknown type, burying the real cause under a second, unrelated-looking error.
             const outcome = await triggerPluginInstallIfNeeded()
             if (outcome === "failed" || outcome === "timeout") return
             await persistAll(draft)
-        } catch (error) {
-            reportSaveError(error)
-        }
-    }
-
-    async function saveAsDraft() {
-        try {
-            await persistAll(true)
         } catch (error) {
             reportSaveError(error)
         }
@@ -338,15 +327,15 @@ export function useFlowEditorActions() {
         hasFlowSourceChange,
         canSave,
         hasErrors,
-        hasBlockingErrors,
         isReadOnly,
         isAllowedEdit,
         isDraft,
         isPlaygroundEnabled,
         isPlaygroundAllowed,
         // actions
-        save,
-        saveKeepingDraftState,
+        publish,
+        /** @deprecated since 2.1, use `publish` instead. */
+        save: publish,
         saveAsDraft,
         publishDraft,
         saveAndExecute,

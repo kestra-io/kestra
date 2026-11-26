@@ -38,11 +38,13 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
@@ -196,6 +198,9 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private TriggerRepositoryInterface triggerRepository;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @Inject
     private SchedulerTriggerStateInterface triggerState;
@@ -523,7 +528,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
                 // WorkerTriggerRunning
                 if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
-                    resubmitWorkerTrigger(workerTriggerRunning);
+                    resubmitWorkerTrigger(configuration, workerTriggerRunning);
                 }
             });
     }
@@ -535,7 +540,7 @@ public class JdbcExecutor implements ExecutorInterface {
             {
                 // WorkerTriggerRunning for realtime workers
                 if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning && workerTriggerRunning.getTrigger() instanceof RealtimeTriggerInterface) {
-                    resubmitWorkerTrigger(workerTriggerRunning);
+                    resubmitWorkerTrigger(configuration, workerTriggerRunning);
                 }
             });
     }
@@ -570,7 +575,18 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
-    private void resubmitWorkerTrigger(WorkerTriggerRunning workerTriggerRunning) {
+    private void resubmitWorkerTrigger(Configuration configuration, WorkerTriggerRunning workerTriggerRunning) {
+        if (!isTriggerStillDefined(workerTriggerRunning.getTriggerContext())) {
+            Logs.logTrigger(
+                workerTriggerRunning.getTriggerContext(),
+                Level.WARN,
+                "Discarding the running entry of the trigger instead of re-emitting it, because its flow was deleted or the trigger was removed from it."
+            );
+            // Deleted within the caller's transaction, which holds a lock on the row.
+            workerJobRunningRepository.deleteByKey(configuration.dsl(), workerTriggerRunning.uid());
+            return;
+        }
+
         try {
             workerJobQueue.emit(
                 workerTriggerRunning.getWorkerInstance().workerGroup(), WorkerTrigger.builder()
@@ -592,6 +608,16 @@ public class JdbcExecutor implements ExecutorInterface {
                 e
             );
         }
+    }
+
+    private boolean isTriggerStillDefined(TriggerContext triggerContext) {
+        return flowRepository
+            .findByIdWithSourceWithoutAcl(triggerContext.getTenantId(), triggerContext.getNamespace(), triggerContext.getFlowId(), Optional.empty())
+            .filter(flow -> !flow.isDeleted())
+            // An invalid flow has no parsed triggers, which does not mean the trigger was removed.
+            .map(flow -> flow instanceof FlowWithException || ListUtils.emptyOnNull(flow.getTriggers()).stream()
+                .anyMatch(trigger -> trigger.getId().equals(triggerContext.getTriggerId())))
+            .orElse(false);
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {

@@ -41,6 +41,13 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
             );
     }
 
+    public void deleteByKey(DSLContext context, String key) {
+        context
+            .deleteFrom(this.jdbcRepository.getTable())
+            .where(KEY_FIELD.eq(key))
+            .execute();
+    }
+
     @Override
     public Optional<WorkerJobRunning> findByKey(String uid) {
         return this.jdbcRepository

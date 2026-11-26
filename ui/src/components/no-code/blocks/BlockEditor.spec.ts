@@ -1152,9 +1152,9 @@ describe("BlockEditor", () => {
         })
 
         it.each([
-            ["a draft flow as a draft", true],
-            ["a published flow as published", false],
-        ])("Cmd+S saves %s", async (_label, draft) => {
+            ["a draft flow", true],
+            ["a published flow", false],
+        ])("Cmd+S saves %s as a draft", async (_label, draft) => {
             // Given
             mockFlow.draft = draft
             wrapper = mountBlockEditor()
@@ -1164,7 +1164,7 @@ describe("BlockEditor", () => {
             await flushPromises()
 
             // Then
-            expect(mockFlowSave).toHaveBeenCalledExactlyOnceWith(draft)
+            expect(mockFlowSave).toHaveBeenCalledExactlyOnceWith(true)
         })
 
         it("Delete key removes the selected leaf task after confirmation", async () => {

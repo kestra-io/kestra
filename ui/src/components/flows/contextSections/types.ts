@@ -5,6 +5,10 @@ export interface DataChip {
     // Shared by every chip derived from the same underlying entry (e.g. read()/fileURI() for one
     // file), so the section header can count entries instead of chips.
     groupKey?: string
+    // Muted secondary text shown next to the label (e.g. the value a policy sets); never inserted.
+    detail?: string
+    // Makes the chip a link opening in a new tab; such a chip is never an insertable expression.
+    href?: string
 }
 
 export interface DataSection {

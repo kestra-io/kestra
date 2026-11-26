@@ -19,6 +19,7 @@
                 :initialInputs="inputsList"
                 :execution="execution"
                 v-model="inputs"
+                :submitAttempted="submitAttempted"
                 @clear-validation="onClearValidation"
             />
         </KsForm>
@@ -61,6 +62,7 @@
     const inputs = ref<Record<string, unknown>>({})
     const isDrawerOpen = ref(false)
     const form = ref<FormInstance | null>(null)
+    const submitAttempted = ref(false)
 
     const enabled = computed(() => {
         if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
@@ -99,6 +101,7 @@
     }
 
     function resumeWithInputs(formRef: FormInstance | null) {
+        submitAttempted.value = true
         if (formRef) {
             formRef.validate((valid: boolean) => {
                 if (!valid) {

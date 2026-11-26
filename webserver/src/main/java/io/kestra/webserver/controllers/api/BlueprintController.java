@@ -202,8 +202,8 @@ public class BlueprintController {
     }
 
     protected <T> T fastForwardToKestraApi(HttpRequest<?> originalRequest, String newPath, Map<String, Object> additionalQueryParams, Argument<T> returnType) throws URISyntaxException {
-        UriBuilder uriBuilder = UriBuilder.of(originalRequest.getUri())
-            .replacePath(originalRequest.getUri().getPath().toString().replaceAll("^[^?]*", newPath));
+        String rawQuery = originalRequest.getUri().getRawQuery();
+        UriBuilder uriBuilder = UriBuilder.of(rawQuery == null ? newPath : newPath + "?" + rawQuery);
 
         if (additionalQueryParams != null) {
             additionalQueryParams.forEach((name, value) ->

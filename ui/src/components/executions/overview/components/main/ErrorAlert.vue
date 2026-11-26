@@ -77,19 +77,31 @@
         },
     }
 
+    const failedAt = (state?: {histories?: {state?: string; date?: string}[]}) =>
+        new Date(state?.histories?.findLast(history => history.state === "FAILED")?.date ?? 0).getTime()
+
+    /** The task run that failed first: errors and finally tasks run after it and would otherwise hide its error. */
+    const firstFailedTaskRunId = props.execution.taskRunList
+        ?.filter(taskRun => taskRun.state?.current === "FAILED")
+        .sort((a, b) => failedAt(a.state) - failedAt(b.state))[0]?.id
+
+    const loadErrorLogs = (taskRunId?: string) => store.loadLogs({
+        store: false,
+        executionId: props.execution.id,
+        filters: [
+            {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+            ...(taskRunId ? [{field: "taskRunId" as const, operation: "EQUALS" as const, value: taskRunId}] : []),
+        ],
+        size: MAX_PREVIEW_LOGS,
+        sort: ["timestamp:desc"],
+    })
+
     onMounted(async () => {
         try {
             // Only the last MAX_PREVIEW_LOGS errors are ever shown, so ask the server
             // for just those (newest first) instead of the full error log list.
-            const response = await store.loadLogs({
-                store: false,
-                executionId: props.execution.id,
-                filters: [
-                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
-                ],
-                size: MAX_PREVIEW_LOGS,
-                sort: ["timestamp:desc"],
-            })
+            let response = firstFailedTaskRunId ? await loadErrorLogs(firstFailedTaskRunId) : []
+            if (!response.length) response = await loadErrorLogs()
 
             if (response.length) logs.value = [...response].reverse()
         } catch (e: unknown) {

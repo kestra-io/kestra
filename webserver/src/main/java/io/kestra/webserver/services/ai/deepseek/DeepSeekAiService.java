@@ -54,7 +54,7 @@ public class DeepSeekAiService extends AiService<DeepSeekConfiguration> {
             .timeout(getAiConfiguration().timeout())
             .customHeaders(getAiConfiguration().customHeaders());
 
-        pemHttpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
             .ifPresent(builder::httpClientBuilder);
 
         return builder
@@ -77,7 +77,7 @@ public class DeepSeekAiService extends AiService<DeepSeekConfiguration> {
             .timeout(getAiConfiguration().timeout())
             .customHeaders(getAiConfiguration().customHeaders());
 
-        pemHttpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
             .ifPresent(builder::httpClientBuilder);
 
         return builder

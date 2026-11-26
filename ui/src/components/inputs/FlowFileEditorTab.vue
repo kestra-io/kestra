@@ -2,7 +2,7 @@
     <div class="editor-tab">
         <img
             v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
-            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+            :src="fileUrl"
             class="image-preview"
         >
         <div v-else-if="bigFile" class="big-file-warning" data-test="big-file-warning">
@@ -111,6 +111,7 @@
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
     import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
     import {useViolationMarkers} from "../../composables/useViolationMarkers"
+    import {safePath} from "../../composables/useBaseNamespaces"
 
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsEditor} from "@kestra-io/design-system"
@@ -127,7 +128,7 @@
     const route = useRoute()
     const {t} = useI18n()
 
-    const {saveKeepingDraftState} = useFlowEditorActions()
+    const {saveAsDraft} = useFlowEditorActions()
     const flowStore = useFlowStore()
     const editorBindings = useEditorBindings()
 
@@ -290,7 +291,7 @@
     const namespace = computed(() => flowStore.flow?.namespace)
     const fileNamespace = computed(() => (namespace.value ?? route.params?.namespace)?.toString())
     const humanSize = computed(() => fileSize.value === undefined ? "" : humanFileSize(fileSize.value))
-    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=${encodeURI(`/${props.path}`)}`)
+    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=/${safePath(props.path)}`)
     const isCreating = computed(() => flowStore.isCreating)
 
     // shallowRef, not ref: a deep reactive proxy around the editor breaks it.
@@ -437,16 +438,14 @@
             t("schema warning", {line: w.line, message: w.message}),
         )
     }
-    // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
-    // path as the Save button — including auto-install of missing plugins before persisting — but
-    // keep a draft a draft, since only Publish or the Save menu item should take it out of draft.
+    // Delegate to the shared action so Ctrl+S goes through the same path as Save draft, auto-install of missing plugins included.
     const saveFlowYaml = async () => {
         if (timeout.value) {
             clearTimeout(timeout.value)
         }
         if(!editorRefElement.value?.getEditor()) return
 
-        await saveKeepingDraftState()
+        await saveAsDraft()
     }
 
     // The tab stays dirty until the request returns, so without this a click during a slow save sends the file again.
@@ -475,7 +474,7 @@
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {
-        if (!((event.ctrlKey || event.metaKey) && event.key === "s")) return
+        if (!((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key === "s")) return
         // Both listeners are on the window, so without standing down for what the authoring
         // surface answers, one chord would run two saves against the same flow.
         if (authoringSurfaceAnswersKeyFor(event.target as Node)) return

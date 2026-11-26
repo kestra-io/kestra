@@ -3,8 +3,11 @@ import type {RouterLink} from "vue-router"
 
 type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"]
 
-/** Fetches the entries of a breadcrumb menu or of a fly-out; a bar menu whose result is empty is not offered. */
-export type KsBreadcrumbLoader = () => Promise<KsBreadcrumbItem[]>
+/**
+ * Fetches the entries of a breadcrumb menu or of a fly-out; a bar menu whose result is empty is not offered.
+ * A `lazy` loader runs each time its bar menu opens instead of when the bar renders, so the menu is always offered.
+ */
+export type KsBreadcrumbLoader = (() => Promise<KsBreadcrumbItem[]>) & {lazy?: boolean}
 
 export interface KsBreadcrumbItem {
     label: string
@@ -15,6 +18,8 @@ export interface KsBreadcrumbItem {
     icon?: Component
     /** Native tooltip of the item inside a menu, e.g. the full path behind a short label. */
     tooltip?: string
+    /** Starts a new group inside a menu, ruled off from the entries above it. */
+    divided?: boolean
     /** The entry the page is on, highlighted inside a menu. */
     current?: boolean
     /** The name the item's content is listed under in a menu heading, when it is not the label itself. */

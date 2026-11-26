@@ -30,9 +30,10 @@ vi.mock("vue-i18n", () => ({
 
 const post = vi.fn()
 const put = vi.fn()
+const del = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
-    useClient: () => ({get: vi.fn(), post, put, delete: vi.fn()}),
+    useClient: () => ({get: vi.fn(), post, put, delete: del}),
 }))
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({}))
@@ -57,6 +58,8 @@ describe("dashboard store yaml writes", () => {
         put.mockReset()
         post.mockResolvedValue({data: {}})
         put.mockResolvedValue({data: {}})
+        del.mockReset()
+        del.mockResolvedValue({data: {}})
         localStorage.clear()
         setActivePinia(createPinia())
     })
@@ -105,5 +108,23 @@ describe("dashboard store yaml writes", () => {
         await store.validateChart("id: c")
 
         expect(store.chartErrors).toEqual(["chartOptions: must not be null", "boom"])
+    })
+
+    it("addresses a dashboard whose id holds a reserved character by its full id", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("./dashboard")
+        const store = useDashboardStore()
+
+        await store.update({id: "ops?x", source: "id: \"ops?x\""})
+        await store.delete("ops?x")
+
+        await store.generate("ops?x", "c1", {})
+        await store.stateCounts("ops?x", "c1", {})
+
+        expect(put.mock.calls[0][0]).toBe("/api/v1/main/dashboards/ops%3Fx")
+        expect(del.mock.calls[0][0]).toBe("/api/v1/main/dashboards/ops%3Fx")
+        expect(post.mock.calls.map(([url]) => url)).toEqual([
+            "/api/v1/main/dashboards/ops%3Fx/charts/c1",
+            "/api/v1/main/dashboards/ops%3Fx/charts/c1/state-counts",
+        ])
     })
 })

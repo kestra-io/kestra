@@ -31,7 +31,7 @@
                         mode="wizard"
                         :hideRecapNavigation="!embed"
                         v-model="inputs"
-                        :executeClicked="executeClicked"
+                        :submitAttempted="executeClicked"
                         @confirm="onSubmit"
                         @ready="onInputsFormReady"
                         @update:model-value-no-default="values => inputsNoDefaults=values"

@@ -26,6 +26,7 @@
 {{- $dind = true }}
 {{- end }}
 {{- $kind := default $common.kind $content.kind }}
+{{- $hpa := default $common.autoscaler $content.autoscaler }}
 apiVersion: apps/v1
 kind: {{ $kind }}
 metadata:
@@ -48,7 +49,10 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  {{- /* an autoscaler owns spec.replicas, and rendering it makes every upgrade conflict with or reset it */}}
+  {{- if not (or $hpa.enabled $hpa.external) }}
   replicas: {{ kindIs "invalid" $content.replicas | ternary $common.replicas $content.replicas }}
+  {{- end }}
   revisionHistoryLimit: {{ default $common.revisionHistoryLimit $content.revisionHistoryLimit }}
   selector:
     matchLabels:
@@ -340,7 +344,6 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
 
-{{- $hpa := default $common.autoscaler $content.autoscaler }}
 {{- if $hpa.enabled }}
 ---
 {{- if semverCompare ">=1.23-0" $.Capabilities.KubeVersion.GitVersion -}}

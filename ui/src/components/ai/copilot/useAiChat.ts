@@ -26,6 +26,7 @@ import {
     type ConfirmActionRequest,
     type CreateThreadRequest,
     type DoneEvent,
+    type EmptyTurnReason,
     type ErrorEvent,
     type ProposedActionEvent,
     type ScopeBinding,
@@ -40,7 +41,13 @@ import {
 export type ErrorCode = "turnInProgress" | "turnCap" | "request" | "generic"
 
 /** Locale-agnostic non-error notice identifier; the component maps it to `ai.copilot.notice.<code>`. */
-export type NoticeCode = "emptyTurn"
+export type NoticeCode = "emptyTurn" | "outputLimit" | "contentFiltered"
+
+/** The notice for each reason the backend gives for an empty turn; anything else falls back to `emptyTurn`. */
+const EMPTY_TURN_NOTICES: Partial<Record<EmptyTurnReason, NoticeCode>> = {
+    OUTPUT_LIMIT: "outputLimit",
+    CONTENT_FILTERED: "contentFiltered",
+}
 
 /** A display-only transcript line noting a focus change (a context resource added or removed). */
 export interface ContextNotice {
@@ -109,6 +116,8 @@ export function useAiChat() {
     let abort: AbortController | null = null
     /** The last chat/confirm request, so an empty/failed turn can be retried without retyping. */
     let lastTurn: {url: string; body: unknown} | null = null
+    /** The reason the backend gave on `done` for a turn without output, for the current stream. */
+    let emptyTurnReason: EmptyTurnReason | null = null
 
     /** True when a new chat turn may be sent. */
     const canSend = computed(() => status.value === "IDLE" && !streaming.value)
@@ -336,17 +345,19 @@ export function useAiChat() {
         activeAssistant = null
         abort = new AbortController()
         lastTurn = {url, body}
+        emptyTurnReason = null
         const countBefore = messages.value.length
         let waitForServerIdle = false
 
         try {
             await streamSse({url, body, signal: abort.signal, onFrame: reduce})
             // The stream closed cleanly but added nothing to the transcript and left no proposal —
-            // e.g. a transient provider hiccup returned only `done`; surface a notice rather than
+            // e.g. a transient provider hiccup returned only `done`; surface a notice (specific to
+            // the reason the backend gave, when it gave one) rather than
             // leaving the panel silent. A streamed error event already surfaces its own reason, so
             // don't stack the empty-turn notice on top of it.
             if (messages.value.length === countBefore && !pendingConfirmation.value && !errorDetail.value && !error.value) {
-                notice.value = "emptyTurn"
+                notice.value = (emptyTurnReason && EMPTY_TURN_NOTICES[emptyTurnReason]) || "emptyTurn"
             }
         } catch (e) {
             if (isAbortError(e)) {
@@ -451,7 +462,9 @@ export function useAiChat() {
             }
             case AiEvent.DONE: {
                 // The resting state the stream closed into — authoritative.
-                status.value = (frame.data as DoneEvent).status
+                const done = frame.data as DoneEvent
+                status.value = done.status
+                emptyTurnReason = done.reason ?? null
                 break
             }
             case AiEvent.ERROR: {

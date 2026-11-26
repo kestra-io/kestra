@@ -97,3 +97,23 @@ describe("toast.error", () => {
         expect(column?.props?.label).toBe("t:toast_message_column")
     })
 })
+
+describe("toast.requestError", () => {
+    beforeEach(() => {
+        vi.mocked(KsNotification).mockClear()
+    })
+
+    const failure = (status: number) => Object.assign(new Error("Request failed"), {status, response: {data: {detail: "Not found"}}})
+
+    it("should stay silent when the global handler already toasted the failure", () => {
+        makeToast(t).requestError(failure(404), "Could not delete")
+
+        expect(KsNotification).not.toHaveBeenCalled()
+    })
+
+    it("should toast a failure the global handler leaves to the caller", () => {
+        makeToast(t).requestError(failure(400), "Could not delete")
+
+        expect(KsNotification).toHaveBeenCalledTimes(1)
+    })
+})

@@ -143,6 +143,17 @@ describe("FlowTriggers - governance block", () => {
     })
 })
 
+describe("FlowTriggers - next evaluation date", () => {
+    it("warns about a missing next evaluation only for a trigger the scheduler evaluates", async () => {
+        triggerBState.extra = {kind: "UNSCHEDULED"}
+
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-test=\"trigger-never-evaluated\"]")).toHaveLength(1)
+    })
+})
+
 // Issue #12784: each trigger row links to the flow executions tab pre-filtered
 // on that trigger, so the list shows every execution the trigger created.
 describe("FlowTriggers - executions link", () => {
@@ -356,6 +367,17 @@ describe("FlowTriggers - execute backfill button", () => {
         await fillInputs(wrapper, {region: "EU"})
 
         expect(executeButton()?.disabled).toBe(false)
+    })
+
+    // https://github.com/kestra-io/kestra/issues/22518: clearing a text field sends "", which used to count as filled
+    it("goes back to disabled when the required input is cleared to an empty string", async () => {
+        const wrapper = await openBackfill()
+
+        await fillInputs(wrapper, {region: "EU", batchSize: 100})
+        expect(executeButton()?.disabled).toBe(false)
+
+        await fillInputs(wrapper, {region: "", batchSize: 100})
+        expect(executeButton()?.disabled).toBe(true)
     })
 })
 

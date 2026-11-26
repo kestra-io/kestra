@@ -613,6 +613,8 @@
         "all-iterations": "All iterations",
         "iteration-index": "index {index}",
         "iteration-value-index": "{value} · index {index}",
+        "first-iteration": "First iteration",
+        "last-iteration": "Last iteration",
         "previous-iteration": "Previous iteration",
         "next-iteration": "Next iteration",
         "previous-page": "Previous page",
@@ -1174,6 +1176,12 @@
     "bulk force run": "Are you sure you want to force run `{executionCount}` execution(s)?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task executions.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "bulk restart": "Are you sure you want to restart {executionCount} execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
+    "bulk action ineligible change state": "{count} of {total} selected executions are not eligible for a state change.",
+    "bulk action ineligible not state": "{count} of {total} selected executions are not in {state} state.",
+    "bulk action ineligible not pausable": "{count} of {total} selected executions cannot be paused.",
+    "bulk action ineligible not resumable": "{count} of {total} selected executions cannot be resumed.",
+    "bulk action ineligible not terminated": "{count} of {total} selected executions have not terminated.",
+    "bulk action ineligible already terminated": "{count} of {total} selected executions have already terminated.",
     "cancel": "Cancel",
     "errorLogs": "Error logs",
     "product_tour": "Product Tour",
@@ -1434,6 +1442,7 @@
     "execution-include-non-terminated": "Include non-terminated executions?",
     "execution-warn-title": "Important Warning!",
     "execution-warn-deleting-still-running": "We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
+    "execution-warn-non-terminated-count": "{count} of {total} selected execution(s) are non-terminated.",
     "pluginPage": {
       "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
@@ -1529,6 +1538,7 @@
             "flow_default_tab": "Default Flow Tab",
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
+            "open_docs_tab": "Open Docs Tab",
             "auto_refresh_interval": "Auto Refresh Interval",
             "task_edit_default_mode": "Default Task Edit Mode",
             "flow_template": "Default Flow Template"
@@ -1545,6 +1555,7 @@
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground.",
+            "open_docs_tab": "Open the Docs tab next to the editor. Applies to new flows and flows you haven't opened before.",
             "task_edit_default_mode": "How a task opens by default from the no-code editor.",
             "flow_template": "YAML opened in the editor when you create a new flow. The id and namespace can be left out, since they are generated for you. When this is empty, the template configured for the instance is used."
           },
@@ -2587,6 +2598,8 @@
         },
         "notice": {
           "emptyTurn": "The assistant didn't return a response. Please try again.",
+          "outputLimit": "The assistant ran out of output tokens before it could answer. Shorten your message or start a new chat.",
+          "contentFiltered": "The AI provider blocked the response. Rephrase your message or remove the content that may have triggered the provider's filters.",
           "retry": "Retry"
         },
         "cancelled": "Turn cancelled",

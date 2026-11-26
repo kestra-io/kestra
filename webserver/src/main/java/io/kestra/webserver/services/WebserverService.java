@@ -12,7 +12,6 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.runtime.event.annotation.EventListener;
-import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -73,10 +72,5 @@ public final class WebserverService implements Service {
             setState(ServiceState.TERMINATING);
             setState(ServiceState.TERMINATED_GRACEFULLY);
         }
-    }
-
-    @EventListener
-    public void onServeShutdown(ServerShutdownEvent event) {
-        close();
     }
 }

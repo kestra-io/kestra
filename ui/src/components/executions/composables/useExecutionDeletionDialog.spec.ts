@@ -13,16 +13,18 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
 import {KsSwitch} from "@kestra-io/design-system"
 import {useExecutionDeletionDialog, type ExecutionDeletionOptions} from "./useExecutionDeletionDialog"
 
-const openDialog = async (offerNonTerminated: boolean) => {
+type BeforeClose = (action: string, instance: unknown, done: () => void) => void
+
+const openDialog = async (offerNonTerminated: boolean, nonTerminatedCount = 0) => {
     let result: Promise<ExecutionDeletionOptions | undefined> | undefined
     i18nMount(defineComponent({
         setup() {
-            result = useExecutionDeletionDialog().confirmExecutionDeletion("Delete <code>e1</code>?", {offerNonTerminated})
+            result = useExecutionDeletionDialog().confirmExecutionDeletion("Delete <code>e1</code>?", {offerNonTerminated, nonTerminatedCount, total: 3})
             return () => null
         },
-    }))
-    const message = confirm.mock.calls[0][0] as () => VNode
-    return {result: result!, dialog: mount({render: message})}
+    }), {messages: {"execution-warn-non-terminated-count": "{count} of {total}"}})
+    const [message, , options] = confirm.mock.calls[0] as [() => VNode, string, {beforeClose: BeforeClose}]
+    return {result: result!, dialog: mount({render: message}), beforeClose: options.beforeClose}
 }
 
 describe("execution deletion dialog", () => {
@@ -48,5 +50,22 @@ describe("execution deletion dialog", () => {
         expect((await openDialog(false)).dialog.findComponent(KsSwitch).exists()).toBe(false)
         confirm.mockClear()
         expect((await openDialog(true)).dialog.findComponent(KsSwitch).exists()).toBe(true)
+    })
+
+    it("refuses to confirm until the user consents to deleting non-terminated executions", async () => {
+        confirm.mockReturnValueOnce(new Promise(() => {}))
+        const {dialog, beforeClose} = await openDialog(true, 2)
+        const done = vi.fn()
+
+        expect(dialog.text()).toContain("2 of 3")
+        beforeClose("confirm", undefined, done)
+        expect(done).not.toHaveBeenCalled()
+
+        beforeClose("cancel", undefined, done)
+        expect(done).toHaveBeenCalledTimes(1)
+
+        await dialog.findComponent(KsSwitch).vm.$emit("update:modelValue", true)
+        beforeClose("confirm", undefined, done)
+        expect(done).toHaveBeenCalledTimes(2)
     })
 })

@@ -92,6 +92,28 @@ describe("ErrorAlert", () => {
         expect(wrapper.text()).toContain("Ledger APAC is off")
     })
 
+    it("quotes the error of the task that failed first rather than a later error handler's log", async () => {
+        const failed = (id: string, date: string) => ({id, state: {current: "FAILED", histories: [{state: "RUNNING", date: "2026-10-14T11:55:00Z"}, {state: "FAILED", date}]}})
+        const failingExecution = {
+            ...execution,
+            taskRunList: [
+                failed("parent", "2026-10-14T11:55:03Z"),
+                failed("boom", "2026-10-14T11:55:01Z"),
+                {id: "on_error", state: {current: "SUCCESS", histories: [{state: "SUCCESS", date: "2026-10-14T11:55:02Z"}]}},
+            ],
+        } as unknown as Execution
+        vi.spyOn(useExecutionsStore(), "loadLogs").mockImplementation(async ({filters}) =>
+            (filters?.some(filter => filter.field === "taskRunId" && filter.value === "boom")
+                ? [{level: "ERROR", taskId: "boom", message: "The real reason it failed"}]
+                : [{level: "ERROR", taskId: "on_error", message: "error branch ran"}]) as never,
+        )
+
+        const wrapper = i18nMount(ErrorAlert, {messages, props: {execution: failingExecution}, global: {stubs: {LogLine: true}}})
+        await flushPromises()
+
+        expect(wrapper.find(".error-preview").text()).toContain("The real reason it failed")
+    })
+
     it("keeps the failure title visible when error logs are unavailable", async () => {
         vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([])
         const wrapper = mountAlert()

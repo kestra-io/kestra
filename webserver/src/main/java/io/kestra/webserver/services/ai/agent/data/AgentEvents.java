@@ -48,7 +48,26 @@ public final class AgentEvents {
         @Nullable String constraints) {
     }
 
-    public record DoneEvent(String status) {
+    /**
+     * @param status the resting thread status the stream closed into.
+     * @param reason why the turn ended without any output; {@code null} whenever the turn produced something.
+     */
+    public record DoneEvent(String status, @Nullable EmptyTurnReason reason) {
+        public DoneEvent(final String status) {
+            this(status, null);
+        }
+    }
+
+    /**
+     * Why the model call succeeded yet returned neither text nor a tool call.
+     */
+    public enum EmptyTurnReason {
+        /** The provider stopped normally with nothing to say; usually transient, so worth retrying. */
+        EMPTY_RESPONSE,
+        /** The output-token budget ran out before any visible output was produced. */
+        OUTPUT_LIMIT,
+        /** The provider withheld the response (safety, recitation, blocklist, ...). */
+        CONTENT_FILTERED
     }
 
     /**

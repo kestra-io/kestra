@@ -5,6 +5,7 @@ import {expect, waitFor} from "storybook/test"
 import KsEditor from "./KsEditor.vue"
 import KsForm from "./KsForm/KsForm.vue"
 import KsFormItem from "./KsForm/KsFormItem.vue"
+import KsButton from "../Basic/KsButton/KsButton.vue"
 
 const meta: Meta<typeof KsEditor> = {
     title: "Components/Form/KsEditor",
@@ -360,7 +361,7 @@ export const Height: Story = {
 
 export const RevalidatesFormItemOnEdit: Story = {
     render: () => ({
-        components: {KsEditor, KsForm, KsFormItem},
+        components: {KsEditor, KsForm, KsFormItem, KsButton},
         setup() {
             const model = ref({reason: ""})
             const form = ref<{validate: (callback: (valid: boolean) => void) => void}>()
@@ -375,12 +376,12 @@ export const RevalidatesFormItemOnEdit: Story = {
                     <ks-editor ref="editor" v-model="model.reason" :inline="true" :navbar="false" lang="plaintext" />
                 </ks-form-item>
             </ks-form>
-            <button data-testid="validate" @click="validate">validate</button>
+            <ks-button data-test="validate" @click="validate">validate</ks-button>
         </div>`,
     }),
     play: async ({canvasElement}) => {
         await settled("form-item")
-        canvasElement.querySelector<HTMLButtonElement>("[data-testid='validate']")!.click()
+        canvasElement.querySelector<HTMLButtonElement>("[data-test='validate']")!.click()
         await waitFor(() => expect(canvasElement.textContent).toContain("reason is required"))
 
         handles["form-item"]!.insertTextAtCursor("because")

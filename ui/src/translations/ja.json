@@ -399,6 +399,7 @@
     "create": "作成",
     "create_flow": "フローを作成",
     "create_child_namespace": "子 namespace を作成",
+    "view_all_flows": "すべての flow を表示",
     "from": "から",
     "to": "まで",
     "steps": "ステップ",

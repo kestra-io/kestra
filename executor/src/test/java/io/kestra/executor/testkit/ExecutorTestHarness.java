@@ -3,13 +3,14 @@ package io.kestra.executor.testkit;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
-import io.kestra.core.repositories.*;
 import org.mockito.Mockito;
+
+import com.google.common.util.concurrent.MoreExecutors;
 
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.async.AsyncOperationsConfiguration;
@@ -29,7 +30,10 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+import io.kestra.core.notification.AsyncOperationAggregator;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.repositories.*;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.DisabledAssetInputResolver;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
@@ -39,7 +43,6 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.runners.MultipleConditionEvent;
-import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -55,16 +58,16 @@ import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.services.QuotaService;
@@ -100,7 +103,6 @@ import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultListener;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
@@ -133,7 +135,9 @@ public final class ExecutorTestHarness {
     private final SLAMonitorProcessor slaMonitorProcessor;
     private final List<Runnable> loops = new ArrayList<>();
     private final List<Trace.Emission> journal = new ArrayList<>();
-    private final List<ExecutionTerminatedNotifier> executionTerminatedNotifiers = new ArrayList<>(List.of(execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution))));
+    private final List<ExecutionTerminatedNotifier> executionTerminatedNotifiers = new ArrayList<>(
+        List.of(execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)))
+    );
     private int workerJobsAnswered = 0;
 
     // in-memory fakes
@@ -501,7 +505,8 @@ public final class ExecutorTestHarness {
 
         // the production DefaultExecutor over same-thread pools and hand-ticked loops
         ScheduledExecutorService scheduledExecutorService = Mockito.mock(ScheduledExecutorService.class);
-        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation -> {
+        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation ->
+        {
             loops.add(invocation.getArgument(0));
             return Mockito.mock(ScheduledFuture.class);
         });
@@ -530,7 +535,8 @@ public final class ExecutorTestHarness {
             executorCore,
             new MaintenanceService.NoopMaintenanceService(),
             multipleConditionStateStore,
-            metricRegistry
+            metricRegistry,
+            Mockito.mock(AsyncOperationAggregator.class)
         );
         executor.initMetrics();
         executor.run();
@@ -668,11 +674,13 @@ public final class ExecutorTestHarness {
     @SuppressWarnings("unchecked")
     private static BeanProvider<StickyWorkerRouting> stickyWorkerRouting() {
         StickyWorkerRouting routing = Mockito.mock(StickyWorkerRouting.class);
-        Mockito.when(routing.route(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(invocation -> new WorkerJobEvent(
-            invocation.getArgument(1),
-            invocation.getArgument(0),
-            new WorkerJobEvent.StickyRouting(invocation.getArgument(2), StickyWorkerRouting.routingKey(0))
-        ));
+        Mockito.when(routing.route(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(
+            invocation -> new WorkerJobEvent(
+                invocation.getArgument(1),
+                invocation.getArgument(0),
+                new WorkerJobEvent.StickyRouting(invocation.getArgument(2), StickyWorkerRouting.routingKey(0))
+            )
+        );
         BeanProvider<StickyWorkerRouting> provider = Mockito.mock(BeanProvider.class);
         Mockito.when(provider.get()).thenReturn(routing);
         return provider;

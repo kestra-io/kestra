@@ -151,7 +151,7 @@
                 <KsAlert v-else-if="notice" type="warning" role="status" data-test="copilot-notice">
                     <div class="copilot-notice-body">
                         <span>{{ $t(`ai.copilot.notice.${notice}`) }}</span>
-                        <KsButton size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
+                        <KsButton v-if="notice === 'emptyTurn'" size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
                             {{ $t("ai.copilot.notice.retry") }}
                         </KsButton>
                     </div>

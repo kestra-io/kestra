@@ -613,7 +613,7 @@ public class ExecutorService {
                             }
                             // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
                             if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
-                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, flowableResult.get().getTaskRun(), runContext);
+                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
                             }
                         }
                     }
@@ -653,9 +653,11 @@ public class ExecutorService {
                         AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                         if (retry != null) {
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
-                            if (!isRetriedAsAWorkingDirectory(taskRun, parentTaskWithRetry, retry, executor)
+                            if (
+                                !isRetriedAsAWorkingDirectory(taskRun, parentTaskWithRetry, retry, executor)
                                     && retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)
+                            ) {
                                 behavior = retry.getBehavior();
                                 nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
                                     : taskRun.nextRetryDate(retry);
@@ -925,10 +927,12 @@ public class ExecutorService {
         AbstractRetry retry = task instanceof WorkingDirectory ? workingDirectoryRetry(executor, task, taskRun) : task.getRetry();
 
         // a WorkingDirectory can only run again as a whole, since its folder is deleted once it ends
-        if (retry == null
-            || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE && !(task instanceof WorkingDirectory)
-            || retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION
-            || !result.getTaskRun().getState().isTerminated()) {
+        if (
+            retry == null
+                || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE && !(task instanceof WorkingDirectory)
+                || retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION
+                || !result.getTaskRun().getState().isTerminated()
+        ) {
             return Optional.empty();
         }
 
@@ -1096,10 +1100,21 @@ public class ExecutorService {
     }
 
     /**
+     * The direct child whose failure made {@code parentTaskRun} fail: the sibling named to the task runs it interrupts.
+     */
+    private static String failedChildTaskId(Execution execution, TaskRun parentTaskRun) {
+        return ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .filter(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) && taskRun.getState().isFailed())
+            .map(TaskRun::getTaskId)
+            .findFirst()
+            .orElse(parentTaskRun.getTaskId());
+    }
+
+    /**
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
-    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext) throws InternalException {
+    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, RunContext runContext) throws InternalException {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);
@@ -1113,6 +1128,7 @@ public class ExecutorService {
         }
 
         State.Type targetState = config.toTaskRunState();
+        String failedSibling = failedChildTaskId(executor.getExecution(), parentTaskRun);
         List<String> leafTaskRunIds = new ArrayList<>();
         List<WorkerTaskResult> resolvedFlowables = new ArrayList<>();
 
@@ -1131,7 +1147,7 @@ public class ExecutorService {
             RunContext childRunContext = descendantTask != null
                 ? runContextFactory.of(executor.getFlow(), descendantTask, executor.getExecution(), descendant)
                 : runContextFactory.of(executor.getFlow(), executor.getExecution());
-            childRunContext.logger().warn("Task terminated because sibling task '{}' failed", failedTaskRun.getTaskId());
+            childRunContext.logger().warn("Task terminated because sibling task '{}' failed", failedSibling);
         }
 
         if (!resolvedFlowables.isEmpty()) {

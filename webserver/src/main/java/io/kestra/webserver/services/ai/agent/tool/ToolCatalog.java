@@ -120,13 +120,18 @@ public class ToolCatalog {
 
             // Docs MCP tools are public documentation reads: no permission and no tenant scoping.
             if (docsMcpToolProvider != null) {
-                docsMcpToolProvider.tools().forEach(
-                    (spec, executor) -> built.put(
+                docsMcpToolProvider.tools().forEach((spec, executor) ->
+                {
+                    if (built.containsKey(spec.name())) {
+                        log.warn("Ignoring docs MCP tool '{}': a local tool already uses that name.", spec.name());
+                        return;
+                    }
+                    built.put(
                         spec.name(), new ToolEntry(
                             spec.name(), spec, executor, AgentToolCall.Kind.PLATFORM, AgentToolFamily.READ, AgentWritePolicy.AUTO, null
                         )
-                    )
-                );
+                    );
+                });
             }
 
             this.registry = built;

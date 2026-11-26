@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.kestra.core.exceptions.DeserializationException;
@@ -79,12 +80,13 @@ public class StickyJobVNodeSubscriber implements WorkerLifecycleListener {
         assignment = vNodesAssigner.subscribe(controllerId, new VNodesAssigner.VNodeAssignmentListener() {
             @Override
             public void onVNodesRevoked() {
-                subscribers.keySet().stream().toList().forEach(vNode -> closeQuietly(vNode, subscribers.remove(vNode)));
+                unsubscribeAll();
             }
 
             @Override
             public void onVNodesAssigned(Set<Integer> vNodes) {
                 vNodes.forEach(vNode -> subscribers.computeIfAbsent(vNode, StickyJobVNodeSubscriber.this::subscribe));
+                log.info("Subscribed to vNodes {} for sticky jobs", new TreeSet<>(vNodes));
             }
         });
     }
@@ -120,7 +122,7 @@ public class StickyJobVNodeSubscriber implements WorkerLifecycleListener {
     private QueueSubscriber<WorkerJobEvent> subscribe(int vNode) {
         QueueSubscriber<WorkerJobEvent> subscriber = workerJobEventQueue.subscriber(StickyWorkerRouting.routingKey(vNode));
         subscriber.subscribe(either -> handle(vNode, either));
-        log.info("Subscribed to vNode {} for sticky jobs", vNode);
+        log.debug("Subscribed to vNode {} for sticky jobs", vNode);
         return subscriber;
     }
 
@@ -219,10 +221,19 @@ public class StickyJobVNodeSubscriber implements WorkerLifecycleListener {
         workerJobEventQueue.emit(event.key(), event);
     }
 
+    private void unsubscribeAll() {
+        Set<Integer> vNodes = new TreeSet<>(subscribers.keySet());
+        if (vNodes.isEmpty()) {
+            return;
+        }
+        vNodes.forEach(vNode -> closeQuietly(vNode, subscribers.remove(vNode)));
+        log.info("Unsubscribed from vNodes {} for sticky jobs", vNodes);
+    }
+
     private void closeQuietly(int vNode, QueueSubscriber<WorkerJobEvent> subscriber) {
         try {
             subscriber.close();
-            log.info("Unsubscribed from vNode {} for sticky jobs", vNode);
+            log.debug("Unsubscribed from vNode {} for sticky jobs", vNode);
         } catch (Exception e) {
             log.warn("Error closing the subscription to vNode {}: {}", vNode, e.getMessage());
         } finally {
@@ -237,8 +248,7 @@ public class StickyJobVNodeSubscriber implements WorkerLifecycleListener {
             assignment.dispose();
         }
         vNodesAssigner.stop();
-        subscribers.forEach(this::closeQuietly);
-        subscribers.clear();
+        unsubscribeAll();
         pausedVNodes.clear();
     }
 

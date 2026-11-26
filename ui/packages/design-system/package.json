@@ -15,6 +15,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./shiki": "./src/components/Data/KsMarkdown/shikiHighlighter.ts",
+    "./monaco-features": "./src/utils/monacoFeatures.ts",
     "./components/*": "./src/components/*",
     "./src/assets/styles/*": "./src/assets/styles/*",
     "./styles/color-palette": {

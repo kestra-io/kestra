@@ -1,6 +1,6 @@
 // Must stay the FIRST import: it patches window.fetch before any src/ or SDK module is evaluated.
 import {apiFetch, beginStoryScope} from "./apiMock"
-import "../packages/design-system/src/utils/monacoFeatures"
+import "@kestra-io/design-system/monaco-features"
 import {setup, type Preview} from "@storybook/vue3-vite"
 import {withThemeByClassName} from "@storybook/addon-themes"
 import initApp from "../src/utils/init"

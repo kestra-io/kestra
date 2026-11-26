@@ -1232,6 +1232,19 @@
         "discard": "Descartar"
       }
     },
+    "flowSaveStatus": {
+      "upToDate": "Actualizado con la revisión {revision}",
+      "saving": "Guardando borrador...",
+      "draft": "Borrador guardado · difiere de la revisión {revision}",
+      "draftUnpublished": "Borrador guardado · aún no publicado",
+      "invalid": "Borrador guardado · {count} error que corregir antes de publicar | Borrador guardado · {count} errores que corregir antes de publicar",
+      "offline": "Guardado solo en este navegador · reintentando",
+      "published": "Publicado como revisión {revision}",
+      "viewChanges": "Ver cambios",
+      "discard": "Descartar borrador",
+      "discardConfirm": "¿Descartar el borrador y volver a la revisión {revision}? Tus cambios no publicados se perderán.",
+      "executeRevision": "Ejecutar revisión {revision}"
+    },
     "flow export": "¿Estás seguro de que quieres exportar <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exportado(s)",
     "import": "Importar",

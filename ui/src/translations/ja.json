@@ -1232,6 +1232,19 @@
         "discard": "破棄"
       }
     },
+    "flowSaveStatus": {
+      "upToDate": "リビジョン {revision} で最新です",
+      "saving": "ドラフトを保存中...",
+      "draft": "下書きを保存しました · リビジョン {revision} と異なります",
+      "draftUnpublished": "下書きが保存されました · まだ公開されていません",
+      "invalid": "下書きを保存しました · 公開する前に修正すべきエラーが {count} 件あります",
+      "offline": "このブラウザのみに保存済み · 再試行中",
+      "published": "リビジョン {revision} として公開済み",
+      "viewChanges": "変更を表示",
+      "discard": "ドラフトを破棄",
+      "discardConfirm": "下書きを破棄してリビジョン {revision} に戻しますか？未公開の変更は失われます。",
+      "executeRevision": "リビジョン {revision} を実行"
+    },
     "flow export": "<code>{flowCount}</code>件のflowをエクスポートしてもよろしいですか？",
     "flows exported": "<code>{count}</code> Flow(s) エクスポート済み",
     "import": "インポート",

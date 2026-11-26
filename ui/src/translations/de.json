@@ -1232,6 +1232,19 @@
         "discard": "Verwerfen"
       }
     },
+    "flowSaveStatus": {
+      "upToDate": "Auf dem neuesten Stand mit Revision {revision}",
+      "saving": "Entwurf wird gespeichert...",
+      "draft": "Entwurf gespeichert · unterscheidet sich von Revision {revision}",
+      "draftUnpublished": "Entwurf gespeichert · noch nicht veröffentlicht",
+      "invalid": "Entwurf gespeichert · {count} Fehler muss vor der Veröffentlichung behoben werden | Entwurf gespeichert · {count} Fehler müssen vor der Veröffentlichung behoben werden",
+      "offline": "Nur in diesem Browser gespeichert · erneuter Versuch",
+      "published": "Veröffentlicht als Revision {revision}",
+      "viewChanges": "Änderungen anzeigen",
+      "discard": "Entwurf verwerfen",
+      "discardConfirm": "Entwurf verwerfen und zu Revision {revision} zurückkehren? Deine unveröffentlichten Änderungen gehen verloren.",
+      "executeRevision": "Revision {revision} ausführen"
+    },
     "flow export": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich exportieren?",
     "flows exported": "<code>{count}</code> Flow(s) exportiert",
     "import": "Importieren",

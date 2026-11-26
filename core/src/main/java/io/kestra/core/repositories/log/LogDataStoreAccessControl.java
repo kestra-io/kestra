@@ -37,4 +37,11 @@ public interface LogDataStoreAccessControl {
     default void onDeleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt) {
         // no-op by default
     }
+
+    /**
+     * Invoked before a {@code deleteByQuery(tenantId, namespace, flowId, triggerId)}.
+     * Default no-op; EE publishes an audit event.
+     */
+    default void onDeleteByQuery(String tenantId, String namespace, String flowId, String triggerId) {
+    }
 }

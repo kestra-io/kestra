@@ -1531,6 +1531,7 @@
             "flow_default_tab": "Pestaña de Flow Predeterminada",
             "triggers_default_tab": "Pestaña de Triggers Predeterminados",
             "playground": "Área de pruebas",
+            "open_docs_tab": "Abrir pestaña de Docs",
             "auto_refresh_interval": "Intervalo de Auto Refresh",
             "task_edit_default_mode": "Modo de edición de Task predeterminado",
             "flow_template": "Plantilla de flow predeterminada"
@@ -1547,6 +1548,7 @@
             "triggers_default_tab": "Pestaña seleccionada al navegar a la página de triggers.",
             "auto_refresh_interval": "Segundos entre actualizaciones automáticas de datos en las páginas de lista.",
             "playground": "Ejecutar tasks individualmente en el editor de pruebas.",
+            "open_docs_tab": "Abre la pestaña Docs junto al editor. Se aplica a los flows nuevos y a los flows que no hayas abierto antes.",
             "task_edit_default_mode": "Cómo se abre una task por defecto desde el editor no-code.",
             "flow_template": "YAML se abre en el editor cuando creas un nuevo flow. El id y el namespace pueden omitirse, ya que se generan automáticamente. Cuando está vacío, se utiliza la plantilla configurada para la instancia."
           },

@@ -1531,6 +1531,7 @@
             "flow_default_tab": "기본 Flow 탭",
             "triggers_default_tab": "기본 Trigger 탭",
             "playground": "플레이그라운드",
+            "open_docs_tab": "Docs 탭 열기",
             "auto_refresh_interval": "자동 새로고침 간격",
             "task_edit_default_mode": "기본 Task 편집 모드",
             "flow_template": "기본 flow 템플릿"
@@ -1547,6 +1548,7 @@
             "triggers_default_tab": "트리거 페이지로 이동할 때 선택된 탭.",
             "auto_refresh_interval": "목록 페이지에서 자동 데이터 새로 고침 간격(초).",
             "playground": "편집기 플레이그라운드에서 개별적으로 task 실행.",
+            "open_docs_tab": "편집기 옆의 Docs 탭을 엽니다. 새 flow 및 이전에 열지 않은 flow에 적용됩니다.",
             "task_edit_default_mode": "노코드 편집기에서 task가 기본적으로 열리는 방식입니다.",
             "flow_template": "새 flow를 생성할 때 YAML이 에디터에서 열립니다. id와 namespace는 자동으로 생성되므로 비워둘 수 있습니다. 이 필드가 비어 있으면 인스턴스에 구성된 템플릿이 사용됩니다."
           },

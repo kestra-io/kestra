@@ -1531,6 +1531,7 @@
             "flow_default_tab": "Scheda Flow Predefinita",
             "triggers_default_tab": "Scheda Trigger Predefiniti",
             "playground": "Playground",
+            "open_docs_tab": "Apri la scheda Docs",
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
             "task_edit_default_mode": "Modalità di Modifica Task Predefinita",
             "flow_template": "Modello di flow predefinito"
@@ -1547,6 +1548,7 @@
             "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger.",
             "auto_refresh_interval": "Secondi tra gli aggiornamenti automatici dei dati nelle pagine elenco.",
             "playground": "Esegui i task singolarmente nel playground dell'editor.",
+            "open_docs_tab": "Apri la scheda Docs accanto all'editor. Si applica ai nuovi flow e ai flow che non hai mai aperto prima.",
             "task_edit_default_mode": "Come un task si apre di default dall'editor no-code.",
             "flow_template": "YAML aperto nell'editor quando crei un nuovo flow. L'id e il namespace possono essere omessi, poiché vengono generati automaticamente. Quando è vuoto, viene utilizzato il template configurato per l'istanza."
           },

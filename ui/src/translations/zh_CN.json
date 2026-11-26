@@ -1531,6 +1531,7 @@
             "flow_default_tab": "默认 Flow 标签页",
             "triggers_default_tab": "默认 Trigger 标签页",
             "playground": "游乐场",
+            "open_docs_tab": "打开文档选项卡",
             "auto_refresh_interval": "自动刷新间隔",
             "task_edit_default_mode": "默认 Task 编辑模式",
             "flow_template": "默认 flow 模板"
@@ -1547,6 +1548,7 @@
             "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。",
             "auto_refresh_interval": "列表页面上自动数据刷新的秒数。",
             "playground": "在编辑器游乐场中单独运行任务。",
+            "open_docs_tab": "打开编辑器旁边的 Docs 选项卡。适用于新的 flow 和您以前未打开过的 flow。",
             "task_edit_default_mode": "无代码编辑器中 task 的默认打开方式。",
             "flow_template": "当您创建新的 flow 时，YAML 会在编辑器中打开。id 和 namespace 可以省略，因为它们是为您生成的。当此处为空时，将使用为实例配置的模板。"
           },

@@ -399,7 +399,7 @@
     "create": "Utwórz",
     "create_flow": "Utwórz Flow",
     "create_child_namespace": "Utwórz podrzędny namespace",
-    "view_all_flows": "Zobacz wszystkie flow ({count})",
+    "view_all_flows": "Zobacz wszystkie flow",
     "from": "Od",
     "to": "Do",
     "steps": "Kroki",

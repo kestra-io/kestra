@@ -399,7 +399,7 @@
     "create": "Erstellen",
     "create_flow": "Flow erstellen",
     "create_child_namespace": "Untergeordneten Namespace erstellen",
-    "view_all_flows": "Alle {count} Flows anzeigen",
+    "view_all_flows": "Alle Flows anzeigen",
     "from": "Von",
     "to": "Bis",
     "steps": "Schritte",

@@ -399,7 +399,7 @@
     "create": "Crea",
     "create_flow": "Crea Flow",
     "create_child_namespace": "Crea namespace figlio",
-    "view_all_flows": "Vedi tutti i {count} flow",
+    "view_all_flows": "Vedi tutti i flow",
     "from": "Da",
     "to": "A",
     "steps": "Passaggi",

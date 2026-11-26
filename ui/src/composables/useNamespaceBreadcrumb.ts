@@ -50,8 +50,9 @@ async function flowEntries(namespace: string, t: ReturnType<typeof useI18n>["t"]
     if (!flowsByNamespace.has(key)) {
         const search = useFlowStore().findFlows({"filters[namespace][EQUALS]": namespace, size: 20, sort: "id:asc", commit: false})
         flowsByNamespace.set(key, search)
-        search.catch(() => flowsByNamespace.delete(key))
-        setTimeout(() => flowsByNamespace.delete(key), 10_000)
+        const forget = () => flowsByNamespace.get(key) === search && flowsByNamespace.delete(key)
+        search.catch(forget)
+        setTimeout(forget, 10_000)
     }
 
     const page = await flowsByNamespace.get(key)?.catch(() => undefined)
@@ -65,7 +66,7 @@ async function flowEntries(namespace: string, t: ReturnType<typeof useI18n>["t"]
             current: id === current,
         })),
         ...((page?.total ?? 0) > ids.length ? [{
-            label: t("view_all_flows", {count: page?.total}),
+            label: t("view_all_flows"),
             link: {name: `${NAMESPACE_PARENT_ROUTE}/flows`, params: {id: namespace}},
         }] : []),
     ]

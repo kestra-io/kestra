@@ -7,7 +7,7 @@ const all = vi.hoisted(() => vi.fn())
 const findFlows = vi.hoisted(() => vi.fn())
 
 vi.mock("vue-i18n", () => ({
-    useI18n: () => ({t: (key: string, named?: {count: number}) => named ? `${key}:${named.count}` : key}),
+    useI18n: () => ({t: (key: string) => key}),
 }))
 
 vi.mock("override/utils/route", () => ({
@@ -178,7 +178,7 @@ describe("useNamespaceBreadcrumb", () => {
 
         const content = (await solo.children?.()) ?? []
 
-        expect(content.map((entry) => entry.label)).toEqual(["only", "create_child_namespace", "daily", "hourly", "view_all_flows:40"])
+        expect(content.map((entry) => entry.label)).toEqual(["only", "create_child_namespace", "daily", "hourly", "view_all_flows"])
         expect(content.map((entry) => Boolean(entry.divided))).toEqual([false, false, true, false, false])
         expect(content[2].link).toEqual({name: "flows/update", params: {namespace: "solo", id: "daily"}})
         expect(content[4].link).toEqual({name: "namespaces/update/flows", params: {id: "solo"}})

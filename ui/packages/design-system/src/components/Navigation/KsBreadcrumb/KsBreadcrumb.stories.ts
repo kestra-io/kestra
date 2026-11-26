@@ -206,9 +206,10 @@ export const EmptySiblings: Story = {
 }
 
 const flowsBeside = Object.assign(fn(() => after<KsBreadcrumbItem[]>([
-    {label: "daily-report", onClick: () => {}, current: true},
+    {label: "reporting", onClick: () => {}, icon: FolderOutline},
+    {label: "daily-report", onClick: () => {}, current: true, divided: true},
     {label: "hourly-sync", onClick: () => {}},
-    {label: "View all 40 flows", onClick: () => {}, divided: true},
+    {label: "View all flows", onClick: () => {}},
 ], 100)), {lazy: true})
 
 /**

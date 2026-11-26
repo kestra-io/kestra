@@ -25,7 +25,7 @@ import io.micronaut.context.env.Environment;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 class StandAloneCommandTest {
-    private static final String PLUGIN_JAR = "plugins/plugin-template-test-0.24.0-SNAPSHOT.jar";
+    private static final String PLUGIN_JAR = "plugins/plugin-template-test-1.0.0-SNAPSHOT.jar";
     private static final String EXTERNAL_TYPE = "io.kestra.plugin.templates.ExampleTask";
 
     @Test

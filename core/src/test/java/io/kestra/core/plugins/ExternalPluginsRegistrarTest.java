@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ExternalPluginsRegistrarTest {
 
-    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.24.0-SNAPSHOT.jar";
+    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-1.0.0-SNAPSHOT.jar";
 
     @Test
     void shouldRegisterExternalPluginsWhenRegistryBeanIsCreated(@TempDir Path pluginsPath) throws IOException, URISyntaxException {

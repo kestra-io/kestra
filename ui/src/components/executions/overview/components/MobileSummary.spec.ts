@@ -72,6 +72,7 @@ describe("MobileSummary", () => {
 
         const wrapper = mountSummary([{key: "system.correlationId", value: "2raAjVYwthisTFH32QXzqh"}])
 
+        expect(wrapper.find(".labels-list .kel-tag").classes()).toContain("kel-tag--truncate")
         expect(wrapper.find(".labels-list .kel-tag__label").text()).toBe(label)
         expect(wrapper.find(".labels-list [data-tooltip]").attributes("data-tooltip")).toBe(label)
     })

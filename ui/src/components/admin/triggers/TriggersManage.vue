@@ -546,13 +546,7 @@
             .map((row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`),
     )
 
-    const detailsTrigger = computed(() =>
-        triggersMerged.value.find((row: any) =>
-            row.namespace === detailsKey.value?.namespace &&
-            row.flowId === detailsKey.value?.flowId &&
-            row.triggerId === detailsKey.value?.triggerId,
-        ),
-    )
+    const detailsTrigger = computed(() => detailsKey.value && findRowBySelection(detailsKey.value))
 
     const detailsData = computed(() => {
         const trigger = detailsTrigger.value
@@ -706,7 +700,7 @@
     }
 
     const openDetails = (row: any) => {
-        detailsKey.value = {namespace: row.namespace, flowId: row.flowId, triggerId: row.triggerId}
+        detailsKey.value = selectionMapper(row)
         isDetailsOpen.value = true
     }
 

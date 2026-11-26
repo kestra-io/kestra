@@ -1611,6 +1611,7 @@
       "add": "Utwórz",
       "update": "Zaktualizuj Value dla Key '{key}'",
       "duplicate": "Ten Key już istnieje",
+      "description_latin1": "Opis może zawierać tylko znaki łacińskie, bez emoji.",
       "delete multiple": {
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
         "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>"

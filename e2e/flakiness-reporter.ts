@@ -98,7 +98,8 @@ export default class FlakinessReporter implements Reporter {
 
     onBegin(config: FullConfig, suite: Suite): void {
         this.rootDir = config.rootDir
-        this.reportDirectory = resolve(dirname(config.configFile), this.outputDirectory)
+        const configDirectory = config.configFile ? dirname(config.configFile) : config.rootDir
+        this.reportDirectory = resolve(configDirectory, this.outputDirectory)
         this.suite = suite
     }
 

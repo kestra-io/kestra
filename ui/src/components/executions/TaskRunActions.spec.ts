@@ -27,6 +27,7 @@ vi.mock("vue-router", () => ({
 vi.mock("../../utils/toast", () => ({
     useToast: vi.fn(() => ({
         confirm: vi.fn((_msg: string, callback: () => void) => callback()),
+        warning: vi.fn(),
     })),
 }))
 
@@ -126,6 +127,21 @@ describe("TaskRunActions", () => {
             name: "executions/update",
             params: {namespace: "ns-1", flowId: "child_flow", id: "child"},
         })
+    })
+
+    it("shouldStayOnThePageWhenTheSubflowTaskRunStartedNoExecution", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.findExecutions = vi.fn().mockResolvedValue({results: [], total: 0}) as never
+
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "call_subflow", state: state("FAILED")},
+            taskType: "io.kestra.plugin.core.flow.Subflow",
+            execution,
+        })
+        await wrapper.find("[data-test='task-run-subflow-execution']").trigger("click")
+        await flushPromises()
+
+        expect(routerPush).not.toHaveBeenCalled()
     })
 
     it("shouldNotOfferTheSubflowExecutionForATaskThatStartsNone", () => {

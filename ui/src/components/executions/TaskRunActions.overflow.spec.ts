@@ -90,7 +90,8 @@ describe("TaskRunActions overflow", () => {
         // Given
         const run = {id: "run-1", taskId: "call_subflow", state: state("SUCCESS")}
         const wrapper = await mountActions(true, {taskRun: run, taskRuns: [run], taskType: "io.kestra.plugin.core.flow.Subflow"})
-        vi.spyOn(useExecutionsStore(), "findExecutions").mockResolvedValue({results: [], total: 0})
+        const child = (id: string) => ({id, namespace: "tests", flowId: "child", state: state("SUCCESS"), trigger: {variables: {executionId: "execution", taskRunId: "run-1"}}})
+        vi.spyOn(useExecutionsStore(), "findExecutions").mockResolvedValue({results: [child("first"), child("retry")], total: 2} as never)
 
         // When
         await wrapper.findAllComponents(KsDropdownItem).find((item) => item.text() === "sub flow")!.get("[role=\"menuitem\"]").trigger("click")

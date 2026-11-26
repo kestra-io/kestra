@@ -2,7 +2,7 @@
     <div class="execution-task-runs" data-test="iteration-task-runs">
         <GanttMessageRow v-if="!loaded && entry.error" :ancestors="ancestors">
             <KsAlert type="error" :closable="false">
-                {{ $t("loop_iterations_load_error") }}
+                {{ $t(subflow ? "gantt_subflow.load_error" : "loop_iterations_load_error") }}
                 <KsButton size="small" link @click="tree.loadExecution(execution.id, true)">{{ $t("retry") }}</KsButton>
             </KsAlert>
         </GanttMessageRow>
@@ -10,11 +10,11 @@
             <KsIcon class="is-loading" size="sm">
                 <Loading />
             </KsIcon>
-            {{ $t("gantt_loop_loading") }}
+            {{ $t(subflow ? "gantt_subflow.loading" : "gantt_loop_loading") }}
         </GanttMessageRow>
         <template v-else>
             <GanttMessageRow v-if="rows.length === 0" :ancestors="ancestors">
-                {{ $t(tree.failedOnly.value ? "gantt_iteration_no_failed_tasks" : "gantt_iteration_no_tasks") }}
+                {{ $t(tree.failedOnly.value ? "gantt_iteration_no_failed_tasks" : subflow ? "gantt_subflow.no_tasks" : "gantt_iteration_no_tasks") }}
             </GanttMessageRow>
             <template v-for="node in rows" :key="node.key">
                 <GanttRow
@@ -106,6 +106,7 @@
     const props = defineProps<{
         execution: ExecutionRef;
         ancestors: Ancestor[];
+        subflow?: boolean;
     }>()
 
     const tree = useGanttTree()

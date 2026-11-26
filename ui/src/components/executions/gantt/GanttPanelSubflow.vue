@@ -1,14 +1,22 @@
 <template>
     <div class="panel-subflow">
-        <section v-if="entry.children" class="panel-section" data-test="gantt-panel-subflow">
+        <KsAlert v-if="!entry.children && entry.error" type="error" :closable="false" class="panel-section">
+            {{ $t("gantt_subflow.load_error") }}
+            <KsButton size="small" link @click="tree.loadSubflowExecutions(node.executionId, true)">{{ $t("retry") }}</KsButton>
+        </KsAlert>
+        <section v-else-if="entry.children" class="panel-section" data-test="gantt-panel-subflow">
             <div class="section-head">
-                <h3>{{ $t("gantt_subflow.executions", children.length) }}</h3>
+                <h3>{{ $t(children.length > 1 ? "gantt_subflow.executions" : "gantt_subflow.task_runs") }}</h3>
                 <GanttOpenExecution v-if="child" :execution="child" />
             </div>
             <p v-if="children.length === 0" class="panel-empty">{{ $t("gantt_subflow.none") }}</p>
             <template v-else-if="child">
-                <KsSkeleton v-if="!childEntry?.execution" animated :rows="2" />
-                <p v-else-if="runs.length === 0" class="panel-empty">{{ $t("gantt_iteration_no_tasks") }}</p>
+                <KsAlert v-if="!childEntry?.execution && childEntry?.error" type="error" :closable="false">
+                    {{ $t("gantt_subflow.load_error") }}
+                    <KsButton size="small" link @click="tree.loadExecution(child.id, true)">{{ $t("retry") }}</KsButton>
+                </KsAlert>
+                <KsSkeleton v-else-if="!childEntry?.execution" animated :rows="2" />
+                <p v-else-if="runs.length === 0" class="panel-empty">{{ $t("gantt_subflow.no_tasks") }}</p>
                 <div v-else class="mini-list">
                     <GanttPanelListRow
                         v-for="run in runs"
@@ -46,7 +54,7 @@
 <script setup lang="ts">
     import {computed, watch} from "vue"
     import {useRouter} from "vue-router"
-    import {KsSkeleton} from "@kestra-io/design-system"
+    import {KsAlert, KsButton, KsSkeleton} from "@kestra-io/design-system"
     import type {ExecutionTaskRun} from "../executionTaskRun"
     import GanttTaskIcon from "./GanttTaskIcon.vue"
     import GanttPanelListRow from "./GanttPanelListRow.vue"

@@ -247,11 +247,16 @@
     // Task run outputs are no longer on the execution payload, so the child is found through its trigger instead.
     async function openSubflowExecution() {
         emit("dismiss")
-        const children = (await findSubflowExecutions([props.execution.id]))
-            .filter(child => child.taskRunId === currentTaskRun.value.id)
-        router.push(children.length === 1
-            ? subflowExecutionRoute(children[0])
-            : {name: "executions/list", query: {"filters[triggerExecutionId][EQUALS]": props.execution.id}})
+        const children = await findSubflowExecutions([props.execution.id], props.execution.kind)
+            .then(found => found.filter(child => child.taskRunId === currentTaskRun.value.id), () => undefined)
+        if (!children) return
+        if (children.length === 0) {
+            toast.warning(t("gantt_subflow.none"))
+        } else if (children.length === 1) {
+            router.push(subflowExecutionRoute(children[0]))
+        } else {
+            router.push({name: "executions/list", query: {"filters[triggerExecutionId][EQUALS]": props.execution.id}})
+        }
     }
 
     function openIterations() {

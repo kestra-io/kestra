@@ -20,44 +20,48 @@
             :key="children[0].id"
             :execution="children[0]"
             :ancestors="ancestors"
+            subflow
         />
-        <template v-for="child in children" v-else :key="child.id">
-            <GanttRow
-                :nodeKey="executionKey(child.id)"
-                :label="child.flowId"
-                :ancestors="ancestors"
-                :offset="offset(child.state.histories)"
-                :barStyle="barStyle(child.state.histories, child.state.current)"
-                :state="child.state.current"
-                :selected="false"
-                expandable
-                :expanded="tree.isExpanded(executionKey(child.id))"
-                data-test="subflow-execution-row"
-                @select="tree.toggleExpanded(executionKey(child.id))"
-                @toggle="tree.toggleExpanded(executionKey(child.id))"
-            >
-                <template #label>
-                    <code class="execution-flow">{{ child.flowId }}</code>
-                    <KsId :value="child.id" />
-                </template>
-                <template #duration>
-                    <Duration :histories="child.state.histories" />
-                </template>
-                <template #actions>
-                    <GanttOpenExecution :execution="child" iconOnly />
-                </template>
-            </GanttRow>
-            <ExecutionTaskRuns
-                v-if="tree.isExpanded(executionKey(child.id))"
-                :execution="child"
-                :ancestors="[...ancestors, {key: executionKey(child.id), label: child.flowId}]"
-            />
+        <template v-else>
+            <template v-for="child in children" :key="child.id">
+                <GanttRow
+                    :nodeKey="executionKey(child.id)"
+                    :label="child.flowId"
+                    :ancestors="ancestors"
+                    :offset="offset(child.state.histories)"
+                    :barStyle="barStyle(child.state.histories, child.state.current)"
+                    :state="child.state.current"
+                    :selected="false"
+                    expandable
+                    :expanded="tree.isExpanded(executionKey(child.id))"
+                    data-test="subflow-execution-row"
+                    @select="tree.toggleExpanded(executionKey(child.id))"
+                    @toggle="tree.toggleExpanded(executionKey(child.id))"
+                >
+                    <template #label>
+                        <code class="execution-flow">{{ child.flowId }}</code>
+                        <KsId :value="child.id" />
+                    </template>
+                    <template #duration>
+                        <Duration :histories="child.state.histories" />
+                    </template>
+                    <template #actions>
+                        <GanttOpenExecution :execution="child" iconOnly />
+                    </template>
+                </GanttRow>
+                <ExecutionTaskRuns
+                    v-if="tree.isExpanded(executionKey(child.id))"
+                    :execution="child"
+                    :ancestors="[...ancestors, {key: executionKey(child.id), label: child.flowId}]"
+                    subflow
+                />
+            </template>
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted} from "vue"
+    import {computed, onMounted, watch} from "vue"
     import Loading from "vue-material-design-icons/Loading.vue"
     import {Duration} from "@kestra-io/topology"
     import {KsAlert, KsButton, KsIcon, KsId} from "@kestra-io/design-system"
@@ -80,6 +84,12 @@
     const ancestors = computed(() => loopAncestors(props.node))
 
     onMounted(() => tree.loadSubflowExecutions(props.node.executionId))
+
+    // A running Subflow task starts its execution after the row exists, and that execution keeps moving until the task ends.
+    watch(() => props.node.taskRun.state.current, async () => {
+        await tree.loadSubflowExecutions(props.node.executionId, true)
+        children.value.forEach(child => tree.loadExecution(child.id, true))
+    })
 </script>
 
 <style scoped>

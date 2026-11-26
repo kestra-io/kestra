@@ -260,11 +260,13 @@ export function createGanttTree(options: {
         return FlowUtils.findTaskById(executionsStore.flow, taskId)?.type
     }
 
-    const flowKey = (flow: FlowRef) => `${flow.namespace}/${flow.flowId}`
+    const flowKey = (flow: FlowRef) => `${flow.namespace}/${flow.flowId}/${flow.flowRevision ?? ""}`
 
     function flowOf(flow: FlowRef): FlowForExecution | undefined {
         const root = executionsStore.flow
-        return root?.namespace === flow.namespace && root.id === flow.flowId ? root : flows.get(flowKey(flow))
+        const isRoot = root?.namespace === flow.namespace && root.id === flow.flowId
+            && (flow.flowRevision === undefined || root.revision === undefined || root.revision === flow.flowRevision)
+        return isRoot ? root : flows.get(flowKey(flow))
     }
 
     function loadFlow(flow: FlowRef): Promise<void> {
@@ -301,7 +303,7 @@ export function createGanttTree(options: {
         const pending = subflowsInFlight.get(executionId)
         if (pending) return pending
 
-        const request = findSubflowExecutions([executionId]).then(
+        const request = findSubflowExecutions([executionId], executionsStore.execution?.kind).then(
             (children) => {
                 entry.children = children
                 entry.error = undefined
@@ -359,6 +361,8 @@ export function createGanttTree(options: {
         inFlight.clear()
         subflows.clear()
         subflowsInFlight.clear()
+        flows.clear()
+        flowsInFlight.clear()
     }
 
     function refresh(): Promise<void> {

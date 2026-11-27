@@ -104,12 +104,13 @@ public abstract class AbstractV2_0_03TriggerMigrationTest {
     void shouldMigrateV1TriggerWithNullOptionalFields() throws Exception {
         // Given
         Map<String, Object> v1Json = new LinkedHashMap<>();
+        v1Json.put("tenantId", "test-tenant");
         v1Json.put("namespace", "io.kestra.test");
         v1Json.put("flowId", "minimal-flow");
         v1Json.put("triggerId", "trigger-1");
         v1Json.put("disabled", false);
 
-        String key = "null_io.kestra.test_minimal-flow_trigger-1";
+        String key = "test-tenant_io.kestra.test_minimal-flow_trigger-1";
         insertV1Trigger(key, v1Json);
 
         // When
@@ -117,7 +118,7 @@ public abstract class AbstractV2_0_03TriggerMigrationTest {
 
         // Then
         TriggerState result = readTriggerState(key);
-        assertThat(result.getTenantId()).isNull();
+        assertThat(result.getTenantId()).isEqualTo("test-tenant");
         assertThat(result.getEvaluatedAt()).isNull();
         assertThat(result.getNextEvaluationDate()).isNull();
         assertThat(result.isLocked()).isFalse();
@@ -265,6 +266,7 @@ public abstract class AbstractV2_0_03TriggerMigrationTest {
     // --- Helpers ---
 
     private void insertV1Trigger(String key, Map<String, Object> v1Json) throws Exception {
+        v1Json.putIfAbsent("tenantId", "test-tenant");
         String json = MAPPER.writeValueAsString(v1Json);
         dslContextWrapper.transaction(
             configuration -> DSL.using(configuration)

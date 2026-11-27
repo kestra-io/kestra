@@ -43,6 +43,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      # Gemini is called as translator through WIF (SEC-2311).
+      id-token: write
     outputs:
       changed: ${{ steps.patch.outputs.changed }}
       head_sha: ${{ steps.pr.outputs.head_sha }}
@@ -113,7 +115,9 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          # SEC-2311: Gemini on Vertex AI as translator through WIF (no key).
+          workload_identity_provider: projects/956000344026/locations/global/workloadIdentityPools/github/providers/github
+          service_account: translator@kestra-dev.iam.gserviceaccount.com
 
       - name: Generate missing and stale translations
         run: npm run translations:generate

@@ -281,7 +281,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     @JsonProperty("partOf")
     public void setPartOf(AssetRelationRef partOf) {
-        this.partOf = partOf;
+        this.partOf = partOf != null && Boolean.TRUE.equals(partOf.hidden()) ? null : partOf;
     }
 
     @JsonProperty("related")

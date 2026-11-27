@@ -325,6 +325,21 @@ class AssetTest {
     }
 
     @Test
+    void shouldKeepPreviousPartOfWhenIncomingIsTheHiddenMarker() throws Exception {
+        Asset previous = External.builder().id("web-1").build().withPartOf(new AssetRelationRef("dep-1", null, null));
+        Asset incoming = JacksonMapper.ofYaml().readValue("""
+            id: web-1
+            type: io.kestra.core.models.assets.External
+            partOf:
+              hidden: true
+            """, Asset.class);
+
+        incoming.toUpdated(previous, false);
+
+        assertThat(incoming.getPartOf()).isEqualTo(new AssetRelationRef("dep-1", null, null));
+    }
+
+    @Test
     void shouldNotSerializeEmptyRelated() throws Exception {
         Asset asset = External.builder().id("web-1").build().withRelated(List.of());
 

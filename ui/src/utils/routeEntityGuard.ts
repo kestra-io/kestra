@@ -23,22 +23,25 @@ function hasSameParams(to: RouteLocationNormalized, from: RouteLocationNormalize
         && keys.every((key) => String(to.params[key]) === String(from.params[key]))
 }
 
-async function probe(resolve: EntityResolver, to: RouteLocationNormalized): Promise<404 | undefined> {
+async function probe(resolve: EntityResolver, to: RouteLocationNormalized): Promise<403 | 404 | undefined> {
     let error: unknown
+    let status: 403 | 404 = 404
     try {
         if (await resolve(to)) return undefined
     } catch (thrown) {
-        // Only a missing entity is this guard's business: any other failure is left to the page,
+        // Only a missing or forbidden entity is this guard's business: any other failure is left to the page,
         // which the interceptor has already reported with a toast.
-        if ((thrown as {status?: number})?.status !== 404) return undefined
+        const thrownStatus = (thrown as {status?: number})?.status
+        if (thrownStatus !== 403 && thrownStatus !== 404) return undefined
         handled(thrown)
         error = thrown
+        status = thrownStatus
     }
 
-    // The not-found screen is the only report here, and it does not say which entity is missing.
-    console.error(`No entity behind ${to.fullPath}, showing the not-found screen instead.`, error)
+    // The error screen is the only report here, and it does not say which entity is missing or forbidden.
+    console.error(`No entity behind ${to.fullPath}, showing the ${status} screen instead.`, error)
 
-    return 404
+    return status
 }
 
 const startNavigation = latestRequest()

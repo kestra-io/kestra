@@ -19,8 +19,10 @@ public class StartsWith<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.STARTS_WITH;
 
     @NotNull
+    @Schema(title = "Text the field must start with.")
     private String value;
 }

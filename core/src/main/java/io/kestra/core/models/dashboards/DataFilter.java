@@ -15,6 +15,7 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.kestra.plugin.core.dashboard.data.IData;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -34,17 +35,21 @@ import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 @Plugin
 @EqualsAndHashCode
 public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F>> implements io.kestra.core.models.Plugin, IData<F> {
+    @Schema(title = "Type of the data source, such as `io.kestra.plugin.core.dashboard.data.Executions`.")
     @NotNull
     @NotBlank
     @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     private String type;
 
+    @Schema(title = "Columns to query, keyed by the name the chart options refer to.")
     private Map<String, @Valid C> columns;
 
+    @Schema(title = "Conditions the rows must match.", description = "All conditions must match. Use an `OR` condition to accept rows matching any of several.")
     @Setter
     @Nullable
     private List<@Valid AbstractFilter<F>> where;
 
+    @Schema(title = "Sort order of the rows.")
     private List<OrderBy> orderBy;
 
     /** Set per request from the dashboard's own limit or the instance default; not part of the chart definition. */

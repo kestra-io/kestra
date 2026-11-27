@@ -17,5 +17,6 @@ public class IsTrue<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.IS_TRUE;
 }

@@ -26,16 +26,20 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode
 public class TimeSeriesOption extends ChartOption implements WithLegend, WithTooltip, WithColorByValues {
+    @Schema(title = WithTooltip.TOOLTIP_TITLE)
     @Builder.Default
     private TooltipBehaviour tooltip = TooltipBehaviour.ALL;
 
+    @Schema(title = WithLegend.LEGEND_TITLE)
     @Builder.Default
     private LegendOption legend = LegendOption.builder().enabled(true).build();
 
+    @Schema(title = "Date column, from `data.columns`, used for the time axis.")
     @NotNull
     @NotBlank
     private String column;
 
+    @Schema(title = "Column, from `data.columns`, whose values split the chart into series, such as the execution state.")
     private String colorByColumn;
 
     @Schema(title = WithColorByValues.COLOR_BY_VALUES_TITLE, description = WithColorByValues.COLOR_BY_VALUES_DESCRIPTION)

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -39,12 +40,16 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 public abstract class AbstractFilter<F extends Enum<F>> {
+    public static final String TYPE_TITLE = "Kind of condition.";
+
     @NotNull
     @JsonProperty(value = "field", required = true)
     @Valid
+    @Schema(title = "Field the condition applies to.")
     private F field;
     // `labelKey` is the legacy name (Executions LABELS); kept as a read alias for backward compatibility.
     @JsonAlias("labelKey")
+    @Schema(title = "Key inside the field, for fields that hold several values.", description = "For example the label key when `field` is `LABELS`.")
     private String key;
 
     abstract public FilterType getType();

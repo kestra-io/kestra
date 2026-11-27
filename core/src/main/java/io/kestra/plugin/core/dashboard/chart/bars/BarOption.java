@@ -26,12 +26,15 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode
 public class BarOption extends ChartOption implements WithLegend, WithTooltip, WithColorByValues {
+    @Schema(title = WithTooltip.TOOLTIP_TITLE)
     @Builder.Default
     private TooltipBehaviour tooltip = TooltipBehaviour.ALL;
 
+    @Schema(title = WithLegend.LEGEND_TITLE)
     @Builder.Default
     private LegendOption legend = LegendOption.builder().build();
 
+    @Schema(title = "Column, from `data.columns`, whose values form the bars.")
     @NotNull
     @NotBlank
     private String column;

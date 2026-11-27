@@ -19,8 +19,10 @@ public class Prefix<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.PREFIX;
 
     @NotNull
+    @Schema(title = "Namespace to match, together with its child namespaces.")
     private String value;
 }

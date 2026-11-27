@@ -89,6 +89,12 @@ describe("getTaskComponent discriminated-union dispatch", () => {
         expect(component.ksTaskName).toBe("plugin-implementation")
     })
 
+    it("dispatches a discriminated $ref that carries a title through allOf to the plugin-implementation control", () => {
+        const property = {allOf: [{$ref: "#/definitions/io.kestra.plugin.ai.provider.GoogleGemini"}, {title: "Model provider."}]}
+        const component = getTaskComponent(property, providerDefinitions)
+        expect(component.ksTaskName).toBe("plugin-implementation")
+    })
+
     it("treats an enum discriminator the same as a const one", () => {
         const property = {$ref: "#/definitions/io.kestra.plugin.ai.provider.OpenAI"}
         const component = getTaskComponent(property, providerDefinitions)

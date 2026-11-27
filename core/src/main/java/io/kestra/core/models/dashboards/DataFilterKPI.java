@@ -14,6 +14,7 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.kestra.plugin.core.dashboard.data.IData;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,16 +33,26 @@ import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 @Plugin
 @EqualsAndHashCode
 public abstract class DataFilterKPI<F extends Enum<F>, C extends ColumnDescriptor<F>> implements io.kestra.core.models.Plugin, IData<F> {
+    @Schema(title = "Type of the data source, such as `io.kestra.plugin.core.dashboard.data.ExecutionsKPI`.")
     @NotNull
     @NotBlank
     @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     private String type;
 
+    @Schema(title = "Column aggregated into the KPI value.")
     private C columns;
 
+    @Schema(
+        title = "Extra conditions for the rows counted in the KPI value.",
+        description = "With `numberType: PERCENTAGE`, the KPI shows the value matching `where` and `numerator` as a percentage of the value matching `where` alone."
+    )
     @Setter
     private List<AbstractFilter<F>> numerator;
 
+    @Schema(
+        title = "Conditions the rows must match, for the value and for the total of a percentage.",
+        description = "All conditions must match. Use an `OR` condition to accept rows matching any of several."
+    )
     private List<AbstractFilter<F>> where;
 
     /** Set per request from the dashboard's own limit or the instance default; not part of the chart definition. */

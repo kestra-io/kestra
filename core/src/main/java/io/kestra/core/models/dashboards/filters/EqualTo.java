@@ -21,9 +21,10 @@ public class EqualTo<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(title = TYPE_TITLE)
     protected FilterType type = FilterType.EQUAL_TO;
 
     @NotNull
-    @Schema(anyOf = { Number.class, ZonedDateTime.class, String.class })
+    @Schema(anyOf = { Number.class, ZonedDateTime.class, String.class }, title = "Value the field must equal.")
     private Object value;
 }

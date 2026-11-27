@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Schema
 public class TimeSeriesColumnDescriptor<F extends Enum<F>> extends ColumnDescriptor<F> {
+    @Schema(title = "How the column is drawn: `LINES`, `BARS` or `POINTS`.", description = "An aggregated column with no style is drawn as `LINES`.")
     private GraphStyle graphStyle;
 
     public GraphStyle getGraphStyle() {

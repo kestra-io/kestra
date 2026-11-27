@@ -34,20 +34,23 @@ import lombok.experimental.SuperBuilder;
                     chartOptions:
                       displayName: Chart Insights
                       description: How to interpret this chart
-                    content: |
-                      ## Execution Success Rate
-                      This chart displays the percentage of successful executions over time.
+                    source:
+                      type: Text
+                      content: |
+                        ## Execution Success Rate
+                        This chart displays the percentage of successful executions over time.
 
-                      - A **higher success rate** indicates stable and reliable workflows.
+                        - A **higher success rate** indicates stable and reliable workflows.
 
-                      - Sudden **drops** may signal issues in task execution or external dependencies.
+                        - Sudden **drops** may signal issues in task execution or external dependencies.
 
-                      - Use this insight to identify trends and optimize performance.
+                        - Use this insight to identify trends and optimize performance.
                 """
             }
         )
     }
 )
 public class Markdown extends Chart<ChartOption> {
+    @Schema(title = "Where the Markdown comes from: inline content (`Text`) or a flow's description (`FlowDescription`).")
     private MarkdownSource source;
 }

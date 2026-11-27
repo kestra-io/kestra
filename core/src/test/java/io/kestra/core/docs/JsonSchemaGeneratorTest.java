@@ -5,7 +5,9 @@ import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -692,13 +694,13 @@ class JsonSchemaGeneratorTest {
 
             String executionTimeSeriesColumnDescriptorExecutionFieldsKey = "io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__";
             assertThat(
-                properties(
+                ((List<Map<String, Object>>) properties(
                     definitions.get(
                         "io.kestra.plugin.core.dashboard.chart.TimeSeries_io.kestra.plugin.core.dashboard.data.IExecutions-Fields.io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields___"
                     )
                 )
                     .get("data")
-                    .get("$ref"),
+                    .get("allOf")).getFirst().get("$ref"),
                 Matchers.is("#/definitions/" + executionTimeSeriesColumnDescriptorExecutionFieldsKey)
             );
 
@@ -728,6 +730,42 @@ class JsonSchemaGeneratorTest {
                 Matchers.arrayContainingInAnyOrder(Arrays.stream(Executions.Fields.values()).map(Object::toString).toArray())
             );
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldDocumentEveryPropertyOfADashboardAndItsCorePlugins() {
+        RegisteredPlugin core = pluginRegistry.plugins().stream()
+            .filter(plugin -> plugin.getCharts().stream().anyMatch(cls -> cls.getName().startsWith("io.kestra.plugin.core.dashboard")))
+            .findFirst()
+            .orElseThrow();
+
+        List<Class<?>> dashboardPlugins = new ArrayList<>();
+        dashboardPlugins.addAll(core.getCharts());
+        dashboardPlugins.addAll(core.getDataFilters());
+        dashboardPlugins.addAll(core.getDataFiltersKPI());
+
+        Map<String, Map<String, Object>> schemas = new HashMap<>();
+        schemas.put(Dashboard.class.getName(), jsonSchemaGenerator.properties(null, Dashboard.class));
+        for (Class<?> cls : dashboardPlugins) {
+            schemas.put(cls.getName(), jsonSchemaGenerator.properties(core.baseClass(cls.getName()), cls));
+        }
+
+        List<String> undocumented = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Object>> schema : schemas.entrySet()) {
+            Map<String, Map<String, Object>> owners = new HashMap<>((Map<String, Map<String, Object>>) schema.getValue().getOrDefault("$defs", Map.of()));
+            owners.put(schema.getKey(), schema.getValue());
+            for (Map.Entry<String, Map<String, Object>> owner : owners.entrySet()) {
+                var properties = (Map<String, Map<String, Object>>) owner.getValue().getOrDefault("properties", Map.of());
+                for (Map.Entry<String, Map<String, Object>> property : properties.entrySet()) {
+                    if (!property.getValue().containsKey("title") && !property.getValue().containsKey("description")) {
+                        undocumented.add(owner.getKey() + "." + property.getKey());
+                    }
+                }
+            }
+        }
+
+        assertThat(undocumented.stream().distinct().sorted().toList(), is(empty()));
     }
 
     @SuppressWarnings("unchecked")

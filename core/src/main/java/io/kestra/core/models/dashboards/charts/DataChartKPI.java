@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.validations.DataChartKPIValidation;
 import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -22,6 +23,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @DataChartKPIValidation
 public abstract class DataChartKPI<P extends KpiOption, D extends DataFilterKPI<?, ?>> extends Chart<P> implements io.kestra.core.models.Plugin {
+    @Schema(title = "Data source the KPI computes its value from.")
     @NotNull
     @Valid
     private D data;

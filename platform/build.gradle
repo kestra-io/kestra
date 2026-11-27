@@ -18,18 +18,18 @@ ext {
 dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.20"
-    def bouncycastleVersion = "1.86"
+    def bouncycastleVersion = "1.87"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "2.24.0"
     def jsonschemaVersion = "4.38.0"
     def kafkaVersion = "4.4.0"
-    def opensearchVersion = "3.10.0"
-    def opensearchRestVersion = "3.9.0"
+    def opensearchVersion = "3.11.0"
+    def opensearchRestVersion = "3.10.0"
     def flyingSaucerVersion = "10.7.0"
     def jacksonVersion = "2.23.0"
     def jacksonAnnotationsVersion = "2.23"
     def jugVersion = "5.2.0"
-    def langchain4jVersion = "1.23.0"
+    def langchain4jVersion = "1.24.0"
     def langchain4jCommunityVersion = "1.23.0-beta33"
     def jettyVersion = "12.0.41" // Wiremock uses an older version as Micronaut
 
@@ -39,16 +39,16 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
-    api platform("io.micronaut.platform:micronaut-platform:5.2.5")
+    api platform("io.micronaut.platform:micronaut-platform:5.2.7")
     // security tower (Trivy): micronaut-tracing 8.3.0 imports opentelemetry-bom 1.64.0, opentelemetry-api < 1.67.0 has
     // CVE-2026-118259 (SEC-0387). Both BOMs so api, context, sdk and the -alpha incubator stay aligned; drop once Micronaut ships >= 1.67.0.
     api platform("io.opentelemetry:opentelemetry-bom:1.68.0")
     api platform("io.opentelemetry:opentelemetry-bom-alpha:1.68.0-alpha")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.93.0')
+    api platform('com.google.cloud:libraries-bom:26.94.0')
     api platform("io.grpc:grpc-bom:$grpcVersion")
-    api platform("com.azure:azure-sdk-bom:1.3.9")
-    api platform('software.amazon.awssdk:bom:2.57.13')
+    api platform("com.azure:azure-sdk-bom:1.3.10")
+    api platform('software.amazon.awssdk:bom:2.59.5')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
     api platform("io.qameta.allure:allure-bom:2.35.5")
@@ -57,7 +57,7 @@ dependencies {
         // security tower (Trivy): transitive libraries pinned to their fixed version
         api("org.xerial.snappy:snappy-java:1.1.10.12") // from kafka-clients 4.4.0 (1.1.10.7): CVE-2026-93451, CVE-2026-108106, CVE-2026-116590 (SEC-2097)
         api("org.apache.qpid:proton-j:0.35.0") // from azure-core-amqp 2.12.2 (azure-sdk-bom 1.3.9 ships 0.34.1): CVE-2026-66274 (SEC-2098)
-        api("at.yawk.lz4:lz4-java:1.14.0") // from kafka-clients, rocketmq, flink: CVE-2026-106451, CVE-2026-106450, CVE-2026-106449 (SEC-2095)
+        api("at.yawk.lz4:lz4-java:1.14.1") // from kafka-clients, rocketmq, flink: CVE-2026-106451, CVE-2026-106450, CVE-2026-106449 (SEC-2095)
         api("io.opentelemetry.proto:opentelemetry-proto:1.11.1-alpha")
         // align protobuf across mysql-connector, Google Cloud libs, micrometer-otlp and grpc
         api("com.google.protobuf:protobuf-java:$protobufVersion")
@@ -84,8 +84,8 @@ dependencies {
 
         // http5 client
         api("org.apache.httpcomponents.client5:httpclient5:5.6.5")
-        api("org.apache.httpcomponents.core5:httpcore5:5.4.4")
-        api("org.apache.httpcomponents.core5:httpcore5-h2:5.4.4")
+        api("org.apache.httpcomponents.core5:httpcore5:5.5")
+        api("org.apache.httpcomponents.core5:httpcore5-h2:5.5")
 
         api("com.fasterxml.uuid:java-uuid-generator:$jugVersion")
         // issue with the Docker lib having a too old version for the k8s extension
@@ -108,7 +108,7 @@ dependencies {
         api "net.thisptr:jackson-jq:1.6.5"
         api "com.google.guava:guava:33.8.0-jre"
         api "commons-io:commons-io:2.22.0"
-        api "org.apache.commons:commons-lang3:3.21.0"
+        api "org.apache.commons:commons-lang3:3.22.0"
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'
         api "org.apache.maven.resolver:maven-resolver-impl:$mavenResolverVersion"
@@ -116,8 +116,8 @@ dependencies {
         api "org.apache.maven.resolver:maven-resolver-connector-basic:$mavenResolverVersion"
         api "org.apache.maven.resolver:maven-resolver-transport-file:$mavenResolverVersion"
         api "org.apache.maven.resolver:maven-resolver-transport-apache:$mavenResolverVersion"
-        api 'com.github.oshi:oshi-core:7.7.3'
-        api 'io.pebbletemplates:pebble:4.1.2'
+        api 'com.github.oshi:oshi-core:7.8.0'
+        api 'io.pebbletemplates:pebble:4.1.3'
         api "co.elastic.logging:logback-ecs-encoder:1.8.0"
         api "de.focus-shift:jollyday-core:$jollydayVersion"
         api "de.focus-shift:jollyday-jaxb:$jollydayVersion"
@@ -153,15 +153,15 @@ dependencies {
         api "de.siegmar:fastcsv:4.4.1"
         // Json Diff
         api "com.github.java-json-tools:json-patch:1.13"
-        api 'com.rabbitmq:amqp-client:5.37.1'
+        api 'com.rabbitmq:amqp-client:5.38.0'
         api 'org.apache.commons:commons-pool2:2.13.1'
         api 'io.lettuce:lettuce-core:7.9.0.RELEASE'
 
         // force transitive version to fix CVE
-        api 'org.codehaus.plexus:plexus-utils:4.1.0' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
+        api 'org.codehaus.plexus:plexus-utils:4.2.0' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api "org.jooq:jooq:3.21.9"
+        api "org.jooq:jooq:3.21.10"
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.3.0"
@@ -170,7 +170,7 @@ dependencies {
         api "org.exparity:hamcrest-date:2.0.8"
         api "org.wiremock:wiremock-jetty12:3.13.2"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
-        api "com.microsoft.playwright:playwright:1.64.0"
+        api "com.microsoft.playwright:playwright:1.65.1"
         api "org.awaitility:awaitility:4.3.0"
         api "com.tngtech.archunit:archunit-junit5:1.5.1"
 
@@ -186,10 +186,10 @@ dependencies {
         api "io.kestra:storage-local:$version"
         api "io.kestra:scheduler:$version"
         api "io.kestra:worker:$version"
-        api "io.kestra.libs:copilot:0.3.5"
-        api 'io.modelcontextprotocol.sdk:mcp:2.1.0'
+        api "io.kestra.libs:copilot:0.3.6"
+        api 'io.modelcontextprotocol.sdk:mcp:2.2.0'
         // Micronaut's BOM manages mcp-core at its own version (2.0.1 as of Micronaut 5.2) -
         // pinned to keep both artifacts of the one SDK at the same version.
-        api 'io.modelcontextprotocol.sdk:mcp-core:2.1.0'
+        api 'io.modelcontextprotocol.sdk:mcp-core:2.2.0'
     }
 }

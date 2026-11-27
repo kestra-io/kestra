@@ -28,9 +28,11 @@ public class VariableRenderer {
     private final VariableConfiguration variableConfiguration;
 
     @Inject
-    public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
+    public VariableRenderer(PebbleEngineFactory pebbleEngineFactory,
+            @Nullable VariableConfiguration variableConfiguration) {
         this.pebbleEngine = pebbleEngineFactory.create();
-        this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
+        this.variableConfiguration = variableConfiguration != null ? variableConfiguration
+                : new VariableConfiguration();
     }
 
     public void setPebbleEngine(final PebbleEngine pebbleEngine) {
@@ -43,13 +45,18 @@ public class VariableRenderer {
 
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
         if (initialExtension instanceof AttributeNotFoundException current) {
-            return new IllegalVariableEvaluationException(
-                "Unable to find `" + current.getAttributeName() +
+            String message = "Unable to find `" + current.getAttributeName() +
                     "` used in the expression `" + current.getFileName() +
-                    "` at line " + current.getLineNumber()
-            );
-        }
+                    "` at line " + current.getLineNumber();
 
+            if ("value".equals(current.getAttributeName())
+                    && current.getFileName() != null
+                    && current.getFileName().contains("outputs.")) {
+                message += ". If the upstream task has `store: true`, only a URI is available, not a value.";
+            }
+
+            return new IllegalVariableEvaluationException(message);
+        }
         return new IllegalVariableEvaluationException(initialExtension);
     }
 
@@ -61,7 +68,8 @@ public class VariableRenderer {
         return this.render(inline, variables, this.variableConfiguration.getRecursiveRendering(), false);
     }
 
-    public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+    public String render(String inline, Map<String, Object> variables, boolean recursive)
+            throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
@@ -69,7 +77,8 @@ public class VariableRenderer {
         return result != null ? result : "";
     }
 
-    public Object render(Object inline, Map<String, Object> variables, boolean recursive, boolean stringify) throws IllegalVariableEvaluationException {
+    public Object render(Object inline, Map<String, Object> variables, boolean recursive, boolean stringify)
+            throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
@@ -80,8 +89,8 @@ public class VariableRenderer {
         }
 
         Object render = recursive
-            ? renderRecursively(inline, variables, stringify)
-            : renderOnce(inline, variables, stringify);
+                ? renderRecursively(inline, variables, stringify)
+                : renderOnce(inline, variables, stringify);
 
         if (render instanceof String renderStr) {
             return RAW_PATTERN.matcher(renderStr).replaceAll("$2");
@@ -90,7 +99,8 @@ public class VariableRenderer {
         return render;
     }
 
-    public Object renderOnce(Object inline, Map<String, Object> variables, boolean stringify) throws IllegalVariableEvaluationException {
+    public Object renderOnce(Object inline, Map<String, Object> variables, boolean stringify)
+            throws IllegalVariableEvaluationException {
         Object result = inline;
         Map<String, String> replacers = null;
         if (inline instanceof String inlineStr) {
@@ -109,7 +119,7 @@ public class VariableRenderer {
                 compiledTemplate.evaluate(writer, variables);
                 result = writer.output();
             } catch (IllegalArgumentException e) {
-                //can happen in case of mixed type in string
+                // can happen in case of mixed type in string
                 if (!stringify) {
                     JsonWriter fallbackWriter = new JsonWriter(this.variableConfiguration.getMaxOutputSize());
                     compiledTemplate.evaluate(fallbackWriter, variables);
@@ -156,19 +166,20 @@ public class VariableRenderer {
     }
 
     private static String replaceRawTags(Matcher rawMatcher, Map<String, String> replacers) {
-        return rawMatcher.replaceAll(matchResult ->
-        {
+        return rawMatcher.replaceAll(matchResult -> {
             var uuid = UUID.randomUUID().toString();
             replacers.put(uuid, matchResult.group(1));
             return uuid;
         });
     }
 
-    public Object renderRecursively(Object inline, Map<String, Object> variables, boolean stringify) throws IllegalVariableEvaluationException {
+    public Object renderRecursively(Object inline, Map<String, Object> variables, boolean stringify)
+            throws IllegalVariableEvaluationException {
         return this.renderRecursively(0, inline, variables, stringify);
     }
 
-    private Object renderRecursively(int renderingCount, Object inline, Map<String, Object> variables, boolean stringify) throws IllegalVariableEvaluationException {
+    private Object renderRecursively(int renderingCount, Object inline, Map<String, Object> variables,
+            boolean stringify) throws IllegalVariableEvaluationException {
         if (renderingCount > MAX_RENDERING_AMOUNT) {
             throw new IllegalVariableEvaluationException("Too many rendering attempts");
         }
@@ -181,11 +192,13 @@ public class VariableRenderer {
         return renderRecursively(++renderingCount, result, variables, stringify);
     }
 
-    public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables)
+            throws IllegalVariableEvaluationException {
         return this.render(in, variables, this.variableConfiguration.getRecursiveRendering());
     }
 
-    public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+    public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables, boolean recursive)
+            throws IllegalVariableEvaluationException {
         Map<String, Object> map = new LinkedHashMap<>();
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
@@ -193,20 +206,21 @@ public class VariableRenderer {
             Object value = renderObject(r.getValue(), variables, recursive).orElse(null);
 
             map.putIfAbsent(
-                key,
-                value
-            );
+                    key,
+                    value);
         }
 
         return map;
     }
 
-    public Optional<Object> renderObject(Object object, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables)
+            throws IllegalVariableEvaluationException {
         return this.renderObject(object, variables, this.variableConfiguration.getRecursiveRendering());
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive)
+            throws IllegalVariableEvaluationException {
         if (object instanceof Map map) {
             return Optional.of(this.render(map, variables, recursive));
         } else if (object instanceof List list) {
@@ -222,18 +236,22 @@ public class VariableRenderer {
     }
 
     /**
-     * Renders an object while tracking render() nesting depth to prevent infinite recursion.
+     * Renders an object while tracking render() nesting depth to prevent infinite
+     * recursion.
      */
-    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive, int renderDepth) throws IllegalVariableEvaluationException {
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive,
+            int renderDepth) throws IllegalVariableEvaluationException {
         variables.put(RENDER_DEPTH_VAR, renderDepth);
         return renderObject(object, variables, recursive);
     }
 
-    public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public List<Object> renderList(List<Object> list, Map<String, Object> variables)
+            throws IllegalVariableEvaluationException {
         return this.renderList(list, variables, this.variableConfiguration.getRecursiveRendering());
     }
 
-    public List<Object> renderList(List<Object> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+    public List<Object> renderList(List<Object> list, Map<String, Object> variables, boolean recursive)
+            throws IllegalVariableEvaluationException {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
@@ -243,11 +261,13 @@ public class VariableRenderer {
         return result;
     }
 
-    public List<String> render(List<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public List<String> render(List<String> list, Map<String, Object> variables)
+            throws IllegalVariableEvaluationException {
         return this.render(list, variables, this.variableConfiguration.getRecursiveRendering());
     }
 
-    public List<String> render(List<String> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+    public List<String> render(List<String> list, Map<String, Object> variables, boolean recursive)
+            throws IllegalVariableEvaluationException {
         List<String> result = new ArrayList<>();
         for (String inline : list) {
             result.add(this.render(inline, variables, recursive));
@@ -256,11 +276,13 @@ public class VariableRenderer {
         return result;
     }
 
-    public Set<String> render(Set<String> set, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public Set<String> render(Set<String> set, Map<String, Object> variables)
+            throws IllegalVariableEvaluationException {
         return this.render(set, variables, this.variableConfiguration.getRecursiveRendering());
     }
 
-    public Set<String> render(Set<String> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+    public Set<String> render(Set<String> list, Map<String, Object> variables, boolean recursive)
+            throws IllegalVariableEvaluationException {
         Set<String> result = new HashSet<>();
         for (String inline : list) {
             result.add(this.render(inline, variables, recursive));

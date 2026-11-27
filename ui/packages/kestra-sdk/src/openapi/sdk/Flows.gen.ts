@@ -134,6 +134,7 @@ export const generateFlowGraphFromSource = (parameters: Omit<Parameters<typeof _
  *     Import flows as a ZIP archive of yaml sources or a multi-objects YAML file.
  *     When sending a Yaml that contains one or more flows, a list of index is returned.
  *     When sending a ZIP archive, a list of files that couldn't be imported is returned.
+ *     When a flow targets a namespace the user cannot import into, the allowed flows are still imported and a 403 is returned instead of the list.
  *
  */
 export const importFlows = (parameters: Omit<Parameters<typeof _562B4060>[0], 'tenant'> & {

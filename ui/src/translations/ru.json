@@ -2653,7 +2653,11 @@
           "errorHandling": "Добавить обработку ошибок",
           "unitTest": "Сгенерировать модульный тест",
           "explain": "Объяснить этот flow",
-          "dbt": "Запустить dbt конвейер"
+          "dbt": "Запустить dbt конвейер",
+          "createFlow": "Создайте flow, который…",
+          "createFlowPrefill": "Создайте Flow, который",
+          "pythonSchedule": "Запускать Python-скрипт каждый день",
+          "triggers": "Как работают Trigger'ы?"
         },
         "voice": {
           "start": "Начать голосовой ввод",

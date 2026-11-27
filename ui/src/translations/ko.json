@@ -2653,7 +2653,11 @@
           "errorHandling": "오류 처리 추가",
           "unitTest": "단위 테스트 생성",
           "explain": "이 flow 설명",
-          "dbt": "dbt 파이프라인 실행"
+          "dbt": "dbt 파이프라인 실행",
+          "createFlow": "다음과 같은 flow 생성",
+          "createFlowPrefill": "Flow 생성",
+          "pythonSchedule": "매일 Python 스크립트 실행",
+          "triggers": "트리거는 어떻게 작동하나요?"
         },
         "voice": {
           "start": "음성 입력 시작",

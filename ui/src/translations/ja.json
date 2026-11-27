@@ -2653,7 +2653,11 @@
           "errorHandling": "エラー処理を追加",
           "unitTest": "ユニットテストを作成",
           "explain": "この flow を説明する",
-          "dbt": "dbtパイプラインを実行する"
+          "dbt": "dbtパイプラインを実行する",
+          "createFlow": "Flowを作成する…",
+          "createFlowPrefill": "Flowを作成する",
+          "pythonSchedule": "毎日 Python スクリプトを実行する",
+          "triggers": "トリガーはどのように機能しますか？"
         },
         "voice": {
           "start": "音声入力を開始",

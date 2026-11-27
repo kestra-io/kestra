@@ -2653,7 +2653,11 @@
           "errorHandling": "添加错误处理",
           "unitTest": "生成单元测试",
           "explain": "解释此 flow",
-          "dbt": "运行 dbt 管道"
+          "dbt": "运行 dbt 管道",
+          "createFlow": "创建一个 flow，它…",
+          "createFlowPrefill": "创建一个 Flow，它",
+          "pythonSchedule": "每天运行一个 Python 脚本",
+          "triggers": "Trigger 如何工作？"
         },
         "voice": {
           "start": "开始语音输入",

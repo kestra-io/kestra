@@ -2653,7 +2653,11 @@
           "errorHandling": "Dodaj obsługę błędów",
           "unitTest": "Wygeneruj test jednostkowy",
           "explain": "Wyjaśnij ten Flow",
-          "dbt": "Uruchom potok dbt"
+          "dbt": "Uruchom potok dbt",
+          "createFlow": "Utwórz Flow, który…",
+          "createFlowPrefill": "Utwórz Flow, który",
+          "pythonSchedule": "Uruchamiaj skrypt Python codziennie",
+          "triggers": "Jak działają Triggery?"
         },
         "voice": {
           "start": "Rozpocznij wprowadzanie głosowe",

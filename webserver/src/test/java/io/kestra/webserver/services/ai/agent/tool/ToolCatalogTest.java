@@ -10,6 +10,8 @@ import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.internals.ToolResultLimit;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.service.tool.ToolExecutor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -137,6 +139,23 @@ class ToolCatalogTest {
         // Then
         assertThat(result.artefact()).isNull();
         assertThat(result.text()).isEqualTo("updated: exec-1");
+    }
+
+    @Test
+    void shouldKeepLocalToolWhenDocsToolHasSameName() {
+        // Given
+        ToolSpecification remoteEcho = ToolSpecification.builder().name("tenant-echo").description("remote").build();
+        ToolSpecification remoteSearch = ToolSpecification.builder().name("search-docs").description("remote").build();
+        DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
+        when(docs.tools()).thenReturn(Map.of(remoteEcho, mock(ToolExecutor.class), remoteSearch, mock(ToolExecutor.class)));
+        ToolCatalog catalog = new ToolCatalog(List.of(new TestTenantEchoTool()), List.of(), docs, DENY_ALL, new DefaultAgentToolCallScope(), new ToolResultBudget(100_000, null));
+        ToolExecutionRequest request = ToolExecutionRequest.builder().id("c1").name("tenant-echo").arguments("{}").build();
+
+        // When / Then — the local tool is still the one registered, so its permission check applies
+        assertThat(catalog.byName("tenant-echo").orElseThrow().tool()).isInstanceOf(TestTenantEchoTool.class);
+        assertThatThrownBy(() -> catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit")))
+            .isInstanceOf(ToolPermissionDeniedException.class);
+        assertThat(catalog.byName("search-docs")).isPresent();
     }
 
     private static ToolCatalog newCatalog(final AgentToolPermissionEvaluator evaluator) {

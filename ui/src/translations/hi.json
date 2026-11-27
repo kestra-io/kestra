@@ -183,6 +183,23 @@
     "publish_draft": "ड्राफ़्ट प्रकाशित करें",
     "draft": "ड्राफ़्ट",
     "draft_flow_warning": "इस flow का नवीनतम रिवीज़न एक ड्राफ़्ट है। निष्पादन इसके बजाय नवीनतम प्रकाशित रिवीज़न पर चलेगा - अपने नवीनतम बदलावों को चलाने के लिए ड्राफ़्ट प्रकाशित करें (या उसे Playground से चलाएँ)।",
+    "save_draft": "ड्राफ्ट सहेजें",
+    "flow_publish": {
+      "description": "इस संशोधन को लाइव करता है: ट्रिगर इसे शुरू करते हैं, अन्य Flow इसे कॉल कर सकते हैं, और इसकी विफलताएं अलर्ट Flow तक पहुंचती हैं।",
+      "done_title": "प्रकाशित",
+      "failed": "इस ड्राफ्ट को प्रकाशित नहीं किया जा सका।",
+      "done": "{name} का Revision {revision} लाइव है: ट्रिगर इसे शुरू करते हैं, अन्य Flow इसे कॉल कर सकते हैं, और इसकी विफलताएं अलर्ट Flow तक पहुंचती हैं।"
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "यह Flow एक ड्राफ्ट है",
+        "description": "इसका कोई प्रकाशित revision नहीं है, इसलिए trigger और अन्य flow इसे शुरू नहीं करते हैं। इसे Playground से चलाएँ, या इसे लाइव करने के लिए प्रकाशित करें।"
+      },
+      "over_published": {
+        "title": "नवीनतम revision एक ड्राफ्ट है",
+        "description": "शेड्यूल, वेबहुक और अन्य Flow प्रकाशित रिविज़न को तब तक चलाते रहेंगे जब तक आप इस ड्राफ्ट को प्रकाशित नहीं करते। इस बीच Flow ट्रिगर Flow को शुरू नहीं करते हैं।"
+      }
+    },
     "save task": "Task सहेजें",
     "saved": "सफलतापूर्वक सहेजा गया",
     "saved as draft": "ड्राफ़्ट के रूप में सफलतापूर्वक सहेजा गया",
@@ -382,6 +399,7 @@
     "create": "बनाएँ",
     "create_flow": "फ़्लो बनाएं",
     "create_child_namespace": "चाइल्ड namespace बनाएँ",
+    "view_all_flows": "सभी flow देखें",
     "from": "से",
     "to": "तक",
     "steps": "चरण",
@@ -624,6 +642,8 @@
         "all-iterations": "सभी इटरेशन",
         "iteration-index": "इंडेक्स {index}",
         "iteration-value-index": "{value} · इंडेक्स {index}",
+        "first-iteration": "पहला पुनरावृति",
+        "last-iteration": "अंतिम पुनरावृति",
         "previous-iteration": "पिछला इटरेशन",
         "next-iteration": "अगला इटरेशन",
         "previous-page": "पिछला पृष्ठ",
@@ -1185,6 +1205,12 @@
     "bulk force run": "क्या आप वाकई `{executionCount}` Execution(s) को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी Execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट Task Execution बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED Task को RUNNING स्थिति में ले जाया जाएगा।\n- RUNNING Task को फिर से सबमिट किया जाएगा।\n- QUEUED Task को अन-क्यू किया जाएगा।\n- PAUSED Task को फिर से शुरू किया जाएगा।",
     "bulk restart": "क्या आप वाकई {executionCount} निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
+    "bulk action ineligible change state": "{total} में से {count} चुने गए executions का state नहीं बदला जा सकता।",
+    "bulk action ineligible not state": "{total} में से {count} चुने गए executions {state} state में नहीं हैं।",
+    "bulk action ineligible not pausable": "{total} में से {count} चुने गए executions को pause नहीं किया जा सकता।",
+    "bulk action ineligible not resumable": "{total} में से {count} चुने गए executions को resume नहीं किया जा सकता।",
+    "bulk action ineligible not terminated": "{total} में से {count} चुने गए executions समाप्त नहीं हुए हैं।",
+    "bulk action ineligible already terminated": "{total} में से {count} चुने गए executions पहले ही समाप्त हो चुके हैं।",
     "cancel": "रद्द करें",
     "errorLogs": "त्रुटि लॉग",
     "product_tour": "उत्पाद यात्रा",
@@ -1445,6 +1471,7 @@
     "execution-include-non-terminated": "गैर-समाप्त निष्पादन शामिल करें?",
     "execution-warn-title": "महत्वपूर्ण WARNING!",
     "execution-warn-deleting-still-running": "हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency समस्याएँ, flow निर्भरता प्रबंधन असंगतताएँ, और आपके instance पर zombie प्रक्रियाएँ हो सकती हैं, जो सिस्टम प्रदर्शन को खराब कर सकती हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं, इससे पहले कि आप deletion के साथ आगे बढ़ें।",
+    "execution-warn-non-terminated-count": "{total} में से {count} चयनित execution(s) समाप्त नहीं हैं।",
     "pluginPage": {
       "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
@@ -1540,6 +1567,7 @@
             "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब",
             "playground": "प्लेग्राउंड",
+            "open_docs_tab": "Docs टैब खोलें",
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
             "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड",
             "flow_template": "डिफ़ॉल्ट flow टेम्पलेट"
@@ -1556,6 +1584,7 @@
             "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।",
             "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
             "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
+            "open_docs_tab": "संपादक के बगल में Docs टैब खोलें। नए Flow और उन Flow पर लागू होता है जिन्हें आपने पहले नहीं खोला है।",
             "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।",
             "flow_template": "जब आप एक नया flow बनाते हैं तो YAML एडिटर में खुलता है। id और namespace को छोड़ा जा सकता है, क्योंकि वे आपके लिए जनरेट किए जाते हैं। जब यह खाली होता है, तो इंस्टेंस के लिए कॉन्फ़िगर किया गया टेम्पलेट उपयोग किया जाता है।"
           },
@@ -2000,6 +2029,7 @@
       "add": "बनाएँ",
       "update": "key '{key}' के लिए value अपडेट करें",
       "duplicate": "यह key पहले से मौजूद है",
+      "description_latin1": "विवरण में केवल लैटिन अक्षर हो सकते हैं, इमोजी नहीं।",
       "delete multiple": {
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>",
@@ -2074,6 +2104,7 @@
       "title": "Kestra के साथ ऑटोमेशन शुरू करें",
       "sub_title": "अपने पहले workflow execution को शुरू करने के लिए Execute बटन पर क्लिक करें।",
       "namespace_sub_title": "इस डैशबोर्ड को भरने के लिए इस namespace से एक या अधिक flows निष्पादित करें।",
+      "draft_sub_title": "इस Flow में केवल ड्राफ़्ट हैं: इसे एडिटर में Playground से चलाएँ, या इसे निष्पादित करने के लिए प्रकाशित करें।",
       "need_help": "मदद चाहिए?"
     },
     "execution_guide": {
@@ -2265,7 +2296,7 @@
       "label": "कीबोर्ड शॉर्टकट्स",
       "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन",
       "command_palette": "कमांड पैलेट दिखाएं",
-      "save_flow": "फ्लो सहेजें",
+      "save_flow": "ड्राफ्ट सहेजें",
       "execute_flow": "flow निष्पादित करें",
       "toggle_ai_agent": "AI एजेंट टॉगल करें",
       "move_line": "लाइन को स्थानांतरित करें",
@@ -2598,6 +2629,8 @@
         },
         "notice": {
           "emptyTurn": "सहायक ने कोई प्रतिक्रिया नहीं दी। कृपया पुनः प्रयास करें।",
+          "outputLimit": "उत्तर देने से पहले सहायक के आउटपुट टोकन समाप्त हो गए। अपना संदेश छोटा करें या नई चैट शुरू करें।",
+          "contentFiltered": "AI प्रदाता ने प्रतिक्रिया को ब्लॉक कर दिया। अपने संदेश को फिर से लिखें या उस सामग्री को हटा दें जिसने प्रदाता के फ़िल्टर को ट्रिगर किया हो।",
           "retry": "पुनः प्रयास करें"
         },
         "cancelled": "बारी रद्द कर दी गई",
@@ -2613,7 +2646,11 @@
           "errorHandling": "त्रुटि प्रबंधन जोड़ें",
           "unitTest": "इकाई परीक्षण उत्पन्न करें",
           "explain": "यह flow समझाएं",
-          "dbt": "dbt पाइपलाइन चलाएँ"
+          "dbt": "dbt पाइपलाइन चलाएँ",
+          "createFlow": "एक Flow बनाएं जो…",
+          "createFlowPrefill": "एक Flow बनाएँ जो",
+          "pythonSchedule": "हर दिन एक Python स्क्रिप्ट चलाएँ",
+          "triggers": "ट्रिगर कैसे काम करते हैं?"
         },
         "voice": {
           "start": "वॉयस input शुरू करें",
@@ -3076,7 +3113,7 @@
         "no_match": "कोई मिलान नहीं",
         "open": "{name} खोलें",
         "paste": "चिपकाएँ",
-        "save": "flow सेव करें",
+        "save": "ड्राफ्ट सहेजें",
         "search_placeholder": "एक कमांड टाइप करें या किसी task को खोजें…",
         "title": "कमांड मेनू"
       },
@@ -3184,7 +3221,7 @@
         "paste": "चिपकाएँ",
         "redo": "फिर से करें",
         "reorder": "ऊपर/नीचे पुनर्व्यवस्थित करें",
-        "save": "flow सेव करें",
+        "save": "ड्राफ्ट सहेजें",
         "step_into": "समूह में विस्तार/स्टेप इन करें",
         "step_out": "कोलैप्स करें / पैरेंट पर स्टेप आउट करें",
         "title": "कीबोर्ड शॉर्टकट",
@@ -3266,6 +3303,8 @@
     "chart mode": {
       "counts": "गणना",
       "timeline": "टाइमलाइन"
-    }
+    },
+    "search_in_flow_source": "फ़्लो स्रोत में \"{query}\" खोजें",
+    "flows_matched_query": "आईडी या नेमस्पेस में \"{query}\" वाला {count} फ़्लो। | आईडी या नेमस्पेस में \"{query}\" वाले {count} फ़्लो।"
   }
 }

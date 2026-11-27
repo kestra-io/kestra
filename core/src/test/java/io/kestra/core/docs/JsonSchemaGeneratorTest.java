@@ -172,6 +172,43 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldCompactTheFlowSchemaWithoutLosingTheSharedContent() {
+        Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+
+        Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
+
+        var compactDefinitions = (Map<String, Map<String, Object>>) compact.get("definitions");
+        Map<String, Object> inlineItems = flowTasksItems(schema);
+        String listRef = (String) flowTasksItems(compact).get("$ref");
+        assertThat(listRef, startsWith("#/definitions/shared-subtypes"));
+        assertThat(compactDefinitions.get(listRef.substring("#/definitions/".length())), is(Map.of("$ref", "#/definitions/" + Task.class.getName())));
+        assertThat((List<Object>) inlineItems.get("anyOf"), not(empty()));
+        assertThat(compactDefinitions.get(Task.class.getName()).get("anyOf"), is(inlineItems.get("anyOf")));
+
+        // A single-task property keeps its annotation once, beside one reference to the list.
+        Map<String, Object> dagTask = properties(compactDefinitions.get(Dag.DagTask.class.getName().replace('$', '-'))).get("task");
+        assertThat(dagTask.get("anyOf"), is(List.of(Map.of("$ref", listRef))));
+        assertThat(dagTask, hasEntry("title", "The task within the DAG"));
+
+        String retryRef = (String) properties(compactDefinitions.get(Log.class.getName())).get("retry").get("$ref");
+        assertThat(retryRef, startsWith("#/definitions/shared-property-retry"));
+        assertThat(properties(compactDefinitions.get(Return.class.getName())).get("retry"), is(Map.of("$ref", retryRef)));
+        assertThat(compactDefinitions.get(retryRef.substring("#/definitions/".length())), hasEntry("title", "Retry"));
+
+        assertThat(schema.toString(), containsString("##### Examples"));
+        assertThat(compact.toString(), not(containsString("##### Examples")));
+        assertThat(compact.toString(), allOf(containsString("$dynamic"), containsString("$group")));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> flowTasksItems(Map<String, Object> schema) {
+        var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+        var properties = (Map<String, Map<String, Object>>) definitions.get(Flow.class.getName()).get("properties");
+        return (Map<String, Object>) properties.get("tasks").get("items");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void outputAssetsAcceptExpressionsAndFreeFormTypes() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
         {

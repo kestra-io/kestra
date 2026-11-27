@@ -15,6 +15,7 @@ import io.kestra.core.services.KVService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.Pagination;
 import io.kestra.webserver.responses.PagedResults;
@@ -208,7 +209,7 @@ public class KVController {
         @Parameter(description = "The list of keys deleted") List<String> keys) {
 
         public List<String> keys() {
-            return Optional.ofNullable(keys).orElse(List.of());
+            return ListUtils.emptyOnNull(keys);
         }
     }
 
@@ -221,7 +222,7 @@ public class KVController {
         @Parameter(description = "The list of keys to delete") List<String> keys) {
 
         public List<String> keys() {
-            return Optional.ofNullable(keys).orElse(List.of());
+            return ListUtils.emptyOnNull(keys);
         }
     }
 

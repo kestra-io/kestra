@@ -191,11 +191,16 @@ export function normalize(type: InputType | undefined, value: unknown): unknown 
     return res
 }
 
+function isEmptyInputValue(value: unknown): boolean {
+    return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
+}
+
 type RequiredInputLike = {id?: string; type?: string; required?: boolean; inputs?: RequiredInputLike[]}
 
 /**
  * Values are keyed by leaf id, so FORM children are checked under their dotted id
  * (`env.region`) instead of the FORM id itself, like `flattenInputs`.
+ * A cleared field counts as missing (`""` and `[]`), the same rule the Run wizard applies.
  */
 export function hasMissingRequiredInputs(flowInputs: (RequiredInputLike | undefined)[] | undefined, values: Record<string, unknown> | null | undefined): boolean {
     const leaves = (flowInputs ?? []).flatMap(input =>
@@ -204,5 +209,5 @@ export function hasMissingRequiredInputs(flowInputs: (RequiredInputLike | undefi
             : [input],
     )
     const requiredIds = leaves.filter(input => input?.required !== false).map(input => input?.id)
-    return requiredIds.some(id => id === undefined || values?.[id] === null || values?.[id] === undefined)
+    return requiredIds.some(id => id === undefined || isEmptyInputValue(values?.[id]))
 }

@@ -417,6 +417,7 @@
             show: showAxes,
             position,
             splitNumber: 5,
+            ...(aggregator.value[fieldIndex]?.[1]?.agg === "COUNT" ? {minInterval: 1} : {}),
             splitLine: {
                 show: showAxes && position === "left",
                 lineStyle: {type: "dashed", color: cssVar("--ks-border-subtle"), width: 1},

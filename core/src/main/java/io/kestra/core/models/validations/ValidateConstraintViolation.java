@@ -1,5 +1,6 @@
 package io.kestra.core.models.validations;
 
+import io.kestra.core.utils.ListUtils;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ public class ValidateConstraintViolation {
     private List<ValidationError> errors;
 
     public List<ValidationError> getErrors() {
-        return errors == null ? List.of() : errors;
+        return ListUtils.emptyOnNull(errors);
     }
 
     @Deprecated

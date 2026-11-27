@@ -4,14 +4,14 @@ import {configureClient} from "@kestra-io/kestra-sdk"
 import useFlowsBulkActions from "./useFlowsBulkActions"
 
 const downloads: Array<{blob: Blob, filename: string}> = []
-const {error} = vi.hoisted(() => ({error: vi.fn()}))
+const {requestError} = vi.hoisted(() => ({requestError: vi.fn()}))
 
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key, te: () => false})}))
 vi.mock("../../utils/toast", () => ({
     useToast: () => ({
         confirm: (_message: string, callback: () => Promise<unknown>) => callback(),
         success: vi.fn(),
-        error,
+        requestError,
     }),
 }))
 vi.mock("../../stores/flow", () => ({useFlowStore: () => ({total: 2})}))
@@ -107,6 +107,6 @@ describe("useFlowsBulkActions deleteFlows", () => {
 
         deleteFlows()
 
-        await vi.waitFor(() => expect(error).toHaveBeenCalledWith([{message: "flow not found"}], "Bulk validation failed"))
+        await vi.waitFor(() => expect(requestError).toHaveBeenCalledWith(expect.anything(), [{message: "flow not found"}], "Bulk validation failed"))
     })
 })

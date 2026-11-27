@@ -10,7 +10,7 @@
         <div class="plugin-page__body">
             <div class="plugin-detail">
                 <div :class="['plugin-detail__main', {'plugin-detail__main--flat': flat}]">
-                    <header class="plugin-header">
+                    <header v-if="headerTitle" class="plugin-header">
                         <div class="plugin-header__row">
                             <KsIconButton
                                 class="plugin-header__back"

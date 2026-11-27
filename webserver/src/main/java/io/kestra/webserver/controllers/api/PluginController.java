@@ -33,6 +33,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.Strings;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
@@ -124,27 +125,14 @@ public class PluginController {
         @Parameter(description = "Whether to merge the pre-baked plugin schema bundle for un-installed types") @Nullable
         @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
         @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
-        if (Boolean.TRUE.equals(includeCatalog)) {
-            // Same ETag revalidation as the plain schema (#12102): the browser re-downloads the big
-            // merged JSON only when the installed plugin set or the bundle actually changed, and
-            // gets a cheap 304 otherwise — a newly-installed plugin shows up on the next request.
-            final String catalogEtag = schemaETag("schema-catalog-" + pluginSchemaBundleService.fingerprint(), type, arrayOf);
-            if (catalogEtag.equals(ifNoneMatch)) {
-                return notModified(catalogEtag);
-            }
-            Map<String, Object> merged = pluginSchemaBundleService.mergeWithBundle(type, jsonSchemaCache.getSchemaForType(type, arrayOf));
-            return HttpResponse.ok(merged)
-                .header(HttpHeaders.ETAG, catalogEtag)
-                .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
-        }
-
-        // Non-merged schema: revalidate on every use via ETag so the editor never validates against a
-        // stale schema after a plugin is added/removed (#12102).
-        final String etag = schemaETag("schema", type, arrayOf);
+        // Revalidated via ETag on every use, so an added or removed plugin is never masked by a cached schema (#12102).
+        final boolean mergeCatalog = Boolean.TRUE.equals(includeCatalog) && isCatalogMergeAllowed();
+        final String etag = schemaETag(mergeCatalog ? "schema-catalog-" + pluginSchemaBundleService.fingerprint() : "schema", type, arrayOf);
         if (etag.equals(ifNoneMatch)) {
             return notModified(etag);
         }
-        return HttpResponse.ok(jsonSchemaCache.getSchemaForType(type, arrayOf))
+        Map<String, Object> schema = jsonSchemaCache.getSchemaForType(type, arrayOf);
+        return HttpResponse.ok(mergeCatalog ? pluginSchemaBundleService.mergeWithBundle(type, schema) : schema)
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
@@ -248,6 +236,11 @@ public class PluginController {
         return HttpResponse.ok(jsonSchemaCache.getPropertiesForType(type))
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
+    }
+
+    /** Whether {@code includeCatalog} may merge the plugin schema bundle; an edition without auto-install turns it off. */
+    protected boolean isCatalogMergeAllowed() {
+        return true;
     }
 
     /**
@@ -433,7 +426,7 @@ public class PluginController {
         Manifest manifest = registeredPlugin.getManifest();
         String title = manifest == null ? null : manifest.getMainAttributes().getValue("X-Kestra-Title");
 
-        return title == null || title.isBlank() ? null : title;
+        return Strings.nullIfBlank(title);
     }
 
     /**

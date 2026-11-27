@@ -23,6 +23,7 @@ import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.*;
@@ -34,6 +35,7 @@ import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.debug.Return;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.data.model.Pageable;
@@ -258,6 +260,64 @@ class SubflowRunnerTest {
 
         // Then the chain is stopped rather than left to recurse forever
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldRunDraftOnlyChildWhenPlaygroundRunCallsItWithoutRevision() throws Exception {
+        FlowWithSource draftParent = createDraftParentCallingDraftOnlyChild();
+
+        Execution parentExecution = runAndAwait(draftParent, ExecutionKind.PLAYGROUND);
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        String childExecutionId = (String) taskOutputService.getOutputs(parentExecution.findTaskRunsByTaskId("call").getFirst()).get("executionId");
+        Execution childExecution = executionRepository.findById(MAIN_TENANT, childExecutionId).orElseThrow();
+        assertThat(childExecution.getKind()).isEqualTo(ExecutionKind.PLAYGROUND);
+        assertThat(childExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    void shouldNotFindDraftOnlyChildWhenNormalRunCallsItWithoutRevision() throws Exception {
+        FlowWithSource draftParent = createDraftParentCallingDraftOnlyChild();
+
+        Execution parentExecution = runAndAwait(draftParent, null);
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    private FlowWithSource createDraftParentCallingDraftOnlyChild() throws Exception {
+        String childId = IdUtils.create();
+        Flow child = Flow.builder()
+            .id(childId)
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.tests")
+            .tasks(List.of(Return.builder().id("return").type(Return.class.getName()).format(io.kestra.core.models.property.Property.ofValue("draft")).build()))
+            .build();
+        Flow parent = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.tests")
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace("io.kestra.tests").flowId(childId).build()))
+            .build();
+        FlowWithSource draftChild = flowRepository.create(GenericFlow.of(child).toBuilder().draft(true).build());
+        FlowWithSource draftParent = flowRepository.create(GenericFlow.of(parent).toBuilder().draft(true).build());
+        flowQueue.emit(draftChild);
+        flowQueue.emit(draftParent);
+        await().atMost(Duration.ofSeconds(10)).until(
+            () -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(childId))
+                && flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(parent.getId()))
+        );
+        return draftParent;
+    }
+
+    private Execution runAndAwait(FlowWithSource flow, ExecutionKind kind) throws QueueException {
+        String executionId = IdUtils.create();
+        executionCommandQueue.emit(
+            Create.of(new ExecutionId(MAIN_TENANT, flow.getNamespace(), flow.getId(), executionId, flow.getRevision())).withKind(kind)
+        );
+        return runnerUtils.awaitFlowExecution(
+            e -> executionId.equals(e.getId()) && e.getState().isTerminated(),
+            MAIN_TENANT, flow.getNamespace(), flow.getId()
+        );
     }
 
     @Test

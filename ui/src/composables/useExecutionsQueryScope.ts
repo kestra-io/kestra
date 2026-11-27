@@ -35,7 +35,7 @@ export function useExecutionsQueryScope(
         let queryFilter: Record<string, unknown> = dropUnsupportedFilters(restQuery)
 
         if (scope.value.namespace) {
-            queryFilter["filters[namespace][PREFIX]"] = scope.value.namespace
+            queryFilter[`filters[namespace][${scope.value.flowId ? "EQUALS" : "PREFIX"}]`] = scope.value.namespace
         }
 
         if (scope.value.flowId) {

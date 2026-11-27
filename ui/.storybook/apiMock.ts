@@ -298,7 +298,9 @@ function installFetchMock(): void {
 
         return bodyPromise
             .catch(() => undefined)
-            .then((body) => jsonResponse(resolveApiRequest(method, rawUrl, {body})))
+            .then((body) => resolveApiRequest(method, rawUrl, {body}))
+            // Awaited so a handler can return a promise and hold its response until the story releases it.
+            .then(async ({status, data}) => jsonResponse({status, data: await data}))
     }
 
     wrapper.__kestraApiMock = true

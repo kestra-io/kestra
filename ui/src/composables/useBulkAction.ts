@@ -2,7 +2,6 @@ import type {Ref} from "vue"
 import {useI18n} from "vue-i18n"
 import {asProblem} from "@kestra-io/kestra-sdk"
 import {useToast} from "../utils/toast"
-import {isReportedCentrally, type KestraHttpError} from "../utils/kestraHttp"
 import {problemBulkBody, problemTitle} from "../utils/problem"
 
 /** Runs a list page's bulk action on every match or on the ticked rows, then reports, unselects and refreshes; a refusal is listed per item. Pass `report` instead of `success` when the outcome is not always a success. */
@@ -17,7 +16,7 @@ export function useBulkAction(
     function runBulkAction<Q, I>(action: {
         byQuery: () => Promise<Q>;
         byIds: () => Promise<I>;
-    } & ({success: (response: Q | I) => string} | {report: (response: Q | I) => void})): Promise<void> {
+    } & ({success: (response: Q | I) => string} | {report: (response: Q | I) => void})): Promise<boolean> {
         const call: () => Promise<Q | I> = table.value?.queryBulkAction ? action.byQuery : action.byIds
         return call()
             .then((response) => {
@@ -28,13 +27,12 @@ export function useBulkAction(
                 }
                 table.value?.toggleAllUnselected()
                 refresh()
+                return true
             })
             .catch((error: unknown) => {
-                if (isReportedCentrally(error as KestraHttpError)) {
-                    return
-                }
                 const problem = asProblem(error)
-                toast.error(problemBulkBody(problem, t, te), problemTitle(problem, t, te))
+                toast.requestError(error, problemBulkBody(problem, t, te), problemTitle(problem, t, te))
+                return false
             })
     }
 

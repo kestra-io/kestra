@@ -62,6 +62,7 @@ import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.scheduler.pubsub.TriggerKillPublisher;
 import io.kestra.scheduler.stores.CachedFlowMetaStore;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
@@ -131,7 +132,7 @@ class TriggerEventHandlerTest {
             triggerExecutionPublisher,
             runContextFactory,
             conditionService,
-            executionKilledQueue,
+            new TriggerKillPublisher(executionKilledQueue),
             new AsyncOperationService(asyncOperationProcessedEventQueue),
             flowParsingService
         );
@@ -1990,7 +1991,7 @@ class TriggerEventHandlerTest {
             triggerExecutionPublisher,
             runContextFactory,
             conditionService,
-            executionKilledQueue,
+            new TriggerKillPublisher(executionKilledQueue),
             new AsyncOperationService(asyncOperationProcessedEventQueue),
             Fixtures.passThroughFlowParsingService()
         );

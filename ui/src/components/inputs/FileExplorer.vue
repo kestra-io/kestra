@@ -999,8 +999,8 @@
             // succeeds; a rejected upload (e.g. missing permission) surfaces the error instead
             await filesStore.importFiles(importedFiles)
             toast.success(t("namespace files.import.success"))
-        } catch {
-            toast.error(t("namespace files.import.error"))
+        } catch (error) {
+            toast.requestError(error, t("namespace files.import.error"))
         } finally {
             (event.target as HTMLInputElement).value = ""
             dialog.value = {...DIALOG_DEFAULTS}
@@ -1240,19 +1240,23 @@
     }
 
     ul.tabs-context {
+        /* Element Plus falls back to a light primary tint for the hover fill, which is near-white in dark mode */
+        --kel-menu-bg-color: var(--ks-bg-elevated);
+        --kel-menu-hover-bg-color: var(--ks-bg-hover-elevated);
+        --kel-menu-text-color: var(--ks-text-primary);
+        --kel-menu-hover-text-color: var(--ks-text-primary);
+
         position: fixed;
         z-index: var(--ks-z-top);
-        border: 1px solid var(--ks-border-default);
+        border: 1px solid var(--ks-border-strong);
+        border-radius: var(--ks-radius-base);
+        box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
 
         & li {
             height: 30px;
             padding: 16px;
             font-size: var(--ks-font-size-sm);
             color: var(--ks-text-primary);
-
-            &:hover {
-                color: var(--ks-text-secondary);
-            }
         }
     }
 

@@ -40,7 +40,8 @@ export default defineProject({
                 // 'placements' not found ... is a CommonJS module". Inlining element-plus (and
                 // popper) routes them through Vite's transform, which provides the named
                 // exports. This is what unblocks the ~20 element-plus-backed suites.
-                inline: [/element-plus/, "@popperjs/core"],
+                // The yaml worker is inlined so its spec can mock the worker bootstrap it imports.
+                inline: [/element-plus/, "@popperjs/core", /monaco-yaml\/yaml\.worker/],
             },
         },
     },

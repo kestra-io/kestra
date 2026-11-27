@@ -43,6 +43,30 @@ class SearchPluginsToolTest {
     }
 
     @Test
+    void shouldMatchTypeWhenQueryHasSeveralKeywordsInAnyOrder() {
+        SearchPluginsTool.Result inOrder = tool.searchPlugins("debug return", null, null, null);
+        SearchPluginsTool.Result reversed = tool.searchPlugins("  Return   DEBUG ", null, null, null);
+
+        assertThat(inOrder.plugins()).anyMatch(match -> RETURN_TYPE.equals(match.type()));
+        assertThat(reversed.plugins()).containsExactlyElementsOf(inOrder.plugins());
+    }
+
+    @Test
+    void shouldMatchTypeWhenKeywordsAreSpreadOverNameAndTitle() {
+        SearchPluginsTool.Result result = tool.searchPlugins("core.debug value purposes", null, null, null);
+
+        assertThat(result.plugins()).extracting(SearchPluginsTool.PluginMatch::type).containsExactly(RETURN_TYPE);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenOneKeywordDoesNotMatch() {
+        SearchPluginsTool.Result result = tool.searchPlugins("core.debug.Return definitely-not-a-keyword-xyz", null, null, null);
+
+        assertThat(result.plugins()).isEmpty();
+        assertThat(result.total()).isZero();
+    }
+
+    @Test
     void shouldReturnOnlyTypesOfTheRequestedKindWhenKindIsGiven() {
         SearchPluginsTool.Result result = tool.searchPlugins(null, PluginKind.TRIGGER, null, null);
 

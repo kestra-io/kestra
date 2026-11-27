@@ -9,6 +9,7 @@ import {useViolationMarkers} from "../../composables/useViolationMarkers"
 const fileMetadata = vi.fn()
 const readFile = vi.fn()
 const saveOrCreateFile = vi.fn()
+const lazyLoadSchemaType = vi.fn()
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {namespace: "io.kestra.test"}, query: {}}),
@@ -45,7 +46,7 @@ vi.mock("../../composables/useViolationMarkers", async () => {
     return {useViolationMarkers: () => ({markers, revealNext})}
 })
 vi.mock("../../stores/plugins", () => ({
-    usePluginsStore: () => ({lazyLoadSchemaType: vi.fn(), editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
+    usePluginsStore: () => ({lazyLoadSchemaType, editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
 }))
 vi.mock("../../stores/productTour", () => ({
     useProductTourStore: () => ({isGuidedActive: false}),
@@ -154,6 +155,19 @@ describe("FlowFileEditorTab", () => {
         const downloadLink = wrapper.findAll("button").find((button) => button.attributes("href") !== undefined)
         expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/data.txt")
         expect(downloadLink?.attributes("download")).toBe("data.txt")
+    })
+
+    it("should address a file whose name holds characters reserved in a query string by its full path", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+
+        const image = mountWithTabContext(FlowFileEditorTab, {...namespaceFileProps, name: "a&b #1.png", extension: "png", path: "dir/a&b #1.png"})
+        fileMetadata.mockResolvedValue({size: 11 * 1024 * 1024})
+        const big = mountWithTabContext(FlowFileEditorTab, {...namespaceFileProps, name: "a&b #1.bin", extension: "bin", path: "dir/a&b #1.bin"})
+        await flushPromises()
+
+        expect(image.find("img").attributes("src")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.png")
+        const downloadLink = big.findAll("button").find((button) => button.attributes("href") !== undefined)
+        expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.bin")
     })
 
     it("should load the file content when the size stats are unavailable", async () => {
@@ -286,6 +300,14 @@ describe("FlowFileEditorTab", () => {
         expect(useFlowStore().errorNavigation).toBeNull()
     })
 
+    // The YAML worker fetches its own schema; a second copy parsed on the main thread only slows the editor down.
+    it("should not load the flow schema when the flow tab opens", async () => {
+        mountWithTabContext(FlowFileEditorTab, flowTabProps)
+        await flushPromises()
+
+        expect(lazyLoadSchemaType).not.toHaveBeenCalled()
+    })
+
     it("should drop error navigation while the flow tab is parked in KeepAlive and restore it when shown again", async () => {
         violationMarkers().value = locatedErrors
         const shown = ref(true)
@@ -308,7 +330,7 @@ describe("FlowFileEditorTab", () => {
         expect(useFlowStore().errorNavigation?.count).toBe(2)
     })
 
-    it("should save the flow without choosing its draft state, so a draft stays a draft", async () => {
+    it("should save a draft on the editor's save shortcut", async () => {
         const flowStore = useFlowStore() as unknown as {saveAll: ReturnType<typeof vi.fn>}
         flowStore.saveAll.mockReset()
         const wrapper = mountWithTabContext(FlowFileEditorTab, flowTabProps)
@@ -317,6 +339,6 @@ describe("FlowFileEditorTab", () => {
         wrapper.findComponent({name: "KsEditor"}).vm.$emit("save")
         await flushPromises()
 
-        expect(flowStore.saveAll).toHaveBeenCalledExactlyOnceWith(undefined)
+        expect(flowStore.saveAll).toHaveBeenCalledExactlyOnceWith(true)
     })
 })

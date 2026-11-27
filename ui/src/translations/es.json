@@ -183,6 +183,23 @@
     "publish_draft": "Publicar borrador",
     "draft": "Borrador",
     "draft_flow_warning": "La última revisión de este flow es un borrador. La ejecución se realizará sobre la última revisión publicada; publica el borrador (o ejecútalo desde el Playground) para ejecutar tus últimos cambios.",
+    "save_draft": "Guardar borrador",
+    "flow_publish": {
+      "description": "Hace que esta revisión esté activa: los triggers la inician, otros flows pueden llamarla y sus fallos llegan a los flows de alerta.",
+      "done_title": "Publicado",
+      "failed": "No se pudo publicar este borrador.",
+      "done": "La revisión {revision} de {name} está activa: los triggers la inician, otros flows pueden llamarla y sus fallos llegan a los flows de alerta."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Este Flow es un borrador",
+        "description": "No tiene una revisión publicada, por lo que los triggers y otros flows no lo inician. Ejecútalo desde el Playground o publícalo para activarlo."
+      },
+      "over_published": {
+        "title": "La última revisión es un borrador",
+        "description": "Los Schedules, webhooks y otros Flows seguirán ejecutando la revisión publicada hasta que publiques este draft. Los Trigger de Flow no iniciarán el Flow mientras tanto."
+      }
+    },
     "save task": "Guardar tarea",
     "saved": "Guardado exitosamente",
     "saved as draft": "Guardado como borrador correctamente",
@@ -382,6 +399,7 @@
     "create": "Crear",
     "create_flow": "Crear Flow",
     "create_child_namespace": "Crear namespace secundario",
+    "view_all_flows": "Ver todos los flows",
     "from": "Desde",
     "to": "Hasta",
     "steps": "Pasos",
@@ -624,6 +642,8 @@
         "all-iterations": "Todas las iteraciones",
         "iteration-index": "índice {index}",
         "iteration-value-index": "{value} · índice {index}",
+        "first-iteration": "Primera iteración",
+        "last-iteration": "Última iteración",
         "previous-iteration": "Iteración anterior",
         "next-iteration": "Iteración siguiente",
         "previous-page": "Página anterior",
@@ -1185,6 +1205,12 @@
     "bulk force run": "¿Estás seguro de que quieres forzar la ejecución de `{executionCount}` ejecución(es)?\n\nADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de Task duplicadas.\n\nSe realizarán las siguientes transiciones:\n\n- Los Tasks CREATED se moverán al estado RUNNING.\n- Los Tasks RUNNING se volverán a enviar.\n- Los Tasks QUEUED se des-encolarán.\n- Los Tasks PAUSED se reanudarán.",
     "bulk restart": "¿Estás seguro de que quieres reiniciar {executionCount} ejecución(es)?",
     "bulk kill": "¿Estás seguro de que quieres matar <code>{executionCount}</code> ejecución(es)?",
+    "bulk action ineligible change state": "{count} de {total} ejecuciones seleccionadas no pueden cambiar de estado.",
+    "bulk action ineligible not state": "{count} de {total} ejecuciones seleccionadas no están en el estado {state}.",
+    "bulk action ineligible not pausable": "{count} de {total} ejecuciones seleccionadas no se pueden pausar.",
+    "bulk action ineligible not resumable": "{count} de {total} ejecuciones seleccionadas no se pueden reanudar.",
+    "bulk action ineligible not terminated": "{count} de {total} ejecuciones seleccionadas no han terminado.",
+    "bulk action ineligible already terminated": "{count} de {total} ejecuciones seleccionadas ya han terminado.",
     "cancel": "Cancelar",
     "errorLogs": "Logs de error",
     "product_tour": "Recorrido del Producto",
@@ -1445,6 +1471,7 @@
     "execution-include-non-terminated": "¿Incluir ejecuciones no terminadas?",
     "execution-warn-title": "¡Advertencia Importante!",
     "execution-warn-deleting-still-running": "Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrencia, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo que puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
+    "execution-warn-non-terminated-count": "{count} de {total} ejecución(es) seleccionadas no han terminado.",
     "pluginPage": {
       "search": "Buscar entre {count}+ plugins",
       "searchTasks": "Buscar {count} tasks",
@@ -1540,6 +1567,7 @@
             "flow_default_tab": "Pestaña de Flow Predeterminada",
             "triggers_default_tab": "Pestaña de Triggers Predeterminados",
             "playground": "Área de pruebas",
+            "open_docs_tab": "Abrir pestaña de Docs",
             "auto_refresh_interval": "Intervalo de Auto Refresh",
             "task_edit_default_mode": "Modo de edición de Task predeterminado",
             "flow_template": "Plantilla de flow predeterminada"
@@ -1556,6 +1584,7 @@
             "triggers_default_tab": "Pestaña seleccionada al navegar a la página de triggers.",
             "auto_refresh_interval": "Segundos entre actualizaciones automáticas de datos en las páginas de lista.",
             "playground": "Ejecutar tasks individualmente en el editor de pruebas.",
+            "open_docs_tab": "Abre la pestaña Docs junto al editor. Se aplica a los flows nuevos y a los flows que no hayas abierto antes.",
             "task_edit_default_mode": "Cómo se abre una task por defecto desde el editor no-code.",
             "flow_template": "YAML se abre en el editor cuando creas un nuevo flow. El id y el namespace pueden omitirse, ya que se generan automáticamente. Cuando está vacío, se utiliza la plantilla configurada para la instancia."
           },
@@ -2000,6 +2029,7 @@
       "add": "Crear",
       "update": "Actualizar value para key '{key}'",
       "duplicate": "Esta key ya existe",
+      "description_latin1": "La descripción solo puede contener caracteres latinos, sin emojis.",
       "delete multiple": {
         "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
         "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>",
@@ -2074,6 +2104,7 @@
       "title": "Empieza a automatizar con Kestra",
       "sub_title": "Haz clic en el botón Ejecutar para iniciar la ejecución de tu primer flujo de trabajo.",
       "namespace_sub_title": "Ejecuta uno o más flows de este namespace para llenar este panel.",
+      "draft_sub_title": "Este flow solo tiene borradores: ejecútalo desde el Playground en el editor, o publícalo para ejecutarlo.",
       "need_help": "¿Necesitas ayuda?"
     },
     "execution_guide": {
@@ -2265,7 +2296,7 @@
       "label": "Atajos de teclado",
       "trigger_autocompletion": "Activar autocompletado",
       "command_palette": "Mostrar paleta de comandos",
-      "save_flow": "Guardar flow",
+      "save_flow": "Guardar borrador",
       "execute_flow": "Ejecutar flow",
       "toggle_ai_agent": "Alternar agente de AI",
       "move_line": "Mover línea",
@@ -2598,6 +2629,8 @@
         },
         "notice": {
           "emptyTurn": "El asistente no devolvió una respuesta. Por favor, inténtalo de nuevo.",
+          "outputLimit": "El asistente se quedó sin tokens de salida antes de poder responder. Acorta tu mensaje o inicia un nuevo chat.",
+          "contentFiltered": "El proveedor de IA bloqueó la respuesta. Reformula tu mensaje o elimina el contenido que pueda haber activado los filtros del proveedor.",
           "retry": "Reintentar"
         },
         "cancelled": "Turno cancelado",
@@ -2613,7 +2646,11 @@
           "errorHandling": "Añadir manejo de errores",
           "unitTest": "Generar una prueba unitaria",
           "explain": "Explicar este flow",
-          "dbt": "Ejecutar un dbt pipeline"
+          "dbt": "Ejecutar un dbt pipeline",
+          "createFlow": "Crea un Flow que…",
+          "createFlowPrefill": "Crear un flow que",
+          "pythonSchedule": "Ejecuta un script Python todos los días",
+          "triggers": "¿Cómo funcionan los triggers?"
         },
         "voice": {
           "start": "Iniciar entrada de voz",
@@ -3076,7 +3113,7 @@
         "no_match": "Sin coincidencias",
         "open": "Abrir {name}",
         "paste": "Pegar",
-        "save": "Guardar flow",
+        "save": "Guardar borrador",
         "search_placeholder": "Escribe un comando o busca una task…",
         "title": "Menú de comandos"
       },
@@ -3184,7 +3221,7 @@
         "paste": "Pegar",
         "redo": "Rehacer",
         "reorder": "Reordenar arriba / abajo",
-        "save": "Guardar flow",
+        "save": "Guardar borrador",
         "step_into": "Expandir / entrar en un grupo",
         "step_out": "Contraer / salir al padre",
         "title": "Atajos de teclado",
@@ -3266,6 +3303,8 @@
     "chart mode": {
       "counts": "Recuentos",
       "timeline": "Cronología"
-    }
+    },
+    "search_in_flow_source": "Buscar \"{query}\" en el código del flujo",
+    "flows_matched_query": "{count} flujo con \"{query}\" en el id o namespace. | {count} flujos con \"{query}\" en el id o namespace."
   }
 }

@@ -630,10 +630,13 @@ declare module "vue" {
         KsListingPage: typeof KsListingPage
         KsMain: typeof KsMain
         KsDatePicker: typeof KsDatePicker
+        KsDescriptions: typeof KsDescriptions
+        KsDescriptionsItem: typeof KsDescriptionsItem
         KsDialog: typeof KsDialog
         KsDivider: typeof KsDivider
         KsDrawer: typeof KsDrawer
         KsDurationPicker: typeof KsDurationPicker
+        KsEditor: typeof KsEditor
         KsDropdown: typeof KsDropdown
         KsDropdownItem: typeof KsDropdownItem
         KsDropdownMenu: typeof KsDropdownMenu

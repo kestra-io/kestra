@@ -265,6 +265,9 @@
         emit("createTask", parentPath, blockSchemaPath, refPath, "after")
     }
 
+    // An authoring surface: fetched at once, so the full schema is usually there by the time a block is opened.
+    void pluginsStore.lazyLoadSchemaType({type: "flow"})
+
     useBlockEditorProvides({
         props,
         flowYaml,
@@ -412,7 +415,7 @@
     const inlineTaskEditRef = ref<InstanceType<typeof TaskEdit>>()
     async function saveFlowWithPendingEdits() {
         inlineTaskEditRef.value?.flushPendingEdit()
-        const outcome = await flowStore.save?.(flowStore.flow?.draft ?? false)
+        const outcome = await flowStore.save?.(true)
         if (outcome === "blocked") {
             coreStore.message = {
                 variant: "error",

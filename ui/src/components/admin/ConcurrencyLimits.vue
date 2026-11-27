@@ -63,7 +63,6 @@
     import {apiUrlWithTenant} from "override/utils/route"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
-    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
     import action from "../../models/action"
 
@@ -155,9 +154,7 @@
                 running: newRunningCount.value,
             })
         } catch (error) {
-            if (!isReportedCentrally(error as KestraHttpError)) {
-                toast.error(t("concurrency_limit.save_error"))
-            }
+            toast.requestError(error, t("concurrency_limit.save_error"))
             return
         }
         editRunning.value = false

@@ -42,6 +42,13 @@ describe("entityNotFoundGuard", () => {
         expect(coreStore.error).toBeUndefined()
     })
 
+    it("renders the access-denied screen at the requested URL when the entity is forbidden", async () => {
+        const to = location(() => Promise.reject(Object.assign(new Error("403 Forbidden"), {status: 403})))
+
+        expect(await entityNotFoundGuard(to, elsewhere, next)).toBe(true)
+        expect(useCoreStore().error).toBe(403)
+    })
+
     it("lets the page mount on any other failure, which the interceptor has already toasted", async () => {
         const to = location(() => Promise.reject(Object.assign(new Error("500 Server Error"), {status: 500})))
 

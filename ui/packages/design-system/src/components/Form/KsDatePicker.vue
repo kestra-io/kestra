@@ -1,10 +1,10 @@
 <template>
     <span ref="host" class="ks-picker-host">
         <ElDatePicker
-            :modelValue="(props.modelValue as DatePickerPropsPublic['modelValue'])"
-            v-bind="({...filteredProps(), ...pickerAttrs()} as DatePickerPropsPublic)"
-            @update:modelValue="(value: T) => emit('update:modelValue', value)"
-            @change="(value: DatePickerPropsPublic['modelValue']) => emit('change', value as T)"
+            :modelValue="(shown as DatePickerPropsPublic['modelValue'])"
+            v-bind="({...filteredProps(), ...pickerAttrs(), ...zonedAttrs} as DatePickerPropsPublic)"
+            @update:modelValue="(value: T) => emit('update:modelValue', fromPicker(value))"
+            @change="(value: DatePickerPropsPublic['modelValue']) => emit('change', fromPicker(value as T))"
         />
     </span>
 </template>
@@ -15,7 +15,8 @@
     import {useFilteredProps} from "../../utils/filteredProps"
     import {useInputAttrs} from "../../composables/useInputAttrs"
     import type {NativeAttributes} from "../../utils/nativeAttributes"
-    import type {HTMLAttributes} from "vue"
+    import {computed, type HTMLAttributes} from "vue"
+    import {instantToPickerDate, pickerDateToInstant} from "../../utils/date"
 
     defineOptions({inheritAttrs: false})
 
@@ -29,6 +30,8 @@
         size?: "large" | "default" | "small"
         startPlaceholder?: string
         endPlaceholder?: string
+        /** Shows and edits a single date as a wall clock in this IANA zone instead of the browser's; the model stays an instant. */
+        timezone?: string
     }
 
     type PickerTooltipProps = Pick<ElTooltipContentProps, "teleported">
@@ -41,6 +44,7 @@
         size: undefined,
         startPlaceholder: undefined,
         endPlaceholder: undefined,
+        timezone: undefined,
     })
 
     const emit = defineEmits<{
@@ -48,8 +52,17 @@
         change: [value: T]
     }>()
 
-    const filteredProps = useFilteredProps(props, ["modelValue"])
+    const filteredProps = useFilteredProps(props, ["modelValue", "timezone"])
     const {pickerAttrs} = useInputAttrs("host")
+
+    const shown = computed(() => props.timezone ? instantToPickerDate(props.modelValue, props.timezone) : props.modelValue)
+
+    // Element Plus fills "Now" with the browser's wall clock, which would then be read in the other zone.
+    const zonedAttrs = computed(() => props.timezone ? {showNow: false} : {})
+
+    function fromPicker(value: T): T {
+        return props.timezone ? pickerDateToInstant(value as Date | null, props.timezone) as T : value
+    }
 </script>
 
 <style lang="scss">

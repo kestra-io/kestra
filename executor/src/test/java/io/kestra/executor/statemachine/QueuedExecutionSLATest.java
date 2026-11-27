@@ -35,7 +35,8 @@ class QueuedExecutionSLATest {
         );
         harness.registerFlow(flow);
         Execution holder = Executions.created(flow);
-        Execution expired = Executions.created(flow);
+        // started an hour ago: duration SLAs are measured on the wall clock, a just-created execution may not have exceeded even 1ms yet
+        Execution expired = Executions.createdAt(flow, Instant.now().minus(Duration.ofHours(1)));
         Execution waiting = Executions.created(flow);
         harness.step(holder);
         harness.step(expired);

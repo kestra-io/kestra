@@ -3,7 +3,6 @@ package io.kestra.core.models.flows;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -17,6 +16,7 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.GenericTask;
 import io.kestra.core.models.triggers.GenericTrigger;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.utils.ListUtils;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -89,11 +89,11 @@ public class GenericFlow extends AbstractFlow implements HasUID {
     }
 
     public List<GenericTask> getTasks() {
-        return Optional.ofNullable(tasks).orElse(List.of());
+        return ListUtils.emptyOnNull(tasks);
     }
 
     public List<GenericTrigger> getTriggers() {
-        return Optional.ofNullable(triggers).orElse(List.of());
+        return ListUtils.emptyOnNull(triggers);
     }
 
     @Override

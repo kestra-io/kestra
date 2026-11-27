@@ -1,7 +1,5 @@
 package io.kestra.webserver.services.ai.gemini;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -15,11 +13,8 @@ import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.AiService;
 import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
-import io.kestra.webserver.utils.HttpClientUtils;
 
 import dev.langchain4j.http.client.HttpClientBuilder;
-import dev.langchain4j.http.client.HttpClientBuilderLoader;
-import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
@@ -88,20 +83,8 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .customHeaders(customHeaders())
             .timeout(getAiConfiguration().timeout());
 
-        if (getAiConfiguration().clientPem() != null) {
-            try (
-                ByteArrayInputStream is = new ByteArrayInputStream(getAiConfiguration().clientPem().getBytes(StandardCharsets.UTF_8));
-                ByteArrayInputStream caPem = getAiConfiguration().caPem() == null ? null : new ByteArrayInputStream(getAiConfiguration().caPem().getBytes(StandardCharsets.UTF_8))
-            ) {
-                JdkHttpClientBuilder jdkHttpClientBuilder = ((JdkHttpClientBuilder) HttpClientBuilderLoader.loadHttpClientBuilder()).httpClientBuilder(
-                    HttpClientUtils.withPemCertificate(is, caPem)
-                );
-
-                builder = builder.httpClientBuilder(jdkHttpClientBuilder);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Exception while trying to setup AI Service certificates", e);
-            }
-        }
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+            .ifPresent(builder::httpClientBuilder);
 
         return builder.build();
     }
@@ -145,6 +128,9 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .sendThinking(true)
             .customHeaders(customHeaders)
             .timeout(getAiConfiguration().timeout());
+
+        httpClientBuilder(getAiConfiguration().clientPem(), getAiConfiguration().caPem())
+            .ifPresent(builder::httpClientBuilder);
 
         return builder.build();
     }

@@ -308,7 +308,11 @@ public class ExecutorService {
                         outputs = Collections.emptyMap();
                     }
 
-                    taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), outputs);
+                    if (flowableParent instanceof WorkingDirectory && ListUtils.emptyOnNull(parentTaskRun.getAttempts()).size() > 1) {
+                        taskOutputService.replaceOutputs(workerTaskResult.getTaskRun(), outputs);
+                    } else {
+                        taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), outputs);
+                    }
 
                     // flowable attempt state transition to terminated
                     List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())

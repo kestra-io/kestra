@@ -1237,12 +1237,14 @@
         changeStatusDialogVisible.value = false
         actionOptions.value.newStatus = selectedStatus.value
 
-        await genericConfirmCallback(
+        const succeeded = await genericConfirmCallback(
             "queryChangeExecutionStatus",
             "bulkChangeExecutionStatus",
             "executions state changed",
         )
-        window.setTimeout(() => dataTable.value?.reload(), 100)
+        if (succeeded) {
+            window.setTimeout(() => dataTable.value?.reload(), 100)
+        }
     }
 
 

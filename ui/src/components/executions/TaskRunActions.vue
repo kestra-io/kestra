@@ -14,12 +14,14 @@
                         <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
-                <SubFlowLink
+                <KsDropdownItem
                     v-if="isSubflow"
-                    component="KsDropdownItem"
-                    tabExecution="logs"
-                    :executionId="taskRun.outputs.executionId"
-                />
+                    :icon="AxisYArrow"
+                    data-test="task-run-subflow-execution"
+                    @click="openSubflowExecution"
+                >
+                    {{ $t("sub flow") }}
+                </KsDropdownItem>
 
                 <Metrics :taskRun="taskRun" :execution="execution" />
 
@@ -91,16 +93,19 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
 
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Copy from "vue-material-design-icons/ContentCopy.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import Download from "vue-material-design-icons/Download.vue"
+    import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue"
 
     import {State} from "@kestra-io/design-system"
 
     import * as Utils from "../../utils/utils"
+    import {findTaskById} from "../../utils/flowUtils"
+    import {isSubflowTaskType} from "../../services/subflowReferences"
     import {useToast} from "../../utils/toast"
     import resource from "../../models/resource"
     import action from "../../models/action"
@@ -114,7 +119,6 @@
     import Outputs from "./Outputs.vue"
     import WorkerInfo from "./WorkerInfo.vue"
     import TaskEdit from "../flows/TaskEdit.vue"
-    import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
     import {useAiEnabled} from "../../composables/useAiEnabled"
 
@@ -139,6 +143,7 @@
 
     const {t} = useI18n()
     const route = useRoute()
+    const router = useRouter()
     const toast = useToast()
     const miscStore = useMiscStore()
     const aiEnabled = useAiEnabled()
@@ -155,7 +160,22 @@
 
     const selectedAttempt = computed(() => attempts(props.taskRun)[props.attemptIndex ?? 0])
 
-    const isSubflow = computed<boolean>(() => props.taskRun?.outputs?.executionId)
+    const isSubflow = computed(() => isSubflowTaskType(findTaskById(props.flow, props.taskRun.taskId)?.type))
+
+    // Task run outputs are no longer on the execution payload, so the child is found through its trigger instead.
+    async function openSubflowExecution() {
+        const response = await executionsStore.findExecutions({
+            "filters[triggerExecutionId][EQUALS]": props.execution.id,
+            page: 1,
+            size: 100,
+            commit: false,
+        })
+        const children = (response.results ?? []).filter((child: {trigger?: {variables?: {taskRunId?: unknown}}}) =>
+            child.trigger?.variables?.taskRunId === props.taskRun.id)
+        router.push(children.length === 1
+            ? {name: "executions/update", params: {namespace: children[0].namespace, flowId: children[0].flowId, id: children[0].id}}
+            : {name: "executions/list", query: {"filters[triggerExecutionId][EQUALS]": props.execution.id}})
+    }
 
     const hasWorkerId = computed<boolean | null>(() =>
         props.taskRun.attempts?.find((attempt: any) => attempt.workerId !== null) !== null,

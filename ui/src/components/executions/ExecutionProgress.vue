@@ -1,17 +1,21 @@
 <template>
-    <div v-if="averageDurationMs" class="execution-progress">
-        <KsText size="small" class="progress-title">{{ $t("executionProgress.title") }}</KsText>
-        <KsText size="small" class="progress-estimate">
-            <template v-if="isPastEstimate">
-                {{ $t("executionProgress.pastEstimate") }}
-            </template>
-            <template v-else>
-                {{ $t("executionProgress.estimatedRemaining", {duration: remainingDisplay}) }}
-            </template>
-        </KsText>
+    <div v-if="isVisible" class="execution-progress" data-test="execution-progress">
+        <div class="progress-header">
+            <KsText size="small" class="progress-title" data-test="execution-progress-title">
+                {{ $t("executionProgress.title") }}
+            </KsText>
+            <KsText size="small" class="progress-estimate" data-test="execution-progress-estimate">
+                <template v-if="isPastEstimate">
+                    {{ $t("executionProgress.pastEstimate") }}
+                </template>
+                <template v-else>
+                    {{ $t("executionProgress.estimatedRemaining", {duration: remainingDisplay}) }}
+                </template>
+            </KsText>
+        </div>
         <KsProgress
             :percentage="progressPercent"
-            :stroke-width="18"
+            :stroke-width="8"
             :showText="false"
             striped
             stripedFlow
@@ -20,9 +24,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onBeforeUnmount} from "vue"
+    import {ref, computed, onBeforeUnmount, watch} from "vue"
 
-    import {durationUtils, KsProgress, KsText} from "@kestra-io/design-system"
+    import {durationUtils, KsProgress, KsText, State} from "@kestra-io/design-system"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
     import {type Execution} from "../../stores/executions"
@@ -35,6 +39,9 @@
     // estimate from — both cases skip rendering the progress bar.
     const averageDurationMs = ref<number | null>(null)
 
+    const isRunning = computed(() => props.execution.state?.current === State.RUNNING)
+    const isVisible = computed(() => isRunning.value && averageDurationMs.value !== null)
+
     // Timezone-independent: Date.now() counts milliseconds since the UTC epoch, as does parsing the
     // execution's ISO start date below, so the two can be subtracted whatever the browser timezone.
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
@@ -42,7 +49,7 @@
     let ticker: ReturnType<typeof setInterval> | undefined
 
     const elapsedMs = computed(() => {
-        const {startDate} = props.execution.state
+        const startDate = props.execution.state?.startDate
         if (!startDate) return 0
         return Math.max(0, now.value - new Date(startDate).getTime())
     })
@@ -68,11 +75,9 @@
         return Math.min(99, (elapsedMs.value / averageDurationMs.value) * 100)
     })
 
-    onMounted(async () => {
-        ticker = setInterval(() => {
-            now.value = Date.now()
-        }, 1000)
+    let retryTimeout: ReturnType<typeof setTimeout> | undefined
 
+    const fetchAverageDuration = async () => {
         try {
             const {avgDurationMs} = await ExecutionsAPI.executionAverageDuration({
                 namespace: props.execution.namespace,
@@ -81,35 +86,72 @@
             // the backend omits the field entirely when there is no history (non_null serialization)
             averageDurationMs.value = avgDurationMs ?? null
         } catch {
-            // no baseline: the progress bar is skipped rather than blocking the Gantt view
+            if (isRunning.value && !retryTimeout) {
+                retryTimeout = setTimeout(() => {
+                    retryTimeout = undefined
+                    if (isRunning.value && averageDurationMs.value === null) {
+                        fetchAverageDuration()
+                    }
+                }, 10_000)
+            }
         }
-    })
+    }
+
+    watch(
+        isRunning,
+        (running) => {
+            if (running) {
+                if (!ticker) {
+                    ticker = setInterval(() => {
+                        now.value = Date.now()
+                    }, 1000)
+                }
+                if (averageDurationMs.value === null) {
+                    fetchAverageDuration()
+                }
+            } else {
+                if (ticker) {
+                    clearInterval(ticker)
+                    ticker = undefined
+                }
+                if (retryTimeout) {
+                    clearTimeout(retryTimeout)
+                    retryTimeout = undefined
+                }
+            }
+        },
+        {immediate: true},
+    )
 
     onBeforeUnmount(() => {
-        clearInterval(ticker)
+        if (ticker) {
+            clearInterval(ticker)
+        }
+        if (retryTimeout) {
+            clearTimeout(retryTimeout)
+        }
     })
 </script>
 
 <style scoped>
-    /* Sits on --ks-bg-base, where the progress track (--ks-bg-hover) resolves to the same color and
-       would be invisible; the surface background is what makes the unfilled part of the bar read. */
     .execution-progress {
         display: flex;
         flex-direction: column;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-4);
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2) var(--ks-spacing-5);
         text-align: left;
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-lg);
+        border-top: 1px solid var(--ks-border-default);
     }
 
-    .progress-title,
-    .progress-estimate {
-        align-self: flex-start;
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--ks-spacing-2);
     }
 
     .progress-estimate {
         color: var(--ks-text-secondary);
+        white-space: nowrap;
     }
 </style>

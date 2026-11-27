@@ -31,8 +31,8 @@ const messages = {
 
 const averageDuration = vi.mocked(ExecutionsAPI.executionAverageDuration)
 
-function mountProgress(startDate = START) {
-    const execution = {namespace: "company.team", flowId: "my-flow", state: {startDate}} as unknown as Execution
+function mountProgress(startDate = START, current = "RUNNING") {
+    const execution = {namespace: "company.team", flowId: "my-flow", state: {startDate, current}} as unknown as Execution
     return i18nMount(ExecutionProgress, {
         props: {execution},
         messages,
@@ -58,7 +58,6 @@ describe("ExecutionProgress", () => {
     })
 
     afterEach(() => {
-        // Before useRealTimers, or vitest's end-of-file restore reinstalls the dead fake setInterval for later files.
         vi.restoreAllMocks()
         vi.useRealTimers()
         vi.resetAllMocks()
@@ -88,6 +87,31 @@ describe("ExecutionProgress", () => {
     it("should render nothing when the request fails", async () => {
         averageDuration.mockRejectedValue(new Error("Request failed"))
         const wrapper = mountProgress()
+        await flushPromises()
+
+        expect(wrapper.text()).toBe("")
+    })
+
+    it("should retry fetching average duration after 10s on failure", async () => {
+        averageDuration.mockRejectedValueOnce(new Error("Request failed"))
+        averageDuration.mockResolvedValueOnce({avgDurationMs: 60_000})
+
+        const wrapper = mountProgress()
+        await flushPromises()
+
+        expect(wrapper.text()).toBe("")
+        expect(averageDuration).toHaveBeenCalledTimes(1)
+
+        await vi.advanceTimersByTimeAsync(10_000)
+        await flushPromises()
+
+        expect(averageDuration).toHaveBeenCalledTimes(2)
+        expect(wrapper.find("[data-test='execution-progress']").exists()).toBe(true)
+    })
+
+    it("should render nothing when execution is not running", async () => {
+        averageDuration.mockResolvedValue({avgDurationMs: 60_000})
+        const wrapper = mountProgress(START, "SUCCESS")
         await flushPromises()
 
         expect(wrapper.text()).toBe("")

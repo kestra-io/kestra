@@ -369,7 +369,7 @@
         column-gap: var(--ks-spacing-4);
         row-gap: var(--ks-spacing-2);
         flex: 1;
-        padding: 1rem var(--ks-spacing-5);
+        padding: var(--ks-spacing-3) var(--ks-spacing-5);
         border-bottom: 1px solid var(--ks-border-default);
     }
 
@@ -378,7 +378,7 @@
         align-items: center;
         justify-content: space-between;
         gap: var(--ks-spacing-4);
-        padding: var(--ks-spacing-4) var(--ks-spacing-5);
+        padding: var(--ks-spacing-2) var(--ks-spacing-5);
         flex-shrink: 0;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);

@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -15,6 +17,8 @@ import io.kestra.core.runners.pebble.PebbleEngineFactory;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.error.AttributeNotFoundException;
+import io.pebbletemplates.pebble.error.RootAttributeNotFoundException;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +34,15 @@ class VariableRendererTest {
 
     @Inject
     private PebbleEngineFactory pebbleEngineFactory;
+
+    @ParameterizedTest
+    @CsvSource({ "labels.env, env", "nmespace, nmespace" })
+    void shouldPreserveMissingAttributeCauseWhenRenderingFails(String expression, String attribute) {
+        assertThatThrownBy(() -> variableRenderer.render("{{ " + expression + " }}", Map.of("labels", Map.of())))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessage("Unable to find `%s` used in the expression `{{ %s }}` at line 1", attribute, expression)
+            .hasCauseExactlyInstanceOf("nmespace".equals(expression) ? RootAttributeNotFoundException.class : AttributeNotFoundException.class);
+    }
 
     @Test
     void shouldRenderContactUntypedStringExpression() throws IllegalVariableEvaluationException {

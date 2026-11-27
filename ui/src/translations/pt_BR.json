@@ -458,7 +458,7 @@
     "change state confirm": "Tem certeza de que deseja alterar o estado de execução da task {task} na execução {id}?",
     "change state confirm restart": "Isso reiniciará a execução a partir da próxima task e reiniciará a execução pai, se houver.",
     "interrupt": "Interromper",
-    "interrupt confirm": "Tem certeza de que deseja interromper a execução da Task para a Task {task} na egzekucja {id}?",
+    "interrupt confirm": "",
     "interrupt note": "Isso encerrará a Task em execução dentro do Worker e definirá seu estado.",
     "interrupt done": "A execução da Task foi interrompida",
     "interrupt target state": "Estado alvo",
@@ -559,7 +559,7 @@
       "cancel done": "A solicitação de aprovação foi cancelada",
       "banner": {
         "pausing": "Esta execução está pausando. A solicitação de aprovação pode ser revisada assim que todas as tasks onWait terminarem.",
-        "paused": "Esta egzekucja está aguardando uma revisão. Aprove ou negue para continuar."
+        "paused": ""
       }
     },
     "resume from breakpoint done": "A execução é retomada a partir do ponto de interrupção",

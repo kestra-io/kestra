@@ -434,8 +434,8 @@
     "restart tooltip": "Перезапустить выполнение с <code>{state}</code> task",
     "restarted": "Выполнение перезапущено",
     "restart confirm": "Вы уверены, что хотите перезапустить выполнение {id}?",
-    "restart subflow warning": "Эта egzekucja была создана родительской egzekucją и должна быть перезапущена оттуда. Перезапуск только этой egzekucji оставит родительскую egzekucję в статусе FAILED, и ее следующие Task'и не будут запущены. Перейдите к {parent}, чтобы перезапустить ее.",
-    "restart subflow warning link": "родительская egzekucja",
+    "restart subflow warning": "",
+    "restart subflow warning link": "",
     "replay": "Повтор",
     "replay from task tooltip": "Создать аналогичное выполнение, начиная с задачи <code>{taskId}</code>",
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",
@@ -504,11 +504,11 @@
       "refused_description": "Задача, input или переменная, результат которых будет повторно использован, определены по-другому в этой версии.",
       "error_title": "Не удалось проверить, можно ли повторить версию {revision} из Task'а {taskId}.",
       "error_description": "Вы все еще можете сделать Replay. Сервер применяет те же правила при запуске Replay и отклоняет его, если версия несовместима.",
-      "whole_action": "Повторить всю egzekucję вместо этого",
-      "whole_title": "Ревизия {revision} может быть повторно воспроизведена как полная egzekucja.",
-      "whole_description": "Более ранние результаты не используются повторно, поэтому каждая Task запускается снова в версии {revision}. Исходная egzekucja сохраняется и связывается.",
+      "whole_action": "",
+      "whole_title": "",
+      "whole_description": "",
       "confirm_from_task": "Повтор с {taskId}",
-      "confirm_whole": "Повторить всю egzekucję"
+      "confirm_whole": ""
     },
     "change execution state done": "Состояние выполнения обновлено",
     "mark as": "Пометить как {status}",
@@ -559,7 +559,7 @@
       "cancel done": "Запрос на утверждение отменен",
       "banner": {
         "pausing": "Эта Execution приостанавливается. Запрос на утверждение можно будет рассмотреть, как только все onWait Task'и завершатся.",
-        "paused": "Эта egzekucja ожидает проверки. Одобрите или отклоните ее, чтобы продолжить."
+        "paused": ""
       }
     },
     "resume from breakpoint done": "Выполнение возобновлено с точки останова",
@@ -818,7 +818,7 @@
     },
     "concurrency_limit": {
       "dialog_title": "Ограничения на параллельность",
-      "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit.",
+      "warning": "",
       "queued": "В очереди",
       "save_error": "Не удалось обновить лимит Concurrency, сохранено предыдущее значение.",
       "invalid_running_count": "Введите целое число от 0 до {max}."
@@ -1206,12 +1206,12 @@
     "executions replayed": "<code>{executionCount}</code> выполнение | <code>{executionCount}</code> выполнения | <code>{executionCount}</code> выполнений воспроизведено",
     "executions state changed": "Состояние выполнения <code>{executionCount}</code> было изменено",
     "executions resumed": "<code>{executionCount}</code> выполнение | <code>{executionCount}</code> выполнения | <code>{executionCount}</code> выполнений возобновлено",
-    "executions paused": "<code>{executionCount}</code> egzekucja(-e) wstrzymana(-e)",
-    "executions unqueue": "<code>{executionCount}</code> egzekucja(e) usunięte z kolejki",
-    "executions force run": "<code>{executionCount}</code> принудительно запущенных egzekucji",
-    "executions restarted": "<code>{executionCount}</code> перезапущенных egzekucji",
-    "executions killed": "<code>{executionCount}</code> egzekucja(-e) zabita(-e)",
-    "executions deleted": "<code>{executionCount}</code> удаленных egzekucji",
+    "executions paused": "",
+    "executions unqueue": "",
+    "executions force run": "",
+    "executions restarted": "",
+    "executions killed": "",
+    "executions deleted": "",
     "execution not found": "Выполнение {executionId} не найдено.",
     "seeing old revision": "Вы просматриваете старую ревизию: {revision}",
     "export": "Экспорт",
@@ -2168,9 +2168,9 @@
       "range": "{from}–{to} из {total}"
     },
     "loop_iterations_notice": {
-      "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",
-      "outputs": "Итерации Loop выполняются как отдельные под-egzekucje, поэтому их output не отображается здесь.",
-      "metrics": "Итерации Loop выполняются как отдельные под-egzekucje, поэтому их метрики здесь не отображаются.",
+      "logs": "",
+      "outputs": "",
+      "metrics": "",
       "view_iterations": "Просмотр итераций"
     },
     "cron": "Крон",

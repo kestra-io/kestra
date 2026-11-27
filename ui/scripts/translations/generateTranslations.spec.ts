@@ -68,6 +68,30 @@ describe("generateTranslations", () => {
         }
     })
 
+    it("gives each language only its own glossary", async () => {
+        const dir = mkdtempSync(join(tmpdir(), "translations-"))
+        writeFileSync(join(dir, "en.json"), JSON.stringify({en: {greeting: "Hello"}}))
+        const prompts: Record<string, string> = {}
+        const client = {
+            models: {
+                generateContent: async ({contents, config}: {contents: string; config: {systemInstruction: string}}) => {
+                    prompts[config.systemInstruction.includes("Polish") ? "pl" : "ru"] = contents
+                    return {text: config.systemInstruction.includes("Polish") ? "Cześć" : "Привет"}
+                },
+            },
+        } as unknown as TranslationClient
+
+        try {
+            await generateTranslations({client, translationsDir: dir, languages: [["pl", "Polish"], ["ru", "Russian"]]})
+
+            expect(prompts.pl).toContain("\"egzekucja\"")
+            expect(prompts.ru).not.toContain("egzekucja")
+            expect(prompts.ru).toContain("Russian Plural Forms")
+        } finally {
+            rmSync(dir, {recursive: true, force: true})
+        }
+    })
+
     it("marks the run as failed and leaves the key unsettled when the client rejects every call", async () => {
         const dir = mkdtempSync(join(tmpdir(), "translations-"))
         writeFileSync(join(dir, "en.json"), JSON.stringify({en: {greeting: "Hello"}}))

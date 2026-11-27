@@ -443,7 +443,7 @@
     "replayed": "La ejecución se está reproduciendo",
     "reused_task_run": {
       "label": "Reutilizado",
-      "tooltip": "No se volverá a ejecutar en esta egzekucja. Se ejecutó el {date}, y sus logs y outputs provienen de esa ejecución."
+      "tooltip": ""
     },
     "replay the execution": "Repetir la ejecución {executionId} para el flow {flowId}",
     "prefill inputs": "Prefill",
@@ -458,7 +458,7 @@
     "change state confirm": "¿Estás seguro de que quieres cambiar el estado de ejecución de la task {task} en la ejecución {id}?",
     "change state confirm restart": "Luego, reiniciará la ejecución desde la siguiente task y reiniciará la ejecución padre si existe.",
     "interrupt": "Interrumpir",
-    "interrupt confirm": "¿Estás seguro de que quieres interrumpir la ejecución de la task {task} en la egzekucja {id}?",
+    "interrupt confirm": "",
     "interrupt note": "Esto finalizará la task en ejecución dentro del worker y establecerá su estado.",
     "interrupt done": "La ejecución de la Task ha sido interrumpida",
     "interrupt target state": "Estado objetivo",
@@ -818,7 +818,7 @@
     },
     "concurrency_limit": {
       "dialog_title": "Límites de Concurrencia",
-      "warning": "Cambiar el contador en ejecución puede corromper la Concurrency, por lo que las egzekucje pueden exceder el límite permitido.",
+      "warning": "",
       "queued": "En cola",
       "save_error": "No se pudo actualizar el límite de concurrency, se mantiene el valor anterior.",
       "invalid_running_count": "Introduce un número entero entre 0 y {max}."
@@ -2651,7 +2651,7 @@
         },
         "mcpTip": {
           "title": "Usa Kestra desde Claude Code, Cursor y otros clientes de MCP",
-          "description": "Junto con Copilot, Kestra proporciona un servidor MCP. Conecta un cliente MCP externo a él para gestionar tus Flows y egzekucje desde las herramientas que ya utilizas.",
+          "description": "",
           "docs": "Ver documentación",
           "dismiss": "No volver a mostrar"
         },

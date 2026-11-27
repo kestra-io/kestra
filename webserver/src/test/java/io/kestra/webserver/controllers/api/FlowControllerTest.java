@@ -1616,6 +1616,55 @@ class FlowControllerTest {
     }
 
     @Test
+    void disableFlowsSkipsPendingDrafts() {
+        String flowId = "bulk-draft-" + IdUtils.create();
+        String namespace = "io.kestra.unittest.bulkdraft";
+
+        String savedSource = """
+            id: %s
+            namespace: %s
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: saved revision
+            """.formatted(flowId, namespace);
+
+        String draftSource = savedSource.replace("saved revision", "draft revision");
+
+        try {
+            client.toBlocking().exchange(
+                POST("/api/v1/main/flows", savedSource).contentType(MediaType.APPLICATION_YAML)
+            );
+            client.toBlocking().exchange(
+                PUT("/api/v1/main/flows/" + namespace + "/" + flowId + "?draft=true", draftSource)
+                    .contentType(MediaType.APPLICATION_YAML)
+            );
+
+            List<IdWithNamespace> ids = List.of(new IdWithNamespace(namespace, flowId));
+
+            HttpResponse<BulkResponse> byIds = client.toBlocking().exchange(
+                POST("/api/v1/main/flows/disable/by-ids", ids), BulkResponse.class
+            );
+            assertThat(byIds.getBody().get().getCount()).isZero();
+
+            HttpResponse<BulkResponse> byQuery = client.toBlocking().exchange(
+                POST("/api/v1/main/flows/disable/by-query?filters[namespace][PREFIX]=" + namespace, Map.of()),
+                BulkResponse.class
+            );
+            assertThat(byQuery.getBody().get().getCount()).isZero();
+
+            Flow latest = parseFlow(client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/flows/" + namespace + "/" + flowId), String.class
+            ));
+
+            assertThat(latest.isDraft()).isTrue();
+            assertThat(latest.isDisabled()).isFalse();
+        } finally {
+            client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + namespace + "/" + flowId));
+        }
+    }
+    @Test
     void deleteFlowFlowsByQuery() {
         postFlow("flowIdA", "io.kestra.tests.delete", "a");
         postFlow("flowIdB", "io.kestra.tests.delete", "b");

@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -34,7 +35,9 @@ import jakarta.validation.ConstraintViolationException;
 public final class YamlParser {
     public static final Pattern DOCUMENT_SEPARATOR = Pattern.compile("(?m)^---[ \\t]*(?:#.*)?\\r?$");
 
-    private static final ObjectMapper NON_STRICT_MAPPER = JacksonMapper.ofYaml()
+    // convertValue() re-serializes the input map, so null entries must be kept for a property parsed from a map.
+    private static final ObjectMapper NON_STRICT_MAPPER = JacksonMapper.ofYaml().copy()
+        .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS))
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
 

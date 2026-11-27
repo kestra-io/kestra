@@ -4,6 +4,7 @@
             <KsText size="small" class="copilot-draft-title">
                 <KsIcon class="copilot-draft-icon"><FileDocumentOutline /></KsIcon>
                 {{ $t(`ai.copilot.draft.title.${draft.kind.toLowerCase()}`) }}
+                <code v-if="flowTarget" class="copilot-draft-target" data-test="copilot-draft-target">{{ flowTarget }}</code>
             </KsText>
             <KsCodeStatus
                 data-test="copilot-draft-status"
@@ -93,6 +94,7 @@
     import {computed, defineAsyncComponent, ref, watch} from "vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import {useApplyDraft} from "./useApplyDraft"
+    import {parseArtefactYaml} from "./draftApply"
     import type {ArtefactDraftEvent} from "./types"
 
     const props = defineProps<{
@@ -147,6 +149,14 @@
         if (await apply(props.draft)) emit("applied", props.draft.draftId)
     }
 
+    // Names the flow a draft would write to, so a proposal aimed at the wrong flow (a new id where a
+    // change to the open flow was asked for) is visible before Apply.
+    const flowTarget = computed(() => {
+        if (props.draft.kind !== "FLOW") return ""
+        const {namespace, id} = parseArtefactYaml(props.draft.yaml)
+        return namespace && id ? `${namespace}.${id}` : ""
+    })
+
     const yamlBlock = computed(() => "```yaml\n" + props.draft.yaml + "\n```")
 </script>
 
@@ -173,6 +183,10 @@
         align-items: center;
         gap: var(--ks-spacing-1);
         font-size: var(--ks-font-size-sm);
+    }
+
+    .copilot-draft-target {
+        overflow-wrap: anywhere;
     }
 
     .copilot-draft-constraints {

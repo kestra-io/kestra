@@ -116,6 +116,11 @@ public class GrpcWorkerFlowMetaStore implements FlowMetaStoreInterface, WorkerMe
     }
 
     @Override
+    public Optional<Integer> findLatestRevision(String tenantId, String namespace, String id) {
+        throw new UnsupportedOperationException("findLatestRevision is not supported on workers");
+    }
+
+    @Override
     public Optional<FlowInterface> findByIdFromTask(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant, String fromNamespace, String fromId) {
         throw new UnsupportedOperationException("findByIdFromTask is not supported on workers");
     }

@@ -6,12 +6,14 @@ const createDirectory = vi.fn()
 const saveOrCreateFile = vi.fn()
 const importFileDirectory = vi.fn()
 const readDirectory = vi.fn()
+const toastSuccess = vi.fn()
+const toastError = vi.fn()
 
 vi.mock("override/stores/namespaces", () => ({
     useNamespacesStore: () => ({createDirectory, saveOrCreateFile, importFileDirectory, readDirectory}),
 }))
 vi.mock("../utils/toast", () => ({
-    makeToast: () => ({success: vi.fn(), error: vi.fn()}),
+    makeToast: () => ({success: toastSuccess, error: toastError}),
 }))
 
 describe("fileExplorer store", () => {
@@ -115,6 +117,15 @@ describe("fileExplorer store", () => {
         error.mockRestore()
     })
 
+    it("should leave an entry without a name out of the tree instead of rendering it", async () => {
+        const filesStore = store()
+        readDirectory.mockResolvedValueOnce([{type: "File"}, {type: "File", fileName: "one.txt"}])
+
+        await filesStore.loadNodes()
+
+        expect(filesStore.fileTree.map(node => node.fileName)).toEqual(["one.txt"])
+    })
+
     it("should clear the tree when the root load fails so a stale namespace's files are not shown", async () => {
         const filesStore = store()
         readDirectory.mockResolvedValueOnce([{type: "File", fileName: "one.txt"}])
@@ -194,6 +205,198 @@ describe("fileExplorer store", () => {
         expect(path).toBe("my.file.py")
         expect(file?.fileName).toBe("my.file.py")
         expect(file?.extension).toBe("py")
+    })
+
+    it("should block creating a file in a collapsed folder when that file already exists on the server", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "scripts"}])
+            .mockResolvedValueOnce([{type: "File", fileName: "main.py"}])
+        await filesStore.loadNodes()
+
+        const result = await filesStore.addFile({fileName: "main", extension: "py", leaf: true}, "scripts", true)
+
+        expect(result).toEqual({})
+        expect(saveOrCreateFile).not.toHaveBeenCalled()
+        expect(toastError).toHaveBeenCalledWith("namespace files.create.file_already_exists")
+    })
+
+    it("should block creating a file via a path into a collapsed folder when that file already exists", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "scripts"}])
+            .mockResolvedValueOnce([{type: "File", fileName: "main.py"}])
+        await filesStore.loadNodes()
+
+        const result = await filesStore.addFile({fileName: "scripts/main", extension: "py", leaf: true}, undefined, true)
+
+        expect(result).toEqual({})
+        expect(saveOrCreateFile).not.toHaveBeenCalled()
+        expect(toastError).toHaveBeenCalledWith("namespace files.create.file_already_exists")
+    })
+
+    it("should block creating a folder in a collapsed folder when that folder already exists on the server", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "scripts"}])
+            .mockResolvedValueOnce([{type: "Directory", fileName: "utils"}])
+        await filesStore.loadNodes()
+
+        await filesStore.addFolder({parentPath: "scripts", fileName: "utils"}, true)
+
+        expect(createDirectory).not.toHaveBeenCalled()
+        expect(toastError).toHaveBeenCalledWith("namespace files.create.folder_already_exists")
+    })
+
+    it("should create a nested path inside a lazy-loaded subfolder without throwing", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "parent"}])
+            .mockResolvedValueOnce([{type: "Directory", fileName: "sub"}])
+            .mockResolvedValueOnce([{type: "File", fileName: "existing.txt"}])
+        await filesStore.loadNodes()
+        const parent = filesStore.fileTree[0] as TreeNodeDirectory
+
+        await filesStore.loadNodes({level: 1, data: {id: parent.id}} as unknown as ElTreeNode, vi.fn())
+        const sub = parent.children[0] as TreeNodeDirectory
+        expect(sub.children).toEqual([])
+
+        const {path, file} = await filesStore.addFile({fileName: "parent/sub/a/new", extension: "py", leaf: true}, undefined, true)
+
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "parent/sub/a/new.py", content: ""})
+        expect(path).toBe("parent/sub/a/new.py")
+        expect(file?.fileName).toBe("new.py")
+        const aFolder = sub.children.find(node => node.fileName === "a") as TreeNodeDirectory
+        expect(aFolder).toBeDefined()
+        expect(aFolder.children.map(node => node.fileName)).toEqual(["new.py"])
+    })
+
+    it("should update children when expanding a nested directory even when sibling files are present", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "parent"}])
+            .mockResolvedValueOnce([{type: "File", fileName: "readme.md"}, {type: "Directory", fileName: "sub"}])
+            .mockResolvedValueOnce([{type: "File", fileName: "nested.py"}])
+        await filesStore.loadNodes()
+        const parent = filesStore.fileTree[0] as TreeNodeDirectory
+        await filesStore.loadNodes({level: 1, data: {id: parent.id}} as unknown as ElTreeNode, vi.fn())
+        const sub = parent.children.find(node => node.fileName === "sub") as TreeNodeDirectory
+
+        await filesStore.loadNodes({level: 2, data: {id: sub.id}} as unknown as ElTreeNode, vi.fn())
+
+        expect(sub.children.map(node => node.fileName)).toEqual(["nested.py"])
+    })
+
+    it("should find the expanded directory even when a file precedes it in the tree", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "parent"}])
+            .mockResolvedValueOnce([{type: "File", fileName: "nested.py"}])
+        await filesStore.loadNodes()
+        const parent = filesStore.fileTree[0]
+        filesStore.fileTree = [{id: "readme", fileName: "readme.md", type: "File", leaf: true}, parent]
+
+        await filesStore.loadNodes({level: 1, data: {id: parent.id}} as unknown as ElTreeNode, vi.fn())
+
+        const expanded = filesStore.fileTree[1] as TreeNodeDirectory
+        expect(expanded.children.map(node => node.fileName)).toEqual(["nested.py"])
+    })
+
+    it("should add a nested path under a directory that has no children array", async () => {
+        const filesStore = store()
+        readDirectory.mockResolvedValueOnce([])
+        await filesStore.loadNodes()
+        filesStore.fileTree = [{id: "parent", fileName: "parent", type: "Directory", leaf: false} as unknown as TreeNodeDirectory]
+
+        const {path} = await filesStore.addFile({fileName: "parent/a/new", extension: "py", leaf: true})
+
+        expect(path).toBe("parent/a/new.py")
+        const parent = filesStore.fileTree[0] as TreeNodeDirectory
+        const aFolder = parent.children.find(node => node.fileName === "a") as TreeNodeDirectory
+        expect(aFolder.children.map(node => node.fileName)).toEqual(["new.py"])
+    })
+
+    it("should treat a 404 when reading a collapsed folder as empty and still create the file", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "scripts"}])
+            .mockRejectedValueOnce(Object.assign(new Error("Directory not found"), {status: 404}))
+        await filesStore.loadNodes()
+
+        const {path} = await filesStore.addFile({fileName: "main", extension: "py", leaf: true}, "scripts", true)
+
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "scripts/main.py", content: ""})
+        expect(path).toBe("scripts/main.py")
+        expect(toastError).not.toHaveBeenCalled()
+    })
+
+    it("should not create the file when reading the collapsed folder fails", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "scripts"}])
+            .mockRejectedValueOnce(Object.assign(new Error("boom"), {status: 500}))
+        await filesStore.loadNodes()
+
+        const result = await filesStore.addFile({fileName: "main", extension: "py", leaf: true}, "scripts", true)
+
+        expect(result).toEqual({})
+        expect(saveOrCreateFile).not.toHaveBeenCalled()
+        expect(toastError).toHaveBeenCalledWith("namespace files.create.file_error")
+    })
+
+    it("should not create the folder when reading the collapsed parent fails", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "scripts"}])
+            .mockRejectedValueOnce(Object.assign(new Error("boom"), {status: 500}))
+        await filesStore.loadNodes()
+
+        await filesStore.addFolder({parentPath: "scripts", fileName: "utils"}, true)
+
+        expect(createDirectory).not.toHaveBeenCalled()
+        expect(toastError).toHaveBeenCalledWith("namespace files.create.folder_error")
+    })
+
+    it("should block creation when a file already holds one of the folder names in the path", async () => {
+        const filesStore = store()
+        readDirectory.mockResolvedValueOnce([{type: "File", fileName: "main.py"}])
+        await filesStore.loadNodes()
+
+        const result = await filesStore.addFile({fileName: "main.py/other", extension: "txt", leaf: true}, undefined, true)
+
+        expect(result).toEqual({})
+        expect(saveOrCreateFile).not.toHaveBeenCalled()
+        expect(toastError).toHaveBeenCalledWith("namespace files.create.folder_conflicts_with_file")
+    })
+
+    it("should read a collapsed folder only once across several creations", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "scripts"}])
+            .mockResolvedValueOnce([])
+        await filesStore.loadNodes()
+
+        await filesStore.addFile({fileName: "one", extension: "py", leaf: true}, "scripts", true)
+        await filesStore.addFile({fileName: "two", extension: "py", leaf: true}, "scripts", true)
+        await filesStore.addFolder({parentPath: "scripts", fileName: "utils"}, true)
+
+        expect(readDirectory).toHaveBeenCalledTimes(2)
+        expect(saveOrCreateFile).toHaveBeenCalledTimes(2)
+        expect(createDirectory).toHaveBeenCalledTimes(1)
+    })
+
+    it("should not read folders that were created from the explorer", async () => {
+        const filesStore = store()
+        readDirectory.mockResolvedValueOnce([])
+        await filesStore.loadNodes()
+
+        await filesStore.addFile({fileName: "x/y/one", extension: "txt", leaf: true}, undefined, true)
+        await filesStore.addFile({fileName: "x/y/two", extension: "txt", leaf: true}, undefined, true)
+        await filesStore.addFolder({fileName: "z"}, true)
+        await filesStore.addFile({fileName: "three", extension: "txt", leaf: true}, "z", true)
+
+        expect(readDirectory).toHaveBeenCalledTimes(1)
+        expect(saveOrCreateFile).toHaveBeenCalledTimes(3)
     })
 })
 

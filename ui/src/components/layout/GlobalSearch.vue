@@ -8,8 +8,12 @@
                             ref="searchInput"
                             v-model="query"
                             :placeholder="$t('jump to...')"
+                            class="search-input"
+                            borderless
                             clearable
+                            autofocus
                             @keydown.esc="closeSearch"
+                            @keydown.esc.prevent="closeSearch"
                             @keydown="onInputKeydown"
                         >
                             <template v-if="scopePrefix" #prefix>
@@ -24,45 +28,100 @@
                         </KsSearch>
 
                         <div class="results" role="listbox">
-                            <KsScrollbar v-if="results.length > 0" class="results-scroll">
+                            <KsScrollbar v-if="hasResultRows" class="results-scroll">
                                 <ul id="global-search-listbox" class="results-list">
-                                    <li
-                                        v-for="(item, index) in results"
-                                        :key="itemKey(item, index)"
-                                        :id="`global-search-option-${index}`"
-                                        class="result-item"
-                                        :class="{active: index === activeIndex}"
-                                        role="option"
-                                        :aria-selected="index === activeIndex"
-                                        @mouseenter="activeIndex = index"
-                                    >
-                                        <component
-                                            :is="item.kind === 'link' ? 'router-link' : 'button'"
-                                            v-bind="item.kind === 'link' ? {to: item.href} : {type: 'button'}"
-                                            class="result-link"
-                                            @click="onItemClick(item)"
+                                    <template v-for="(item, index) in results" :key="itemKey(item, index)">
+                                        <li v-if="headingFor(index)" class="result-heading" role="presentation">
+                                            <span>{{ headingLabel(item) }}</span>
+                                            <span class="result-count">{{ groupCount(item) }}</span>
+                                        </li>
+                                        <li
+                                            :id="`global-search-option-${index}`"
+                                            class="result-item"
+                                            :class="{active: index === activeIndex}"
+                                            role="option"
+                                            :aria-selected="index === activeIndex"
+                                            @mouseenter="activeIndex = index"
                                         >
-                                            <div class="result-title nav-item-title">
-                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" />
-                                                <span v-if="item.parentTitle" class="result-parent">
-                                                    {{ item.parentTitle }}
-                                                </span>
-                                                <span v-if="item.parentTitle" class="result-separator">/</span>
-                                                <span class="result-leaf">{{ item.title }}</span>
+                                            <div class="result-row">
+                                                <component
+                                                    :is="item.kind === 'link' ? 'router-link' : 'button'"
+                                                    v-bind="item.kind === 'link' ? {to: item.href} : {type: 'button'}"
+                                                    class="result-link"
+                                                    @click="onItemClick(item)"
+                                                >
+                                                    <div class="result-title nav-item-title">
+                                                        <component
+                                                            v-if="item.icon?.element"
+                                                            :is="{...item.icon.element}"
+                                                            class="result-icon"
+                                                        />
+                                                        <span v-if="item.parentTitle" class="result-parent">
+                                                            <template v-for="(part, partIndex) in highlightMatch(item.parentTitle, query)" :key="partIndex">
+                                                                <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
+                                                                <template v-else>{{ part.text }}</template>
+                                                            </template>
+                                                        </span>
+                                                        <span v-if="item.parentTitle" class="result-separator">/</span>
+                                                        <span class="result-leaf">
+                                                            <template v-for="(part, partIndex) in highlightMatch(item.title, query)" :key="partIndex">
+                                                                <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
+                                                                <template v-else>{{ part.text }}</template>
+                                                            </template>
+                                                        </span>
+                                                        <span v-if="item.namespace" class="result-namespace">
+                                                            <template v-for="(part, partIndex) in highlightMatch(item.namespace, query)" :key="partIndex">
+                                                                <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
+                                                                <template v-else>{{ part.text }}</template>
+                                                            </template>
+                                                        </span>
+                                                    </div>
+                                                    <span
+                                                        v-if="index === activeIndex && item.executionsHref"
+                                                        class="result-hint"
+                                                    >
+                                                        <kbd>↵</kbd> {{ $t("global_search.open_flow") }}
+                                                    </span>
+                                                    <span
+                                                        v-else-if="index === activeIndex"
+                                                        class="result-hint"
+                                                    >
+                                                        <span>{{ $t("jump to") }}</span>
+                                                    </span>
+                                                </component>
+                                                <KsButton
+                                                    v-if="index === activeIndex && item.executionsHref"
+                                                    link
+                                                    size="small"
+                                                    class="result-action"
+                                                    @click.stop="openExecutions(item)"
+                                                >
+                                                    <kbd>→</kbd> {{ $t("executions") }}
+                                                </KsButton>
                                             </div>
-                                            <span
-                                                v-if="index === activeIndex"
-                                                class="result-hint"
-                                            >
-                                                <span>{{ $t("jump to") }}</span>
-                                            </span>
-                                        </component>
+                                        </li>
+                                    </template>
+                                    <li v-if="showEntityHints && entitiesLoading" class="result-status" role="status">
+                                        {{ $t("loading") }}
+                                    </li>
+                                    <li v-else-if="showEntityHints && entitiesError" class="result-status" role="status">
+                                        {{ $t("global_search.search_failed") }}
                                     </li>
                                 </ul>
                             </KsScrollbar>
                             <div v-else class="empty">
                                 {{ $t("no_results_found") }}
                             </div>
+                        </div>
+                        <div v-if="showEntityHints" class="search-footer">
+                            <span class="search-footer-keys">
+                                <kbd>↑</kbd><kbd>↓</kbd> {{ $t("global_search.move") }}
+                                <kbd>↵</kbd> {{ $t("open") }}
+                                <template v-if="canListFlows">
+                                    <kbd>→</kbd> {{ $t("global_search.flow_executions") }}
+                                </template>
+                            </span>
+                            <span>{{ $t(sourcesKey) }}</span>
                         </div>
                     </div>
                 </div>
@@ -73,20 +132,52 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useDebounceFn} from "@vueuse/core"
     import {useTopLayer, KsSearch} from "@kestra-io/design-system"
-    import {useRouter} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import {useLeftMenu} from "override/components/useLeftMenu"
     import type {MenuItem} from "override/components/useLeftMenu"
+    import {useAuthStore} from "override/stores/auth"
+    import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+    import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
+    import action from "../../models/action"
+    import resource from "../../models/resource"
+    import {isFlowTabAllowed} from "../flows/flowTabs"
     import Magnify from "vue-material-design-icons/Magnify.vue"
+    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
+    import {
+        flowOrNamespaceFilter,
+        highlightMatch,
+        namespaceFilter,
+        paletteEntities,
+        PALETTE_ENTITY_LIMIT,
+        paletteEntityKey,
+        type PaletteDestination,
+        type PaletteEntity,
+    } from "./globalSearchEntities"
 
+    const route = useRoute()
     const router = useRouter()
+    const authStore = useAuthStore()
+    const {t} = useI18n()
     const {menu} = useLeftMenu()
+
+    const ENTITY_ICON = {
+        flow: FileDocumentOutline,
+        namespace: FolderOpenOutline,
+    }
 
     type SearchItem = {
         kind: "link" | "scope";
+        destination?: PaletteDestination | "menu";
         title: MenuItem["title"];
         parentTitle?: MenuItem["title"];
+        namespace?: string;
         href?: NonNullable<MenuItem["href"]>;
+        executionsHref?: NonNullable<MenuItem["href"]>;
         icon?: MenuItem["icon"];
         children?: MenuItem[];
         depth: number;
@@ -99,10 +190,16 @@
     };
 
     const query = ref("")
+    const entities = ref<PaletteEntity[]>([])
+    const entityTotals = ref({flow: 0, namespace: 0})
+    const entitiesLoading = ref(false)
+    const entitiesError = ref(false)
+    let searchTicket = 0
     const isOpen = ref(false)
     const topLayer = useTopLayer()
     const searchInput = ref<InstanceType<typeof KsSearch> | null>(null)
     const activeIndex = ref(0)
+    const activeKey = ref<string | null>(null)
     const scopeStack = ref<ScopeNode[]>([])
 
     const scopePrefix = computed(() => {
@@ -159,6 +256,17 @@
         return entries
     }
 
+    const findFlowsItem = (items: MenuItem[]): MenuItem | undefined => {
+        for (const item of items) {
+            if (item.id === "flows") return item
+            if (item.child) {
+                const found = findFlowsItem(item.child)
+                if (found) return found
+            }
+        }
+        return undefined
+    }
+
     const navItems = computed(() => {
         if (!isOpen.value) {
             return []
@@ -170,7 +278,7 @@
         return buildEntries(root, [], 0, order)
     })
 
-    const results = computed(() => {
+    const menuResults = computed(() => {
         const q = query.value.trim().toLowerCase()
         const matches = (item: SearchItem) => {
             const haystack = [item.parentTitle, item.title].filter(Boolean).join(" ").toLowerCase()
@@ -183,11 +291,158 @@
         return [...filtered].sort((a, b) => (a.depth - b.depth) || (a.order - b.order))
     })
 
+    const entityResults = computed((): SearchItem[] => entities.value.map(entity => ({
+        kind: "link",
+        destination: entity.destination,
+        title: entity.title,
+        namespace: entity.namespace,
+        href: entity.href,
+        executionsHref: entity.executionsHref,
+        icon: {element: ENTITY_ICON[entity.destination]},
+        depth: 0,
+        order: 0,
+    })))
+
+    const showEntityHints = computed(() => query.value.trim().length > 0 && scopeStack.value.length === 0)
+
+    const canListFlows = computed(() => !!authStore.user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.LIST))
+    const canListNamespaces = computed(() => !!authStore.user?.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST))
+
+    const sourcesKey = computed(() => {
+        if (canListFlows.value && canListNamespaces.value) return "global_search.sources"
+        if (canListFlows.value) return "global_search.sources_flows"
+        if (canListNamespaces.value) return "global_search.sources_namespaces"
+        return "global_search.menu"
+    })
+
+    const results = computed(() => {
+        const menuRows = showEntityHints.value
+            ? menuResults.value.map(item => ({...item, destination: "menu" as const}))
+            : menuResults.value
+        const rows = showEntityHints.value ? [...entityResults.value, ...menuRows] : [...menuRows]
+
+        const trimmed = query.value.trim()
+        if (trimmed) {
+            const root = scopeStack.value.length > 0 ? scopeStack.value[scopeStack.value.length - 1].items : menu.value
+            const flowsItem = findFlowsItem(root)
+            if (flowsItem) {
+                rows.push({
+                    kind: "link",
+                    destination: "menu",
+                    title: t("search_in_flow_source", {query: trimmed}),
+                    parentTitle: flowsItem.title,
+                    href: {
+                        name: "flows/search",
+                        query: {q: trimmed},
+                    },
+                    icon: {
+                        element: TextBoxSearch,
+                    },
+                    depth: 1,
+                    order: Number.MAX_SAFE_INTEGER,
+                })
+            }
+        }
+
+        return rows
+    })
+
+    const hasResultRows = computed(() =>
+        results.value.length > 0 || (showEntityHints.value && (entitiesLoading.value || entitiesError.value)),
+    )
+
+    const headingFor = (index: number): boolean => {
+        if (!showEntityHints.value) {
+            return false
+        }
+        const item = results.value[index]
+        return item?.destination !== results.value[index - 1]?.destination
+    }
+
+    const headingLabel = (item: SearchItem): string => {
+        if (item.destination === "flow") return t("flows")
+        if (item.destination === "namespace") return t("namespaces")
+        return t("global_search.menu")
+    }
+
+    const groupCount = (item: SearchItem): number => {
+        if (item.destination === "flow" || item.destination === "namespace") {
+            return entityTotals.value[item.destination]
+        }
+        return results.value.filter(candidate => candidate.destination === item.destination).length
+    }
+
+    const openExecutions = (item: SearchItem) => {
+        if (!item.executionsHref) {
+            return
+        }
+        router.push(item.executionsHref)
+        closeSearch()
+    }
+
+    const loadEntities = useDebounceFn(async (q: string, ticket: number) => {
+        if (!isOpen.value || ticket !== searchTicket) {
+            return
+        }
+        const tenant = route.params.tenant
+        const tenantId = Array.isArray(tenant) ? tenant[0] : tenant
+        const user = authStore.user
+        const flowsAllowed = canListFlows.value
+        const namespacesAllowed = canListNamespaces.value
+        const [flowsOutcome, namespacesOutcome] = await Promise.allSettled([
+            flowsAllowed
+                ? FlowsAPI.searchFlows({
+                    page: 1,
+                    size: PALETTE_ENTITY_LIMIT,
+                    filters: [flowOrNamespaceFilter(q)],
+                })
+                : Promise.resolve(undefined),
+            namespacesAllowed
+                ? NamespaceAPI.searchNamespaces({
+                    page: 1,
+                    size: PALETTE_ENTITY_LIMIT,
+                    filters: [namespaceFilter(q)],
+                })
+                : Promise.resolve(undefined),
+        ])
+        if (!isOpen.value || ticket !== searchTicket) {
+            return
+        }
+        try {
+            const flows = flowsOutcome.status === "fulfilled" ? flowsOutcome.value : undefined
+            const namespaces = namespacesOutcome.status === "fulfilled" ? namespacesOutcome.value : undefined
+            entitiesError.value = (flowsAllowed && flowsOutcome.status === "rejected")
+                || (namespacesAllowed && namespacesOutcome.status === "rejected")
+            entityTotals.value = {
+                flow: flows?.total ?? 0,
+                namespace: namespaces?.total ?? 0,
+            }
+            entities.value = paletteEntities(
+                flows?.results ?? [],
+                namespaces?.results ?? [],
+                tenantId || undefined,
+                namespace => isFlowTabAllowed("executions", {user, namespace}),
+            )
+        } finally {
+            entitiesLoading.value = false
+        }
+    }, 200)
+
+    const isEditorTarget = (target: EventTarget | null) => {
+        const el = target as HTMLElement | null
+        return Boolean(el?.closest?.(".monaco-editor"))
+    }
+
     const keyDown = (e: KeyboardEvent) => {
-        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "k") {
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "k") {
+            if (isEditorTarget(e.target)) {
+                return
+            }
             e.preventDefault()
             openSearch()
+            return
         }
+
         if (e.key === "Escape" && isOpen.value) {
             e.preventDefault()
             closeSearch()
@@ -197,19 +452,30 @@
     const openSearch = () => {
         isOpen.value = true
         activeIndex.value = 0
+        activeKey.value = null
         nextTick(() => {
-            searchInput.value?.focus()
+            searchInput.value?.focus?.()
         })
     }
 
     const closeSearch = () => {
+        searchTicket++
         isOpen.value = false
         query.value = ""
+        entities.value = []
+        entityTotals.value = {flow: 0, namespace: 0}
+        entitiesLoading.value = false
+        entitiesError.value = false
         activeIndex.value = 0
+        activeKey.value = null
         scopeStack.value = []
     }
 
     const itemKey = (item: SearchItem, index: number): string => {
+        if (item.destination === "flow" || item.destination === "namespace") {
+            return paletteEntityKey({destination: item.destination, title: item.title, namespace: item.namespace})
+        }
+
         const href = item.href
         if (typeof href === "string") {
             return href
@@ -219,11 +485,15 @@
                 return href.path
             }
             if ("name" in href && href.name != null) {
-                return `name:${String(href.name)}`
+                const params = "params" in href && href.params && typeof href.params === "object" ? href.params : undefined
+                const namespace = params && "namespace" in params ? String(params.namespace ?? "") : ""
+                const id = params && "id" in params ? String(params.id ?? "") : ""
+                const queryParam = "query" in href && href.query ? `?${JSON.stringify(href.query)}` : ""
+                return `name:${String(href.name)}:${namespace}:${id || item.title}${queryParam}`
             }
         }
 
-        return `${item.kind}:${item.parentTitle ?? ""}:${item.title}:${index}`
+        return `${item.kind}:${item.destination ?? "menu"}:${item.namespace ?? item.parentTitle ?? ""}:${item.title}:${index}`
     }
 
     const enterScope = (item: SearchItem) => {
@@ -234,7 +504,8 @@
         scopeStack.value = [...scopeStack.value, {title: item.title, items: item.children}]
         query.value = ""
         activeIndex.value = 0
-        nextTick(() => searchInput.value?.focus())
+        activeKey.value = null
+        nextTick(() => searchInput.value?.focus?.())
     }
 
     const onItemClick = (item: SearchItem) => {
@@ -282,6 +553,12 @@
         } else if (e.key === "ArrowUp") {
             e.preventDefault()
             activeIndex.value = Math.max(activeIndex.value - 1, 0)
+        } else if (e.key === "ArrowRight") {
+            const item = results.value[activeIndex.value]
+            if (item?.executionsHref && isCaretAtEnd(e)) {
+                e.preventDefault()
+                openExecutions(item)
+            }
         } else if (e.key === "Enter") {
             e.preventDefault()
             const item = results.value[activeIndex.value]
@@ -296,6 +573,13 @@
         }
     }
 
+    const isCaretAtEnd = (e: KeyboardEvent): boolean => {
+        const target = e.target
+        if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLTextAreaElement)) {
+            return false
+        }
+        return target.selectionStart === target.value.length && target.selectionEnd === target.value.length
+    }
 
     onMounted(() => {
         window.addEventListener("keydown", keyDown)
@@ -305,13 +589,44 @@
         window.removeEventListener("keydown", keyDown)
     })
 
+    const resetEntities = () => {
+        entities.value = []
+        entityTotals.value = {flow: 0, namespace: 0}
+        entitiesLoading.value = false
+        entitiesError.value = false
+    }
+
     watch(query, () => {
         activeIndex.value = 0
+        activeKey.value = null
+        const q = query.value.trim()
+        const ticket = ++searchTicket
+        if (!isOpen.value || !q || scopeStack.value.length > 0) {
+            resetEntities()
+            return
+        }
+        if (!canListFlows.value && !canListNamespaces.value) {
+            resetEntities()
+            return
+        }
+        entities.value = []
+        entityTotals.value = {flow: 0, namespace: 0}
+        entitiesError.value = false
+        entitiesLoading.value = true
+        loadEntities(q, ticket)
     })
 
     watch(results, () => {
         if (!isOpen.value) {
             return
+        }
+
+        if (activeKey.value) {
+            const found = results.value.findIndex((item, index) => itemKey(item, index) === activeKey.value)
+            if (found >= 0) {
+                activeIndex.value = found
+                return
+            }
         }
 
         activeIndex.value = Math.min(activeIndex.value, Math.max(results.value.length - 1, 0))
@@ -322,6 +637,8 @@
             return
         }
 
+        const item = results.value[activeIndex.value]
+        activeKey.value = item ? itemKey(item, activeIndex.value) : null
         scrollActiveOptionIntoView()
     })
 </script>
@@ -354,35 +671,8 @@
             font-size: var(--ks-font-size-sm);
         }
 
-        & :deep(.kel-input) {
+        .search-input {
             font-size: var(--ks-font-size-sm);
-
-            .kel-input__wrapper {
-                padding: 8px 16px;
-                border: 0;
-                box-shadow: none;
-                background: var(--ks-bg-surface);
-                border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base)) var(--kel-input-border-radius, var(--kel-border-radius-base)) 0 0;
-
-                & input {
-                    color: var(--ks-text-primary);
-                    background: transparent;
-                }
-
-                & input::placeholder {
-                    color: var(--ks-placeholder-color);
-                    font-size: var(--ks-placeholder-font-size);
-                    font-weight: var(--ks-placeholder-font-weight);
-                }
-
-                .close-button {
-                    color: var(--ks-text-primary);
-                    &:hover {
-                        color: var(--ks-text-link);
-                        background-color: var(--ks-border-default);
-                    }
-                }
-            }
 
             .scope-prefix {
                 margin-left: 0.5rem;
@@ -418,6 +708,71 @@
             gap: 6px;
         }
 
+        .result-heading {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            padding: var(--ks-spacing-1) var(--ks-spacing-2);
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-xs);
+            text-transform: uppercase;
+        }
+
+        .result-count {
+            color: var(--ks-text-dim);
+        }
+
+        .result-namespace {
+            color: var(--ks-text-secondary);
+            white-space: nowrap;
+        }
+
+        .result-match {
+            background: transparent;
+            color: var(--ks-text-link);
+            font-weight: var(--ks-font-weight-semibold);
+        }
+
+        .result-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: var(--ks-spacing-2);
+        }
+
+        .result-icon {
+            vertical-align: middle;
+        }
+
+        .result-action {
+            display: none;
+            flex: 0 0 auto;
+            color: var(--ks-text-secondary);
+            white-space: nowrap;
+        }
+
+        .result-status {
+            padding: var(--ks-spacing-1) var(--ks-spacing-2);
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-sm);
+        }
+
+        .search-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--ks-spacing-3);
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            border-top: 1px solid var(--ks-border-default);
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-xs);
+        }
+
+        .search-footer-keys {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+        }
+
         .result-link {
             font-size: var(--ks-font-size-sm);
             padding: 6px 10px;
@@ -428,7 +783,9 @@
             align-items: center;
             gap: var(--ks-spacing-2);
             transition: none;
-            width: 100%;
+            flex: 1 1 auto;
+            min-width: 0;
+            width: auto;
             border: 0;
             background: transparent;
             text-align: left;
@@ -457,9 +814,10 @@
             white-space: nowrap;
         }
 
-        .result-item.active .result-link {
+        .result-item.active .result-row {
             background-color: var(--ks-btn-secondary-bg-hover);
             color: var(--ks-text-primary);
+            border-radius: var(--ks-radius-base);
         }
 
         .result-hint {
@@ -470,9 +828,12 @@
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             transition: none;
+        }
 
-            @media (min-width: 576px) {
-                display: flex;
+        @media (min-width: 576px) {
+            .result-hint,
+            .result-action {
+                display: inline-flex;
             }
         }
 

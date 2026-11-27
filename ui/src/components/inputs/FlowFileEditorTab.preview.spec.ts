@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../tests/unit/i18nMount"
+import type {FlowPreviewBanner} from "../../stores/flow"
 
 vi.mock("../../stores/flow", async () => {
     const {reactive} = await import("vue")
@@ -9,6 +10,7 @@ vi.mock("../../stores/flow", async () => {
         flowYamlOrigin: "",
         previewSource: undefined as string | undefined,
         declinePreview: null as (() => void) | null,
+        previewBanner: undefined as FlowPreviewBanner | undefined,
         flow: {namespace: "company.team", id: "flow_1"},
         isReadOnly: false,
         isCreating: false,
@@ -112,6 +114,7 @@ describe("FlowFileEditorTab policy mutation preview", () => {
         flowYamlOrigin: string
         previewSource: string | undefined
         declinePreview: (() => void) | null
+        previewBanner: FlowPreviewBanner | undefined
         isReadOnly: boolean
     }
 
@@ -121,6 +124,7 @@ describe("FlowFileEditorTab policy mutation preview", () => {
         flowStore.flowYamlOrigin = BUFFER
         flowStore.previewSource = undefined
         flowStore.declinePreview = null
+        flowStore.previewBanner = undefined
         flowStore.isReadOnly = false
     })
 
@@ -204,8 +208,8 @@ describe("FlowFileEditorTab policy mutation preview", () => {
         flowStore.previewSource = MUTATED
         await flushPromises()
 
-        expect(wrapper.find("[data-test=\"flow-preview-banner\"]").exists()).toBe(true)
-        expect(wrapper.find("[data-test=\"flow-preview-dismiss\"]").exists()).toBe(true)
+        expect(wrapper.find("[data-test=\"flow-preview-banner\"]").text()).toContain("ai.copilot.draft.previewBanner")
+        expect(wrapper.find("[data-test=\"flow-preview-dismiss\"]").text()).toBe("ai.copilot.draft.dismiss")
     })
 
     test("shouldCallDeclinePreviewWhenTheBannerDismissIsClicked", async () => {
@@ -218,5 +222,24 @@ describe("FlowFileEditorTab policy mutation preview", () => {
         await wrapper.find("[data-test=\"flow-preview-dismiss\"]").trigger("click")
 
         expect(decline).toHaveBeenCalled()
+    })
+
+    test("shouldShowTheBannerSetWithThePreviewAndRunItsActionInsteadOfDecliningCopilot", async () => {
+        const decline = vi.fn()
+        const onAction = vi.fn()
+        flowStore.declinePreview = decline
+        const wrapper = mountTab()
+
+        flowStore.previewSource = MUTATED
+        flowStore.previewBanner = {message: "Previewing policy changes", actionLabel: "Turn off preview", onAction}
+        await flushPromises()
+        const banner = wrapper.find("[data-test=\"flow-preview-banner\"]")
+        expect(banner.text()).toContain("Previewing policy changes")
+        expect(banner.text()).not.toContain("ai.copilot")
+
+        await wrapper.find("[data-test=\"flow-preview-dismiss\"]").trigger("click")
+
+        expect(onAction).toHaveBeenCalled()
+        expect(decline).not.toHaveBeenCalled()
     })
 })

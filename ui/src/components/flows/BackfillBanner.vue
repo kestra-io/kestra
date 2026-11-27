@@ -32,8 +32,7 @@
             <KsIconButton
                 data-test="backfill-stop"
                 :tooltip="$t('delete backfill')"
-                class="bf-stop"
-                @click="emit('stop')"
+                @click="confirmStop"
             >
                 <Stop />
             </KsIconButton>
@@ -43,16 +42,19 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
 
     import Play from "vue-material-design-icons/Play.vue"
     import Pause from "vue-material-design-icons/Pause.vue"
     import Stop from "vue-material-design-icons/Stop.vue"
 
     import {dateUtils, dayjs, KsIconButton, KsProgress} from "@kestra-io/design-system"
+    import {useToast} from "../../utils/toast"
 
 
     const props = defineProps<{
         row: {
+            triggerId?: string
             backfill?: {
                 start?: string
                 end?: string
@@ -67,6 +69,13 @@
         resume: []
         stop: []
     }>()
+
+    const {t} = useI18n()
+    const toast = useToast()
+
+    function confirmStop() {
+        toast.confirm(t("delete backfill confirm", {id: props.row.triggerId}), () => emit("stop"))
+    }
 
     const progress = computed(() => {
         const bf = props.row?.backfill
@@ -108,9 +117,5 @@
 .bf-actions {
     display: flex;
     gap: 0.25rem;
-}
-
-.bf-stop :deep(.material-design-icon) {
-    color: var(--ks-text-error);
 }
 </style>

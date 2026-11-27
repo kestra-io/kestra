@@ -39,7 +39,6 @@
     import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter} from "./utils/savedFilterTracking"
     import ErrorToast from "./components/ErrorToast.vue"
     import ServerUnreachableBanner from "./components/ServerUnreachableBanner.vue"
-    import TourOverlay from "./components/onboarding/tour/TourOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
@@ -58,6 +57,8 @@
     // branch (and the import() it guards) is dead-code eliminated rather than merely hidden by v-if.
     // Also excluded under Vitest (`MODE === "test"`, its documented default): there's no live
     // backend to compare against there, so the banner has nothing meaningful to show.
+    const TourOverlay = defineAsyncComponent(() => import("./components/onboarding/tour/TourOverlay.vue"))
+
     const SdkDriftBanner = import.meta.env.DEV && import.meta.env.MODE !== "test"
         ? defineAsyncComponent(() => import("./components/SdkDriftBanner.vue"))
         : null

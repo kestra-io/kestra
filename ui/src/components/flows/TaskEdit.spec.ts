@@ -156,6 +156,58 @@ describe("TaskEdit", () => {
         vi.useRealTimers()
     })
 
+    it("does not emit an edit the debounce already committed again when it is unmounted", async () => {
+        // Regression: the debounced commit left its timer set, so unmounting re-emitted the edit; in the
+        // task modal that stale edit landed on the block the user had just navigated to.
+        vi.useFakeTimers()
+        const onUpdateTask = vi.fn()
+        const wrapper = i18nMount(TaskEdit, {
+            messages: {close: "Close"},
+            props: {
+                task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log", message: "hi"},
+                section: "tasks",
+                flowId: "my_flow",
+                namespace: "company.team",
+                presentation: "panel",
+                "onUpdate:task": onUpdateTask,
+            },
+            global: {plugins: [KestraDesignSystem]},
+        })
+        await wrapper.vm.$nextTick()
+
+        wrapper.findComponent({name: "TaskEditPanes"}).vm.$emit("input", "id: verify_backups\ntype: io.kestra.plugin.core.log.Log\nmessage: edited")
+        vi.advanceTimersByTime(500)
+        wrapper.unmount()
+
+        expect(onUpdateTask).toHaveBeenCalledTimes(1)
+
+        vi.useRealTimers()
+    })
+
+    it("shows an edit made to the task from inside the panel, such as deleting an entry of a nested list", async () => {
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+        wrapper.get("[data-test='fake-editor-focus']").element.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+
+        await wrapper.setProps({task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log"}})
+
+        expect(wrapper.findComponent({name: "TaskEditPanes"}).props("modelValue")).not.toContain("message")
+    })
+
+    it("keeps an edit still being typed when the task changes while the panel has focus", async () => {
+        vi.useFakeTimers()
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+        const panes = wrapper.findComponent({name: "TaskEditPanes"})
+        wrapper.get("[data-test='fake-editor-focus']").element.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+        panes.vm.$emit("input", "id: verify_backups\ntype: io.kestra.plugin.core.log.Log\nmessage: typing")
+
+        await wrapper.setProps({task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log", message: "from elsewhere"}})
+
+        expect(panes.props("modelValue")).toContain("message: typing")
+        vi.useRealTimers()
+    })
+
     it("starts the Output column expanded when the task type declares outputs", async () => {
         pluginsStoreState.plugin = {schema: {outputs: {properties: {uri: {type: "string"}}}}}
         const wrapper = mountTaskEdit()

@@ -31,22 +31,22 @@ import CopilotMessage from "./CopilotMessage.vue"
 // The AI Copilot v2 tool catalog, mirrored from the backend agent tools. This is the single
 // place the FE test suite enumerates every tool; add new tools here when the backend adds them.
 const PLATFORM_TOOLS = [
-    {tool: "read-execution", family: "READ"},
-    {tool: "list-executions", family: "READ"},
-    {tool: "read-execution-logs", family: "READ"},
-    {tool: "read-flow", family: "READ"},
-    {tool: "list-flows", family: "READ"},
-    {tool: "search-plugins", family: "READ"},
-    {tool: "get-plugin-schema", family: "READ"},
-    {tool: "validate-flow", family: "READ"},
-    {tool: "restart-execution", family: "ACT"},
+    {tool: "read_execution", family: "READ"},
+    {tool: "list_executions", family: "READ"},
+    {tool: "read_execution_logs", family: "READ"},
+    {tool: "read_flow", family: "READ"},
+    {tool: "list_flows", family: "READ"},
+    {tool: "search_plugins", family: "READ"},
+    {tool: "get_plugin_schema", family: "READ"},
+    {tool: "validate_flow", family: "READ"},
+    {tool: "restart_execution", family: "ACT"},
 ] as const
 
 const AUTHORING_TOOLS = [
-    {tool: "author-flow", kind: "FLOW", title: "Proposed flow"},
-    {tool: "author-dashboard", kind: "DASHBOARD", title: "Proposed dashboard"},
-    {tool: "author-app", kind: "APP", title: "Proposed app"},
-    {tool: "author-test-suite", kind: "TEST_SUITE", title: "Proposed unit test"},
+    {tool: "author_flow", kind: "FLOW", title: "Proposed flow"},
+    {tool: "author_dashboard", kind: "DASHBOARD", title: "Proposed dashboard"},
+    {tool: "author_app", kind: "APP", title: "Proposed app"},
+    {tool: "author_test_suite", kind: "TEST_SUITE", title: "Proposed unit test"},
 ] as const
 
 /** A stream that exercises every tool: each platform tool calls + returns; each authoring tool

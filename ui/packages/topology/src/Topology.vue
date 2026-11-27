@@ -1,5 +1,5 @@
 <template>
-    <div class="topology-shell">
+    <div ref="shell" class="topology-shell ks-topology">
         <FlowSummaryChip
             v-if="flowId && !isReadOnly && isAllowedEdit"
             class="topology-flow-bar"
@@ -77,6 +77,7 @@
                     @open-link="emit(EVENTS.OPEN_LINK, $event)"
                     @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                    @show-artifacts="emit(EVENTS.SHOW_ARTIFACTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
                     @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
@@ -84,15 +85,13 @@
                     @show-details="emit(EVENTS.SHOW_DETAILS, $event)"
                     @mouseover="onMouseOver($event)"
                     @mouseleave="onMouseLeave()"
+                    @cardClick="onTaskCardClick($event)"
                     @add-error="emit('on-add-flowable-error', $event)"
                     @taskDragStart="onTaskDragStart"
                     @taskDragEnd="onTaskDragEnd"
                     :dragging="draggingNodeId === taskProps.id"
                     :enableSubflowInteraction="enableSubflowInteraction"
                 >
-                    <template #details>
-                        <slot name="taskDetails" v-bind="taskProps" />
-                    </template>
                     <template #taskActions="taskActionProps">
                         <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
                     </template>
@@ -112,8 +111,6 @@
                     v-bind="triggerProps"
                     :icons="icons"
                     :loadIcon="loadIcon"
-                    :isReadOnly="isReadOnly"
-                    :isAllowedEdit="isAllowedEdit"
                     @delete="emit(EVENTS.DELETE, $event)"
                     @edit="emit(EVENTS.EDIT, $event)"
                     @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
@@ -150,12 +147,9 @@
             <template #edge-edge="EdgeProps">
                 <EdgeNode
                     v-bind="EdgeProps"
-                    :yamlSource="source"
                     @add-task="emit(EVENTS.ADD_TASK, $event)"
                     @drag-over-edge="dropEdgeId = $event"
                     @drop-task="onDropTask"
-                    :isReadOnly="isReadOnly"
-                    :isAllowedEdit="isAllowedEdit"
                 />
             </template>
 
@@ -175,7 +169,7 @@
                     </ControlButton>
                 </KsTooltip>
                 <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
-                    <ControlButton @click.stop="fitView()">
+                    <ControlButton @click.stop="fitGraph()">
                         <Fullscreen />
                     </ControlButton>
                 </KsTooltip>
@@ -208,12 +202,32 @@
                     </li>
                 </ul>
             </Controls>
+
+            <div class="node-details-layer">
+                <Transition name="node-details-peek">
+                    <NodeDetailsPeek
+                        v-if="peek"
+                        :key="peek.uid"
+                        :x="peek.x"
+                        :y="peek.y"
+                        :width="NODE_DETAILS_PEEK.WIDTH_PX"
+                        :title="peek.title"
+                        :type="peek.type"
+                        :ariaLabel="$t('topology-graph.task-details', {task: peek.title})"
+                        @peekEnter="cancelPeekClose()"
+                        @peekLeave="schedulePeekClose()"
+                        @measured="peekHeight = $event"
+                    >
+                        <slot name="taskDetails" v-bind="peek.node" />
+                    </NodeDetailsPeek>
+                </Transition>
+            </div>
         </VueFlow>
     </div>
 
     <div
         v-if="dragGhost"
-        class="drag-ghost"
+        class="drag-ghost ks-topology"
         :style="{transform: `translate(${dragGhost.x}px, ${dragGhost.y}px)`}"
         aria-hidden="true"
     >
@@ -231,7 +245,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from "vue"
+    import {computed, nextTick, onMounted, onUnmounted, provide, ref, shallowRef, useSlots, watch} from "vue"
     import {getRectOfNodes, Panel, useVueFlow, VueFlow, type GraphEdge, type GraphNode} from "@vue-flow/core"
     import type {ViewportTransform} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
@@ -252,16 +266,20 @@
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
     import {cssVar as cssVariable, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
-    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD} from "./utils/constants"
+    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, NODE_DETAILS_PEEK, ZOOM_LOD, pillZoomCompensation} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
-    import {afterLastDot} from "./utils/utils"
+    import {afterLastDot, shortPluginType} from "./utils/utils"
+    import NodeDetailsPeek from "./nodes/NodeDetailsPeek.vue"
+    import {placePeek, type PeekRect} from "./utils/peekPlacement"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, SCOPED_LONGEST_DURATIONS_INJECTION_KEY} from "./injectionKeys"
+    import {useViewportRefit} from "./composables/useViewportRefit"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY, DIFF_INJECTION_KEY} from "./injectionKeys"
+    import type {TaskDiffStatus} from "./utils/flowDiff"
     import type {LoopLaneData} from "./utils/loopOutcome"
-    import {useLongestTaskRunDuration} from "./composables/useLongestTaskRunDuration"
-    import {useScopedLongestDurations} from "./composables/useScopedLongestDurations"
     import BasicNode from "./nodes/BasicNode.vue"
+    import {provideGlobalConfig} from "element-plus"
+    import {registerTopologyMessages} from "./i18n"
 
     const props = withDefaults(defineProps<{
         id: string;
@@ -296,6 +314,9 @@
         validationIssuesByTask?: Map<string, string[]>;
         focusedTaskId?: string;
         loopLanes?: Record<string, LoopLaneData>;
+        artifactCounts?: Record<string, number>;
+        diffStatuses?: Map<string, TaskDiffStatus>;
+        selectedNodeUid?: string;
         // For Storybook / tests only, to start the canvas pre-zoomed at a given level of detail.
         defaultViewport?: Partial<ViewportTransform>;
     }>(), {
@@ -323,8 +344,16 @@
         validationIssuesByTask: undefined,
         focusedTaskId: undefined,
         loopLanes: undefined,
+        artifactCounts: undefined,
+        diffStatuses: undefined,
+        selectedNodeUid: undefined,
         defaultViewport: undefined,
     })
+
+    // The Ks* components render Element Plus markup in the `kel` namespace their styles target.
+    // The Kestra UI sets it app-wide; a page without the design-system plugin gets it here.
+    provideGlobalConfig({namespace: "kel"})
+    registerTopologyMessages()
 
     const isRunning = computed(() => {
         const current = props.execution?.state?.current
@@ -332,7 +361,7 @@
     })
 
     const vueFlowStore = useVueFlow(props.id)
-    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
+    const {getNodes, getEdges, getElements, onNodesInitialized, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
     const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -352,16 +381,78 @@
         VueFlowUtils.buildEffectiveGetNodeDimensions(Boolean(props.execution), props.getNodeDimensions),
     )
 
+    const slots = useSlots()
+    const isZoomedInEnoughForPeek = computed(() => lod.value === "expanded")
+    const hoveredNodeUid = ref<string | undefined>(undefined)
+    const pinnedNodeUid = ref<string | undefined>(undefined)
+    const peekHeight = ref(0)
+    let peekOpenTimer: ReturnType<typeof setTimeout> | undefined
+    let peekCloseTimer: ReturnType<typeof setTimeout> | undefined
+
+    function cancelPeekOpen() {
+        if (peekOpenTimer) clearTimeout(peekOpenTimer)
+        peekOpenTimer = undefined
+    }
+
+    function cancelPeekClose() {
+        if (peekCloseTimer) clearTimeout(peekCloseTimer)
+        peekCloseTimer = undefined
+    }
+
+    function schedulePeekOpen(uid: string) {
+        cancelPeekOpen()
+        cancelPeekClose()
+        const isSwapFromAnAlreadyOpenPeek = Boolean(hoveredNodeUid.value)
+        if (isSwapFromAnAlreadyOpenPeek) {
+            hoveredNodeUid.value = uid
+            return
+        }
+        peekOpenTimer = setTimeout(() => (hoveredNodeUid.value = uid), NODE_DETAILS_PEEK.HOVER_INTENT_MS)
+    }
+
+    function schedulePeekClose() {
+        cancelPeekOpen()
+        cancelPeekClose()
+        peekCloseTimer = setTimeout(() => (hoveredNodeUid.value = undefined), NODE_DETAILS_PEEK.CLOSE_GRACE_MS)
+    }
+
+    function closeHoverPeek() {
+        cancelPeekOpen()
+        cancelPeekClose()
+        hoveredNodeUid.value = undefined
+    }
+
+    function onTaskCardClick({uid}: {uid: string}) {
+        if (!isZoomedInEnoughForPeek.value) return
+        cancelPeekOpen()
+        cancelPeekClose()
+        pinnedNodeUid.value = pinnedNodeUid.value === uid ? undefined : uid
+    }
+
+    function onPeekKeydown(event: KeyboardEvent) {
+        if (event.key !== "Escape") return
+        closeHoverPeek()
+        pinnedNodeUid.value = undefined
+    }
+
     provide(EXECUTION_INJECTION_KEY, computed(() => props.execution))
     provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions))
     provide(LOD_INJECTION_KEY, lod)
+    provide(PILL_ZOOM_COMPENSATION_INJECTION_KEY, computed(() => pillZoomCompensation(vueFlowStore.viewport.value.zoom)))
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
-    provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
+    const taskIdWearingTheFocusRing = computed(() =>
+        props.focusedTaskId ?? (pinnedNodeUid.value ? afterLastDot(pinnedNodeUid.value) : undefined),
+    )
+    provide(FOCUSED_TASK_INJECTION_KEY, taskIdWearingTheFocusRing)
     provide(LOOP_LANES_INJECTION_KEY, computed(() => props.loopLanes ?? {}))
-    // Computed once for the whole graph rather than per node: `taskRunList` is execution-wide, so
-    // every TaskNode reducing over it independently would be N× the same work.
-    provide(SCOPED_LONGEST_DURATIONS_INJECTION_KEY, useScopedLongestDurations(() => Object.values(props.subflowsExecutions)))
-    provide(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, useLongestTaskRunDuration(computed(() => props.execution?.taskRunList ?? [])))
+    provide(ARTIFACT_COUNTS_INJECTION_KEY, computed(() => props.artifactCounts ?? {}))
+    provide(DIFF_INJECTION_KEY, computed(() => props.diffStatuses
+        ? {
+            statusByUid: props.diffStatuses,
+            selectedUid: props.selectedNodeUid,
+            select: (uid: string) => emit("select-node", uid),
+        }
+        : undefined))
 
     const initialFitDone = ref(false)
 
@@ -380,6 +471,7 @@
     const dragGhost = ref<{label: string; cls?: string; x: number; y: number} | undefined>(undefined)
 
     function onTaskDragStart({nodeId, label, cls}: {nodeId: string; label: string; cls?: string}) {
+        closeHoverPeek()
         draggingNodeId.value = nodeId
         dragGhost.value = {label, cls, x: -9999, y: -9999}
         window.addEventListener("dragover", onGhostMove)
@@ -411,13 +503,24 @@
     onMounted(() => {
         window.addEventListener("dragend", onTaskDragEnd)
         window.addEventListener("blur", onTaskDragEnd)
+        window.addEventListener("keydown", onPeekKeydown)
     })
 
     onUnmounted(() => {
         window.removeEventListener("dragend", onTaskDragEnd)
         window.removeEventListener("blur", onTaskDragEnd)
         window.removeEventListener("dragover", onGhostMove)
+        window.removeEventListener("keydown", onPeekKeydown)
+        cancelPeekOpen()
+        cancelPeekClose()
     })
+
+    vueFlowStore.onMoveStart(({event}) => {
+        const isDragToPan = (event as {sourceEvent?: Event} | undefined)?.sourceEvent?.type === "mousedown"
+        if (isDragToPan) closeHoverPeek()
+    })
+
+    vueFlowStore.onPaneClick(() => (pinnedNodeUid.value = undefined))
 
     const emit = defineEmits(
         [
@@ -428,6 +531,7 @@
             EVENTS.OPEN_LINK,
             EVENTS.SHOW_LOGS,
             EVENTS.SHOW_OUTPUTS,
+            EVENTS.SHOW_ARTIFACTS,
             EVENTS.REPLAY_TASK,
             EVENTS.SHOW_DESCRIPTION,
             "on-add-flowable-error",
@@ -443,6 +547,7 @@
             EVENTS.MOVE_TASK,
             EVENTS.LOOP_STEP,
             EVENTS.LOOP_SCOPE_FAILED,
+            "select-node",
         ],
     )
 
@@ -466,18 +571,21 @@
         generateGraph()
     })
 
+    const shell = ref<HTMLDivElement>()
+    const {fitGraph} = useViewportRefit(shell, vueFlowStore)
+
     const refitOnNodesInitialized = ref(false)
     onNodesInitialized(() => {
         if (!initialFitDone.value) {
             initialFitDone.value = true
             // A caller passing its own starting zoom (Storybook, tests) means fitView() would
             // immediately discard it.
-            if (!props.defaultViewport) fitView()
+            if (!props.defaultViewport) fitGraph()
             return
         }
         if (refitOnNodesInitialized.value) {
             refitOnNodesInitialized.value = false
-            fitView()
+            fitGraph()
         }
     })
 
@@ -540,6 +648,7 @@
     }
 
     const onMouseOver = (node: {uid: string}) => {
+        schedulePeekOpen(node.uid)
         VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
             if (n?.type === "task") {
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
@@ -548,8 +657,65 @@
     }
 
     const onMouseLeave = () => {
+        schedulePeekClose()
         resetNodesStyle()
     }
+
+    const NODE_TYPES_THE_PEEK_MUST_NOT_COVER = new Set(["task", "custom", "trigger", "collapsedcluster"])
+
+    const peekUid = computed(() => {
+        const picked = pinnedNodeUid.value ?? hoveredNodeUid.value
+        if (picked) return picked
+        const focused = props.focusedTaskId
+        if (!focused) return undefined
+        return getNodes.value.find((n) => n.type === "task" && afterLastDot(n.id) === focused)?.id
+    })
+
+    const anchoredNode = shallowRef<GraphNode | undefined>(undefined)
+
+    watch([peekUid, getNodes], ([uid, nodes]) => {
+        if (!uid) {
+            anchoredNode.value = undefined
+            return
+        }
+        const isGraphBeingRegenerated = nodes.length === 0
+        if (isGraphBeingRegenerated) return
+        anchoredNode.value = nodes.find((n) => n.id === uid && n.type === "task")
+    }, {immediate: true})
+
+    watch(isZoomedInEnoughForPeek, (canPeek) => {
+        if (canPeek) return
+        closeHoverPeek()
+        pinnedNodeUid.value = undefined
+    })
+
+    const peek = computed(() => {
+        const node = isZoomedInEnoughForPeek.value ? anchoredNode.value : undefined
+        if (!node || !slots.taskDetails) return undefined
+
+        const {x: offsetX, y: offsetY, zoom} = vueFlowStore.viewport.value
+        const {width: canvasWidth, height: canvasHeight} = vueFlowStore.dimensions.value
+
+        const screenRect = (n: GraphNode): PeekRect => ({
+            x: offsetX + n.computedPosition.x * zoom,
+            y: offsetY + n.computedPosition.y * zoom,
+            width: (n.dimensions?.width ?? 0) * zoom,
+            height: (n.dimensions?.height ?? 0) * zoom,
+        })
+
+        const placement = placePeek({
+            anchor: screenRect(node),
+            panel: {width: NODE_DETAILS_PEEK.WIDTH_PX, height: peekHeight.value},
+            canvas: {x: 0, y: 0, width: canvasWidth, height: canvasHeight},
+            isHorizontal: props.isHorizontal,
+            otherRects: getNodes.value
+                .filter((n) => n.id !== node.id && !n.hidden && NODE_TYPES_THE_PEEK_MUST_NOT_COVER.has(n.type))
+                .map(screenRect),
+        })
+
+        const task = (node.data as {node?: {task?: {type?: string}}} | undefined)?.node?.task
+        return {uid: node.id, node, title: afterLastDot(node.id) ?? node.id, type: shortPluginType(task?.type), ...placement}
+    })
 
     const resetNodesStyle = () => {
         getNodes.value.filter(n => n.type === "task" || n.type === "trigger")
@@ -636,7 +802,7 @@
 
     const collapsibleLaneUids = computed(() =>
         outermostLaneUids(
-            props.flowGraph.clusters
+            (props.flowGraph.clusters ?? [])
                 .filter((entry) => VueFlowUtils.isTrueFlowableCluster(entry.cluster))
                 .map((entry) => entry.cluster.uid.replace(CLUSTER_PREFIX, "")),
         ),
@@ -733,6 +899,31 @@
 
         :deep(.vue-flow__node.dragging .node-wrapper) {
             transform: none;
+        }
+    }
+
+    /* Must stay a sibling of `.vue-flow__transformationpane`, whose transform traps node z-index (kestra-io/kestra#20642). */
+    .node-details-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    .node-details-peek-enter-active,
+    .node-details-peek-leave-active {
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
+    }
+
+    .node-details-peek-enter-from,
+    .node-details-peek-leave-to {
+        opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .node-details-peek-enter-active,
+        .node-details-peek-leave-active {
+            transition: none;
         }
     }
 

@@ -1,5 +1,4 @@
 import {h, markRaw} from "vue"
-import {storageKeys} from "../../../utils/constants"
 
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue"
 import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
@@ -16,8 +15,6 @@ import FileExplorerWrapper from "../../../components/inputs/FileExplorerWrapper.
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue"
 import {EditorElement} from "../../../utils/multiPanelTypes"
 
-export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
-
 export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
@@ -25,6 +22,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "Flow Code",
         },
         uid: "code",
+        main: true,
         component: () => h(FlowFileEditorTab, {
             path: "Flow.yaml",
             name: "Flow.yaml",
@@ -39,6 +37,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "No Code",
         },
         uid: "nocode",
+        main: true,
         component: markRaw(NoCode),
     },
     {

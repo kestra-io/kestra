@@ -11,6 +11,7 @@ import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.plugin.core.trigger.Schedule;
 
@@ -33,7 +34,7 @@ class TriggerFlowParserTest {
     void shouldThrowWithTheReasonWhenBlockedByGovernance() throws FlowProcessingException {
         // Given
         FlowParsingService flowParsingService = mock(FlowParsingService.class);
-        when(flowParsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException("Blocked by governance policy: policy=deny-log"));
+        when(flowParsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException(Blocker.Reason.POLICY, "Blocked by governance policy: policy=deny-log", List.of(), null));
 
         // When / Then the block reaches the caller with its reason, so it can report it against the trigger
         assertThatThrownBy(() -> TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOGGER))

@@ -142,7 +142,7 @@ public record PluginArtifact(
 
     @JsonIgnore
     public boolean isOfficial() {
-        return groupId.startsWith(KESTRA_GROUP_ID);
+        return KESTRA_GROUP_ID.equals(groupId) || groupId.startsWith(KESTRA_GROUP_ID + ".");
     }
 
     public String toCoordinates() {

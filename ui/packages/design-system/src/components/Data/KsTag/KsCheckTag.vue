@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElCheckTag, type CheckTagProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -28,7 +30,7 @@
         disabled?: boolean
         size?: "large" | "default" | "small"
         pill?: boolean
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         size: "small",
         pill: false,
     })

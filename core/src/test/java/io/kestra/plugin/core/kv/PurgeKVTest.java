@@ -169,11 +169,11 @@ public class PurgeKVTest {
 
         RunContext runContext = runContextFactory.of(namespace1);
         KVStore kvStore1 = runContext.namespaceKv(namespace1);
-        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
+        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
         kvStore1.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
 
         KVStore kvStore2 = runContext.namespaceKv(namespace2);
-        kvStore2.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
+        kvStore2.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
         kvStore2.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
         kvStore2.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", (Duration) null), "unused"));
         kvStore2.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
@@ -199,7 +199,7 @@ public class PurgeKVTest {
 
         RunContext runContext = runContextFactory.of(namespace);
         KVStore kvStore1 = runContext.namespaceKv(namespace);
-        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
+        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
         kvStore1.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
         kvStore1.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", (Duration) null), "unused"));
         kvStore1.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
@@ -224,9 +224,9 @@ public class PurgeKVTest {
 
         RunContext runContext = runContextFactory.of(namespace);
         KVStore kvStore1 = runContext.namespaceKv(namespace);
-        kvStore1.put("key_1", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
-        kvStore1.put("key_2", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
-        kvStore1.put("not_found", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
+        kvStore1.put("key_1", new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
+        kvStore1.put("key_2", new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
+        kvStore1.put("not_found", new KVValueAndMetadata(new KVMetadata("unused", Instant.now().minusSeconds(60)), "unused"));
 
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())

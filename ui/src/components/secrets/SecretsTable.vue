@@ -7,9 +7,9 @@
             :total="total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'key', order: 'ascending'}"
+            :defaultSort="defaultSort"
             :selectable="false"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
             :fitHeight="!paneView && !keyOnly"
@@ -83,7 +83,7 @@
                         <template #content>
                             <span>{{ $t("secret.isReadOnly") }}</span>
                         </template>
-                        <KsIcon class="d-flex justify-content-center">
+                        <KsIcon class="lock-icon">
                             <Lock />
                         </KsIcon>
                     </KsTooltip>
@@ -157,8 +157,6 @@
                     <NamespaceSelect
                         v-model="secret.namespace"
                         :readOnly="secret.update"
-                        :includeSystemNamespace="true"
-                        all
                     />
                 </KsFormItem>
                 <KsFormItem :label="$t('secret.key')" prop="key" required inline class="field-item">
@@ -189,7 +187,7 @@
                         resize="vertical"
                     />
                 </KsFormItem>
-                <KsFormItem prop="tags" labelPosition="top" class="secret-tags-item">
+                <KsFormItem prop="tags" labelPosition="top" class="secret-tags-item" wideLabel>
                     <template #label>
                         <div class="secret-tags-label">
                             <span>{{ $t('secret.tags') }}</span>
@@ -242,13 +240,15 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
     import type {ListSecretsData} from "@kestra-io/kestra-sdk"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations/secretsFilter"
-    import {useTableColumns} from "@kestra-io/design-system"
+    import {latestRequest} from "../../utils/latestRequest"
+    import {sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     const secretsFilter = useSecretsFilter()
 
@@ -267,13 +267,6 @@
         namespace?: string;
         description?: string;
         tags?: {key?: string; value?: string}[];
-    }
-
-    interface SecretPayload {
-        key?: string;
-        description?: string;
-        tags?: {key?: string; value?: string}[];
-        value?: string;
     }
 
     const props = withDefaults(defineProps<{
@@ -470,7 +463,10 @@
     const namespaceFilter = (namespace: string) =>
         [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
 
+    const startLoad = latestRequest()
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        const isLatest = startLoad()
         const activeFilters = routeQueryToQueryFilters(route.query)
         const secretsResponse = await SecretsAPI.listSecrets(loadQuery({
             size,
@@ -482,6 +478,7 @@
             ],
         }))
 
+        if (!isLatest()) return
         emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false)
 
         let allSecrets = secretsResponse.results ?? []
@@ -505,6 +502,7 @@
             }
         }
 
+        if (!isLatest()) return
         hasData.value = (allSecrets.length ?? 0) !== 0
         areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false
         secrets.value = allSecrets
@@ -513,7 +511,13 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "key", order: "ascending"})
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
@@ -589,34 +593,30 @@
                 return
             }
 
-            const secretData: SecretPayload = {
-                key: secret.value?.key,
-                description: secret.value?.description,
-                tags: secret.value?.tags
-                    ?.map(item => item.value !== undefined ? item : {key: item.key, value: ""})
-                    ?.filter(item => item.key !== undefined),
-            }
+            const key = secret.value.key
+            if (!key) return
 
-            if (isSecretValueUpdated()) {
-                secretData.value = secret.value?.value
-            }
-
-            const actionMethod = isSecretValueUpdated()
-                ? namespacesStore.createSecrets
-                : namespacesStore.patchSecret
+            const description = secret.value.description
+            const tags = secret.value.tags
+                .filter((tag): tag is {key: string; value?: string} => tag.key !== undefined)
+                .map(tag => ({key: tag.key, value: tag.value ?? ""}))
 
             // Snapshot before the request: resetForm() swaps secret.value out when the drawer closes,
             // and the .then() would then read the flag off a different object.
-            const wasUpdate = secret.value?.update === true
-            const namespace = secret.value?.namespace
+            const wasUpdate = secret.value.update === true
+            const namespace = secret.value.namespace as string
 
-            actionMethod({namespace: namespace as string, secret: secretData})
+            const request = isSecretValueUpdated()
+                ? namespacesStore.createSecrets({namespace, secret: {key, value: secret.value.value, description, tags}})
+                : namespacesStore.patchSecret({namespace, secret: {key, description, tags}})
+
+            request
                 .then(() => {
                     apiStore.posthogEvents({
                         type: wasUpdate ? "SECRET_UPDATED" : "SECRET_CREATED",
                         secret_type: "secret",
                         namespace,
-                        has_tags: (secretData.tags?.length ?? 0) > 0,
+                        has_tags: tags.length > 0,
                     })
 
                     secret.value!.update = true
@@ -682,16 +682,12 @@
         pointer-events: none;
     }
 
-    .field-item :deep(.kel-form-item__content) {
-        flex: 0 0 260px;
-        max-width: 260px;
-    }
-
-    .field-item :deep(.kel-form-item__content) > * {
-        width: 100%;
+    .field-item {
+        --ks-form-item-content-width: 260px;
     }
 
     .secret-value-control {
+        width: 100%;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -702,14 +698,15 @@
         width: 100%;
     }
 
-    .secret-tags-item :deep(.kel-form-item__label) {
-        width: 100%;
-    }
-
     .secret-tags-label {
         display: flex;
         align-items: center;
         justify-content: space-between;
         width: 100%;
+    }
+
+    .lock-icon {
+        display: flex;
+        justify-content: center;
     }
 </style>

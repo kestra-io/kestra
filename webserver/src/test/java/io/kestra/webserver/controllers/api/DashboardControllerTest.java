@@ -152,6 +152,140 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldCountExecutionsByStateWhenPreviewingChart() {
+        String namespace = saveExecutionsByState(State.Type.SUCCESS, State.Type.SUCCESS, State.Type.FAILED);
+        var namespaceFilter = QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build();
+        var failedFilter = QueryFilter.builder().field(QueryFilter.Field.STATE).operation(Op.IN).value(List.of("FAILED")).build();
+
+        DashboardController.ChartStateCounts counts = previewStateCounts(EXECUTIONS_CHART_YAML, List.of(namespaceFilter));
+        assertThat(counts.counts()).containsOnly(Map.entry("SUCCESS", 2L), Map.entry("FAILED", 1L));
+
+        DashboardController.ChartStateCounts failedOnly = previewStateCounts(EXECUTIONS_CHART_YAML, List.of(namespaceFilter, failedFilter));
+        assertThat(failedOnly.counts()).containsOnly(Map.entry("FAILED", 1L));
+    }
+
+    @Test
+    void shouldCountOnlyTheStatesTheChartWhereAllowsWhenPreviewingChart() {
+        String namespace = saveExecutionsByState(State.Type.SUCCESS, State.Type.SUCCESS, State.Type.FAILED);
+        var namespaceFilter = QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build();
+
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_state:
+                  field: STATE
+              where:
+                - field: STATE
+                  type: IN
+                  values:
+                    - FAILED
+            """;
+
+        // the chart's own where must narrow the counts exactly as it narrows the table rows
+        DashboardController.ChartStateCounts counts = previewStateCounts(chartYaml, List.of(namespaceFilter));
+        assertThat(counts.counts()).containsOnly(Map.entry("FAILED", 1L));
+
+        PagedResults<?> rows = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/preview", new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(List.of(namespaceFilter)).build())),
+            PagedResults.class
+        );
+        assertThat(rows.getTotal()).isEqualTo(counts.counts().values().stream().mapToLong(Long::longValue).sum());
+    }
+
+    @Test
+    void shouldCountNothingWhenPreviewingChartWithoutMatchingExecutions() {
+        var namespaceFilter = QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(TestsUtils.randomNamespace()).build();
+
+        assertThat(previewStateCounts(EXECUTIONS_CHART_YAML, List.of(namespaceFilter)).counts()).isEmpty();
+    }
+
+    @Test
+    void shouldTreatMissingGlobalFilterAsNoFilterWhenCountingExecutionsByState() {
+        DashboardController.ChartStateCounts counts = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/state-counts", new DashboardController.PreviewRequest(EXECUTIONS_CHART_YAML, null)),
+            DashboardController.ChartStateCounts.class
+        );
+
+        assertThat(counts.counts()).isNotNull();
+    }
+
+    @Test
+    void shouldRejectStateCountsWhenChartIsOnLogsData() {
+        String chartYaml = """
+            id: table_logs_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Logs
+              columns:
+                chart_message:
+                  field: MESSAGE
+            """;
+
+        HttpClientResponseException exception = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> previewStateCounts(chartYaml, List.of())
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(exception.getMessage()).contains("Only a chart on Executions data can be counted by state");
+    }
+
+    @Test
+    void shouldRejectStateCountsWhenChartIsNotADataChart() {
+        String chartYaml = """
+            id: a_markdown_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Markdown
+            source:
+              type: Text
+              content: hello
+            """;
+
+        HttpClientResponseException exception = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> previewStateCounts(chartYaml, List.of())
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(exception.getMessage()).contains("Only data charts can be counted by state");
+    }
+
+    private static final String EXECUTIONS_CHART_YAML = """
+        id: table_executions_chart_id
+        type: io.kestra.plugin.core.dashboard.chart.Table
+        data:
+          type: io.kestra.plugin.core.dashboard.data.Executions
+          columns:
+            execution_state:
+              field: STATE
+        """;
+
+    private String saveExecutionsByState(State.Type... states) {
+        String namespace = TestsUtils.randomNamespace();
+        for (State.Type state : states) {
+            executionRepository.save(
+                Execution.builder()
+                    .tenantId(MAIN_TENANT)
+                    .id(IdUtils.create())
+                    .namespace(namespace)
+                    .flowId("flow")
+                    .state(new State(state))
+                    .build()
+            );
+        }
+        return namespace;
+    }
+
+    private DashboardController.ChartStateCounts previewStateCounts(String chartYaml, List<QueryFilter> filters) {
+        return client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/state-counts", new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(filters).build())),
+            DashboardController.ChartStateCounts.class
+        );
+    }
+
+    @Test
     void shouldExportChartFromDefaultDashboardSentinel() {
         // the "_default" id is a reserved sentinel resolving to the built-in default dashboard, not a stored one
         DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
@@ -160,7 +294,7 @@ class DashboardControllerTest {
         );
         assertThat(defaultDashboard).isNotNull();
         assertThat(defaultDashboard.getId()).isEqualTo("_default");
-        assertThat(defaultDashboard.getCharts()).hasSize(10);
+        assertThat(defaultDashboard.getCharts()).hasSize(9);
 
         byte[] csvBytes = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH + "/_default/charts/logs_timeseries/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
@@ -354,8 +488,13 @@ class DashboardControllerTest {
         assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("oldest"));
     }
 
+    /**
+     * The Upcoming tab of the Executions table has no stored chart: the frontend builds this Triggers
+     * table and sends its YAML through the content-based routes, so the ordering it relies on is
+     * covered here rather than against a dashboard definition.
+     */
     @Test
-    void shouldSortNextExecutionsOfDefaultDashboardByUpcomingFirst() {
+    void shouldSortUpcomingTriggersBySoonestFirst() {
         String namespace = TestsUtils.randomNamespace();
         Instant now = Instant.now();
         // saved out of order on purpose, so a result sorted by insertion cannot pass
@@ -372,11 +511,60 @@ class DashboardControllerTest {
                     .build()
             );
         }
+        triggerStateStore.save(
+            TriggerState.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId("disabled")
+                .triggerId(IdUtils.create())
+                .workerId("worker")
+                .nextEvaluationDate(now)
+                .disabled(true)
+                .build()
+        );
 
-        String csv = exportDefaultChart("next_executions", namespace);
+        String csv = exportUpcomingChart(namespace);
 
+        assertThat(csv).doesNotContain("disabled");
         assertThat(csv.indexOf("soonest")).isPositive().isLessThan(csv.indexOf("middle"));
         assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("last"));
+    }
+
+    private String exportUpcomingChart(String namespace) {
+        String chartYaml = """
+            id: recent_executions__upcoming
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            chartOptions:
+              displayName: Executions
+              pagination:
+                enabled: true
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Triggers
+              columns:
+                namespace:
+                  field: NAMESPACE
+                flowId:
+                  field: FLOW_ID
+                triggerId:
+                  field: TRIGGER_ID
+                next_execution_date:
+                  field: NEXT_EXECUTION_DATE
+              where:
+                - field: DISABLED
+                  type: EQUAL_TO
+                  value: false
+              orderBy:
+                - column: next_execution_date
+                  order: ASC
+            """;
+        var globalFilter = ChartFiltersOverrides.builder().filters(
+            List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build())
+        ).build();
+        byte[] csv = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/export", new DashboardController.PreviewRequest(chartYaml, globalFilter)),
+            Argument.of(byte[].class)
+        );
+        return new String(csv, StandardCharsets.UTF_8);
     }
 
     private String exportDefaultChart(String chartId, String namespace) {

@@ -25,13 +25,17 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.annotations.TicketingField;
+import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.Custom;
 import io.kestra.core.models.assets.External;
+import io.kestra.core.models.assets.TriggerAssetsDeclaration;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -168,6 +172,43 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldCompactTheFlowSchemaWithoutLosingTheSharedContent() {
+        Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+
+        Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
+
+        var compactDefinitions = (Map<String, Map<String, Object>>) compact.get("definitions");
+        Map<String, Object> inlineItems = flowTasksItems(schema);
+        String listRef = (String) flowTasksItems(compact).get("$ref");
+        assertThat(listRef, startsWith("#/definitions/shared-subtypes"));
+        assertThat(compactDefinitions.get(listRef.substring("#/definitions/".length())), is(Map.of("$ref", "#/definitions/" + Task.class.getName())));
+        assertThat((List<Object>) inlineItems.get("anyOf"), not(empty()));
+        assertThat(compactDefinitions.get(Task.class.getName()).get("anyOf"), is(inlineItems.get("anyOf")));
+
+        // A single-task property keeps its annotation once, beside one reference to the list.
+        Map<String, Object> dagTask = properties(compactDefinitions.get(Dag.DagTask.class.getName().replace('$', '-'))).get("task");
+        assertThat(dagTask.get("anyOf"), is(List.of(Map.of("$ref", listRef))));
+        assertThat(dagTask, hasEntry("title", "The task within the DAG"));
+
+        String retryRef = (String) properties(compactDefinitions.get(Log.class.getName())).get("retry").get("$ref");
+        assertThat(retryRef, startsWith("#/definitions/shared-property-retry"));
+        assertThat(properties(compactDefinitions.get(Return.class.getName())).get("retry"), is(Map.of("$ref", retryRef)));
+        assertThat(compactDefinitions.get(retryRef.substring("#/definitions/".length())), hasEntry("title", "Retry"));
+
+        assertThat(schema.toString(), containsString("##### Examples"));
+        assertThat(compact.toString(), not(containsString("##### Examples")));
+        assertThat(compact.toString(), allOf(containsString("$dynamic"), containsString("$group")));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> flowTasksItems(Map<String, Object> schema) {
+        var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+        var properties = (Map<String, Map<String, Object>>) definitions.get(Flow.class.getName()).get("properties");
+        return (Map<String, Object>) properties.get("tasks").get("items");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void outputAssetsAcceptExpressionsAndFreeFormTypes() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
         {
@@ -278,6 +319,7 @@ class JsonSchemaGeneratorTest {
             // discriminator
             assertThat(schema, not(containsString("ReusableInputsInput")));
             assertThat(schema, not(containsString("TableInput")));
+            assertThat(schema, not(containsString("AssetInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
         });
@@ -299,6 +341,41 @@ class JsonSchemaGeneratorTest {
             var testSuiteProperties = properties(testSuiteDefinitions.get(TestSuite.class.getName()));
             assertThat(List.of("source", "deleted"), everyItem(not(in(testSuiteProperties.keySet()))));
             assertThat(testSuiteProperties.keySet(), hasItems("id", "flowId", "testCases"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldOmitPropertiesThatCannotHoldAValueWhenTheInputTypeIsVoid() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            var definitions = (Map<String, Map<String, Object>>) jsonSchemaGenerator.schemas(Flow.class).get("definitions");
+            var formProperties = properties(definitionOf(definitions, FormInput.class));
+            var intProperties = properties(definitionOf(definitions, IntInput.class));
+
+            assertThat(List.of("defaults", "prefill"), everyItem(not(in(formProperties.keySet()))));
+            assertThat(formProperties.keySet(), hasItems("id", "inputs", "displayName"));
+            assertThat(intProperties.keySet(), hasItems("defaults", "prefill"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldListOnlyOpenSourceOutputTypesWhenGeneratingTheFlowOutputSchema() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+            var output = definitions.get(io.kestra.core.models.flows.Output.class.getName());
+            var type = (Map<String, Object>) ((Map<String, Object>) output.get("properties")).get("type");
+
+            assertThat((List<String>) type.get("enum"), containsInAnyOrder(
+                "STRING", "INT", "FLOAT", "BOOL", "DATETIME", "DATE", "TIME", "DURATION", "FILE", "JSON", "ION", "URI", "SECRET", "ARRAY", "YAML"
+            ));
         });
     }
 
@@ -445,6 +522,18 @@ class JsonSchemaGeneratorTest {
                 )
             );
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldOfferAssetFailureBehaviorOnTasksOnly() {
+        Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class, false);
+        Map<String, Map<String, Object>> definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+
+        Map<String, Object> taskAssets = (Map<String, Object>) definitions.get(AssetsDeclaration.class.getName()).get("properties");
+        Map<String, Object> triggerAssets = (Map<String, Object>) definitions.get(TriggerAssetsDeclaration.class.getName()).get("properties");
+        assertThat(taskAssets, hasKey("assetFailureBehavior"));
+        assertThat(triggerAssets, allOf(hasKey("outputs"), not(hasKey("assetFailureBehavior"))));
     }
 
     @SuppressWarnings("unchecked")
@@ -664,8 +753,16 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
-        assertThat(definitions.size(), is(13));
+        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs, and the trigger base has its own
+        assertThat(definitions.size(), is(14));
+    }
+
+    private static Map<String, Object> definitionOf(Map<String, Map<String, Object>> definitions, Class<?> cls) {
+        return definitions.entrySet().stream()
+            .filter(entry -> entry.getKey().startsWith(cls.getName()))
+            .map(Map.Entry::getValue)
+            .findFirst()
+            .orElseThrow();
     }
 
     @SuppressWarnings("unchecked")

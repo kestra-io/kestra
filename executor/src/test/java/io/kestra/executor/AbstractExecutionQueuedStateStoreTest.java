@@ -86,6 +86,27 @@ public abstract class AbstractExecutionQueuedStateStoreTest {
         }
     }
 
+    @Test
+    void shouldCountQueuedExecutionsOfAFlowNamespaceAndTenantOutsideOfATransaction() {
+        Flow flow = flow("count", "io.kestra.unittest");
+        Flow childFlow = flow("count", "io.kestra.unittest.child");
+        Flow siblingFlow = flow("count", "io.kestra.unittest2");
+        List<Execution> executions = queue(flow, 2);
+        List<Execution> childExecutions = queue(childFlow, 1);
+        List<Execution> siblingExecutions = queue(siblingFlow, 1);
+
+        try {
+            assertThat(executionQueuedStateStore.count("count", "io.kestra.unittest", flow.getId())).isEqualTo(2);
+            assertThat(executionQueuedStateStore.count("count", "io.kestra.unittest", null)).isEqualTo(3);
+            assertThat(executionQueuedStateStore.count("count", null, null)).isEqualTo(4);
+            assertThat(executionQueuedStateStore.count("count", "io.kestra.unittest", IdUtils.create())).isZero();
+        } finally {
+            executions.forEach(executionQueuedStateStore::remove);
+            childExecutions.forEach(executionQueuedStateStore::remove);
+            siblingExecutions.forEach(executionQueuedStateStore::remove);
+        }
+    }
+
     private void pop(Flow flow, Consumer<Execution> consumer) {
         concurrencyLimitStateStore.countThenProcess(flow, (txContext, limit) ->
         {
@@ -120,9 +141,13 @@ public abstract class AbstractExecutionQueuedStateStoreTest {
     }
 
     private static Flow flow(String tenantId) {
+        return flow(tenantId, "io.kestra.unittest");
+    }
+
+    private static Flow flow(String tenantId, String namespace) {
         return Flow.builder()
             .tenantId(tenantId)
-            .namespace("io.kestra.unittest")
+            .namespace(namespace)
             .id(IdUtils.create())
             .revision(1)
             .concurrency(Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(1).build())

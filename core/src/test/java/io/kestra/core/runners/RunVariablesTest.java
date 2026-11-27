@@ -27,6 +27,7 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.BoolInput;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
@@ -53,6 +54,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 class RunVariablesTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(RunVariablesTest.class);
+
+    @Test
+    void shouldResolveInputsFromRootExecutionForNestedLoops() {
+        var flow = GenericFlow.builder()
+            .id("flow")
+            .namespace("ns")
+            .revision(1)
+            .tenantId("tenant")
+            .inputs(List.of(StringInput.builder().id("main_value").type(Type.STRING).required(true).build()))
+            .build();
+
+        Execution rootExecution = Execution.newExecution(flow, null)
+            .withInputs(Map.of("main_value", "provided value"));
+        Execution firstLoopExecution = rootExecution.loopExecution(
+            TaskRun.builder().id("first-loop").taskId("first-loop").executionId(rootExecution.getId()).state(new State()).build(),
+            0,
+            null,
+            "first",
+            false
+        );
+        Execution nestedLoopExecution = firstLoopExecution.loopExecution(
+            TaskRun.builder().id("nested-loop").taskId("nested-loop").executionId(firstLoopExecution.getId()).state(new State()).build(),
+            0,
+            null,
+            "nested",
+            false
+        );
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .withExecution(nestedLoopExecution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat(variables).extractingByKey("inputs").isEqualTo(Map.of("main_value", "provided value"));
+    }
 
 
     @Inject

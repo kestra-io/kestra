@@ -17,16 +17,20 @@ export interface ApprovalTaskRun {
     taskId: string;
 }
 
+function isApprovalTask(task: FlowUtils.FlowTask | undefined): task is FlowUtils.FlowTask & ApprovalTask {
+    return task?.type === APPROVAL_TYPE && task.id !== undefined
+}
+
 export function findApprovalTask(flow: unknown, taskId: string): ApprovalTask | undefined {
     const task = FlowUtils.findTaskById(flow, taskId)
-    return task?.type === APPROVAL_TYPE ? task as unknown as ApprovalTask : undefined
+    return isApprovalTask(task) ? task : undefined
 }
 
 export function findApprovalTaskRun(execution: Execution, flow: unknown, state: string): {taskRun: ApprovalTaskRun; task: ApprovalTask} | undefined {
     for (const taskRun of ExecutionUtils.findTaskRunsByState(execution, state)) {
         const task = findApprovalTask(flow, taskRun.taskId)
         if (task) {
-            return {taskRun: taskRun as unknown as ApprovalTaskRun, task}
+            return {taskRun, task}
         }
     }
     return undefined

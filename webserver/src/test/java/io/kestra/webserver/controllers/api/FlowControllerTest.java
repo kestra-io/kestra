@@ -718,6 +718,29 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldReturnUnprocessableEntityWhenOverridingWithNamespaceContainingReplacementCharacters() throws IOException {
+        // Given
+        File flowFile = File.createTempFile("flow", ".yaml");
+        Files.writeString(flowFile.toPath(), generateFlowAsString("flow1", "io.kestra.randomnamespace", "a"));
+        MultipartBody body = MultipartBody.builder()
+            .addPart("flows", flowFile.getName(), MediaType.APPLICATION_YAML_TYPE, flowFile)
+            .build();
+
+        // When
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/flows/io.kestra.$1?override=true", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+                Argument.listOf(FlowWithSource.class)
+            )
+        );
+
+        // Then
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
     void bulk() {
         // initial création
         String flows = String.join(
@@ -844,6 +867,41 @@ class FlowControllerTest {
 
         client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/namespaceleading1"));
         client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/namespaceleading2"));
+    }
+
+    @Test
+    void shouldNotDeleteOrUpdateAnyFlowWhenOneFlowOfABulkUpdateIsInvalid() {
+        String namespace = "io.kestra.bulk.atomic";
+        client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/main/flows/" + namespace,
+                generateFlow("flow_a", namespace, "v1").sourceOrGenerateIfNull() + "\n---\n" + generateFlow("flow_b", namespace, "v1").sourceOrGenerateIfNull()
+            ).contentType(MediaType.APPLICATION_YAML)
+        );
+        String invalidFlow = """
+            id: flow_c
+            namespace: %s
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Lgo
+                message: typo in the task type
+            """.formatted(namespace);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/flows/" + namespace,
+                    generateFlow("flow_a", namespace, "v2").sourceOrGenerateIfNull() + "\n---\n" + invalidFlow
+                ).contentType(MediaType.APPLICATION_YAML)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_b"), Flow.class).getId())
+            .isEqualTo("flow_b");
+        Flow flowA = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_a"), Flow.class);
+        assertThat(flowA.getRevision()).isEqualTo(1);
+        assertThat(flowA.getInputs().getFirst().getId()).isEqualTo("v1");
     }
 
     @Test
@@ -1178,7 +1236,7 @@ class FlowControllerTest {
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
         );
 
-        assertThat(namespaces.size()).isEqualTo(20);
+        assertThat(namespaces.size()).isEqualTo(21);
     }
 
     @Test

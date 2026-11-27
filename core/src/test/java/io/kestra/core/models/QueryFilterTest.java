@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
@@ -599,6 +600,16 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.EXECUTION_KIND, Resource.CASE,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.EXPIRED_AT, Resource.INVITATION,
                 Set.of()
             ),
@@ -823,6 +834,7 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.RESOURCES, Resource.AUDIT_LOG,
                 Set.of(
+                    Op.EQUALS,
                     Op.IN
                 )
             ),
@@ -1575,6 +1587,21 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.EXECUTION_KIND, Resource.CASE,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.EXPIRED_AT, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS,
@@ -1863,7 +1890,6 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.RESOURCES, Resource.AUDIT_LOG,
                 Set.of(
-                    Op.EQUALS,
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -1958,6 +1984,19 @@ public class QueryFilterTest {
 
         // Then
         assertThat(filter.field()).isEqualTo(Field.FLOW_ID);
+    }
+
+    @Test
+    void shouldDeclareJsonPropertyMatchingWireValueForEveryField() throws Exception {
+        for (Field field : Field.values()) {
+            JsonProperty annotation = Field.class.getField(field.name()).getAnnotation(JsonProperty.class);
+
+            assertThat(annotation)
+                .as("Field.%s must carry @JsonProperty so that the OpenAPI enum lists its wire value", field.name())
+                .isNotNull();
+            assertThat(annotation.value()).isEqualTo(field.value());
+            assertThat(Field.fromString(annotation.value())).isEqualTo(field);
+        }
     }
 
     @Test

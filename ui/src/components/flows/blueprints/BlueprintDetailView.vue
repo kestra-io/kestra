@@ -45,7 +45,6 @@
                 <KsSplitterPanel v-if="flowGraph" min="20%">
                     <LowCodeEditor
                         class="pane"
-                        viewType="blueprints"
                         isReadOnly
                         :flowId="parsedFlow.id"
                         :namespace="parsedFlow.namespace"

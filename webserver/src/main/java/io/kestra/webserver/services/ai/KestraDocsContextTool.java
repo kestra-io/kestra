@@ -13,7 +13,6 @@ import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutionResult;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -26,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Singleton
-@Requires(property = "kestra.ai.enabled", value = "true", defaultValue = "true")
+@RequiresAiEnabled
 public class KestraDocsContextTool implements AutoCloseable {
 
     private static final Duration MCP_TIMEOUT = Duration.ofSeconds(15);
@@ -47,6 +46,8 @@ public class KestraDocsContextTool implements AutoCloseable {
                         .build()
                 )
                 .clientName("Kestra/" + versionProvider.getVersion())
+                // The docs server does not speak 2026-07-28, so skip the server/discover round trip on connect.
+                .protocolVersion("2025-11-25")
                 .toolExecutionTimeout(MCP_TIMEOUT)
                 .autoHealthCheck(false)
                 .build();
@@ -62,7 +63,7 @@ public class KestraDocsContextTool implements AutoCloseable {
      * @param query the search query
      * @return matching documentation entries, or null if an error occurred
      */
-    @Tool("Search the Kestra documentation for a given query. Use this to find information about Kestra features, tasks, triggers, and configuration options.")
+    @Tool(name = "search_docs", value = "Search the Kestra documentation for a given query. Use this to find information about Kestra features, tasks, triggers, and configuration options.")
     public String searchDocs(@P("The search query to find relevant Kestra documentation") String query) {
         return callMcpTool("search_docs", Map.of("query", query));
     }
@@ -73,7 +74,7 @@ public class KestraDocsContextTool implements AutoCloseable {
      * @param parsedUrl the parsed URL of the documentation page
      * @return the documentation page content, or null if an error occurred
      */
-    @Tool("Retrieve the content of a specific Kestra documentation page by its URL.")
+    @Tool(name = "get_doc", value = "Retrieve the content of a specific Kestra documentation page by its URL.")
     public String getDoc(@P("The parsed URL of the documentation page to retrieve") String parsedUrl) {
         return callMcpTool("get_doc", Map.of("parsedUrl", parsedUrl));
     }
@@ -84,7 +85,7 @@ public class KestraDocsContextTool implements AutoCloseable {
      * @param query the search query
      * @return matching blueprints, or null if an error occurred
      */
-    @Tool("Search for Kestra flow blueprints that match a given query. Use this to find example flows and templates.")
+    @Tool(name = "search_blueprints", value = "Search for Kestra flow blueprints that match a given query. Use this to find example flows and templates.")
     public String searchBlueprints(@P("The search query to find relevant Kestra flow blueprints") String query) {
         return callMcpTool("blueprints", Map.of("query", query));
     }
@@ -95,7 +96,7 @@ public class KestraDocsContextTool implements AutoCloseable {
      * @param blueprintId the ID of the blueprint to retrieve
      * @return the blueprint flow YAML, or null if an error occurred
      */
-    @Tool("Retrieve the YAML flow definition of a specific Kestra blueprint by its ID.")
+    @Tool(name = "get_blueprint_flow", value = "Retrieve the YAML flow definition of a specific Kestra blueprint by its ID.")
     public String getBlueprintFlow(@P("The numeric ID of the blueprint to retrieve") int blueprintId) {
         return callMcpTool("get_blueprint_flow", Map.of("blueprintId", blueprintId));
     }

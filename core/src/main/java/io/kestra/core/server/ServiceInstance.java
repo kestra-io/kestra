@@ -156,6 +156,28 @@ public record ServiceInstance(
     }
 
     /**
+     * Updates the properties for this instance.
+     *
+     * @param props The new properties.
+     * @return a new {@link ServiceInstance}.
+     */
+    public ServiceInstance props(final Map<String, Object> props) {
+        return new ServiceInstance(
+            uid,
+            type,
+            state,
+            server,
+            createdAt,
+            updatedAt,
+            events,
+            config,
+            props,
+            metrics,
+            seqId
+        );
+    }
+
+    /**
      * Updates this service instance with the given state and instant.
      *
      * @param newState The new state.

@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent, effectScope, nextTick} from "vue"
+import {defineComponent, effectScope, nextTick, reactive} from "vue"
 import {mount} from "@vue/test-utils"
 import type {Flow} from "../../../stores/flow"
 
@@ -11,12 +11,12 @@ interface MockRoute {
 }
 
 const routerReplace = vi.fn()
-const currentRoute: MockRoute = {
+const currentRoute = reactive<MockRoute>({
     params: {namespace: "company.team", id: "myflow"},
     query: {},
     meta: {tab: "edit"},
     name: "flows/update/edit",
-}
+})
 
 vi.mock("vue-router", () => ({
     useRoute: () => currentRoute,
@@ -28,13 +28,14 @@ vi.mock("vue-i18n", () => ({
 }))
 
 vi.mock("../../../stores/flow", async () => {
-    const {reactive} = await import("vue")
-    const flowStore = reactive({
+    const vue = await import("vue")
+    const flowStore = vue.reactive({
         flow: undefined,
         dependenciesCount: undefined,
         loadDependencies: vi.fn(),
         loadFlow: vi.fn(),
         loadGraph: vi.fn(),
+        loadHasPublishedRevision: vi.fn(() => Promise.resolve()),
         isCreating: false,
     })
 
@@ -59,7 +60,7 @@ vi.mock("override/stores/auth", () => ({
 }))
 
 vi.mock("override/stores/misc", () => ({
-    useMiscStore: () => ({configs: {chartDefaultDuration: "PT24H"}}),
+    useMiscStore: () => ({configs: {chartDefaultDuration: "P30D"}}),
 }))
 
 import {useFlowStore} from "../../../stores/flow"
@@ -84,6 +85,7 @@ describe("useFlowRoot", () => {
         currentRoute.meta = {tab: "edit"}
         currentRoute.name = "flows/update/edit"
         currentRoute.query = {}
+        currentRoute.params = {namespace: "company.team", id: "myflow"}
         routerReplace.mockReset()
         flowStore.flow = undefined
         flowStore.dependenciesCount = undefined
@@ -136,6 +138,23 @@ describe("useFlowRoot", () => {
         scope.stop()
     })
 
+    it("loads the dependencies count when the route guard loaded the flow before mount", async () => {
+        loadDependencies.mockResolvedValue({count: 1})
+        flowStore.flow = makeFlow("myflow")
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot())
+        await vi.advanceTimersByTimeAsync(1000)
+
+        expect(loadDependencies).toHaveBeenCalledWith({
+            subtype: "FLOW",
+            namespace: "company.team",
+            id: "myflow",
+        }, true)
+
+        scope.stop()
+    })
+
     it("reuses the flow the route guard loaded, instead of fetching it a second time", async () => {
         flowStore.flow = makeFlow("myflow")
 
@@ -173,7 +192,7 @@ describe("useFlowRoot", () => {
         scope.stop()
     })
 
-    it("injects default duration when activeTab is overview with no time filter in query", async () => {
+    it("injects the default duration in its dropdown spelling when activeTab is overview with no time filter in query", async () => {
         currentRoute.meta = {tab: "overview"}
         currentRoute.name = "flows/update/overview"
         currentRoute.query = {}
@@ -186,7 +205,26 @@ describe("useFlowRoot", () => {
         expect(routerReplace).toHaveBeenCalledWith({
             name: "flows/update/overview",
             params: {namespace: "company.team", id: "myflow"},
-            query: {"filters[timeRange][EQUALS]": "PT24H"},
+            query: {"filters[timeRange][EQUALS]": "PT720H"},
+        })
+        scope.stop()
+    })
+
+    it("injects the default duration again when the overview switches to another flow", async () => {
+        currentRoute.meta = {tab: "overview"}
+        currentRoute.name = "flows/update/overview"
+        const scope = effectScope()
+        scope.run(() => useFlowRoot())
+        await nextTick()
+        routerReplace.mockReset()
+
+        currentRoute.params = {namespace: "company.team", id: "otherflow"}
+        await nextTick()
+
+        expect(routerReplace).toHaveBeenCalledWith({
+            name: "flows/update/overview",
+            params: {namespace: "company.team", id: "otherflow"},
+            query: {"filters[timeRange][EQUALS]": "PT720H"},
         })
         scope.stop()
     })

@@ -1,0 +1,17 @@
+Import-Module ActiveDirectory
+
+# Define user parameters
+$userParams = @{
+    Name            = "John Doe"
+    GivenName       = "John"
+    Surname         = "Doe"
+    SamAccountName  = "john.doe"
+    UserPrincipalName = "john.doe@yourdomain.com"
+    Path            = "OU=Users,DC=yourdomain,DC=com"
+    AccountPassword = (ConvertTo-SecureString "P@ssword123!" -AsPlainText -Force)
+    Enabled         = $true
+    ChangePasswordAtLogon = $true
+}
+
+# Create the new Active Directory user
+New-ADUser @userParams

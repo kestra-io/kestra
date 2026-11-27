@@ -17,13 +17,14 @@ public interface AsyncOperationType {
     String name();
 
     /**
-     * The kind of resource this operation type targets — an execution id or a trigger uid. A
-     * backfill is addressed by the trigger uid it belongs to, hence {@code TRIGGER}.
+     * The kind of resource this operation type targets — an execution id, a trigger uid or plugin
+     * artifact coordinates. A backfill is addressed by the trigger uid it belongs to, hence {@code TRIGGER}.
      */
     ResourceType resourceType();
 
     enum ResourceType {
         EXECUTION,
-        TRIGGER
+        TRIGGER,
+        PLUGIN
     }
 }

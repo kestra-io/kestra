@@ -70,14 +70,14 @@ import lombok.experimental.SuperBuilder;
                       - id: fail_silently
                         type: io.kestra.plugin.scripts.shell.Commands
                         taskRunner:
-                        type: io.kestra.plugin.core.runner.Process
+                          type: io.kestra.plugin.core.runner.Process
                         commands:
                           - exit 1
 
                   - id: print_to_console
                     type: io.kestra.plugin.scripts.shell.Commands
                     taskRunner:
-                    type: io.kestra.plugin.core.runner.Process
+                      type: io.kestra.plugin.core.runner.Process
                     commands:
                       - echo "this will run since previous failure was allowed ✅"
                 """

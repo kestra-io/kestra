@@ -6,6 +6,7 @@ import java.util.Optional;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -15,9 +16,8 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 import io.kestra.webserver.models.api.ApiMcpServer;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.models.api.Pagination;
 
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -31,8 +31,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
 @Controller("/api/v1/{tenant}/mcp-servers")
@@ -60,11 +58,9 @@ public class McpServerController {
     @Get
     @Operation(tags = { "Mcp" }, summary = "List MCP servers")
     public PagedResults<ApiMcpServer> listMcps(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort) {
+        @Valid @RequestBean Pagination paging) {
         return PagedResults.of(
-            mcpServerRepository.find(PageableUtils.from(page, size, sort), tenantService.resolveTenant())
+            mcpServerRepository.find(paging.toPageable(), tenantService.resolveTenant())
                 .map(ApiMcpServer::from)
         );
     }
@@ -257,7 +253,7 @@ public class McpServerController {
             boolean destructive,
             boolean idempotent,
             boolean returnDirect) {
-            public static Annotations from(McpToolTrigger.Annotations a) {
+            public static Annotations from(McpToolAnnotations a) {
                 if (a == null) {
                     return new Annotations(false, false, false, false, false);
                 }

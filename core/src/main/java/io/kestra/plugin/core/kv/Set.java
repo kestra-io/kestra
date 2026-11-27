@@ -8,6 +8,9 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectReader;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.kv.KVType;
@@ -63,6 +66,8 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class Set extends Task implements RunnableTask<VoidOutput> {
+    private static final ObjectReader EXACT_DECIMAL_READER = JacksonMapper.ofJson().reader(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
+
     @NotNull
     @Schema(
         title = "The key to set the value for"
@@ -118,7 +123,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
             KVType renderedKvType = runContext.render(kvType).as(KVType.class).orElseThrow();
             if (renderedValue instanceof String renderedValueStr) {
                 renderedValue = switch (renderedKvType) {
-                    case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
+                    case NUMBER -> EXACT_DECIMAL_READER.forType(Number.class).readValue(renderedValueStr);
                     case BOOLEAN -> parseBoolean(renderedValueStr);
                     case DATETIME -> TypeConverter.toInstant(renderedValueStr);
                     case DATE -> parseDate(renderedValueStr);
@@ -127,7 +132,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                         TypeConverter.toDuration(renderedValueStr);
                         yield renderedValueStr;
                     }
-                    case JSON -> JacksonMapper.toObject(renderedValueStr);
+                    case JSON -> EXACT_DECIMAL_READER.forType(Object.class).readValue(renderedValueStr);
                     default -> renderedValue;
                 };
             } else if (renderedValue instanceof Number valueNumber && renderedKvType == KVType.STRING) {

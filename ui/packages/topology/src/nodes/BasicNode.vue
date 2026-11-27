@@ -1,7 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer}"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer, 'node-wrapper--with-status-row': hasStatusRow}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -9,26 +9,52 @@
         @dragstart="onDragStart"
         @dragend="emit(EVENTS.TASK_DRAG_END)"
     >
-        <div v-if="lod === 'pill'" class="node-pill" :style="nodeStyle">
-            <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
-            </KsTooltip>
+        <div
+            v-if="lod === 'pill'"
+            class="node-pill"
+            :class="diffStatus ? `node-pill--diff-${diffStatus}` : ''"
+            :style="pillStyle"
+            data-test="topology-task-pill"
+        >
+            <span class="node-pill-icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
+                    <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                </KsTooltip>
+            </span>
+            <span
+                v-if="statusStyle"
+                class="node-pill-status"
+                :style="pillStatusStyle"
+                data-test="topology-task-pill-status"
+                role="img"
+                :aria-label="state"
+            >
+                <component :is="statusStyle.icon" :size="14" />
+            </span>
         </div>
         <template v-else>
             <div
                 class="node-core"
-                :style="nodeStyle"
-                :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
+                :style="cardStyle"
+                :class="[
+                    classes,
+                    diffClasses,
+                    {'node-core--focused': focused, 'node-core--with-footer': $slots.footer},
+                ]"
             >
                 <div class="main-content">
-                    <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
+                    <DragVertical v-if="movable" class="node-grip" />
                     <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                        <slot name="icon-badge" />
                         <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
                             <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                         </KsTooltip>
                         <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                     </div>
                     <div class="node-content">
+                        <div v-if="$slots.runner" class="node-runner">
+                            <slot name="runner" />
+                        </div>
                         <div class="node-title">
                             <div class="task-title">
                                 <KsTooltip v-if="extraTooltip" :content="extraTooltip">
@@ -49,17 +75,16 @@
                     <slot name="footer" />
                 </div>
             </div>
-            <Transition name="node-details-overlay">
-                <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay" data-test="node-details-overlay">
-                    <slot name="details" />
-                </div>
-            </Transition>
+            <DiffBadge v-if="diffStatus" class="node-diff-badge" :status="diffStatus" />
+            <div v-if="hasStatusRow" class="node-status-row" :style="{height: `${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`}" data-test="node-status-row">
+                <slot name="status-row" />
+            </div>
         </template>
     </div>
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject} from "vue"
+    import {computed, inject, useSlots} from "vue"
     import {
         KsTooltip,
         useTaskIcon,
@@ -67,10 +92,15 @@
         type PluginIconMap,
     } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import {EVENTS} from "../utils/constants"
+    import DiffBadge from "./DiffBadge.vue"
+    import {EVENTS, NODE_SIZES, PILL_COMPENSATION} from "../utils/constants"
     import type {LodLevel} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
-    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
+    import {
+        DIFF_INJECTION_KEY,
+        EXECUTION_INJECTION_KEY,
+        PILL_ZOOM_COMPENSATION_INJECTION_KEY,
+    } from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
     interface NodeEntity {
@@ -113,6 +143,9 @@
         EVENTS.TASK_DRAG_END,
     ])
 
+    const slots = useSlots()
+    const hasStatusRow = computed(() => Boolean(slots["status-row"]) && props.lod !== "pill")
+
     const movable = computed(() => Boolean(props.data?.isMovable))
 
     // A 1x1 transparent gif replaces the browser's own drag image, which is an OS-level layer we
@@ -136,6 +169,7 @@
         const target = event.target as HTMLElement | null
         // The card is one big target, so anything that already has its own action keeps it.
         if (target?.closest("button, a, input, [role='button'], .vue-flow__handle")) return
+        if (diff?.value && diffStatus.value && props.id) diff.value.select(props.id)
         emit(EVENTS.CARD_CLICK, event)
     }
 
@@ -176,6 +210,14 @@
     }
 
     const execution = inject(EXECUTION_INJECTION_KEY, undefined)
+    const diff = inject(DIFF_INJECTION_KEY, undefined)
+    const diffStatus = computed(() => (props.id ? diff?.value?.statusByUid.get(props.id) : undefined))
+    const diffClasses = computed(() => diffStatus.value
+        ? [
+            `node-core--diff-${diffStatus.value}`,
+            {"node-core--diff-selected": diff?.value?.selectedUid === props.id},
+        ]
+        : [])
     const isExecution = computed(() => Boolean(execution?.value))
 
     const statusStyle = computed(() => getStatusStyle(props.state))
@@ -188,6 +230,23 @@
             borderColor: style.border,
         }
     })
+
+    const pillCompensation = inject(PILL_ZOOM_COMPENSATION_INJECTION_KEY, computed(() => 1))
+
+    const pillStyle = computed(() => {
+        const style = nodeStyle.value
+        if (!style) return undefined
+        return {...style, borderWidth: `${pillCompensation.value}px`}
+    })
+
+    const pillStatusStyle = computed(() => ({
+        color: `var(${statusStyle.value?.textVar})`,
+        transform: `scale(${Math.min(pillCompensation.value, PILL_COMPENSATION.GLYPH_MAX)})`,
+    }))
+
+    const cardStyle = computed(() => (isExecution.value
+        ? {borderColor: statusStyle.value?.border, width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`}
+        : nodeStyle.value))
 
     const node = computed(() => {
         return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null
@@ -261,6 +320,7 @@
     }
 
     .node-pill {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -270,6 +330,27 @@
         background-color: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-strong);
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
+    }
+
+    .node-pill-icon {
+        display: flex;
+    }
+
+    .node-pill-status {
+        position: absolute;
+        right: calc(var(--ks-spacing-1) * -1);
+        bottom: calc(var(--ks-spacing-1) * -1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--ks-bg-surface);
+        line-height: 1;
+        transform-origin: top left;
+    }
+
+    .node-pill .icon--dimmed {
+        opacity: 0.2;
     }
 
     .node-grip {
@@ -306,6 +387,60 @@
         opacity: 0.35;
     }
 
+    .node-diff-badge {
+        position: absolute;
+        top: calc(var(--ks-spacing-2) * -1);
+        right: var(--ks-spacing-2);
+        z-index: 1;
+    }
+
+    .node-pill.node-pill--diff-unchanged,
+    .node-core.node-core--diff-unchanged {
+        opacity: 0.6;
+    }
+
+    .node-pill.node-pill--diff-added,
+    .node-core.node-core--diff-added {
+        border-color: var(--ks-border-success);
+        background-color: var(--ks-bg-success);
+    }
+
+    .node-pill.node-pill--diff-changed,
+    .node-core.node-core--diff-changed {
+        border-color: var(--ks-border-warning);
+        background-color: var(--ks-bg-warning);
+    }
+
+    .node-pill.node-pill--diff-renamed,
+    .node-pill.node-pill--diff-moved,
+    .node-core.node-core--diff-renamed {
+        border-color: var(--ks-border-info);
+        background-color: var(--ks-bg-info);
+    }
+
+    .node-pill.node-pill--diff-removed {
+        border: 1px dashed var(--ks-border-error);
+    }
+
+    .node-core.node-core--diff-removed {
+        border: 1px dashed var(--ks-border-error);
+        box-shadow: none;
+        opacity: 0.75;
+
+        .task-title {
+            text-decoration: line-through;
+        }
+    }
+
+    .node-core.node-core--diff-moved {
+        border: 1px dashed var(--ks-border-info);
+    }
+
+    .node-core.node-core--diff-selected {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: 2px;
+    }
+
     .node-core {
         display: flex;
         flex-direction: column;
@@ -316,6 +451,7 @@
         border: 1px solid var(--ks-border-strong);
 
         .main-content {
+            position: relative;
             display: flex;
             padding: var(--ks-spacing-2);
             padding-right: var(--ks-spacing-4);
@@ -337,6 +473,7 @@
         }
 
         .icon {
+            position: relative;
             flex-shrink: 0;
             border-radius: var(--ks-radius-lg);
             width: 40px;
@@ -354,8 +491,36 @@
         }
     }
 
-    .node-core--execution .main-content {
-        width: 273px;
+    .node-core.node-core--execution {
+        box-sizing: border-box;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2);
+        background-color: var(--ks-bg-surface);
+
+        .main-content {
+            width: auto;
+            height: var(--ks-spacing-7);
+            padding: 0;
+        }
+
+        .icon {
+            border: none;
+            border-radius: var(--ks-radius-base);
+        }
+
+        .node-footer {
+            flex: none;
+            padding: 0;
+        }
+
+        .task-title {
+            font-weight: var(--ks-font-weight-semibold);
+            line-height: var(--ks-line-height-tight);
+        }
+
+        .node-subtitle {
+            line-height: var(--ks-line-height-tight);
+        }
     }
 
     .node-core--with-footer {
@@ -365,6 +530,28 @@
         .main-content {
             flex-shrink: 0;
         }
+    }
+
+    .node-wrapper--with-status-row {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        & > .node-core--with-footer {
+            height: auto;
+            flex: 1 1 0;
+            min-height: 0;
+        }
+    }
+
+    .node-status-row {
+        display: flex;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+        padding-top: var(--ks-spacing-1);
+        align-items: stretch;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-1);
     }
 
     .node-footer {
@@ -391,12 +578,20 @@
         }
     }
 
+    .node-runner {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        font-size: var(--ks-font-size-2xs);
+        line-height: 1;
+    }
+
     .node-subtitle {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
         min-width: 0;
-        font-size: var(--ks-font-size-2xs);
+        font-size: var(--ks-font-size-xs);
         color: var(--ks-text-secondary);
     }
 
@@ -420,39 +615,4 @@
         flex-grow: 1;
     }
 
-    .node-details-overlay {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        z-index: var(--ks-z-dropdown);
-        margin-top: var(--ks-spacing-1);
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
-        max-height: 20rem;
-        overflow: auto;
-    }
-
-    .node-details-overlay:empty {
-        display: none;
-    }
-
-    .node-details-overlay-enter-active,
-    .node-details-overlay-leave-active {
-        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
-    }
-
-    .node-details-overlay-enter-from,
-    .node-details-overlay-leave-to {
-        opacity: 0;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .node-details-overlay-enter-active,
-        .node-details-overlay-leave-active {
-            transition: none;
-        }
-    }
 </style>

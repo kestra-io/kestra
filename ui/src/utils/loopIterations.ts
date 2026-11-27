@@ -157,7 +157,7 @@ export async function findFirstFailedIteration(parentId: string, taskId: string,
 
 export async function loadIterationExecution(executionId: string): Promise<Execution> {
     try {
-        return await ExecutionsAPI.execution({executionId}) as unknown as Execution
+        return await ExecutionsAPI.execution({executionId})
     } catch (error) {
         handled(error)
         throw new LoopIterationError(failureOf(error))

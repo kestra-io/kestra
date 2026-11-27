@@ -103,7 +103,7 @@ test.describe("Flow editor with namespace files open", () => {
         await editor.typeAtEnd(fileTabId("b.txt"), " edited in b")
 
         await editor.selectTab(FLOW_TAB)
-        await expect(editor.page.getByRole("button", {name: "Save", exact: true})).toBeEnabled()
+        await expect(editor.page.getByRole("button", {name: "Save draft", exact: true})).toBeEnabled()
         await editor.clickSave()
 
         await expect.poll(() => filesApi.readFile("a.txt")).toBe("alpha edited in a")
@@ -152,8 +152,6 @@ test.describe("Flow editor with namespace files open", () => {
     })
 
     test("saves a file emptied in the editor as an empty file", async ({namespace, filesApi}) => {
-        test.fail(true, "the flow's save-all skips a dirty tab whose content is \"\", so the file keeps its old content and stays dirty. Tracked in kestra-io/kestra-ee#4972")
-
         const file = fileTabId("notes.txt")
         await filesApi.writeFile("notes.txt", "to be removed")
 

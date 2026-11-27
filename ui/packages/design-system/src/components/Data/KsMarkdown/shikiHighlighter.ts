@@ -15,8 +15,7 @@ let promise: Promise<HighlighterCore> | null = null
 
 import {createJavaScriptRegexEngine} from "shiki/engine/javascript"
 
-import GithubLight from "shiki/themes/github-light.mjs"
-import GithubDark from "shiki/themes/github-dark.mjs"
+import {kestraDark, kestraLight, toTextMateTheme, yamlKeysInjection} from "@kestra-io/plumage"
 import Json from "shiki/langs/json.mjs"
 import Python from "shiki/langs/python.mjs"
 import Yaml from "shiki/langs/yaml.mjs"
@@ -28,11 +27,12 @@ export function getShiki(): Promise<HighlighterCore> {
             const jsEngine = createJavaScriptRegexEngine()
 
             return createHighlighterCore({
-                themes: [GithubDark, GithubLight],
+                themes: [toTextMateTheme(kestraDark), toTextMateTheme(kestraLight)],
                 langs: [
                     Json,
                     Python,
                     Yaml,
+                    yamlKeysInjection,
                 ],
                 engine: jsEngine,
             })

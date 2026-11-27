@@ -19,7 +19,9 @@ import reactor.core.publisher.FluxSink;
  * <p>
  * Controllers performing blocking single-action APIs register a subscriber keyed by
  * {@code (operationId, itemId)} before emitting the domain event; the service dispatches
- * the incoming processed event to the matching subscriber and completes the sink.
+ * the incoming processed events to the matching subscriber and completes the sink on the first
+ * terminal one. An operation subscriber receives the events of every item of an operation and is
+ * never completed by the service.
  * <p>
  * Mirrors {@link io.kestra.core.services.ExecutionStreamingService}: subscribers are held in a nested
  * {@link ConcurrentHashMap} guarded by a single lock for add/remove atomicity.
@@ -28,6 +30,7 @@ import reactor.core.publisher.FluxSink;
 @Singleton
 public class AsyncEventStreamingService {
     private final Map<String, Map<String, FluxSink<AsyncOperationProcessedEvent>>> subscribers = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, FluxSink<AsyncOperationProcessedEvent>>> operationSubscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();
 
     private final BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationQueue;
@@ -49,32 +52,53 @@ public class AsyncEventStreamingService {
                 return;
             }
 
-            if (subscribers.isEmpty()) {
+            if (subscribers.isEmpty() && operationSubscribers.isEmpty()) {
                 return;
             }
 
             AsyncOperationProcessedEvent event = either.getLeft();
+            dispatchToItem(event);
+            dispatchToOperation(event);
+        });
+    }
 
-            // Get all subscribers for this operation
-            Map<String, FluxSink<AsyncOperationProcessedEvent>> operationSubscribers = subscribers.get(event.operationId());
+    private void dispatchToItem(AsyncOperationProcessedEvent event) {
+        Map<String, FluxSink<AsyncOperationProcessedEvent>> itemSubscribers = subscribers.get(event.operationId());
+        if (MapUtils.isEmpty(itemSubscribers)) {
+            return;
+        }
 
-            if (MapUtils.isEmpty(operationSubscribers)) {
-                return;
+        FluxSink<AsyncOperationProcessedEvent> sink = itemSubscribers.get(event.itemId());
+        if (sink == null) {
+            return;
+        }
+
+        try {
+            sink.next(event);
+            if (event.outcome().isTerminal()) {
+                sink.complete();
             }
+        } catch (Exception e) {
+            log.error(
+                "Error dispatching AsyncOperationProcessedEvent for op {} item {}",
+                event.operationId(), event.itemId(), e
+            );
+            sink.error(e);
+        }
+    }
 
-            FluxSink<AsyncOperationProcessedEvent> sink = operationSubscribers.get(event.itemId());
-            if (sink == null) {
-                return;
-            }
+    private void dispatchToOperation(AsyncOperationProcessedEvent event) {
+        Map<String, FluxSink<AsyncOperationProcessedEvent>> sinks = operationSubscribers.get(event.operationId());
+        if (MapUtils.isEmpty(sinks)) {
+            return;
+        }
 
+        sinks.forEach((subscriberId, sink) ->
+        {
             try {
                 sink.next(event);
-                sink.complete();
             } catch (Exception e) {
-                log.error(
-                    "Error dispatching AsyncOperationProcessedEvent for op {} item {}",
-                    event.operationId(), event.itemId(), e
-                );
+                log.error("Error dispatching AsyncOperationProcessedEvent for op {} to subscriber {}", event.operationId(), subscriberId, e);
                 sink.error(e);
             }
         });
@@ -82,7 +106,7 @@ public class AsyncEventStreamingService {
 
     /**
      * Register a subscriber for a specific {@code (operationId, itemId)} pair.
-     * The sink will receive exactly one event and then complete.
+     * The sink receives the item's events and completes after the first terminal one.
      * All subscribers must ensure to call {@link #unregisterSubscriber(String, String)} to avoid any memory leak.
      */
     public void registerSubscriber(String operationId, String itemId, FluxSink<AsyncOperationProcessedEvent> sink) {
@@ -105,6 +129,30 @@ public class AsyncEventStreamingService {
                 operationSubscribers.remove(itemId);
                 if (operationSubscribers.isEmpty()) {
                     subscribers.remove(operationId);
+                }
+            }
+        }
+    }
+
+    /**
+     * Register a subscriber for every item of {@code operationId}. The sink is never completed by
+     * this service, so the caller decides when it has heard enough and must then call
+     * {@link #unregisterOperationSubscriber(String, String)}.
+     */
+    public void registerOperationSubscriber(String operationId, String subscriberId, FluxSink<AsyncOperationProcessedEvent> sink) {
+        synchronized (subscriberLock) {
+            operationSubscribers.computeIfAbsent(operationId, k -> new ConcurrentHashMap<>())
+                .put(subscriberId, sink);
+        }
+    }
+
+    public void unregisterOperationSubscriber(String operationId, String subscriberId) {
+        synchronized (subscriberLock) {
+            Map<String, FluxSink<AsyncOperationProcessedEvent>> sinks = operationSubscribers.get(operationId);
+            if (sinks != null) {
+                sinks.remove(subscriberId);
+                if (sinks.isEmpty()) {
+                    operationSubscribers.remove(operationId);
                 }
             }
         }

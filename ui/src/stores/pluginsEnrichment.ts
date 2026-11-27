@@ -25,6 +25,8 @@ type SubGroupEntry = {
     group?: string;
     subGroup?: string | null;
     title?: string;
+    name?: string;
+    version?: string;
 }
 
 export type PluginEnrichment = {
@@ -36,6 +38,7 @@ export type PluginEnrichment = {
     description?: string;
     body?: string;
     title?: string;
+    releaseNotesUrl?: string;
 }
 
 // https://api.kestra.io/v1/plugins/{cls}/versions
@@ -47,6 +50,8 @@ export type PluginVersion = {
 }
 
 const PUBLIC_API_TIMEOUT_MS = 5000
+
+const isEnterpriseGroup = (group?: string): boolean => group?.split(".")[3] === "ee"
 
 export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => {
     const enrichments = ref<Record<string, PluginEnrichment>>({})
@@ -105,8 +110,11 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
             if (subgroups.status === "fulfilled") {
                 for (const entry of subgroups.value ?? []) {
                     const key = entry.subGroup ?? entry.group
-                    if (!key || !entry.title) continue
-                    upsert(key, {title: entry.title})
+                    if (!key) continue
+                    if (entry.title) upsert(key, {title: entry.title})
+                    if (isEnterpriseGroup(entry.group) && entry.name && entry.version) {
+                        upsert(key, {releaseNotesUrl: `${API_URL}/v1/plugins/artifacts/ee/release-notes/${entry.name}?version=${entry.version}`})
+                    }
                 }
             }
             if (info.status === "fulfilled" || meta.status === "fulfilled" || subgroups.status === "fulfilled") {

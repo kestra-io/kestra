@@ -6,6 +6,7 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
 import {handled} from "../utils/kestraHttp"
+import {latestRequest} from "../utils/latestRequest"
 
 /**
  * A route query only whose `filters[...]` keys reach the backend as filters. Left open because
@@ -77,10 +78,10 @@ function setupLogsStore() {
     let currentCursor: string | undefined = undefined
     const hasPreviousPage = computed(() => cursorStack.value.length > 0)
 
-    let latestSearchId = 0
+    const startSearch = latestRequest()
 
     function applyResponse(response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>) {
-        logs.value = response.results as unknown as Log[]
+        logs.value = response.results
         total.value = response.total ?? 0
         paginationType.value = response.type ?? "OFFSET"
         nextCursor.value = response.nextCursor
@@ -89,9 +90,9 @@ function setupLogsStore() {
     /** Fresh load — resets the cursor back-stack. Used for the first page, filter changes, refresh
      * and mode transitions. Next/Previous navigation goes through the dedicated actions below. */
     function findLogs(options: LogSearchOptions, cursor?: string) {
-        const searchId = ++latestSearchId
+        const isLatest = startSearch()
         return LogsAPI.searchLogs(toSearchParams(options, cursor)).then(response => {
-            const isSuperseded = searchId !== latestSearchId
+            const isSuperseded = !isLatest()
             if (isSuperseded) return
 
             cursorStack.value = []
@@ -106,12 +107,12 @@ function setupLogsStore() {
     function loadNextPage(options: LogSearchOptions) {
         const cursor = nextCursor.value
         if (!cursor) return Promise.resolve()
-        const searchId = ++latestSearchId
+        const isLatest = startSearch()
         return LogsAPI.searchLogs(toSearchParams(options, cursor)).then(response => {
-            const isSuperseded = searchId !== latestSearchId
+            const isSuperseded = !isLatest()
             if (isSuperseded) return
 
-            const results = (response.results ?? []) as unknown as Log[]
+            const results = response.results ?? []
             if (results.length === 0) {
                 nextCursor.value = undefined
                 return
@@ -127,9 +128,9 @@ function setupLogsStore() {
         if (cursorStack.value.length === 0) return Promise.resolve()
         const stack = [...cursorStack.value]
         const previousCursor = stack.pop()
-        const searchId = ++latestSearchId
+        const isLatest = startSearch()
         return LogsAPI.searchLogs(toSearchParams(options, previousCursor)).then(response => {
-            const isSuperseded = searchId !== latestSearchId
+            const isSuperseded = !isLatest()
             if (isSuperseded) return
 
             cursorStack.value = stack
@@ -172,7 +173,7 @@ function setupLogsStore() {
                 break
             }
 
-            const results = (response.results ?? []) as unknown as Log[]
+            const results = response.results ?? []
             reportedTotal = response.total ?? reportedTotal
             collected.push(...results)
 
@@ -196,10 +197,7 @@ function setupLogsStore() {
         // whole change exists to stop producing.
         if (lines.length > 0) {
             const text = formatLogsAsText(lines.slice().reverse())
-            Utils.downloadUrl(
-                window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
-                logsDownloadFilename(new Date()),
-            )
+            Utils.downloadBlob(new Blob([text], {type: "text/plain"}), logsDownloadFilename(new Date()))
         }
 
         const matchedTotal = reportedTotal === undefined ? undefined : Math.max(reportedTotal, collected.length)

@@ -3,7 +3,7 @@ package io.kestra.scheduler.stores;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.vnodes.VNodes;
 
 /**
  * A decorator class adding caching capabilities on top of {@link TriggerStateStore}.
@@ -59,25 +59,23 @@ public class CachedTriggerStateStore implements TriggerStateStore {
      */
     @Override
     public List<TriggerState> findAllForVNodes(final Set<Integer> vNodes) {
-        // Check if all requested vNodes are cached
-        boolean allCached = vNodes.stream().allMatch(partitionedCache::containsKey);
+        long start = System.currentTimeMillis();
+        // The cache is size-bounded, so it cannot tell whether it holds every state of a vNode.
+        List<TriggerState> states = delegate.findAllForVNodes(vNodes);
+        states.forEach(state -> partitionedCache.computeIfAbsent(state.getVnode(), k -> newCache()).put(state.uid(), state));
 
-        if (allCached && !vNodes.isEmpty()) {
-            return findAllForNodesFromCache(vNodes);
-        }
+        Map<Integer, Long> countByVNode = states.stream()
+            .collect(Collectors.groupingBy(TriggerState::getVnode, TreeMap::new, Collectors.counting()));
+        LOG.debug("Loaded {} trigger states for vNodes {} in {}ms, per vNode: {}", states.size(), vNodes, System.currentTimeMillis() - start, countByVNode);
 
-        // Fallback to delegate and update caches for missing vNodes);
-        loadCacheForAllVNodes(vNodes);
-
-        return findAllForNodesFromCache(vNodes);
-    }
-
-    private List<TriggerState> findAllForNodesFromCache(final Set<Integer> vNodes) {
-        return vNodes.stream()
-            .map(partitionedCache::get)
-            .filter(Objects::nonNull)
-            .flatMap(cache -> cache.asMap().values().stream())
-            .toList();
+        int maxSize = schedulerConfiguration.cacheMaxSizePerVNode();
+        countByVNode.values().stream().max(Long::compare)
+            .filter(largest -> largest > maxSize)
+            .ifPresent(largest -> LOG.warn(
+                "Some vNodes hold more trigger states than the scheduler cache keeps per vNode ({}), per vNode: {}. Set 'kestra.scheduler.cache-max-size-per-vnode' to at least {} to keep them all in memory.",
+                maxSize, countByVNode, largest
+            ));
+        return states;
     }
 
     /**
@@ -152,26 +150,6 @@ public class CachedTriggerStateStore implements TriggerStateStore {
                     .ifPresent(Cache::invalidateAll);
             }
         }
-    }
-
-    private void loadCacheForAllVNodes(final Set<Integer> vNodes) {
-        long start = System.currentTimeMillis();
-        LOG.debug("Loading trigger states for vnodes {}", vNodes);
-        // Create or warm up caches for new vNodes
-        AtomicInteger count = new AtomicInteger(0);
-        for (Integer vnode : vNodes) {
-            partitionedCache.computeIfAbsent(vnode, key ->
-            {
-
-                Cache<String, TriggerState> cache = newCache();
-
-                List<TriggerState> states = delegate.findAllForVNodes(Set.of(vnode));
-                states.forEach(state -> cache.put(state.uid(), state));
-                count.addAndGet(states.size());
-                return cache;
-            });
-        }
-        LOG.debug("Loaded {} trigger states for vnoded {} in {}ms", count, vNodes, System.currentTimeMillis() - start);
     }
 
     public void clear() {

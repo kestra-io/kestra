@@ -2,9 +2,11 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,6 +31,15 @@ public class WorkerTaskRunning extends WorkerJobRunning {
     @NotNull
     private WorkerTaskData data;
 
+    @Nullable
+    private ExecutionKind executionKind;
+
+    /**
+     * The id of the task run of the enclosing WorkingDirectory, whose folder the task runs in.
+     */
+    @Nullable
+    private String workingDirectoryId;
+
     /**
      * {@inheritDoc}
      */
@@ -51,6 +62,8 @@ public class WorkerTaskRunning extends WorkerJobRunning {
             .taskRun(workerTask.getTaskRun())
             .task(workerTask.getTask())
             .data(workerTask.getData())
+            .workingDirectoryId(workerTask.getWorkingDirectoryId())
+            .executionKind(workerTask.getExecutionKind())
             .build();
     }
 }

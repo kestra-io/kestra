@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -52,6 +54,12 @@ class AiServiceManagerTest {
 
     private final PropertyPlaceholderResolver placeholderResolver = mock(PropertyPlaceholderResolver.class);
 
+    private static AiFreeTierConfiguration freeTierDisabled() {
+        AiFreeTierConfiguration configuration = new AiFreeTierConfiguration();
+        configuration.setEnabled(false);
+        return configuration;
+    }
+
     private AiServiceManager buildManager(List<AiProviderConfiguration> providers) {
         when(providersConfiguration.providers()).thenReturn(providers);
         // Only exercised when at least one provider is configured, hence lenient.
@@ -70,7 +78,11 @@ class AiServiceManagerTest {
             namespaceContextTool,
             kestraDocsContextTool,
             expressionContextService,
-            flowParsingService
+            flowParsingService,
+            // These cases assert how *configured* providers resolve; leaving the free tier on would register
+            // a fallback for the no-provider case.
+            freeTierDisabled(),
+            null
         );
     }
 
@@ -117,5 +129,25 @@ class AiServiceManagerTest {
 
         // The ${...} value must be sent through the placeholder resolver rather than passed verbatim.
         verify(placeholderResolver).resolveRequiredPlaceholders("${GEMINI_API_KEY}");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "gemini", "openai", "anthropic", "ollama", "open-router", "mistralai", "bedrock", "deepseek", "azure-openai", "googlevertexai" })
+    void shouldRegisterProviderWhenTypeIsSupported(String type) {
+        AiProviderConfiguration provider = new AiProviderConfiguration(type + "-test", type, type, true, java.util.Map.of("modelName", "a-model", "apiKey", "fake-key"));
+
+        AiServiceManager manager = buildManager(List.of(provider));
+
+        assertThat(manager.getAiService(type + "-test")).isNotNull();
+    }
+
+    @Test
+    void shouldSkipProviderWhenTypeIsUnknown() {
+        AiProviderConfiguration unknown = new AiProviderConfiguration("unknown-test", "Unknown", "not-a-provider", false, java.util.Map.of("apiKey", "fake-key"));
+        AiProviderConfiguration gemini = new AiProviderConfiguration("gemini-test", "Gemini", "gemini", true, java.util.Map.of("apiKey", "fake-key"));
+
+        AiServiceManager manager = buildManager(List.of(unknown, gemini));
+
+        assertThat(manager.getAllAiServices()).containsOnlyKeys("gemini-test");
     }
 }

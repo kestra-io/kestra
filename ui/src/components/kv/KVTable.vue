@@ -7,11 +7,13 @@
         :currentPage="urlPage"
         :pageSize="urlSize"
         :defaultSort="defaultSort"
-        @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+        @page-changed="onPageChanged"
         @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_results.all_columns_hidden')"
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
+        selectable
+        :rowSelectable="isRowSelectable"
         :showSelection="!paneView"
         :rowKey="(row: KvEntry) => `${row.namespace}-${row.key}`"
     >
@@ -165,8 +167,6 @@
                 <NamespaceSelect
                     v-model="kv.namespace"
                     :readOnly="kv.update"
-                    :includeSystemNamespace="true"
-                    all
                 />
             </KsFormItem>
 
@@ -295,7 +295,7 @@
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n"
-    import {useRoute, useRouter, type LocationQuery} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import {computed, nextTick, ref, useTemplateRef, watch} from "vue"
 
     import Delete from "vue-material-design-icons/Delete.vue"
@@ -323,9 +323,11 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import {useKvFilter} from "../filter/configurations/kvFilter"
+    import {latestRequest} from "../../utils/latestRequest"
 
-    import {dateUtils, dayjs, useTableColumns} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
@@ -358,8 +360,13 @@
     const namespaceFilter = (namespace: string): QueryFilter[] =>
         [{field: "namespace", operation: "EQUALS", value: namespace}]
 
+    const isRowSelectable = () => true
+
+    const startLoad = latestRequest()
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
+        const isLatest = startLoad()
         const activeFilters = routeQueryToQueryFilters(route.query)
         const kvsResponse = await KvAPI.listAllKeys(loadQuery({
             size,
@@ -392,6 +399,7 @@
             }
         }
 
+        if (!isLatest()) return
         kvs.value = allKvs
         total.value = kvsResponse.total ?? 0
     }
@@ -407,20 +415,14 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
 
-    // The table reads defaultSort once, when it mounts, so it has to start from the URL sort that loadData
-    // uses: otherwise a page opened with ?sort=updateDate:desc lists rows by date under an arrow on Key, and
-    // the first click on Last modified re-applies the order it already has.
-    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
-        const parts = typeof sort === "string" ? sort.split(":") : []
-        if (parts.length !== 2 || !parts[0] || !parts[1]) {
-            return {prop: "key", order: "ascending"}
-        }
-        // Read the direction as the API does: "asc" is ascending, anything else descending.
-        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
     }
-    const defaultSort = sortFromQuery(route.query.sort)
+
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "key", order: "ascending"})
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
@@ -581,6 +583,18 @@
         ttl: [
             {validator: durationValidator, trigger: "change"},
         ],
+        description: [
+            {
+                validator: (_rule: FormItemRule, value: string | undefined, callback: (error?: Error) => void) => {
+                    if ([...(value ?? "")].some(char => (char.codePointAt(0) ?? 0) > 0xff)) {
+                        callback(new Error(t("kv.description_latin1")))
+                    } else {
+                        callback()
+                    }
+                },
+                trigger: "change",
+            },
+        ],
     })
 
     function canUpdate(kvItem: KvEntry) {
@@ -688,7 +702,7 @@
     }
 
     function removeKv(namespace: string, key: string) {
-        toast.confirm(t("delete confirm"), async () => {
+        toast.confirm(t("delete confirm", {name: key}), async () => {
             return namespacesStore
                 .deleteKv({namespace, key: key})
                 .then(() => {
@@ -699,19 +713,19 @@
     }
 
     function removeKvs() {
-        const groupedByNamespace = groupBy(selection.value, (item) => item.namespace)
+        const groupedByNamespace = groupBy(selection.value, (item) => item.namespace ?? "")
         const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, namespace)))
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs)
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n))
         toast.confirm(
             t("kv.delete multiple.confirm", {name: Object.values(withDeletePermissionGroupedKvs).reduce((count, group) => count + group.length, 0)}) +
-                (withoutDeletePermissionNamespaces.length === 0 ? "" : "\n" + t("kv.delete multiple.warning")),
+                (withoutDeletePermissionNamespaces.length === 0 ? "" : "\n" + t("kv.delete multiple.warning", {namespaces: withoutDeletePermissionNamespaces.join(", ")})),
             async () => {
                 Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, group]) => {
                     namespacesStore
                         .deleteKvs({namespace, request: {keys: group.flatMap(item => item.key ? [item.key] : [])}})
                         .then(() => {
-                            toast.deleted(`${group.length} KV(s) from ${namespace} namespace`)
+                            toast.success(t("kv.delete multiple.deleted", {count: group.length, namespace}), t("deleted"))
                             toggleAllUnselected()
                             dataTable.value?.reload()
                         })

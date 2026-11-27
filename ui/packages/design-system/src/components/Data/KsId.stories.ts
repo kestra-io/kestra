@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect} from "storybook/test"
 import KsId from "./KsId.vue"
 
 const meta: Meta<typeof KsId> = {
@@ -79,4 +80,24 @@ export const Empty: Story = {
         `,
     }),
     parameters: {controls: {disable: true}},
+}
+
+/** Colour: `--ks-id-color` replaces the link colour, set on the id or an ancestor such as a link wrapping it */
+export const Color: Story = {
+    render: () => ({
+        components: {KsId},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
+                <ks-id value="a1b2c3d4-e5f6-7890" :shrink="false" data-test="default" />
+                <span style="--ks-id-color:var(--ks-text-primary)"><ks-id value="a1b2c3d4-e5f6-7890" :shrink="false" data-test="primary" /></span>
+                <span data-test="reference" style="color:var(--ks-text-primary)">reference</span>
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const color = (test: string) => getComputedStyle(canvasElement.querySelector(`[data-test="${test}"]`)!).color
+        await expect(color("primary")).toBe(color("reference"))
+        await expect(color("default")).not.toBe(color("reference"))
+    },
 }

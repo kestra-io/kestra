@@ -3,7 +3,7 @@
         <KsPopover width="max-content" trigger="hover" placement="right" :showArrow="false" :offset="24">
             <template #reference>
                 <span class="version-item">
-                    <KsIcon size="base">
+                    <KsIcon size="sm">
                         <InformationOutline />
                     </KsIcon>
                     {{ $t("version") }}
@@ -16,7 +16,16 @@
                     <div>{{ $t("version") }}: {{ configs.version }}</div>
                     <div v-if="configs.commitId">
                         {{ $t("commit_id") }}:
-                        <span class="version-item__commit">{{ configs.commitId }}</span>
+                        <KsLink
+                            v-if="configs.edition === 'OSS'"
+                            class="version-item__commit"
+                            :href="`https://github.com/kestra-io/kestra/commit/${configs.commitId}`"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {{ configs.commitId }}
+                        </KsLink>
+                        <span v-else class="version-item__commit">{{ configs.commitId }}</span>
                     </div>
                     <div v-if="configs.commitDate">
                         {{ $t("date") }}: {{ dateUtils.dateFilter(configs.commitDate) }}
@@ -30,7 +39,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import {KsDropdownItem, KsIcon, KsPopover, dateUtils} from "@kestra-io/design-system"
+    import {KsDropdownItem, KsIcon, KsLink, KsPopover, dateUtils} from "@kestra-io/design-system"
     import {useMiscStore} from "override/stores/misc"
 
     const miscStore = useMiscStore()
@@ -65,6 +74,7 @@
 
     .version-item__commit {
         color: var(--ks-text-link);
+        font-size: inherit;
         font-family: var(--kel-font-family-monospace);
     }
 </style>

@@ -1,7 +1,11 @@
-import {dayjs} from "@kestra-io/design-system"
+import {dayjs, normalizeRelativeDate} from "@kestra-io/design-system"
 import {FILTER_FIELD_PATTERN} from "./utils"
 
 export const FALLBACK_TIME_RANGE = "PT24H"
+
+// The timeRange select only matches the canonical spelling, so `P30D` has to become `PT720H`.
+export const defaultTimeRange = (configured: string | undefined): string =>
+    normalizeRelativeDate(configured ?? FALLBACK_TIME_RANGE)
 
 // The chip labels relative ranges by exact string (FilterChip.vue's RELATIVE_DATE), and the executions
 // `timeRange` key is a plain "select", so it skips the P30D -> PT720H aliasing filterChipFactory applies
@@ -44,8 +48,8 @@ export function timeRangeWidenSequence(start: string): string[] {
     return sequence
 }
 
-export function remainingWidenWindows(current: string, defaultTimeRange: string): string[] {
-    const sequence = timeRangeWidenSequence(defaultTimeRange)
+export function remainingWidenWindows(current: string, baseTimeRange: string): string[] {
+    const sequence = timeRangeWidenSequence(baseTimeRange)
     const index = sequence.findIndex(step => isSameTimeRange(step, current))
     if (index === -1) {
         return []
@@ -90,7 +94,7 @@ export async function widenEmptyTimeRange(options: {
 }): Promise<{timeRange: string | undefined; widened: boolean}> {
     const {
         currentTimeRange,
-        defaultTimeRange,
+        defaultTimeRange: baseTimeRange,
         hasAbsoluteDateFilter,
         alreadyAttempted,
         hasUserFilters,
@@ -102,8 +106,8 @@ export async function widenEmptyTimeRange(options: {
         return {timeRange: currentTimeRange, widened: false}
     }
 
-    const current = currentTimeRange ?? defaultTimeRange
-    const remaining = remainingWidenWindows(current, defaultTimeRange)
+    const current = currentTimeRange ?? baseTimeRange
+    const remaining = remainingWidenWindows(current, baseTimeRange)
 
     let applied = currentTimeRange
     let widened = false

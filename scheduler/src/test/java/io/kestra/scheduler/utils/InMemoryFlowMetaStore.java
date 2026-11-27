@@ -2,10 +2,11 @@ package io.kestra.scheduler.utils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.vnodes.VNodes;
 import io.kestra.scheduler.stores.FlowMetaStore;
 
 /**
@@ -15,8 +16,7 @@ import io.kestra.scheduler.stores.FlowMetaStore;
  */
 public final class InMemoryFlowMetaStore implements FlowMetaStore {
 
-    // Map from FlowId to FlowWithSource
-    private final Map<Integer, Map<String, FlowWithSource>> flowStoresByVNode = new ConcurrentHashMap<>();
+    private final Map<Integer, Map<String, NavigableMap<Integer, FlowWithSource>>> flowStoresByVNode = new ConcurrentHashMap<>();
 
     private final int vnodes;
 
@@ -26,24 +26,27 @@ public final class InMemoryFlowMetaStore implements FlowMetaStore {
     }
 
     /**
-     * Adds or replaces a FlowWithSource in the store.
+     * Adds a revision of a flow to the store, replacing the one with the same revision if any.
      *
      * @param flow the flow to add
      */
     public void add(FlowWithSource flow) {
         int vNode = VNodes.computeVNodeFromFlow(flow, vnodes);
 
-        Map<String, FlowWithSource> store = flowStoresByVNode.computeIfAbsent(vNode, (key) -> new ConcurrentHashMap<>());
-        store.put(flow.uidWithoutRevision(), flow);
+        flowStoresByVNode.computeIfAbsent(vNode, (key) -> new ConcurrentHashMap<>())
+            .computeIfAbsent(flow.uidWithoutRevision(), (key) -> new ConcurrentSkipListMap<>())
+            .put(flow.getRevision(), flow);
     }
 
     /**
-     * {@inheritDoc}
+     * Finds the requested revision of a flow, or its latest revision when that one is unknown.
      */
     @Override
     public Optional<FlowWithSource> find(FlowId flowId) {
         int vNode = VNodes.computeVNodeFromFlow(flowId, vnodes);
-        return Optional.ofNullable(flowStoresByVNode.get(vNode)).map(store -> store.get(FlowId.uidWithoutRevision(flowId)));
+        return Optional.ofNullable(flowStoresByVNode.get(vNode))
+            .map(store -> store.get(FlowId.uidWithoutRevision(flowId)))
+            .map(revisions -> Optional.ofNullable(flowId.getRevision()).map(revisions::get).orElseGet(() -> revisions.lastEntry().getValue()));
     }
 
     /**
@@ -57,9 +60,9 @@ public final class InMemoryFlowMetaStore implements FlowMetaStore {
 
         List<FlowWithSource> result = new ArrayList<>();
         for (Integer vNode : vNodes) {
-            Map<String, FlowWithSource> store = flowStoresByVNode.get(vNode);
+            Map<String, NavigableMap<Integer, FlowWithSource>> store = flowStoresByVNode.get(vNode);
             if (store != null) {
-                result.addAll(store.values());
+                store.values().forEach(revisions -> result.add(revisions.lastEntry().getValue()));
             }
         }
         return result;

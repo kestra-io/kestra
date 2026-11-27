@@ -66,7 +66,7 @@ function extractAllVersions(source: string){
 const yamlKeyCapture = "([^:\\n]+): *"
 
 const indentAndYamlKeyCapture = new RegExp(
-    `(( *)(?:${yamlKeyCapture})?)[^\\n]*?$`,
+    `(( *)(?:- )?(?:${yamlKeyCapture})?)[^\\n]*?$`,
 )
 
 function getParentKeyByChildIndent(
@@ -78,6 +78,7 @@ function getParentKeyByChildIndent(
     }
 
     const matches = stringToSearch.matchAll(
+        // nosemgrep: detect-non-literal-regexp -- only a numeric indent and a constant pattern are interpolated.
         new RegExp(`(?<! ) {${indent - 2}}(?! )${yamlKeyCapture}`, "g"),
     )
     const lastMatch = [...matches].pop()

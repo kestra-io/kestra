@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
+import {expect} from "storybook/test"
 import KsRadio from "./KsRadio.vue"
 import KsRadioGroup from "./KsRadioGroup.vue"
 import KsRadioButton from "./KsRadioButton.vue"
@@ -142,4 +143,33 @@ export const Disabled: Story = {
             </div>
         `,
     }),
+}
+
+/** Radio button knobs, set on the group or an ancestor: `--ks-radio-button-padding`, `--ks-radio-button-radius` (every corner, wherever the button sits), `--ks-radio-button-bg`, `--ks-radio-button-active-bg`, `--ks-radio-button-active-color` and `--ks-radio-button-active-border-color` */
+export const ButtonVariables: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsRadioGroup, KsRadioButton},
+        setup() { return {value: ref("all")} },
+        template: `
+            <div style="padding:24px">
+                <ks-radio-group v-model="value" style="display:flex;gap:8px;--ks-radio-button-padding:var(--ks-spacing-2) var(--ks-spacing-3);--ks-radio-button-radius:var(--ks-radius-sm);--ks-radio-button-bg:var(--ks-btn-secondary-bg-default);--ks-radio-button-active-bg:var(--ks-btn-primary-bg-default);--ks-radio-button-active-color:var(--ks-white);--ks-radio-button-active-border-color:var(--ks-border-default)">
+                    <ks-radio-button value="all">All</ks-radio-button>
+                    <ks-radio-button value="data">Data</ks-radio-button>
+                    <ks-radio-button value="ops">Ops</ks-radio-button>
+                </ks-radio-group>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const inners = [...canvasElement.querySelectorAll(".kel-radio-button__inner")].map(inner => getComputedStyle(inner))
+        for (const inner of inners) {
+            await expect(inner.paddingTop).toBe("8px")
+            await expect(inner.paddingLeft).toBe("12px")
+            await expect(inner.borderTopLeftRadius).toBe("6px")
+            await expect(inner.borderBottomRightRadius).toBe("6px")
+        }
+        await expect(inners[0].color).toBe("rgb(255, 255, 255)")
+        await expect(inners[1].backgroundColor).not.toBe(inners[0].backgroundColor)
+    },
 }

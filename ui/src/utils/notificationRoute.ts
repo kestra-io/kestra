@@ -27,14 +27,23 @@ export async function resolveExecutionRoute(notification: Notification): Promise
 }
 
 function resolveAsyncOperationRoute(notification: Notification): NotificationRoute | null {
-    if (!notification.resourceType) {
+    const query = {"filters[operationId][EQUALS]": notification.referenceId as string}
+    switch (notification.resourceType) {
+    case "TRIGGER":
+        return {name: "admin/triggers", params: {tab: "manage"}, query}
+    case "EXECUTION":
+        return {name: "executions/list", params: {}, query}
+    default:
         return null
     }
+}
 
-    const query = {"filters[operationId][EQUALS]": notification.referenceId as string}
-    return notification.resourceType === "TRIGGER"
-        ? {name: "admin/triggers", params: {tab: "manage"}, query}
-        : {name: "executions/list", params: {}, query}
+export function isRelativeNotificationUrl(url: string | null | undefined): url is string {
+    return !!url && url.startsWith("/") && !url.startsWith("//")
+}
+
+export function isAbsoluteNotificationUrl(url: string | null | undefined): url is string {
+    return !!url && /^https?:\/\/[^/\s]/i.test(url)
 }
 
 export function registerNotificationRoute(type: string, resolver: RouteResolver) {

@@ -80,6 +80,16 @@ describe("useExecutionsQueryScope", () => {
         expect(query["filters[namespace][PREFIX]"]).toBe("company")
     })
 
+    it("should match the namespace exactly when the scope is a flow, so a same-id flow in a child namespace stays out", async () => {
+        const mounted = await mountScope(createTestRouter(), {}, {namespace: "company", flowId: "etl"})
+        wrapper = mounted.wrapper
+
+        const query = mounted.api.loadQuery({})
+
+        expect(query["filters[namespace][EQUALS]"]).toBe("company")
+        expect(query["filters[namespace][PREFIX]"]).toBeUndefined()
+    })
+
     it("should keep an explicit state filter from the URL instead of overwriting it with the scope's statuses", async () => {
         const mounted = await mountScope(
             createTestRouter(),

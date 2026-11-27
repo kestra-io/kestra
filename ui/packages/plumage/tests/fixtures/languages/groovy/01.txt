@@ -1,0 +1,34 @@
+plugins {
+    // ... existing plugins ...
+    id 'com.github.node-gradle.node' version '7.1.0'
+}
+
+// Build the UI module before packaging (only if ui/ directory exists)
+if (file('ui').exists()) {
+    tasks.register('npmInstallUI', com.github.gradle.node.npm.task.NpmTask) {
+        args = ['install']
+        workingDir = file('ui')
+        // Lets Gradle mark this UP-TO-DATE across separate ./gradlew invocations in the
+        // same CI job (e.g. `check`, then `publish`); without this, npm install reruns from
+        // scratch on every invocation, doubling peak memory on memory-constrained runners.
+        inputs.files('ui/package.json', 'ui/package-lock.json')
+        outputs.dir('ui/node_modules')
+    }
+
+    tasks.register('buildUI', com.github.gradle.node.npm.task.NpmTask) {
+        dependsOn 'npmInstallUI'
+        args = ['run', 'build', '--', '--outDir', '../src/main/resources/plugin-ui']
+        workingDir = file('ui')
+        // Same reasoning as npmInstallUI: avoids rebuilding the whole UI bundle a second time.
+        inputs.dir('ui/src')
+        inputs.files('ui/package.json', 'ui/vite.config.ts')
+        outputs.dir('src/main/resources/plugin-ui')
+    }
+
+    processResources.dependsOn 'buildUI'
+    shadowJar.dependsOn 'buildUI'
+    // buildUI's output dir overlaps sourcesJar's implicit input (src/main/resources); without
+    // this, Gradle's task validation fails the build once buildUI declares that directory as
+    // an output above, since sourcesJar would consume it without a declared dependency.
+    sourcesJar.dependsOn 'buildUI'
+}

@@ -51,7 +51,7 @@
                 <h3 class="modal-title">
                     {{ $t("restart execution title") }}
                 </h3>
-                <KsDivider />
+                <KsDivider class="divider" />
             </div>
         </template>
 
@@ -97,7 +97,7 @@
                 <h3 class="modal-title">
                     {{ $t("replay execution title") }}
                 </h3>
-                <KsDivider />
+                <KsDivider class="divider" />
             </div>
         </template>
 
@@ -220,7 +220,7 @@
                 {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" :disabled="replayBlocked" data-test="replay-confirm" @click="handleReplayExecute">
-                {{ replayTaskRun ? $t("replayCheck.confirm_from_task") : $t("replayCheck.confirm_whole") }}
+                {{ replayTaskRun ? $t("replayCheck.confirm_from_task", {taskId: replayTaskRun.taskId}) : $t("replayCheck.confirm_whole") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -249,11 +249,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, inject} from "vue"
+    import {ref, computed, watch, inject, type PropType} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State} from "@kestra-io/design-system"
+    import {State, type KsTooltipProps} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
@@ -280,7 +280,7 @@
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
-        tooltipPosition: {type: String, default: "bottom"},
+        tooltipPosition: {type: String as PropType<KsTooltipProps["placement"]>, default: "bottom"},
         trigger: {type: Boolean, default: true},
     })
 
@@ -616,46 +616,13 @@
     align-items: flex-start;
 }
 
-.modal-header :deep(.kel-divider--horizontal) {
+.modal-header .divider {
     margin-bottom: 8px;
 }
 
 .radio-item {
-    & :deep(.kel-radio__input) {
-        .kel-radio__inner {
-            width: 18px;
-            height: 18px;
-
-            &::after {
-                width: 8px;
-                height: 8px;
-                background-color: var(--ks-btn-primary-bg-default);
-            }
-        }
-    }
-
-    & :deep(.kel-radio__label) {
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-primary);
-        padding-left: 8px;
-    }
-
-
-    &.is-checked {
-        & :deep(.kel-radio__input) {
-            .kel-radio__inner {
-                border-color: var(--ks-btn-primary-bg-default);
-                background-color: var(--ks-btn-primary-bg-default);
-
-                &::after {
-                    background-color: var(--ks-white);
-                }
-            }
-        }
-
-        & :deep(.kel-radio__label) {
-            color: var(--ks-text-primary) !important;
-        }
-    }
+    --ks-radio-size: 18px;
+    --ks-radio-dot-size: 8px;
+    --ks-radio-label-font-size: var(--ks-font-size-xs);
 }
 </style>

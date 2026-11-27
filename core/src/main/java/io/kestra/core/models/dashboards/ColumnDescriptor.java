@@ -18,4 +18,6 @@ public class ColumnDescriptor<F extends Enum<F>> {
     // `labelKey` is the legacy name (Executions LABELS); kept as a read alias for backward compatibility.
     @JsonAlias("labelKey")
     private String key;
+    // Row column weighting the aggregation, for the aggregations and data sources that support it.
+    private String weight;
 }

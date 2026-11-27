@@ -74,15 +74,19 @@ const HANDLERS: ApiRouteHandlers = {
     "GET /plugins/inputs": [],
     "GET /plugins/triggers": {results: [], total: 0},
     "GET /plugins/schemas/:type": {},
+    "GET /plugins/:cls": {},
+    "GET /plugins/ticketing-systems": {results: [], total: 0},
     "POST /plugins/pluginUiManifest": {manifest: {}},
 
     // --- flows --------------------------------------------------------------------------------
     "GET /flows/:namespace": [],
     "GET /flows/:namespace/:id/revisions": [],
     "GET /flows/:namespace/:id/dependencies": {nodes: [], edges: []},
+    "POST /flows/validate/task": {index: 0},
 
     // --- namespaces ---------------------------------------------------------------------------
     "POST /namespaces/autocomplete": [],
+    "GET /namespaces/search": {results: [], total: 0},
     "GET /namespaces/:namespace/files/directory": [],
 
     // --- executions ---------------------------------------------------------------------------
@@ -294,7 +298,9 @@ function installFetchMock(): void {
 
         return bodyPromise
             .catch(() => undefined)
-            .then((body) => jsonResponse(resolveApiRequest(method, rawUrl, {body})))
+            .then((body) => resolveApiRequest(method, rawUrl, {body}))
+            // Awaited so a handler can return a promise and hold its response until the story releases it.
+            .then(async ({status, data}) => jsonResponse({status, data: await data}))
     }
 
     wrapper.__kestraApiMock = true

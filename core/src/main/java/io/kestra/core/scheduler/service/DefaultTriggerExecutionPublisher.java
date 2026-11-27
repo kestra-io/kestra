@@ -70,6 +70,7 @@ public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublish
             .withTrigger(evaluation.trigger())
             .withLabels(evaluation.labels())
             .withInputs(evaluation.inputs())
-            .withScheduleDate(evaluation.scheduleDate());
+            .withScheduleDate(evaluation.scheduleDate())
+            .withTraceParent(evaluation.traceParent());
     }
 }

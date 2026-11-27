@@ -1,6 +1,7 @@
 package io.kestra.webserver.configuration;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -98,7 +99,7 @@ public record QueryFilterConfiguration(
             return Optional.empty();
         }
         return Optional.ofNullable(resources.get(resource.name()))
-            .or(() -> Optional.ofNullable(resources.get(resource.name().toLowerCase())));
+            .or(() -> Optional.ofNullable(resources.get(resource.name().toLowerCase(Locale.ROOT))));
     }
 
     public record ResourceLimits(@Nullable Integer maxDepth, @Nullable Integer maxWidth) {

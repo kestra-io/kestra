@@ -164,6 +164,7 @@ function templatePattern(body: string): RegExp | undefined {
         }
     }
 
+    // nosemgrep: detect-non-literal-regexp -- every literal part of the pattern went through escapeRegex.
     return new RegExp(`^${pattern}$`)
 }
 

@@ -1,7 +1,10 @@
 package io.kestra.core.plugins;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PluginArtifactTest {
@@ -97,5 +100,11 @@ class PluginArtifactTest {
         assertNull(artifact.classifier());
         assertEquals("0.0.1", artifact.version());
         assertNull(artifact.uri());
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "io.kestra, true", "io.kestra.plugin, true", "io.kestra.storage.gcs, true", "io.kestrax, false", "io.kestralabs.plugin, false" })
+    void shouldBeOfficialOnlyForTheKestraGroupAndItsSubgroups(String groupId, boolean official) {
+        assertThat(PluginArtifact.fromCoordinates(groupId + ":plugin-test:1.0.0").isOfficial()).isEqualTo(official);
     }
 }

@@ -2,21 +2,34 @@ import {beforeEach, describe, expect, it, vi} from "vitest"
 import {reactive} from "vue"
 import {flushPromises, mount} from "@vue/test-utils"
 
-const route = reactive<{params: Record<string, string>}>({
+const route = reactive<{params: Record<string, string>, meta: Record<string, string>}>({
     params: {namespace: "company.team", flowId: "demo_breadcrumb_fix", id: "exec-1"},
+    meta: {},
 })
 
 // Hoisted: the store factory below hands this spy to every consumer of the store, so the
 // expectations below can read the calls the composable made.
-const {followExecution} = vi.hoisted(() => ({followExecution: vi.fn()}))
+const {followExecution, loopLevels, tabRoutes} = vi.hoisted(() => ({followExecution: vi.fn(), loopLevels: {value: undefined as unknown}, tabRoutes: [] as {meta: {tab: string, title: string}}[]}))
 
 vi.mock("vue-router", () => ({
     useRoute: () => route,
 }))
 
 vi.mock("vue-i18n", () => ({
-    useI18n: () => ({t: (key: string) => key}),
+    useI18n: () => ({t: (key: string, named?: Record<string, unknown>) => named ? `${key}:${Object.values(named).filter((value) => value !== undefined).join("/")}` : key}),
 }))
+
+vi.mock("../../../composables/useLoopLineage", () => ({
+    useLoopLineage: () => loopLevels,
+}))
+
+vi.mock("../../../composables/useNamespaceBreadcrumb", async () => {
+    const {computed} = await import("vue")
+    return {
+        useNamespaceBreadcrumb: () => computed(() => [{label: "executions"}, {label: "company"}, {label: "team"}]),
+        useFlowSiblings: () => computed(() => undefined),
+    }
+})
 
 vi.mock("../../../stores/flow", async () => {
     const {reactive: reactiveVue} = await import("vue")
@@ -40,7 +53,7 @@ vi.mock("../../../stores/executions", () => ({
 
 vi.mock("../executionTabs", () => ({
     EXECUTION_PARENT_ROUTE: "executions/update",
-    EXECUTION_TAB_ROUTES: [],
+    EXECUTION_TAB_ROUTES: tabRoutes,
 }))
 
 import {useFlowStore, type Flow} from "../../../stores/flow"
@@ -121,5 +134,58 @@ describe("useExecutionRoot follow", () => {
         expect(followExecution).toHaveBeenLastCalledWith({id: "exec-2"}, expect.any(Function))
 
         wrapper.unmount()
+    })
+})
+
+describe("useExecutionRoot breadcrumb", () => {
+    function routeInfoOf() {
+        let info!: ReturnType<typeof useExecutionRoot>["routeInfo"]
+        mount({template: "<div></div>", setup() {
+            info = useExecutionRoot().routeInfo
+        }})
+        return info
+    }
+
+    beforeEach(() => {
+        route.params = {namespace: "company.team", flowId: "nested_loop_demo", id: "5j2D9NuQvgj0wiyuADhgmt"}
+        loopLevels.value = undefined
+    })
+
+    it("leaves a top-level execution with the flow as its last crumb and the id as title", () => {
+        const info = routeInfoOf().value
+
+        expect(info.title).toBe("5j2D9NuQvgj0wiyuADhgmt")
+        expect(info.bookmarkLabel).toBe("company.team.nested_loop_demo: 5j2D9NuQvgj0wiyuADhgmt")
+        expect(info.breadcrumb?.map((crumb) => crumb.label)).toEqual(["executions", "company", "team", "nested_loop_demo"])
+    })
+
+    it("keeps first, the current loop task and the current iteration visible once the bar collapses", () => {
+        loopLevels.value = [
+            {executionId: "1mubyrnLabcdef", parentExecutionId: "root", taskId: "per_region", number: 1, count: 3, value: "EMEA"},
+            {executionId: "5j2D9NuQvgj0wiyuADhgmt", parentExecutionId: "1mubyrnLabcdef", taskId: "per_quarter", number: 2, count: 4, value: "Q2"},
+        ]
+        const info = routeInfoOf().value
+        const labels = info.breadcrumb!.map((crumb) => crumb.label)
+
+        expect(labels).toEqual(["executions", "company", "team", "nested_loop_demo", "per_region", "1mubyrnL loop-lineage.iteration-count-value:1/3/EMEA", "per_quarter"])
+        expect(info.title).toBe("5j2D9NuQvgj0wiyuADhgmt loop-lineage.iteration-count-value:2/4/Q2")
+    })
+})
+
+describe("useExecutionRoot tabs", () => {
+    it("keeps the Artifacts tab while it is the open route, though the execution has no artifacts", () => {
+        tabRoutes.splice(0, tabRoutes.length, {meta: {tab: "overview", title: "overview"}}, {meta: {tab: "artifacts", title: "execution_artifacts.title"}})
+        let tabs: ReturnType<typeof useExecutionRoot>["tabs"] | undefined
+        mount({template: "<div></div>", setup() {
+            tabs = useExecutionRoot().tabs
+        }})
+
+        route.meta = {tab: "overview"}
+        expect(tabs?.value.map(tab => tab.name)).toEqual(["overview"])
+
+        route.meta = {tab: "artifacts"}
+        expect(tabs?.value.map(tab => tab.name)).toEqual(["overview", "artifacts"])
+        tabRoutes.splice(0, tabRoutes.length)
+        route.meta = {}
     })
 })

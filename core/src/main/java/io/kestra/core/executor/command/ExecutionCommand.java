@@ -27,6 +27,7 @@ import jakarta.annotation.Nullable;
         @JsonSubTypes.Type(value = Pause.class, name = "PAUSE"),
         @JsonSubTypes.Type(value = Reschedule.class, name = "RESCHEDULE"),
         @JsonSubTypes.Type(value = Restart.class, name = "RESTART"),
+        @JsonSubTypes.Type(value = RestartWorkingDirectory.class, name = "RESTART_WORKING_DIRECTORY"),
         @JsonSubTypes.Type(value = Resume.class, name = "RESUME"),
         @JsonSubTypes.Type(value = ResumeFromBreakpoint.class, name = "RESUME_FROM_BREAKPOINT"),
         @JsonSubTypes.Type(value = Unqueue.class, name = "UNQUEUE"),

@@ -1,5 +1,9 @@
 <template>
-    <ElText v-bind="({...filteredProps(), ...$attrs} as TextProps)">
+    <ElText
+        v-bind="({...filteredProps(), ...$attrs} as TextProps)"
+        :type="type === 'secondary' ? undefined : type"
+        :class="{'kel-text--secondary': type === 'secondary'}"
+    >
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,24 +11,28 @@
 </template>
 
 <script setup lang="ts">
+    import type {HTMLAttributes} from "vue"
     import {ElText, type TextProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        type?: "" | "primary" | "success" | "warning" | "danger" | "info"
+    interface KsTextProps {
+        type?: "" | "primary" | "secondary" | "success" | "warning" | "danger" | "info"
         size?: "small" | "default" | "large"
         truncated?: boolean
         lineClamp?: string | number
         tag?: string
-    }>()
+    }
+
+    const props = defineProps<KsTextProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsTextProps>>()
 
     defineSlots<{
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["type"])
 </script>
 
 <style lang="scss">
@@ -35,6 +43,10 @@
 <style>
     .kel-text.kel-text--primary {
         --kel-text-color: var(--ks-text-link);
+    }
+
+    .kel-text.kel-text--secondary {
+        --kel-text-color: var(--ks-text-secondary);
     }
 
     .kel-text.kel-text--success {

@@ -17,7 +17,7 @@ export function waitFor($http: KestraClient, execution: {id: string}, predicate:
     return new Promise((resolve, reject) => {
         let remaining = MAX_POLLS
         const poll = () => {
-            $http.get(`${apiUrl()}/executions/${execution.id}`).then((response) => {
+            $http.get<Execution>(`${apiUrl()}/executions/${execution.id}`).then((response) => {
                 remaining--
                 if (predicate(response.data) || remaining <= 0) {
                     resolve(response.data)

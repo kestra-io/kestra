@@ -34,6 +34,7 @@ vi.mock("./composables/useDependencies", async () => {
                 ],
                 chartNodes: ref([]),
                 chartEdges: ref([]),
+                chartLayout: ref("force"),
                 shownNodeIDs: ref(null),
                 isolateGroup: vi.fn(),
                 toggleGroup: vi.fn(),

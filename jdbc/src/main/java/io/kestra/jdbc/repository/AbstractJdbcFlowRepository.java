@@ -890,7 +890,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect, boolean excludeDraft) {
-        var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of(), excludeDraft);
+        var select = this.fullTextSelect(tenantId, context, ListUtils.emptyOnNull(additionalFieldsToSelect), excludeDraft);
         select = select.and(this.filter(filters, null, Resource.FLOW));
         return (SelectConditionStep<R>) select;
     }
@@ -899,7 +899,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         if (QueryFilter.Field.FLOW_ID.equals(field)) {
             return DSL.quotedName("id");
         } else {
-            return DSL.quotedName(field.name().toLowerCase());
+            return DSL.quotedName(field.name().toLowerCase(Locale.ROOT));
         }
     }
 

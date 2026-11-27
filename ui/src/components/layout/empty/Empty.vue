@@ -38,7 +38,7 @@
 
     import generic from "../../../assets/empty_visuals/generic.svg"
     import {images} from "./images"
-    import {links} from "./links"
+    import {demoLink, links} from "./links"
 
     const props = withDefaults(
         defineProps<{
@@ -71,7 +71,5 @@
 
     const resolvedLearnMore = computed(() => props.learnMore ?? typeDocs.value)
 
-    const contactSalesUrl = computed(
-        () => `https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=demo-${props.type}`,
-    )
+    const contactSalesUrl = computed(() => demoLink(props.type))
 </script>

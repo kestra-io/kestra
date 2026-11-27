@@ -4,11 +4,15 @@ import java.util.Collections;
 import java.util.List;
 
 import io.kestra.core.models.dashboards.ChartOption;
+import io.kestra.core.models.dashboards.WithColorByValues;
 import io.kestra.core.models.dashboards.WithLegend;
 import io.kestra.core.models.dashboards.WithTooltip;
+import io.kestra.core.models.dashboards.charts.ColorByValue;
 import io.kestra.core.models.dashboards.charts.LegendOption;
 import io.kestra.core.models.dashboards.charts.TooltipBehaviour;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -21,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode
-public class BarOption extends ChartOption implements WithLegend, WithTooltip {
+public class BarOption extends ChartOption implements WithLegend, WithTooltip, WithColorByValues {
     @Builder.Default
     private TooltipBehaviour tooltip = TooltipBehaviour.ALL;
 
@@ -31,6 +35,9 @@ public class BarOption extends ChartOption implements WithLegend, WithTooltip {
     @NotNull
     @NotBlank
     private String column;
+
+    @Schema(title = WithColorByValues.COLOR_BY_VALUES_TITLE, description = WithColorByValues.COLOR_BY_VALUES_DESCRIPTION)
+    private List<@Valid ColorByValue> colorByValues;
 
     @Override
     public List<String> neededColumns() {

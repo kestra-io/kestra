@@ -76,9 +76,11 @@ public class NanoIDFuntionTest {
 
         // When rendering
         // Then it fails fast with a descriptive error instead of looping forever
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ nanoId(length,alphabet) }}", Map.of("length", 21L, "alphabet", alphabet)
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ nanoId(length,alphabet) }}", Map.of("length", 21L, "alphabet", alphabet)
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("'alphabet' must not contain more than: 256");
     }
 
@@ -87,9 +89,11 @@ public class NanoIDFuntionTest {
         // Given an empty alphabet
         // When rendering
         // Then it fails with a descriptive error instead of an ArrayIndexOutOfBoundsException
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ nanoId(alphabet='') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ nanoId(alphabet='') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("'alphabet' must not be empty");
     }
 
@@ -98,9 +102,11 @@ public class NanoIDFuntionTest {
         // Given a negative length
         // When rendering
         // Then it fails with a descriptive error instead of a NegativeArraySizeException
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ nanoId(length=-1) }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ nanoId(length=-1) }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("'length' must be greater than: 0");
     }
 
@@ -109,10 +115,33 @@ public class NanoIDFuntionTest {
         // Given a zero length
         // When rendering
         // Then it fails with a descriptive error
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ nanoId(length=0) }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ nanoId(length=0) }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("'length' must be greater than: 0");
     }
 
+    @Test
+    void shouldAcceptIntegerLength() throws Exception {
+        // Given an Integer length, as an INT flow input, `list | length` or a fromJson number would provide
+        String rendered = variableRenderer.render(
+            "{{ nanoId(length) }}", Map.of("length", 8)
+        );
+
+        // Then the requested length is honoured instead of silently falling back to the default
+        assertThat(rendered).hasSize(8);
+    }
+
+    @Test
+    void shouldThrowWhenLengthIsNotANumber() {
+        // Given a non-numeric length
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ nanoId(length) }}", Map.of("length", "8")
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("'length' must be a number");
+    }
 }

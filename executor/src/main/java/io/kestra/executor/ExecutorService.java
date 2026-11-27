@@ -13,17 +13,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
-import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.assets.AssetIdentifier;
-import io.kestra.core.models.assets.AssetUser;
-import io.kestra.core.models.assets.AssetsDeclaration;
-import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -43,6 +40,7 @@ import io.kestra.core.utils.*;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.plugin.core.flow.*;
 
+import io.micronaut.core.annotation.Nullable;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -67,7 +65,6 @@ public class ExecutorService {
     protected final BroadcastQueueInterface<ExecutionKilled> killQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final RunContextLoggerFactory runContextLoggerFactory;
-    private final AssetService assetService;
     private final RunContextInitializer runContextInitializer;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
@@ -85,7 +82,6 @@ public class ExecutorService {
         BroadcastQueueInterface<ExecutionKilled> killQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         RunContextLoggerFactory runContextLoggerFactory,
-        AssetService assetService,
         RunContextInitializer runContextInitializer,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
@@ -100,7 +96,6 @@ public class ExecutorService {
         this.killQueue = killQueue;
         this.loopExecutionEventQueue = loopExecutionEventQueue;
         this.runContextLoggerFactory = runContextLoggerFactory;
-        this.assetService = assetService;
         this.runContextInitializer = runContextInitializer;
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
@@ -206,10 +201,10 @@ public class ExecutorService {
             //then set the execution to killed
             executor = this.handleKilling(executor);
 
-            // process next task if not killing, killed or queued
+            // process next task if not killing, killed, queued or already terminated (an SLA may end it while afterExecution tasks are pending)
             if (
                 executor.getExecution().getState().getCurrent() != State.Type.KILLING && executor.getExecution().getState().getCurrent() != State.Type.KILLED
-                    && executor.getExecution().getState().getCurrent() != State.Type.QUEUED
+                    && executor.getExecution().getState().getCurrent() != State.Type.QUEUED && !executor.getExecution().getState().isTerminated()
             ) {
                 executor = this.handleNext(executor);
             }
@@ -618,7 +613,7 @@ public class ExecutorService {
                             }
                             // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
                             if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
-                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, flowableResult.get().getTaskRun(), runContext);
+                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
                             }
                         }
                     }
@@ -644,8 +639,6 @@ public class ExecutorService {
             ) {
                 Instant nextRetryDate = null;
                 AbstractRetry.Behavior behavior = null;
-                // the children of a WorkingDirectory only run inside it, on its worker, so retrying one means running the WorkingDirectory again
-                TaskRun retriedTaskRun = parentWorkingDirectory(taskRun, executor).orElse(taskRun);
 
                 try {
                     // Case task has a retry
@@ -653,28 +646,31 @@ public class ExecutorService {
                         AbstractRetry retry = task.getRetry();
                         behavior = retry.getBehavior();
                         nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
-                            : retriedTaskRun.nextRetryDate(retry);
+                            : taskRun.nextRetryDate(retry);
                     } else {
                         // Case parent task has a retry
                         Task parentTaskWithRetry = searchForParentTaskWithRetry(taskRun, executor);
                         AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                         if (retry != null) {
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
-                            if (retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                            if (
+                                !isRetriedAsAWorkingDirectory(taskRun, parentTaskWithRetry, retry, executor)
+                                    && retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)
+                            ) {
                                 behavior = retry.getBehavior();
                                 nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
                                     : taskRun.nextRetryDate(retry);
                                 nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
-                                    : retriedTaskRun.nextRetryDate(retry);
+                                    : taskRun.nextRetryDate(retry);
                             }
                         }
                         // Case flow has a retry
-                        else if (executor.getFlow().getRetry() != null) {
+                        else if (executor.getFlow().getRetry() != null && !isRetriedAsAWorkingDirectory(taskRun, null, executor.getFlow().getRetry(), executor)) {
                             retry = executor.getFlow().getRetry();
                             behavior = retry.getBehavior();
                             nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? executionService.nextRetryDate(retry, executor.getExecution())
-                                : retriedTaskRun.nextRetryDate(retry);
+                                : taskRun.nextRetryDate(retry);
                         }
                     }
                 } catch (DateTimeException | ArithmeticException e) {
@@ -684,7 +680,7 @@ public class ExecutorService {
                 if (nextRetryDate != null) {
                     boolean createNewExecution = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION);
                     ExecutionDelay.ExecutionDelayBuilder executionDelayBuilder = ExecutionDelay.builder()
-                        .taskRunId(createNewExecution ? taskRun.getId() : retriedTaskRun.getId())
+                        .taskRunId(taskRun.getId())
                         .executionId(executor.getExecution().getId())
                         .date(nextRetryDate)
                         .state(State.Type.RUNNING)
@@ -692,7 +688,7 @@ public class ExecutorService {
                     executionDelays.add(executionDelayBuilder.build());
                     executor.withExecution(
                         createNewExecution ? executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true)
-                            : executionService.markWithTaskRunAs(executor.getExecution(), retriedTaskRun.getId(), State.Type.RETRYING, false),
+                            : executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRYING, false),
                         "handleRetryTask"
                     );
                     // Prevent workerTaskResult from flowable tasks to be sent because one of its children is retrying
@@ -737,7 +733,11 @@ public class ExecutorService {
                         }
                         case Pause pause when pause.getOnPause() != null -> {
                             // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks will dispatch it.
-                            onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                            // A Pause whose runIf is false is skipped when its worker task is handled, so it has no onPause.
+                            RunContext runContext = runContextFactory.of(executor.getFlow(), pause, executor.getExecution(), taskRun);
+                            if (TruthUtils.isTruthy(runContext.render(pause.getRunIf()))) {
+                                onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                            }
                         }
                         case Loop loop -> {
                             if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
@@ -924,11 +924,15 @@ public class ExecutorService {
      * Determines whether a flowable should be retried and creates a delay to restart it from the beginning.
      */
     private Optional<ExecutionDelay> flowableRetryDelay(ExecutorContext executor, Task task, TaskRun taskRun, WorkerTaskResult result) {
-        AbstractRetry retry = task.getRetry();
+        AbstractRetry retry = task instanceof WorkingDirectory ? workingDirectoryRetry(executor, task, taskRun) : task.getRetry();
 
-        if (retry == null
-            || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-            || !result.getTaskRun().getState().isTerminated()) {
+        // a WorkingDirectory can only run again as a whole, since its folder is deleted once it ends
+        if (
+            retry == null
+                || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE && !(task instanceof WorkingDirectory)
+                || retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION
+                || !result.getTaskRun().getState().isTerminated()
+        ) {
             return Optional.empty();
         }
 
@@ -973,7 +977,11 @@ public class ExecutorService {
             } else if (task instanceof Pause pause && pause.getOnPause() != null) {
                 // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks
                 // dispatches it like any other CREATED task run, immediately since it runs right after.
-                onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                // A Pause whose runIf is false is skipped when its worker task is handled, so it has no onPause.
+                RunContext runContext = runContextFactory.of(executor.getFlow(), pause, executor.getExecution(), taskRun);
+                if (TruthUtils.isTruthy(runContext.render(pause.getRunIf()))) {
+                    onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                }
             }
         } catch (Exception e) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
@@ -993,6 +1001,11 @@ public class ExecutorService {
      */
     private void handleLoopCreated(ExecutorContext executor, Loop loop, TaskRun taskRun) throws InternalException, IOException {
         RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), taskRun);
+        // a Loop whose runIf is false is skipped when its worker task is handled: don't start any iteration
+        if (!TruthUtils.isTruthy(runContext.render(loop.getRunIf()))) {
+            return;
+        }
+
         var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
         int iterationCount;
 
@@ -1050,6 +1063,11 @@ public class ExecutorService {
         }
 
         if (iterationCount == 0) {
+            if (!ListUtils.isEmpty(loop.getOutputs())) {
+                Map<String, Object> current = new HashMap<>(taskOutputService.getOutputs(taskRun));
+                current.put(Loop.OUTPUTS_OUTPUT, Collections.emptyList());
+                taskOutputService.saveOutputs(taskRun, current);
+            }
             executor.withExecution(
                 executor.getExecution()
                     .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
@@ -1082,10 +1100,21 @@ public class ExecutorService {
     }
 
     /**
+     * The direct child whose failure made {@code parentTaskRun} fail: the sibling named to the task runs it interrupts.
+     */
+    private static String failedChildTaskId(Execution execution, TaskRun parentTaskRun) {
+        return ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .filter(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) && taskRun.getState().isFailed())
+            .map(TaskRun::getTaskId)
+            .findFirst()
+            .orElse(parentTaskRun.getTaskId());
+    }
+
+    /**
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
-    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext) throws InternalException {
+    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, RunContext runContext) throws InternalException {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);
@@ -1099,6 +1128,7 @@ public class ExecutorService {
         }
 
         State.Type targetState = config.toTaskRunState();
+        String failedSibling = failedChildTaskId(executor.getExecution(), parentTaskRun);
         List<String> leafTaskRunIds = new ArrayList<>();
         List<WorkerTaskResult> resolvedFlowables = new ArrayList<>();
 
@@ -1117,7 +1147,7 @@ public class ExecutorService {
             RunContext childRunContext = descendantTask != null
                 ? runContextFactory.of(executor.getFlow(), descendantTask, executor.getExecution(), descendant)
                 : runContextFactory.of(executor.getFlow(), executor.getExecution());
-            childRunContext.logger().warn("Task terminated because sibling task '{}' failed", failedTaskRun.getTaskId());
+            childRunContext.logger().warn("Task terminated because sibling task '{}' failed", failedSibling);
         }
 
         if (!resolvedFlowables.isEmpty()) {
@@ -1141,12 +1171,61 @@ public class ExecutorService {
         }
     }
 
-    private Optional<TaskRun> parentWorkingDirectory(TaskRun taskRun, ExecutorContext executor) throws InternalException {
-        Optional<TaskRun> parentTaskRun = taskRun.getParentTaskRunId() == null ? Optional.empty() : executor.getExecution().findTaskRunByTaskRunIdIfPresent(taskRun.getParentTaskRunId());
-        if (parentTaskRun.isEmpty()) {
-            return Optional.empty();
+    /**
+     * Resolves the Worker Queue of a task. The tasks of a WorkingDirectory take the one of their WorkingDirectory, since
+     * they all run on the worker holding its folder.
+     */
+    public Optional<WorkerQueueRouting> resolveWorkerQueue(Flow flow, Execution execution, WorkerTask workerTask, RunContext runContext)
+        throws NoMatchingWorkerQueueException, IllegalVariableEvaluationException {
+        WorkerTask routed = Optional.ofNullable(workerTask.getWorkingDirectoryId())
+            .flatMap(execution::findTaskRunByTaskRunIdIfPresent)
+            .map(workingDirectory -> flow.findTaskByTaskIdOrNull(workingDirectory.getTaskId()))
+            .map(workerTask::withTask)
+            .orElse(workerTask);
+        return workerQueueService.resolveWorkerQueueForJob(flow, routed, runContext);
+    }
+
+    private Optional<TaskRun> enclosingWorkingDirectory(TaskRun taskRun, ExecutorContext executor) {
+        Optional<TaskRun> parent = Optional.ofNullable(taskRun.getParentTaskRunId())
+            .flatMap(id -> executor.getExecution().findTaskRunByTaskRunIdIfPresent(id));
+        while (parent.isPresent()) {
+            if (executor.getFlow().findTaskByTaskIdOrNull(parent.get().getTaskId()) instanceof WorkingDirectory) {
+                return parent;
+            }
+            parent = Optional.ofNullable(parent.get().getParentTaskRunId())
+                .flatMap(id -> executor.getExecution().findTaskRunByTaskRunIdIfPresent(id));
         }
-        return executor.getFlow().findTaskByTaskId(parentTaskRun.get().getTaskId()) instanceof WorkingDirectory ? parentTaskRun : Optional.empty();
+        return Optional.empty();
+    }
+
+    /**
+     * Whether a retry set on the given owner, or on the flow when it is null, runs a WorkingDirectory holding the task
+     * again as a whole: its finally deletes the folder before a retry of the task alone could fire.
+     */
+    private boolean isRetriedAsAWorkingDirectory(TaskRun taskRun, @Nullable Task retryOwner, AbstractRetry retry, ExecutorContext executor) {
+        if (retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION) {
+            return false;
+        }
+        Task parent = executor.getFlow().findParentTasksByTaskId(taskRun.getTaskId());
+        while (parent != null && (retryOwner == null || !parent.getId().equals(retryOwner.getId()))) {
+            if (parent instanceof WorkingDirectory) {
+                return true;
+            }
+            parent = executor.getFlow().findParentTasksByTaskId(parent.getId());
+        }
+        return parent instanceof WorkingDirectory;
+    }
+
+    /**
+     * The retry of a WorkingDirectory: its own, or the one set above it that its tasks leave to it.
+     */
+    private AbstractRetry workingDirectoryRetry(ExecutorContext executor, Task workingDirectory, TaskRun taskRun) {
+        if (workingDirectory.getRetry() != null) {
+            return workingDirectory.getRetry();
+        }
+        Task retryOwner = searchForParentTaskWithRetry(taskRun, executor);
+        AbstractRetry inherited = retryOwner != null ? retryOwner.getRetry() : executor.getFlow().getRetry();
+        return inherited == null || inherited.getBehavior() == AbstractRetry.Behavior.RETRY_FLOWABLE ? null : inherited;
     }
 
     private Task searchForParentTaskWithRetry(TaskRun taskRun, ExecutorContext executor) {
@@ -1437,12 +1516,16 @@ public class ExecutorService {
                     .taskRun(taskRun)
                     .task(task)
                     .executionKind(executor.getExecution().getKind())
+                    .workingDirectoryId(enclosingWorkingDirectory(taskRun, executor).map(TaskRun::getId).orElse(null))
                     .build();
+                if (workerTask.getWorkingDirectoryId() != null && task.getWorkerSelector() != null) {
+                    runContext.logger().warn("The workerSelector of task '{}' is ignored: it runs on the worker holding the folder of its WorkingDirectory.", task.getId());
+                }
                 // Resolve the target Worker Queue for this task
                 Optional<WorkerQueueRouting> routing;
                 try {
-                    routing = workerQueueService.resolveWorkerQueueForJob(executor.getFlow(), workerTask);
-                } catch (NoMatchingWorkerQueueException e) {
+                    routing = resolveWorkerQueue(executor.getFlow(), executor.getExecution(), workerTask, runContext);
+                } catch (NoMatchingWorkerQueueException | IllegalVariableEvaluationException e) {
                     runContext.logger()
                         .error(e.getMessage(), workerTask.getTaskRun().getId(), e);
                     // fail the task-run because we cannot determine the target Worker Queue
@@ -1498,28 +1581,8 @@ public class ExecutorService {
                 .flatMap(taskRun -> executor.getExecution().getFixtureForTaskRun(taskRun).stream().map(fixture -> new FixtureAndTaskRun(fixture, taskRun)))
                 .map(throwFunction(fixtureAndTaskRun ->
                 {
-                    AssetsDeclaration assetsDeclaration = executor.getFlow().findTaskByTaskId(fixtureAndTaskRun.taskRun.getTaskId()).getAssets();
                     return WorkerTaskResult.builder()
-                        .taskRun(
-                            fixtureAndTaskRun.taskRun()
-                                .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
-                                .withAssetEmits(
-                                    List.of(
-                                        new AssetsInOut(
-                                            Optional.ofNullable(assetsDeclaration).map(AssetsDeclaration::getInputs)
-                                                .map(throwFunction(assetInputs -> runContext.render(assetInputs).asList(AssetIdentifier.class)))
-                                                .stream()
-                                                .flatMap(Collection::stream)
-                                                .map(throwFunction(assetIdentifier -> assetIdentifier.withTenantId(executor.getFlow().getTenantId())))
-                                                .toList(),
-                                            fixtureAndTaskRun.fixture().getAssets() == null ? null
-                                                : fixtureAndTaskRun.fixture().getAssets().stream()
-                                                    .map(asset -> asset.withTenantId(executor.getFlow().getTenantId()))
-                                                    .toList()
-                                        )
-                                    )
-                                )
-                        )
+                        .taskRun(fixtureAndTaskRun.taskRun().withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS)))
                         .outputs(fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
                         .build();
                 }
@@ -1787,14 +1850,19 @@ public class ExecutorService {
     }
 
     public void addWorkerTaskResult(ExecutorContext executor, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
-        // add dynamic taskruns + taskruns created by the WorkingDirectory
+        TaskRun taskRun = workerTaskResult.getTaskRun();
+        if (taskRun.getParentTaskRunId() != null && executor.getExecution().findTaskRunByTaskRunIdIfPresent(taskRun.getId()).isEmpty()) {
+            // a task of a WorkingDirectory that ran again after losing its worker
+            log.debug("Ignoring the result of task run '{}' which is no longer part of execution '{}'", taskRun.getId(), taskRun.getExecutionId());
+            return;
+        }
+
+        // add dynamic taskruns
         this.addAdditionalTaskRun(
             executor,
-            flow,
             workerTaskResult
         );
 
-        TaskRun taskRun = workerTaskResult.getTaskRun();
         Execution newExecution = executor.getExecution().withTaskRun(taskRun);
         // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
         // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.
@@ -1806,81 +1874,32 @@ public class ExecutorService {
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
 
-            // may be escalated below by assetFailureBehavior; kept separate from `taskRun` for the metrics in the finally block
-            TaskRun finalTaskRun = taskRun;
             try {
                 // outputs
                 taskOutputService.saveOutputs(taskRun, workerTaskResult.getOutputs());
-
-                ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
-                boolean hasAssets = taskRun.getAssetEmits() != null && taskRun.getAssetEmits().stream()
-                    .anyMatch(bundle -> !bundle.getInputs().isEmpty() || !bundle.getOutputs().isEmpty());
-                if (
-                    hasAssets
-                        && executionKind != ExecutionKind.TEST
-                ) {
-                    AssetUser assetUser = new AssetUser(
-                        taskRun.getTenantId(),
-                        taskRun.getNamespace(),
-                        taskRun.getFlowId(),
-                        newExecution.getFlowRevision(),
-                        taskRun.getExecutionId(),
-                        taskRun.getTaskId(),
-                        taskRun.getId(),
-                        taskRun.getState().getCurrent(),
-                        taskRun.getState().getStartDate(),
-                        taskRun.getState().getEndDate().orElse(null)
-                    );
-
-                    try {
-                        Optional<TaskRun> escalated = assetService.processTaskRunAssets(assetUser, taskRun, newExecution, flow, executionKind);
-                        if (escalated.isPresent()) {
-                            finalTaskRun = escalated.get();
-                            executor.withExecution(executor.getExecution().withTaskRun(finalTaskRun), "addWorkerTaskResult");
-                        }
-                    } catch (Exception e) {
-                        // a bug in asset-lineage/escalation processing must not prevent the taskRun's own
-                        // (already-terminated) result from being recorded; metrics below still tag from taskRun
-                        log.error("Unable to process assets for taskRun {}", taskRun.getId(), e);
-                    }
-                }
             } finally {
-                // tagged from finalTaskRun so a state escalated above by assetFailureBehavior is reflected in the metrics too
-                WorkerTaskResult finalWorkerTaskResult = workerTaskResult.withTaskRun(finalTaskRun);
                 metricRegistry
                     .counter(
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION,
-                        metricRegistry.tags(finalWorkerTaskResult)
+                        metricRegistry.tags(workerTaskResult)
                     )
                     .increment();
 
-                // duration from the original taskRun: withState() above would otherwise inflate it by the escalation delay
                 metricRegistry
                     .timer(
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION,
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
-                        metricRegistry.tags(finalWorkerTaskResult)
+                        metricRegistry.tags(workerTaskResult)
                     )
                     .record(taskRun.getState().getDurationOrComputeIt());
             }
         }
     }
 
-    // Note: as the flow is only used in an error branch, and it can take time to load, we pass it thought a Supplier
-    private void addAdditionalTaskRun(ExecutorContext executor, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    private void addAdditionalTaskRun(ExecutorContext executor, WorkerTaskResult workerTaskResult) {
         Execution execution = executor.getExecution();
         List<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
-
-        // if there is a parent but the taskrun didn't exist: the parent should be the WorkingDirectory
-        // as inside a WorkingDirectory, a taskrun is directly created inside the Worker and not inside the Executor
-        if (workerTaskResult.getTaskRun().getParentTaskRunId() != null && taskRuns.stream().noneMatch(t -> t.getId().equals(workerTaskResult.getTaskRun().getId()))) {
-            TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
-            Task parentTask = flow.get().findTaskByTaskId(parentTaskRun.getTaskId());
-            if (parentTask instanceof WorkingDirectory) {
-                taskRuns.add(workerTaskResult.getTaskRun());
-            }
-        }
 
         // declared dynamic tasks
         if (!ListUtils.isEmpty(workerTaskResult.getDynamicTaskRuns())) {

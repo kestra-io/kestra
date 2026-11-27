@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Integration check that {@code restart-execution} restarts a restartable execution and waits for the
+ * Integration check that {@code restart_execution} restarts a restartable execution and waits for the
  * executor to apply the restart before returning — so the outcome is observable — and rejects a missing
  * or non-restartable execution. Runs against the real executor ({@code startRunner = true}) because the
  * tool now blocks on the async restart operation, which only completes once the executor processes it.

@@ -1,18 +1,24 @@
 <template>
     <div>
-        <div class="plugin-header">
-            <h1>
+        <header class="plugin-unified__header">
+            <h1 class="plugin-unified__title" data-test="plugin-title">
                 <TaskIcon
-                    class="icon"
+                    class="plugin-unified__icon"
                     :onlyIcon="true"
                     :cls="currentIcon"
                     :icons="icons"
                 />
                 {{ displayTitle }}
             </h1>
-            <KsMarkdown :content="plugin?.description" />
-            <KsMarkdown :content="plugin?.longDescription" />
-        </div>
+            <p v-if="plugin?.description" class="plugin-unified__summary">{{ plugin.description }}</p>
+        </header>
+        <KsMarkdown
+            v-if="plugin?.longDescription"
+            compact
+            class="plugin-unified__long"
+            data-test="plugin-long-description"
+            :content="plugin.longDescription"
+        />
 
         <div v-if="showElements" class="elements-view">
             <div v-for="(elements, type) in elementsData" :key="type" class="section">
@@ -180,10 +186,6 @@
 </script>
 
 <style scoped>
-    .plugin-header {
-        padding: var(--ks-spacing-5);
-    }
-
     .section {
         h2 {
             color: var(--ks-text-primary);
@@ -216,22 +218,38 @@
         }
     }
 
-    h1 {
+    .plugin-unified__header {
+        padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-3);
+        border-bottom: 1px solid var(--ks-border-default);
+    }
+
+    .plugin-unified__title {
         display: flex;
         align-items: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
+        gap: var(--ks-spacing-2);
+        margin: 0;
+        font-size: var(--ks-font-size-lg);
+        font-weight: var(--ks-font-weight-bold);
+        line-height: var(--ks-line-height-tight);
         color: var(--ks-text-primary);
-        font-weight: 600;
-        font-size: var(--ks-font-size-xl);
-        line-height: 36px;
+    }
 
-        .icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
-            flex-shrink: 0;
-            opacity: 1;
-        }
+    .plugin-unified__icon {
+        width: var(--ks-icon-size-lg);
+        height: var(--ks-icon-size-lg);
+        min-width: var(--ks-icon-size-lg);
+        flex: none;
+    }
+
+    .plugin-unified__summary {
+        margin: var(--ks-spacing-3) 0 0;
+        font-size: var(--ks-font-size-sm);
+        line-height: var(--ks-line-height-base);
+        color: var(--ks-text-secondary);
+    }
+
+    .plugin-unified__long {
+        padding: var(--ks-spacing-4);
+        font-size: var(--ks-font-size-sm);
     }
 </style>

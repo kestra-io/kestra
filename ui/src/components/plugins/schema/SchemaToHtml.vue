@@ -38,6 +38,7 @@
                     :clickableText="$t('plugins.nav_examples')"
                     href="examples"
                     :arrow="!compact"
+                    :compact="compact"
                     :initiallyExpanded="compact"
                     :noUrlChange
                 >
@@ -84,9 +85,9 @@
                     :compact
                     showFilter
                 >
-                    <template #markdown="{content}">
+                    <template #markdown="{content, dense}">
                         <div class="markdown">
-                            <slot name="markdown" :content="content" />
+                            <slot name="markdown" :content="content" :dense="dense" />
                         </div>
                     </template>
                 </SchemaPropertiesSection>
@@ -108,9 +109,9 @@
                     :noUrlChange
                     :compact
                 >
-                    <template #markdown="{content}">
+                    <template #markdown="{content, dense}">
                         <div class="markdown">
-                            <slot name="markdown" :content="content" />
+                            <slot name="markdown" :content="content" :dense="dense" />
                         </div>
                     </template>
                 </SchemaPropertiesSection>
@@ -132,9 +133,9 @@
                     :noUrlChange
                     :compact
                 >
-                    <template #markdown="{content}">
+                    <template #markdown="{content, dense}">
                         <div class="markdown">
-                            <slot name="markdown" :content="content" />
+                            <slot name="markdown" :content="content" :dense="dense" />
                         </div>
                     </template>
                 </SchemaPropertiesSection>
@@ -151,6 +152,7 @@
                     :clickableText="$t('plugins.nav_definitions')"
                     href="definitions"
                     :arrow="!compact"
+                    :compact="compact"
                     :initiallyExpanded="definitionsExpanded || compact"
                     :noUrlChange
                 >
@@ -189,6 +191,7 @@
                                             :language="example.lang ?? 'yaml'"
                                             :theme="codeTheme"
                                             :code="generateExampleCode(example)"
+                                            dense
                                         />
                                     </div>
                                 </template>
@@ -241,7 +244,7 @@
     const forceExpandKey = ref(0)
     const highlighter = await getShiki()
 
-    const codeTheme = computed(() => `github-${props.darkMode ? "dark" : "light"}`)
+    const codeTheme = computed(() => `kestra-${props.darkMode ? "dark" : "light"}`)
 
     const examples = computed(() => props.schema.properties?.$examples)
 
@@ -347,6 +350,7 @@
         display: flex;
         flex-direction: column;
         gap: 2rem;
+        --ks-markdown-code-block-spacing: 0;
     }
 
     .schema-header,
@@ -356,19 +360,9 @@
         gap: 1rem;
     }
 
-    .plugin-description :deep(p),
-    .plugin-description :deep(li) {
-        color: var(--ks-text-secondary);
-    }
-
-    .schema-sections.compact > [data-section] > :deep(.plugin-section > .collapse-button) {
-        font-size: var(--ks-font-size-xs);
-        font-weight: var(--ks-font-weight-bold);
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: var(--ks-text-muted);
-        pointer-events: none;
-        margin-bottom: var(--ks-spacing-3);
+    .plugin-description {
+        --ks-markdown-paragraph-color: var(--ks-text-secondary);
+        --ks-markdown-list-color: var(--ks-text-secondary);
     }
 
     .examples-list {
@@ -400,33 +394,19 @@
         padding-left: 1rem;
     }
 
-    :deep(.markdown) {
+    .markdown {
         display: flex;
         flex-direction: column;
         gap: 1rem;
-
-        pre, .code-block {
-            margin: 0;
-        }
-
-        & > ol, & > ul, & > dl {
-            margin-top: 0;
-            margin-bottom: 0;
-        }
     }
 
-    :deep(.plugin-section) {
-        p {
-            margin-bottom: 0;
-        }
+    .plugin-section {
+        --ks-markdown-paragraph-spacing: 0;
+    }
 
-        [id$="-body"]:not(#examples-body) span {
-            font-size: var(--ks-font-size-xs);
-            font-weight: 400;
-        }
-
-        & > .collapse-button {
-            margin-bottom: var(--ks-spacing-2);
-        }
+    .plugin-section:not(#examples) {
+        --ks-tag-font-size: var(--ks-font-size-xs);
+        --ks-tag-font-weight: var(--ks-font-weight-regular);
+        --ks-markdown-code-token-size: var(--ks-font-size-xs);
     }
 </style>

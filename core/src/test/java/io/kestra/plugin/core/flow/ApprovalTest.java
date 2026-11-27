@@ -94,7 +94,7 @@ public class ApprovalTest {
         Flow flow = flowRepository.findByExecution(sub);
         String taskRunId = sub.findTaskRunsByTaskId("approval").getFirst().getId();
 
-        Execution cancelled = executionService.cancelApproval(sub, flow, taskRunId, null);
+        Execution cancelled = executionService.cancelApproval(sub, flow, taskRunId, null, false);
         runnerUtils.emitAndAwaitExecution(e -> e.getState().isTerminated(), cancelled);
         Execution result = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), parent);
 
@@ -174,7 +174,7 @@ public class ApprovalTest {
         Flow flow = flowRepository.findByExecution(execution);
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
-        Execution cancelled = executionService.cancelApproval(execution, flow, taskRunId, null);
+        Execution cancelled = executionService.cancelApproval(execution, flow, taskRunId, null, false);
 
         execution = runnerUtils.emitAndAwaitExecution(
             e -> e.getId().equals(executionId) && e.getState().isTerminated()
@@ -263,7 +263,7 @@ public class ApprovalTest {
         Flow flow = flowRepository.findByExecution(execution);
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
-        Execution cancelled = executionService.cancelApproval(execution, flow, taskRunId, null);
+        Execution cancelled = executionService.cancelApproval(execution, flow, taskRunId, null, false);
 
         execution = runnerUtils.emitAndAwaitExecution(
             e -> e.getId().equals(executionId) && e.getState().isTerminated(),
@@ -889,7 +889,7 @@ public class ApprovalTest {
         Flow flow = flowRepository.findByExecution(execution);
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
-        Execution cancelled = executionService.cancelApproval(execution, flow, taskRunId, null);
+        Execution cancelled = executionService.cancelApproval(execution, flow, taskRunId, null, false);
 
         execution = runnerUtils.emitAndAwaitExecution(
             e -> e.getId().equals(executionId) && e.getState().isTerminated()

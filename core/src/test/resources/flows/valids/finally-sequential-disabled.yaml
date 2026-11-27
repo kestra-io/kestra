@@ -1,0 +1,16 @@
+id: finally-sequential-disabled
+namespace: io.kestra.tests
+
+tasks:
+  - id: seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: ok
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+
+    finally:
+      - id: a1
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+        disabled: true

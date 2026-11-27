@@ -173,8 +173,31 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Then
         assertThat(response).isNotNull();
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-        assertThat(response.getHeaders().get(HttpHeaders.MCP_SESSION_ID)).isNotNull();
-        assertThat(response.getHeaders().get(HttpHeaders.MCP_SESSION_ID)).isEqualTo(context.getSessionId());
+        String sessionId = response.getHeaders().get(HttpHeaders.MCP_SESSION_ID);
+        assertThat(sessionId).isNotBlank();
+        assertThat(mcpSessionRepository.find(context.getTenantId(), context.getServerId(), sessionId)).isPresent();
+    }
+
+    @Test
+    void shouldIssueNewSessionIdWhenInitializeCarriesClientSessionId() {
+        // Given — the client tries to pick its own session id
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        provider.setSessionFactory(buildSessionFactory());
+        KestraMcpTransportContext clientChosen = buildTransportContext("user-a");
+        HttpRequest<String> request = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
+            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE)
+            .header(HttpHeaders.MCP_SESSION_ID, clientChosen.getSessionId());
+
+        // When
+        HttpResponse<?> response = provider.handleRequest(request, clientChosen).block();
+
+        // Then — the server issues its own id and nothing is stored under the client's
+        assertThat(response).isNotNull();
+        String issued = response.getHeaders().get(HttpHeaders.MCP_SESSION_ID);
+        assertThat(issued).isNotBlank().isNotEqualTo(clientChosen.getSessionId());
+        assertThat(mcpSessionRepository.find(clientChosen.getTenantId(), clientChosen.getServerId(), clientChosen.getSessionId())).isEmpty();
+        assertThat(mcpSessionRepository.find(clientChosen.getTenantId(), clientChosen.getServerId(), issued))
+            .get().extracting(McpSession::userId).isEqualTo("user-a");
     }
 
     @Test
@@ -182,10 +205,7 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — a session established via initialize, then a notification posted with the session ID
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
-        KestraMcpTransportContext context = buildTransportContext();
-        HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
-            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
-        provider.handleRequest(initRequest, context).block();
+        KestraMcpTransportContext context = initialize(provider, buildTransportContext());
 
         // When
         HttpRequest<String> notifRequest = HttpRequest.POST("/mcp", toJson(NOTIFICATION_REQUEST))
@@ -255,10 +275,7 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — a local session initialized on this node
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
-        KestraMcpTransportContext localContext = buildTransportContext();
-        HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
-            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
-        provider.handleRequest(initRequest, localContext).block();
+        initialize(provider, buildTransportContext());
 
         // When — a notification is broadcast; should complete without error
         // (cross-node fanout was removed: each node handles its own sessions via the broadcast flow queue)
@@ -375,10 +392,7 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — a session initialized on this node (ends up in streamableSessions)
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
-        KestraMcpTransportContext context = buildTransportContext();
-        HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
-            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
-        provider.handleRequest(initRequest, context).block();
+        KestraMcpTransportContext context = initialize(provider, buildTransportContext());
 
         assertThat(mcpSessionService.findMcpStreamableServerSession(context)).isPresent();
 
@@ -406,10 +420,7 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — a session initialized on this node
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
-        KestraMcpTransportContext context = buildTransportContext();
-        HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
-            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
-        provider.handleRequest(initRequest, context).block();
+        KestraMcpTransportContext context = initialize(provider, buildTransportContext());
 
         assertThat(mcpSessionService.findMcpStreamableServerSession(context)).isPresent();
 
@@ -432,15 +443,18 @@ class KestraFluxStreamableServerTransportProviderTest {
 
     @Test
     void shouldBroadcastCreatedEventWhenSessionInitialized() throws InterruptedException {
-        // Given — subscribe to the queue before the session is created
-        KestraMcpTransportContext context = buildTransportContext();
+        // Given — subscribe to the queue before the session is created; the server is unique to this
+        // test, since the session id is only known once initialize has returned
+        KestraMcpTransportContext requestContext = buildTransportContext().toBuilder()
+            .serverId("server-" + UUID.randomUUID())
+            .build();
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<McpSessionEvent> received = new AtomicReference<>();
         QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either ->
         {
             if (
                 either.isLeft()
-                    && either.getLeft().session().sessionId().equals(context.getSessionId())
+                    && either.getLeft().session().serverId().equals(requestContext.getServerId())
                     && either.getLeft().type() == McpSessionEventType.CREATED
             ) {
                 received.set(either.getLeft());
@@ -452,9 +466,7 @@ class KestraFluxStreamableServerTransportProviderTest {
         provider.setSessionFactory(buildSessionFactory());
 
         // When — an initialize request creates a new session
-        HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
-            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
-        provider.handleRequest(initRequest, context).block();
+        KestraMcpTransportContext context = initialize(provider, requestContext);
 
         // Then — a CREATED event is broadcast with this node as the SSE owner
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -473,10 +485,7 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — a session initialized on this node (ends up in streamableSessions)
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
-        KestraMcpTransportContext context = buildTransportContext();
-        HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
-            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
-        provider.handleRequest(initRequest, context).block();
+        KestraMcpTransportContext context = initialize(provider, buildTransportContext());
         assertThat(mcpSessionService.findMcpStreamableServerSession(context)).isPresent();
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -506,11 +515,140 @@ class KestraFluxStreamableServerTransportProviderTest {
         subscriber.close();
     }
 
+    @Test
+    void shouldReturnNotFoundWhenAnotherCallerPostsToSession() {
+        // Given — user A holds a session on this node
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        provider.setSessionFactory(buildSessionFactory());
+        KestraMcpTransportContext owner = initialize(provider, buildTransportContext("user-a"));
+        KestraMcpTransportContext intruder = owner.toBuilder().userId("user-b").build();
+
+        // When — user B sends a request with A's session id
+        HttpResponse<?> response = provider.handleRequest(mcpPost(TOOLS_LIST_REQUEST, owner.getSessionId()), intruder).block();
+
+        // Then — B is told the session does not exist, and A can still use it
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        HttpResponse<?> ownerResponse = provider.handleRequest(mcpPost(NOTIFICATION_REQUEST, owner.getSessionId()), owner).block();
+        assertThat(ownerResponse).isNotNull();
+        assertThat(ownerResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenAnotherCallerOpensSseStreamOnSession() {
+        // Given
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        provider.setSessionFactory(buildSessionFactory());
+        KestraMcpTransportContext owner = initialize(provider, buildTransportContext("user-a"));
+        KestraMcpTransportContext intruder = owner.toBuilder().userId("user-b").build();
+
+        // When
+        HttpResponse<?> response = provider.handleRequest(sseGet(owner.getSessionId()), intruder).block();
+
+        // Then — no stream is handed to B, and A's session is untouched
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(mcpSessionService.findMcpStreamableServerSession(owner)).isPresent();
+        assertThat(mcpSessionRepository.find(owner.getTenantId(), owner.getServerId(), owner.getSessionId()))
+            .get().extracting(McpSession::sseNode).isEqualTo(ServerInstance.INSTANCE_ID);
+    }
+
+    @Test
+    void shouldReturnNotFoundAndKeepSessionWhenAnotherCallerDeletesSession() {
+        // Given
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        provider.setSessionFactory(buildSessionFactory());
+        KestraMcpTransportContext owner = initialize(provider, buildTransportContext("user-a"));
+        KestraMcpTransportContext intruder = owner.toBuilder().userId("user-b").build();
+
+        // When
+        HttpResponse<?> response = provider.handleRequest(mcpDelete(owner.getSessionId()), intruder).block();
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(mcpSessionRepository.find(owner.getTenantId(), owner.getServerId(), owner.getSessionId())).isPresent();
+        assertThat(mcpSessionService.findMcpStreamableServerSession(owner)).isPresent();
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenAnotherCallerUsesSessionHeldOnAnotherNode() {
+        // Given — user A's session lives on another node, so only the repository knows about it
+        String remoteSseNode = UUID.randomUUID().toString();
+        KestraMcpTransportContext owner = buildTransportContext("user-a");
+        mcpSessionRepository.save(
+            new McpSession(owner.getTenantId(), owner.getServerId(), owner.getSessionId(), remoteSseNode, "user-a", false)
+        );
+        KestraMcpTransportContext intruder = owner.toBuilder().userId("user-b").build();
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        provider.setSessionFactory(buildSessionFactory());
+
+        // When — user B tries every cross-node path
+        HttpResponse<?> post = provider.handleRequest(mcpPost(TOOLS_LIST_REQUEST, owner.getSessionId()), intruder).block();
+        HttpResponse<?> get = provider.handleRequest(sseGet(owner.getSessionId()), intruder).block();
+        HttpResponse<?> delete = provider.handleRequest(mcpDelete(owner.getSessionId()), intruder).block();
+
+        // Then — all are refused, and B took neither the stream nor the session
+        assertThat(post).isNotNull().extracting(r -> r.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(get).isNotNull().extracting(r -> r.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(delete).isNotNull().extracting(r -> r.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(mcpSessionRepository.find(owner.getTenantId(), owner.getServerId(), owner.getSessionId()))
+            .get().extracting(McpSession::sseNode).isEqualTo(remoteSseNode);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingUnknownSession() {
+        // Given
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraMcpTransportContext context = buildTransportContext();
+
+        // When
+        HttpResponse<?> response = provider.handleRequest(mcpDelete(context.getSessionId()), context).block();
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    /** Initializes a session and returns the context carrying the session id the server issued. */
+    private static KestraMcpTransportContext initialize(KestraFluxStreamableServerTransportProvider provider, KestraMcpTransportContext context) {
+        HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
+            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
+        HttpResponse<?> response = provider.handleRequest(initRequest, context).block();
+        assertThat(response).isNotNull();
+        String sessionId = response.getHeaders().get(HttpHeaders.MCP_SESSION_ID);
+        assertThat(sessionId).isNotBlank();
+        return context.toBuilder().sessionId(sessionId).build();
+    }
+
+    private static HttpRequest<String> mcpPost(McpSchema.JSONRPCMessage message, String sessionId) {
+        return HttpRequest.POST("/mcp", toJson(message))
+            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE)
+            .header(HttpHeaders.MCP_SESSION_ID, sessionId);
+    }
+
+    private static HttpRequest<String> sseGet(String sessionId) {
+        return HttpRequest.<String> GET("/mcp")
+            .accept(MediaType.TEXT_EVENT_STREAM_TYPE)
+            .header(HttpHeaders.MCP_SESSION_ID, sessionId);
+    }
+
+    private static HttpRequest<String> mcpDelete(String sessionId) {
+        return HttpRequest.<String> create(HttpMethod.DELETE, "/mcp")
+            .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE)
+            .header(HttpHeaders.MCP_SESSION_ID, sessionId);
+    }
+
     private static KestraMcpTransportContext buildTransportContext() {
+        return buildTransportContext(null);
+    }
+
+    private static KestraMcpTransportContext buildTransportContext(String userId) {
         return KestraMcpTransportContext.builder()
             .tenantId("test-tenant")
             .serverId("default")
             .sessionId(UUID.randomUUID().toString())
+            .userId(userId)
             .build();
     }
 

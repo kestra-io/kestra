@@ -100,14 +100,14 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                 - id: fail
-                    type: io.kestra.plugin.core.execution.Fail
-                    errorMessage: Something went wrong, make sure to fix it asap!
+                  type: io.kestra.plugin.core.execution.Fail
+                  errorMessage: Something went wrong, make sure to fix it asap!
 
                 errors:
                 - id: slack
-                    type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
-                    url: "{{ secret('SLACK_WEBHOOK') }}"
-                    payload: |
+                  type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+                  url: "{{ secret('SLACK_WEBHOOK') }}"
+                  payload: |
                     {
                       "text": "Failure alert for flow `{{ flow.namespace }}.{{ flow.id }}` with ID `{{ execution.id }}`. Here is a bit more context about why the execution failed: `{{ errorLogs()[0]['message'] }}`"
                     }

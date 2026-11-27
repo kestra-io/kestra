@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.time.DurationFormatUtils;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -46,7 +44,7 @@ public class State {
 
     public State(State state, Type type) {
         this.current = type;
-        this.histories = state.histories;
+        this.histories = new ArrayList<>(state.histories);
         this.histories.add(new History(this.current, Instant.now()));
     }
 
@@ -153,10 +151,43 @@ public class State {
 
     public String humanDuration() {
         try {
-            return DurationFormatUtils.formatDurationHMS(getDurationOrComputeIt().toMillis());
+            return formatHoursMinutesSeconds(getDurationOrComputeIt().toMillis());
         } catch (Throwable e) {
             return getDuration().toString();
         }
+    }
+
+    /**
+     * Same output as commons-lang3's {@code formatDurationHMS} ({@code HH:mm:ss.SSS}, hours not capped, negative
+     * rejected) without tokenizing a format string on every call: see StateHumanDurationBenchmark in jmh-benchmarks.
+     */
+    private static String formatHoursMinutesSeconds(long millis) {
+        if (millis < 0) {
+            throw new IllegalArgumentException("The duration must not be negative.");
+        }
+        long hours = millis / 3_600_000L;
+        millis -= hours * 3_600_000L;
+        long minutes = millis / 60_000L;
+        millis -= minutes * 60_000L;
+        long seconds = millis / 1_000L;
+        millis -= seconds * 1_000L;
+
+        StringBuilder builder = new StringBuilder(12);
+        if (hours < 10) {
+            builder.append('0');
+        }
+        builder.append(hours).append(':');
+        appendPadded(builder, minutes, 2).append(':');
+        appendPadded(builder, seconds, 2).append('.');
+        return appendPadded(builder, millis, 3).toString();
+    }
+
+    private static StringBuilder appendPadded(StringBuilder builder, long value, int digits) {
+        String digitsText = Long.toString(value);
+        for (int i = digitsText.length(); i < digits; i++) {
+            builder.append('0');
+        }
+        return builder.append(digitsText);
     }
 
     public Instant maxDate() {

@@ -18,7 +18,7 @@ const planAction: ProposedActionEvent = {
     ],
 }
 const mutateAction: ProposedActionEvent = {
-    confirmationId: "c2", tool: "restart-execution", family: "MUTATE", summary: "Restart exec-1", arguments: {id: "exec-1"},
+    confirmationId: "c2", tool: "restart_execution", family: "MUTATE", summary: "Restart exec-1", arguments: {id: "exec-1"},
 }
 
 const mountCard = (action: ProposedActionEvent, props = {}) =>
@@ -37,7 +37,7 @@ describe("ProposedActionCard", () => {
         expect(steps[0].text()).toContain("Mock external task outputs")
         expect(steps[0].text()).toContain("tests/ai-summarize.test.yml")
         expect(reject(w).text()).toBe("Reply to revise")
-        expect(approve(w).text()).toBe("Approve & execute")
+        expect(approve(w).text()).toBe("Approve plan")
         expect(w.find("[data-test='copilot-proposed-family']").exists()).toBe(false) // no family tag on a plan
     })
 

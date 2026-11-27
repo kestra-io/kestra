@@ -47,21 +47,36 @@ describe("untilNodesMeasured", () => {
     const measured = {dimensions: {width: 100, height: 40}}
     const unmeasured = {dimensions: {width: 0, height: 0}}
 
+    beforeEach(() => {
+        vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
     it("resolves once every rendered node carries dimensions", async () => {
         const nodes = [measured, unmeasured]
 
         const waited = untilNodesMeasured(() => nodes)
         nodes[1] = measured
+        vi.runAllTimers()
 
         await expect(waited).resolves.toBeUndefined()
     })
 
     it("resolves straight away for a graph with no nodes", async () => {
-        await expect(untilNodesMeasured(() => [])).resolves.toBeUndefined()
+        const waited = untilNodesMeasured(() => [])
+        vi.runAllTimers()
+
+        await expect(waited).resolves.toBeUndefined()
     })
 
     it("gives up after its frame budget so a node that never measures cannot block the export", async () => {
-        await expect(untilNodesMeasured(() => [unmeasured], 3)).resolves.toBeUndefined()
+        const waited = untilNodesMeasured(() => [unmeasured], 3)
+        vi.runAllTimers()
+
+        await expect(waited).resolves.toBeUndefined()
     })
 })
 

@@ -1,5 +1,7 @@
 import {describe, test, expect} from "vitest"
-import {useFilteredProps} from "./filteredProps"
+import {defineComponent, h} from "vue"
+import {mount} from "@vue/test-utils"
+import {useFilteredProps, usePassedProps} from "./filteredProps"
 
 describe("useFilteredProps", () => {
     test("drops keys whose value is undefined", () => {
@@ -40,5 +42,29 @@ describe("useFilteredProps", () => {
         props.round = true
 
         expect(filtered()).toStrictEqual({size: "large", round: true})
+    })
+})
+
+describe("usePassedProps", () => {
+    const Wrapper = defineComponent({
+        props: {teleported: Boolean, validateEvent: Boolean, size: String, borderless: Boolean},
+        setup(props) {
+            const passed = usePassedProps(props, ["borderless"])
+            return () => h("div", {"data-forwarded": JSON.stringify(passed())})
+        },
+    })
+    const forwarded = (props: Record<string, unknown>) =>
+        JSON.parse(mount(Wrapper, {props}).attributes("data-forwarded") ?? "{}")
+
+    test("leaves out a boolean the parent did not pass, instead of the false Vue casts it to", () => {
+        expect(forwarded({size: "small"})).toStrictEqual({size: "small"})
+    })
+
+    test("forwards a false the parent passed explicitly", () => {
+        expect(forwarded({teleported: false, "validate-event": true})).toStrictEqual({teleported: false, validateEvent: true})
+    })
+
+    test("drops keys listed in skip", () => {
+        expect(forwarded({borderless: true})).toStrictEqual({})
     })
 })

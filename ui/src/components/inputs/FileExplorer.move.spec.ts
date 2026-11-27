@@ -6,8 +6,10 @@ import {i18nShallowMount} from "../../../tests/unit/i18nMount"
 
 type Node = {data: {id: string; fileName?: string; leaf?: boolean}; parent?: Node}
 
-const {moveFileDirectory, store} = vi.hoisted(() => ({
+const {moveFileDirectory, renameFileDirectory, deleteFileDirectory, store} = vi.hoisted(() => ({
     moveFileDirectory: vi.fn(),
+    renameFileDirectory: vi.fn(),
+    deleteFileDirectory: vi.fn(),
     store: {fileTree: [] as unknown[], paths: {} as Record<string, string>},
 }))
 
@@ -17,7 +19,7 @@ vi.mock("vue-router", async (importOriginal) => ({
 }))
 
 vi.mock("override/stores/namespaces", () => ({
-    useNamespacesStore: () => ({moveFileDirectory}),
+    useNamespacesStore: () => ({moveFileDirectory, renameFileDirectory, deleteFileDirectory}),
 }))
 
 vi.mock("override/stores/auth", () => ({
@@ -40,7 +42,7 @@ vi.mock("../../stores/fileExplorer", async (importOriginal) => ({
     }),
 }))
 
-import FileExplorer, {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "./FileExplorer.vue"
+import FileExplorer, {FILES_CLOSE_TAB_INJECTION_KEY, FILES_MOVE_TABS_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "./FileExplorer.vue"
 
 const root: Node = {data: {id: "root"}}
 const docs: Node = {data: {id: "docs"}, parent: root}
@@ -49,12 +51,25 @@ const changelog: Node = {data: {id: "changelog", fileName: "CHANGELOG.md", leaf:
 const contributing: Node = {data: {id: "contributing", fileName: "CONTRIBUTING.md", leaf: true}, parent: docs}
 
 let rows: Node[] = []
+const closeTab = vi.fn(() => true)
+const moveTabs = vi.fn()
 
 const KsTree = defineComponent({
     name: "KsTree",
     props: {allowDrop: {type: Function, default: undefined}},
     emits: ["node-drag-start", "node-drop"],
-    methods: {setCurrentKey() {}, remove() {}, append() {}},
+    methods: {
+        setCurrentKey() {},
+        remove() {},
+        append() {},
+        // The tree looks nodes up by id. A miss must stay empty so a rename does not throw.
+        getNode(key: string | Node) {
+            if (typeof key === "object" && key?.data) {
+                return key
+            }
+            return [...rows, readme, docs, changelog, contributing].find((row) => row.data.id === key)
+        },
+    },
     render() {
         return h("div", rows.map((node) => h("div", {key: node.data.id}, this.$slots.default?.({node, data: node.data}))))
     },
@@ -64,7 +79,11 @@ function mountExplorer() {
     return i18nShallowMount(FileExplorer, {
         global: {
             plugins: [createPinia()],
-            provide: {[FILES_OPEN_TAB_INJECTION_KEY as symbol]: vi.fn(), [FILES_CLOSE_TAB_INJECTION_KEY as symbol]: vi.fn(() => true)},
+            provide: {
+                [FILES_OPEN_TAB_INJECTION_KEY as symbol]: vi.fn(),
+                [FILES_CLOSE_TAB_INJECTION_KEY as symbol]: closeTab,
+                [FILES_MOVE_TABS_INJECTION_KEY as symbol]: moveTabs,
+            },
             stubs: {KsTree, KsDropdown: {template: "<div><slot /></div>"}},
         },
     })
@@ -94,6 +113,7 @@ describe("FileExplorer drag and drop", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         moveFileDirectory.mockReset().mockResolvedValue(undefined)
+        moveTabs.mockReset()
         store.fileTree = [
             {id: "readme", fileName: "README.md", type: "File"},
             {id: "changelog", fileName: "CHANGELOG.md", type: "File"},
@@ -121,6 +141,15 @@ describe("FileExplorer drag and drop", () => {
         await dragAndDrop(mountExplorer(), readme, "docs/README.md")
 
         expect(moveFileDirectory).toHaveBeenCalledWith({namespace: "company", old: "README.md", new: "docs/README.md"})
+        expect(moveTabs).toHaveBeenCalledWith({from: "README.md", to: "docs/README.md"})
+    })
+
+    it("leaves the open tabs alone when the server refuses the move", async () => {
+        moveFileDirectory.mockRejectedValue(new Error("refused"))
+
+        await dragAndDrop(mountExplorer(), readme, "docs/README.md")
+
+        expect(moveTabs).not.toHaveBeenCalled()
     })
 
     it("sends nothing for a bulk drop when every selected file is already in the target folder", async () => {
@@ -143,5 +172,57 @@ describe("FileExplorer drag and drop", () => {
 
         expect(moveFileDirectory).toHaveBeenCalledTimes(1)
         expect(moveFileDirectory).toHaveBeenCalledWith({namespace: "company", old: "docs/CONTRIBUTING.md", new: "CONTRIBUTING.md"})
+        expect(moveTabs).toHaveBeenCalledWith({from: "docs/CONTRIBUTING.md", to: "CONTRIBUTING.md"})
+    })
+})
+
+describe("FileExplorer rename and delete", () => {
+    type ExplorerVm = {
+        toggleRenameDialog: (shown: boolean, type: "file" | "folder", name: string, node: Node) => void
+        renameItem: () => Promise<void>
+        confirmRemove: (nodes: unknown[]) => void
+        removeItems: () => Promise<void>
+    }
+
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        renameFileDirectory.mockReset().mockResolvedValue(undefined)
+        deleteFileDirectory.mockReset().mockResolvedValue(undefined)
+        closeTab.mockClear()
+        moveTabs.mockReset()
+        store.fileTree = []
+        store.paths = {readme: "README.md", docs: "docs", contributing: "docs/CONTRIBUTING.md"}
+        rows = []
+    })
+
+    it("moves the open tab of a renamed file, so its unsaved edits follow it", async () => {
+        const vm = mountExplorer().vm as unknown as ExplorerVm
+
+        vm.toggleRenameDialog(true, "file", "README.md", readme)
+        Object.assign((vm as unknown as {renameDialog: {name: string}}).renameDialog, {name: "NOTES.md"})
+        await vm.renameItem()
+
+        expect(renameFileDirectory).toHaveBeenCalledWith({namespace: "company", old: "README.md", new: "NOTES.md"})
+        expect(moveTabs).toHaveBeenCalledWith({from: "README.md", to: "NOTES.md"})
+        expect(closeTab).not.toHaveBeenCalled()
+    })
+
+    it("closes the tabs inside a deleted folder", async () => {
+        const vm = mountExplorer().vm as unknown as ExplorerVm
+
+        vm.confirmRemove([{id: "docs", fileName: "docs", leaf: false}])
+        await vm.removeItems()
+
+        expect(deleteFileDirectory).toHaveBeenCalledWith({namespace: "company", path: "docs"})
+        expect(closeTab).toHaveBeenCalledWith({path: "docs", folder: true})
+    })
+
+    it("closes only the exact tab of a deleted file", async () => {
+        const vm = mountExplorer().vm as unknown as ExplorerVm
+
+        vm.confirmRemove([{id: "readme", fileName: "README.md", leaf: true}])
+        await vm.removeItems()
+
+        expect(closeTab).toHaveBeenCalledWith({path: "README.md", folder: false})
     })
 })

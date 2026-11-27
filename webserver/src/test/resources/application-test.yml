@@ -48,6 +48,8 @@ kestra:
     monitor-sla-loop-periodicity-ms: 250
     multiple-condition-purge-loop-periodicity-ms: 1000
   ai:
+    agent:
+      docs-mcp-enabled: false
     type: gemini
     gemini:
       base-url: https://localhost:28183

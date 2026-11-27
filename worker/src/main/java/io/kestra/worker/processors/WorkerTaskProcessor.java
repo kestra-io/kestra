@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -26,10 +25,6 @@ import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.assets.Asset;
-import io.kestra.core.models.assets.AssetIdentifier;
-import io.kestra.core.models.assets.AssetsDeclaration;
-import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.AssetFailureBehavior;
@@ -42,20 +37,19 @@ import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Logs;
-import io.kestra.core.utils.TruthUtils;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
 
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.models.flows.State.Type.*;
 
 @Slf4j
 public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> {
+    // METRICS
+    private static final Map<Long, AtomicInteger> METRIC_RUNNING_COUNT = new ConcurrentHashMap<>();
 
     private final String workerId;
     private final String workerGroup;
@@ -64,9 +58,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     private final ServerConfig serverConfig;
     private final RunContextInitializer runContextInitializer;
     private final RunContextLoggerFactory runContextLoggerFactory;
-
-    // METRICS
-    private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
+    private final WorkingDirFactory workingDirFactory;
 
     // QUEUEs
     private final WorkerQueue<WorkerTaskResult> workerTaskResultQueue;
@@ -82,8 +74,10 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         final RunContextLoggerFactory runContextLoggerFactory,
         final WorkerQueue<WorkerTaskResult> workerTaskResultQueue,
         final WorkerQueue<MetricEntry> workerMetricQueue,
-        final ExecutionKilledManager executionKilledManager) {
+        final ExecutionKilledManager executionKilledManager,
+        final WorkingDirFactory workingDirFactory) {
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
+        this.workingDirFactory = workingDirFactory;
         this.runContextInitializer = runContextInitializer;
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.workerId = workerId;
@@ -100,80 +94,14 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     protected void doProcess(final WorkerTask workerTask) {
         Task task = workerTask.getTask();
         if (task instanceof RunnableTask) {
-            runTask(workerTask, true);
-        } else if (task instanceof WorkingDirectory workingDirectory) {
-            runWorkingDirectory(workerTask, workingDirectory);
+            if (workerTask.getWorkingDirectoryId() == null) {
+                runTask(workerTask, true);
+            } else {
+                WorkingDir workingDir = workingDirFactory.createWorkingDirectory(workerTask.getTaskRun().getExecutionId(), workerTask.getWorkingDirectoryId());
+                runTask(workerTask, false, runContextInitializer.forWorkingDirectorySubtask(workerTask, workingDir));
+            }
         } else {
             throw new IllegalArgumentException("Unable to process the task '" + task.getId() + "' as it's not a runnable task");
-        }
-    }
-
-    private void runWorkingDirectory(WorkerTask workerTask, WorkingDirectory workingDirectory) {
-        DefaultRunContext runContext = runContextInitializer.forWorkingDirectory(workerTask);
-        final RunContext workingDirectoryRunContext = runContext.clone();
-
-        try {
-            // preExecuteTasks
-            try {
-                workingDirectory.preExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
-            } catch (Exception e) {
-                runContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                workerTask = workerTask.withTaskRun(workerTask.fail());
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.getTaskRun()));
-                return;
-            }
-
-            // execute all tasks
-            for (Task currentTask : workingDirectory.getTasks()) {
-                if (Boolean.TRUE.equals(currentTask.getDisabled())) {
-                    continue;
-                }
-                WorkerTask currentWorkerTask = workingDirectory.workerTask(
-                    workerTask.getTaskRun(),
-                    currentTask,
-                    runContext.cloneForPlugin(currentTask)
-                );
-
-                // all tasks will be handled immediately by the worker
-                WorkerTaskResult workerTaskResult = null;
-                try {
-                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
-                        workerTaskResult = new WorkerTaskResult(
-                            currentWorkerTask.getTaskRun()
-                                .withState(SKIPPED)
-                                .addAttempt(TaskRunAttempt.builder().workerId(workerId).state(new State().withState(SKIPPED)).build())
-                        );
-                        workerTaskResultQueue.put(workerTaskResult);
-                    } else {
-                        workerTaskResult = this.runTask(
-                            currentWorkerTask, false,
-                            runContextInitializer.forWorkingDirectorySubtask(currentWorkerTask, runContext.workingDir())
-                        );
-                    }
-                } catch (IllegalVariableEvaluationException e) {
-                    RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
-                    contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
-                    workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
-                }
-
-                if (workerTaskResult == null || workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
-                    break;
-                }
-
-                // create the next RunContext populated with the previous WorkerTaskResult
-                runContext = runContextInitializer.forWorker(runContext.clone(), workerTaskResult, workerTask.getTaskRun());
-            }
-
-            // postExecuteTasks
-            try {
-                workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
-            } catch (Exception e) {
-                workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
-            }
-            this.logTerminated(workerTask, workerTask.getTaskRun());
-        } finally {
-            runContext.cleanup();
         }
     }
 
@@ -250,7 +178,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
 
-            if (isStopped() && isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
+            if (isInterruptedForResubmission(state)) {
                 // The Worker is terminating and forcibly interrupted this still-running task (grace period
                 // elapsed or force shutdown), so its failed state is an artifact of the shutdown, not a real
                 // failure: we return immediately without emitting any result as it will be resubmitted
@@ -281,17 +209,16 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     );
                     state = FAILED;
                 }
-            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
-                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
-                AssetFailureBehavior assetFailureBehavior = AssetFailureBehavior.WARN;
-                if (assetsDeclaration != null) {
-                    try {
-                        assetFailureBehavior = runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
-                    } catch (IllegalVariableEvaluationException | ConstraintViolationException e) {
-                        // validate() re-checks the whole task bean, so an unrelated invalid field throws here too
-                        runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
-                    }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.LOCKS_NOT_RELEASED) {
+                if (!state.isTerminatedInError()) {
+                    runContext.logger().error(
+                        "Task state changed from {} to {} because the assets it locked could not be released, which assetFailureBehavior does not soften",
+                        state, FAILED
+                    );
+                    state = FAILED;
                 }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
+                AssetFailureBehavior assetFailureBehavior = TaskAttemptAssets.assetFailureBehavior(runContext, workerTask);
                 State.Type newState = assetFailureBehavior.apply(state);
                 if (newState != state) {
                     runContext.logger().warn(
@@ -452,14 +379,24 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             )
         );
 
-        AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
-        metricRunningCount.incrementAndGet();
+        TaskAttemptAssets assets = new TaskAttemptAssets(runContext, workerTask);
+        assets.emitAtStart();
 
-        // run it
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
-        io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
+        io.kestra.core.models.flows.State.Type state;
+        WorkerTaskCallable workerTaskCallable = null;
+        if (!assets.isRefusedByALock()) {
+            AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
+            metricRunningCount.incrementAndGet();
 
-        metricRunningCount.decrementAndGet();
+            // run it
+            workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
+            state = callJob(workerTaskCallable);
+
+            metricRunningCount.decrementAndGet();
+        } else {
+            logger.error("The task was not run because another owner locked the assets it writes: {}", String.join(" ", assets.lockRefusals()));
+            state = FAILED;
+        }
 
         // attempt
         TaskRunAttempt taskRunAttempt = builder
@@ -479,96 +416,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         TaskRun taskRun = workerTask.getTaskRun()
             .withAttempts(attempts);
 
-        Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
+        Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable).map(WorkerTaskCallable::getTaskOutput).map(it -> it.toMap()).orElse(null);
 
-        TaskRunWithOutput.AssetEmission assetEmission = TaskRunWithOutput.AssetEmission.OK;
-        try {
-            if (workerTask.getTask().getAssets() != null) {
-                // We need to have the task outputs injected before rendering the assets
-                Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);
-
-                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
-
-                // Rendered independently so an unrenderable output doesn't discard the inputs of the same task.
-                List<AssetIdentifier> declaredInputs = List.of();
-                try {
-                    declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
-                } catch (IllegalVariableEvaluationException e) {
-                    logger.warn("Unable to render the declared asset inputs of task '{}'", taskRun.getTaskId(), e);
-                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-                }
-
-                List<Asset> declaredOutputs = List.of();
-                try {
-                    declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
-                } catch (IllegalVariableEvaluationException e) {
-                    logger.warn("Unable to render the declared asset outputs of task '{}'", taskRun.getTaskId(), e);
-                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-                }
-
-                // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
-                // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
-                List<AssetsInOut> bundles = new ArrayList<>();
-                if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
-                    bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
-                }
-                for (AssetEmit emit : runContext.assets().emitted()) {
-                    try {
-                        emit.outputs().forEach(runContext::validate);
-                        bundles.add(new AssetsInOut(emit.inputs(), emit.outputs()));
-                    } catch (ConstraintViolationException e) {
-                        logger.warn("Skipping the assets emitted by task '{}': {}", taskRun.getTaskId(), violationsUnder("", e));
-                        assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-                    }
-                }
-
-                if (!bundles.isEmpty()) {
-                    taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));
-                }
-            }
-        } catch (ConstraintViolationException e) {
-            // validate() re-checks the whole task bean, so only an assets-scoped violation is the declaration's fault
-            String assetViolations = violationsUnder("assets", e);
-            if (assetViolations.isEmpty()) {
-                logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
-                assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-            } else {
-                logger.error("Invalid asset declaration for taskRun '{}': {}", taskRun.getId(), assetViolations);
-                assetEmission = TaskRunWithOutput.AssetEmission.DECLARATION_INVALID;
-            }
-        } catch (Exception e) {
-            logger.warn("Unable to emit the assets of task '{}'", taskRun.getTaskId(), e);
-            assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-        }
+        TaskRunWithOutput.AssetEmission assetEmission = assets.emitAtEnd(taskRun, state, outputs, isInterruptedForResubmission(state));
 
         return new TaskRunWithOutput(taskRun, outputs, assetEmission);
     }
 
-    private static String violationsUnder(String propertyPathPrefix, ConstraintViolationException e) {
-        return e.getConstraintViolations().stream()
-            .filter(violation -> violation.getPropertyPath().toString().startsWith(propertyPathPrefix))
-            .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
-            .collect(Collectors.joining(", "));
-    }
-
-    /**
-     * A declared asset input without a namespace belongs to the flow referencing it, and left null it is
-     * filtered out of the view of every user whose asset permission is scoped to namespaces rather than
-     * global. Outputs are untouched here: an omitted output namespace must reach {@link Asset#toUpdated}
-     * as {@code null} so it keeps the stored asset's namespace instead of being silently rewritten to the
-     * flow's own.
-     */
-    private static List<AssetsInOut> withDefaultInputNamespace(List<AssetsInOut> bundles, String namespace) {
-        return bundles.stream()
-            .map(
-                bundle -> new AssetsInOut(
-                    bundle.getInputs().stream()
-                        .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
-                        .toList(),
-                    bundle.getOutputs()
-                )
-            )
-            .toList();
+    private boolean isInterruptedForResubmission(io.kestra.core.models.flows.State.Type state) {
+        return isStopped() && isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed();
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {
@@ -610,11 +466,11 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         long index = Hashing.hashToLong(String.join("-", tags));
 
-        return this.metricRunningCount
+        return METRIC_RUNNING_COUNT
             .computeIfAbsent(
-                index, l -> metricRegistry.gauge(
-                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
-                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION,
+                index, _ -> metricRegistry.gauge(
+                    MetricRegistry.METRIC_WORKER_TASKS_RUNNING_COUNT,
+                    MetricRegistry.METRIC_WORKER_TASKS_RUNNING_COUNT_DESCRIPTION,
                     new AtomicInteger(0),
                     tags
                 )

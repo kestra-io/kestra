@@ -232,6 +232,11 @@ function deferred<T>() {
 
 async function mountRefreshGantt(initialExecution: Execution) {
     const pinia = createPinia()
+    const router = createRouter({
+        history: createMemoryHistory(),
+        routes: [{path: "/", component: {template: "<div />"}}],
+    })
+    createApp({}).use(pinia).use(router)
     const store = useExecutionsStore(pinia)
     store.flow = {
         id: "flow-id",
@@ -239,11 +244,6 @@ async function mountRefreshGantt(initialExecution: Execution) {
         tasks: [{id: "task-id", type: "io.kestra.plugin.core.log.Log"}],
     } as FlowForExecution
     store.execution = initialExecution
-
-    const router = createRouter({
-        history: createMemoryHistory(),
-        routes: [{path: "/", component: {template: "<div />"}}],
-    })
     await router.push("/")
 
     const wrapper = i18nMount(Gantt, {
@@ -420,8 +420,7 @@ describe("Gantt selection", () => {
 
     it("shouldScrollTheVirtualScrollerToTheFirstFailureWhenItsRowIsNotRendered", async () => {
         const scrollToItem = vi.fn()
-        const scrollIntoView = vi.fn()
-        Element.prototype.scrollIntoView = scrollIntoView
+        const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
         const OneRowScroller = defineComponent({
             props: {items: {type: Array as PropType<Array<{id: string}>>, required: true}},
             setup(_, {expose}) {
@@ -456,7 +455,7 @@ describe("Gantt selection", () => {
             expect(scrollIntoView.mock.contexts[0]).toBe(wrapper.get("[data-row-key='tr:tr-3']").element)
         } finally {
             wrapper.unmount()
-            delete (Element.prototype as Partial<Element>).scrollIntoView
+            scrollIntoView.mockRestore()
         }
     })
 

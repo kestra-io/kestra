@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref, type ConcreteComponent} from "vue"
+import {expect} from "storybook/test"
 import KsTable from "./KsTable.vue"
 import KsTableColumn from "./KsTableColumn.vue"
 import KsTag from "../KsTag/KsTag.vue"
@@ -266,4 +267,57 @@ export const Empty: Story = {
         `,
     }),
     parameters: {controls: {disable: true}},
+}
+
+/** `flushExpand` renders an expanded row's content edge to edge, with no cell padding and no border */
+export const FlushExpand: Story = {
+    render: () => ({
+        components: {KsTable, KsTableColumn},
+        setup() { return {SAMPLE_DATA} },
+        template: `
+            <div style="padding:24px">
+                <ks-table :data="SAMPLE_DATA" rowKey="id" :expandRowKeys="['flow-001']" flushExpand>
+                    <ks-table-column type="expand">
+                        <template #default="{row}">
+                            <div style="background:var(--ks-bg-surface);padding:12px">{{ row.namespace }}</div>
+                        </template>
+                    </ks-table-column>
+                    <ks-table-column prop="id" label="Flow ID" />
+                    <ks-table-column prop="namespace" label="Namespace" />
+                </ks-table>
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const cell = getComputedStyle(canvasElement.querySelector(".kel-table__expanded-cell")!)
+        await expect(cell.paddingTop).toBe("0px")
+        await expect(cell.paddingLeft).toBe("0px")
+        await expect(cell.borderBottomStyle).toBe("none")
+    },
+}
+
+/** `--ks-table-action-header-padding-right` sets the right padding of the `row-action` column header (8px by default), set on the table or an ancestor */
+export const ActionHeaderPadding: Story = {
+    render: () => ({
+        components: {KsTable, KsTableColumn, KsButton},
+        setup() { return {SAMPLE_DATA} },
+        template: `
+            <div style="padding:24px;--ks-table-action-header-padding-right:var(--ks-spacing-4)">
+                <ks-table :data="SAMPLE_DATA">
+                    <ks-table-column prop="id" label="Flow ID" />
+                    <ks-table-column columnKey="action" className="row-action" label="Actions">
+                        <template #default>
+                            <ks-button size="small">Run</ks-button>
+                        </template>
+                    </ks-table-column>
+                </ks-table>
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        await expect(getComputedStyle(canvasElement.querySelector("th.row-action .cell")!).paddingRight).toBe("16px")
+        await expect(getComputedStyle(canvasElement.querySelector("td.row-action .cell")!).paddingRight).toBe("8px")
+    },
 }

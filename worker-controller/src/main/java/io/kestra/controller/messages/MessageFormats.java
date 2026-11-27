@@ -1,12 +1,12 @@
 package io.kestra.controller.messages;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.UnsafeByteOperations;
 
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -21,12 +21,11 @@ public enum MessageFormats implements MessageFormat {
         /** {@inheritDoc} **/
         @Override
         public <T> T fromByteString(ByteString data, Class<T> type) {
-            byte[] bytes = toByteArray(data);
-            if (bytes == null || bytes.length == 0) {
+            if (data == null || data.isEmpty()) {
                 return null;
             }
             try {
-                return OBJECT_MAPPER.readValue(bytes, type);
+                return OBJECT_MAPPER.readValue(data.newInput(), type);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -34,12 +33,11 @@ public enum MessageFormats implements MessageFormat {
 
         @Override
         public <T> T fromByteString(ByteString data, TypeReference<T> type) {
-            byte[] bytes = toByteArray(data);
-            if (bytes == null || bytes.length == 0) {
+            if (data == null || data.isEmpty()) {
                 return null;
             }
             try {
-                return OBJECT_MAPPER.readValue(bytes, type);
+                return OBJECT_MAPPER.readValue(data.newInput(), type);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -52,14 +50,11 @@ public enum MessageFormats implements MessageFormat {
                 return ByteString.EMPTY;
             }
             try {
-                return ByteString.copyFrom(OBJECT_MAPPER.writeValueAsBytes(value));
+                // the array is never touched again, so wrapping it saves a copy of every message
+                return UnsafeByteOperations.unsafeWrap(OBJECT_MAPPER.writeValueAsBytes(value));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
         }
     };
-
-    private static byte[] toByteArray(ByteString data) {
-        return Optional.ofNullable(data).map(ByteString::toByteArray).orElse(null);
-    }
 }

@@ -10,6 +10,7 @@ import io.kestra.core.validations.validator.TenantIdValidator;
  */
 final class StorageLocations {
 
+    // Deliberately accepts an id with an empty segment: this only checks the shape of the path, so that the storage of existing namespaces stays reachable.
     private static final Pattern NAMESPACE_PATTERN = Pattern.compile("^[a-z0-9][a-z0-9._-]*");
 
     private StorageLocations() {

@@ -1,15 +1,21 @@
 package io.kestra.core.serializers;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
+import com.google.common.annotations.VisibleForTesting;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -89,6 +95,42 @@ public final class FileSerde {
             }
         }
         return false;
+    }
+
+    /**
+     * Same as {@link #read(InputStream, int, Consumer)}, but each object keeps only the given fields: the others are skipped without being built.
+     * A value that is not an object is passed unchanged.
+     * <p>
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
+     *
+     * @return true if there were more values after the ones read
+     */
+    public static boolean read(InputStream input, int maxLines, Set<String> fields, Consumer<Object> consumer) throws IOException {
+        try (JsonParser parser = DEFAULT_OBJECT_MAPPER.createParser(input)) {
+            int nbLines = 0;
+            while (parser.nextToken() != null) {
+                if (nbLines >= maxLines) {
+                    return true;
+                }
+                consumer.accept(parser.currentToken() == JsonToken.START_OBJECT ? readFields(parser, fields) : DEFAULT_OBJECT_MAPPER.readValue(parser, DEFAULT_TYPE_REFERENCE));
+                nbLines++;
+            }
+        }
+        return false;
+    }
+
+    private static Map<String, Object> readFields(JsonParser parser, Set<String> fields) throws IOException {
+        Map<String, Object> row = new HashMap<>();
+        while (parser.nextToken() == JsonToken.FIELD_NAME) {
+            String name = parser.currentName();
+            parser.nextToken();
+            if (fields.contains(name)) {
+                row.put(name, DEFAULT_OBJECT_MAPPER.readValue(parser, DEFAULT_TYPE_REFERENCE));
+            } else {
+                parser.skipChildren();
+            }
+        }
+        return row;
     }
 
     /**
@@ -262,6 +304,42 @@ public final class FileSerde {
             sink.complete();
         }, FluxSink.OverflowStrategy.BUFFER)
             .doFinally(throwConsumer(ignored -> mappingIterator.close()));
+    }
+
+    /**
+     * Reads one record per request, for the first subscription only, instead of the whole stream up front, and closes the stream when the Flux completes, fails or is cancelled.
+     * A later subscription completes empty, without any error, and a Flux that is never subscribed leaves the stream open.
+     */
+    public static <T> Flux<T> readOnDemand(InputStream inputStream, Class<T> type) throws IOException {
+        return readOnDemand(createMappingIterator(DEFAULT_OBJECT_MAPPER, inputStream, type), inputStream);
+    }
+
+    @VisibleForTesting
+    static <T> Flux<T> readOnDemand(MappingIterator<T> mappingIterator, Closeable source) {
+        var subscribed = new AtomicBoolean();
+        var records = Flux.<T, MappingIterator<T>> generate(
+            () -> mappingIterator,
+            (iterator, sink) ->
+            {
+                if (iterator.hasNext()) {
+                    sink.next(iterator.next());
+                }
+                if (!iterator.hasNext()) {
+                    sink.complete();
+                }
+                return iterator;
+            },
+            iterator ->
+            {
+                try (source) {
+                    iterator.close();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        );
+        // Only the first subscription reads, as with readAll; fusion would let a cancel close the parser during a read.
+        return Flux.defer(() -> subscribed.compareAndSet(false, true) ? records : Flux.<T> empty()).hide();
     }
 
     public static <T> Mono<Long> writeAll(Flux<T> values, SequenceWriter seqWriter) throws IOException {

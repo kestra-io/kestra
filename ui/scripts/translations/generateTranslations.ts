@@ -238,7 +238,8 @@ async function translateText(client: TranslationClient, key: string, text: strin
             console.log(`'${key}': ${problems[0]} - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
             continue
         }
-        if (untranslatedKeys(languageCode, {[key]: translated}, {[key]: text}).length > 0) {
+        const dottedKey = key.split(KEY_SEPARATOR).join(".")
+        if (untranslatedKeys(languageCode, {[dottedKey]: translated}, {[dottedKey]: text}).length > 0) {
             console.log(`[${languageCode}] '${key}': the model returned the English text unchanged - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
             continue
         }
@@ -285,6 +286,7 @@ function unflattenDict(d: FlatDict, sep = KEY_SEPARATOR): NestedDict {
             if (typeof current[key] !== "object" || current[key] === null) {
                 current[key] = emptyDict()
             }
+            // nosemgrep: prototype-pollution-loop -- every level is an Object.create(null) dict, so there is no prototype to reach.
             current = current[key] as NestedDict
         }
         current[keys[keys.length - 1]] = v

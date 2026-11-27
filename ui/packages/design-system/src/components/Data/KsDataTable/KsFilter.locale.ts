@@ -297,9 +297,9 @@ export default {
                 "label": "Operation ID",
                 "description": "Filter by async operation identifier",
             },
-            "outputs": {
-                "label": "Searchable outputs",
-                "description": "Filter by the searchable outputs of the execution",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filter by the searchable inputs and outputs of the execution",
             },
             "taskRunId": {
                 "label": "Task Run ID",
@@ -403,6 +403,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Search MCP tools",
                 "search_executions": "Search executions",
+                "search_tasks": "Search tasks",
                 "search_dashboards": "Search dashboards...",
                 "search_flows": "Search flows",
                 "search_logs": "Search logs",
@@ -713,9 +714,9 @@ export default {
                 "label": "Operations-ID",
                 "description": "Nach ID des asynchronen Vorgangs filtern",
             },
-            "outputs": {
-                "label": "Durchsuchbare Outputs",
-                "description": "Nach den durchsuchbaren Outputs der Execution filtern",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtern nach den durchsuchbaren Inputs und Outputs der Execution",
             },
             "taskRunId": {
                 "label": "Task-Run-ID",
@@ -819,6 +820,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "MCP-Tools durchsuchen",
                 "search_executions": "Executions durchsuchen",
+                "search_tasks": "Tasks durchsuchen",
                 "search_dashboards": "Dashboards durchsuchen…",
                 "search_flows": "Flows durchsuchen",
                 "search_logs": "Logs durchsuchen",
@@ -1129,9 +1131,9 @@ export default {
                 "label": "ID de operación",
                 "description": "Filtrar por identificador de operación asíncrona",
             },
-            "outputs": {
-                "label": "Salidas buscables",
-                "description": "Filtrar por los outputs buscables de la ejecución",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtrar por los inputs y outputs de la ejecución que se pueden buscar",
             },
             "taskRunId": {
                 "label": "ID de Ejecución de Task",
@@ -1235,6 +1237,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Buscar herramientas MCP",
                 "search_executions": "Buscar ejecuciones",
+                "search_tasks": "Buscar tasks",
                 "search_dashboards": "Buscar dashboards...",
                 "search_flows": "Buscar flows",
                 "search_logs": "Buscar logs",
@@ -1545,9 +1548,9 @@ export default {
                 "label": "ID d'opération",
                 "description": "Filtrer par identifiant d'opération asynchrone",
             },
-            "outputs": {
-                "label": "Sorties interrogeables",
-                "description": "Filtrer par les outputs recherchables de l'exécution",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtrer par les inputs et outputs recherchables de l'exécution",
             },
             "taskRunId": {
                 "label": "ID d'exécution de Task",
@@ -1651,6 +1654,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Rechercher des outils MCP",
                 "search_executions": "Rechercher des exécutions",
+                "search_tasks": "Rechercher des tasks",
                 "search_dashboards": "Rechercher des tableaux de bord...",
                 "search_flows": "Rechercher des flows",
                 "search_logs": "Rechercher des logs",
@@ -1961,9 +1965,9 @@ export default {
                 "label": "ऑपरेशन ID",
                 "description": "एसिंक ऑपरेशन ID द्वारा फ़िल्टर करें",
             },
-            "outputs": {
-                "label": "खोजने योग्य आउटपुट",
-                "description": "execution के खोज योग्य output द्वारा फ़िल्टर करें",
+            "searchableData": {
+                "label": "इनपुट और आउटपुट",
+                "description": "execution के खोज योग्य input और output द्वारा फ़िल्टर करें",
             },
             "taskRunId": {
                 "label": "Task रन ID",
@@ -2067,6 +2071,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "MCP टूल खोजें",
                 "search_executions": "निष्पादन खोजें",
+                "search_tasks": "tasks खोजें",
                 "search_dashboards": "डैशबोर्ड खोजें...",
                 "search_flows": "फ्लो खोजें",
                 "search_logs": "लॉग खोजें",
@@ -2377,9 +2382,9 @@ export default {
                 "label": "ID operazione",
                 "description": "Filtra per identificatore di operazione asincrona",
             },
-            "outputs": {
-                "label": "Output ricercabili",
-                "description": "Filtra in base agli output ricercabili dell'Execution",
+            "searchableData": {
+                "label": "Input e Output",
+                "description": "Filtra in base agli input e output ricercabili dell'Execution",
             },
             "taskRunId": {
                 "label": "ID Esecuzione Task",
@@ -2483,6 +2488,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Cerca strumenti MCP",
                 "search_executions": "Cerca esecuzioni",
+                "search_tasks": "Cerca task",
                 "search_dashboards": "Cerca dashboard...",
                 "search_flows": "Cerca flow",
                 "search_logs": "Cerca log",
@@ -2793,9 +2799,9 @@ export default {
                 "label": "オペレーション ID",
                 "description": "非同期操作IDでフィルタリング",
             },
-            "outputs": {
-                "label": "検索可能な出力",
-                "description": "Executionの検索可能なoutputでフィルタリング",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Executionの検索可能なinputとoutputでフィルタリング",
             },
             "taskRunId": {
                 "label": "Task 実行 ID",
@@ -2899,6 +2905,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "MCPツールを検索",
                 "search_executions": "実行を検索",
+                "search_tasks": "taskを検索",
                 "search_dashboards": "ダッシュボードを検索...",
                 "search_flows": "フローを検索",
                 "search_logs": "ログを検索",
@@ -3209,9 +3216,9 @@ export default {
                 "label": "작업 ID",
                 "description": "비동기 작업 ID로 필터링",
             },
-            "outputs": {
-                "label": "검색 가능한 output",
-                "description": "실행의 검색 가능한 output으로 필터링",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "실행의 검색 가능한 input 및 output으로 필터링",
             },
             "taskRunId": {
                 "label": "Task 실행 ID",
@@ -3315,6 +3322,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "MCP 도구 검색",
                 "search_executions": "실행 검색",
+                "search_tasks": "task 검색",
                 "search_dashboards": "대시보드 검색...",
                 "search_flows": "flow 검색",
                 "search_logs": "로그 검색",
@@ -3625,9 +3633,9 @@ export default {
                 "label": "ID operacji",
                 "description": "Filtruj według ID operacji asynchronicznej",
             },
-            "outputs": {
-                "label": "Wyjścia z możliwością wyszukiwania",
-                "description": "Filtruj według przeszukiwalnych outputów egzekucji",
+            "searchableData": {
+                "label": "Inputy i Outputy",
+                "description": "Filtruj według przeszukiwalnych inputów i outputów egzekucji",
             },
             "taskRunId": {
                 "label": "ID Task Runa",
@@ -3731,6 +3739,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Wyszukaj narzędzia MCP",
                 "search_executions": "Szukaj egzekucji",
+                "search_tasks": "Wyszukaj taski",
                 "search_dashboards": "Szukaj Dashboardów…",
                 "search_flows": "Szukaj Flowów",
                 "search_logs": "Wyszukaj logi",
@@ -4041,9 +4050,9 @@ export default {
                 "label": "ID da Operação",
                 "description": "Filtrar por identificador de operação assíncrona",
             },
-            "outputs": {
-                "label": "Saídas pesquisáveis",
-                "description": "Filtrar pelas saídas pesquisáveis da execução",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtrar pelas entradas e saídas pesquisáveis da Execution",
             },
             "taskRunId": {
                 "label": "ID da Execução da Task",
@@ -4147,6 +4156,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_executions": "Pesquisar execuções",
+                "search_tasks": "Pesquisar tasks",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_flows": "Pesquisar flows",
                 "search_logs": "Pesquisar logs",
@@ -4457,9 +4467,9 @@ export default {
                 "label": "ID da Operação",
                 "description": "Filtrar por identificador de operação assíncrona",
             },
-            "outputs": {
-                "label": "Outputs pesquisáveis",
-                "description": "Filtrar pelas outputs pesquisáveis da Execution",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtrar pelos inputs e outputs pesquisáveis da Execution",
             },
             "taskRunId": {
                 "label": "ID da Execução da Task",
@@ -4563,6 +4573,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_executions": "Pesquisar execuções",
+                "search_tasks": "Pesquisar tasks",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_flows": "Pesquisar flows",
                 "search_logs": "Pesquisar logs",
@@ -4873,9 +4884,9 @@ export default {
                 "label": "ID операции",
                 "description": "Фильтровать по ID асинхронной операции",
             },
-            "outputs": {
-                "label": "Выходные данные с возможностью поиска",
-                "description": "Фильтровать по поисковым output'ам Execution",
+            "searchableData": {
+                "label": "Входы и выходы",
+                "description": "Фильтрация по доступным для поиска input и output Execution",
             },
             "taskRunId": {
                 "label": "ID запуска Task",
@@ -4979,6 +4990,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "Поиск инструментов MCP",
                 "search_executions": "Поиск выполнений",
+                "search_tasks": "Поиск task",
                 "search_dashboards": "Искать панели...",
                 "search_flows": "Поиск flow",
                 "search_logs": "Поиск logs",
@@ -5289,9 +5301,9 @@ export default {
                 "label": "操作 ID",
                 "description": "按异步操作 ID 筛选",
             },
-            "outputs": {
-                "label": "可搜索的 output",
-                "description": "按 execution 的可搜索 output 筛选",
+            "searchableData": {
+                "label": "输入与输出",
+                "description": "按 execution 的可搜索 input 和 output 筛选",
             },
             "taskRunId": {
                 "label": "Task 运行 ID",
@@ -5395,6 +5407,7 @@ export default {
             "search_placeholders": {
                 "search_mcp_tools": "搜索 MCP 工具",
                 "search_executions": "搜索执行",
+                "search_tasks": "搜索 task",
                 "search_dashboards": "搜索仪表板...",
                 "search_flows": "搜索 flows",
                 "search_logs": "搜索日志",

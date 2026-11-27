@@ -4,7 +4,7 @@ import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../i18nMount"
 
 import KestraDesignSystem from "@kestra-io/design-system"
-import KsDataTable from "@kestra-io/design-system/components/Data/KsDataTable/KsDataTable.vue"
+import KsDataTable, {type KsDataTableInstance} from "@kestra-io/design-system/components/Data/KsDataTable/KsDataTable.vue"
 
 const globalConfig = {
     plugins: [KestraDesignSystem],
@@ -18,7 +18,7 @@ function makeHarness(initialQuery: Record<string, string> = {}) {
     const Harness = defineComponent({
         components: {KsDataTable},
         setup() {
-            const dataTable = useTemplateRef<InstanceType<typeof KsDataTable>>("dataTable")
+            const dataTable = useTemplateRef<KsDataTableInstance>("dataTable")
 
             const loadData = async ({page, size}: {page: number; size: number}) => {
                 loadCalls.push({page, size})

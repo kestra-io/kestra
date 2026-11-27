@@ -11,7 +11,6 @@
             :items="variables"
             :minItemSize="40"
             keyField="key"
-            :buffer="200"
             :prerender="20"
             class="vars-rows"
         >
@@ -19,7 +18,7 @@
                 <DynamicScrollerItem
                     :item="item"
                     :active="active"
-                    :dataIndex="index"
+                    :data-index="index"
                 >
                     <div class="vars-row">
                         <code class="vars-key">{{ item.key }}</code>
@@ -34,7 +33,7 @@
                                 {{ item.value }}
                                 <SubFlowLink :executionId="item.value" />
                             </template>
-                            <VarValue v-else :execution="executionsStore.execution" :value="item.value" :name="item.key" />
+                            <VarValue v-else :execution="execution ?? executionsStore.execution" :value="item.value" :name="item.key" />
                         </div>
                     </div>
                 </DynamicScrollerItem>
@@ -45,7 +44,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
 
     import * as Utils from "../../utils/utils"
@@ -64,6 +63,7 @@
         defineProps<{
             data: Record<string, unknown>;
             keyLabelTranslationKey?: string;
+            execution?: {id: string};
         }>(),
         {
             keyLabelTranslationKey: "name",

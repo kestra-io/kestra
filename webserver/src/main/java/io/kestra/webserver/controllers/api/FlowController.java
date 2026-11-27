@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,12 +56,12 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.SourceSearchService;
 import io.kestra.webserver.utils.CSVUtils;
-import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
 import io.kestra.webserver.errors.ProblemType;
 import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.exceptions.BulkValidationException;
+import io.kestra.webserver.models.api.Pagination;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -70,18 +71,17 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.authentication.AuthorizationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
@@ -253,19 +253,12 @@ public class FlowController {
     @Get(uri = "/search")
     @Operation(tags = { "Flows" }, summary = "Search for flows")
     public PagedResults<Flow> searchFlows(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(
-            description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by namespace in ascending order", value = "namespace:asc"),
-                @ExampleObject(name = "Sort by flow ID in descending order", value = "id:desc"),
-            }
-        ) @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws HttpStatusException {
         return PagedResults.of(
             flowRepository.find(
-                PageableUtils.from(page, size, sort),
+                paging.toPageable(),
                 tenantService.resolveTenant(),
                 filters
             )
@@ -284,9 +277,7 @@ public class FlowController {
     @Get(uri = "/source")
     @Operation(tags = { "Flows" }, summary = "Search for flows source code")
     public PagedResults<SourceSearchResult> searchFlowsBySourceCode(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "Whether the query must match with exact case") @QueryValue(defaultValue = "false") boolean caseSensitive,
@@ -295,7 +286,7 @@ public class FlowController {
         @Parameter(description = "Restricts matches to a top-level section of the flow YAML") @QueryValue(defaultValue = "all") SourceSearchScope scope) throws HttpStatusException {
         return PagedResults.of(
             sourceSearchService.search(
-                PageableUtils.from(page, size, sort),
+                paging.toPageable(),
                 tenantService.resolveTenant(),
                 namespace,
                 query,
@@ -469,7 +460,7 @@ public class FlowController {
         for (CompletedFileUpload flowFile : flowFiles) {
             String source = new String(flowFile.getBytes()).trim();
             if (override) {
-                source = source.replaceFirst("(?m)^namespace:.+", "namespace: " + namespace);
+                source = source.replaceFirst("(?m)^namespace:.+", "namespace: " + Matcher.quoteReplacement(namespace));
             }
 
             genericFlows.add(parseFlowSource(source));
@@ -544,6 +535,17 @@ public class FlowController {
             );
         }
 
+        for (GenericFlow flow : flows) {
+            try {
+                flowService.validateFlow(flow);
+            } catch (FlowProcessingException e) {
+                if (e.getCause() instanceof ConstraintViolationException cve) {
+                    throw cve;
+                }
+                throw e;
+            }
+        }
+
         deleted.forEach(flowService::delete);
 
         // update or create flows
@@ -606,7 +608,7 @@ public class FlowController {
     }
 
     /**
-     * Called once by a bulk update with the flows to create or update and the flows to delete, before anything is written, so that an override can reject the whole request on a permission or policy check. It does not validate the content of the flows, which can still fail after the deletions.
+     * Called once by a bulk update with the flows to create or update and the flows to delete, before anything is written, so that an override can reject the whole request on a permission or policy check. The content of the flows is validated right after it, still before the deletions.
      */
     protected void validateBulkUpdate(List<GenericFlow> flows, List<FlowWithSource> toDelete) {
     }
@@ -965,20 +967,25 @@ public class FlowController {
                 Import flows as a ZIP archive of yaml sources or a multi-objects YAML file.
                 When sending a Yaml that contains one or more flows, a list of index is returned.
                 When sending a ZIP archive, a list of files that couldn't be imported is returned.
+                When a flow targets a namespace the user cannot import into, the allowed flows are still imported and a 403 is returned instead of the list.
             """
     )
     @ApiResponse(responseCode = "200", description = "On success")
+    @ApiResponse(responseCode = "403", description = "At least one flow targets a namespace the user is not allowed to import into")
     public HttpResponse<List<String>> importFlows(
         @Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file")
         @Part CompletedFileUpload fileUpload,
         @Parameter(description = "If should fail on invalid flows") @QueryValue(defaultValue = "false") Boolean failOnError) throws IOException {
         String tenantId = tenantService.resolveTenant();
         final List<String> wrongFiles = new ArrayList<>();
+        final List<AuthorizationException> refusals = new ArrayList<>();
         try {
             HasSource.readSourceFile(securityConfiguration.zipBombProtection(), fileUpload, (source, name) ->
             {
                 try {
                     this.importFlow(tenantId, source);
+                } catch (AuthorizationException e) {
+                    refusals.add(e);
                 } catch (Exception e) {
                     wrongFiles.add(name);
                 }
@@ -987,6 +994,9 @@ public class FlowController {
             log.error("Unexpected error while importing flows", e);
             IOUtils.closeQuietly(fileUpload);
             return HttpResponse.badRequest();
+        }
+        if (!refusals.isEmpty()) {
+            throw refusals.getFirst();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
             throw new IllegalArgumentException("Following invalid flows were not imported: " + String.join(", ", wrongFiles));

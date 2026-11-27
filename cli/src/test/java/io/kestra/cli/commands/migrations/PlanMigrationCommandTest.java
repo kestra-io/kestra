@@ -1,11 +1,10 @@
 package io.kestra.cli.commands.migrations;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.cli.ConsoleCapture;
 import io.kestra.cli.Kestra;
 import io.kestra.core.migration.MigrationRunnerInterface;
 
@@ -44,57 +43,40 @@ class PlanMigrationCommandTest {
         return ctx;
     }
 
+    private static String plan(ApplicationContext ctx, String... args) {
+        var result = ConsoleCapture.run(() -> PicocliRunner.call(PlanMigrationCommand.class, ctx, args));
+        assertThat(result.value()).isZero();
+        return result.out();
+    }
+
     @Test
     void plan_listsPendingMigrations_whenNothingApplied() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(out));
-
         try (ApplicationContext ctx = migrationContext()) {
-            Integer call = PicocliRunner.call(PlanMigrationCommand.class, ctx);
-            assertThat(call).isZero();
-        } finally {
-            System.setOut(originalOut);
-        }
+            String output = plan(ctx);
 
-        assertThat(out.toString()).contains("pending migration(s):");
-        assertThat(out.toString()).contains("0-init");
+            assertThat(output).contains("pending migration(s):");
+            assertThat(output).contains("0-init");
+        }
     }
 
     @Test
     void plan_printsSql_whenSqlFlagSet() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(out));
-
         try (ApplicationContext ctx = migrationContext()) {
-            Integer call = PicocliRunner.call(PlanMigrationCommand.class, ctx, "--sql");
-            assertThat(call).isZero();
-        } finally {
-            System.setOut(originalOut);
-        }
+            String output = plan(ctx, "--sql");
 
-        // the actual SQL of the pending migrations must be printed, not only their ids
-        assertThat(out.toString()).contains("0-init");
-        assertThat(out.toString()).containsIgnoringCase("CREATE TABLE");
+            // the actual SQL of the pending migrations must be printed, not only their ids
+            assertThat(output).contains("0-init");
+            assertThat(output).containsIgnoringCase("CREATE TABLE");
+        }
     }
 
     @Test
     void plan_reportsNoPending_afterMigrationsApplied() throws Exception {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(out));
-
         try (ApplicationContext ctx = migrationContext()) {
             // Apply every migration explicitly in this context, then plan must report none.
             ctx.getBean(MigrationRunnerInterface.class).runAlways();
 
-            Integer call = PicocliRunner.call(PlanMigrationCommand.class, ctx);
-            assertThat(call).isZero();
-        } finally {
-            System.setOut(originalOut);
+            assertThat(plan(ctx)).contains("No pending migrations.");
         }
-
-        assertThat(out.toString()).contains("No pending migrations.");
     }
 }

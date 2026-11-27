@@ -3,6 +3,7 @@
 // dependence on the relative order of this setup file and the one addon-vitest injects itself.
 import "./apiMock"
 import {afterAll} from "vitest"
+import {LAYOUT_SLOT_IDS} from "./layoutSlots"
 
 // Story templates are runtime-compiled by Vue in the browser, which triggers
 // "@vue/compiler-core: decodeEntities option is passed but will be ignored in
@@ -17,7 +18,7 @@ console.warn = (...args: unknown[]) => {
 
 afterAll(() => {
     for (const node of [...document.body.children]) {
-        if (!node.id.startsWith("topnav-")) {
+        if (!LAYOUT_SLOT_IDS.includes(node.id)) {
             node.remove()
         }
     }

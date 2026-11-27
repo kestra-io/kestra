@@ -2,10 +2,14 @@ package io.kestra.webserver.services.ai.agent.internals;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
@@ -14,6 +18,7 @@ import io.kestra.core.ai.agent.models.AgentThinking;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.MapUtils;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
@@ -28,6 +33,12 @@ import io.micronaut.core.annotation.Nullable;
  */
 public final class ChatMessageAdaptor {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
+    private static final String NOT_AN_OBJECT = "the arguments must be a JSON object";
+
+    private static final Pattern WRAPPING_QUOTE = Pattern.compile("^\"|\"$");
+
+    private static final Pattern TRAILING_COMMA = Pattern.compile(",(\\s*[}\\]])");
 
     /**
      * AiMessage attribute key under which LangChain4j stores a turn's reasoning signature — Gemini and
@@ -73,7 +84,7 @@ public final class ChatMessageAdaptor {
                 case TOOL_RESULT -> {
                     if (m.toolCall() != null) {
                         ToolExecutionRequest req = toRequest(m.toolCall());
-                        Map<String, Object> toolResult = m.toolResult();
+                        Map<String, Object> toolResult = capResult(m.toolResult());
                         // Preserve the error flag on reload so a previously-failed tool call is still
                         // presented to the model (and provider APIs) as an error, matching the live path.
                         boolean isError = toolResult != null && "error".equals(toolResult.get("outcome"));
@@ -162,10 +173,82 @@ public final class ChatMessageAdaptor {
             return Map.of();
         }
         try {
-            return MAPPER.readValue(json, Map.class);
+            Map<String, Object> parsed = MAPPER.readValue(json, Map.class);
+            return MapUtils.emptyOnNull(parsed);
         } catch (Exception e) {
-            return Map.of("_raw", json);
+            return Map.of();
         }
+    }
+
+    public static boolean hasMalformedArguments(@Nullable final String json) {
+        return malformedArgumentsReason(json) != null;
+    }
+
+    /** Why the arguments are not a valid JSON object, even once normalized, or {@code null} when they are. */
+    @Nullable
+    public static String malformedArgumentsReason(@Nullable final String json) {
+        if (json == null || json.isBlank() || normalizedArguments(json) != null) {
+            return null;
+        }
+        try {
+            MAPPER.readValue(json, Map.class);
+            return NOT_AN_OBJECT;
+        } catch (JsonParseException e) {
+            JsonLocation location = e.getLocation();
+            return location == null
+                ? e.getOriginalMessage()
+                : "%s (line %d, column %d)".formatted(e.getOriginalMessage(), location.getLineNr(), location.getColumnNr());
+        } catch (Exception e) {
+            return NOT_AN_OBJECT;
+        }
+    }
+
+    /**
+     * The arguments as a valid JSON object, or {@code null} when they are not one. Applies the two
+     * normalizations LangChain4j's tool executor applies before running a tool, a trailing comma and an
+     * object wrapped in a string, so that a call it would run is not refused here.
+     */
+    @Nullable
+    public static String normalizedArguments(final String json) {
+        if (isJsonObject(json)) {
+            return json;
+        }
+        String unwrapped = WRAPPING_QUOTE.matcher(json).replaceAll("").replace("\\\"", "\"");
+        String normalized = TRAILING_COMMA.matcher(unwrapped).replaceAll("$1");
+        return isJsonObject(normalized) ? normalized : null;
+    }
+
+    private static boolean isJsonObject(final String json) {
+        try {
+            return MAPPER.readValue(json, Map.class) != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** The request with its arguments normalized to valid JSON when they can be, unchanged otherwise. */
+    public static ToolExecutionRequest withNormalizedArguments(final ToolExecutionRequest req) {
+        String arguments = req.arguments();
+        if (arguments == null || arguments.isBlank()) {
+            return req;
+        }
+        String normalized = normalizedArguments(arguments);
+        return normalized == null || normalized.equals(arguments) ? req : req.toBuilder().arguments(normalized).build();
+    }
+
+    /**
+     * Providers reject a request that replays a tool call with malformed arguments, so those are replayed
+     * normalized, or as {@code {}} when they cannot be.
+     */
+    public static AiMessage withValidToolArguments(final AiMessage ai) {
+        if (!ai.hasToolExecutionRequests()) {
+            return ai;
+        }
+        List<ToolExecutionRequest> requests = ai.toolExecutionRequests().stream()
+            .map(ChatMessageAdaptor::withNormalizedArguments)
+            .map(req -> hasMalformedArguments(req.arguments()) ? req.toBuilder().arguments("{}").build() : req)
+            .toList();
+        return requests.equals(ai.toolExecutionRequests()) ? ai : ai.toBuilder().toolExecutionRequests(requests).build();
     }
 
     public static ToolExecutionRequest toRequest(final AgentToolCall toolCall) {
@@ -174,6 +257,20 @@ public final class ChatMessageAdaptor {
             .name(toolCall.tool())
             .arguments(toJson(toolCall.arguments()))
             .build();
+    }
+
+    /**
+     * Cap an oversized {@code result} text on projection too, so a thread that already persisted a huge
+     * tool result before the dispatch-side cap existed recovers instead of failing every later turn.
+     */
+    @Nullable
+    private static Map<String, Object> capResult(@Nullable final Map<String, Object> toolResult) {
+        if (toolResult == null || !(toolResult.get("result") instanceof String text) || text.length() <= ToolResultLimit.MAX_CHARS) {
+            return toolResult;
+        }
+        Map<String, Object> capped = new LinkedHashMap<>(toolResult);
+        capped.put("result", ToolResultLimit.cap(text));
+        return capped;
     }
 
     private static String toJson(final Object value) {

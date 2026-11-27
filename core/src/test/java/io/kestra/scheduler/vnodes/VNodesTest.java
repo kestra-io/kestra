@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.vnodes.VNodes;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

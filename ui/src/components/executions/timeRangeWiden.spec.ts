@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from "vitest"
 import {
     FALLBACK_TIME_RANGE,
+    defaultTimeRange,
     isSameTimeRange,
     queryHasAbsoluteDateFilter,
     queryHasTimeBound,
@@ -17,6 +18,17 @@ const widenOpts = {
     hasUserFilters: false,
     currentTotal: 0,
 }
+
+describe("defaultTimeRange", () => {
+    it("spells the configured default the way the interval options do", () => {
+        expect(defaultTimeRange("P30D")).toBe("PT720H")
+        expect(defaultTimeRange("PT1H")).toBe("PT1H")
+    })
+
+    it("falls back to the 24-hour window when nothing is configured", () => {
+        expect(defaultTimeRange(undefined)).toBe(FALLBACK_TIME_RANGE)
+    })
+})
 
 describe("timeRangeWidenSequence", () => {
     it("starts at 24 hours and then steps to 7 days and 30 days", () => {

@@ -21,6 +21,12 @@ describe("KsText", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-text--success").exists()).toBe(true)
+
+        const secondaryWrapper = mount(KsText, {
+            props: {type: "secondary"},
+            global: globalConfig,
+        })
+        expect(secondaryWrapper.find(".kel-text--secondary").exists()).toBe(true)
     })
 
     test("size prop applies correct class", () => {

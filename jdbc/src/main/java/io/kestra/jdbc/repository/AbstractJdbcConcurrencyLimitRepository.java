@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 
@@ -27,10 +29,14 @@ public class AbstractJdbcConcurrencyLimitRepository extends AbstractJdbcReposito
                     .using(configuration)
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.buildTenantCondition(tenantId));
+                    .where(this.defaultFilter(tenantId));
 
                 return this.jdbcRepository.fetch(select);
             });
+    }
+
+    protected Condition defaultFilter(String tenantId) {
+        return this.buildTenantCondition(tenantId).and(this.aclCondition(QueryFilter.Resource.CONCURRENCY_LIMIT));
     }
 
     @Override

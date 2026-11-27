@@ -1,4 +1,6 @@
 import {describe, expect, it} from "vitest"
+import {flushPromises} from "@vue/test-utils"
+import {createMemoryHistory, createRouter} from "vue-router"
 import {KsCollapseItem} from "@kestra-io/design-system"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import "../../utils/global"
@@ -18,11 +20,62 @@ function mountRecursiveToc(props: {
     }
     depth?: number
     makeIndexNavigable?: boolean
+    activePath?: string
 }) {
     return i18nMount(RecursiveToc, {props})
 }
 
+const nestedChildren: TocChild[] = [
+    {
+        title: "guides",
+        path: "docs/guides",
+        children: [
+            {
+                title: "flows",
+                path: "docs/guides/flows",
+                children: [{title: "create-flow", path: "docs/guides/flows/create-flow"}],
+            },
+        ],
+    },
+    {
+        title: "concepts",
+        path: "docs/concepts",
+        children: [{title: "secret", path: "docs/concepts/secret"}],
+    },
+]
+
+const expandedSections = (wrapper: ReturnType<typeof mountRecursiveToc>) =>
+    wrapper.findAll("[aria-expanded=\"true\"]").map((header) => header.text())
+
 describe("RecursiveToc", () => {
+    it("marks the current page of the current tenant as the active link", async () => {
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [{name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: {render: () => null}}],
+        })
+        await router.push("/main/docs/concepts/secret")
+
+        const wrapper = i18nMount(RecursiveToc, {
+            props: {parent: {children: [{title: "secret", path: "docs/concepts/secret"}, {title: "revision", path: "docs/concepts/revision"}]}},
+            global: {plugins: [router], stubs: {RouterLink: false}},
+        })
+
+        const links = wrapper.findAll("a")
+        expect(links.map((link) => link.attributes("href"))).toEqual(["/main/docs/concepts/secret", "/main/docs/concepts/revision"])
+        expect(links[0].attributes("aria-current")).toBe("page")
+        expect(links[1].attributes("aria-current")).toBeUndefined()
+    })
+
+    it("expands every section holding the active page and follows it on navigation", async () => {
+        const wrapper = mountRecursiveToc({parent: {children: nestedChildren}, activePath: "docs/guides/flows/create-flow"})
+        await flushPromises()
+        expect(expandedSections(wrapper)).toEqual(["Guides", "Flows"])
+
+        await wrapper.setProps({activePath: "docs/concepts/secret"})
+        await flushPromises()
+        expect(expandedSections(wrapper)).toEqual(["Concepts"])
+    })
+
     it("renders a flat list of children as links", () => {
         const wrapper = mountRecursiveToc({
             parent: {

@@ -54,7 +54,7 @@ class FilterNodeBuilder {
             return
         }
 
-        if (field === "outputs" && subKey) {
+        if (field === "searchableData" && subKey) {
             const values = (Array.isArray(value) ? value : [value]).filter(Boolean)
             if (values.length === 0) return
             this.directLeaves.push({field, operation, value: {[subKey]: values.join(",")}})

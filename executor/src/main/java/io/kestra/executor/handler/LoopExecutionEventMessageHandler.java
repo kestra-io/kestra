@@ -3,7 +3,6 @@ package io.kestra.executor.handler;
 import java.io.IOException;
 import java.util.*;
 
-import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -21,8 +20,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.TruthUtils;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.Loop;
 
@@ -104,6 +103,11 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         {
             try {
                 final FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                // the Loop task run was removed by a WorkingDirectory that runs again, which killed its iterations
+                if (execution.findTaskRunByTaskRunIdIfPresent(message.loopRun().taskRunId()).isEmpty()) {
+                    log.warn("Ignoring loop execution event for sub-execution {} as its Loop task run no longer exists", message.executionId());
+                    return null;
+                }
                 ExecutorContext executor = new ExecutorContext(execution, flow);
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
                 Loop loop = (Loop) executor.getFlow().findTaskByTaskId(message.loopRun().taskId());
@@ -119,7 +123,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 terminatedByState.merge(message.state().name(), 1, Integer::sum);
                 int terminatedIteration = terminatedByState.values().stream().mapToInt(Integer::intValue).sum();
                 @SuppressWarnings("unchecked")
-                List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT) ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT) : new ArrayList<>();
+                List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT)
+                    ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT)
+                    : new ArrayList<>();
                 if (!MapUtils.isEmpty(message.outputs())) {
                     taskOutputs.add(buildIterationOutput(message));
                 }
@@ -159,7 +165,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                     "executionId", message.executionId(),
                                     "state", message.state(),
                                     "outputs", MapUtils.emptyOnNull(message.outputs())
-                                    )
+                                )
                             );
                             boolean shouldBreak = runContext.render(loop.getBreakWhen()).as(String.class, iterationVariables).map(s -> TruthUtils.isTruthy(s)).orElse(false);
                             if (shouldBreak) {
@@ -295,7 +301,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 // throws InternalException if not found — treated as a hard failure below
                 TaskRun loopTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
 
-                Execution resumedExecution = executionService.resumeFlowable(execution, loopTaskRun);
+                Execution resumedExecution = executionService.resumeFlowable(execution, loopTaskRun, message.executionId());
 
                 return executor.withExecution(resumedExecution, "resumedLoopIteration");
             } catch (InternalException e) {
@@ -329,7 +335,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         );
     }
 
-    private void computeOutputs(TaskRun parentTaskRun, Map<String, Object> outputs, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration, Map<String, Integer> terminatedByState,
+    private void computeOutputs(TaskRun parentTaskRun, Map<String, Object> outputs, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration,
+        Map<String, Integer> terminatedByState,
         Long offset, TaskRunStatistic taskRunStatistic)
         throws InternalException {
         outputs.put(Loop.ITERATION_COUNT_OUTPUT, iterationCount);
@@ -338,7 +345,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (offset != null) {
             outputs.put(Loop.NEXT_OFFSET_OUTPUT, offset);
         }
-        if (!ListUtils.isEmpty(taskOutputs)) {
+        if (!taskOutputs.isEmpty()) {
             outputs.put(Loop.OUTPUTS_OUTPUT, taskOutputs);
         }
         if (taskRunStatistic.count() > 0) {

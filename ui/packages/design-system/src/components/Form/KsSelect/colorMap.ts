@@ -7,4 +7,4 @@ import type {InjectionKey, Ref} from "vue"
  */
 export type KsSelectColorMap = Record<string, string>
 
-export const KsSelectColorMapKey: InjectionKey<Ref<KsSelectColorMap | undefined>> = Symbol("KsSelectColorMap")
+export const KsSelectColorMapKey: InjectionKey<Readonly<Ref<KsSelectColorMap | undefined>>> = Symbol("KsSelectColorMap")

@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.State;
@@ -124,6 +125,35 @@ class ExecutionDependenciesStreamingServiceDispatchTest {
         // Then nothing is written to it and it is unregistered, which pauses the queue as nobody listens anymore
         verify(cancelled, never()).next(any());
         verify(queueSubscriber, times(2)).pause(); // once on startup, once when the last subscriber is gone
+    }
+
+    @Test
+    void shouldIgnoreLoopIterationsOfTheFollowedFlow() {
+        // Given a subscriber and a Loop iteration, which shares the flow and the correlation id of the followed execution
+        FluxSink<Event<ExecutionStatusEvent>> sink = sink();
+        service.registerSubscriber(CORRELATION_ID, "subscriber", subscriber(sink));
+        Execution iteration = execution.toBuilder().id("iteration-id").kind(ExecutionKind.LOOP).build();
+        when(executionRepository.findByIdWithoutAcl(TENANT_ID, "iteration-id")).thenReturn(Optional.of(iteration));
+
+        // When the iteration event is dispatched
+        dispatcher.accept(Either.left(new FollowExecutionEvent(iteration, ExecutionEventType.UPDATED)));
+
+        // Then it is not reported, otherwise a finished iteration would end the followed flow
+        verify(sink, never()).next(any());
+        verify(sink, never()).complete();
+    }
+
+    @Test
+    void shouldNotLoadTheExecutionOfAFlowNobodyFollows() {
+        // Given a subscriber following one flow
+        service.registerSubscriber(CORRELATION_ID, "subscriber", subscriber(sink()));
+        Execution other = execution.toBuilder().id("other-id").flowId("other-flow").build();
+
+        // When an event of another flow is dispatched
+        dispatcher.accept(Either.left(new FollowExecutionEvent(other, ExecutionEventType.UPDATED)));
+
+        // Then the execution is not read from the repository
+        verify(executionRepository, never()).findByIdWithoutAcl(TENANT_ID, "other-id");
     }
 
     @Test

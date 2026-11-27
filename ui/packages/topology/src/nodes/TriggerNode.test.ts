@@ -22,7 +22,6 @@ const BasicNodeStub = defineComponent({
             type: Object,
             required: true,
         },
-        color: String,
     },
     template: "<div><slot name=\"title-actions\" /></div>",
 })
@@ -124,34 +123,6 @@ describe("TriggerNode", () => {
             })
 
             expect(getBasicNodeData(wrapper).unused).toBeFalsy()
-        })
-    })
-
-    describe("color", () => {
-        it("should default to primary when no color is given", () => {
-            // No color in data on purpose
-            const wrapper = mountTriggerNode({
-                data: {
-                    node: {
-                        trigger: {...scheduleTrigger},
-                    },
-                },
-            })
-
-            expect(wrapper.findComponent(BasicNodeStub).props("color")).toBe("primary")
-        })
-
-        it("should use the color from data when present", () => {
-            const wrapper = mountTriggerNode({
-                data: {
-                    node: {
-                        trigger: {...scheduleTrigger},
-                    },
-                    color: "success",
-                },
-            })
-
-            expect(wrapper.findComponent(BasicNodeStub).props("color")).toBe("success")
         })
     })
 

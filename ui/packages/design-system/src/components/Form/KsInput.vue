@@ -1,9 +1,10 @@
 <template>
     <ElInput
         ref="elInputRef"
-        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as InputProps)"
-        :class="{'ks-input--reserve-clear': reserveClearSpace, 'ks-input--borderless': borderless}"
+        :modelValue="modelValue"
+        :class="{'ks-input--reserve-clear': reserveClearSpace, 'ks-input--borderless': borderless, 'ks-input--highlight': highlight, 'ks-input--thin-scrollbar': thinScrollbar}"
+        @update:modelValue="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.prepend" #prepend>
@@ -21,10 +22,26 @@
     </ElInput>
 </template>
 
+<script lang="ts">
+    import type {InputProps} from "element-plus"
+
+    export interface KsInputProps extends Omit<InputProps, "modelValue"> {
+        modelValue?: string | number
+        required?: boolean
+        /** Drops the border, background and side padding, for a search field that sits flush in a list row. */
+        borderless?: boolean
+        /** Pulses the focus ring once, to point at the field a page has just opened on. */
+        highlight?: boolean
+        /** Gives a textarea a thin rounded scrollbar, where the pointer is coarse and the app's own scrollbar style does not apply. */
+        thinScrollbar?: boolean
+    }
+</script>
+
 <script setup lang="ts">
-    import {type Component, computed, ref} from "vue"
-    import {ElInput, type InputProps} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, ref, type InputHTMLAttributes} from "vue"
+    import {ElInput} from "element-plus"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
@@ -36,26 +53,12 @@
         select: () => elInputRef.value?.select(),
     })
 
-    const model = defineModel<string | number>()
+    const props = defineProps<KsInputProps & /* @vue-ignore */ (Omit<NativeAttributes<InputHTMLAttributes>, keyof KsInputProps> & {onInput?: (value: string) => void})>()
 
-    const props = defineProps<{
-        type?: string
-        placeholder?: string
-        disabled?: boolean
-        showPassword?: boolean
-        suffixIcon?: Component | string
-        clearable?: boolean
-        size?: "large" | "default" | "small"
-        name?: string
-        id?: string
-        required?: boolean
-        rows?: number
-        /** Drops the border, background and side padding, for a search field that sits flush in a list row. */
-        borderless?: boolean
-    }>()
-
+    // ElInput emits strings only, whatever type the bound value has.
     const emit = defineEmits<{
-        change: [value: string | number]
+        "update:modelValue": [value: string]
+        change: [value: string]
     }>()
 
     const slots = defineSlots<{
@@ -65,7 +68,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["borderless"])
+    const filteredProps = usePassedProps(props, ["borderless", "highlight", "thinScrollbar", "modelValue"])
 
     const reserveClearSpace = computed(() =>
         Boolean(props.clearable) && !props.showPassword && !props.suffixIcon && !slots.suffix,
@@ -79,12 +82,26 @@
 
 <style>
     .kel-textarea, .kel-input {
-        --kel-input-border-color: var(--ks-border-strong);
-        --kel-input-hover-border-color: var(--ks-border-strong);
-        --kel-input-bg-color: var(--ks-bg-input);
+        --kel-input-border-color: var(--ks-input-border-color, var(--ks-border-strong));
+        --kel-input-hover-border-color: var(--ks-input-border-color, var(--ks-border-strong));
+        --kel-input-focus-border-color: var(--ks-input-border-color, var(--kel-color-primary));
+        --kel-input-bg-color: var(--ks-input-bg-color, var(--ks-bg-input));
+        --kel-input-icon-color: var(--ks-input-icon-color, var(--kel-text-color-placeholder));
+        --kel-input-text-color: var(--ks-input-text-color, var(--kel-text-color-regular));
+        --kel-input-border-radius: var(--ks-input-radius, var(--kel-border-radius-base));
+    }
+
+    .kel-input__wrapper {
+        height: var(--ks-input-wrapper-height, auto);
+        border: var(--ks-input-border, none);
+    }
+
+    .kel-input__inner {
+        padding-inline-end: var(--ks-input-inner-padding-end, 0);
     }
 
     .kel-input__inner, .kel-textarea__inner {
+        font-size: var(--ks-input-font-size, inherit);
         font-variant-ligatures: none;
     }
 
@@ -137,6 +154,14 @@
             }
         }
 
+        &.ks-input--highlight .kel-input__wrapper {
+            animation: ks-input-highlight 1.2s ease-out 2;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+
         &.ks-input--reserve-clear {
             & .kel-input__inner {
                 padding-inline-end: var(--ks-spacing-5);
@@ -147,6 +172,31 @@
                 inset-block: 0;
                 inset-inline-end: var(--ks-spacing-3);
             }
+        }
+    }
+
+    .ks-input--thin-scrollbar .kel-textarea__inner {
+        &::-webkit-scrollbar {
+            width: 0.5rem;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--ks-scrollbar-content);
+            background-clip: padding-box;
+            border: 2px solid transparent;
+            border-radius: 999px;
+        }
+    }
+
+    @keyframes ks-input-highlight {
+        from {
+            background-color: color-mix(in srgb, var(--ks-border-focus) 15%, var(--ks-bg-input));
+            box-shadow: 0 0 0 2px var(--ks-border-focus) inset;
+        }
+
+        to {
+            background-color: var(--ks-bg-input);
+            box-shadow: 0 0 0 1px var(--ks-border-focus) inset;
         }
     }
 </style>

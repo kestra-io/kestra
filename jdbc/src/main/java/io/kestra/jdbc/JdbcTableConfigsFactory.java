@@ -3,6 +3,7 @@ package io.kestra.jdbc;
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.checkpoint.Checkpoint;
+import io.kestra.core.ai.usage.models.AiUsage;
 import io.kestra.core.lock.Lock;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpSession;
@@ -23,7 +24,7 @@ import io.kestra.core.notification.model.Notification;
 import io.kestra.core.notification.model.NotificationItem;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.searchable.SearchableOutput;
+import io.kestra.core.searchable.SearchableData;
 import io.kestra.core.server.ServiceInstance;
 
 import io.micronaut.context.annotation.Bean;
@@ -181,6 +182,12 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
+    @Named("aiusage")
+    public InstantiableJdbcTableConfig aiUsage() {
+        return new InstantiableJdbcTableConfig("aiusage", AiUsage.class, "ai_usage");
+    }
+
+    @Bean
     @Named("agentthread")
     public InstantiableJdbcTableConfig agentThread() {
         return new InstantiableJdbcTableConfig("agentthread", AgentThread.class, "ai_agent_thread");
@@ -205,9 +212,9 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
-    @Named("searchableoutputs")
+    @Named("searchabledata")
     public InstantiableJdbcTableConfig searchableOutputs() {
-        return new InstantiableJdbcTableConfig("searchableoutputs", SearchableOutput.class, "searchable_outputs");
+        return new InstantiableJdbcTableConfig("searchabledata", SearchableData.class, "searchable_data");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

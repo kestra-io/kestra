@@ -1,0 +1,16 @@
+id: flow-trigger-pausing-listen
+namespace: io.kestra.tests.trigger.pausing
+
+triggers:
+  - id: on_pausing
+    type: io.kestra.plugin.core.trigger.Flow
+    states: [ PAUSING ]
+    dependsOn:
+      - namespace: io.kestra.tests.trigger.pausing
+        flowId: flow-trigger-pausing-flow
+        states: [ PAUSING ]
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

@@ -1,7 +1,7 @@
 <template>
     <KsPopover
-        v-if="rows.length"
         v-model:visible="visible"
+        :disabled="!offered"
         trigger="hover"
         placement="bottom-start"
         width="auto"
@@ -14,7 +14,7 @@
             <span class="segment" :class="{open: visible}" data-testid="breadcrumb-segment">
                 <slot />
                 <button
-                    v-if="chevron"
+                    v-if="chevron && offered"
                     type="button"
                     class="trigger"
                     data-testid="breadcrumb-menu-trigger"
@@ -25,9 +25,8 @@
                 </button>
             </span>
         </template>
-        <KsBreadcrumbColumn :entries="rows" :heading="heading" @select="visible = false" />
+        <KsBreadcrumbColumn :entries="load?.lazy ? undefined : rows" :load="load?.lazy ? load : undefined" :heading="heading" @select="visible = false" />
     </KsPopover>
-    <slot v-else />
 </template>
 
 <script setup lang="ts">
@@ -45,9 +44,11 @@
         chevron?: boolean
     }>()
 
+    /** The popover stays mounted while empty: swapping it in once entries load would remount the slot and drop content teleported into it. */
     const visible = ref(false)
     const loaded = shallowRef<KsBreadcrumbItem[]>([])
     const rows = computed(() => entries ?? loaded.value)
+    const offered = computed(() => load?.lazy || rows.value.length > 0)
 
     let latestLoad = 0
 
@@ -55,7 +56,7 @@
     watch(() => load, async (loader) => {
         const current = ++latestLoad
         loaded.value = []
-        if (!loader) return
+        if (!loader || loader.lazy) return
 
         const items = await loader().catch(() => [])
         if (current === latestLoad) loaded.value = items

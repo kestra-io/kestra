@@ -26,8 +26,8 @@ const graph = () => ({
     edges: [],
 })
 
-const executionIds = (graph: {nodes: {uid: string; executionId?: string}[]} | undefined) =>
-    Object.fromEntries((graph?.nodes ?? []).map((node) => [node.uid, node.executionId]))
+const executionIds = (augmented: {nodes: {uid: string; executionId?: string}[]} | undefined) =>
+    Object.fromEntries((augmented?.nodes ?? []).map((node) => [node.uid, node.executionId]))
 
 describe("executions store loop scope", () => {
     beforeEach(() => {

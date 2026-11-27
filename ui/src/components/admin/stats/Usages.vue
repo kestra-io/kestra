@@ -27,7 +27,7 @@
                 :label="$t(item.labelKey)"
                 :value="item.value"
                 :subtitle="item.subtitle"
-                :to="linkFor(item.route)"
+                :to="linkFor(item)"
             />
             <slot name="additional-usages" />
         </div>
@@ -36,39 +36,17 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {useRoute, useRouter, type RouteLocationRaw} from "vue-router"
+    import {useRoute, useRouter, type LocationQueryRaw, type RouteLocationRaw} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import UsageCard from "./UsageCard.vue"
     import {dateUtils, dayjs, KsOption, KsSelect} from "@kestra-io/design-system"
+    import type {MiscControllerApiUsage, DailyExecutionStatistics} from "@kestra-io/kestra-sdk"
 
     type UsagePeriod = 1 | 7 | 30
 
-    interface DailyExecution {
-        groupBy: string;
-        startDate?: string;
-        duration: {
-            count?: number;
-            sum?: string;
-        };
-        taskRunsDuration?: {
-            count?: number;
-            sum?: string;
-        };
-    }
-
-    interface UsageData {
-        flows?: {
-            namespacesCount?: number;
-            count?: number;
-            taskTypeCount?: Record<string, number>;
-            triggerTypeCount?: Record<string, number>;
-            taskRunnerTypeCount?: Record<string, number>;
-        };
-        executions?: {
-            dailyExecutionsCount?: DailyExecution[];
-        };
-    }
+    /** Usage statistics leave out the Getting Started flows, so the Flows list they link to does too. */
+    const WITHOUT_TUTORIAL_FLOWS: LocationQueryRaw = {"filters[namespace][NOT_IN]": "tutorial"}
 
     interface UsageItem {
         key: string;
@@ -76,10 +54,11 @@
         value: number;
         subtitle?: string;
         route: string;
+        query?: LocationQueryRaw;
     }
 
     const props = defineProps<{
-        fetchedUsages?: UsageData;
+        fetchedUsages?: MiscControllerApiUsage;
     }>()
 
     const emit = defineEmits<{
@@ -93,7 +72,7 @@
     const miscStore = useMiscStore()
     const {t} = useI18n()
 
-    const usages = ref<UsageData>()
+    const usages = ref<MiscControllerApiUsage>()
 
     const periodOptions = computed(() => [
         {value: 1 as UsagePeriod, label: t("datepicker.24hours")},
@@ -120,7 +99,7 @@
         }
     })
 
-    const dailyExecutions = computed<DailyExecution[]>(() =>
+    const dailyExecutions = computed<DailyExecutionStatistics[]>(() =>
         (usages.value?.executions?.dailyExecutionsCount ?? []).filter((entry) => entry.groupBy === "day"),
     )
 
@@ -181,18 +160,21 @@
             labelKey: "flows",
             value: flows.value,
             route: "flows/list",
+            query: WITHOUT_TUTORIAL_FLOWS,
         },
         {
             key: "tasks",
             labelKey: "tasks",
             value: tasks.value,
             route: "flows/list",
+            query: WITHOUT_TUTORIAL_FLOWS,
         },
         {
             key: "taskRunners",
             labelKey: "taskRunners",
             value: taskRunners.value,
             route: "flows/list",
+            query: WITHOUT_TUTORIAL_FLOWS,
         },
         {
             key: "triggers",
@@ -234,17 +216,17 @@
         return Object.values(record ?? {}).reduce((total, value) => total + value, 0)
     }
 
-    function linkFor(routeName: string): RouteLocationRaw | undefined {
+    function linkFor(item: UsageItem): RouteLocationRaw | undefined {
         if (isInstance.value) {
             return undefined
         }
-        return {name: routeName}
+        return {name: item.route, query: item.query}
     }
 
     watch(
         () => props.fetchedUsages,
         async (next) => {
-            usages.value = next ?? await miscStore.loadAllUsages(period.value) as UsageData
+            usages.value = next ?? await miscStore.loadAllUsages(period.value)
             emit("loaded")
         },
         {immediate: true},
@@ -253,7 +235,7 @@
     // Without usages handed in, this component loads them itself, so it also reloads them for the new window.
     watch(period, async (next) => {
         if (props.fetchedUsages === undefined) {
-            const loaded = await miscStore.loadAllUsages(next) as UsageData
+            const loaded = await miscStore.loadAllUsages(next)
             // A slower response for a window the user already left must not land under the current label.
             if (period.value === next) {
                 usages.value = loaded

@@ -52,4 +52,15 @@ class ListUtilsTest {
 
         assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToListString("not a list"));
     }
+
+    @Test
+    void shouldReturnEachDuplicateOnceInOrderOfFirstOccurrence() {
+        assertThat(ListUtils.getDuplicates(List.of("b", "a", "b", "c", "a", "b"))).containsExactly("b", "a");
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenThereIsNoDuplicate() {
+        assertThat(ListUtils.getDuplicates(List.of("a", "b", "c"))).isEmpty();
+        assertThat(ListUtils.getDuplicates(List.of())).isEmpty();
+    }
 }

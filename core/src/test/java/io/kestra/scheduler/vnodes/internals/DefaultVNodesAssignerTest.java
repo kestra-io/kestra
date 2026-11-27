@@ -8,12 +8,14 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.scheduler.events.SchedulerEvent;
-import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRejected;
-import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRelease;
-import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRequest;
-import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
-import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
+import io.kestra.core.server.ServiceType;
+import io.kestra.core.vnodes.VNodesAssignmentEvent;
+import io.kestra.core.vnodes.VNodesAssignmentEvent.VNodesAssignmentRejected;
+import io.kestra.core.vnodes.VNodesAssignmentEvent.VNodesAssignmentRelease;
+import io.kestra.core.vnodes.VNodesAssignmentEvent.VNodesAssignmentReply;
+import io.kestra.core.vnodes.VNodesAssignmentEvent.VNodesAssignmentRequest;
+import io.kestra.core.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.scheduler.utils.InMemoryVNodesAssignmentChannel;
 import io.kestra.scheduler.utils.TestVNodeAssignmentListener;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -24,13 +26,13 @@ class DefaultVNodesAssignerTest {
     private static final String TEST_SCHEDULER_1 = "scheduler-1";
     private static final String TEST_CONTROLLER_1 = "controller-1";
 
-    private InMemorySchedulerEventQueue queue;
+    private InMemoryVNodesAssignmentChannel channel;
     private DefaultVNodesAssigner assigner;
 
     @BeforeEach
     void setUp() {
-        queue = new InMemorySchedulerEventQueue();
-        assigner = new DefaultVNodesAssigner(queue);
+        channel = new InMemoryVNodesAssignmentChannel();
+        assigner = new DefaultVNodesAssigner(channel);
     }
 
     @Test
@@ -43,7 +45,7 @@ class DefaultVNodesAssignerTest {
 
         // THEN
         assertThatList(listener.assigned()).isEmpty();
-        assertThatList(queue.sentEvents()).isEmpty();
+        assertThatList(channel.sentEvents()).isEmpty();
         assertThat(listener.revokedCount()).isEqualTo(0);
     }
 
@@ -58,7 +60,7 @@ class DefaultVNodesAssignerTest {
         assigner.stop();
 
         // THEN
-        assertThatList(queue.subscribers()).isEmpty();
+        assertThatList(channel.subscribers()).isEmpty();
     }
 
     @Test
@@ -94,22 +96,22 @@ class DefaultVNodesAssignerTest {
 
         Instant epoch = Instant.now();
         VNodesAssignmentRequest request = new VNodesAssignmentRequest(
-            Instant.now(), TEST_CONTROLLER_1, epoch, Set.of(TEST_SCHEDULER_1)
+            Instant.now(), ServiceType.SCHEDULER, TEST_CONTROLLER_1, epoch, Set.of(TEST_SCHEDULER_1)
         );
 
         // WHEN
-        queue.send(request);
+        channel.send(request);
 
         // THEN
-        List<SchedulerEvent> sent = queue.sentEvents();
+        List<VNodesAssignmentEvent> sent = channel.sentEvents();
         assertThatList(sent).hasSize(2);
 
-        SchedulerEvent last = sent.getLast();
-        assertThat(last).isInstanceOf(SchedulerEvent.VNodesAssignmentReply.class);
-        assertThat(((SchedulerEvent.VNodesAssignmentReply) last).controllerEpoch()).isEqualTo(epoch);
-        assertThat(((SchedulerEvent.VNodesAssignmentReply) last).controllerId()).isEqualTo(TEST_CONTROLLER_1);
-        assertThat(((SchedulerEvent.VNodesAssignmentReply) last).schedulerId()).isEqualTo(TEST_SCHEDULER_1);
-        assertThat(((SchedulerEvent.VNodesAssignmentReply) last).controllerEpoch()).isEqualTo(epoch);
+        VNodesAssignmentEvent last = sent.getLast();
+        assertThat(last).isInstanceOf(VNodesAssignmentReply.class);
+        assertThat(((VNodesAssignmentReply) last).controllerEpoch()).isEqualTo(epoch);
+        assertThat(((VNodesAssignmentReply) last).controllerId()).isEqualTo(TEST_CONTROLLER_1);
+        assertThat(((VNodesAssignmentReply) last).serviceId()).isEqualTo(TEST_SCHEDULER_1);
+        assertThat(((VNodesAssignmentReply) last).controllerEpoch()).isEqualTo(epoch);
 
         assertThat(listener.revokedCount()).isEqualTo(1);
     }
@@ -123,15 +125,15 @@ class DefaultVNodesAssignerTest {
 
         Instant epoch = Instant.now();
         // WHEN
-        queue.send(new VNodesAssignmentRequest(Instant.now(), TEST_CONTROLLER_1, epoch, Set.of(TEST_SCHEDULER_1)));
-        queue.send(new VNodesAssignmentRelease(Instant.now(), TEST_CONTROLLER_1, epoch, Map.of(TEST_SCHEDULER_1, Set.of(1, 2))));
+        channel.send(new VNodesAssignmentRequest(Instant.now(), ServiceType.SCHEDULER, TEST_CONTROLLER_1, epoch, Set.of(TEST_SCHEDULER_1)));
+        channel.send(new VNodesAssignmentRelease(Instant.now(), ServiceType.SCHEDULER, TEST_CONTROLLER_1, epoch, Map.of(TEST_SCHEDULER_1, Set.of(1, 2))));
 
         // THEN
-        List<SchedulerEvent> sent = queue.sentEvents();
+        List<VNodesAssignmentEvent> sent = channel.sentEvents();
         assertThatList(sent).hasSize(3);
 
-        SchedulerEvent last = sent.getLast();
-        assertThat(last).isInstanceOf(SchedulerEvent.VNodesAssignmentRelease.class);
+        VNodesAssignmentEvent last = sent.getLast();
+        assertThat(last).isInstanceOf(VNodesAssignmentRelease.class);
 
         assertThat(listener.revokedCount()).isEqualTo(1);
         assertThat(listener.assigned().size()).isEqualTo(1);
@@ -147,21 +149,21 @@ class DefaultVNodesAssignerTest {
 
         Instant epoch = Instant.now();
         VNodesAssignmentRequest assignmentRequest = new VNodesAssignmentRequest(
-            Instant.now(), TEST_CONTROLLER_1, epoch, Set.of(TEST_SCHEDULER_1)
+            Instant.now(), ServiceType.SCHEDULER, TEST_CONTROLLER_1, epoch, Set.of(TEST_SCHEDULER_1)
         );
-        queue.send(assignmentRequest);
+        channel.send(assignmentRequest);
 
         // WHEN
         Instant oldControllerEpoch = epoch.minusSeconds(100);
         VNodesAssignmentRelease release = new VNodesAssignmentRelease(
-            Instant.now(), TEST_CONTROLLER_1, oldControllerEpoch, Map.of(TEST_SCHEDULER_1, Set.of(1, 2))
+            Instant.now(), ServiceType.SCHEDULER, TEST_CONTROLLER_1, oldControllerEpoch, Map.of(TEST_SCHEDULER_1, Set.of(1, 2))
         );
-        queue.send(release);
+        channel.send(release);
 
         // THEN
-        List<SchedulerEvent> sent = queue.sentEvents();
+        List<VNodesAssignmentEvent> sent = channel.sentEvents();
         assertThatList(sent).hasSize(4);
-        SchedulerEvent last = sent.getLast();
+        VNodesAssignmentEvent last = sent.getLast();
         assertThat(last).isInstanceOf(VNodesAssignmentRejected.class);
         assertThat(((VNodesAssignmentRejected) last).controllerEpoch()).isEqualTo(oldControllerEpoch);
         assertThat(((VNodesAssignmentRejected) last).controllerId()).isEqualTo(TEST_CONTROLLER_1);

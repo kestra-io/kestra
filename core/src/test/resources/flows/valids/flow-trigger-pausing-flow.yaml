@@ -1,0 +1,10 @@
+id: flow-trigger-pausing-flow
+namespace: io.kestra.tests.trigger.pausing
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    onWait:
+      - id: wait
+        type: io.kestra.plugin.core.debug.Return
+        format: "waiting"

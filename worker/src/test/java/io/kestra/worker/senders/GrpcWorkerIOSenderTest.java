@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -336,6 +337,41 @@ class GrpcWorkerIOSenderTest {
     }
 
     @Test
+    void shouldReportResultAsAcceptedOnlyOnceTheControllerReplied() throws Exception {
+        // Given
+        List<StreamObserver<OpaqueData>> pendingReplies = new CopyOnWriteArrayList<>();
+        List<WorkerTaskResult> accepted = new CopyOnWriteArrayList<>();
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult((request, observer) -> pendingReplies.add(observer), accepted::add, Duration.ofSeconds(30));
+
+        // When
+        Thread drain = Thread.ofVirtual().start(sender);
+        await().atMost(Duration.ofSeconds(5)).until(() -> pendingReplies.size() == 1);
+
+        // Then
+        assertThat(accepted).isEmpty();
+        pendingReplies.getFirst().onCompleted();
+        assertThat(drain.join(Duration.ofSeconds(5))).isTrue();
+        assertThat(accepted).hasSize(1);
+    }
+
+    @Test
+    void shouldNotReportResultAsAcceptedWhenSendFails() {
+        // Given
+        List<WorkerTaskResult> accepted = new CopyOnWriteArrayList<>();
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult(
+            (request, observer) -> observer.onError(new StatusRuntimeException(Status.UNAVAILABLE.withDescription("controller unreachable"))),
+            accepted::add,
+            Duration.ofSeconds(30)
+        );
+
+        // When
+        sender.run();
+
+        // Then
+        assertThat(accepted).isEmpty();
+    }
+
+    @Test
     void shouldReportUndeliveredResultsWhenSendFailsDuringShutdown() {
         // Given
         GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult(
@@ -353,7 +389,9 @@ class GrpcWorkerIOSenderTest {
     @Test
     void shouldReportUndeliveredResultsWhenControllerNeverReplies() {
         // Given
-        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult((request, observer) -> {}, Duration.ofMillis(200));
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult((request, observer) ->
+        {
+        }, Duration.ofMillis(200));
 
         // When
         sender.run();
@@ -363,6 +401,12 @@ class GrpcWorkerIOSenderTest {
     }
 
     private GrpcWorkerIOSender<WorkerTaskResult> stoppedSenderHoldingOneResult(BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod, Duration replyTimeout) {
+        return stoppedSenderHoldingOneResult(grpcSendMethod, null, replyTimeout);
+    }
+
+    private GrpcWorkerIOSender<WorkerTaskResult> stoppedSenderHoldingOneResult(BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
+        Consumer<WorkerTaskResult> onAccepted,
+        Duration replyTimeout) {
         WorkerQueueRegistry workerQueueRegistry = applicationContext.getBean(WorkerQueueRegistry.class);
         WorkerContext workerContext = new WorkerContext("worker-" + IdUtils.create(), "", 1);
         GrpcWorkerIOSender<WorkerTaskResult> sender = new GrpcWorkerIOSender<>(
@@ -373,6 +417,7 @@ class GrpcWorkerIOSenderTest {
             grpcSendMethod,
             null,
             true,
+            onAccepted,
             replyTimeout
         );
         sender.init(workerContext);

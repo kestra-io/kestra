@@ -2,12 +2,12 @@ import {describe, expect, it, vi, beforeEach, afterEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
 const searchLogs = vi.fn()
-const downloadUrl = vi.fn()
+const downloadBlob = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({searchLogs}))
 vi.mock("../utils/utils", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../utils/utils")>()),
-    downloadUrl,
+    downloadBlob,
 }))
 
 const {useLogsStore} = await import("./logs")
@@ -27,7 +27,7 @@ describe("logs store downloadLogs", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         searchLogs.mockReset()
-        downloadUrl.mockReset()
+        downloadBlob.mockReset()
         vi.spyOn(console, "error").mockImplementation(() => {})
     })
     afterEach(() => {
@@ -44,7 +44,7 @@ describe("logs store downloadLogs", () => {
 
         expect(searchLogs).toHaveBeenCalledTimes(2)
         expect(result).toEqual({downloaded: 1500, total: 1500, outcome: "complete"})
-        expect(downloadUrl).toHaveBeenCalledOnce()
+        expect(downloadBlob).toHaveBeenCalledOnce()
     })
 
     // The spec's original seven cases all had rows, which is how the silent no-op survived:
@@ -55,7 +55,7 @@ describe("logs store downloadLogs", () => {
         const result = await useLogsStore().downloadLogs({})
 
         expect(result).toEqual({downloaded: 0, total: 0, outcome: "complete"})
-        expect(downloadUrl).not.toHaveBeenCalled()
+        expect(downloadBlob).not.toHaveBeenCalled()
     })
 
     it("should opt out of the global error toast on a failed page", async () => {
@@ -143,7 +143,7 @@ describe("logs store downloadLogs", () => {
         const result = await useLogsStore().downloadLogs({})
 
         expect(result).toEqual({downloaded: 1000, total: 12000, outcome: "failed"})
-        expect(downloadUrl).toHaveBeenCalledOnce()
+        expect(downloadBlob).toHaveBeenCalledOnce()
     })
 
     it("should not write a file when the very first page is refused", async () => {
@@ -152,6 +152,6 @@ describe("logs store downloadLogs", () => {
         const result = await useLogsStore().downloadLogs({})
 
         expect(result).toEqual({downloaded: 0, total: undefined, outcome: "failed"})
-        expect(downloadUrl).not.toHaveBeenCalled()
+        expect(downloadBlob).not.toHaveBeenCalled()
     })
 })

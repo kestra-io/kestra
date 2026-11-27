@@ -16,11 +16,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.scheduler.events.TriggerEvent;
 
 import io.micrometer.core.instrument.Counter;
@@ -173,8 +175,7 @@ public class TriggerSchedulingLoop implements Runnable {
                     int processedEvents = processTriggerEvents();
 
                     // Sampled after the initialization and the event drain, either of which can take seconds:
-                    // this instant is the eligibility cut-off, the schedule date of the executions created from
-                    // it, and the left bound of scheduler.evaluation.loop.duration.
+                    // this instant is the eligibility cut-off and the schedule date of the executions created from it.
                     Instant now = clock.instant();
 
                     // Check whether triggers should be scheduled
@@ -366,6 +367,28 @@ public class TriggerSchedulingLoop implements Runnable {
             }
         });
         return future;
+    }
+
+    /**
+     * Updates, on this loop's thread, the triggers of the assigned flows matching {@code inScope} whose governed
+     * definition changed. The flows' governance must already be up to date on this node.
+     */
+    public void onGovernanceChanged(final Predicate<FlowId> inScope) {
+        doOnEndLoop(() ->
+        {
+            // the initialization compares the definitions itself
+            if (initialized.get()) {
+                triggerScheduler.onGovernanceChanged(clock, assignments, inScope);
+            }
+        }).exceptionally(e ->
+        {
+            LOG.error(
+                "Scheduling loop {} failed to apply a flow governance change. Its triggers keep their previous definition until the next scheduler restart or rebalance.",
+                schedulingLoopId,
+                e
+            );
+            return null;
+        });
     }
 
     /**

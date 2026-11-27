@@ -2,6 +2,7 @@ import { vueRouter } from "storybook-vue3-router";
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
 import { within, expect, waitFor } from "storybook/test";
 import { configureClient, type FlowForExecution, type StateType } from "@kestra-io/kestra-sdk";
+import { mockStoryApiRoutes } from "../../../.storybook/apiMock";
 import { useExecutionsStore, type Execution } from "../../stores/executions";
 import { useFlowStore, type Flow } from "../../stores/flow";
 import Gantt from "./Gantt.vue";
@@ -83,6 +84,11 @@ const meta = {
         },
     },
     args: { state: "CANCELLED" },
+    beforeEach() {
+        mockStoryApiRoutes({
+            [`GET /concurrency-limit/${NAMESPACE}/${FLOW_ID}`]: { tenantId: "main", namespace: NAMESPACE, flowId: FLOW_ID, running: 1 },
+        });
+    },
     render: () => ({ components: { Gantt }, template: "<Gantt />" }),
     decorators: [
         (_story: unknown, context: { args: GanttStoryArgs }) => ({
@@ -128,25 +134,22 @@ export const Queued: Story = {
     args: { state: "QUEUED" },
 };
 
-/** A progressing execution: the progress bar is shown above the (empty) Gantt. */
+/** A progressing execution. */
 export const Running: Story = {
     args: { state: "RUNNING" },
     play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
         const canvas = within(canvasElement);
-        await waitFor(() => expect(canvas.getByRole("progressbar")).toBeInTheDocument());
+        await waitFor(() => expect(canvas.getByText("Running")).toBeInTheDocument());
     },
 };
 
 /**
- * PAUSED satisfies State.isRunning() but is not progressing, so the progress bar must stay hidden —
- * otherwise an execution paused on a manual approval climbs to the bar's cap while nothing advances.
+ * PAUSED satisfies State.isRunning() but is not progressing.
  */
 export const Paused: Story = {
     args: { state: "PAUSED" },
     play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
         const canvas = within(canvasElement);
-        // Wait for the status badge so the absence below is a real absence, not an unrendered Gantt.
         await waitFor(() => expect(canvas.getByText("Paused")).toBeInTheDocument());
-        expect(canvas.queryByRole("progressbar")).toBeNull();
     },
 };

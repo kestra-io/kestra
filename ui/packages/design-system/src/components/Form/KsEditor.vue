@@ -25,7 +25,12 @@
             <slot name="absolute" />
         </div>
         <span v-if="label" class="label">{{ label }}</span>
-        <div class="editor-container" ref="container" :class="[containerClass, {'has-label': label}]">
+        <div
+            class="editor-container"
+            ref="container"
+            :class="[containerClass, {'has-label': label}]"
+            :style="containerStyle"
+        >
             <div ref="editorContainer" class="editor-wrapper">
                 <div>
                     <div
@@ -51,7 +56,6 @@
                     <textarea
                         data-testid="monaco-editor-hidden-synced-textarea"
                         style="height: 0; width: 0; opacity: 0;"
-                        type="text"
                         v-model="textAreaValue"
                     />
                 </div>
@@ -78,7 +82,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {ref, watch, type HTMLAttributes} from "vue"
+    import {useFormItem} from "element-plus"
     import KsDatePicker from "./KsDatePicker.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
@@ -88,7 +94,7 @@
 
     defineOptions({name: "KsEditor"})
 
-    const props = withDefaults(defineProps<KsEditorProps>(), {
+    const props = withDefaults(defineProps<KsEditorProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsEditorProps>>(), {
         modelValue: "",
         original: undefined,
         lang: undefined,
@@ -127,6 +133,7 @@
     const {
         icon,
         containerClass,
+        containerStyle,
         showPlaceholder,
         textAreaValue,
         showWidgetContent,
@@ -149,6 +156,9 @@
         insertTextAtCursor,
         getEditor,
     } = useKsEditor(props, emit, {editorRef, container, datePickerWrapper, datePicker})
+
+    const {formItem} = useFormItem()
+    watch(() => props.modelValue, () => formItem?.validate("change").catch(() => {}))
 
     defineExpose<KsEditorExposes>({
         focus,
@@ -228,6 +238,8 @@
         & .editor-container {
             display: flex;
             flex-grow: 1;
+            height: var(--ks-editor-height, auto);
+            max-height: var(--ks-editor-max-height, none);
 
             &:not(.single-line) .editor-wrapper {
                 padding-bottom: 4rem;
@@ -248,7 +260,7 @@
 
             & .placeholder {
                 position: absolute;
-                top: -3px;
+                top: var(--ks-editor-placeholder-top, -3px);
                 overflow: hidden;
                 padding-left: inherit;
                 padding-right: inherit;
@@ -316,17 +328,17 @@
         & .monaco-editor,
         & .monaco-editor-background {
             outline: none;
-            background-color: var(--ks-bg-input);
-            --vscode-editor-background: var(--ks-bg-input);
-            --vscode-breadcrumb-background: var(--ks-bg-input);
-            --vscode-editorGutter-background: var(--ks-bg-input);
-            --vscode-editorStickyScrollGutter-background: var(--ks-bg-input);
-            --vscode-editorStickyScroll-background: var(--ks-bg-input);
+            background-color: var(--code-background, var(--ks-bg-input));
+            --vscode-editor-background: var(--code-background, var(--ks-bg-input));
+            --vscode-breadcrumb-background: var(--code-background, var(--ks-bg-input));
+            --vscode-editorGutter-background: var(--code-background, var(--ks-bg-input));
+            --vscode-editorStickyScrollGutter-background: var(--code-background, var(--ks-bg-input));
+            --vscode-editorStickyScroll-background: var(--code-background, var(--ks-bg-input));
         }
 
         & .monaco-editor .margin {
-            background-color: var(--ks-bg-input);
-            --vscode-editorGutter-background: var(--ks-bg-input);
+            background-color: var(--code-background, var(--ks-bg-input));
+            --vscode-editorGutter-background: var(--code-background, var(--ks-bg-input));
             --vscode-editorLineNumber-activeForeground: var(--ks-text-secondary);
             --vscode-editorLineNumber-foreground: var(--ks-text-secondary);
             --vscode-editorLineNumber-rangeHighlightBackground: var(--ks-text-secondary);
@@ -343,13 +355,40 @@
         }
     }
 
-    .highlight-pebble {
-        /* Not `--ks-editor-pabble`: Dark 2.0 maps that token to green, so it stays hardcoded until the token is corrected. */
-        color: #977100 !important;
+    .highlight-pebble-pebble {
+        color: var(--code-pebble) !important;
+    }
 
-        html.dark & {
-            color: #ffca16 !important;
-        }
+    .highlight-pebble-pebbleVariable {
+        color: var(--code-pebbleVariable) !important;
+    }
+
+    .highlight-pebble-keyword {
+        color: var(--code-keyword) !important;
+    }
+
+    .highlight-pebble-constant {
+        color: var(--code-constant) !important;
+    }
+
+    .highlight-pebble-string {
+        color: var(--code-string) !important;
+    }
+
+    .highlight-pebble-number {
+        color: var(--code-number) !important;
+    }
+
+    .highlight-pebble-function {
+        color: var(--code-function) !important;
+    }
+
+    .highlight-pebble-operator {
+        color: var(--code-operator) !important;
+    }
+
+    .highlight-pebble-punctuation {
+        color: var(--code-punctuation) !important;
     }
 
     .disable-text {
@@ -366,6 +405,7 @@
         width: 100%;
         height: 100%;
         outline: none;
+        overflow-x: var(--ks-editor-overflow-x, visible);
     }
 
     .main-editor > #flowFileEditorTab .monaco-editor {
@@ -373,7 +413,7 @@
     }
 
     .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
-        background-color: var(--ks-bg-input);
+        background-color: var(--code-background, var(--ks-bg-input));
     }
 
     .monaco-editor {

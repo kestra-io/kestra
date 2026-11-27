@@ -20,6 +20,7 @@
 
         <slot name="extra" />
 
+        <!-- activatable uses errorNavigation.count rather than errors.length: it is only set when at least one error resolved to an editor marker. -->
         <ValidationError
             v-if="hasFlow"
             class="stat-validation"
@@ -28,6 +29,8 @@
             :warnings="flowWarnings"
             :infos="flowStore.flowInfos"
             :iconOnly="isNarrow"
+            :activatable="Boolean(flowStore.errorNavigation?.count)"
+            @activate="flowStore.errorNavigation?.revealNext()"
         />
     </div>
 </template>

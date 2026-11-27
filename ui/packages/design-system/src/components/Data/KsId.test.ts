@@ -22,12 +22,12 @@ describe("KsId", () => {
         expect(wrapper.find("code").text()).toBe("abc123456789")
     })
 
-    test("truncates value to default 8 chars when shrink is true", () => {
+    test("truncates value to default 8 chars with ellipsis when shrink is true", () => {
         const wrapper = mount(KsId, {
             props: {value: "abc123456789"},
             global: globalConfig,
         })
-        expect(wrapper.find("code").text()).toBe("abc12345")
+        expect(wrapper.find("code").text()).toBe("abc12345…")
     })
 
     test("truncates value to custom size with ellipsis", () => {

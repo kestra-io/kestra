@@ -35,6 +35,7 @@ webserver/src/main/resources/ui
 webserver/src/main/resources/views
 ui/coverage
 ui/.vitest-reports
+ui/.vitest
 ui/stats.html
 ui/.frontend-gradle-plugin
 ui/test-report.junit.xml

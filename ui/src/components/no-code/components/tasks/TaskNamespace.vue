@@ -3,7 +3,7 @@
         data-type="flow"
         v-model="modelValue"
         :readOnly="!isCreating"
-        allowCreate
+        taggable
     />
 </template>
 

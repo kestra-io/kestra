@@ -48,6 +48,9 @@ public class WorkerStreamContext<T> {
     /** Worker's advertised gRPC max inbound message size (bytes); 0 = not advertised. */
     private volatile int maxInboundMessageSize;
 
+    /** Generation the worker gave this stream; 0 = not advertised. */
+    private volatile long streamGeneration;
+
     /**
      * Number of jobs the worker has capacity to receive.
      * Decremented when a job is sent, incremented when worker sends permits.
@@ -317,6 +320,10 @@ public class WorkerStreamContext<T> {
     /** Records the worker's advertised gRPC max inbound message size (bytes). */
     public void setMaxInboundMessageSize(int maxInboundMessageSize) {
         this.maxInboundMessageSize = maxInboundMessageSize;
+    }
+
+    public void setStreamGeneration(long streamGeneration) {
+        this.streamGeneration = streamGeneration;
     }
 
     /**

@@ -1,20 +1,22 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent, h, ref} from "vue"
+import {defineComponent, h, nextTick, reactive, ref} from "vue"
 import {flushPromises, mount} from "@vue/test-utils"
+import * as monaco from "monaco-editor/editor/editor.api"
 import {useKsEditor} from "./useKsEditor"
+import {createPebbleEntryTracker} from "../utils/pebbleBlock"
 import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "../utils/editorTypes"
 
 const {markerTrigger, onDidChangeMarkers, getModelMarkers, markerDispose} = vi.hoisted(() => {
     let markerCallback: ((uris: {toString(): string}[]) => void) | null = null
-    const markerDispose = vi.fn()
+    const dispose = vi.fn()
     return {
         markerTrigger: (uris: {toString(): string}[]) => markerCallback?.(uris),
         onDidChangeMarkers: vi.fn((cb: (uris: {toString(): string}[]) => void) => {
             markerCallback = cb
-            return {dispose: markerDispose}
+            return {dispose}
         }),
         getModelMarkers: vi.fn(() => [] as unknown[]),
-        markerDispose,
+        markerDispose: dispose,
     }
 })
 
@@ -170,9 +172,9 @@ vi.mock("./PlaceholderContentWidget", () => ({
     },
 }))
 
-function mountEditor(emit: KsEditorEmit) {
-    const props = {
-        modelValue: "",
+function mountEditor(emit: KsEditorEmit, modelValue = ref("")) {
+    const props = reactive({
+        modelValue,
         options: {},
         theme: "vs",
         readOnly: false,
@@ -180,7 +182,7 @@ function mountEditor(emit: KsEditorEmit) {
         navbar: false,
         placeholder: "",
         path: "",
-    } as unknown as ResolvedKsEditorProps
+    }) as unknown as ResolvedKsEditorProps
     const refs: KsEditorTemplateRefs = {
         editorRef: ref(document.createElement("div")),
         container: ref(document.createElement("div")),
@@ -197,26 +199,30 @@ function mountEditor(emit: KsEditorEmit) {
     return mount(Comp)
 }
 
+beforeEach(() => {
+    vi.clearAllMocks()
+    Object.defineProperty(document, "fonts", {
+        value: {ready: Promise.resolve()},
+        configurable: true,
+    })
+    vi.stubGlobal("ResizeObserver", class {
+        observe = vi.fn()
+        unobserve = vi.fn()
+        disconnect = vi.fn()
+    })
+})
+
+afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+})
+
 describe("useKsEditor validation listener", () => {
     let mockEmit: ReturnType<typeof vi.fn>
 
     beforeEach(() => {
-        vi.clearAllMocks()
         mockEmit = vi.fn()
         getModelMarkers.mockReturnValue([])
-        Object.defineProperty(document, "fonts", {
-            value: {ready: Promise.resolve()},
-            configurable: true,
-        })
-        vi.stubGlobal("ResizeObserver", class {
-            observe = vi.fn()
-            unobserve = vi.fn()
-            disconnect = vi.fn()
-        })
-    })
-
-    afterEach(() => {
-        vi.unstubAllGlobals()
     })
 
     it("filters out backend-validation and errors, emitting only mapped schema warnings", async () => {
@@ -273,5 +279,96 @@ describe("useKsEditor validation listener", () => {
         wrapper.unmount()
 
         expect(markerDispose).toHaveBeenCalledTimes(1)
+    })
+})
+describe("useKsEditor model value sync", () => {
+    async function mountWithContent(modelValue = ref("saved")) {
+        const emit = vi.fn()
+        const wrapper = mountEditor(emit as unknown as KsEditorEmit, modelValue)
+        await flushPromises()
+
+        const editor = vi.mocked(monaco.editor.create).mock.results[0].value
+        const changeContent = (value: string) => {
+            editor.getValue.mockReturnValue(value)
+            editor.onDidChangeModelContent.mock.calls.at(-1)[0]()
+        }
+        const emittedValues = () => emit.mock.calls.filter(([name]) => name === "update:modelValue").map(([, value]) => value)
+
+        return {wrapper, changeContent, emittedValues}
+    }
+
+    it("emits a change that restores the prop value in the tick of the change it undoes", async () => {
+        const {wrapper, changeContent, emittedValues} = await mountWithContent()
+
+        changeContent("")
+        changeContent("saved")
+
+        expect(emittedValues()).toEqual(["", "saved"])
+
+        wrapper.unmount()
+    })
+
+    it("does not emit back content the parent set after an emitted change", async () => {
+        const modelValue = ref("saved")
+        const {wrapper, changeContent, emittedValues} = await mountWithContent(modelValue)
+
+        changeContent("typed")
+        modelValue.value = "set by the parent"
+        await nextTick()
+        changeContent("set by the parent")
+
+        expect(emittedValues()).toEqual(["typed"])
+
+        wrapper.unmount()
+    })
+
+    it("emits a value again when the parent never applied it the first time", async () => {
+        const {wrapper, changeContent, emittedValues} = await mountWithContent()
+
+        changeContent("typed")
+        changeContent("typed more")
+        changeContent("typed")
+
+        expect(emittedValues()).toEqual(["typed", "typed more", "typed"])
+
+        wrapper.unmount()
+    })
+})
+describe("useKsEditor suggestions on cursor settle", () => {
+    async function mountAndSettle({selectionEmpty, suggestOpen, enteredPebble}: {selectionEmpty: boolean, suggestOpen: boolean, enteredPebble: boolean}) {
+        vi.mocked(createPebbleEntryTracker).mockReturnValueOnce({track: vi.fn(), consumeEntered: () => enteredPebble})
+        const wrapper = mountEditor(vi.fn() as unknown as KsEditorEmit)
+        await flushPromises()
+
+        const editor = vi.mocked(monaco.editor.create).mock.results[0].value
+        const suggestController = editor.getContribution.mock.results[0].value
+        suggestController.model.state = suggestOpen ? 1 : 0
+        editor.getSelection.mockReturnValue({isEmpty: () => selectionEmpty})
+
+        vi.useFakeTimers()
+        editor.onDidChangeCursorPosition.mock.calls[0][0]()
+        vi.advanceTimersByTime(300)
+        wrapper.unmount()
+
+        return {trigger: editor.trigger, cancelSuggestWidget: suggestController.cancelSuggestWidget}
+    }
+
+    it("closes the open suggest widget without reopening it when text is selected", async () => {
+        const {trigger, cancelSuggestWidget} = await mountAndSettle({selectionEmpty: false, suggestOpen: true, enteredPebble: false})
+
+        expect(cancelSuggestWidget).toHaveBeenCalledTimes(1)
+        expect(trigger).not.toHaveBeenCalled()
+    })
+
+    it("does not open the suggest widget when a selection crosses a Pebble block", async () => {
+        const {trigger} = await mountAndSettle({selectionEmpty: false, suggestOpen: false, enteredPebble: true})
+
+        expect(trigger).not.toHaveBeenCalled()
+    })
+
+    it("opens the suggest widget when the cursor alone enters a Pebble block", async () => {
+        const {trigger} = await mountAndSettle({selectionEmpty: true, suggestOpen: false, enteredPebble: true})
+
+        expect(trigger).toHaveBeenCalledWith("triggerSuggestionsInPebbleBlock", "editor.action.triggerSuggest", {})
     })
 })

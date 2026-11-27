@@ -24,9 +24,10 @@
             </div>
 
             <div class="execution-banner__top">
-                <router-link class="execution-banner__flow" :to="createLink('flows', execution)">
+                <router-link v-if="canViewFlow" class="execution-banner__flow" :to="createLink('flows', execution)">
                     {{ execution.flowId }}
                 </router-link>
+                <span v-else class="execution-banner__flow">{{ execution.flowId }}</span>
 
                 <span class="execution-banner__id">
                     <code>{{ execution.id }}</code>
@@ -98,11 +99,11 @@
             <div class="execution-banner__actions">
                 <RunTimeline :histories="execution.state.histories ?? []" />
 
-                <KsButton v-if="canAccessLogs" :icon="ContentCopy" @click="copyLogs" link>
+                <KsButton v-if="canAccessLogs && route.meta.tab !== 'logs'" class="action" :icon="ContentCopy" @click="copyLogs" link>
                     {{ $t("copy logs") }}
                 </KsButton>
 
-                <KsButton v-if="isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
+                <KsButton v-if="aiEnabled && isFailed && canUseCopilot" class="action fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
                     {{ $t("fix_with_ai") }}
                 </KsButton>
             </div>
@@ -115,7 +116,7 @@
                     <div class="list">
                         <SetLabels :execution />
                         <span
-                            v-for="(label, idx) in execution.labels"
+                            v-for="(label, idx) in shownLabels"
                             :key="idx"
                             class="label-tag"
                         >{{ label.key }}: {{ label.value }}</span>
@@ -127,10 +128,10 @@
                     <div class="list">
                         <span
                             v-for="(output, index) in searchableOutputs"
-                            :key="`${output.outputId}-${index}`"
+                            :key="`${output.dataId}-${index}`"
                             class="label-tag searchable-tag"
-                            :title="`${output.outputId}: ${output.value}`"
-                        >{{ output.outputId }}: {{ output.value }}</span>
+                            :title="`${output.dataId}: ${output.value}`"
+                        >{{ output.dataId }}: {{ output.value }}</span>
                         <span v-if="remainingSearchableOutputs > 0" class="more-searchable" data-test="more-searchable-outputs">
                             {{ $t("execution_banner.more_searchable_values", {count: $n(remainingSearchableOutputs)}) }}
                         </span>
@@ -164,17 +165,22 @@
             :title="$t(approvalBanner)"
             :closable="false"
             data-test="approval-banner"
-        />
+        >
+            <template v-if="approvalTaskRun" #action>
+                <ApprovalActions :execution :taskRun="approvalTaskRun" />
+            </template>
+        </KsAlert>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
-    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
-    import type {OutputControllerSearchableOutputInformation} from "@kestra-io/kestra-sdk"
+    import * as SearchableDataAPI from "@kestra-io/kestra-sdk/searchable-data"
+    import type {SearchableDataControllerSearchableDataInformation} from "@kestra-io/kestra-sdk"
 
     import {Execution, useExecutionsStore} from "../../../stores/executions"
     import {useExecutionSummary} from "../../../composables/useExecutionSummary"
@@ -183,6 +189,7 @@
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
+    import {useAiEnabled} from "../../../composables/useAiEnabled"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
     import {handledIf} from "../../../utils/kestraHttp"
@@ -194,6 +201,7 @@
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
     import ParentExecutionLink from "../overview/components/ParentExecutionLink.vue"
+    import ApprovalActions from "./ApprovalActions.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
@@ -215,8 +223,13 @@
     const props = defineProps<{execution: Execution}>()
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const executionsStore = useExecutionsStore()
     const toast = useToast()
+
+    const approvalTaskRun = computed(() =>
+        (findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ?? findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSING))?.taskRun,
+    )
 
     const approvalBanner = computed(() => {
         // the generated SDK StateType does not list PAUSING until the SDK is regenerated
@@ -227,6 +240,7 @@
         return findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ? "approval.banner.paused" : undefined
     })
 
+    const aiEnabled = useAiEnabled()
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
     const {statusLabel, replayed, restarted, createdDate, replaysLink, copyId} = useExecutionSummary(() => props.execution)
@@ -249,6 +263,13 @@
             : props.execution.labels?.find((label) => label.key === "system.username")?.value,
     )
 
+    const shownLabels = computed(() =>
+        props.execution.labels?.filter((label) =>
+            !(label.key === "system.username" && username.value)
+            && !(label.key === "system.correlationId" && label.value === props.execution.id),
+        ) ?? [],
+    )
+
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
     const completedTaskCount = computed(() =>
         props.execution.taskRunList?.filter(
@@ -258,7 +279,7 @@
 
     const SEARCHABLE_OUTPUTS_LIMIT = 10
 
-    const searchableOutputs = ref<OutputControllerSearchableOutputInformation[]>([])
+    const searchableOutputs = ref<SearchableDataControllerSearchableDataInformation[]>([])
     const searchableOutputsTotal = ref(0)
     const remainingSearchableOutputs = computed(() => searchableOutputsTotal.value - searchableOutputs.value.length)
 
@@ -276,7 +297,7 @@
                 superseded = true
             })
 
-            const page = await OutputsAPI.listSearchableOutputs({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
+            const page = await SearchableDataAPI.listSearchableData({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
                 .catch((e: unknown) => {
                     handledIf(e, [403, 404])
                     return undefined
@@ -291,6 +312,8 @@
 
     const authStore = useAuthStore()
     const canAccessLogs = computed(() => authStore.user?.isAllowed(resource.EXECUTION, action.ACCESS_LOGS, props.execution.namespace) ?? true)
+    const canViewFlow = computed(() => authStore.user?.isAllowed(resource.FLOW, action.VIEW, props.execution.namespace) ?? true)
+    const canUseCopilot = computed(() => authStore.user?.hasAny(resource.COPILOT) ?? true)
 
     const copyLogs = () => {
         executionsStore
@@ -346,7 +369,7 @@
         column-gap: var(--ks-spacing-4);
         row-gap: var(--ks-spacing-2);
         flex: 1;
-        padding: 1rem var(--ks-spacing-5);
+        padding: var(--ks-spacing-3) var(--ks-spacing-5);
         border-bottom: 1px solid var(--ks-border-default);
     }
 
@@ -355,7 +378,7 @@
         align-items: center;
         justify-content: space-between;
         gap: var(--ks-spacing-4);
-        padding: var(--ks-spacing-4) var(--ks-spacing-5);
+        padding: var(--ks-spacing-2) var(--ks-spacing-5);
         flex-shrink: 0;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
@@ -429,7 +452,7 @@
         color: var(--ks-text-primary);
         text-decoration: none;
 
-        &:hover {
+        &:is(a):hover {
             color: var(--ks-text-link);
             text-decoration: underline;
         }
@@ -448,13 +471,7 @@
             overflow-wrap: anywhere;
         }
 
-        & :deep(.kel-button) {
-            color: var(--ks-text-secondary);
-
-            &:hover {
-                color: var(--ks-text-primary);
-            }
-        }
+        --ks-icon-button-color: var(--ks-text-secondary);
     }
 
     .execution-banner__replay, .execution-banner__restart {
@@ -485,7 +502,7 @@
         gap: var(--ks-spacing-2);
         flex-shrink: 0;
 
-        & :deep(.kel-button) {
+        & .action {
             color: var(--ks-text-secondary);
             font-weight: 600;
             font-size: var(--ks-font-size-sm);
@@ -495,13 +512,9 @@
             }
         }
 
-        & :deep(.fix-with-ai.kel-button) {
+        & .action.fix-with-ai {
             color: var(--ks-text-link);
             box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
-
-            .material-design-icon {
-                color: var(--ks-text-link);
-            }
         }
     }
 

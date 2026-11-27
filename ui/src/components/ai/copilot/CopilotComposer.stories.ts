@@ -20,6 +20,7 @@ const meta: Meta<typeof CopilotComposer> = {
         mode: {control: "select", options: ["ASK", "EDIT", "PLAN"]},
         disabled: {control: "boolean"},
         streaming: {control: "boolean"},
+        disabledReason: {control: "text"},
     },
 }
 export default meta
@@ -34,3 +35,8 @@ export const Disabled: Story = {args: {mode: "ASK", disabled: true}}
 
 // Stop replaces send while a turn is streaming.
 export const Streaming: Story = {args: {mode: "ASK", disabled: true, streaming: true}}
+
+// No AI provider: every control is off for good, and Send says why on hover or focus.
+export const NoProvider: Story = {
+    args: {mode: "EDIT", modelValue: "", disabledReason: "Sending is disabled because no AI provider is configured."},
+}

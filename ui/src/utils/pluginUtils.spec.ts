@@ -1,5 +1,5 @@
 import {describe, it, expect} from "vitest"
-import {countUniquePluginElements, extractPluginElements, getPluginReleaseUrl, isEnterpriseEditionPlugin, isEntryAPluginElementPredicate, isPluginMatched, type Plugin} from "./pluginUtils"
+import {countUniquePluginElements, extractPluginElements, getPluginReleaseUrl, isEnterpriseEditionPlugin, isEntryAPluginElementPredicate, isPluginMatched, latestVersionEntries, pluginElementType, type Plugin} from "./pluginUtils"
 
 describe("getPluginReleaseUrl", () => {
     it("returns the Kestra core repo for core plugins", () => {
@@ -126,5 +126,38 @@ describe("isEntryAPluginElementPredicate", () => {
         expect(isEntryAPluginElementPredicate("categories", ["CLOUD"])).toBe(false)
         expect(isEntryAPluginElementPredicate("aliases", [{cls: "io.kestra.plugin.a.Run"}])).toBe(false)
         expect(isEntryAPluginElementPredicate("tasks", [{title: "Run"}])).toBe(false)
+    })
+})
+
+describe("latestVersionEntries", () => {
+    it("keeps the highest version of each artifact and subgroup when several versions are installed", () => {
+        const entry = (version: string, subGroup?: string) => ({name: "plugin-dbt", title: "dbt", group: "io.kestra.plugin.dbt", subGroup, version}) as Plugin
+
+        const latest = latestVersionEntries([entry("1.2.4"), entry("1.2.4", "io.kestra.plugin.dbt.cli"), entry("2.5.4"), entry("2.5.4", "io.kestra.plugin.dbt.cli"), entry("1.10.0")])
+
+        expect(latest.map(plugin => [plugin.subGroup ?? "", plugin.version])).toEqual([["", "2.5.4"], ["io.kestra.plugin.dbt.cli", "2.5.4"]])
+    })
+})
+
+describe("pluginElementType", () => {
+    const plugin: Plugin = {
+        name: "io.kestra.plugin.a",
+        title: "A",
+        group: "io.kestra.plugin.a",
+        tasks: [{cls: "io.kestra.plugin.a.Run", aliases: ["io.kestra.plugin.legacy.Run"]}],
+        triggers: [{cls: "io.kestra.plugin.a.Watch"}],
+    }
+
+    it("returns the element type that declares the class", () => {
+        expect(pluginElementType(plugin, "io.kestra.plugin.a.Watch")).toBe("triggers")
+    })
+
+    it("resolves a class through the aliases of an element", () => {
+        expect(pluginElementType(plugin, "io.kestra.plugin.legacy.Run")).toBe("tasks")
+    })
+
+    it("returns undefined when no element declares the class", () => {
+        expect(pluginElementType(plugin, "io.kestra.plugin.b.Run")).toBeUndefined()
+        expect(pluginElementType(null, "io.kestra.plugin.a.Run")).toBeUndefined()
     })
 })

@@ -83,6 +83,16 @@ html.dark {
     --ks-chart-trace: #b4b4c4;
     --ks-chart-warn: var(--ks-orange-300);
     --ks-chart-warning: var(--ks-orange-300);
+    --ks-chart-categorical-1: #8a3ffc;
+    --ks-chart-categorical-2: #33b1ff;
+    --ks-chart-categorical-3: #007d79;
+    --ks-chart-categorical-4: #ff7eb6;
+    --ks-chart-categorical-5: #4589ff;
+    --ks-chart-categorical-6: #d12771;
+    --ks-chart-categorical-7: #d2a106;
+    --ks-chart-categorical-8: #08bdba;
+    --ks-chart-categorical-9: #ba4e00;
+    --ks-chart-categorical-10: #d4bbff;
 
     /* dependencies */
     --ks-dependencies-edge-default: var(--ks-gray-cool-200);

@@ -1,9 +1,10 @@
 <template>
     <ElRadioGroup
-        v-model="model"
+        :modelValue="props.modelValue"
+        @update:modelValue="(value: string | number | boolean | undefined) => emit('update:modelValue', value as T)"
         :class="props.size ? `kel-radio-group--${props.size}` : undefined"
         v-bind="({...filteredProps(), ...$attrs} as RadioGroupProps)"
-        @change="emit('change', $event)"
+        @change="(value: string | number | boolean | undefined) => emit('change', value as T | undefined)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -11,28 +12,30 @@
     </ElRadioGroup>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string | number | boolean = string">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElRadioGroup, type RadioGroupProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string | number | boolean>()
-
     const props = defineProps<{
+        modelValue?: T
         disabled?: boolean
         size?: "large" | "default" | "small"
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
-        change: [value: string | number | boolean | undefined]
+        "update:modelValue": [value: T]
+        change: [value: T | undefined]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["modelValue"])
 </script>
 
 <style lang="scss">
@@ -43,7 +46,7 @@
 <style>
     .kel-radio-group {
         & .kel-radio__label {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-radio-label-font-size, var(--kel-font-size-small));
         }
 
         &:not(.kel-radio-group--small) {

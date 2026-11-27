@@ -17,8 +17,11 @@ import io.kestra.controller.grpc.WorkerJobPayload;
 import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.metrics.MetricConfig;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.WorkerJobStreamConfig;
 import io.kestra.worker.queues.InMemoryWorkerQueue;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
@@ -26,6 +29,7 @@ import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -76,7 +80,9 @@ class WorkerJobFetcherPermitsTest {
             mock(ExecutionKilledManager.class),
             null,
             List.of(),
-            new GrpcConfiguration(false, 10485760)
+            new GrpcConfiguration(false, 10485760),
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65)),
+            new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig())
         );
         fetcher.init(context);
     }

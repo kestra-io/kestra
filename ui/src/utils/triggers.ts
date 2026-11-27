@@ -1,4 +1,5 @@
 import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
+import {downloadBlob} from "./utils"
 
 interface TriggerSearchOptions {
     sort?: string;
@@ -39,12 +40,17 @@ export async function exportTriggersAsCSV(options: TriggerExportOptions) {
     }, {
         headers: {Accept: "text/csv"},
     })
-    const url = window.URL.createObjectURL(new Blob([response as string], {type: "text/csv"}))
-    const link = document.createElement("a")
-    link.href = url
-    link.setAttribute("download", "triggers.csv")
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(url)
+    downloadBlob(new Blob([response as string], {type: "text/csv"}), "triggers.csv")
+}
+
+export function blockerMessage(blocker: {reason?: string, message?: string}, t: (key: string) => string) {
+    switch (blocker.reason) {
+        case "POLICY":
+            // message is always explicitly set on policy failure, fallback added just in case
+            return blocker.message || t("trigger blocked unknown")
+        case "POLICY_CHECK_FAILED":
+            return t("trigger blocked policy check failed")
+        default:
+            return t("trigger blocked unknown")
+    }
 }

@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -69,6 +70,23 @@ class FromIonFunctionTest {
         render = variableRenderer.render("{{ fromIon(read('" + internalStorageFile + "')) }}", variables);
         assertThat(render).contains("\"id\":0");
         assertThat(render, not((containsString("\"id\":9"))));
+    }
+
+    @Test
+    void shouldHandleExplicitNullAllRows() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render("{{ fromIon('{title:\"Main_Page\",views:109787}', allRows=null).title }}", Map.of());
+        assertThat(render).isEqualTo("Main_Page");
+    }
+
+    @Test
+    void shouldThrowWhenAllRowsIsNotBoolean() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ fromIon('{title:\"Main_Page\"}', allRows='true') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("The 'fromIon' function expects an optional argument 'allRows' with type boolean.");
+
+        assertThatThrownBy(() -> variableRenderer.render("{{ fromIon('{title:\"Main_Page\"}', allRows=123) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("The 'fromIon' function expects an optional argument 'allRows' with type boolean.");
     }
 
     @Test

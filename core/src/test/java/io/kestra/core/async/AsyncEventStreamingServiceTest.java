@@ -3,12 +3,14 @@ package io.kestra.core.async;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
+import io.kestra.core.async.AsyncOperationProcessedEvent.Progress;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.queues.BroadcastQueueInterface;
 
@@ -16,6 +18,7 @@ import jakarta.inject.Inject;
 import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @KestraTest
 class AsyncEventStreamingServiceTest {
@@ -48,6 +51,47 @@ class AsyncEventStreamingServiceTest {
         // Then
         AsyncOperationProcessedEvent received = future.get(5, TimeUnit.SECONDS);
         assertThat(received).isEqualTo(event);
+    }
+
+    @Test
+    void shouldKeepItemSubscriberOpenUntilTerminalEvent() throws Exception {
+        String opId = "op-progress";
+        String itemId = "item-progress";
+        CompletableFuture<List<AsyncOperationProcessedEvent>> future = new CompletableFuture<>();
+        Flux.<AsyncOperationProcessedEvent> create(sink -> service.registerSubscriber(opId, itemId, sink))
+            .timeout(Duration.ofSeconds(5))
+            .doFinally(sig -> service.unregisterSubscriber(opId, itemId))
+            .collectList()
+            .subscribe(future::complete, future::completeExceptionally);
+
+        queue.emit(new AsyncOperationProcessedEvent(opId, "tenant", itemId, Outcome.RUNNING, null, new Progress(10, 100), Instant.now()));
+        queue.emit(new AsyncOperationProcessedEvent(opId, "tenant", itemId, Outcome.SUCCEEDED, null, Instant.now()));
+
+        assertThat(future.get(5, TimeUnit.SECONDS))
+            .extracting(AsyncOperationProcessedEvent::outcome)
+            .containsExactly(Outcome.RUNNING, Outcome.SUCCEEDED);
+    }
+
+    @Test
+    void shouldDispatchEveryItemEventToOperationSubscriber() throws Exception {
+        String opId = "op-follow";
+        String subscriberId = "subscriber-1";
+        CompletableFuture<List<AsyncOperationProcessedEvent>> future = new CompletableFuture<>();
+        Flux.<AsyncOperationProcessedEvent> create(sink -> service.registerOperationSubscriber(opId, subscriberId, sink))
+            .take(3)
+            .timeout(Duration.ofSeconds(5))
+            .doFinally(sig -> service.unregisterOperationSubscriber(opId, subscriberId))
+            .collectList()
+            .subscribe(future::complete, future::completeExceptionally);
+
+        queue.emit(new AsyncOperationProcessedEvent(opId, null, "item-1", Outcome.SUCCEEDED, null, Instant.now()));
+        queue.emit(new AsyncOperationProcessedEvent("another-op", null, "item-1", Outcome.SUCCEEDED, null, Instant.now()));
+        queue.emit(new AsyncOperationProcessedEvent(opId, null, "item-2", Outcome.RUNNING, null, new Progress(1, -1), Instant.now()));
+        queue.emit(new AsyncOperationProcessedEvent(opId, null, "item-2", Outcome.FAILED, "boom", Instant.now()));
+
+        assertThat(future.get(5, TimeUnit.SECONDS))
+            .extracting(AsyncOperationProcessedEvent::itemId, AsyncOperationProcessedEvent::outcome)
+            .containsExactly(tuple("item-1", Outcome.SUCCEEDED), tuple("item-2", Outcome.RUNNING), tuple("item-2", Outcome.FAILED));
     }
 
     @Test

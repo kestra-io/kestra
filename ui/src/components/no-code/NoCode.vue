@@ -57,6 +57,7 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
+        SCHEMA_LOADER_INJECTION_KEY,
         SAVE_FLOW_FUNCTION_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys"
@@ -169,6 +170,7 @@
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}))
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
+    provide(SCHEMA_LOADER_INJECTION_KEY, pluginsStore.flowSchemaLoader)
 
     provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => {
         if (props.creatingTask) return undefined
@@ -191,7 +193,7 @@
     })
 
     provide(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {
-        flowStore.save?.()
+        flowStore.save?.(true)
     })
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {

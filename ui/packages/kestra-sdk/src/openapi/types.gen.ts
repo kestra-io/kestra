@@ -36,7 +36,7 @@ export type AbstractFlow = {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
 };
 
@@ -81,7 +81,7 @@ export type AbstractTrigger = {
     /**
      * Routing requirements (tags + fallback) for this trigger.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     /**
      * Identifiers of `enforcement: REFERENCE` governance policies to attach to this trigger and everything nested under it (Enterprise Edition; ignored in the open-source edition).
      */
@@ -103,7 +103,7 @@ export type AbstractTrigger = {
      * Specifies whether a trigger is allowed to start a new execution even if a previous run is still in progress.
      */
     allowConcurrent?: boolean;
-    assets?: AssetsDeclaration;
+    assets?: TriggerAssetsDeclaration;
 };
 
 export type AbstractTriggerForExecution = {
@@ -169,6 +169,53 @@ export type AiControllerAiProviderResponse = {
 
 export type AiControllerFlowGenerationPrompt = FlowGenerationPrompt & {
     providerId?: string;
+};
+
+/**
+ * Where a provider stands against its ceiling --- one type for both what the API answers and what the orchestrator enforces, so the figure shown and the figure enforced cannot drift apart.
+ */
+export type AiUsageStatus = {
+    /**
+     * the provider these figures are for, resolved from the default when the caller named none
+     */
+    providerId?: string | null;
+    /**
+     * whether this provider has limits switched on; when false every other field is empty
+     */
+    enabled?: boolean;
+    /**
+     * the lower bound the totals were summed from
+     */
+    windowStart?: string | null;
+    /**
+     * when the current period ends and spend starts again, absent while nothing is exhausted
+     */
+    availableAt?: string | null;
+    global?: AiUsageStatusAxis | null;
+    user?: AiUsageStatusAxis | null;
+    /**
+     * the remaining percentage below which a client should warn
+     */
+    warningThresholdPercent?: number;
+    exceeded?: boolean;
+    /**
+     * True once either axis is inside its warning threshold, so a client has one flag rather than two sums to compare.
+     */
+    warning?: boolean;
+    remainingPercent?: number;
+};
+
+/**
+ * One ceiling and what has been spent against it.
+ */
+export type AiUsageStatusAxis = {
+    weight?: number;
+    /**
+     * the ceiling, or zero when this axis has none configured --- reported for information and never exceeded
+     */
+    maxWeight?: number;
+    remainingPercent?: number;
+    exceeded?: boolean;
 };
 
 /**
@@ -365,7 +412,6 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -427,6 +473,7 @@ export type ApiTriggerState = {
     lastTriggeredDate?: string;
     executionId?: string;
     kind?: TriggerType;
+    blockedBy?: Blocker;
 };
 
 export type ApprovalCommentRequired = 'NEVER' | 'ALWAYS' | 'ON_DENY' | 'ON_APPROVE';
@@ -524,12 +571,7 @@ export type AssetsDeclaration = {
     assetFailureBehavior?: PropertyAssetFailureBehavior;
 };
 
-export type AssetsInOut = {
-    inputs?: Array<AssetIdentifier>;
-    outputs?: Array<Asset>;
-};
-
-export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER' | 'PLUGIN';
 
 /**
  * A backfill configuration.
@@ -575,6 +617,23 @@ export type BasicAuthCredentials = {
     password?: string;
     currentPassword?: string;
 };
+
+/**
+ * What blocks the trigger's flow from running.
+ */
+export type Blocker = {
+    reason?: BlockerReason;
+    /**
+     * The ids of what blocks the flow, such as the rejecting policies when the reason is POLICY.
+     */
+    ids?: Array<string>;
+    /**
+     * The message reported to the user.
+     */
+    message?: string;
+};
+
+export type BlockerReason = 'UNKNOWN' | 'POLICY' | 'POLICY_CHECK_FAILED';
 
 export type BlueprintControllerApiBlueprintItem = {
     id?: string;
@@ -627,6 +686,14 @@ export type ChartFiltersOverrides = {
     filters?: Array<QueryFilter>;
 };
 
+export type ChartMetadata = {
+    executionId: string;
+    date: string;
+    state: string;
+    rowsRead?: number;
+    truncated?: boolean;
+};
+
 export type ChartChartOption = {
     id: string;
     type: string;
@@ -663,6 +730,20 @@ export type ConcurrencyLimit = {
     namespace: string;
     flowId: string;
     running?: number;
+};
+
+export type ConcurrencyLimitControllerConcurrencyLimitSearchResult = {
+    tenantId?: string;
+    namespace?: string;
+    flowId?: string;
+    running?: number;
+    queued?: number;
+};
+
+export type ConcurrencyLimitControllerConcurrencyLimitUpdateRequest = {
+    namespace?: string | null;
+    flowId?: string | null;
+    running: number;
 };
 
 /**
@@ -733,6 +814,16 @@ export type DashboardControllerChartData = {
      * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
      */
     ignoredFilters?: Array<QueryFilterField>;
+    metadata?: ChartMetadata | null;
+};
+
+export type DashboardControllerChartStateCounts = {
+    /**
+     * the number of executions per state name, without an entry for a state that has none
+     */
+    counts: {
+        [key: string]: number;
+    };
 };
 
 export type DashboardControllerDashboardResponse = {
@@ -871,6 +962,7 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError =
     message: string;
     renderError?: boolean;
     path?: string;
+    detail?: string;
 };
 
 export type ExecutionControllerEvalResult = {
@@ -1066,7 +1158,7 @@ export type Flow = AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
     /**
@@ -1172,7 +1264,7 @@ export type FlowForExecution = AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
     /**
      * Output values available and exposes to other flows.
@@ -1235,7 +1327,7 @@ export type FlowInterface = FlowId & SoftDeletableFlowInterface & TenantInterfac
             [key: string]: unknown;
         };
     };
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     concurrency?: Concurrency;
     quotas?: Array<Quota>;
     sla?: Array<Sla>;
@@ -1345,7 +1437,7 @@ export type FlowWithSource = Flow & AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
     /**
      * Output values available and exposes to other flows.
@@ -1371,6 +1463,21 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     quotas?: Array<Quota>;
     source?: string;
+};
+
+export type FlowWorkerSelector = {
+    /**
+     * Required tags used to route to a matching Worker Queue. Each tag is an RFC 1123 label: lowercase alphanumerics and hyphens, must start and end with alphanumeric, max 63 chars per tag, max 20 tags. The list, or any of its tags, can be a Pebble expression, rendered when the job is routed; a tag rendering to an empty value is ignored, and when no tag is left the selector is treated as unset.
+     */
+    tags?: PropertyListString;
+    /**
+     * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.
+     */
+    match?: WorkerSelectorMatch;
+    /**
+     * Strategy when no worker is available. Defaults to FAIL when null.
+     */
+    fallback?: WorkerQueueFallback;
 };
 
 export type FollowLogEvent = {
@@ -1431,6 +1538,14 @@ export type InputObject = {
      * The default value to use if no value is specified.
      */
     defaults?: PropertyObject;
+    /**
+     * Whether the input is searchable.
+     *
+     * A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.
+     * By default, an input is not searchable.
+     *
+     */
+    searchable?: boolean;
     /**
      * The suggested value for the input.
      *
@@ -1659,6 +1774,7 @@ export type MiscControllerConfiguration = {
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
     isPluginEndpointsEnabled?: boolean;
+    isMcpServerEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -1702,6 +1818,7 @@ export type Notification = {
     resourceType?: AsyncOperationTypeResourceType | null;
     title: string;
     referenceId?: string | null;
+    url?: string | null;
     succeededItems?: number | null;
     failedItems?: number | null;
     totalItems?: number | null;
@@ -1733,15 +1850,10 @@ export type Output = {
     value: {
         [key: string]: unknown;
     } | string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
-};
-
-export type OutputControllerSearchableOutputInformation = {
-    outputId?: string;
-    value?: string;
 };
 
 export type OutputControllerTaskOutputInformation = {
@@ -1755,11 +1867,13 @@ export type OutputControllerTaskOutputInformation = {
 export type OutputForExecution = {
     id: string;
     description?: string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
 };
+
+export type OutputType = 'STRING' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'YAML' | 'ASSET' | 'UNKNOWN';
 
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
@@ -1804,8 +1918,8 @@ export type PagedResultsBlueprintControllerApiBlueprintItem = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsConcurrencyLimit = {
-    results: Array<ConcurrencyLimit>;
+export type PagedResultsConcurrencyLimitControllerConcurrencyLimitSearchResult = {
+    results: Array<ConcurrencyLimitControllerConcurrencyLimitSearchResult>;
     total: number;
 };
 
@@ -1852,14 +1966,6 @@ export type PagedResultsNamespace = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsOutputControllerSearchableOutputInformation = {
-    results: Array<OutputControllerSearchableOutputInformation>;
-    total: number;
-};
-
-/**
- * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
- */
 export type PagedResultsPluginControllerApiTicketingSystem = {
     results: Array<PluginControllerApiTicketingSystem>;
     total: number;
@@ -1878,6 +1984,14 @@ export type PagedResultsPluginControllerApiTriggerPlugin = {
  */
 export type PagedResultsPlugin = {
     results: Array<Plugin>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsSearchableDataControllerSearchableDataInformation = {
+    results: Array<SearchableDataControllerSearchableDataInformation>;
     total: number;
 };
 
@@ -2186,6 +2300,13 @@ export type PropertyListAsset = ({
     value?: Array<Asset>;
 };
 
+export type PropertyListString = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: Array<string>;
+};
+
 export type PropertyObject = ({
     [key: string]: unknown;
 } | string) & {
@@ -2210,7 +2331,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'outputs' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'executionKind' | 'policyScope' | 'enforcement' | 'labels' | 'tags' | 'metadata' | 'searchableData' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'severity' | 'assignee' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2243,6 +2364,11 @@ export type SlaBehavior = 'FAIL' | 'CANCEL' | 'NONE';
 export type SlaType = 'MAX_DURATION' | 'AVG_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
+
+export type SearchableDataControllerSearchableDataInformation = {
+    dataId?: string;
+    value?: string;
+};
 
 export type ServerInstance = {
     id: string;
@@ -2432,7 +2558,7 @@ export type Task = {
     /**
      * Routing requirements (tags + fallback) for this task.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     /**
      * Identifiers of `enforcement: REFERENCE` governance policies to attach to this task and everything nested under it (Enterprise Edition; ignored in the open-source edition).
      */
@@ -2458,6 +2584,9 @@ export type TaskFixture = {
             [key: string]: unknown;
         };
     };
+    /**
+     * @deprecated
+     */
     assets?: Array<Asset>;
     description?: PropertyString;
 };
@@ -2489,10 +2618,6 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
-    /**
-     * @deprecated
-     */
-    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2501,7 +2626,6 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2535,15 +2659,30 @@ export type TimeWindow = {
     max?: string;
 };
 
+export type TriggerAssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
+    enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
+    inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
+    outputs?: PropertyListAsset;
+};
+
 export type TriggerControllerApiCreateBackfillRequest = {
-    namespace?: string;
-    flowId?: string;
-    triggerId?: string;
+    namespace: string;
+    flowId: string;
+    triggerId: string;
     backfill: TriggerControllerApiCreateBackfillRequestBackfill;
 };
 
 export type TriggerControllerApiCreateBackfillRequestBackfill = {
-    start?: string;
+    start: string;
     end?: string;
     inputs?: {
         [key: string]: {
@@ -2587,9 +2726,9 @@ export type TriggerControllerSetDisabledRequest = {
  */
 export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
-export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
+export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME' | 'UNSCHEDULED';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE' | 'ASSET';
 
 export type ValidateConstraintViolation = {
     errors?: Array<ValidationError>;
@@ -2647,21 +2786,6 @@ export type WebhookResponse = {
  * Strategy when no worker is available. Defaults to FAIL when null.
  */
 export type WorkerQueueFallback = 'FAIL' | 'WAIT' | 'CANCEL' | 'IGNORE';
-
-export type WorkerSelector = {
-    /**
-     * Required tags used to route to a matching Worker Queue. Each tag is an RFC 1123 label: lowercase alphanumerics and hyphens, must start and end with alphanumeric, max 64 chars per tag, max 20 tags.
-     */
-    tags?: Array<string>;
-    /**
-     * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.
-     */
-    match?: WorkerSelectorMatch;
-    /**
-     * Strategy when no worker is available. Defaults to FAIL when null.
-     */
-    fallback?: WorkerQueueFallback;
-};
 
 /**
  * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.
@@ -2754,7 +2878,6 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2844,10 +2967,6 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
-    /**
-     * @deprecated
-     */
-    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2856,7 +2975,6 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -3118,6 +3236,111 @@ export type GetProvidersResponses = {
 };
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
+
+export type HandleDeleteRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleDeleteRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleDeleteRequestError = HandleDeleteRequestErrors[keyof HandleDeleteRequestErrors];
+
+export type HandleDeleteRequestResponses = {
+    /**
+     * handleDeleteRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleDeleteRequestResponse = HandleDeleteRequestResponses[keyof HandleDeleteRequestResponses];
+
+export type HandleGetRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleGetRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleGetRequestError = HandleGetRequestErrors[keyof HandleGetRequestErrors];
+
+export type HandleGetRequestResponses = {
+    /**
+     * handleGetRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleGetRequestResponse = HandleGetRequestResponses[keyof HandleGetRequestResponses];
+
+export type HandleRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleRequestError = HandleRequestErrors[keyof HandleRequestErrors];
+
+export type HandleRequestResponses = {
+    /**
+     * handleRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleRequestResponse = HandleRequestResponses[keyof HandleRequestResponses];
 
 export type ListenUserNotificationsData = {
     body?: never;
@@ -4348,6 +4571,46 @@ export type ConfirmResponses = {
 
 export type ConfirmResponse = ConfirmResponses[keyof ConfirmResponses];
 
+export type UsageData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query?: {
+        /**
+         * the provider to report on, defaulting to the active one
+         */
+        providerId?: string | null;
+    };
+    url: '/api/v1/{tenant}/ai/usage';
+};
+
+export type UsageErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UsageError = UsageErrors[keyof UsageErrors];
+
+export type UsageResponses = {
+    /**
+     * usage 200 response
+     */
+    200: AiUsageStatus;
+};
+
+export type UsageResponse = UsageResponses[keyof UsageResponses];
+
 export type CreateBasicAuthData = {
     body: BasicAuthCredentials;
     path: {
@@ -4396,10 +4659,6 @@ export type SearchBlueprintsData = {
     };
     query?: {
         /**
-         * The sort of current page
-         */
-        sort?: string | null;
-        /**
          * The current page
          */
         page?: number;
@@ -4407,6 +4666,10 @@ export type SearchBlueprintsData = {
          * The current page size
          */
         size?: number;
+        /**
+         * The sort of current page
+         */
+        sort?: Array<string> | null;
         /**
          * A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected.
          */
@@ -4691,12 +4954,56 @@ export type GetServiceResponses = {
 
 export type GetServiceResponse = GetServiceResponses[keyof GetServiceResponses];
 
+export type UpdateConcurrencyLimitData = {
+    body: ConcurrencyLimitControllerConcurrencyLimitUpdateRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit';
+};
+
+export type UpdateConcurrencyLimitErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
+
+export type UpdateConcurrencyLimitResponses = {
+    /**
+     * updateConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
+
 export type SearchConcurrencyLimitsData = {
     body?: never;
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
     url: '/api/v1/{tenant}/concurrency-limit/search';
 };
 
@@ -4721,7 +5028,7 @@ export type SearchConcurrencyLimitsResponses = {
     /**
      * searchConcurrencyLimits 200 response
      */
-    200: PagedResultsConcurrencyLimit;
+    200: PagedResultsConcurrencyLimitControllerConcurrencyLimitSearchResult;
 };
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
@@ -4763,43 +5070,6 @@ export type GetConcurrencyLimitResponses = {
 
 export type GetConcurrencyLimitResponse = GetConcurrencyLimitResponses[keyof GetConcurrencyLimitResponses];
 
-export type UpdateConcurrencyLimitData = {
-    body: ConcurrencyLimit;
-    path: {
-        namespace: string;
-        flowId: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
-};
-
-export type UpdateConcurrencyLimitErrors = {
-    /**
-     * Authentication required
-     */
-    401: ProblemDetail;
-    /**
-     * Access denied
-     */
-    403: ProblemDetail;
-    /**
-     * Internal server error
-     */
-    500: ProblemDetail;
-};
-
-export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
-
-export type UpdateConcurrencyLimitResponses = {
-    /**
-     * updateConcurrencyLimit 200 response
-     */
-    200: ConcurrencyLimit;
-};
-
-export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
-
 export type SearchDashboardsData = {
     body?: never;
     path: {
@@ -4815,13 +5085,13 @@ export type SearchDashboardsData = {
          */
         size?: number;
         /**
-         * The filter query
-         */
-        q?: string | null;
-        /**
          * The sort of current page
          */
         sort?: Array<string> | null;
+        /**
+         * The filter query
+         */
+        q?: string | null;
     };
     url: '/api/v1/{tenant}/dashboards';
 };
@@ -4926,6 +5196,41 @@ export type PreviewChartResponses = {
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];
+
+export type PreviewChartStateCountsData = {
+    body: DashboardControllerPreviewRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/dashboards/charts/state-counts';
+};
+
+export type PreviewChartStateCountsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PreviewChartStateCountsError = PreviewChartStateCountsErrors[keyof PreviewChartStateCountsErrors];
+
+export type PreviewChartStateCountsResponses = {
+    /**
+     * previewChartStateCounts 200 response
+     */
+    200: DashboardControllerChartStateCounts;
+};
+
+export type PreviewChartStateCountsResponse = PreviewChartStateCountsResponses[keyof PreviewChartStateCountsResponses];
 
 export type GetDefaultDashboardDefinitionsData = {
     body?: never;
@@ -5131,6 +5436,10 @@ export type DeleteExecutionsByIdsData = {
          * Whether to delete execution files in the internal storage
          */
         deleteStorage?: boolean;
+        /**
+         * Whether to delete in the background, tracked by a notification
+         */
+        async?: boolean;
     };
     url: '/api/v1/{tenant}/executions/by-ids';
 };
@@ -5161,6 +5470,10 @@ export type DeleteExecutionsByIdsResponses = {
      * On success
      */
     200: BulkResponse;
+    /**
+     * Accepted, when async is true
+     */
+    202: ApiAsyncOperationResponse;
 };
 
 export type DeleteExecutionsByIdsResponse = DeleteExecutionsByIdsResponses[keyof DeleteExecutionsByIdsResponses];
@@ -5191,6 +5504,10 @@ export type DeleteExecutionsByQueryData = {
          * Whether to delete execution files in the internal storage
          */
         deleteStorage?: boolean;
+        /**
+         * Whether to delete in the background, tracked by a notification
+         */
+        async?: boolean;
     };
     url: '/api/v1/{tenant}/executions/by-query';
 };
@@ -5221,6 +5538,10 @@ export type DeleteExecutionsByQueryResponses = {
      * On success
      */
     200: BulkResponse;
+    /**
+     * Accepted, when async is true
+     */
+    202: ApiAsyncOperationResponse;
 };
 
 export type DeleteExecutionsByQueryResponse = DeleteExecutionsByQueryResponses[keyof DeleteExecutionsByQueryResponses];
@@ -9016,7 +9337,7 @@ export type ImportFlowsErrors = {
      */
     401: ProblemDetail;
     /**
-     * Access denied
+     * At least one flow targets a namespace the user is not allowed to import into
      */
     403: ProblemDetail;
     /**
@@ -10515,7 +10836,7 @@ export type ListToolsResponses = {
 
 export type ListToolsResponse = ListToolsResponses[keyof ListToolsResponses];
 
-export type HandleDeleteRequestData = {
+export type HandleDeleteRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10525,18 +10846,18 @@ export type HandleDeleteRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleDeleteRequestResponses = {
+export type HandleDeleteRequest1Responses = {
     /**
-     * handleDeleteRequest 200 response
+     * handleDeleteRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleDeleteRequestResponse = HandleDeleteRequestResponses[keyof HandleDeleteRequestResponses];
+export type HandleDeleteRequest1Response = HandleDeleteRequest1Responses[keyof HandleDeleteRequest1Responses];
 
-export type HandleGetRequestData = {
+export type HandleGetRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10546,18 +10867,18 @@ export type HandleGetRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleGetRequestResponses = {
+export type HandleGetRequest1Responses = {
     /**
-     * handleGetRequest 200 response
+     * handleGetRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleGetRequestResponse = HandleGetRequestResponses[keyof HandleGetRequestResponses];
+export type HandleGetRequest1Response = HandleGetRequest1Responses[keyof HandleGetRequest1Responses];
 
-export type HandleRequestData = {
+export type HandleRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10567,16 +10888,16 @@ export type HandleRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleRequestResponses = {
+export type HandleRequest1Responses = {
     /**
-     * handleRequest 200 response
+     * handleRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleRequestResponse = HandleRequestResponses[keyof HandleRequestResponses];
+export type HandleRequest1Response = HandleRequest1Responses[keyof HandleRequest1Responses];
 
 export type AggregateMetricsFromFlowData = {
     body?: never;
@@ -11812,54 +12133,6 @@ export type GetExecutionOutputsResponses = {
 
 export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
 
-export type ListSearchableOutputsData = {
-    body?: never;
-    path: {
-        /**
-         * The execution id
-         */
-        executionId: string;
-        tenant: string;
-    };
-    query?: {
-        /**
-         * The current page
-         */
-        page?: number;
-        /**
-         * The current page size
-         */
-        size?: number;
-    };
-    url: '/api/v1/{tenant}/outputs/searchable/{executionId}';
-};
-
-export type ListSearchableOutputsErrors = {
-    /**
-     * Authentication required
-     */
-    401: ProblemDetail;
-    /**
-     * Access denied
-     */
-    403: ProblemDetail;
-    /**
-     * Internal server error
-     */
-    500: ProblemDetail;
-};
-
-export type ListSearchableOutputsError = ListSearchableOutputsErrors[keyof ListSearchableOutputsErrors];
-
-export type ListSearchableOutputsResponses = {
-    /**
-     * listSearchableOutputs 200 response
-     */
-    200: PagedResultsOutputControllerSearchableOutputInformation;
-};
-
-export type ListSearchableOutputsResponse = ListSearchableOutputsResponses[keyof ListSearchableOutputsResponses];
-
 export type GetTaskOutputsInformationData = {
     body?: never;
     path: {
@@ -12025,6 +12298,54 @@ export type PostResponses = {
 };
 
 export type PostResponse = PostResponses[keyof PostResponses];
+
+export type ListSearchableDataData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
+    url: '/api/v1/{tenant}/searchable_data/{executionId}';
+};
+
+export type ListSearchableDataErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListSearchableDataError = ListSearchableDataErrors[keyof ListSearchableDataErrors];
+
+export type ListSearchableDataResponses = {
+    /**
+     * listSearchableData 200 response
+     */
+    200: PagedResultsSearchableDataControllerSearchableDataInformation;
+};
+
+export type ListSearchableDataResponse = ListSearchableDataResponses[keyof ListSearchableDataResponses];
 
 export type ListSecretsData = {
     body?: never;

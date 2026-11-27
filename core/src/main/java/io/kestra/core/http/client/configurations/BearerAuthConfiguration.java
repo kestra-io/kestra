@@ -1,7 +1,9 @@
 package io.kestra.core.http.client.configurations;
 
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpRequestInterceptor;
 import org.apache.hc.core5.http.message.BasicHeader;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,16 +37,24 @@ public class BearerAuthConfiguration extends AbstractAuthConfiguration {
 
     @Override
     public void configure(HttpClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {
+        builder.addRequestInterceptorFirst(authorizationInterceptor(runContext));
+    }
+
+    @Override
+    public void configure(HttpAsyncClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {
+        builder.addRequestInterceptorFirst(authorizationInterceptor(runContext));
+    }
+
+    private HttpRequestInterceptor authorizationInterceptor(RunContext runContext) throws IllegalVariableEvaluationException {
         var renderedToken = runContext.render(this.token).as(String.class).orElse(null);
-        builder.addRequestInterceptorFirst(
-            (request, entity, context) -> request
-                .setHeader(
-                    new BasicHeader(
-                        HttpHeaders.AUTHORIZATION,
-                        "Bearer " + renderedToken
-                    )
+
+        return (request, entity, context) -> request
+            .setHeader(
+                new BasicHeader(
+                    HttpHeaders.AUTHORIZATION,
+                    "Bearer " + renderedToken
                 )
-        );
+            );
     }
 
     @Override

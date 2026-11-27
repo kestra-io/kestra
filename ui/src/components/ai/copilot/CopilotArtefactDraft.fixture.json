@@ -1,0 +1,338 @@
+{
+  "before": {
+    "yaml": "id: orders_sync\nnamespace: company.sales\ntriggers:\n  - id: webhook\n    type: io.kestra.plugin.core.trigger.Webhook\n    key: orders\ntasks:\n  - id: extract\n    type: io.kestra.plugin.core.http.Download\n    uri: https://example.com/orders.csv\n  - id: validate\n    type: io.kestra.plugin.core.log.Log\n    message: \"Validating {{ outputs.extract.uri }}\"\n  - id: load\n    type: io.kestra.plugin.core.log.Log\n    message: Loading orders\n  - id: notify_slack\n    type: io.kestra.plugin.core.log.Log\n    message: Posting to Slack\n",
+    "graph": {
+      "nodes": [
+        {
+          "uid": "root.root-3SttfX3NWVomZQKd7KgJQU",
+          "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+          "uid": "root.end-2mUnaI0ZFY8BIVwqkKOlbA",
+          "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+          "uid": "root.Triggers.root-4JWsnTPuPW5kz9BA655Ywu",
+          "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+          "uid": "root.Triggers.end-5IM9oMG78XnDtOTKZNnwNn",
+          "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+          "triggerDeclaration": {
+            "id": "webhook",
+            "type": "io.kestra.plugin.core.trigger.Webhook",
+            "key": "orders"
+          },
+          "uid": "root.Triggers.webhook",
+          "type": "io.kestra.core.models.hierarchies.GraphTrigger"
+        },
+        {
+          "uid": "root.extract",
+          "task": {
+            "id": "extract",
+            "type": "io.kestra.plugin.core.http.Download",
+            "uri": "https://example.com/orders.csv",
+            "options": {
+              "followRedirects": "true",
+              "allowFailed": "false",
+              "enabledTcpExtendedKeepAlive": "true",
+              "defaultCharset": "UTF-8",
+              "retry": {
+                "maxAttempts": 1,
+                "warningOnRetry": false,
+                "behavior": "RETRY_FAILED_TASK",
+                "type": "exponential",
+                "interval": "PT1S",
+                "maxInterval": "PT30S"
+              },
+              "retryOnStatusCodes": "[502,503,504]",
+              "retryableTransportFailureMethods": "[\"GET\",\"HEAD\"]"
+            }
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        },
+        {
+          "uid": "root.validate",
+          "task": {
+            "id": "validate",
+            "type": "io.kestra.plugin.core.log.Log",
+            "message": "Validating {{ outputs.extract.uri }}"
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        },
+        {
+          "uid": "root.load",
+          "task": {
+            "id": "load",
+            "type": "io.kestra.plugin.core.log.Log",
+            "message": "Loading orders"
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        },
+        {
+          "uid": "root.notify_slack",
+          "task": {
+            "id": "notify_slack",
+            "type": "io.kestra.plugin.core.log.Log",
+            "message": "Posting to Slack"
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        }
+      ],
+      "edges": [
+        {
+          "source": "root.root-3SttfX3NWVomZQKd7KgJQU",
+          "target": "root.extract",
+          "relation": {}
+        },
+        {
+          "source": "root.Triggers.end-5IM9oMG78XnDtOTKZNnwNn",
+          "target": "root.root-3SttfX3NWVomZQKd7KgJQU",
+          "relation": {}
+        },
+        {
+          "source": "root.extract",
+          "target": "root.validate",
+          "relation": {
+            "relationType": "SEQUENTIAL"
+          }
+        },
+        {
+          "source": "root.validate",
+          "target": "root.load",
+          "relation": {
+            "relationType": "SEQUENTIAL"
+          }
+        },
+        {
+          "source": "root.load",
+          "target": "root.notify_slack",
+          "relation": {
+            "relationType": "SEQUENTIAL"
+          }
+        },
+        {
+          "source": "root.notify_slack",
+          "target": "root.end-2mUnaI0ZFY8BIVwqkKOlbA",
+          "relation": {}
+        },
+        {
+          "source": "root.Triggers.root-4JWsnTPuPW5kz9BA655Ywu",
+          "target": "root.Triggers.webhook",
+          "relation": {}
+        },
+        {
+          "source": "root.Triggers.webhook",
+          "target": "root.Triggers.end-5IM9oMG78XnDtOTKZNnwNn",
+          "relation": {}
+        }
+      ],
+      "clusters": [
+        {
+          "cluster": {
+            "uid": "cluster_root.Triggers",
+            "type": "io.kestra.core.models.hierarchies.GraphCluster",
+            "finally": {
+              "uid": "root.Triggers.finally-5Rc7hxfMBuTobizUkFCkNB",
+              "type": "io.kestra.core.models.hierarchies.GraphClusterFinally"
+            }
+          },
+          "nodes": [
+            "root.Triggers.root-4JWsnTPuPW5kz9BA655Ywu",
+            "root.Triggers.end-5IM9oMG78XnDtOTKZNnwNn",
+            "root.Triggers.webhook"
+          ],
+          "parents": [],
+          "start": "root.Triggers.root-4JWsnTPuPW5kz9BA655Ywu",
+          "end": "root.Triggers.end-5IM9oMG78XnDtOTKZNnwNn"
+        }
+      ]
+    }
+  },
+  "after": {
+    "yaml": "id: orders_sync\nnamespace: company.sales\ntriggers:\n  - id: webhook\n    type: io.kestra.plugin.core.trigger.Webhook\n    key: orders\ntasks:\n  - id: extract\n    type: io.kestra.plugin.core.http.Download\n    uri: https://example.com/orders.csv\n  - id: validate\n    type: io.kestra.plugin.core.log.Log\n    message: \"Validating {{ outputs.extract.uri }}\"\n  - id: dedupe\n    type: io.kestra.plugin.core.log.Log\n    message: Removing duplicate orders\n  - id: load\n    type: io.kestra.plugin.core.log.Log\n    message: Loading orders\n    retry:\n      type: constant\n      interval: PT1M\n      maxAttempts: 3\n  - id: notify_teams\n    type: io.kestra.plugin.core.log.Log\n    message: Posting to Teams\n",
+    "graph": {
+      "nodes": [
+        {
+          "uid": "root.root-7PAD0zGPjOLTzdm10vzDth",
+          "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+          "uid": "root.end-79QMQXKlaT4rdjj4uVHIlf",
+          "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+          "uid": "root.Triggers.root-6Sa1o498HU669k0k1k4XWl",
+          "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+          "uid": "root.Triggers.end-1YayjTFEkOvhN8ciusuknA",
+          "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+          "triggerDeclaration": {
+            "id": "webhook",
+            "type": "io.kestra.plugin.core.trigger.Webhook",
+            "key": "orders"
+          },
+          "uid": "root.Triggers.webhook",
+          "type": "io.kestra.core.models.hierarchies.GraphTrigger"
+        },
+        {
+          "uid": "root.extract",
+          "task": {
+            "id": "extract",
+            "type": "io.kestra.plugin.core.http.Download",
+            "uri": "https://example.com/orders.csv",
+            "options": {
+              "followRedirects": "true",
+              "allowFailed": "false",
+              "enabledTcpExtendedKeepAlive": "true",
+              "defaultCharset": "UTF-8",
+              "retry": {
+                "maxAttempts": 1,
+                "warningOnRetry": false,
+                "behavior": "RETRY_FAILED_TASK",
+                "type": "exponential",
+                "interval": "PT1S",
+                "maxInterval": "PT30S"
+              },
+              "retryOnStatusCodes": "[502,503,504]",
+              "retryableTransportFailureMethods": "[\"GET\",\"HEAD\"]"
+            }
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        },
+        {
+          "uid": "root.validate",
+          "task": {
+            "id": "validate",
+            "type": "io.kestra.plugin.core.log.Log",
+            "message": "Validating {{ outputs.extract.uri }}"
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        },
+        {
+          "uid": "root.dedupe",
+          "task": {
+            "id": "dedupe",
+            "type": "io.kestra.plugin.core.log.Log",
+            "message": "Removing duplicate orders"
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        },
+        {
+          "uid": "root.load",
+          "task": {
+            "id": "load",
+            "type": "io.kestra.plugin.core.log.Log",
+            "retry": {
+              "maxAttempts": 3,
+              "warningOnRetry": false,
+              "behavior": "RETRY_FAILED_TASK",
+              "type": "constant",
+              "interval": "PT1M"
+            },
+            "message": "Loading orders"
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        },
+        {
+          "uid": "root.notify_teams",
+          "task": {
+            "id": "notify_teams",
+            "type": "io.kestra.plugin.core.log.Log",
+            "message": "Posting to Teams"
+          },
+          "relationType": "SEQUENTIAL",
+          "type": "io.kestra.core.models.hierarchies.GraphTask"
+        }
+      ],
+      "edges": [
+        {
+          "source": "root.root-7PAD0zGPjOLTzdm10vzDth",
+          "target": "root.extract",
+          "relation": {}
+        },
+        {
+          "source": "root.Triggers.end-1YayjTFEkOvhN8ciusuknA",
+          "target": "root.root-7PAD0zGPjOLTzdm10vzDth",
+          "relation": {}
+        },
+        {
+          "source": "root.extract",
+          "target": "root.validate",
+          "relation": {
+            "relationType": "SEQUENTIAL"
+          }
+        },
+        {
+          "source": "root.validate",
+          "target": "root.dedupe",
+          "relation": {
+            "relationType": "SEQUENTIAL"
+          }
+        },
+        {
+          "source": "root.dedupe",
+          "target": "root.load",
+          "relation": {
+            "relationType": "SEQUENTIAL"
+          }
+        },
+        {
+          "source": "root.load",
+          "target": "root.notify_teams",
+          "relation": {
+            "relationType": "SEQUENTIAL"
+          }
+        },
+        {
+          "source": "root.notify_teams",
+          "target": "root.end-79QMQXKlaT4rdjj4uVHIlf",
+          "relation": {}
+        },
+        {
+          "source": "root.Triggers.root-6Sa1o498HU669k0k1k4XWl",
+          "target": "root.Triggers.webhook",
+          "relation": {}
+        },
+        {
+          "source": "root.Triggers.webhook",
+          "target": "root.Triggers.end-1YayjTFEkOvhN8ciusuknA",
+          "relation": {}
+        }
+      ],
+      "clusters": [
+        {
+          "cluster": {
+            "uid": "cluster_root.Triggers",
+            "type": "io.kestra.core.models.hierarchies.GraphCluster",
+            "finally": {
+              "uid": "root.Triggers.finally-A70fnW1k6vEf5NcCfP0D",
+              "type": "io.kestra.core.models.hierarchies.GraphClusterFinally"
+            }
+          },
+          "nodes": [
+            "root.Triggers.root-6Sa1o498HU669k0k1k4XWl",
+            "root.Triggers.end-1YayjTFEkOvhN8ciusuknA",
+            "root.Triggers.webhook"
+          ],
+          "parents": [],
+          "start": "root.Triggers.root-6Sa1o498HU669k0k1k4XWl",
+          "end": "root.Triggers.end-1YayjTFEkOvhN8ciusuknA"
+        }
+      ]
+    }
+  }
+}

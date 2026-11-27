@@ -16,10 +16,10 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.vnodes.VNodes;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -34,7 +34,6 @@ public class QueueService {
 
     private final MetricRegistry metricRegistry;
 
-    @Getter
     private final int vNodeCount;
 
     @Getter
@@ -76,6 +75,18 @@ public class QueueService {
         this.subscriberExecutorService.execute(runnable);
     }
 
+    /**
+     * @deprecated since 2.1, this is the scheduler's vNode count, not the one of every queue: use the count the queue was created with.
+     */
+    @Deprecated(since = "2.1", forRemoval = true)
+    public int getVNodeCount() {
+        return vNodeCount;
+    }
+
+    /**
+     * @deprecated since 2.1, this hashes with the scheduler's vNode count, not the one of every queue: use the count the queue was created with.
+     */
+    @Deprecated(since = "2.1", forRemoval = true)
     public int computeVNode(String key) {
         return VNodes.computeVNode(this.vNodeCount, key);
     }

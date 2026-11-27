@@ -10,7 +10,7 @@ import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.tasks.WorkerSelector;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.runners.WorkerQueueRouting;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
@@ -47,7 +47,7 @@ class WorkerQueueServiceTest {
                 PurgeLogs.builder()
                     .id("purge")
                     .type(PurgeLogs.class.getName())
-                    .workerSelector(new WorkerSelector(List.of("docker"), null))
+                    .workerSelector(new FlowWorkerSelector(List.of("docker"), null))
                     .build()
             )
             .taskRun(TaskRun.builder().build())

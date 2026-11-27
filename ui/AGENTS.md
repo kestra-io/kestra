@@ -27,7 +27,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 1. **Use a `Ks*` component if one exists.** Check the tables below before writing anything custom or importing from `element-plus`. New screens that mix `<el-button>` and `<KsButton>` are a regression.
 2. **Colors come from `--ks-*` tokens. Always.** No hex codes, no `rgb(...)`, no Element Plus tokens (`--el-*`), no Bootstrap variables, no SCSS color variables in component code. If the token you need does not exist, talk to design and add it to `ks-theme-light.css` / `ks-theme-dark.css` / `ks-theme-dark-2.css` — do not pick a one-off color.
 3. **Typography comes from `KsText` or typography tokens.** Use `<KsText>` (with `size`, `type`, `tag`, `truncated`, `lineClamp`) for body copy. For headings or one-off needs, use the `--ks-font-family-*` and `--ks-font-size-*` tokens; feature code should not redefine them.
-4. **No `:deep()` selectors.** Reaching into a child component's internals breaks encapsulation and silently shatters when the design system is upgraded. If you need to style something inside a `Ks*` component, add a prop, a slot, or a CSS variable to the component upstream.
+4. **No `:deep()` selectors.** Reaching into a child component's internals breaks encapsulation and silently shatters when the design system is upgraded. If you need to style something inside a `Ks*` component, add a prop, a slot, or a CSS variable to the component upstream. `tests/unit/designSystem/deepSelectorGuard.spec.ts` (and its `ui-ee` twin) fails on any new one outside `packages/design-system`; the few left are listed there with their reason.
 5. **No SCSS variables (`$...`) in feature components.** Use `var(--ks-*)` CSS custom properties inside `<style>` blocks. SCSS variables don't react to dark mode, can't be overridden at runtime, and bind your component to a specific theme. SCSS variables are only acceptable inside `ui/packages/design-system/` itself, in mixins, or for math at build time.
 6. **No magic numbers for theme values.** Spacing, radii, font sizes, and shadows must reference tokens — never `padding: 13px`, never `border-radius: 6px`. For spacing (`padding`/`margin`/`gap`), reach for the `--ks-spacing-*` scale first (`--ks-spacing-1` = 0.25rem, `-2` = 0.5rem, `-3` = 0.75rem, `-4` = 1rem, `-5` = 1.5rem, `-6` = 2rem, `-7` = 2.5rem, `-8` = 3rem, `-10` = 4rem, `-12` = 5rem, `-16` = 6rem; declared in [`ks-tokens.css`](packages/design-system/src/assets/styles/ks-tokens.css)). Only fall back to a raw `rem` value when no token fits — never a hardcoded `px` value (`margin: 0 24px` → `margin: 0 var(--ks-spacing-5)`).
 7. **Never override Element Plus classes directly.** Don't write `.el-button { ... }` in feature code. If a `Ks*` component is missing a behavior, extend the component in the design system instead of patching CSS at the call site.
@@ -38,7 +38,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 
     Your editor underlines it: `kestra-tokens/no-undeclared-css-token` (eslint, `@eslint/css`) covers `.css` and plain `<style>` blocks, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and `ks/no-undeclared-custom-property` (stylelint) covers the design system's remaining SCSS. All three propose a replacement, and `npm run lint` runs them all. See [scripts/tokens/README.md](scripts/tokens/README.md).
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
-13. **Bootstrap is gone; don't use its utility classes.** The `d-flex`, `mb-3` and similar classes still in the templates are kept alive by `packages/design-system/src/assets/styles/_utilities.css` until their migration issues land, and that file only shrinks: replace a utility with scoped CSS on `--ks-*` tokens and delete its rule once the last use is gone. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on a utility the file does not define and on any `--kbs-*` variable.
+13. **Bootstrap is gone; don't use its utility classes.** Write layout and spacing as scoped CSS with `--ks-*` tokens. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on any Bootstrap utility class and on any `--kbs-*` variable.
 
 ## Best practices for keeping the design system healthy
 
@@ -65,8 +65,12 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 
 - Component styles are plain CSS. A component that needs Element Plus's base styles keeps them in a `<style lang="scss">` block holding only the `el-ns` and `theme-chalk` `@use` lines, placed before the plain `<style>` with its own rules, so each published component entry still ships its chalk CSS. Palette colours are `var(--ks-<family>-<step>)`, not `palette.$base-*`.
 - Don't write one rule per variant. When the tokens follow the variant's name (`--ks-status-<status>`), bind them with `v-bind()` and add a test that every name has its token, since the token lint cannot see a built name (`KsExecutionStatus`, `KsAlert`). When they don't, keep a typed table of `var(--ks-*)` strings in the component's `<script>`, where `kestra-tokens/no-undeclared-ks-token` still checks them, and bind that (`KsTag`, `KsButton`).
+- A control Element Plus positions absolutely (an alert's close button, a textarea's word count) gets room reserved for it, and the story combining it with neighbouring content asserts in `play` that their boxes do not overlap. `KsAlert`'s `#action` button sat under its close button while the story rendered exactly that pair without checking it.
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
+- Type a wrapper's props by extending the Element Plus interface (`interface KsInputProps extends Omit<InputProps, "modelValue">`) instead of copying them, and forward them with `usePassedProps`: Vue casts an omitted boolean to `false`, which would override defaults such as `validateEvent` or `teleported`. A default the wrapper sets in `withDefaults` was not passed, so bind it explicitly (`KsTag`'s `:effect`). Omit the `on*` keys some interfaces declare (`PopoverProps`): declared as props, they stop reaching the parent as listeners. In a `generic` wrapper, write the props as a local `type` alias, since an interface there cannot be exported and breaks declaration emit.
+- When Element Plus has no props interface, only a `*PropsPublic` type or a runtime object (`ExtractPublicPropTypes<typeof dropdownProps>`), put it in the `@vue-ignore` part below with the HTML attributes, so callers are checked and the props still reach Element Plus through `$attrs`.
+- Type the HTML attributes a wrapper forwards through `$attrs` with a `@vue-ignore` intersection, `defineProps<KsButtonProps & /* @vue-ignore */ Omit<NativeAttributes<ButtonHTMLAttributes>, keyof KsButtonProps>>()`: vue-tsc still checks every attribute a caller passes, while the compiler leaves them out of the runtime props so they stay in `$attrs`. `NativeAttributes` drops Vue's `on*` listener types, which would otherwise retype the wrapper's own events (`@change` receiving an `Event`). The type cannot see whether the template forwards them, so `htmlAttributes.test.ts` mounts each such wrapper and checks the attributes reach the DOM; add new wrappers to it.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.
 - Add the new component or prop to the relevant table in this file, plus a Storybook story and a unit test, in the same PR.
 - Document tokens in code comments next to where they're declared in `ks-theme-*.css`. The `scripts/generate-palette.mjs` file is auto-generated — don't hand-edit it.
@@ -111,7 +115,7 @@ Reject (or ask to fix) anything that:
 Every async surface must render all four states. "Happy path only" is a bug.
 
 - **Loading:** `KsSkeleton` for content placeholders; `vKsLoading` directive for sections that already have layout; `KsLoading` component for full-page or container-level spinners.
-- **Empty:** `KsEmpty` with an action where possible — never a blank screen.
+- **Empty:** `KsNoData` with an action next to it where possible — never a blank screen. A page-level empty state with its own illustration uses `KsEmptyState`.
 - **Error:** `KsAlert type="error"` with retry affordance, or `KsMessage` for transient errors.
 - **Success / data:** the actual content.
 
@@ -240,7 +244,7 @@ Rules:
 
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
-- Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- Put the icon component in `KsIcon`'s default slot (`<KsIcon><InformationOutline /></KsIcon>`); `KsIcon` has no `name` prop. Size and color come from props or the surrounding token context — don't override with inline `style`.
 - **One icon per action, in OSS and EE alike.** Before picking an icon for an action (delete, edit, save, run, import…), follow the pattern already used for that action in the codebase: the icon most places use for it, not a variant of it.
 - **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
@@ -254,6 +258,12 @@ Rules:
 
 ### Types
 
+**A prop the component does not declare is a type error.** `vueCompilerOptions.checkUnknownProps` is on, with `data-*` and `aria-*` accepted everywhere. When vue-tsc rejects a prop, it is either dead (remove it) or forwarded through `$attrs` without a type (type it, as in "When extending the design system"). A library component missing a prop it forwards gets a typed re-export, like `DynamicScroller` below.
+
+**Keep `v-model`; fit the bound state to the child's model type.** When the model type rejects a binding (`undefined` from a cleared field, a wider union), widen the parent's ref (`ref<number | undefined>(0)`, read with `?? 0`) instead of splitting it into `:modelValue` + `@update:modelValue` with a conversion. Only a wrapper's binding to the Element Plus component it wraps stays split, since widening the wrapper's model would break every caller's `v-model` (`KsCheckbox`).
+
+**Import `DynamicScroller` from `src/utils/virtualScroller.ts`**, not from `vue-virtual-scroller`. `no-restricted-imports` rejects the direct import. Its 3.0.5 types (the latest) leave out what it forwards to `RecycleScroller` (`buffer`, `prerender`, `emitUpdate`, `updateInterval`, HTML attributes), and the re-export adds them.
+
 **Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`, in the `<script>` block and in template expressions alike.
 
 Where the type comes from, in this order:
@@ -265,21 +275,9 @@ Where the type comes from, in this order:
 
 For a value whose shape really is not known yet, `unknown` with a narrowing check is the honest escape hatch. `any` is not.
 
-**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. An `any` that truly cannot be avoided is a conversation with a maintainer, not a number you change on your own.
+**A package with no types?** Give it a small `.d.ts` shim next to `src/material-icons.d.ts`.
 
-**MANDATORY — never raise the baseline to make the check pass.** A bigger number hides the new `any` from every later run, which is the one thing the baseline exists to prevent, and it will be treated as a bug in review. Specifically, and this applies to coding agents as much as to people:
-
-- Do not hand-edit `scripts/explicit-any/baseline.json`. The only writes to it come from the check itself.
-- Do not run `--accept-new-any`. A maintainer who has already agreed to a raise records it with `npm run check:ts-any -- --write --accept-new-any`; it is never a way to get a green check.
-- A red `check:ts-any` is fixed by typing the value, not by making the check agree with the code.
-- When you cannot type it, stop. Leave the check red, say in the PR which value defeated you and why, and let a maintainer decide. An unfinished PR is fine; a silently raised baseline is not.
-
-**The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
-
-- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above.
-- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change. A rename is followed whether it is staged or already committed on your branch, so the count travels with the file either way.
-
-Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
+**MANDATORY - no explicit `any`.** Type the value, or use `unknown` and narrow it. `npm run check:ts-any` counts every explicit `any`, oxlint for the `<script>` block and the Vue compiler for template expressions, and fails on a single one. The same check runs on every PR, as `Npm - check ts-any`. When you cannot type a value, stop, leave the check red and say in the PR which value defeated you and why, so a maintainer can decide.
 
 ### Testing UI
 
@@ -288,8 +286,10 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 - `i18nMount` also installs a fresh `memoryRouter()` (`tests/unit/memoryRouter.ts`), so `useRoute()` / `useRouter()` resolve instead of warning; a spec that asserts on navigation passes its own router in `global.plugins`, which replaces the default, or mocks `vue-router`. A router already in test-utils' global `config.global.plugins` (ui-ee's setup installs one) also replaces it. A spec mounting with plain `mount` passes `memoryRouter()` itself. A spec that creates a store outside a component activates `routedPinia()` from the same file instead of a bare `createPinia()`, so a store calling `useRoute()` at setup resolves it there too.
 - A spec that mounts a no-code field (`TaskObject`, `TaskObjectField`, `TaskArray`, `Add`, `TaskEdit`) ends with `afterAll(() => taskComponentsReady())` from `useBlockComponent.ts`: the block components are imported on mount, and with `isolate: false` an import still in flight when the file ends is reported as an `EnvironmentTeardownError` for the whole run.
 - A component passed inside `props` (a tab's `component`, an `icon`) is wrapped in `markRaw`: test-utils makes the props object reactive, and Vue warns about a component that was made reactive on every render.
+- A lazy `Ks*` component (`KsEditor`, `KsMarkdown`, the charts) is stubbed with a template, `KsEditor: {template: "<div />"}`, not with `true`: test-utils imports an async component to build a `true` stub, so Monaco loads anyway and the setup's `afterEach` waits for it, past the hook timeout on a busy CI runner.
 - Check a spec's console with `npx vitest run --project=unit --silent=false <file>`. Vitest picks a minimal reporter in agent and non-interactive shells that hides the output of passing tests, so a warning CI prints can be invisible locally.
 - A test that exercises a failure path the code reports with `console.error` stubs it (`vi.spyOn(console, "error").mockImplementation(() => {})`) and restores it, and ideally asserts on the call; output from a passing test is noise that hides the warning worth reading.
+- A spy on a timer global (`vi.spyOn(globalThis, "setInterval")`) taken under fake timers is restored before them: `afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })`. Vitest's end-of-file `restoreAllMocks()` otherwise puts back the dead fake clock, so `requestAnimationFrame` stops firing for every later file in the worker (kestra-io/kestra#22943).
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - The storybook project runs every story file in one shared iframe (`isolate: false`), since a fresh iframe per file crashed Chromium on CI. API data for a story goes through `mockStoryApiRoutes()` from `.storybook/apiMock.ts`, never `vi.mock()` (eslint rejects it in a story file), and an error thrown while a story renders fails that story. Wait for what a click opens (`findBy*`, `waitFor`) instead of relying on a fresh iframe being slow enough. Each story starts with empty `localStorage` and `sessionStorage`, so a story that needs a saved preference (a panel layout, an editor mode) writes it in its own `beforeEach`, decorator or `setup()`.
@@ -304,7 +304,7 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
 
-`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
+`npm run check:ts-any` fails on any explicit `any`, so type the value or use `unknown` and narrow it.
 
 Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, skipping `*.spec.ts`, `*.test.ts` and `*.stories.ts`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
 
@@ -378,22 +378,22 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
-| `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace`; `--ks-button-adjacent-margin` sets the gap Element Plus puts before a button that follows another (default 12px); `--ks-button-link-color` colours a `link` button at rest |
+| `KsIcon` / `KsIconButton` | Material Design icon display (the icon component goes in the default slot); icon-only button (always with `aria-label`), which takes `KsButton`'s `type`; `--ks-icon-button-color` sets the glyph colour at rest; a material icon's drawn size is `--ks-icon-glyph-size` and its box `--ks-icon-box-size` (both 1rem), set on the icon or an ancestor |
 | `KsLink` | Styled hyperlink |
-| `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text |
+| `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |
 | `KsContainer` / `KsHeader` / `KsMain` | Page layout shell |
 | `KsRow` / `KsCol` | Responsive grid |
-| `KsSplitter` / `KsSplitterPanel` | Resizable split-pane layout |
+| `KsSplitter` / `KsSplitterPanel` | Resizable split-pane layout; set on the splitter, `--ks-splitter-panel-bg` paints the panels, `--ks-splitter-panel-display` / `--ks-splitter-panel-rows` lay them out, and `--ks-splitter-bar-size` gives the bars room. A panel renders as a fragment, so a class on it never gets the parent's scope: style it through these variables or its `style` attribute |
 
 ### Feedback
 
 | Component | Purpose |
 |-----------|---------|
-| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
-| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
-| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
+| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint. An `#action` slot puts a button on the right of the title (the approval banner's Review); `fill` stretches the content across the row with no gap under the title and clips a description that would widen it |
+| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not; its form labels read `--ks-form-item-label-font-size` / `--ks-form-item-label-font-weight` (md semibold by default) |
+| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close; `resizable` adds a drag handle, `size` sets the initial width (default 65%) and leaving full screen restores the width held before |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
 | `KsLoading` (`vKsLoading`) | Loading spinner directive |
@@ -405,55 +405,60 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters") |
+| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters"); `highlight` pulses the focus ring once, to point at the field a page has just opened on (the prefilled id of a child namespace); `--ks-input-border-color` replaces the border colour in every state (`transparent` when a container draws the border), `--ks-input-icon-color` the prefix and suffix icons; `--ks-input-font-size`, `--ks-input-text-color` and `--ks-input-bg-color` set the text size, colour and background; `--ks-input-wrapper-height`, `--ks-input-border`, `--ks-input-radius` and `--ks-input-inner-padding-end` draw a real border, round the corners and keep text clear of an overlay on the right (`KsAutocomplete` follows the background, `KsDatePicker` the font size); `thinScrollbar` gives a textarea a thin rounded scrollbar where the pointer is coarse |
+| `KsSearch` | Search field with a leading magnifier; `borderless` drops the border, shadow and background so it sits flush in a container that draws them (the global search) |
 | `KsInputNumber` | Numeric input with increment / decrement |
-| `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
+| `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select; `--ks-select-height`, `--ks-select-padding` (default size only) and `--ks-select-font-size` size the field; `--ks-select-bg`, `--ks-select-hover-bg`, `--ks-select-border` and `--ks-select-gap` style the field, and `--ks-select-padding` applies at every size, each keeping its own default |
 | `KsAutocomplete` | Autocomplete input with suggestions |
-| `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |
-| `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
+| `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants; `ariaLabel` names a `KsCheckboxButton` whose content is a glyph (`Aa`, `.*`) |
+| `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants; `--ks-radio-size`, `--ks-radio-dot-size` and `--ks-radio-label-font-size` size the control and its label; `KsRadioButton` reads `--ks-radio-button-padding`, `--ks-radio-button-radius` (every corner, whatever the position), `--ks-radio-button-bg`, `--ks-radio-button-active-bg`, `--ks-radio-button-active-color` and `--ks-radio-button-active-border-color` |
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
 | `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model`. A `#preview="{option}"` slot replaces the built-in miniature, `columns` lays the options out as a grid, `ariaLabel` names the radiogroup |
-| `KsDatePicker` / `KsTimePicker` | Date and time pickers |
+| `KsDatePicker` / `KsTimePicker` | Date and time pickers; follow `KsInput`'s `--ks-input-border-color`; `timezone` makes a single `KsDatePicker` show and edit its instant as a wall clock in that zone (pass `dateUtils.currentTimezone()` for the Time Zone preference) and hides "Now" |
 | `KsColorPicker` | Color picker; `alphaOnSurface` shows translucent colours over the page surface instead of a checkerboard |
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
-| `KsUpload` | File upload |
-| `KsForm` / `KsFormItem` | Form container with validation |
+| `KsUpload` | File upload; `--ks-upload-dragger-padding` and `--ks-upload-dragger-bg` style the drop area, and a background set this way holds while a file is dragged over |
+| `KsEditor` | Code editor (Monaco); `--ks-editor-height` / `--ks-editor-max-height` size the editor area, `--ks-editor-overflow-x` clips it horizontally, `--ks-editor-placeholder-top` moves the placeholder |
+| `KsForm` / `KsFormItem` | Form container with validation; `inline` on a `KsFormItem` puts the label and the control on one row, `stacked` puts each child of the content on its own full-width line (the no-code fields); `wideLabel` stretches the label across the row for a `#label` slot that lays out its own content; `--ks-form-item-label-font-size`, `--ks-form-item-label-font-weight` and `--ks-form-item-label-color` style the labels below where they are set; `--ks-form-item-content-width` fixes the control column of an `inline` item |
 
 ### Data Display
 
 | Component | Purpose |
 |-----------|---------|
-| `KsCard` | Card container |
-| `KsTable` / `KsTableColumn` | Basic table |
-| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. A filter key with `valueType: "number"` takes a number input; adding `Comparators.BETWEEN` to its comparators offers a min/max pair, sent as `GREATER_THAN_OR_EQUAL_TO` + `LESS_THAN_OR_EQUAL_TO` since the API has no between. A value option's `count` shows as a compact neutral badge next to it in the value lists. A filter key with `valueType: "radio"` takes `allLabel` / `allDescription` to name and describe its default option; selecting it omits the filter from the query. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
+| `KsCard` | Card container; `bodyStyle` sets the body's padding and size, `--ks-card-header-padding` the header's padding |
+| `KsTable` / `KsTableColumn` | Basic table; a row whose `rowClassName` is `selected` gets the selected background; `--ks-table-empty-text-width` widens the empty state (default 50%); `flushExpand` renders expanded rows edge to edge (no cell padding, no border); `--ks-table-action-header-padding-right` sets the right padding of the `row-action` column header (8px by default) |
+| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. A filter key with `valueType: "number"` takes a number input; adding `Comparators.BETWEEN` to its comparators offers a min/max pair, sent as `GREATER_THAN_OR_EQUAL_TO` + `LESS_THAN_OR_EQUAL_TO` since the API has no between. A value option's `count` shows as a compact neutral badge next to it in the value lists. A root-level `filters[field][OP]` URL key whose field has no filter key in the configuration belongs to the page: the bar leaves it in place when it rewrites the query (the apps catalog's tag pills). `startDate` and `endDate` are the exception: the time range filter writes them, so the bar always clears them. A filter key with `valueType: "radio"` takes `allLabel` / `allDescription` to name and describe its default option; selecting it omits the filter from the query. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. `expandableRow` (`(row) => boolean`) removes the expand arrow from the rows it rejects, next to `forceExpandedRowKeys` for rows that are always open. `--ks-data-table-pagination-margin-bottom` trims the space under the pagination, and `--ks-data-table-pagination-wrap: wrap` lets it wrap onto a second line in a narrow container. `--ks-data-table-content-border` / `--ks-data-table-content-padding-block` rule and pad the area above and below the rows (dashboard tables). |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
 | `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it; `type="neutral"` is a grey pill for counts next to content (the KsFilter value counts) |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
-| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container |
+| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container; `--ks-tag-close-color` colours the close glyph at rest; `--ks-tag-font-size` / `--ks-tag-font-weight` set the label and its icon (semibold at the inherited size by default), set on a container of tags |
 | `KsAvatar` | Avatar with fallback |
-| `KsProgress` | Progress bar |
+| `KsProgress` | Progress bar; `--ks-progress-track-color` paints the unfilled track; the default slot replaces the percentage text |
 | `KsPagination` | Pagination controls |
-| `KsEmpty` | Empty state placeholder |
+| `KsNoData` | Default empty state: an icon, a title and a description (`icon`, `title`, `description`, or the default slot for the description) |
+| `KsEmptyState` | Page-level empty state: an illustration (`image`), a title, a description, an `#action` slot and a `learnMore` link |
+| `KsEmpty` | Deprecated since 2.0 and rejected by eslint in `ui/` and `ui-ee/`: use `KsNoData` or `KsEmptyState` |
 | `KsSkeleton` | Skeleton loader |
-| `KsId` | Copyable ID display |
+| `KsId` | Copyable ID display; `--ks-id-color` replaces the link colour |
 | `KsDateAgo` | Relative time display ("2 hours ago") |
-| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label. `variant="neutral"` swaps the primary-coloured selection for a grey one with wider segments |
-| `KsCollapse` / `KsCollapseItem` | Collapsible sections |
+| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label. `variant="neutral"` swaps the primary-coloured selection for a grey one with wider segments; `equalWidth` gives every item the width of the widest one while the control still shrink-wraps |
+| `KsCollapse` / `KsCollapseItem` | Collapsible sections; `flush` makes a compact navigation tree (no padding, arrow beside the title: the docs table of contents); `--ks-collapse-item-disabled-cursor` replaces the not-allowed cursor of a disabled item; `--ks-collapse-header-padding`, `--ks-collapse-header-border` (kept while the item is open), `--ks-collapse-header-radius`, `--ks-collapse-header-bg` and `--ks-collapse-content-padding` restyle the rows |
 | `KsFileTag` | Storage URI rendered as a file reference: a `KsTag` whose symbol comes from the extension, with a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
-| `KsTree` | Hierarchical tree view |
+| `KsTree` | Hierarchical tree view; `--ks-tree-node-height`, `--ks-tree-node-radius`, `--ks-tree-node-hover-bg`, `--ks-tree-node-focus-bg` and `--ks-tree-node-overflow` style the rows; `variant="files"` is the namespace file explorer: a guide line per level, outlined on hover, filled when current or when the node's class is `is-selected` |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
+| `KsChangeReview` | A change to review before it is applied (a Terraform plan, an Ansible check run): a bar of each kind of change, a filter chip per named segment (`v-model:filter`) and a tab per slot (`v-model:tab`) |
 | `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
-| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
+| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces); `compact` scales headings down to the UI type scale for markdown inside a panel; `lead` bolds an opening paragraph; `dense` gives small secondary paragraphs for a description in a list; `reference` turns headings into section labels and stacks table rows; `--ks-markdown-paragraph-color` / `-size` / `-line-height` / `-spacing`, `--ks-markdown-list-color`, `--ks-markdown-code-block-spacing`, `--ks-markdown-h3-margin-top`, `--ks-markdown-copy-hover-background` and `--ks-markdown-code-token-size` tune it from a wrapper |
 
 ### Charts
 
 | Component | Purpose |
 |-----------|---------|
-| `KsEchart` | ECharts base wrapper (lazy-load) |
+| `KsEchart` | ECharts base wrapper (lazy-load); `seriesLabel` sets the text of a series or pie slice in the external tooltip |
 | `KsLine` / `KsBar` / `KsPie` | Line, bar, and pie charts (lazy-load) |
 | `KsGraph` | Graph / network visualization (lazy-load) |
 
@@ -461,13 +466,13 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsTabs` / `KsTabPane` | Tabbed interface |
+| `KsTabs` / `KsTabPane` | Tabbed interface; in `box` tabs a disabled tab cannot be clicked through; `hideDisabledArrows` hides a scroll arrow once it is disabled; `--ks-tabs-header-margin` spaces the header of `box` and `segmented` tabs |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
-| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover |
+| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover; `--ks-dropdown-danger-bg` / `--ks-dropdown-danger-color` replace that hover's colours |
 | `KsTopNavBar` | Top navigation bar; `titleSiblings` reaches the breadcrumb's current page |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
 | `KsSelectableListItem` | Button list item with title, optional subtitle and leading slot, selected and disabled states |
-| `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation. An item's `siblings` loader (or `children` on the first item, and the `titleSiblings` prop for the current page) adds a chevron whose hover menu lists that level, headed by the level above (its `scope` when the label is not the right name for its content); an entry with a `children` loader flies out its own content to the right, as deep as the tree goes. Level loaders run as soon as the bar renders and an empty result shows no chevron; fly-outs load on hover. Namespace and flow pages build theirs with `useNamespaceBreadcrumb` |
+| `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation. An item's `siblings` loader (or `children` on the first item, and the `titleSiblings` prop for the current page) adds a chevron whose hover menu lists that level, headed by the level above (its `scope` when the label is not the right name for its content); an entry with a `children` loader flies out its own content to the right, as deep as the tree goes. Level loaders run as soon as the bar renders and an empty result shows no chevron; a loader marked `lazy` (`Object.assign(loader, {lazy: true})`) runs each time its menu opens instead, for a list that costs a request, and always shows the chevron. Fly-outs load once the pointer rests on their row. An entry with `divided` starts a group inside a menu, ruled off from the entries above. Namespace and flow pages build theirs with `useNamespaceBreadcrumb` |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 
 ## Utilities (import from the design system)
@@ -475,7 +480,7 @@ If your `<style>` block needs to exist:
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants and icons. A state's colour is not a property of the state: read it with `State.getStateColor(name)`, which resolves `--ks-status-*`
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
 - `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
-- `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
+- `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `instantToPickerDate()` / `pickerDateToInstant()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
 - `escapeHtml()`, `cloneDeep()`, `deepMerge()`, `isDeepEqual()`, `isPlainObject()`, `getPath()`, `setPath()`, `groupBy()`, `mapValues()`, `debounce()`, `throttle()` — the general-purpose helpers that replaced lodash. `debounce`/`throttle` return a function carrying `cancel()` and `flush()`. Do not add `lodash` back for any of these
@@ -484,8 +489,10 @@ If your `<style>` block needs to exist:
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
+- `sortFromQuery(route.query.sort, fallback)`: the `defaultSort` of a URL-driven `KsDataTable`, so its sort arrow matches the rows after a refresh
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
 - `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
+- `designSystemAsyncComponentsReady()` — the lazy imports of `KsMarkdown`, the charts and `KsEditor` still in flight, and the render of what they loaded, awaited by the unit setup after each test so a spec that mounts one is not torn down mid-import
 
 ## Composables
 
@@ -509,6 +516,7 @@ Token families currently exposed:
 - `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
 - `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
 - `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-chart-categorical-1` … `-10`: palette for chart categories with no status meaning; dashboard charts hand them out with `chartCategoryColors()`
 - `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
 - `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 

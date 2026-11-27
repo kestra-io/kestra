@@ -36,10 +36,12 @@
     import NoCode from "../no-code/NoCode.vue"
     import BlockEditor from "../no-code/blocks/BlockEditor.vue"
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
-    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
+    import {EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
+    import {getDefaultActiveTabs} from "./defaultActiveTabs"
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
     import {useTopologyPanels} from "./useTopologyPanels"
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
+    import {usePublishShortcut} from "./usePublishShortcut"
     import {storageKeys} from "../../utils/constants"
 
     import {useNoCodePanelsFull} from "./useNoCodePanels"
@@ -60,6 +62,7 @@
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
     const {trackTabOpen} = useTabTracking()
+    usePublishShortcut()
 
     const alwaysSaveKey = computed(() => `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`)
     const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value)
@@ -186,7 +189,7 @@
         source: computed(() => flowStore.flowYaml),
     })
 
-    const tabs = computed(() => DEFAULT_ACTIVE_TABS)
+    const tabs = getDefaultActiveTabs()
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
 

@@ -239,6 +239,49 @@ export const ExternalTooltip: Story = {
     },
 }
 
+export const ExternalTooltipSeriesLabel: Story = {
+    render: () => ({
+        components: {KsEchart},
+        setup() {
+            const labels: Record<string, string> = {"by_priority.critical": "Critical", "by_priority.high": "High"}
+            const seriesData = [
+                {name: "by_priority.critical", data: [7, 9, 6, 8, 5, 7, 4]},
+                {name: "by_priority.high", data: [12, 10, 14, 11, 13, 12, 9]},
+                {name: "by_priority.low", data: [9, 8, 10, 7, 9, 11, 8]},
+            ]
+            return {
+                seriesLabel: (name: string) => labels[name],
+                options: {
+                    xAxis: {type: "category", data: CATEGORIES},
+                    yAxis: {type: "value"},
+                    tooltip: {trigger: "axis"},
+                    series: seriesData.map((s) => ({...s, type: "bar", stack: "total"})),
+                },
+            }
+        },
+        template: `
+            <div style="padding:24px;height:280px">
+                <ks-echart
+                    :options="options"
+                    tooltip-type="external"
+                    :seriesLabel="seriesLabel"
+                />
+            </div>
+        `,
+    }),
+    parameters: {
+        controls: {disable: true},
+        docs: {
+            description: {
+                story:
+                    "seriesLabel gives the external tooltip a display name per series, here Critical and High, " +
+                    "while the series keep their raw names for legend toggles and click handlers. " +
+                    "A series it returns nothing for, by_priority.low, keeps the default formatting.",
+            },
+        },
+    },
+}
+
 // ─── Loading state ────────────────────────────────────────────────────────────
 
 export const Loading: Story = {

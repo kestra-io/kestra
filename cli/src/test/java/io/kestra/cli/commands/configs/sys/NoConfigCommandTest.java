@@ -1,13 +1,12 @@
 package io.kestra.cli.commands.configs.sys;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.cli.ConsoleCapture;
 import io.kestra.cli.commands.flows.FlowDeleteCommand;
 import io.kestra.cli.commands.namespaces.kv.KvCommand;
 
@@ -26,15 +25,12 @@ class NoConfigCommandTest {
 
     @Test
     void shouldSucceedWithNamespaceKVCommandWithoutParamsAndConfig() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
-
         try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
             String[] args = {};
-            Integer call = PicocliRunner.call(KvCommand.class, ctx, args);
+            var result = ConsoleCapture.run(() -> PicocliRunner.call(KvCommand.class, ctx, args));
 
-            assertThat(call).isZero();
-            assertThat(out.toString()).contains("Usage: kestra namespace kv");
+            assertThat(result.value()).isZero();
+            assertThat(result.out()).contains("Usage: kestra namespace kv");
         }
     }
 
@@ -42,12 +38,6 @@ class NoConfigCommandTest {
     void shouldFailWithDeleteFlowCommandWithoutConfig() throws URISyntaxException {
         URL flowUrl = NoConfigCommandTest.class.getClassLoader().getResource("crudFlow/date.yml");
         Objects.requireNonNull(flowUrl, "Test flow resource not found");
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
-
-        System.setOut(new PrintStream(out));
-        System.setErr(new PrintStream(err));
 
         try (
             ApplicationContext ctx = ApplicationContext.builder()
@@ -67,12 +57,12 @@ class NoConfigCommandTest {
                 "id"
             };
 
-            Integer exitCode = PicocliRunner.call(FlowDeleteCommand.class, ctx, createArgs);
+            var result = ConsoleCapture.run(() -> PicocliRunner.call(FlowDeleteCommand.class, ctx, createArgs));
 
-            assertThat(exitCode).isNotZero();
+            assertThat(result.value()).isNotZero();
             // check that the only log is an access log: this has the advantage to also check that access log is working!
-            assertThat(out.toString()).contains("DELETE /api/v1/main/flows/namespace/id HTTP/1.1 | status: 500");
-            assertThat(err.toString()).contains("No bean of type [io.kestra.core.repositories.FlowRepositoryInterface] exists");
+            assertThat(result.out()).contains("DELETE /api/v1/main/flows/namespace/id HTTP/1.1 | status: 500");
+            assertThat(result.err()).contains("No bean of type [io.kestra.core.repositories.FlowRepositoryInterface] exists");
         }
     }
 

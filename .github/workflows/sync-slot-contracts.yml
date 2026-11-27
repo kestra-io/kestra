@@ -7,10 +7,16 @@ on:
       - develop
     paths:
       - "ui/packages/slot-contracts/src/**"
+      - "ui/packages/slot-contracts/scripts/**"
+      - "ui/packages/slot-contracts/tsdown.config.ts"
+      - "ui/packages/slot-contracts/package.json"
+  workflow_dispatch:
 
 jobs:
   sync:
     name: Sync contracts to kestra-io/artifact-sdk
+    # A dispatch from a feature branch would publish its unmerged contracts.
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:

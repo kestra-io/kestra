@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.input.TableInput;
 
 /**
  * Exception that can be thrown when Inputs/Outputs have validation problems.
@@ -26,6 +27,12 @@ public class InputOutputValidationException extends KestraRuntimeException {
      */
     private final String path;
 
+    /**
+     * The cause alone, without the input and the place inside the value that {@link #path} already points to, so a
+     * form showing the message next to that place does not repeat it. Null when the error is not about an input.
+     */
+    private final String detail;
+
     public InputOutputValidationException(String message) {
         this(message, false);
     }
@@ -35,9 +42,14 @@ public class InputOutputValidationException extends KestraRuntimeException {
     }
 
     public InputOutputValidationException(String message, boolean renderError, String path) {
+        this(message, renderError, path, null);
+    }
+
+    public InputOutputValidationException(String message, boolean renderError, String path, String detail) {
         super(message);
         this.renderError = renderError;
         this.path = path;
+        this.detail = detail;
     }
 
     public boolean isRenderError() {
@@ -48,21 +60,29 @@ public class InputOutputValidationException extends KestraRuntimeException {
         return path;
     }
 
-    public static InputOutputValidationException of(String message, Input<?> input) {
-        String inputMessage = "Invalid value for input" + " `" + input.getId() + "`. Cause: " + message;
-        return new InputOutputValidationException(inputMessage);
+    public String getDetail() {
+        return detail;
     }
 
-    /** As {@link #of(String, Input)}, but records where inside the value the error sits. */
-    public static InputOutputValidationException of(String message, Input<?> input, String path) {
+    public static InputOutputValidationException of(String message, Input<?> input) {
         String inputMessage = "Invalid value for input" + " `" + input.getId() + "`. Cause: " + message;
-        return new InputOutputValidationException(inputMessage, false, path);
+        return new InputOutputValidationException(inputMessage, false, null, message);
+    }
+
+    /**
+     * As {@link #of(String, Input)}, but records where inside the value the error sits. The message names that place,
+     * e.g. the row and column of a {@code TABLE} cell, while the detail leaves it to the path.
+     */
+    public static InputOutputValidationException of(String message, Input<?> input, String path) {
+        String located = input instanceof TableInput table ? table.locationOf(path) + message : message;
+        String inputMessage = "Invalid value for input" + " `" + input.getId() + "`. Cause: " + located;
+        return new InputOutputValidationException(inputMessage, false, path, message);
     }
 
     /** As {@link #of(String, Input)}, but flags the error as a render/resolution failure (broken field). */
     public static InputOutputValidationException ofRenderError(String message, Input<?> input) {
         String inputMessage = "Invalid value for input" + " `" + input.getId() + "`. Cause: " + message;
-        return new InputOutputValidationException(inputMessage, true);
+        return new InputOutputValidationException(inputMessage, true, null, message);
     }
 
     public static InputOutputValidationException of(String message, Output output) {

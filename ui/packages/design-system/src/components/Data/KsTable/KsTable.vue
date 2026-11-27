@@ -2,6 +2,7 @@
     <ElTable
         ref="tableRef"
         v-bind="({...filteredProps(), ...$attrs} as TableProps<TableRow>)"
+        :class="{'kel-table--flush-expand': flushExpand}"
         @selection-change="(selection) => emit('selectionChange', selection)"
         @select="(selection, row) => emit('select', selection, row)"
         @sort-change="(e) => emit('sortChange', e)"
@@ -20,41 +21,30 @@
 </template>
 
 <script setup lang="ts" generic="T">
-    import {ref} from "vue"
+    import {ref, type HTMLAttributes} from "vue"
     import {ElTable} from "element-plus"
     import type {TableColumnCtx, TableInstance, TableProps} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 
     type TableRow = NonNullable<TableProps["data"]>[number]
 
-    const props = withDefaults(defineProps<{
+    type KsTableProps = Omit<TableProps<T & TableRow>, "data"> & {
         data?: T[]
-        tableLayout?: "fixed" | "auto"
-        size?: "large" | "default" | "small"
-        rowKey?: string | ((row: T) => string)
-        emptyText?: string
-        defaultSort?: {prop: string; order: "ascending" | "descending" | null}
-        showHeader?: boolean
-        maxHeight?: string | number
-        fit?: boolean
-        cellClassName?: string | ((data: {row: T; rowIndex: number; column: TableColumnCtx<TableRow>; columnIndex: number}) => string)
-        rowClassName?: string | ((data: {row: T; rowIndex: number}) => string)
-    }>(), {
-        data: undefined,
-        tableLayout: undefined,
-        size: undefined,
-        rowKey: undefined,
-        emptyText: undefined,
-        defaultSort: undefined,
-        showHeader: undefined,
-        maxHeight: undefined,
-        fit: undefined,
-        cellClassName: undefined,
-        rowClassName: undefined,
-    })
+        /** Expanded rows render their content edge to edge: no cell padding, no border. */
+        flushExpand?: boolean
+    }
+
+    type CellListener = (row: T, column: TableColumnCtx<T & TableRow>, cell: HTMLTableCellElement, event: Event) => void
+
+    const props = defineProps<KsTableProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsTableProps> & {
+        onCellClick?: CellListener
+        onCellMouseEnter?: CellListener
+        onCellMouseLeave?: CellListener
+    })>()
 
     const emit = defineEmits<{
         selectionChange: [selection: T[]]
@@ -71,7 +61,7 @@
 
     const tableRef = ref<TableInstance>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props, ["flushExpand"])
 
     defineExpose({
         clearSelection: () => tableRef.value?.clearSelection(),
@@ -131,7 +121,12 @@
         }
 
         & .kel-table__empty-text {
+            width: var(--ks-table-empty-text-width, 50%);
             color: var(--ks-text-dim) !important;
+        }
+
+        & tr.selected {
+            background-color: var(--ks-bg-tag);
         }
 
         & .kel-table__body tr:hover > td.kel-table__cell,
@@ -198,6 +193,15 @@
             & .kel-button:hover {
                 background-color: var(--ks-bg-tag);
             }
+        }
+
+        & th.row-action .cell {
+            padding-right: var(--ks-table-action-header-padding-right, 8px);
+        }
+
+        &.kel-table--flush-expand td.kel-table__expanded-cell {
+            padding: 0;
+            border: none;
         }
 
         & th.shrink {

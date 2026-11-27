@@ -1,9 +1,11 @@
 package io.kestra.plugin.core.flow;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
@@ -15,8 +17,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import com.google.common.collect.ImmutableMap;
@@ -30,6 +35,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
@@ -41,11 +47,13 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FilesService;
+import io.kestra.core.runners.LocalWorkingDir;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -59,9 +67,19 @@ import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @KestraTest(startRunner = true)
 @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
@@ -124,53 +142,127 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    void shouldNotResolveTerminalStateWhenASubtaskIsStillRunning() throws Exception {
-        // Given a WorkingDirectory whose subtasks run inside the Worker and report through independent
-        // queue messages: t4 has already failed but t3's terminal (SUCCESS) result hasn't been joined yet
+    void shouldOpenTheFolderBeforeAnyTaskAndCloseItAfterTheLastOne() throws Exception {
         WorkingDirectory workingDirectory = fourSubtasksWorkingDirectory();
-        TaskRun parentTaskRun = TaskRun.builder().id("worker-run").taskId("worker").state(new State()).build();
+        TaskRun parent = TaskRun.builder().id("worker-run").taskId("worker").state(new State().withState(State.Type.RUNNING)).build();
         RunContext runContext = runContextFactory.of(workingDirectory, Map.of());
 
-        Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                parentTaskRun,
-                childTaskRun(parentTaskRun, "t1", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t2", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t3", State.Type.RUNNING),
-                childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
-            ))
-            .build();
+        assertThat(workingDirectory.resolveNexts(runContext, runningExecution(parent), parent))
+            .extracting(next -> next.getTask().getId())
+            .containsExactly("worker_open");
 
-        // When resolving the state while t3 is still RUNNING
-        Optional<State.Type> resolvedState = workingDirectory.resolveState(runContext, execution, parentTaskRun);
-
-        // Then it must not terminate yet
-        assertThat(resolvedState).isEmpty();
+        Execution failedChild = runningExecution(
+            parent,
+            childTaskRun(parent, "worker_open", State.Type.SUCCESS),
+            childTaskRun(parent, "t1", State.Type.SUCCESS),
+            childTaskRun(parent, "t2", State.Type.SUCCESS),
+            childTaskRun(parent, "t3", State.Type.SUCCESS),
+            childTaskRun(parent, "t4", State.Type.FAILED)
+        );
+        assertThat(workingDirectory.resolveNexts(runContext, failedChild, parent))
+            .extracting(next -> next.getTask().getId())
+            .containsExactly("worker_close");
+        assertThat(workingDirectory.findById("worker_close")).containsInstanceOf(WorkingDirectory.Close.class);
     }
 
     @Test
-    void shouldResolveFailedWhenAllSubtasksHaveTerminatedAndOneFailed() throws Exception {
-        // Given a WorkingDirectory whose subtasks have all reported their terminal result, t4 among them FAILED
+    void shouldGiveTheInternalTasksTheValueOfTheWorkingDirectoryInsideAForEach() throws Exception {
         WorkingDirectory workingDirectory = fourSubtasksWorkingDirectory();
-        TaskRun parentTaskRun = TaskRun.builder().id("worker-run").taskId("worker").state(new State()).build();
+        TaskRun parent = TaskRun.builder().id("worker-run").taskId("worker").value("item").state(new State().withState(State.Type.RUNNING)).build();
         RunContext runContext = runContextFactory.of(workingDirectory, Map.of());
 
-        Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                parentTaskRun,
-                childTaskRun(parentTaskRun, "t1", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t2", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t3", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
-            ))
-            .state(new State().withState(State.Type.RUNNING))
+        assertThat(workingDirectory.resolveNexts(runContext, runningExecution(parent), parent))
+            .extracting(next -> next.getTaskRun().getValue())
+            .containsExactly("item");
+    }
+
+    @Test
+    void shouldBindTheWorkingDirectoryToTheWorkerThatRanItsOpenTask() {
+        TaskRun parent = TaskRun.builder().id("worker-run").taskId("worker").state(new State().withState(State.Type.RUNNING)).build();
+        TaskRun open = childTaskRun(parent, "worker_open", State.Type.SUCCESS)
+            .withAttempts(List.of(TaskRunAttempt.builder().workerId("worker-1").state(new State().withState(State.Type.SUCCESS)).build()));
+
+        assertThat(WorkingDirectory.boundWorkerId(runningExecution(parent), parent.getId())).isEmpty();
+        assertThat(WorkingDirectory.boundWorkerId(runningExecution(parent, open), parent.getId())).contains("worker-1");
+    }
+
+    private static Execution runningExecution(TaskRun... taskRuns) {
+        return Execution.builder().state(new State().withState(State.Type.RUNNING)).taskRunList(List.of(taskRuns)).build();
+    }
+
+    private static TaskRun childTaskRun(TaskRun parent, String taskId, State.Type state) {
+        return TaskRun.builder()
+            .id(taskId + "-run")
+            .taskId(taskId)
+            .parentTaskRunId(parent.getId())
+            .state(new State().withState(state))
             .build();
+    }
 
-        // When resolving the state now that every subtask has terminated
-        Optional<State.Type> resolvedState = workingDirectory.resolveState(runContext, execution, parentTaskRun);
+    @Test
+    void shouldNotUploadTheCacheAgainWhenItsFilesDidNotChangeSinceTheOpenTask(@TempDir Path tempDir) throws Exception {
+        // Given a cache holding hello.txt, downloaded by the open task
+        LocalWorkingDir workingDir = new LocalWorkingDir(tempDir, "working-directory-test");
+        ByteArrayOutputStream archive = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(archive)) {
+            zip.putNextEntry(new ZipEntry("hello.txt"));
+            zip.write("cached".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        RunContext runContext = mock(RunContext.class, RETURNS_DEEP_STUBS);
+        when(runContext.workingDir()).thenReturn(workingDir);
+        when(runContext.storage().getCacheFile(any(), any(), any())).thenReturn(Optional.of(new ByteArrayInputStream(archive.toByteArray())));
+        when(runContext.render(any(Property.class)).as(Duration.class)).thenReturn(Optional.of(Duration.ofHours(1)));
+        when(runContext.render(any(Property.class)).asList(String.class)).thenReturn(List.of("*.txt"));
 
-        // Then the WorkingDirectory resolves to FAILED as t4 failed
-        assertThat(resolvedState).contains(State.Type.FAILED);
+        // When the open and the close tasks run on distinct instances of the WorkingDirectory, as they are deserialized from distinct jobs
+        cachedWorkingDirectory().preExecuteTasks(runContext);
+        cachedWorkingDirectory().postExecuteTasks(runContext);
+
+        // Then the unchanged files are not uploaded again
+        verify(runContext.storage(), never()).putCacheFile(any(), any(), any());
+    }
+
+    @Test
+    void shouldNotFailTheCloseTaskWhenItsFolderCannotBeDeleted(@TempDir Path tempDir) throws Exception {
+        WorkingDirectory workingDirectory = spy(fourSubtasksWorkingDirectory());
+        doThrow(new IOException("folder locked")).when(workingDirectory).cleanup(any());
+
+        assertThatCode(() -> closeTask(workingDirectory).run(closeRunContext(tempDir))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldReportTheOutputFilesErrorWhenTheFolderCannotBeDeletedEither(@TempDir Path tempDir) throws Exception {
+        WorkingDirectory workingDirectory = spy(fourSubtasksWorkingDirectory());
+        doThrow(new IllegalStateException("output files not saved")).when(workingDirectory).postExecuteTasks(any());
+        doThrow(new IOException("folder locked")).when(workingDirectory).cleanup(any());
+
+        assertThatThrownBy(() -> closeTask(workingDirectory).run(closeRunContext(tempDir))).hasMessage("output files not saved");
+    }
+
+    private static WorkingDirectory.Close closeTask(WorkingDirectory workingDirectory) {
+        return WorkingDirectory.Close.builder()
+            .id("worker_close")
+            .type(WorkingDirectory.Close.class.getName())
+            .workingDirectory(workingDirectory)
+            .build();
+    }
+
+    private static RunContext closeRunContext(Path tempDir) {
+        LocalWorkingDir workingDir = new LocalWorkingDir(tempDir, "working-directory-test");
+        workingDir.path();
+        RunContext runContext = mock(RunContext.class, RETURNS_DEEP_STUBS);
+        when(runContext.workingDir()).thenReturn(workingDir);
+        return runContext;
+    }
+
+    private static WorkingDirectory cachedWorkingDirectory() {
+        return WorkingDirectory.builder()
+            .id("worker")
+            .type(WorkingDirectory.class.getName())
+            .cache(WorkingDirectory.Cache.builder().ttl(Property.ofValue(Duration.ofHours(1))).patterns(Property.ofValue(List.of("*.txt"))).build())
+            .tasks(List.of(Return.builder().id("t1").type(Return.class.getName()).format(Property.ofValue("first")).build()))
+            .build();
     }
 
     private static WorkingDirectory fourSubtasksWorkingDirectory() {
@@ -183,15 +275,6 @@ public class WorkingDirectoryTest {
                 Return.builder().id("t3").type(Return.class.getName()).format(Property.ofValue("third")).build(),
                 Return.builder().id("t4").type(Return.class.getName()).format(Property.ofValue("fourth")).build()
             ))
-            .build();
-    }
-
-    private static TaskRun childTaskRun(TaskRun parentTaskRun, String taskId, State.Type state) {
-        return TaskRun.builder()
-            .id(taskId + "-run")
-            .taskId(taskId)
-            .parentTaskRunId(parentTaskRun.getId())
-            .state(new State().withState(state))
             .build();
     }
 
@@ -221,6 +304,12 @@ public class WorkingDirectoryTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/working-directory-postexecute-failure.yaml" })
+    void shouldFailWorkingDirectoryWhenItsOutputFilesCannotBeSaved() throws Exception {
+        suite.outputFilesFailure(runnerUtils);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/working-directory-secret-output.yml" })
     void secretOutputMasking() throws Exception {
         suite.secretOutputMasking(runnerUtils);
@@ -232,6 +321,8 @@ public class WorkingDirectoryTest {
         StorageInterface storageInterface;
         @Inject
         NamespaceFactory namespaceFactory;
+        @Inject
+        NamespaceService namespaceService;
         @Inject
         TaskOutputService taskOutputService;
         @Inject
@@ -245,9 +336,9 @@ public class WorkingDirectoryTest {
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
             );
 
-            assertThat(execution.getTaskRunList()).hasSize(4);
+            assertThat(execution.getTaskRunList()).hasSize(6);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-            assertThat((String) taskOutputService.getOutputs(execution.getTaskRunList().get(3)).get("value")).startsWith("kestra://");
+            assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("2_end").getFirst()).get("value")).startsWith("kestra://");
         }
 
         public void failed(String tenantId, TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
@@ -256,7 +347,7 @@ public class WorkingDirectoryTest {
                 (f, e) -> ImmutableMap.of("failed", "true"), Duration.ofSeconds(60)
             );
 
-            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getTaskRunList()).hasSize(5);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
             assertThat(execution.findTaskRunsByTaskId("error-t1")).hasSize(1);
         }
@@ -284,7 +375,7 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "working-directory-outputs");
 
-            assertThat(execution.getTaskRunList()).hasSize(2);
+            assertThat(execution.getTaskRunList()).hasSize(4);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
             TaskRun taskRun = execution.getTaskRunList().getFirst();
@@ -297,7 +388,7 @@ public class WorkingDirectoryTest {
                 null,
                 storageContext,
                 storageInterface,
-                null,
+                namespaceService,
                 namespaceFactory
             );
 
@@ -313,19 +404,19 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-inputs");
 
-            assertThat(execution.getTaskRunList()).hasSize(2);
+            assertThat(execution.getTaskRunList()).hasSize(4);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            StorageContext storageContext = StorageContext.forTask(execution.getTaskRunList().get(1));
+            StorageContext storageContext = StorageContext.forTask(execution.findTaskRunsByTaskId("inputFiles").getFirst());
             InternalStorage storage = new InternalStorage(
                 null,
                 storageContext,
                 storageInterface,
-                null,
+                namespaceService,
                 namespaceFactory
             );
 
-            TaskRun taskRun = execution.getTaskRunList().get(1);
+            TaskRun taskRun = execution.findTaskRunsByTaskId("inputFiles").getFirst();
             Map<String, Object> outputs = taskOutputService.getOutputs(taskRun);
             assertThat(outputs).containsKey("uris");
 
@@ -350,7 +441,7 @@ public class WorkingDirectoryTest {
                 null,
                 storageContext,
                 storageInterface,
-                null,
+                namespaceService,
                 namespaceFactory
             );
             storage.deleteCacheFile("workingDir", null);
@@ -360,7 +451,7 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-cache");
 
-            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getTaskRunList()).hasSize(5);
             assertThat(
                 taskOutputService.getOutputs(
                     execution.getTaskRunList().stream()
@@ -374,7 +465,7 @@ public class WorkingDirectoryTest {
             // a second run should use the cache so the task `exists` should output the cached file
             execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-cache");
 
-            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getTaskRunList()).hasSize(5);
             assertThat(
                 ((Map<String, String>) taskOutputService.getOutputs(
                     execution.getTaskRunList().stream()
@@ -418,7 +509,7 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-namespace-files");
 
-            assertThat(execution.getTaskRunList()).hasSize(6);
+            assertThat(execution.getTaskRunList()).hasSize(8);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
             assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
             assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("t1").getFirst()).get("value")).isEqualTo("first");
@@ -443,7 +534,7 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-namespace-files-with-namespaces");
 
-            assertThat(execution.getTaskRunList()).hasSize(6);
+            assertThat(execution.getTaskRunList()).hasSize(8);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
             assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
             assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("t1").getFirst()).get("value")).isEqualTo("first in third namespace");
@@ -456,7 +547,7 @@ public class WorkingDirectoryTest {
             throws TimeoutException, GeneralSecurityException, QueueException, io.kestra.core.exceptions.InternalException {
             Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-taskrun-encrypted");
 
-            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getTaskRunList()).hasSize(5);
             Map<String, Object> encryptedString = (Map<String, Object>) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("encrypted").getFirst()).get("value");
             assertThat(encryptedString.get("type")).isEqualTo(EncryptedString.TYPE);
             String encryptedValue = (String) encryptedString.get("value");
@@ -494,7 +585,17 @@ public class WorkingDirectoryTest {
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
             );
 
-            assertThat(execution.getTaskRunList()).hasSize(2);
+            assertThat(execution.getTaskRunList()).hasSize(5);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        }
+
+        public void outputFilesFailure(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-postexecute-failure");
+
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory_close").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("after")).isEmpty();
+            assertThat(execution.findTaskRunsByTaskId("onError")).isNotEmpty();
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         }
 

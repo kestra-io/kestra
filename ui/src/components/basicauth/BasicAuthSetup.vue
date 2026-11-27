@@ -36,11 +36,11 @@
                     <div v-if="activeStep === 0">
                         <KsForm ref="userForm" class="user-form" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
                             <div class="user-field">
-                                <KsFormItem :label="$t('setup.form.username')" prop="username">
+                                <KsFormItem :label="$t('setup.form.username')" prop="username" class="field">
                                     <KsInput v-model="userFormData.username" placeholder="admin@company.com" type="email">
                                         <template #suffix v-if="getFieldError('username')">
                                             <KsTooltip placement="top" :content="getFieldError('username')">
-                                                <KsIcon name="information-outline" class="validation-icon error" />
+                                                <KsIcon class="validation-icon error"><InformationOutline /></KsIcon>
                                             </KsTooltip>
                                         </template>
                                     </KsInput>
@@ -52,7 +52,7 @@
                                 </div>
                             </div>
                             <div class="user-field">
-                                <KsFormItem :label="$t('setup.form.password')" prop="password">
+                                <KsFormItem :label="$t('setup.form.password')" prop="password" class="field">
                                     <KsInput
                                         type="password"
                                         showPassword
@@ -62,11 +62,11 @@
                                 </KsFormItem>
                                 <KsPasswordRequirements
                                     :password="userFormData.password"
-                                    v-model:valid="isPasswordValid"
+                                    @update:valid="isPasswordValid = $event"
                                 />
                             </div>
                             <div class="user-field">
-                                <KsFormItem :label="$t('confirm password')">
+                                <KsFormItem :label="$t('confirm password')" class="field">
                                     <KsInput
                                         type="password"
                                         showPassword
@@ -80,7 +80,7 @@
                             </div>
                         </KsForm>
                         <div class="setup-actions user-actions">
-                            <KsButton type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
+                            <KsButton type="primary" class="action" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
                                 {{ $t("setup.confirm.confirm") }}
                             </KsButton>
                         </div>
@@ -88,7 +88,7 @@
 
                     <div v-else-if="activeStep === 1">
                         <KsForm ref="surveyForm" class="survey-form" labelPosition="top" :model="surveyData" :showMessage="false">
-                            <KsFormItem :label="$t('setup.survey.company_size')">
+                            <KsFormItem :label="$t('setup.survey.company_size')" class="field">
                                 <KsSelect
                                     v-model="surveyData.mainGoal"
                                     :placeholder="$t('select')"
@@ -103,9 +103,9 @@
                                 </KsSelect>
                             </KsFormItem>
 
-                            <KsFormItem :label="$t('setup.survey.use_case')">
+                            <KsFormItem :label="$t('setup.survey.use_case')" class="field">
                                 <div class="use-case-checkboxes">
-                                    <KsCheckboxGroup v-model="surveyData.useCases">
+                                    <KsCheckboxGroup v-model="surveyData.useCases" class="use-case-group">
                                         <KsCheckbox
                                             v-for="option in useCaseOptions"
                                             :key="option.value"
@@ -118,7 +118,7 @@
                                 </div>
                             </KsFormItem>
 
-                            <KsFormItem :label="$t('setup.survey.newsletter_heading')" class="newsletter-form-item">
+                            <KsFormItem :label="$t('setup.survey.newsletter_heading')" class="field newsletter-form-item">
                                 <KsCheckbox v-model="surveyData.newsletter" class="newsletter-checkbox">
                                     {{ $t('setup.survey.newsletter') }}
                                 </KsCheckbox>
@@ -126,7 +126,7 @@
                         </KsForm>
 
                         <div class="setup-actions">
-                            <KsButton type="primary" @click="handleSurveyContinue()">
+                            <KsButton type="primary" class="action" @click="handleSurveyContinue()">
                                 {{ $t("setup.survey.continue") }}
                             </KsButton>
                         </div>
@@ -142,7 +142,7 @@
                                 {{ $t('setup.success.subtitle') }}
                             </p>
                         </div>
-                        <KsButton @click="completeSetup()" type="primary" class="success-button">
+                        <KsButton @click="completeSetup()" type="primary" class="action success-button">
                             {{ $t('setup.steps.complete') }}
                         </KsButton>
                     </div>
@@ -168,6 +168,7 @@
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import {storageKeys} from "../../utils/constants"
 
     interface UserFormData {

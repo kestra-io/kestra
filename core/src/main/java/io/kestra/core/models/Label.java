@@ -32,6 +32,7 @@ public record Label(
     public static final String SIMULATED_EXECUTION = SYSTEM_PREFIX + "simulatedExecution";
     public static final String TEST = SYSTEM_PREFIX + "test";
     public static final String FROM = SYSTEM_PREFIX + "from";
+    public static final String TEST_SUITE = SYSTEM_PREFIX + "testSuite";
     public static final String KILL_SWITCH = SYSTEM_PREFIX + "killSwitch";
 
     /** Known values for the {@link #FROM} system label. */

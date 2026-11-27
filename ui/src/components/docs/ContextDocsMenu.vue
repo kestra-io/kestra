@@ -1,9 +1,10 @@
 <template>
-    <div class="docsMenuWrapper">
+    <div ref="menuWrapper" class="docsMenuWrapper">
         <KsButton
             @click="menuOpen = !menuOpen"
             class="menuOpener"
             :class="{'is-open': menuOpen}"
+            :aria-expanded="menuOpen"
         >
             <Menu class="menuIcon" />
             {{ $t("documentationMenu") }}
@@ -30,6 +31,9 @@
                                     {{ (sidebarTitle ?? title).capitalize() }}
                                 </ContextDocsLink>
                             </template>
+                            <template #label="{title, class: childClass}">
+                                <span :class="childClass">{{ title.capitalize() }}</span>
+                            </template>
                         </RecursiveToc>
                     </li>
                 </template>
@@ -42,7 +46,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch, useTemplateRef} from "vue"
+    import {onClickOutside, onKeyStroke} from "@vueuse/core"
     import {useDocStore, type DocMetadata} from "../../stores/doc"
     import {buildDocsSections, buildDocsToc} from "./docsUtils"
 
@@ -54,6 +59,18 @@
     const docStore = useDocStore()
 
     const menuOpen = ref(false)
+    const menuWrapper = useTemplateRef<HTMLElement>("menuWrapper")
+
+    onClickOutside(menuWrapper, () => {
+        menuOpen.value = false
+    })
+
+    onKeyStroke("Escape", (event) => {
+        if (!menuOpen.value || event.defaultPrevented) return
+        const focusWasInMenu = menuWrapper.value?.contains(document.activeElement)
+        menuOpen.value = false
+        if (focusWasInMenu) menuWrapper.value?.querySelector("button")?.focus()
+    })
 
     const rawStructure = ref<Record<string, DocMetadata> | undefined>()
     const currentDocPath = computed(() => docStore.docPath)
@@ -168,7 +185,7 @@
             background-color: var(--ks-border-default);
         }
 
-        a, & :deep(span[class*="depth-"]) {
+        a, & span[class*="depth-"] {
             color: var(--ks-text-primary);
             text-decoration: none;
             display: block;
@@ -180,75 +197,75 @@
             width: 100%;
         }
 
-        a.depth-0, & :deep(span[class*="depth-"]).depth-0 {
+        a.depth-0, & span[class*="depth-"].depth-0 {
             padding-left: 0.5rem;
             font-weight: 500;
         }
 
-        a.active-page.depth-0, & :deep(span[class*="depth-"]).active-page.depth-0 {
+        a.active-page.depth-0, & span[class*="depth-"].active-page.depth-0 {
             padding-left: calc(0.5rem - 3px);
         }
 
-        a.depth-1, & :deep(span[class*="depth-"]).depth-1 {
+        a.depth-1, & span[class*="depth-"].depth-1 {
             padding-left: 1.5rem;
             font-size: var(--ks-font-size-base);
             color: var(--ks-text-secondary);
         }
 
-        a.active-page.depth-1, & :deep(span[class*="depth-"]).active-page.depth-1 {
+        a.active-page.depth-1, & span[class*="depth-"].active-page.depth-1 {
             padding-left: calc(1.5rem - 3px);
         }
 
-        a.depth-2, & :deep(span[class*="depth-"]).depth-2 {
+        a.depth-2, & span[class*="depth-"].depth-2 {
             padding-left: 2.5rem;
             font-size: var(--ks-font-size-xs);
             color: var(--ks-text-secondary);
             opacity: 0.9;
         }
 
-        a.active-page.depth-2, & :deep(span[class*="depth-"]).active-page.depth-2 {
+        a.active-page.depth-2, & span[class*="depth-"].active-page.depth-2 {
             padding-left: calc(2.5rem - 3px);
         }
 
-        a.depth-3, & :deep(span[class*="depth-"]).depth-3 {
+        a.depth-3, & span[class*="depth-"].depth-3 {
             padding-left: 3.5rem;
             font-size: var(--ks-font-size-xs);
             color: var(--ks-text-secondary);
             opacity: 0.8;
         }
 
-        a.active-page.depth-3, & :deep(span[class*="depth-"]).active-page.depth-3 {
+        a.active-page.depth-3, & span[class*="depth-"].active-page.depth-3 {
             padding-left: calc(3.5rem - 3px);
         }
 
-        a.depth-4, & :deep(span[class*="depth-"]).depth-4 {
+        a.depth-4, & span[class*="depth-"].depth-4 {
             padding-left: 4.5rem;
             font-size: var(--ks-font-size-xs);
             color: var(--ks-text-secondary);
             opacity: 0.7;
         }
 
-        a.active-page.depth-4, & :deep(span[class*="depth-"]).active-page.depth-4 {
+        a.active-page.depth-4, & span[class*="depth-"].active-page.depth-4 {
             padding-left: calc(4.5rem - 3px);
         }
 
-        a.depth-5, & :deep(span[class*="depth-"]).depth-5 {
+        a.depth-5, & span[class*="depth-"].depth-5 {
             padding-left: 5.5rem;
             font-size: var(--ks-font-size-xs);
             color: var(--ks-text-secondary);
             opacity: 0.6;
         }
 
-        a.active-page.depth-5, & :deep(span[class*="depth-"]).active-page.depth-5 {
+        a.active-page.depth-5, & span[class*="depth-"].active-page.depth-5 {
             padding-left: calc(5.5rem - 3px);
         }
 
-        & a:hover, & :deep(span[class*="depth-"]):hover {
+        & a:hover, & span[class*="depth-"]:hover {
             color: var(--ks-text-link);
             background-color: var(--ks-btn-secondary-bg-hover);
         }
 
-        a.active-page, & :deep(span[class*="depth-"]).active-page {
+        a.active-page, & span[class*="depth-"].active-page {
             color: var(--ks-text-link) !important;
             font-weight: var(--ks-font-weight-semibold);
             opacity: 1 !important;

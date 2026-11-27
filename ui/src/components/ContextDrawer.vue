@@ -4,7 +4,7 @@
             class="drawerSplitter"
             :style="{width: `${maxDrawerWidth}px`}"
         >
-            <KsSplitterPanel class="drawerSpacerPanel" :min="0" :size="spacerWidth" />
+            <KsSplitterPanel class="drawerSpacerPanel" style="overflow: hidden; pointer-events: none;" :min="0" :size="spacerWidth" />
 
             <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH">
                 <div class="drawerContent">
@@ -93,10 +93,10 @@
         return button.hasUnreadMarker === true && !!button.unread?.value
     }
 
-    const MIN_DRAWER_WIDTH = 200
+    const MIN_DRAWER_WIDTH = 360
     const drawerWidth = ref(640)
     const {width: windowWidth} = useWindowSize()
-    const maxDrawerWidth = computed(() => windowWidth.value * 0.5)
+    const maxDrawerWidth = computed(() => Math.min(windowWidth.value, Math.max(windowWidth.value * 0.5, MIN_DRAWER_WIDTH)))
 
     const spacerWidth = computed(() => Math.max(maxDrawerWidth.value - drawerWidth.value, 0))
 
@@ -131,30 +131,6 @@
         bottom: 0;
         height: 100%;
         flex-shrink: 0;
-
-        & :deep(.kel-splitter-panel) {
-            min-width: 0;
-        }
-
-        & :deep(.drawerSpacerPanel) {
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        & :deep(.kel-splitter-bar) {
-            background-color: transparent;
-        }
-
-        & :deep(.kel-splitter__splitter) {
-            width: 5px;
-            background-color: transparent;
-            transition: background-color 0.1s;
-
-            &:hover,
-            &.is-dragging {
-                background-color: var(--ks-btn-primary-bg-default);
-            }
-        }
     }
 
     .contextDrawer {

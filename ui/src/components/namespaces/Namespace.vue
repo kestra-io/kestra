@@ -4,7 +4,7 @@
             <Actions />
         </template>
     </TopNavBar>
-    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace vertical />
+    <Tabs :key="namespace ? 'update' : 'create'" :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace vertical />
 </template>
 
 <script setup lang="ts">
@@ -20,6 +20,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {provideNamespacePageState} from "override/composables/namespacePageState"
     import Tabs from "../Tabs.vue"
+    import {defaultTimeRange} from "../executions/timeRangeWiden"
 
     provideNamespacePageState()
     const {tabs} = useTabs()
@@ -46,12 +47,12 @@
 
     watch(namespace, loadNamespace)
 
-    watch(activeTabName, (newTab) => {
+    watch([activeTabName, namespace], ([newTab]) => {
         if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
 
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+                const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
                 const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION}
                 router.replace({name: route.name, params: route.params, query: newQuery})
             }

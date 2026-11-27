@@ -1,7 +1,7 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import type {RouteLocation} from "vue-router"
-import {useClient, type ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
+import {asProblem, useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
@@ -13,10 +13,11 @@ import {validationErrorLines, type ValidationError} from "../utils/validationErr
 import {routeFamily} from "../utils/routeFamily"
 import resource from "../models/resource"
 import action from "../models/action"
-import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
+import type {Dashboard, Chart, ChartStateCounts, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
+import {latestRequest} from "../utils/latestRequest"
 
 type ParsedDashboardSource = {id?: string} & Record<string, unknown>
 type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
@@ -221,7 +222,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
-        latestValidation++
+        startValidation()
         setValidationErrors(undefined)
 
         return activeDashboard.value
@@ -232,19 +233,19 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const yaml = {headers: {"Content-Type": "application/x-yaml"}}
 
     async function create(source: Dashboard["sourceCode"]) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards`, source ?? "", yaml)
+        const {data} = await axios.post<Dashboard>(`${apiUrl()}/dashboards`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const {data} = await axios.put(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
+        const {data} = await axios.put<Dashboard>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${id}`)
+        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`)
 
         const bookmarksStore = useBookmarksStore()
         const encodedId = encodeURIComponent(id)
@@ -257,14 +258,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return deleted
     }
 
-    let latestValidation = 0
+    const startValidation = latestRequest()
 
     /** Drops a response overtaken by a newer validation: it describes a source the editor no longer holds. */
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const validation = ++latestValidation
-        const isLatest = () => validation === latestValidation
+        const isLatest = startValidation()
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+            const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
             if (isLatest()) {
                 setValidationErrors(data.errors)
             }
@@ -279,7 +279,18 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
+            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}/charts/${chartId}`, parameters)
+            return data
+        } catch (e: unknown) {
+            if (handledIf(e, [404])) return undefined
+            if (handledIf(e, [410, 400])) return {results: [], total: 0, warning: asProblem(e)?.detail}
+            throw e
+        }
+    }
+
+    async function stateCounts(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
+        try {
+            const {data} = await axios.post<ChartStateCounts>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}/charts/${chartId}/state-counts`, parameters)
             return data
         } catch (e: unknown) {
             if (handledIf(e, [404])) return undefined
@@ -287,8 +298,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
     }
 
+    async function chartPreviewStateCounts(request: {chart: string; globalFilter: ChartFiltersOverrides}) {
+        const {data} = await axios.post<ChartStateCounts>(`${apiUrl()}/dashboards/charts/state-counts`, request)
+        return data
+    }
+
     async function validateChart(source: string) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
+        const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = validationErrorLines(data.errors)
         return data
     }
@@ -302,7 +318,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             ? await DashboardsAPI.exportChart({format: "CSV", chart: chart.content ?? "", globalFilter: parameters})
             : await DashboardsAPI.exportDashboardChart({format: "CSV", id: dashboard.id, chartId: chart.id ?? "", ...parameters})
 
-        Utils.downloadUrl(window.URL.createObjectURL(new Blob([data], {type: "application/octet-stream"})), `chart__${chart.id}.csv`)
+        Utils.downloadBlob(new Blob([data], {type: "application/octet-stream"}), `chart__${chart.id}.csv`)
     }
 
     const pluginsStore = usePluginsStore()
@@ -400,6 +416,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         delete: deleteDashboard,
         validateDashboard,
         generate,
+        stateCounts,
+        chartPreviewStateCounts,
         validateChart,
         chartPreview,
         export: exportDashboard,

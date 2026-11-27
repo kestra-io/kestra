@@ -5,6 +5,8 @@ import java.util.List;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Map;
 
@@ -50,7 +52,7 @@ class ChatMessageAdaptorTest {
     @Test
     void shouldFlagErrorToolResultsAsIsErrorWhenProjecting() {
         // Given — a persisted error tool result and a persisted ok tool result
-        AgentToolCall call = AgentToolCall.platform("c1", "read-execution", null, Map.of("executionId", "missing"));
+        AgentToolCall call = AgentToolCall.platform("c1", "read_execution", null, Map.of("executionId", "missing"));
         AgentMessage errorResult = toolResult(call, Map.of("outcome", "error", "error", "Execution not found"));
         AgentMessage okResult = toolResult(call, Map.of("outcome", "ok", "result", "done"));
 
@@ -64,10 +66,25 @@ class ChatMessageAdaptorTest {
     }
 
     @Test
+    void shouldCapPersistedOversizedToolResultWhenProjecting() {
+        // Given — a tool result persisted before the dispatch-side cap existed
+        AgentToolCall call = AgentToolCall.platform("c1", "get-plugin-schema", null, Map.of("pluginType", "x"));
+        String oversized = "x".repeat(ToolResultLimit.MAX_CHARS * 3);
+        AgentMessage result = toolResult(call, Map.of("outcome", "ok", "result", oversized));
+
+        // When
+        ToolExecutionResultMessage projected = (ToolExecutionResultMessage) ChatMessageAdaptor.project(List.of(result)).get(0);
+
+        // Then — the replayed text is bounded, so the thread can keep going
+        assertThat(projected.text().length()).isLessThan(ToolResultLimit.MAX_CHARS + 500);
+        assertThat(projected.text()).contains("[truncated:");
+    }
+
+    @Test
     void shouldReattachReasoningStateWhenProjectingToolCall() {
         // Given — a persisted tool call carrying the provider's reasoning state (thinking text + opaque
         // signature); projection must rebuild the AiMessage with both so the cross-turn replay stays valid
-        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"),
+        AgentToolCall call = AgentToolCall.platform("c1", "search_docs", null, Map.of("q", "trigger"),
             new AgentThinking("let me search the docs", "sig-abc", null));
         AgentMessage toolCallRow = AgentMessage.builder()
             .uid("tc-1")
@@ -89,7 +106,7 @@ class ChatMessageAdaptorTest {
         assertThat(projected).hasSize(2).first().isInstanceOf(AiMessage.class);
         AiMessage ai = (AiMessage) projected.getFirst();
         assertThat(ai.hasToolExecutionRequests()).isTrue();
-        assertThat(ai.toolExecutionRequests()).first().extracting(ToolExecutionRequest::name).isEqualTo("search-docs");
+        assertThat(ai.toolExecutionRequests()).first().extracting(ToolExecutionRequest::name).isEqualTo("search_docs");
         assertThat(ai.thinking()).isEqualTo("let me search the docs");
         assertThat(ai.attribute(ChatMessageAdaptor.THINKING_SIGNATURE_KEY, String.class)).isEqualTo("sig-abc");
         assertThat(ChatMessageAdaptor.thinkingOf(ai)).isEqualTo(new AgentThinking("let me search the docs", "sig-abc", null));
@@ -98,7 +115,7 @@ class ChatMessageAdaptorTest {
     @Test
     void shouldOmitReasoningStateWhenToolCallHasNone() {
         // Given — a legacy/non-thinking-provider tool call with no reasoning state
-        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"));
+        AgentToolCall call = AgentToolCall.platform("c1", "search_docs", null, Map.of("q", "trigger"));
         AgentMessage toolCallRow = AgentMessage.builder()
             .uid("tc-2")
             .threadId("thread-1")
@@ -120,9 +137,40 @@ class ChatMessageAdaptorTest {
         assertThat(ChatMessageAdaptor.thinkingOf(ai)).isNull();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "null", "[]", "\"text\"", "42" })
+    void shouldReportArgumentsAsMalformedWhenTheyAreNotAJsonObject(final String arguments) {
+        assertThat(ChatMessageAdaptor.hasMalformedArguments(arguments)).isTrue();
+        assertThat(ChatMessageAdaptor.malformedArgumentsReason(arguments)).isEqualTo("the arguments must be a JSON object");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "  ", "{}", "{\"executionId\":\"abc\"}" })
+    void shouldNotReportArgumentsAsMalformedWhenTheyAreBlankOrAJsonObject(final String arguments) {
+        assertThat(ChatMessageAdaptor.hasMalformedArguments(arguments)).isFalse();
+    }
+
+    @Test
+    void shouldReplaceOnlyUnrecoverableArgumentsWhenMakingToolArgumentsValid() {
+        // Given — one valid call, one that only needs normalizing, and one that cannot be recovered
+        AiMessage ai = AiMessage.from("", List.of(
+            ToolExecutionRequest.builder().id("c1").name("read_execution").arguments("{\"executionId\":\"a\"}").build(),
+            ToolExecutionRequest.builder().id("c2").name("read_execution").arguments("{\"executionId\":\"b\",}").build(),
+            ToolExecutionRequest.builder().id("c3").name("read_execution").arguments("{\"executionId\": c}").build()
+        ));
+
+        // When
+        AiMessage valid = ChatMessageAdaptor.withValidToolArguments(ai);
+
+        // Then
+        assertThat(valid.toolExecutionRequests())
+            .extracting(ToolExecutionRequest::arguments)
+            .containsExactly("{\"executionId\":\"a\"}", "{\"executionId\":\"b\"}", "{}");
+    }
+
     @Test
     void shouldDropUnpairedToolCallWhenProjecting() {
-        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"));
+        AgentToolCall call = AgentToolCall.platform("c1", "search_docs", null, Map.of("q", "trigger"));
         List<ChatMessage> projected = ChatMessageAdaptor.project(List.of(
             text(AgentMessageRole.USER, "search"),
             toolCall(call),

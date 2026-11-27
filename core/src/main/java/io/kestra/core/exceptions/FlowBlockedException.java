@@ -1,6 +1,11 @@
 package io.kestra.core.exceptions;
 
 import java.io.Serial;
+import java.util.List;
+
+import io.kestra.core.scheduler.model.Blocker.Reason;
+
+import lombok.Getter;
 
 /**
  * Raised when a flow is rejected by runtime governance and must not run.
@@ -11,16 +16,18 @@ import java.io.Serial;
  * execution, the scheduler path skips the flow's triggers.
  * </p>
  */
+@Getter
 public class FlowBlockedException extends FlowProcessingException {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FlowBlockedException(String message) {
-        super(message);
-    }
+    private final Reason reason;
+    private final List<String> policyIds;
 
-    public FlowBlockedException(String message, Throwable cause) {
+    public FlowBlockedException(Reason reason, String message, List<String> policyIds, Throwable cause) {
         super(message, cause);
+        this.reason = reason;
+        this.policyIds = List.copyOf(policyIds);
     }
 }

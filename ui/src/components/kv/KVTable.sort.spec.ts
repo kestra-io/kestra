@@ -147,4 +147,19 @@ describe("KVTable sort indicator", () => {
 
         expect(sortedColumns(wrapper)).toEqual({key: "ascending"})
     })
+
+    it("keeps the rows of the newest sort when an older sort answers last", async () => {
+        const {wrapper} = await mountKvList()
+        let answerOlderSort: (value: {results: KvEntry[]; total: number}) => void = () => {}
+        listAllKeys.mockImplementationOnce(() => new Promise((resolve) => answerOlderSort = resolve))
+        listAllKeys.mockResolvedValueOnce({results: [{...KV, key: "newest-key"}], total: 1})
+
+        await clickSort(wrapper, "last modified")
+        await clickSort(wrapper, "namespace")
+        answerOlderSort({results: [{...KV, key: "older-key"}], total: 1})
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("newest-key")
+        expect(wrapper.text()).not.toContain("older-key")
+    })
 })

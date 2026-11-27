@@ -7,6 +7,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,6 +36,11 @@ public class JdbcDispatchSubscriber<T extends Event> extends JdbcSubscriber<T> {
     @Override
     protected Integer pollBatch(Consumer<List<byte[]>> messageConsumer) {
         return this.jdbcQueueClient.subscribeDispatchBatch(this.queueName, this.routingKeys, messageConsumer);
+    }
+
+    @Override
+    protected boolean shouldReplayBatchOneByOne(RuntimeException failure) {
+        return !JooqDSLContextWrapper.isDeadlock(failure);
     }
 
     @Override

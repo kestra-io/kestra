@@ -140,6 +140,17 @@ class StateTest {
     }
 
     @Test
+    void shouldFormatHumanDurationWithMillisecondsAndUncappedHours() {
+        Instant start = Instant.parse("2026-01-01T00:00:00Z");
+        State state = new State(State.Type.SUCCESS, List.of(
+            new State.History(State.Type.CREATED, start),
+            new State.History(State.Type.SUCCESS, start.plus(Duration.ofHours(100).plusMinutes(2).plusSeconds(3).plusMillis(45)))
+        ));
+
+        assertThat(state.humanDuration()).isEqualTo("100:02:03.045");
+    }
+
+    @Test
     void shouldFormatHumanDurationAsHoursMinutesSeconds() {
         // Given / When / Then
         assertThat(terminatedState().humanDuration()).isEqualTo("01:01:01.000");

@@ -46,6 +46,39 @@ import lombok.experimental.SuperBuilder;
                         total:
                           agg: COUNT
                 """
+        ),
+        @Example(
+            title = "Display open issues by priority, with a color and a display name per priority, listed from critical to low.",
+            full = true,
+            code = """
+                charts:
+                  - id: open_by_priority
+                    type: io.kestra.plugin.core.dashboard.chart.Pie
+                    chartOptions:
+                      displayName: Open issues by priority
+                      colorByColumn: name
+                      colorByValues:
+                        - value: by_priority.critical
+                          label: Critical
+                          color: failed
+                        - value: by_priority.high
+                          label: High
+                          color: warning
+                        - value: by_priority.medium
+                          label: Medium
+                          color: "#f9a825"
+                        - value: by_priority.low
+                          label: Low
+                          color: success
+                    data:
+                      type: io.kestra.plugin.core.dashboard.data.Metrics
+                      columns:
+                        name:
+                          field: NAME
+                        value:
+                          field: VALUE
+                          agg: MAX
+                """
         )
     }
 )

@@ -92,8 +92,6 @@ test.describe("Namespace Files page", () => {
     })
 
     test("keeps the unsaved edits of a tab the user switches away from and back to", async ({namespace, filesApi}) => {
-        test.fixme(true, "activating a tab fetches its file again and the fetched content replaces the unsaved edits (14 of 14 probe runs); the rare pass under heavy load makes test.fail flaky. Tracked in kestra-io/kestra-ee#4972")
-
         await filesApi.writeFile("a.txt", "alpha")
         await filesApi.writeFile("b.txt", "beta")
 

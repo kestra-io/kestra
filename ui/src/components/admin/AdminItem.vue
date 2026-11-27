@@ -4,6 +4,7 @@
         :icon="CogOutline"
         :active="active"
         class="admin-item"
+        :href="adminHref?.href"
         @click="open"
     />
 </template>
@@ -30,10 +31,12 @@
 
     const active = computed(() => Boolean(activeScopeTab(route, props.tabs, router)))
 
+    const landing = computed(() => props.landingRoute ?? props.tabs.find(t => !t.header && !t.disabled && t.route)?.route)
+    const adminHref = computed(() => landing.value ? router.resolve(landing.value) : undefined)
+
     function open() {
         store.setTabs({ownerId: OWNER, tabs: props.tabs})
-        const landing = props.landingRoute ?? props.tabs.find(t => !t.header && !t.disabled && t.route)?.route
-        if (landing) router.push(landing)
+        if (landing.value) router.push(landing.value)
     }
 
     watch(

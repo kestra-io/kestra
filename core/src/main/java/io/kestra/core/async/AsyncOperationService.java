@@ -49,14 +49,18 @@ public class AsyncOperationService {
         if (operationId == null) {
             return;
         }
+        emit(new AsyncOperationProcessedEvent(operationId, tenantId, itemId, outcome, error, Instant.now()));
+    }
+
+    /**
+     * Emits {@code event} for a producer that runs the operation itself rather than consuming an
+     * {@link AsyncOperation} message. A failure to emit is logged, not thrown.
+     */
+    public void emit(AsyncOperationProcessedEvent event) {
         try {
-            asyncOperationProcessedEventQueue.emit(
-                new AsyncOperationProcessedEvent(
-                    operationId, tenantId, itemId, outcome, error, Instant.now()
-                )
-            );
+            asyncOperationProcessedEventQueue.emit(event);
         } catch (QueueException e) {
-            log.error("Failed to emit AsyncOperationProcessedEvent for op {} item {}. Ignored", operationId, itemId, e);
+            log.error("Failed to emit AsyncOperationProcessedEvent for op {} item {}. Ignored", event.operationId(), event.itemId(), e);
         }
     }
 }

@@ -26,7 +26,8 @@ public enum Type {
     EMAIL(EmailInput.class),
     FORM(FormInput.class),
     REUSABLE_INPUTS(ReusableInputsInput.class),
-    TABLE(TableInput.class);
+    TABLE(TableInput.class),
+    ASSET(AssetInput.class);
 
     private final Class<? extends Input<?>> cls;
 

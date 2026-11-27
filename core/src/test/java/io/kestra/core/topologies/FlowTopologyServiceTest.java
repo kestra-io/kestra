@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
-
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -21,10 +19,8 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Parallel;
 import io.kestra.plugin.core.flow.Subflow;
-
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
@@ -54,6 +50,34 @@ class FlowTopologyServiceTest {
                                     .build()
                             )
                         )
+                        .build()
+                )
+            )
+            .build();
+
+        FlowWithSource child = FlowWithSource.builder()
+            .namespace("io.kestra.ee")
+            .id("child")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .build();
+
+        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.FLOW_TASK);
+    }
+
+    @Test
+    void shouldDetectFlowTaskWhenSubflowNamespaceIsParentNamespaceExpression() {
+        Flow parent = Flow.builder()
+            .namespace("io.kestra.ee")
+            .id("parent")
+            .revision(1)
+            .tasks(
+                List.of(
+                    Subflow.builder()
+                        .id("launch")
+                        .type(Subflow.class.getName())
+                        .namespace("{{ flow.namespace }}")
+                        .flowId("child")
                         .build()
                 )
             )
@@ -203,6 +227,30 @@ class FlowTopologyServiceTest {
             .inputs(
                 List.of(
                     SelectInput.builder().id("select").type(Type.SELECT).expression("{{subflow(id='child-longer', namespace='io.kestra.ee')}}").build()
+                )
+            )
+            .tasks(List.of(returnTask()))
+            .build();
+
+        FlowWithSource child = FlowWithSource.builder()
+            .namespace("io.kestra.ee")
+            .id("child")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .build();
+
+        assertThat(flowTopologyService.isChild(parent, child)).isNull();
+    }
+
+    @Test
+    void isChildShouldReturnFalseWhenNamespaceOnlyMatchesAsRegex() {
+        Flow parent = Flow.builder()
+            .namespace("io.kestra.ee")
+            .id("parent")
+            .revision(1)
+            .inputs(
+                List.of(
+                    SelectInput.builder().id("select").type(Type.SELECT).expression("{{subflow(id='child', namespace='ioXkestraXee')}}").build()
                 )
             )
             .tasks(List.of(returnTask()))

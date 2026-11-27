@@ -76,7 +76,7 @@
             if (state === "PAUSED" && !enabled.value) {
                 return
             }
-            opened.value = {taskRun: found.taskRun as unknown as ApprovalTaskRun, task: found.task, paused: state === "PAUSED"}
+            opened.value = {taskRun: found.taskRun, task: found.task, paused: state === "PAUSED"}
             dialogOpen.value = true
         },
         {immediate: true},

@@ -4,7 +4,7 @@ import io.kestra.core.models.AccessScope;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 
 /**
- * Reads the {@link AccessScope} an {@link McpToolAccessControl} grants a caller.
+ * Reads the {@link AccessScope} an {@link McpFlowToolAccessControl} grants a caller.
  */
 public final class McpToolScope {
     private McpToolScope() {

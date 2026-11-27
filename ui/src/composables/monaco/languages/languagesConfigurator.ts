@@ -5,7 +5,7 @@ import {editor} from "monaco-editor/editor/editor.api"
 import {YamlLanguageConfigurator} from "override/composables/monaco/languages/yamlLanguageConfigurator"
 import {PebbleLanguageConfigurator} from "./pebbleLanguageConfigurator"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider"
-import {YamlAutoCompletion} from "../../../services/autoCompletionProvider"
+import {DashboardAutoCompletion, YamlAutoCompletion} from "../../../services/autoCompletionProvider"
 import {usePluginsStore} from "../../../stores/plugins"
 import {useFlowStore} from "../../../stores/flow"
 import {useMcpStore} from "../../../stores/mcp"
@@ -30,6 +30,8 @@ export default async function configure(
             // flow completion works for testsuites and the reusable-inputs block editor (so `{{ inputs.<sibling> }}`
             // suggests the block's own inputs); the reusable-inputs-only providers gate on the model URI anyway.
             yamlAutocompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, dashboardStore)
+        } else if (domain === "dashboard") {
+            yamlAutocompletion = new DashboardAutoCompletion()
         } else {
             yamlAutocompletion = new YamlAutoCompletion()
         }

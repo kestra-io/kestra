@@ -103,6 +103,14 @@ public class SLATestCase {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    public void shouldStopTasksButRunAfterExecutionWhenExecutionAssertionFails() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-execution-assertion-after-execution");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).extracting(TaskRun::getTaskId).containsExactly("check", "end");
+        assertThat(execution.findTaskRunsByTaskId("end").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
     public void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-flow-trigger-source");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

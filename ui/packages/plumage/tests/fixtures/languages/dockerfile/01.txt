@@ -1,0 +1,24 @@
+FROM openjdk:17-slim as stage-build
+WORKDIR /
+USER root
+
+RUN apt-get update -y
+RUN apt-get install git -y && \
+    git clone https://github.com/kestra-io/plugin-aws.git
+
+RUN cd plugin-aws && ./gradlew :shadowJar
+
+FROM kestra/kestra:latest
+
+## https://github.com/WASdev/ci.docker/issues/194#issuecomment-433519379
+USER root
+
+RUN mkdir -p /app/plugins && \
+  apt-get update -y && \
+  apt-get install -y --no-install-recommends golang && \
+  apt-get install -y pip && \
+  pip install pandas==2.0.3 requests==2.31.0 && \
+  apt-get clean && rm -rf /var/lib/apt/lists/* /var/tmp/*
+
+RUN rm -rf /app/plugins/plugin-aws-*.jar
+COPY --from=stage-build /plugin-aws/build/libs/plugin-aws-*.jar /app/plugins

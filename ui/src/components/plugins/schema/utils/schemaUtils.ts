@@ -1,5 +1,5 @@
 export interface JSONProperty {
-    type: string | string[];
+    type?: string | string[];
     name?: string;
     unit?: string;
     $dynamic?: boolean;
@@ -85,6 +85,7 @@ export function extractEnumValues(property: JSONProperty): string[] | undefined 
     return property.enum
         ?? property.items?.enum
         ?? property.additionalProperties?.enum
+        ?? (isDynamic(property) ? property.anyOf?.find(schema => schema.enum !== undefined)?.enum : undefined)
 }
 
 export function aggregateAllOf(property: JSONProperty): JSONProperty {

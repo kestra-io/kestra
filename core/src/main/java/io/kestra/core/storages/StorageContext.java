@@ -3,9 +3,12 @@ package io.kestra.core.storages;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,8 +17,11 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
+import io.kestra.plugin.core.flow.Subflow;
+import io.kestra.plugin.core.trigger.Flow;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -36,6 +42,9 @@ public class StorageContext {
 
     /** Prefix of namespace-level metadata directories ({@code _files}, {@code _kv}, …). */
     public static final String RESERVED_NAMESPACE_DIR_PREFIX = "_";
+
+    // only these set namespace, flowId and executionId from the engine, a plugin trigger output could carry the same keys
+    private static final Set<String> EXECUTION_TRIGGER_TYPES = Set.of(Flow.class.getName(), Subflow.class.getName());
 
     // /{namespace}/_files
     static final String PREFIX_FORMAT_NAMESPACE_FILE = "/%s/_files";
@@ -60,6 +69,7 @@ public class StorageContext {
      * {@code kestra:///<namespace-as-path>/} — namespace root, flow dirs as direct children.
      */
     public static URI namespaceRootUri(@NotNull String namespace) {
+        requireNoEmptySegment(namespace);
         return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/");
     }
 
@@ -68,6 +78,7 @@ public class StorageContext {
      */
     public static URI executionsRootUri(@NotNull String namespace, @NotNull String flowId) {
         Objects.requireNonNull(flowId, "flowId");
+        requireNoEmptySegment(namespace);
         return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/" + Slugify.of(flowId) + "/" + EXECUTIONS_DIR_NAME + "/");
     }
 
@@ -77,6 +88,55 @@ public class StorageContext {
     public static String namespaceAsPath(@NotNull String namespace) {
         Objects.requireNonNull(namespace, "namespace");
         return namespace.replace(".", "/");
+    }
+
+    /**
+     * Guards the paths made of the namespace alone, where a namespace with an empty segment such as {@code team.}
+     * would share its objects with {@code team}. Paths that hold an execution id are unique and need no guard, so
+     * the data of existing executions stays readable and purgeable.
+     *
+     * @throws IllegalArgumentException if the namespace has an empty segment.
+     */
+    private static void requireNoEmptySegment(String namespace) {
+        Objects.requireNonNull(namespace, "namespace");
+        if (namespace.startsWith(".") || namespace.endsWith(".") || namespace.contains("..")) {
+            throw new IllegalArgumentException(
+                "The namespace '%s' cannot be used as a storage path: it must not start or end with a dot or contain consecutive dots.".formatted(namespace)
+            );
+        }
+    }
+
+    /**
+     * Lists every namespace the given storage path may belong to, as each leading run of segments is a possible
+     * namespace: a namespace can contain words such as {@code executions}, so the path alone is ambiguous.
+     * Checking all of them is the only way to never miss the real one.
+     */
+    public static List<String> candidateNamespaces(URI path) {
+        String[] segments = Arrays.stream(path.getPath().split("/")).filter(s -> !s.isEmpty()).toArray(String[]::new);
+        List<String> namespaces = new ArrayList<>(Math.max(segments.length - 1, 0));
+        for (int end = 1; end < segments.length; end++) {
+            namespaces.add(String.join(".", Arrays.copyOfRange(segments, 0, end)));
+        }
+        return namespaces;
+    }
+
+    /**
+     * Gets the storage path prefix of the execution that triggered the current one (parent of a subflow, upstream
+     * of a flow trigger), read from the {@code trigger} variable of a run context.
+     *
+     * @return the prefix, or {@code null} when the current execution was not triggered by another execution.
+     */
+    @Nullable
+    public static String triggeringExecutionPrefix(Map<String, Object> variables) {
+        if (!(variables.get("trigger") instanceof Map<?, ?> trigger)
+            || !(trigger.get("_context") instanceof Map<?, ?> triggerContext)
+            || !EXECUTION_TRIGGER_TYPES.contains(triggerContext.get("type"))
+            || !(trigger.get("namespace") instanceof String namespace)
+            || !(trigger.get("flowId") instanceof String flowId)
+            || !(trigger.get("executionId") instanceof String executionId)) {
+            return null;
+        }
+        return forExecution(null, namespace, flowId, executionId).getExecutionStorageURI().getPath() + "/";
     }
 
     /**
@@ -203,6 +263,18 @@ public class StorageContext {
     }
 
     /**
+     * Tells whether the path is under the namespace files prefix of the given namespace, without parent traversal.
+     * <p>
+     * This only checks the prefix: a child namespace named {@code _files} stores its flows under the same one, so
+     * the file must still be resolved through {@link Namespace}.
+     */
+    public static boolean isInNamespaceFiles(String namespace, URI path) {
+        return path.getPath() != null
+            && !FileUtils.isParentTraversal(path)
+            && path.getPath().startsWith(String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespaceAsPath(namespace)) + "/");
+    }
+
+    /**
      * Gets the storage URI of the given cacheID, and optionally the given objectID.
      *
      * @param cacheId the ID of the cache.
@@ -211,6 +283,7 @@ public class StorageContext {
      */
     public URI getCacheURI(final String cacheId, @Nullable final String objectId) {
         Objects.requireNonNull(cacheId, "Cannot create URI with id null");
+        requireNoEmptySegment(getNamespace());
 
         final String prefix;
         if (objectId == null) {
@@ -234,7 +307,7 @@ public class StorageContext {
     }
 
     public String getNamespaceAsPath() {
-        return getNamespace().replace(".", "/");
+        return namespaceAsPath(getNamespace());
     }
 
     /**
@@ -246,6 +319,7 @@ public class StorageContext {
      * @return the storage prefix.
      */
     public String getStateStorePrefix(String id, Boolean isNamespace, String value) {
+        requireNoEmptySegment(getNamespace());
         ArrayList<String> paths = new ArrayList<>(List.of(getNamespaceAsPath()));
 
         if (!isNamespace) {
@@ -330,11 +404,13 @@ public class StorageContext {
     }
 
     public static String namespaceFilePrefix(String namespace) {
-        return String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespace.replace(".", "/"));
+        requireNoEmptySegment(namespace);
+        return String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespaceAsPath(namespace));
     }
 
     public static String kvPrefix(String namespace) {
-        return String.format(PREFIX_FORMAT_KV, namespace.replace(".", "/"));
+        requireNoEmptySegment(namespace);
+        return String.format(PREFIX_FORMAT_KV, namespaceAsPath(namespace));
     }
 
     /**

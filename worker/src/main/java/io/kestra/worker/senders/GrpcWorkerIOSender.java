@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,8 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
     private volatile long resendBackoffUntilNanos;
     @Nullable
     private final Function<T, T> fallbackMapperOnResourceExhausted;
+    @Nullable
+    private final Consumer<T> onAccepted;
 
     /**
      * Strategy for sending data to the controller.
@@ -89,6 +92,8 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      *        redrives it once the channel recovers, instead of being dropped. Enable for results that must
      *        not be lost; leave {@code false} for best-effort, high-volume streams (logs, metrics) where
      *        re-queuing would risk back-pressuring the worker.
+     * @param onAccepted optional callback invoked with each item once the controller has replied to the call that
+     *        carried it, so after it has processed the item. Pass {@code null} when nothing depends on it.
      */
     GrpcWorkerIOSender(final WorkerQueueRegistry workerQueueRegistry,
         final String name,
@@ -96,8 +101,9 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         final SendStrategy sendStrategy,
         final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
         @Nullable final Function<T, T> fallbackMapperOnResourceExhausted,
-        final boolean resendOnFailure) {
-        this(workerQueueRegistry, name, eventType, sendStrategy, grpcSendMethod, fallbackMapperOnResourceExhausted, resendOnFailure, DEFAULT_REPLY_TIMEOUT);
+        final boolean resendOnFailure,
+        @Nullable final Consumer<T> onAccepted) {
+        this(workerQueueRegistry, name, eventType, sendStrategy, grpcSendMethod, fallbackMapperOnResourceExhausted, resendOnFailure, onAccepted, DEFAULT_REPLY_TIMEOUT);
     }
 
     GrpcWorkerIOSender(final WorkerQueueRegistry workerQueueRegistry,
@@ -107,6 +113,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
         @Nullable final Function<T, T> fallbackMapperOnResourceExhausted,
         final boolean resendOnFailure,
+        @Nullable final Consumer<T> onAccepted,
         final Duration replyTimeout) {
         super(name);
         this.eventType = eventType;
@@ -115,6 +122,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         this.grpcSendMethod = Objects.requireNonNull(grpcSendMethod, "grpcSendMethod must not be null");
         this.fallbackMapperOnResourceExhausted = fallbackMapperOnResourceExhausted;
         this.resendOnFailure = resendOnFailure;
+        this.onAccepted = onAccepted;
         this.replyTimeout = Objects.requireNonNull(replyTimeout, "replyTimeout must not be null");
     }
 
@@ -283,6 +291,19 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         }
     }
 
+    private void notifyAccepted(final BatchMessage<T> batchMessage) {
+        if (onAccepted == null) {
+            return;
+        }
+        for (T item : batchMessage.records()) {
+            try {
+                onAccepted.accept(item);
+            } catch (RuntimeException e) {
+                LOG.warn("Failed to handle the acceptance of a {} by the controller: {}", eventType.getSimpleName(), e.getMessage(), e);
+            }
+        }
+    }
+
     /**
      * Describes the items of a batch for a log message: their uids when the event type carries one, so a
      * dropped result can be traced back to the task run it belonged to, and their count otherwise, since
@@ -393,6 +414,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
 
         @Override
         public void onCompleted() {
+            notifyAccepted(originalBatch);
         }
 
         private static boolean isResourceExhausted(final Throwable t) {
@@ -457,6 +479,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
 
         @Override
         public void onCompleted() {
+            notifyAccepted(batchMessage);
         }
     }
 }

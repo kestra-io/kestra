@@ -6,8 +6,8 @@ import java.util.Set;
 
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.utils.Disposable;
+import io.kestra.core.vnodes.VNodes;
 
 /**
  * Simple in-memory event queue implementation.

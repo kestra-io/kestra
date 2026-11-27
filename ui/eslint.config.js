@@ -10,7 +10,7 @@ import kestraI18n from "./scripts/translations/eslintPlugin.mjs"
 import {vueWithStyles} from "./scripts/css-lint/vueStyleProcessor.mjs"
 
 export default defineConfig([
-    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "**/storybook-static/*", "packages/kestra-sdk/src/openapi/*"]),
+    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "**/storybook-static/*", "packages/kestra-sdk/src/openapi/*", "packages/topology/src/standalone.css"]),
     ...pluginVue.configs["flat/base"],
     {
         files: ["**/*.vue"],
@@ -90,6 +90,10 @@ export default defineConfig([
             "vue/component-name-in-template-casing": ["error", "PascalCase", {"registeredComponentsOnly": true}],
             "vue/attribute-hyphenation": ["error", "never", {ignoreTags: ["rapi-doc"]}],
             "kestra-i18n/i18n-t-scope": "error",
+            "vue/no-restricted-html-elements": ["error", {
+                element: "KsEmpty",
+                message: "KsEmpty is deprecated: use KsNoData, or KsEmptyState when the empty state has its own illustration.",
+            }],
         },
     },
     {
@@ -108,6 +112,14 @@ export default defineConfig([
             "no-restricted-imports": ["error", {paths: [{
                 name: "axios",
                 message: "Call the Kestra API through the SDK or useClient(), and api.kestra.io through src/utils/publicApi.",
+            }, {
+                name: "@kestra-io/design-system",
+                importNames: ["KsEmpty"],
+                message: "KsEmpty is deprecated: use KsNoData, or KsEmptyState when the empty state has its own illustration.",
+            }, {
+                name: "vue-virtual-scroller",
+                importNames: ["DynamicScroller"],
+                message: "Import DynamicScroller from src/utils/virtualScroller.ts, which types the props it forwards to RecycleScroller.",
             }]}],
         },
     },

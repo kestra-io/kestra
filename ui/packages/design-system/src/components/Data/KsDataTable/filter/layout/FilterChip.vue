@@ -27,9 +27,11 @@
             @remove="emit('remove', $event)"
         />
         <KsButton
+            v-if="isRemovable"
             link
             size="small"
             class="close"
+            data-test="filter-chip-remove"
             :aria-label="$t('filter.remove_filter')"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
@@ -47,7 +49,8 @@
         type FilterKeyConfig,
         Comparators,
     } from "../utils/filterTypes"
-    import {isDateRangeValue} from "../utils/filterChipFactory"
+    import {formatFilterDate, formatFilterDateRange, isDateRangeValue} from "../utils/filterChipFactory"
+    import {normalizeRelativeDate} from "../utils/relativeDates"
     import {ALL_TIME_RANGE} from "../utils/constants"
     import FilterEditPopover from "./FilterEditPopover.vue"
 
@@ -67,7 +70,7 @@
     ]
 
     const getRelativeDateLabel = (value: string): string => {
-        const found = RELATIVE_DATE.find((item) => item.value === value)
+        const found = RELATIVE_DATE.find((item) => item.value === normalizeRelativeDate(value))
         return found ? found.label : value
     }
 
@@ -85,8 +88,10 @@
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>()
 
+    const isRemovable = computed(() => props.filterKey?.removable !== false)
+
     const onAuxClick = (event: MouseEvent) => {
-        if (event.button !== 1) return
+        if (event.button !== 1 || !isRemovable.value) return
         event.preventDefault()
         event.stopPropagation()
         emit("remove", props.filter.id)
@@ -110,9 +115,9 @@
                 ? value[0]
                 : [value[0], h(KsTag, {size: "small"}, () => `+${value.length - 1}`)]
         case value instanceof Date:
-            return value.toLocaleDateString()
+            return formatFilterDate(value)
         case value && typeof value === "object" && "startDate" in value:
-            return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`
+            return formatFilterDateRange(value.startDate, value.endDate)
         case typeof value === "string" && (value === ALL_TIME_RANGE || /^P(T?\d+[HMD]|\d+[YMDW])/.test(value)):
             return getRelativeDateLabel(value)
         default:

@@ -133,7 +133,7 @@ charts:
       displayName: Executions
       pagination:
         enabled: true
-      width: 6
+      width: 12
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
@@ -149,39 +149,15 @@ charts:
         start_date:
           field: START_DATE
           displayName: Start Date
+        duration:
+          field: DURATION
+          displayName: Duration
         state:
           field: STATE
           displayName: State
       orderBy:
         - column: start_date
           order: DESC
-
-  - id: next_executions
-    type: io.kestra.plugin.core.dashboard.chart.Table
-    chartOptions:
-      displayName: Next Executions
-      pagination:
-        enabled: true
-      width: 6
-    data:
-      type: io.kestra.plugin.core.dashboard.data.Triggers
-      where:
-        - field: DISABLED
-          type: EQUAL_TO
-          value: false
-      columns:
-        namespace:
-          field: NAMESPACE
-          displayName: Namespace
-        flowId:
-          field: FLOW_ID
-          displayName: Flow
-        next_execution_date:
-          field: NEXT_EXECUTION_DATE
-          displayName: Next Execution Date
-      orderBy:
-        - column: next_execution_date
-          order: ASC
 
   - id: executions_per_namespace_bars
     type: io.kestra.plugin.core.dashboard.chart.Bar

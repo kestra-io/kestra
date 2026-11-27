@@ -20,13 +20,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
+    protected static final int VNODE_COUNT = 16;
+    protected static final int SMALL_VNODE_COUNT = 4;
     private static final int DEFAULT_TIMEOUT_SECONDS = 15;
 
     @Inject
     private VNodeDispatchQueueInterface<TestVNodeDispatchDispatch> vNodeDispatchQueue;
 
     @Inject
-    private QueueService queueService;
+    private VNodeDispatchQueueInterface<SmallVNodeCountDispatch> smallVNodeCountQueue;
 
     @Test
     void shouldNotThrowWhenEmittingEmptyBatch() {
@@ -39,7 +41,7 @@ public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
         Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
 
         QueueSubscriber<TestVNodeDispatchDispatch> subscriber = vNodeDispatchQueue
-            .subscriber(IntStream.range(0, queueService.getVNodeCount()).boxed().collect(Collectors.toSet()))
+            .subscriber(IntStream.range(0, VNODE_COUNT).boxed().collect(Collectors.toSet()))
             .subscribe(e ->
             {
                 list.add(e.getLeft().id);
@@ -142,6 +144,35 @@ public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
         assertThat(map.get(3)).hasSize(2);
     }
 
+    @Test
+    void shouldRouteEveryKeyIntoTheQueueOwnVNodesWhenTheyDifferFromTheScheduler() throws QueueException, InterruptedException {
+        int messageCount = 20;
+        CountDownLatch countDownLatch = new CountDownLatch(messageCount);
+        Collection<Integer> received = Collections.synchronizedCollection(new ArrayList<>());
+
+        QueueSubscriber<SmallVNodeCountDispatch> subscriber = smallVNodeCountQueue
+            .subscriber(IntStream.range(0, SMALL_VNODE_COUNT).boxed().collect(Collectors.toSet()))
+            .subscribe(e ->
+            {
+                received.add(e.getLeft().id());
+                countDownLatch.countDown();
+            });
+
+        String prefix = this.keyPrefix();
+        for (int i = 0; i < messageCount; i++) {
+            smallVNodeCountQueue.emit(new SmallVNodeCountDispatch(prefix + "_" + IdUtils.create(), i));
+        }
+
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.close();
+
+        assertThat(await).isTrue();
+        assertThat(received).hasSize(messageCount);
+    }
+
     public record TestVNodeDispatchDispatch(String key, Integer id) implements VNodeDispatchEvent {
+    }
+
+    public record SmallVNodeCountDispatch(String key, Integer id) implements VNodeDispatchEvent {
     }
 }

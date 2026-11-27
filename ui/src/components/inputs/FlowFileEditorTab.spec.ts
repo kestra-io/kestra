@@ -1,12 +1,15 @@
 import {describe, expect, it, vi, beforeEach} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
-import {defineComponent, ref} from "vue"
+import {defineComponent, h, KeepAlive, ref, toRaw, type Component} from "vue"
 import FlowFileEditorTab, {FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
+import {useFlowStore} from "../../stores/flow"
+import {useViolationMarkers} from "../../composables/useViolationMarkers"
 
 const fileMetadata = vi.fn()
 const readFile = vi.fn()
 const saveOrCreateFile = vi.fn()
+const lazyLoadSchemaType = vi.fn()
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {namespace: "io.kestra.test"}, query: {}}),
@@ -21,11 +24,29 @@ vi.mock("override/stores/namespaces", () => ({
 vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: {pluginsHash: 0}, openCopilot: vi.fn()}),
 }))
-vi.mock("../../stores/flow", () => ({
-    useFlowStore: () => ({flow: {namespace: "io.kestra.test"}, isReadOnly: false, isCreating: false, flowYaml: "", flowYamlOrigin: "", previewSource: undefined}),
-}))
+vi.mock("../../stores/flow", async () => {
+    const {reactive} = await import("vue")
+    const store = reactive({
+        flow: {namespace: "io.kestra.test"},
+        isReadOnly: false,
+        isCreating: false,
+        flowYaml: "",
+        flowYamlOrigin: "",
+        previewSource: undefined,
+        errorNavigation: null as {count: number; revealNext: () => void} | null,
+        onEdit: vi.fn(),
+        saveAll: vi.fn(),
+    })
+    return {useFlowStore: () => store}
+})
+vi.mock("../../composables/useViolationMarkers", async () => {
+    const {shallowRef} = await import("vue")
+    const markers = shallowRef<unknown[]>([])
+    const revealNext = vi.fn()
+    return {useViolationMarkers: () => ({markers, revealNext})}
+})
 vi.mock("../../stores/plugins", () => ({
-    usePluginsStore: () => ({lazyLoadSchemaType: vi.fn(), editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
+    usePluginsStore: () => ({lazyLoadSchemaType, editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
 }))
 vi.mock("../../stores/productTour", () => ({
     useProductTourStore: () => ({isGuidedActive: false}),
@@ -46,7 +67,7 @@ vi.mock("@kestra-io/topology", () => ({
     flowYamlUtils: {getTypeAtPosition: vi.fn(), getVersionAtPosition: vi.fn()},
 }))
 vi.mock("@kestra-io/design-system", () => ({
-    KsEditor: defineComponent({name: "KsEditor", template: "<div data-test=\"ks-editor\" />"}),
+    KsEditor: defineComponent({name: "KsEditor", methods: {getEditor: () => ({})}, template: "<div data-test=\"ks-editor\" />"}),
 }))
 vi.mock("./PlaygroundRunTaskButton.vue", () => ({
     default: defineComponent({name: "PlaygroundRunTaskButton", template: "<div />"}),
@@ -69,9 +90,22 @@ const i18n = createI18n({
     },
 })
 
-function mountTab() {
-    return mount(FlowFileEditorTab, {
-        props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false},
+const locatedErrors = [1, 6].map(line => ({message: "boom", lines: [{startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 5}]}))
+
+function violationMarkers() {
+    return useViolationMarkers({} as never).markers
+}
+
+const namespaceFileProps = {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false}
+const flowTabProps = {name: "Flow.yaml", extension: "yaml", path: "Flow.yaml", flow: true, dirty: false}
+
+function mountTab(content?: string) {
+    return mountWithTabContext(FlowFileEditorTab, {...namespaceFileProps, content})
+}
+
+function mountWithTabContext(component: Component, props: Record<string, unknown> = {}) {
+    return mount(component, {
+        props,
         global: {
             plugins: [i18n],
             provide: {
@@ -89,6 +123,8 @@ function mountTab() {
 
 describe("FlowFileEditorTab", () => {
     beforeEach(() => {
+        useFlowStore().errorNavigation = null
+        violationMarkers().value = []
         fileMetadata.mockReset()
         readFile.mockReset()
         saveOrCreateFile.mockReset()
@@ -119,6 +155,19 @@ describe("FlowFileEditorTab", () => {
         const downloadLink = wrapper.findAll("button").find((button) => button.attributes("href") !== undefined)
         expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/data.txt")
         expect(downloadLink?.attributes("download")).toBe("data.txt")
+    })
+
+    it("should address a file whose name holds characters reserved in a query string by its full path", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+
+        const image = mountWithTabContext(FlowFileEditorTab, {...namespaceFileProps, name: "a&b #1.png", extension: "png", path: "dir/a&b #1.png"})
+        fileMetadata.mockResolvedValue({size: 11 * 1024 * 1024})
+        const big = mountWithTabContext(FlowFileEditorTab, {...namespaceFileProps, name: "a&b #1.bin", extension: "bin", path: "dir/a&b #1.bin"})
+        await flushPromises()
+
+        expect(image.find("img").attributes("src")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.png")
+        const downloadLink = big.findAll("button").find((button) => button.attributes("href") !== undefined)
+        expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.bin")
     })
 
     it("should load the file content when the size stats are unavailable", async () => {
@@ -168,5 +217,128 @@ describe("FlowFileEditorTab", () => {
 
         expect(saveOrCreateFile).toHaveBeenCalledTimes(2)
         expect(saveOrCreateFile).toHaveBeenLastCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "edited again"})
+    })
+
+    it("should keep unsaved content carried over from the old path and save it to the new one", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+        saveOrCreateFile.mockResolvedValue(undefined)
+
+        const wrapper = mountTab("file content\nunsaved line")
+        await flushPromises()
+        const editor = wrapper.findComponent({name: "KsEditor"})
+
+        expect(editor.attributes("modelvalue")).toBe("file content\nunsaved line")
+        editor.vm.$emit("save")
+        await flushPromises()
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "file content\nunsaved line"})
+    })
+
+    it("should keep unsaved edits when a namespace file tab is parked in KeepAlive and shown again", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+        const shown = ref(true)
+        const Host = defineComponent({
+            setup: () => () => h(KeepAlive, null, {
+                default: () => shown.value ? h(FlowFileEditorTab, namespaceFileProps) : h("div"),
+            }),
+        })
+
+        const wrapper = mountWithTabContext(Host)
+        await flushPromises()
+        wrapper.findComponent({name: "KsEditor"}).vm.$emit("update:model-value", "file content edited")
+
+        shown.value = false
+        await flushPromises()
+        shown.value = true
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: "KsEditor"}).attributes("modelvalue")).toBe("file content edited")
+    })
+
+    it("should keep text typed while the read of a tab shown again is still in flight", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+        const shown = ref(true)
+        const Host = defineComponent({
+            setup: () => () => h(KeepAlive, null, {
+                default: () => shown.value ? h(FlowFileEditorTab, namespaceFileProps) : h("div"),
+            }),
+        })
+        const wrapper = mountWithTabContext(Host)
+        await flushPromises()
+        shown.value = false
+        await flushPromises()
+
+        let finishRead: (result: {content: string}) => void = () => {}
+        readFile.mockReturnValue(new Promise((resolve) => finishRead = resolve))
+        shown.value = true
+        await flushPromises()
+        wrapper.findComponent({name: "KsEditor"}).vm.$emit("update:model-value", "typed during the read")
+        finishRead({content: "file content"})
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: "KsEditor"}).attributes("modelvalue")).toBe("typed during the read")
+    })
+
+    it("should leave the flow tab's error navigation alone when a namespace file tab mounts", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+        const navigation = {count: 1, revealNext: vi.fn()}
+        useFlowStore().errorNavigation = navigation
+
+        mountTab()
+        await flushPromises()
+
+        expect(toRaw(useFlowStore().errorNavigation)).toBe(navigation)
+    })
+
+    it("should register error navigation for the flow tab and clear it on unmount", async () => {
+        violationMarkers().value = locatedErrors
+
+        const wrapper = mountWithTabContext(FlowFileEditorTab, flowTabProps)
+        await flushPromises()
+        expect(useFlowStore().errorNavigation?.count).toBe(2)
+
+        wrapper.unmount()
+        expect(useFlowStore().errorNavigation).toBeNull()
+    })
+
+    // The YAML worker fetches its own schema; a second copy parsed on the main thread only slows the editor down.
+    it("should not load the flow schema when the flow tab opens", async () => {
+        mountWithTabContext(FlowFileEditorTab, flowTabProps)
+        await flushPromises()
+
+        expect(lazyLoadSchemaType).not.toHaveBeenCalled()
+    })
+
+    it("should drop error navigation while the flow tab is parked in KeepAlive and restore it when shown again", async () => {
+        violationMarkers().value = locatedErrors
+        const shown = ref(true)
+        const Host = defineComponent({
+            setup: () => () => h(KeepAlive, null, {
+                default: () => shown.value ? h(FlowFileEditorTab, flowTabProps) : h("div"),
+            }),
+        })
+
+        mountWithTabContext(Host)
+        await flushPromises()
+        expect(useFlowStore().errorNavigation?.count).toBe(2)
+
+        shown.value = false
+        await flushPromises()
+        expect(useFlowStore().errorNavigation).toBeNull()
+
+        shown.value = true
+        await flushPromises()
+        expect(useFlowStore().errorNavigation?.count).toBe(2)
+    })
+
+    it("should save a draft on the editor's save shortcut", async () => {
+        const flowStore = useFlowStore() as unknown as {saveAll: ReturnType<typeof vi.fn>}
+        flowStore.saveAll.mockReset()
+        const wrapper = mountWithTabContext(FlowFileEditorTab, flowTabProps)
+        await flushPromises()
+
+        wrapper.findComponent({name: "KsEditor"}).vm.$emit("save")
+        await flushPromises()
+
+        expect(flowStore.saveAll).toHaveBeenCalledExactlyOnceWith(true)
     })
 })

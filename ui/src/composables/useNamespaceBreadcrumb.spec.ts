@@ -2,8 +2,9 @@ import {beforeEach, describe, expect, it, vi} from "vitest"
 import {ref} from "vue"
 import type {KsBreadcrumbLoader} from "@kestra-io/design-system"
 
-const state = vi.hoisted(() => ({tenant: "", canList: true, ids: [] as string[]}))
+const state = vi.hoisted(() => ({tenant: "", canList: true, ids: [] as string[], edition: "EE", creatable: [] as string[], canReadFlows: false, flows: [] as string[], total: 0}))
 const all = vi.hoisted(() => vi.fn())
+const findFlows = vi.hoisted(() => vi.fn())
 
 vi.mock("vue-i18n", () => ({
     useI18n: () => ({t: (key: string) => key}),
@@ -14,16 +15,28 @@ vi.mock("override/utils/route", () => ({
 }))
 
 vi.mock("override/stores/auth", () => ({
-    useAuthStore: () => ({user: {hasAnyActionOnAnyNamespace: () => state.canList}}),
+    useAuthStore: () => ({user: {
+        hasAnyActionOnAnyNamespace: () => state.canList,
+        isAllowed: (permission: string, act: string, namespace: string) => permission === "FLOW" ? state.canReadFlows : permission === "NAMESPACE" && act === "CREATE"
+            && state.creatable.some((prefix) => namespace === prefix || namespace.startsWith(`${prefix}.`)),
+    }}),
+}))
+
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => ({configs: {edition: state.edition}}),
 }))
 
 vi.mock("./useNamespaces", () => ({
     default: () => ({all}),
 }))
 
-import {useNamespaceBreadcrumb} from "./useNamespaceBreadcrumb"
+vi.mock("../stores/flow", () => ({
+    useFlowStore: () => ({findFlows}),
+}))
 
-const TREE = ["acme", "acme.data", "acme.data.raw", "acme.ops", "lone", "lone.leaf", "solo", "solo.only", "solo.only.deep"]
+import {useFlowSiblings, useNamespaceBreadcrumb} from "./useNamespaceBreadcrumb"
+
+const TREE = ["acme", "acme.data", "acme.data.raw", "acme.ops", "lone", "lone.leaf", "solo", "solo.only", "solo.only.deep", "system"]
 
 const labels = async (loader?: KsBreadcrumbLoader) => (await loader?.())?.map((entry) => entry.label)
 
@@ -35,8 +48,15 @@ describe("useNamespaceBreadcrumb", () => {
         state.tenant = `tenant-${++tenants}`
         state.canList = true
         state.ids = [...TREE]
+        state.edition = "EE"
+        state.creatable = []
         all.mockReset()
         all.mockImplementation(async () => state.ids.map((id) => ({id})))
+        state.canReadFlows = false
+        state.flows = []
+        state.total = 0
+        findFlows.mockReset()
+        findFlows.mockImplementation(async () => ({results: state.flows.map((id) => ({id})), total: state.total}))
     })
 
     it("should hide a level's menu when its only entry is the page itself", async () => {
@@ -54,6 +74,51 @@ describe("useNamespaceBreadcrumb", () => {
 
         expect(children.map((entry) => entry.label)).toEqual(["data", "ops"])
         expect(await labels(children[0].children)).toEqual(["raw"])
+        expect(children[1].children).toBeUndefined()
+    })
+
+    it("should end the fly-out of a namespace the user may create in with a link creating a child of it", async () => {
+        state.creatable = ["acme"]
+        const [, acme] = useNamespaceBreadcrumb("acme.data").value
+
+        const children = (await acme.children?.()) ?? []
+        const topLevel = (await acme.siblings?.()) ?? []
+
+        expect(children.map((entry) => entry.label)).toEqual(["data", "ops", "create_child_namespace"])
+        expect(children[2].link).toEqual({name: "namespaces/create", params: {tab: "edit"}, query: {id: "acme."}})
+        expect(await labels(children[1].children)).toEqual(["create_child_namespace"])
+        expect(topLevel.map((entry) => entry.label)).toEqual(["acme", "lone", "solo", "system"])
+        expect(await labels(topLevel[1].children)).toEqual(["leaf"])
+    })
+
+    it("should keep a leaf page's menu when creating a child of it is offered", async () => {
+        state.creatable = ["lone"]
+        const [, , leaf] = useNamespaceBreadcrumb("lone.leaf").value
+
+        const siblings = (await leaf.siblings?.()) ?? []
+
+        expect(siblings.map((entry) => entry.label)).toEqual(["leaf"])
+        expect(await labels(siblings[0].children)).toEqual(["create_child_namespace"])
+    })
+
+    it("should offer no child creation under the system namespace", async () => {
+        state.creatable = ["system"]
+        const [, system] = useNamespaceBreadcrumb("system").value
+
+        const topLevel = (await system.siblings?.()) ?? []
+
+        expect(await labels(system.children)).toEqual([])
+        expect(topLevel.find((entry) => entry.label === "system")?.children).toBeUndefined()
+    })
+
+    it("should offer no namespace creation in the open source edition, which has none", async () => {
+        state.edition = "OSS"
+        state.creatable = ["acme"]
+        const [, acme] = useNamespaceBreadcrumb("acme.data").value
+
+        const children = (await acme.children?.()) ?? []
+
+        expect(children.map((entry) => entry.label)).toEqual(["data", "ops"])
         expect(children[1].children).toBeUndefined()
     })
 
@@ -102,5 +167,68 @@ describe("useNamespaceBreadcrumb", () => {
         expect(await labels(acme.siblings)).toEqual([])
         expect(await labels(data.children)).toEqual([])
         expect(all).not.toHaveBeenCalled()
+    })
+
+    it("should list a namespace's flows after its child namespaces and the link creating one, ending with a link to the rest when the page is not all of them", async () => {
+        state.canReadFlows = true
+        state.creatable = ["solo"]
+        state.flows = ["daily", "hourly"]
+        state.total = 40
+        const [, solo] = useNamespaceBreadcrumb("solo").value
+
+        const content = (await solo.children?.()) ?? []
+
+        expect(content.map((entry) => entry.label)).toEqual(["only", "create_child_namespace", "daily", "hourly", "view_all_flows"])
+        expect(content.map((entry) => Boolean(entry.divided))).toEqual([false, false, true, false, false])
+        expect(content[2].link).toEqual({name: "flows/update", params: {namespace: "solo", id: "daily"}})
+        expect(content[4].link).toEqual({name: "namespaces/update/flows", params: {id: "solo"}})
+        expect(findFlows).toHaveBeenCalledWith(expect.objectContaining({"filters[namespace][EQUALS]": "solo", commit: false}))
+    })
+
+    it("should ask for a namespace's flows once across its fly-out and the menu of each of its flows", async () => {
+        state.canReadFlows = true
+        state.flows = ["daily", "hourly"]
+        state.total = 2
+        const flowId = ref("daily")
+        const siblings = useFlowSiblings("solo", flowId)
+        const [, solo] = useNamespaceBreadcrumb("solo").value
+
+        await solo.children?.()
+        const beside = (await siblings.value?.()) ?? []
+        flowId.value = "hourly"
+        await siblings.value?.()
+
+        expect(beside.map((entry) => [entry.label, entry.current])).toEqual([["daily", true], ["hourly", false]])
+        expect(findFlows).toHaveBeenCalledTimes(1)
+    })
+
+    it("should fetch the flows next to a flow only when that menu opens", async () => {
+        state.canReadFlows = true
+        state.flows = ["daily"]
+        state.total = 1
+        const siblings = useFlowSiblings("lone", "daily")
+
+        expect(siblings.value?.lazy).toBe(true)
+        expect(findFlows).not.toHaveBeenCalled()
+        expect(await labels(siblings.value)).toEqual(["daily"])
+    })
+
+    it("should ask again for a namespace's flows after a failed search", async () => {
+        state.canReadFlows = true
+        state.flows = ["daily"]
+        state.total = 1
+        findFlows.mockRejectedValueOnce(new Error("Flow search failed."))
+        const siblings = useFlowSiblings("lone", "daily")
+
+        expect(await labels(siblings.value)).toEqual([])
+        expect(await labels(siblings.value)).toEqual(["daily"])
+    })
+
+    it("should fetch no flows without the flow VIEW permission", async () => {
+        const [, solo] = useNamespaceBreadcrumb("solo").value
+
+        expect(await labels(solo.children)).toEqual(["only"])
+        expect(useFlowSiblings("solo", "daily").value).toBeUndefined()
+        expect(findFlows).not.toHaveBeenCalled()
     })
 })

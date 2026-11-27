@@ -59,7 +59,7 @@
                                 {{ $t("system_namespace") }}
                             </span>
                         </div>
-                        <KsButton size="small">
+                        <KsButton size="small" tabindex="-1" aria-hidden="true">
                             <TextSearch />
                         </KsButton>
                     </router-link>
@@ -241,20 +241,17 @@
         background-color: var(--ks-bg-surface);
     }
 
-    & :deep(.kel-tree-node__content) {
-        height: 2.25rem;
-        overflow: hidden;
-        background: transparent;
-        border-radius: var(--kel-border-radius-round);
+    & .namespace-tree {
+        --ks-tree-node-height: 2.25rem;
+        --ks-tree-node-radius: var(--kel-border-radius-round);
+        --ks-tree-node-hover-bg: var(--ks-bg-base);
+        --ks-tree-node-focus-bg: transparent;
+        --ks-tree-node-overflow: hidden;
+    }
 
-        &:hover {
-            background: var(--ks-bg-base);
-        }
-
-        .icon {
-            margin-inline-end: var(--ks-spacing-2);
-            color: var(--ks-text-link);
-        }
+    .icon {
+        margin-inline-end: var(--ks-spacing-2);
+        color: var(--ks-text-link);
     }
 
     .node {

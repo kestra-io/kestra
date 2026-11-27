@@ -6,6 +6,7 @@ import java.nio.file.NoSuchFileException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -26,6 +27,16 @@ import jakarta.annotation.Nullable;
  *           storage implementations that must enforce namespace isolation.
  */
 public interface StorageInterface extends AutoCloseable, Plugin {
+
+    /**
+     * Looks up an optional capability this storage implements, such as {@link PresignableStorage}. Use it rather than
+     * {@code instanceof}, since a storage injected as a bean is a proxy implementing this interface only.
+     *
+     * @return this storage as {@code capability}, or empty when it does not implement it.
+     */
+    default <T> Optional<T> as(Class<T> capability) {
+        return capability.isInstance(this) ? Optional.of(capability.cast(this)) : Optional.empty();
+    }
 
     /**
      * Opens any resources or performs any pre-checks for initializing this storage.

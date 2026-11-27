@@ -1,5 +1,13 @@
 <template>
-    <div class="ks-markdown">
+    <div
+        class="ks-markdown"
+        :class="{
+            'ks-markdown--compact': compact,
+            'ks-markdown--lead': lead,
+            'ks-markdown--dense': dense,
+            'ks-markdown--reference': reference,
+        }"
+    >
         <component :is="renderContent()" />
     </div>
 </template>
@@ -14,6 +22,7 @@
     import remarkParse from "remark-parse"
     import type {Root, RootContent} from "mdast"
     import type {ThemedTokenWithVariants} from "@shikijs/types"
+    import {kestraDark, kestraLight, paintPebble, type PebbleRole} from "@kestra-io/plumage"
     import xss, {escapeAttrValue} from "xss"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -36,6 +45,14 @@
             content?: string
             html?: boolean
             xssProtection?: boolean
+            /** Scales headings down to the UI type scale, for markdown rendered inside a panel rather than as a page. */
+            compact?: boolean
+            /** Sets an opening paragraph (the first child of the page or of a block) in bold at a larger size. */
+            lead?: boolean
+            /** Small secondary paragraphs with tight spacing and tag-styled code, for a short description inside a list. */
+            dense?: boolean
+            /** A reference sheet: headings become small section labels, the first h3 the title, and table rows stack their cells. */
+            reference?: boolean
             /** Tag name → component, for HTML elements (`a`, `img`) and PascalCase custom tags (`ChildCard`). */
             components?: Record<string, Component>
         }>(),
@@ -43,6 +60,10 @@
             content: undefined,
             html: true,
             xssProtection: true,
+            compact: false,
+            lead: false,
+            dense: false,
+            reference: false,
             components: () => ({}),
         },
     )
@@ -207,7 +228,8 @@
                 }
             },
             onIgnoreTagAttr: (_tag: string, name: string, value: string) => {
-                if (name.startsWith("data-") || name.startsWith("aria-")) {
+                // The name must be one parseAttributes reads whole: it ends a name at "." or ":", so `data-a.onclick` would come back as `onclick`.
+                if (/^(data|aria)-[\w-]+$/.test(name)) {
                     return `${name}="${escapeAttrValue(value)}"`
                 }
 
@@ -404,6 +426,12 @@
         case "table": {
             const [header, ...rows] = node.children
             const cells = rows.map((row) => row.children.map((cell) => renderNodes(cell.children)))
+            if (props.reference) {
+                return h("div", {class: "table"}, [
+                    h("div", {class: "rows"}, cells.map((row) => h("div", {class: "row"}, row.map((cell) => h("div", {class: "cell"}, cell))))),
+                ])
+            }
+
             const columns = header.children.map((cell, column) => h(KsTableColumn, {
                 label: extractText(cell.children),
                 align: node.align?.[column] ?? undefined,
@@ -487,11 +515,24 @@
             }, {default: () => renderNodes(node.children)})
 
         case "leafDirective":
-        case "textDirective":
             return null
+
+        // No inline directive is supported, so this is a colon in plain text, such as `10:45` or `plugin-dbt:2.5.4`.
+        case "textDirective":
+            return (props.content ?? "").slice(node.position?.start.offset, node.position?.end.offset)
 
         default:
             return "children" in node && Array.isArray(node.children) ? h("div", renderNodes(node.children)) : null
+        }
+    }
+
+    function paintPebbleVariants(token: ThemedTokenWithVariants, role: PebbleRole): ThemedTokenWithVariants {
+        return {
+            ...token,
+            variants: {
+                light: {...token.variants.light, color: kestraLight.syntax[role]},
+                dark: {...token.variants.dark, color: kestraDark.syntax[role]},
+            },
         }
     }
 
@@ -518,10 +559,12 @@
             }
 
             try {
-                result.set(key, highlighter.codeToTokensWithThemes(value, {
+                const tokens = highlighter.codeToTokensWithThemes(value, {
                     lang: !lang || unavailable.has(lang) ? "text" : lang,
-                    themes: {light: "github-light", dark: "github-dark"},
-                }))
+                    themes: {light: "kestra-light", dark: "kestra-dark"},
+                    tokenizeMaxLineLength: 1000,
+                })
+                result.set(key, ["yaml", "yml"].includes(lang) ? paintPebble(value, tokens, paintPebbleVariants) : tokens)
             } catch {
                 continue
             }
@@ -582,7 +625,10 @@
 
     :where(.ks-markdown) {
         & p {
-            margin: 0 0 var(--ks-spacing-4);
+            margin: 0 0 var(--ks-markdown-paragraph-spacing, var(--ks-spacing-4));
+            color: var(--ks-markdown-paragraph-color, inherit);
+            font-size: var(--ks-markdown-paragraph-size, inherit);
+            line-height: var(--ks-markdown-paragraph-line-height, inherit);
 
             &:last-child {
                 margin-bottom: 0;
@@ -618,6 +664,10 @@
             font-size: var(--ks-font-size-2xl);
         }
 
+        & h3.heading {
+            margin-top: var(--ks-markdown-h3-margin-top, var(--ks-spacing-5));
+        }
+
         & h4 {
             font-size: var(--ks-font-size-xl);
         }
@@ -628,6 +678,20 @@
 
         & h6 {
             font-size: var(--ks-font-size-base);
+        }
+
+        &.ks-markdown--compact {
+            & h1 {
+                font-size: var(--ks-font-size-lg);
+            }
+
+            & h2 {
+                font-size: var(--ks-font-size-base);
+            }
+
+            & h3, & h4, & h5, & h6 {
+                font-size: var(--ks-font-size-sm);
+            }
         }
 
         & .anchor {
@@ -665,6 +729,10 @@
             font-size: var(--ks-font-size-sm);
         }
 
+        & .code-block pre span {
+            font-size: var(--ks-markdown-code-token-size, inherit);
+        }
+
         & ul,
         & ol {
             margin: 0 0 var(--ks-spacing-4);
@@ -678,6 +746,7 @@
 
         & li {
             margin: var(--ks-spacing-1) 0;
+            color: var(--ks-markdown-list-color, inherit);
         }
 
         & blockquote {
@@ -691,7 +760,7 @@
 
         & .code-block {
             position: relative;
-            margin: 0 0 var(--ks-spacing-4);
+            margin: 0 0 var(--ks-markdown-code-block-spacing, var(--ks-spacing-4));
             border: 1px solid var(--ks-border-default);
             border-radius: var(--ks-radius-lg);
             background-color: var(--ks-bg-input);
@@ -739,6 +808,7 @@
 
             &:hover {
                 color: var(--ks-text-primary);
+                background: var(--ks-markdown-copy-hover-background, var(--ks-bg-base));
             }
 
             & > * {
@@ -782,12 +852,144 @@
             margin: 0 0 var(--ks-spacing-4);
         }
 
+        & pre.diagram {
+            margin-bottom: var(--ks-markdown-code-block-spacing, var(--ks-spacing-4));
+        }
+
         & div.diagram {
             text-align: center;
         }
 
         & .alert {
             margin: 0 0 var(--ks-spacing-4);
+        }
+
+        &.ks-markdown--lead p:first-child:not(.alert *) {
+            margin-bottom: var(--ks-spacing-4);
+            font-weight: var(--ks-font-weight-bold);
+            font-size: var(--ks-font-size-lg);
+        }
+
+        &.ks-markdown--dense {
+            & p {
+                margin: 0;
+                font-size: var(--ks-font-size-sm);
+                line-height: var(--ks-line-height-base);
+                color: var(--ks-text-secondary);
+            }
+
+            & p + p {
+                margin-top: var(--ks-spacing-2);
+            }
+
+            & code {
+                font-family: var(--ks-font-family-mono);
+                font-size: 0.92em;
+                background: var(--ks-bg-tag);
+                padding: 1px var(--ks-spacing-1);
+                border-radius: var(--ks-radius-xs);
+                color: var(--ks-text-dim);
+            }
+        }
+
+        &.ks-markdown--reference {
+            & h1, & h2, & h3 {
+                font-size: var(--ks-font-size-2xs);
+                font-weight: var(--ks-font-weight-bold);
+                text-transform: uppercase;
+                letter-spacing: 0.07em;
+                color: var(--ks-text-muted);
+                margin: var(--ks-spacing-6) 0 var(--ks-spacing-3);
+            }
+
+            & > :first-child, & h3:first-child {
+                margin-top: 0;
+            }
+
+            & h3:first-of-type {
+                font-size: var(--ks-font-size-xl);
+                font-weight: var(--ks-font-weight-bold);
+                text-transform: none;
+                letter-spacing: -0.01em;
+                color: var(--ks-text-primary);
+                margin-top: 0;
+            }
+
+            & p, & li {
+                font-size: var(--ks-font-size-base);
+                line-height: var(--ks-line-height-base);
+                color: var(--ks-text-secondary);
+            }
+
+            & p {
+                margin: 0 0 var(--ks-spacing-3);
+            }
+
+            & code {
+                font-family: var(--ks-font-family-mono);
+                font-size: 0.9em;
+                background: var(--ks-bg-tag);
+                color: var(--ks-text-primary);
+                padding: 1px 0.375rem;
+                border-radius: var(--ks-radius-xs);
+            }
+
+            & a {
+                color: var(--ks-text-link);
+                text-decoration: none;
+
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+
+            & pre {
+                border: 1px solid var(--ks-border-default);
+                border-radius: var(--ks-radius-base);
+                padding: var(--ks-spacing-3);
+                overflow-x: auto;
+            }
+
+            & pre code {
+                background: none;
+                padding: 0;
+                font-size: var(--ks-font-size-xs);
+            }
+
+            & .rows {
+                padding: var(--ks-spacing-4) 0;
+                background-color: var(--ks-bg-overlay);
+            }
+
+            & .row {
+                padding: var(--ks-spacing-3) 0;
+                border-top: 1px solid var(--ks-border-subtle);
+
+                &:first-child {
+                    border-top: none;
+                    padding-top: 0;
+                }
+
+                &:hover > .cell {
+                    background-color: var(--ks-bg-hover);
+                }
+            }
+
+            & .cell {
+                padding: 0 var(--ks-spacing-2);
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
+                line-height: 1.4375rem;
+                overflow-wrap: break-word;
+
+                &:first-child {
+                    margin-bottom: var(--ks-spacing-2);
+                }
+
+                & a {
+                    color: var(--ks-text-primary);
+                }
+            }
         }
     }
 </style>

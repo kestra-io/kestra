@@ -76,7 +76,14 @@ public class PageableUtils {
                             col = mapped;
                         }
 
-                        return split[1].equals("asc") ? Sort.Order.asc(col) : Sort.Order.desc(col);
+                        String direction = split[1];
+                        if (direction.equalsIgnoreCase("asc")) {
+                            return Sort.Order.asc(col);
+                        }
+                        if (direction.equalsIgnoreCase("desc")) {
+                            return Sort.Order.desc(col);
+                        }
+                        throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid sort direction: " + direction + " (expected asc or desc)");
                     })
                     .toList()
             );

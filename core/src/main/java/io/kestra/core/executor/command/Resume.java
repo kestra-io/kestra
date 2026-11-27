@@ -21,7 +21,8 @@ public record Resume(String tenantId,
     @Nullable String operationId,
     @Nullable Actor actor,
     @Nullable String taskRunId,
-    @Nullable PausableTask.Decision decision) implements ExecutionCommand {
+    @Nullable PausableTask.Decision decision,
+    boolean bulk) implements ExecutionCommand {
     public static Resume from(Execution execution, PausableTask.Resumed resumed) {
         return from(execution, resumed, null);
     }
@@ -39,7 +40,8 @@ public record Resume(String tenantId,
             null,
             null,
             null,
-            null
+            null,
+            false
         );
     }
 
@@ -56,12 +58,13 @@ public record Resume(String tenantId,
             null,
             null,
             taskRunId,
-            decision
+            decision,
+            false
         );
     }
 
-    /** A task run id without a decision ends that Approval request with no decision. */
-    public static Resume cancelApproval(Execution execution, String taskRunId, PausableTask.Resumed resumed) {
+    /** A task run id without a decision ends that Approval request with no decision; {@code bulk} tells that it was one of several cancelled at once. */
+    public static Resume cancelApproval(Execution execution, String taskRunId, PausableTask.Resumed resumed, boolean bulk) {
         return new Resume(
             execution.getTenantId(),
             execution.getNamespace(),
@@ -74,15 +77,16 @@ public record Resume(String tenantId,
             null,
             null,
             taskRunId,
-            null
+            null,
+            bulk
         );
     }
 
     public Resume withOperationId(String operationId) {
-        return new Resume(tenantId, namespace, flowId, executionId, timestamp, eventId, resumed, resumeInputs, operationId, actor, taskRunId, decision);
+        return new Resume(tenantId, namespace, flowId, executionId, timestamp, eventId, resumed, resumeInputs, operationId, actor, taskRunId, decision, bulk);
     }
 
     public Resume withActor(Actor actor) {
-        return new Resume(tenantId, namespace, flowId, executionId, timestamp, eventId, resumed, resumeInputs, operationId, actor, taskRunId, decision);
+        return new Resume(tenantId, namespace, flowId, executionId, timestamp, eventId, resumed, resumeInputs, operationId, actor, taskRunId, decision, bulk);
     }
 }

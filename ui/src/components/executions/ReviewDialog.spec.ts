@@ -99,6 +99,18 @@ describe("ReviewDialog", () => {
         expect(callback).toHaveBeenCalledWith({})
     })
 
+    it("sends a placeholder comment with the background inputs check so a required comment does not refuse it", async () => {
+        mountDialog(undefined, [{id: "reason", type: "STRING"}])
+        await flushPromises()
+
+        inputsForm.validation?.({formData: new FormData(), inputsMetaData: [], callback: vi.fn()})
+        await flushPromises()
+
+        const {formData} = validateReview.mock.calls[0][0]
+        expect(formData.get("kestra_review_comment")).not.toBe("")
+        expect(formData.get("kestra_review_comment")).toBeTruthy()
+    })
+
     it("keeps a comment typed before the inputs form is ready as an unsaved change", async () => {
         const wrapper = mountDialog(undefined, [{id: "confirmed", type: "BOOL"}])
         await flushPromises()

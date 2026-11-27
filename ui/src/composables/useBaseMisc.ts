@@ -53,7 +53,7 @@ export const useBaseMiscStore = () => {
         if (configs.value?.isBasicAuthInitialized && BasicAuth.isLoggedIn()) {
             return MiscAPI.usages({days})
         }
-        return []
+        return {}
     }
 
     /** Creating the account logs the caller in, so the full configuration loads right after to drive analytics. */

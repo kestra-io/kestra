@@ -418,3 +418,36 @@ export const Mobile: Story = {
         `,
     }),
 }
+
+/** Form labels: `--ks-form-item-label-font-size` and `--ks-form-item-label-font-weight` replace the dialog's md semibold labels, set on the form */
+export const FormLabels: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsButton, KsDialog, KsForm, KsFormItem, KsInput},
+        setup() {
+            const visible = ref(false)
+            return {visible, name: ref("")}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open Dialog</ks-button>
+                <ks-dialog v-model="visible" title="Create" destroy-on-close>
+                    <ks-form labelPosition="top" style="--ks-form-item-label-font-weight:var(--ks-font-weight-medium)">
+                        <ks-form-item label="Name">
+                            <ks-input v-model="name" />
+                        </ks-form-item>
+                    </ks-form>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        await userEvent.click(within(canvasElement).getByRole("button", {name: "Open Dialog"}))
+        const label = await waitFor(() => {
+            const element = document.querySelector<HTMLElement>(".kel-dialog label")
+            if (!element) throw new Error("The dialog has not opened yet.")
+            return element
+        })
+        await expect(getComputedStyle(label).fontWeight).toBe("500")
+    },
+}

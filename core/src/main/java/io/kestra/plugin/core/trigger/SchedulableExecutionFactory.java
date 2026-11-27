@@ -54,7 +54,7 @@ final class SchedulableExecutionFactory {
             .scheduleDate(Optional.ofNullable(scheduleDate).map(ChronoZonedDateTime::toInstant).orElse(null))
             .build();
 
-        Map<String, Object> allInputs = getInputs(trigger, runContext, triggerContext.getBackfill());
+        Map<String, Object> allInputs = getInputs(trigger, runContext, triggerContext.getBackfill(), variables);
 
         Execution executionForRendering = execution.withLabels(
             LabelService.forExecution(conditionContext.getFlow(), executionLabels, execution.getId())
@@ -74,15 +74,17 @@ final class SchedulableExecutionFactory {
         );
     }
 
-    private static Map<String, Object> getInputs(Schedulable trigger, RunContext runContext, Backfill backfill) throws IllegalVariableEvaluationException {
+    private static Map<String, Object> getInputs(Schedulable trigger, RunContext runContext, Backfill backfill, Map<String, Object> variables)
+        throws IllegalVariableEvaluationException {
         Map<String, Object> inputs = new HashMap<>();
+        Map<String, Object> triggerVariables = Map.of("trigger", variables);
 
         if (trigger.getInputs() != null) {
-            inputs.putAll(runContext.render(trigger.getInputs()));
+            inputs.putAll(runContext.render(trigger.getInputs(), triggerVariables));
         }
 
         if (backfill != null && backfill.getInputs() != null) {
-            inputs.putAll(runContext.render(backfill.getInputs()));
+            inputs.putAll(runContext.render(backfill.getInputs(), triggerVariables));
         }
 
         return inputs;

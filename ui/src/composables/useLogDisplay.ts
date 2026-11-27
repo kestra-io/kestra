@@ -61,7 +61,7 @@ export const editorFontSizeOverride = useStorage<number | null>(storageKeys.EDIT
 
 export const logsFontSize = computed({
     get: () => logsFontSizeOverride.value ?? MONO_BASE_PX[appFontSizeMode.value],
-    set: (v: number) => { logsFontSizeOverride.value = v },
+    set: (v: number | undefined) => { logsFontSizeOverride.value = v ?? null },
 })
 
 export const effectiveEditorFontSize = computed(

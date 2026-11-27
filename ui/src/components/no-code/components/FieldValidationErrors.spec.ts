@@ -11,7 +11,7 @@ describe("FieldValidationErrors", () => {
         const errors = ["First validation error", "Second validation error", "Third validation error"]
         const wrapper = mountErrors(errors)
 
-        const entries = wrapper.findAll('[data-test="field-validation-error"]')
+        const entries = wrapper.findAll("[data-test=\"field-validation-error\"]")
         expect(entries).toHaveLength(3)
         expect(entries.map((entry) => entry.text())).toEqual(errors)
     })
@@ -31,7 +31,7 @@ describe("FieldValidationErrors", () => {
     test("renders duplicate errors as separate entries", () => {
         const wrapper = mountErrors(["Required field", "Required field"])
 
-        const entries = wrapper.findAll('[data-test="field-validation-error"]')
+        const entries = wrapper.findAll("[data-test=\"field-validation-error\"]")
         expect(entries).toHaveLength(2)
         expect(entries.map((entry) => entry.text())).toEqual(["Required field", "Required field"])
     })
@@ -39,7 +39,7 @@ describe("FieldValidationErrors", () => {
     test("uses a custom data-test value on every entry", () => {
         const wrapper = mountErrors(["Required field", "Invalid value"], "custom-field-error")
 
-        const entries = wrapper.findAll('[data-test="custom-field-error"]')
+        const entries = wrapper.findAll("[data-test=\"custom-field-error\"]")
         expect(entries).toHaveLength(2)
         expect(entries.map((entry) => entry.attributes("data-test"))).toEqual([
             "custom-field-error", "custom-field-error",

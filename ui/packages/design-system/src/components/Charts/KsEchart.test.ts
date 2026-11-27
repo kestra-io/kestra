@@ -191,6 +191,44 @@ describe("KsEchart", () => {
         expect(content).toContain(">1.5s<")
     })
 
+    test("external tooltip falls back to the chart-wide tooltip.valueFormatter", async () => {
+        const options = {
+            ...BASE_OPTIONS,
+            tooltip: {valueFormatter: (value: unknown) => `~${value}`},
+            series: [{name: "Executions", type: "bar", data: [10]}],
+        }
+        const wrapper = mount(KsEchart, {props: {options, tooltipType: TooltipType.EXTERNAL}})
+
+        const opt = wrapper.findComponent({name: "VChart"}).props("option") as {tooltip: {formatter: (params: unknown) => string}}
+        opt.tooltip.formatter([{seriesName: "Executions", seriesType: "bar", seriesIndex: 0, name: "Jan", value: 10, color: "#0f0"}])
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.findComponent({name: "KsTooltip"}).props("content") as string).toContain(">~10<")
+    })
+
+    test("external tooltip shows the seriesLabel text of a series, escaped, and keeps the default for the others", async () => {
+        const options = {
+            ...BASE_OPTIONS,
+            series: [
+                {name: "by_priority.critical", type: "bar", data: [7]},
+                {name: "by_priority.low", type: "bar", data: [9]},
+            ],
+        }
+        const seriesLabel = (name: string) => name === "by_priority.critical" ? "<b>Critical</b>" : undefined
+        const wrapper = mount(KsEchart, {props: {options, tooltipType: TooltipType.EXTERNAL, seriesLabel}})
+
+        const opt = wrapper.findComponent({name: "VChart"}).props("option") as {tooltip: {formatter: (params: unknown) => string}}
+        opt.tooltip.formatter([
+            {seriesName: "by_priority.critical", seriesType: "bar", seriesIndex: 0, name: "Jan", value: 7, color: "#f00"},
+            {seriesName: "by_priority.low", seriesType: "bar", seriesIndex: 1, name: "Jan", value: 9, color: "#0f0"},
+        ])
+        await wrapper.vm.$nextTick()
+
+        const content = wrapper.findComponent({name: "KsTooltip"}).props("content") as string
+        expect(content).toContain("&lt;b&gt;Critical&lt;/b&gt;")
+        expect(content).toContain("By_priority.low")
+    })
+
     // ── loading ────────────────────────────────────────────────────────────────
 
     test("applies v-ks-loading directive when loading is true", () => {

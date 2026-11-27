@@ -3,10 +3,12 @@ package io.kestra.core.test.flow;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,7 +30,15 @@ public class TaskFixture {
 
     private Map<String, Object> outputs;
 
+    // test executions write no assets, so the assets of a fixture are never written either
+    @Deprecated(forRemoval = true, since = "2.1.0")
     private List<Asset> assets;
 
     private Property<String> description;
+
+    @AssertTrue(message = "The state should be a terminal state.")
+    @JsonIgnore
+    public boolean isInTerminalState() {
+        return state == null || state.isTerminated();
+    }
 }

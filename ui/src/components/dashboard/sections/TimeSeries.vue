@@ -10,6 +10,7 @@
             v-if="showLegend"
             :items="legendStatuses"
             :durationLabel="yBShown ? durationLabel : undefined"
+            :formatValue="formatNumber"
             :chart="ksEchartRef"
             @toggle="onLegendToggle"
         />
@@ -30,6 +31,7 @@
                 :loading="false"
                 :tooltipType="TooltipType.EXTERNAL"
                 :stickyTooltip="props.short"
+                :seriesLabel="seriesLabel"
                 @echarts-click="onChartClick"
             />
 
@@ -86,7 +88,7 @@
     import {Motion} from "motion-v"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, formatNumber, useLegendToggle, toEchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateGrouping} from "../../../utils/utils"
@@ -166,6 +168,9 @@
     const {drillDown} = useChartDrillDown(props.chart)
 
     const {data, chartOptions} = props.chart
+    const colorByValues = computed(() => props.chart.chartOptions?.colorByValues)
+    const byRank = computed(() => byCategoryRank(colorByValues.value))
+    const seriesLabel = (name: string) => categoryDisplayName(name, colorByValues.value)
 
     const aggregator = computed(() => {
         return Object.entries(data?.columns ?? {})
@@ -237,6 +242,12 @@
                 .filter(key => !aggregatorKeys.includes(key))
                 .filter(key => key !== column)
 
+            const stackColors = chartCategoryColors(
+                theme.value,
+                array.map((params) => colorByColumn ? params[colorByColumn] as string | undefined : undefined),
+                colorByValues.value,
+            )
+
             return array.reduce<Record<string, BarAccumulatorEntry>>((acc, {...params}) => {
                 const stack = fields.map((f) => params[f]).join(", ")
 
@@ -248,7 +259,7 @@
                         data: [],
                         tooltip: stack,
                         label: stackLabel,
-                        backgroundColor: getConsistentHEXColor(theme.value, stackLabel),
+                        backgroundColor: stackColors.get(stackLabel ?? "") ?? "",
                         unique: new Set(),
                     }
                 }
@@ -286,9 +297,9 @@
 
         const yDataset = reducer(rawData, aggregator.value[0][0], "y")
 
-        // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
+        // Configured categories first, then alphabetically by label, for a consistent order across time ranges.
         const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a, b) =>
-            (a.label ?? "").localeCompare(b.label ?? ""),
+            byRank.value(a.label ?? "", b.label ?? "") || (a.label ?? "").localeCompare(b.label ?? ""),
         )
 
         const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field
@@ -348,11 +359,11 @@
         const barDatasets = pd.datasets.filter((ds): ds is FlattenedBarDataset => ds.type !== "line")
         const radius = props.short ? 0.5 : 2
 
-        // format duration values in the tooltip as human durations instead of raw seconds
-        const durationTooltip = (fieldIndex: number) =>
+        // durations show as human durations instead of raw seconds, other numbers are rounded
+        const valueTooltip = (fieldIndex: number) =>
             isDuration(aggregator.value[fieldIndex]?.[1]?.field)
                 ? {tooltip: {valueFormatter: (value: unknown) => durationUtils.humanDuration(Number(value))}}
-                : {}
+                : {tooltip: {valueFormatter: (value: unknown) => typeof value === "number" ? formatNumber(value) : value}}
 
         /**
          * ECharts has no native gap for stacked segments — faked with a transparent border.
@@ -378,7 +389,7 @@
             },
             barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
             ...(props.short ? {barCategoryGap: "0%"} : {}),
-            ...durationTooltip(0),
+            ...valueTooltip(0),
         }))
 
         const lineSeries = pd.datasets
@@ -393,7 +404,7 @@
                 z: 1,
                 lineStyle: {width: props.short ? 0.5 : 1, color: ds.borderColor},
                 ...(ds.areaStyle ? {areaStyle: ds.areaStyle} : {}),
-                ...durationTooltip(yBShown.value ? 1 : 0),
+                ...valueTooltip(yBShown.value ? 1 : 0),
             }))
 
         const axisLabelStyle = {
@@ -406,6 +417,7 @@
             show: showAxes,
             position,
             splitNumber: 5,
+            ...(aggregator.value[fieldIndex]?.[1]?.agg === "COUNT" ? {minInterval: 1} : {}),
             splitLine: {
                 show: showAxes && position === "left",
                 lineStyle: {type: "dashed", color: cssVar("--ks-border-subtle"), width: 1},
@@ -413,9 +425,9 @@
             axisLabel: {
                 ...axisLabelStyle,
                 ...(position === "left" ? {align: "left"} : {}),
-                ...(isDuration(aggregator.value[fieldIndex]?.[1]?.field)
-                    ? {formatter: (v: number) => durationUtils.humanDuration(v)}
-                    : {}),
+                formatter: isDuration(aggregator.value[fieldIndex]?.[1]?.field)
+                    ? (v: number) => durationUtils.humanDuration(v)
+                    : formatNumber,
             },
         })
 
@@ -455,6 +467,8 @@
                 label: ds.label ?? "",
                 color: ds.backgroundColor,
                 count: ds.data.reduce((sum, n) => sum + (n || 0), 0),
+                displayName: seriesLabel(ds.label ?? ""),
+                rank: categoryRank(ds.label ?? "", colorByValues.value),
             })),
     )
 
@@ -490,7 +504,7 @@
     }
 
     function onChartClick(rawParams: unknown) {
-        const params = rawParams as EchartsParams
+        const params = toEchartsParams(rawParams)
         if (params.seriesType !== "bar" || props.execution || isSelectable.value) return
 
         drillDown(

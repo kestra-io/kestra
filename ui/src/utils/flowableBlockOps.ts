@@ -618,10 +618,12 @@ function getAtPath(obj: Record<string, unknown>, path: string): unknown {
     for (const seg of segments) {
         if (cur == null || typeof cur !== "object") return undefined
         if (Array.isArray(cur)) {
+            // nosemgrep: prototype-pollution-loop -- numeric index into an array, nothing is assigned on the way.
             cur = (cur as unknown[])[Number(seg)]
         } else {
             const key = String(seg)
             if (UNSAFE_KEYS.has(key)) return undefined
+            // nosemgrep: prototype-pollution-loop -- key was checked against UNSAFE_KEYS above.
             cur = (cur as Record<string, unknown>)[key]
         }
     }
@@ -636,10 +638,12 @@ function setAtPath(obj: Record<string, unknown>, path: string, value: unknown): 
         const seg = segments[i]
         if (cur == null || typeof cur !== "object") return
         if (Array.isArray(cur)) {
+            // nosemgrep: prototype-pollution-loop -- numeric index into an array, nothing is assigned on the way.
             cur = (cur as unknown[])[Number(seg)]
         } else {
             const key = String(seg)
             if (UNSAFE_KEYS.has(key)) return
+            // nosemgrep: prototype-pollution-loop -- key was checked against UNSAFE_KEYS above.
             cur = (cur as Record<string, unknown>)[key]
         }
     }

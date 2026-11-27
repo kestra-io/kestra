@@ -60,6 +60,10 @@
             </KsSelect>
         </section>
 
+        <section v-if="$slots.versions" class="plugin-overview__block">
+            <slot name="versions" />
+        </section>
+
         <section v-if="createdBy" class="plugin-overview__block">
             <h6 class="plugin-overview__label">{{ $t("pluginPage.overview.createdBy") }}</h6>
             <div class="plugin-overview__person">

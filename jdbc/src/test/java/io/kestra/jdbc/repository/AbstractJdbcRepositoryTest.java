@@ -2,6 +2,7 @@ package io.kestra.jdbc.repository;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 
 import org.jooq.Field;
@@ -43,6 +44,21 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.OPERATION_ID,
         QueryFilter.Field.OPERATION_OUTCOME
     );
+
+    @Test
+    void shouldBuildColumnNameWithRootLocaleUnderTurkishLocale() {
+        Locale previous = Locale.getDefault();
+        Locale.setDefault(Locale.of("tr", "TR"));
+
+        try {
+            assertThat(this.getColumnName(QueryFilter.Field.FLOW_ID)).isEqualTo(DSL.quotedName("flow_id"));
+            assertThat(this.getConditionOnField(QueryFilter.Field.EXECUTION_ID, "anyValue", QueryFilter.Op.EQUALS, null)).isEqualTo(
+                DSL.field(DSL.quotedName("execution_id")).eq("anyValue")
+            );
+        } finally {
+            Locale.setDefault(previous);
+        }
+    }
 
     @Test
     void defaultConditions() {

@@ -167,6 +167,12 @@ public class PauseTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/pause-on-pause-run-if-false.yaml")
+    void shouldNotExecuteOnPauseTaskOfASkippedPause(Execution execution) throws Exception {
+        suite.shouldNotExecuteOnPauseTaskOfASkippedPause(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/pause-errors-finally-after-execution.yaml")
     void shouldExecuteErrorsFinallyAndAfterExecution(Execution execution) throws Exception {
         suite.shouldExecuteErrorsFinallyAndAfterExecution(execution);
@@ -458,6 +464,14 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(2);
             assertThat(execution.getTaskRunList().getLast().getTaskId()).isEqualTo("hello");
             assertThat(execution.getTaskRunList().getLast().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        }
+
+        public void shouldNotExecuteOnPauseTaskOfASkippedPause(Execution execution) throws Exception {
+            // the Pause is nested in a flowable and its runIf is false: it is skipped, and so is its onPause task
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(execution.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+            assertThat(execution.findTaskRunsByTaskId("on_pause")).isEmpty();
+            assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         }
 
         public void shouldExecuteErrorsFinallyAndAfterExecution(Execution execution) throws Exception {

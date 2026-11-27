@@ -21,18 +21,21 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.RestartWorkingDirectory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
@@ -41,6 +44,7 @@ import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.NoTransactionContext;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerInstance;
+import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskData;
@@ -105,6 +109,9 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
     @Inject
     private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
+
+    @Inject
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     private VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue;
@@ -178,6 +185,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(workerTaskResult.get().getTaskRun().getAttempts()).hasSize(2);
         assertThat(workerTaskResult.get().getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories()).noneMatch(it -> it.getState() == State.Type.RESUBMITTED);
         newWorker.close();
     }
 
@@ -407,6 +415,64 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     @Test
+    void shouldReportTheLostWorkerOfAWorkingDirectoryTaskInsteadOfResubmittingIt() throws Exception {
+        // Given a task running in the folder of a WorkingDirectory, left by an inactive worker
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        WorkerTaskRunning child = workerTaskRunning(inactive.uid());
+        child.setWorkingDirectoryId(IdUtils.create());
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, child);
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+        List<ExecutionCommand> reported = Collections.synchronizedList(new ArrayList<>());
+        executionCommandQueue.addListener(reported::add);
+
+        // When
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return !reported.isEmpty();
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        // Then the executor is told the worker was lost, so it runs the whole WorkingDirectory again
+        assertThat(reported.getFirst()).isInstanceOfSatisfying(RestartWorkingDirectory.class, command ->
+        {
+            assertThat(command.workingDirectoryTaskRunId()).isEqualTo(child.getWorkingDirectoryId());
+            assertThat(command.lostTaskRunId()).isEqualTo(child.getTaskRun().getId());
+        });
+        assertThat(resubmitted).doesNotContain(child.uid());
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(child.uid(), inactive.uid())).isFalse();
+    }
+
+    @Test
+    void shouldKeepTheExecutionKindWhenTheTaskIsResubmitted() throws Exception {
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        WorkerTaskRunning orphaned = workerTaskRunning(inactive.uid());
+        orphaned.setExecutionKind(ExecutionKind.TEST);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+
+        List<WorkerJob> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job()));
+
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return resubmitted.stream().anyMatch(job -> orphaned.uid().equals(job.uid()));
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        assertThat(resubmitted).filteredOn(job -> orphaned.uid().equals(job.uid()))
+            .singleElement().isInstanceOfSatisfying(WorkerTask.class, job -> assertThat(job.getExecutionKind()).isEqualTo(ExecutionKind.TEST));
+    }
+
+    @Test
     void shouldNotResubmitOrphanedWorkerJobWhenTheWorkerRestartStrategyIsNever() {
         // Given an inactive worker configured never to have its tasks restarted — the setting that
         // exists to keep a non-idempotent task from running twice.
@@ -485,8 +551,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     private WorkerTask workerTaskWithLatch(CountDownLatch holdLatch, String workerQueueId) {
-        WorkerSelector workerSelector = workerQueueId != null
-            ? new WorkerSelector(java.util.List.of(workerQueueId), null)
+        FlowWorkerSelector workerSelector = workerQueueId != null
+            ? new FlowWorkerSelector(java.util.List.of(workerQueueId), null)
             : null;
         // signalLatch satisfies the @NotNull countDownLatchKey constraint; not used in assertions.
         CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(
@@ -542,7 +608,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
                 // Liveness disabled: this instance has no process behind it, and letting the
                 // coordinator declare it non-responding would resubmit its job from the unclean
                 // path and defeat what this test asserts.
-                new ServerConfig(Duration.ofSeconds(1), restartStrategy, new ServerConfig.Liveness(false, Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ZERO, Duration.ofSeconds(1)), null, null, null),
+                new ServerConfig(
+                    Duration.ofSeconds(1), restartStrategy, new ServerConfig.Liveness(false, Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ZERO, Duration.ofSeconds(1)), null, null,
+                    null
+                ),
                 Map.of(),
                 Set.of(),
                 0L
@@ -577,7 +646,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .type(SleepTrigger.class.getName())
             .id("unit-test")
             .duration(sleep.toMillis())
-            .workerSelector(workerQueueId != null ? new io.kestra.core.models.tasks.WorkerSelector(java.util.List.of(workerQueueId), null) : null)
+            .workerSelector(workerQueueId != null ? new io.kestra.core.models.tasks.FlowWorkerSelector(java.util.List.of(workerQueueId), null) : null)
             .build();
 
         Map.Entry<ConditionContext, TriggerState> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);

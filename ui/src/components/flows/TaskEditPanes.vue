@@ -7,7 +7,6 @@
             <div class="task-editor-pane">
                 <TaskEditor
                     :modelValue="modelValue"
-                    :section="section"
                     :hideRunButton="hideRunButton"
                     @update:model-value="(v) => emit('input', v ?? '')"
                 />
@@ -23,7 +22,7 @@
                 :modelValue="modelValue"
                 :schemaType="sectionSchemaType(section)"
                 :path="editorPath"
-                :options="{fullHeight: false}"
+                :options="{fullHeight: false, editor: {padding: {top: 16}}}"
                 :navbar="false"
                 lang="yaml"
                 @save="emit('save')"

@@ -50,7 +50,8 @@ export interface KsEditorProps {
     lang?: string
     path?: string
     schemaType?: KsEditorSchemaType
-    theme?: "dark" | "light" | "vs"
+    /** A theme name from `@kestra-io/plumage`; `light` and `dark` map to Kestra Light and Kestra Dark. */
+    theme?: string
     placeholder?: string | number
     label?: string
     readOnly?: boolean

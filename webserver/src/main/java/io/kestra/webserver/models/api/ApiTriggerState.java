@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 
@@ -36,7 +37,8 @@ public record ApiTriggerState(
     String workerId,
     Instant lastTriggeredDate,
     String executionId,
-    TriggerType kind) {
+    TriggerType kind,
+    Blocker blockedBy) {
     public static ApiTriggerState from(TriggerState state) {
         return new ApiTriggerState(
             state.getNamespace(),
@@ -53,7 +55,8 @@ public record ApiTriggerState(
             state.getWorkerId(),
             truncate(state.getLastTriggeredDate()),
             state.getExecutionId(),
-            state.getType()
+            state.getType(),
+            state.getBlockedBy()
         );
     }
 

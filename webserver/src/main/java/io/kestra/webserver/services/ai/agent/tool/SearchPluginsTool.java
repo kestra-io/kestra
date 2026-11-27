@@ -1,15 +1,19 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.TreeMap;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.webserver.utils.PageableUtils;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -18,12 +22,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Read-only agent tool searching the installed plugin classes by keyword, matching on the
- * fully-qualified class name and on the {@code @Schema} title. Deprecated plugins are skipped.
+ * Read-only agent tool searching the installed plugin types by keywords and kind, matching on the
+ * fully-qualified class name and on the {@code @Schema} title. Deprecated types are skipped unless asked for.
  */
 @Singleton
-public class SearchPluginsTool implements AiPlatformTool {
-    private static final int MAX_RESULTS = 50;
+public class SearchPluginsTool implements McpPlatformTool {
+    private static final int PAGE_SIZE = 50;
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private final PluginRegistry pluginRegistry;
 
@@ -42,64 +47,97 @@ public class SearchPluginsTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
+    }
+
     @Tool(
-        name = "search-plugins",
-        value = "Search the installed Kestra plugins (tasks, triggers, conditions...) by keyword, matching plugin type names and titles (at most 50 results). Read-only; use this to find the right plugin type before fetching its schema with get-plugin-schema. "
-            + "Returns an object { plugins } where `plugins` is an array of { type, title } (empty when nothing matches); `type` is the fully-qualified plugin class and `title` may be null."
+        name = "search_plugins",
+        value = "Search the plugin types installed on this Kestra instance (tasks, triggers, task runners...) by keyword and kind, " + PAGE_SIZE + " per page sorted by type. "
+            + "Read-only; use this to find the right plugin type before fetching its schema with get_plugin_schema or its documentation with read_plugin_documentation. Deprecated types are left out unless `includeDeprecated` is true. "
+            + "Returns an object { plugins, total, page } where `plugins` is an array of { type, kind, title, pluginTitle, deprecated } (empty when nothing matches): `type` is the fully-qualified plugin class, "
+            + "`kind` is TASK, TRIGGER, TASK_RUNNER, STORAGE, SECRET or another plugin kind, `title` may be null and `pluginTitle` names the plugin the type ships in. "
+            + "`total` is the number of all matching types, which can exceed the length of `plugins`; pass `page` to read the next ones."
     )
     public Result searchPlugins(
-        @P(name = "query", value = "Keyword matched case-insensitively against the plugin class name and title") String query) {
-        String needle = query == null ? "" : query.toLowerCase(Locale.ROOT).trim();
+        @P(name = "query", value = "Keywords separated by spaces, e.g. `slack webhook`; a type matches when its name or title contains every keyword, case-insensitively and in any order. Omit to list every type of the given kind", required = false) String query,
+        @P(name = "kind", value = "Only return plugin types of this kind, e.g. TASK or TRIGGER; omit for every kind", required = false) PluginKind kind,
+        @P(name = "includeDeprecated", value = "Whether deprecated plugin types are included; omit to leave them out", required = false) Boolean includeDeprecated,
+        @P(name = "page", value = "The 1-based page of plugin types to read; omit for the first page", required = false) Integer page) {
+        List<String> keywords = keywords(query);
+        boolean withDeprecated = Boolean.TRUE.equals(includeDeprecated);
+        int pageNumber = ToolPages.pageNumber(page);
 
-        // LinkedHashMap keyed by type deduplicates classes registered under several groups while keeping order.
-        Map<String, String> matches = new LinkedHashMap<>();
+        Map<String, PluginMatch> matches = new TreeMap<>();
         for (RegisteredPlugin plugin : pluginRegistry.plugins()) {
-            for (List<Class> classes : plugin.allClassGrouped().values()) {
-                for (Class<?> pluginClass : classes) {
-                    if (matches.size() >= MAX_RESULTS) {
-                        return toResult(matches);
-                    }
-                    Schema schema = pluginClass.getDeclaredAnnotation(Schema.class);
-                    if (schema != null && schema.deprecated()) {
+            for (Map.Entry<String, List<Class>> group : plugin.allClassGrouped().entrySet()) {
+                Optional<PluginKind> groupKind = PluginKind.ofGroup(group.getKey());
+                if (groupKind.isEmpty() || (kind != null && kind != groupKind.get())) {
+                    continue;
+                }
+                for (Class<?> pluginClass : group.getValue()) {
+                    boolean deprecated = isDeprecated(pluginClass);
+                    if (deprecated && !withDeprecated) {
                         continue;
                     }
-                    String title = Optional.ofNullable(schema).map(Schema::title).orElse(null);
-                    if (matches(pluginClass.getName(), title, needle)) {
-                        matches.put(pluginClass.getName(), title);
+                    String title = title(pluginClass);
+                    if (matches(pluginClass.getName(), title, keywords)) {
+                        matches.putIfAbsent(
+                            pluginClass.getName(),
+                            new PluginMatch(pluginClass.getName(), groupKind.get(), title, plugin.title(), deprecated)
+                        );
                     }
                 }
             }
         }
-        return toResult(matches);
+
+        ArrayListTotal<PluginMatch> pageOfMatches = ArrayListTotal.of(PageableUtils.from(pageNumber, PAGE_SIZE), List.copyOf(matches.values()));
+        return new Result(List.copyOf(pageOfMatches), pageOfMatches.getTotal(), pageNumber);
     }
 
-    private static boolean matches(final String type, final String title, final String needle) {
-        return type.toLowerCase(Locale.ROOT).contains(needle)
-            || (title != null && title.toLowerCase(Locale.ROOT).contains(needle));
+    private static boolean isDeprecated(final Class<?> pluginClass) {
+        Schema schema = pluginClass.getDeclaredAnnotation(Schema.class);
+        return pluginClass.isAnnotationPresent(Deprecated.class) || (schema != null && schema.deprecated());
     }
 
-    private static Result toResult(final Map<String, String> matches) {
-        return new Result(
-            matches.entrySet().stream()
-                .map(entry -> new PluginMatch(entry.getKey(), entry.getValue()))
-                .toList()
-        );
+    private static String title(final Class<?> pluginClass) {
+        Schema schema = pluginClass.getDeclaredAnnotation(Schema.class);
+        return schema == null || schema.title().isBlank() ? null : schema.title();
+    }
+
+    private static List<String> keywords(final String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        return List.of(WHITESPACE.split(query.toLowerCase(Locale.ROOT).trim()));
+    }
+
+    private static boolean matches(final String type, final String title, final List<String> keywords) {
+        String lowerType = type.toLowerCase(Locale.ROOT);
+        String lowerTitle = title == null ? "" : title.toLowerCase(Locale.ROOT);
+        return keywords.stream().allMatch(keyword -> lowerType.contains(keyword) || lowerTitle.contains(keyword));
     }
 
     /**
-     * The plugin types matching the search keyword.
+     * One page of the plugin types matching the search.
      *
-     * @param plugins one entry per matching plugin type, empty when nothing matches
+     * @param plugins the types of the requested page, empty when nothing matches or the page is past the end
+     * @param total the number of all matching types
+     * @param page the 1-based page that was read
      */
-    public record Result(List<PluginMatch> plugins) {
+    public record Result(List<PluginMatch> plugins, long total, int page) {
     }
 
     /**
      * A single matching plugin type.
      *
      * @param type the fully-qualified plugin class name
-     * @param title the plugin title, or null when it has none
+     * @param kind the kind of plugin type
+     * @param title the plugin type's title, or null when it has none
+     * @param pluginTitle the title of the plugin the type ships in
+     * @param deprecated whether the type is deprecated
      */
-    public record PluginMatch(String type, String title) {
+    public record PluginMatch(String type, PluginKind kind, String title, String pluginTitle, boolean deprecated) {
     }
 }

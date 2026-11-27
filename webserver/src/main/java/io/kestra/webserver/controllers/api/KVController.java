@@ -5,23 +5,19 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.NamespaceInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.KVService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.models.api.Pagination;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 
@@ -34,10 +30,9 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.Max;
+import jakarta.validation.Valid;
 
 @Controller("/api/v1/{tenant}")
 public class KVController {
@@ -94,17 +89,10 @@ public class KVController {
     @Get("/kv")
     @Operation(tags = { "KV" }, summary = "List all keys")
     public PagedResults<KVEntry> listAllKeys(
-        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(
-            description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by key in ascending order", value = "key:asc"),
-                @ExampleObject(name = "Sort by description in descending order", value = "description:desc"),
-            }
-        ) @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat(Resource.KV_METADATA) List<QueryFilter> filters)
         throws IOException {
-        return PagedResults.of(kvService.list(PageableUtils.from(page, size, sort, this::sortMapper), tenantService.resolveTenant(), null, filters));
+        return PagedResults.of(kvService.list(paging.toPageable(this::sortMapper), tenantService.resolveTenant(), null, filters));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -168,17 +156,10 @@ public class KVController {
         @Parameter(description = "The description of the key") @Nullable @Header("description") String description,
         @RequestBody(description = "The value of the key") @Body String value) throws IOException {
         KVMetadata metadata = new KVMetadata(description, ttl);
-        try {
-            try (JsonParser parser = JacksonMapper.ofIon().createParser(value)) {
-                JsonNode jsonNode = JacksonMapper.ofIon().readTree(parser);
-                if (parser.nextToken() != null) {
-                    throw new JsonParseException(parser, "Trailing content after the first Ion value");
-                }
-                kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
-            }
-        } catch (JsonProcessingException e) {
-            kvStore(namespace).put(key, new KVValueAndMetadata(metadata, value));
+        if (value != null && value.stripLeading().startsWith("\"")) {
+            metadata = metadata.withType(KVType.STRING);
         }
+        kvStore(namespace).put(key, KVValueAndMetadata.ofText(metadata, value));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -228,7 +209,7 @@ public class KVController {
         @Parameter(description = "The list of keys deleted") List<String> keys) {
 
         public List<String> keys() {
-            return Optional.ofNullable(keys).orElse(List.of());
+            return ListUtils.emptyOnNull(keys);
         }
     }
 
@@ -241,7 +222,7 @@ public class KVController {
         @Parameter(description = "The list of keys to delete") List<String> keys) {
 
         public List<String> keys() {
-            return Optional.ofNullable(keys).orElse(List.of());
+            return ListUtils.emptyOnNull(keys);
         }
     }
 

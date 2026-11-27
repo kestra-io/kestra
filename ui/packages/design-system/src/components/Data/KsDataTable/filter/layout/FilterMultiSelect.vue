@@ -157,10 +157,7 @@
                                             inline
                                         />
                                     </div>
-                                    <KsCheckbox
-                                        :modelValue="modelValue.includes(option.value)"
-                                        @update-model-value="(checked: boolean) => handleOptionChange(option.value, checked)"
-                                    />
+                                    <KsCheckbox :modelValue="modelValue.includes(option.value)" />
                                 </div>
                             </div>
                         </div>
@@ -194,10 +191,7 @@
                             inline
                         />
                     </div>
-                    <KsCheckbox
-                        :modelValue="modelValue.includes(option.value)"
-                        @update-model-value="(checked: boolean) => handleOptionChange(option.value, checked)"
-                    />
+                    <KsCheckbox :modelValue="modelValue.includes(option.value)" />
                 </div>
                 <KsAlert
                     v-if="filteredOptions.length === 0"

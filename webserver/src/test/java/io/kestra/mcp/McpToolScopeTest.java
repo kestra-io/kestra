@@ -20,6 +20,15 @@ class McpToolScopeTest {
     }
 
     @Test
+    void shouldNotWidenAGrantOnANamespaceEndingWithADotToItsSiblings() {
+        AccessScope scope = AccessScope.namespaces(List.of("team."));
+
+        assertThat(McpToolScope.allows(scope, "team.")).isTrue();
+        assertThat(McpToolScope.allows(scope, "team.product")).isFalse();
+        assertThat(McpToolScope.allows(scope, "team")).isFalse();
+    }
+
+    @Test
     void shouldAllowEverythingWhenGlobalAndNothingWhenDenyAll() {
         assertThat(McpToolScope.allows(AccessScope.global(), "io.kestra")).isTrue();
         assertThat(McpToolScope.allows(AccessScope.denyAll(), "io.kestra")).isFalse();

@@ -15,6 +15,26 @@ vi.mock("./shikiHighlighter", async (importOriginal) => {
 const BASE64_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
 
 describe("KsMarkdown", () => {
+    test("adds the compact modifier only when the compact prop is set", () => {
+        const regular = i18nMount(KsMarkdown, {props: {content: "# Title"}})
+        const compact = i18nMount(KsMarkdown, {props: {content: "# Title", compact: true}})
+
+        expect(regular.find(".ks-markdown--compact").exists()).toBe(false)
+        expect(compact.find(".ks-markdown--compact").exists()).toBe(true)
+    })
+
+    test("stacks table rows instead of rendering a KsTable in reference mode", () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {reference: true, content: "| Property | Description |\n|---|---|\n| `id` | The flow id. |\n| `namespace` | Its namespace. |"},
+        })
+
+        expect(wrapper.findComponent(KsTable).exists()).toBe(false)
+        expect(wrapper.findAll(".row").map((row) => row.findAll(".cell").map((cell) => cell.text()))).toEqual([
+            ["id", "The flow id."],
+            ["namespace", "Its namespace."],
+        ])
+    })
+
     test("adds a hidden anchor link to each heading", () => {
         const wrapper = i18nMount(KsMarkdown, {props: {content: "# My Title"}})
         const anchor = wrapper.find("h1#my-title a.anchor")
@@ -70,6 +90,14 @@ describe("KsMarkdown", () => {
 
         expect(alert.props("type")).toBe("warning")
         expect(alert.find("strong").text()).toBe("bold")
+    })
+
+    test("keeps text after a colon that the directive syntax would otherwise swallow", () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {content: "<em>io.kestra.plugin:plugin-dbt:2.5.4</em> at 10:45 on http://localhost:8080/ui"},
+        })
+
+        expect(wrapper.text()).toContain("io.kestra.plugin:plugin-dbt:2.5.4 at 10:45 on http://localhost:8080/ui")
     })
 
     test("opens only external links in a new tab", () => {
@@ -141,6 +169,23 @@ describe("KsMarkdown", () => {
             {timeout: 5000, interval: 50},
         )
         expect(wrapper.find(".code-block code").text()).toBe("const x = 1")
+    })
+
+    test("leaves a very long line uncoloured and keeps highlighting the lines after it", async () => {
+        const longLine = `text: ${"x".repeat(2000)}`
+        const wrapper = i18nMount(KsMarkdown, {props: {content: `\`\`\`yaml\nid: produce\n${longLine}\nnext: value\n\`\`\``}})
+
+        await vi.waitFor(
+            () => expect(wrapper.find(".code-block code span[style]").exists()).toBe(true),
+            {timeout: 5000, interval: 20},
+        )
+        const spans = wrapper.findAll<HTMLSpanElement>(".code-block code span")
+        const long = spans.filter((span) => span.text().includes("xxx"))
+
+        expect(long).toHaveLength(1)
+        expect(long[0].text()).toBe(longLine)
+        expect(long[0].element.style.color).toBe("")
+        expect(spans.find((span) => span.text() === "next")?.element.style.color).not.toBe("")
     })
 
     test("highlights a code block that has no language", async () => {
@@ -268,6 +313,25 @@ describe("KsMarkdown", () => {
         expect(link.text()).toBe("click")
         expect(link.attributes("onmouseover")).toBeUndefined()
         expect(link.attributes("href") ?? "").not.toContain("javascript")
+    })
+
+    test.each([
+        ["a dot", "text <span data-a.onclick=\"alert(1)\">x</span>", "span", "onclick"],
+        ["a colon", "text <details open data-a:ontoggle=\"alert(1)\">x</details>", "details", "ontoggle"],
+    ])("does not turn a data- attribute name holding %s into an event handler", (_, content, tag, handler) => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content}})
+        const element = wrapper.find(tag)
+
+        expect(element.exists()).toBe(true)
+        expect(element.attributes(handler)).toBeUndefined()
+    })
+
+    test("keeps plain data- and aria- attributes on an inline HTML tag", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "text <span data-id=\"row\" aria-label=\"Row\">x</span>"}})
+        const attributes = wrapper.find("span").attributes()
+
+        expect(attributes["data-id"]).toBe("row")
+        expect(attributes["aria-label"]).toBe("Row")
     })
 
     test("sanitizes the inner HTML of a custom component", () => {

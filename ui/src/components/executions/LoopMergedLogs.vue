@@ -65,7 +65,6 @@
                     class="loop-merged-scroller"
                     :class="{'loop-merged-scroller-full': fullHeight}"
                     data-test="loop-merged-logs-scroller"
-                    :buffer="200"
                     :prerender="20"
                 >
                     <template #default="{item, active}">
@@ -116,7 +115,7 @@
     import {computed} from "vue"
     import {useRoute, type RouteLocationRaw} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import LogLine from "../logs/LogLine.vue"
     import {useExecutionsStore} from "../../stores/executions"
@@ -159,7 +158,6 @@
             startDate: execution.state?.startDate,
             endDate: props.running ? undefined : execution.state?.endDate ?? undefined,
             taskRunList: execution.taskRunList,
-            kind: (execution as {kind?: string}).kind,
         }
     })
 

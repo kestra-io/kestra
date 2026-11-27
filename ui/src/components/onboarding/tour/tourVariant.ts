@@ -6,6 +6,12 @@ import {TOUR_SCENES, type TourScene} from "./tourScenes"
 import {useTourActions} from "./useTourActions"
 import {shouldShowWelcome} from "../../../utils/welcomeGuard"
 
+/** Values of the `?tour=` query: `start` always starts the tour, `auto` only if it never ran in this browser. */
+export enum TourQueryMode {
+    START = "start",
+    AUTO = "auto",
+}
+
 /**
  * One complete guided experience. `TourOverlay` renders whichever variant
  * `override/components/onboarding/tour/useTourVariant` resolves, so a distribution can serve a
@@ -30,7 +36,7 @@ export const DEFAULT_TOUR_VARIANT: TourVariant<ReturnType<typeof useTourActions>
     i18nPrefix: "onboarding.tour",
     scenes: TOUR_SCENES,
     finale: TourFinale,
-    entryRoute: (tenant) => ({name: "ai", query: {tour: "start"}, params: {tenant}}),
+    entryRoute: (tenant) => ({name: "ai", query: {tour: TourQueryMode.START}, params: {tenant}}),
     autoStartRoute: "ai",
     eligible: shouldShowWelcome,
     useActions: useTourActions,

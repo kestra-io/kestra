@@ -18,17 +18,20 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import type {AnchorHTMLAttributes, Component} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
 
-    const props = defineProps<{
+    interface KsSideBarItemProps {
         title: string
         icon?: Component
         href?: string
         active?: boolean
         locked?: boolean
         disabled?: boolean
-    }>()
+    }
+
+    const props = defineProps<KsSideBarItemProps & /* @vue-ignore */ Omit<NativeAttributes<AnchorHTMLAttributes>, keyof KsSideBarItemProps>>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]
@@ -67,6 +70,12 @@
     &:hover {
         background-color: var(--ks-bg-hover);
         color: var(--ks-text-secondary);
+    }
+
+    /* Inset because KsSideBarSection hides overflow, which clips a ring drawn outside the item. */
+    &:focus-visible {
+        outline: var(--ks-border-width-base) solid var(--ks-border-focus);
+        outline-offset: calc(-1 * var(--ks-border-width-base));
     }
 
     &.is-active {

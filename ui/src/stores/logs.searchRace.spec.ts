@@ -1,19 +1,24 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
-const searchLogs = vi.fn()
+import type {Level, LogEntry} from "@kestra-io/kestra-sdk"
+import type {searchLogs as searchLogsSdk} from "@kestra-io/kestra-sdk/logs"
+
+type SearchLogsResponse = Awaited<ReturnType<typeof searchLogsSdk>>
+
+const searchLogs = vi.fn<typeof searchLogsSdk>()
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({
-    searchLogs: (...args: any[]) => searchLogs(...args),
+    searchLogs: (...args: Parameters<typeof searchLogsSdk>) => searchLogs(...args),
     deleteLogsFromFlow: vi.fn(),
 }))
 
 import {useLogsStore} from "./logs"
 
-const log = (level: string) => ({level, message: `a ${level} line`})
+const log = (level: Level): LogEntry => ({namespace: "test", flowId: "logs", level, message: `a ${level} line`})
 
-const levelFilterOf = (params: any) => params.filters
-    ?.find((filter: any) => filter.field === "level")?.value
+const levelFilterOf = (params: Parameters<typeof searchLogsSdk>[0]) => params?.filters
+    ?.find(filter => filter.field === "level")?.value
 
 describe("logs store search ordering", () => {
     beforeEach(() => {
@@ -24,17 +29,17 @@ describe("logs store search ordering", () => {
     it("ignores a superseded search that answers after the newest one", async () => {
         const store = useLogsStore()
 
-        let resolveStale: (value: unknown) => void = () => {}
-        searchLogs.mockImplementation((params: any) => levelFilterOf(params) === "DEBUG"
-            ? new Promise((resolve) => {
+        let resolveStale: (value: SearchLogsResponse) => void = () => {}
+        searchLogs.mockImplementation(params => levelFilterOf(params) === "DEBUG"
+            ? new Promise<SearchLogsResponse>((resolve) => {
                 resolveStale = resolve
             })
-            : Promise.resolve({results: [log("WARN")], total: 1}))
+            : Promise.resolve({results: [log("WARN")], total: 1, type: "OFFSET"}))
 
         const stale = store.findLogs({page: 1, size: 25, "filters[level][GREATER_THAN_OR_EQUAL_TO]": "DEBUG"})
         const newest = store.findLogs({page: 1, size: 25, "filters[level][GREATER_THAN_OR_EQUAL_TO]": "WARN"})
 
-        resolveStale({results: [log("DEBUG"), log("INFO"), log("WARN")], total: 3})
+        resolveStale({results: [log("DEBUG"), log("INFO"), log("WARN")], total: 3, type: "OFFSET"})
         await Promise.all([stale, newest])
 
         expect(store.logs).toEqual([log("WARN")])
@@ -44,10 +49,10 @@ describe("logs store search ordering", () => {
     it("publishes the newest search even when it answers last", async () => {
         const store = useLogsStore()
 
-        searchLogs.mockImplementation((params: any) => Promise.resolve(
-            params.page === 1
-                ? {results: [log("DEBUG")], total: 1}
-                : {results: [log("ERROR")], total: 1},
+        searchLogs.mockImplementation(params => Promise.resolve(
+            params?.page === 1
+                ? {results: [log("DEBUG")], total: 1, type: "OFFSET"}
+                : {results: [log("ERROR")], total: 1, type: "OFFSET"},
         ))
 
         await store.findLogs({page: 1, size: 25})

@@ -5,12 +5,15 @@ export {default as NodeMenu} from "./nodes/NodeMenu.vue"
 export type {NodeAction} from "./nodes/NodeMenu.vue"
 export {default as NodeMenuItem} from "./nodes/NodeMenuItem.vue"
 export {default as Duration} from "./misc/Duration.vue"
+export {default as LoopStateBar} from "./nodes/LoopStateBar.vue"
 export {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
 export {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY} from "./injectionKeys"
 export {EVENTS, GRAPH_BACKGROUND, MIN_ZOOM, NODE_SIZES, ZOOM_LOD} from "./utils/constants"
 export type {CustomActionConfig, ShowDetailsConfig, LodLevel} from "./utils/constants"
 export {State} from "@kestra-io/design-system"
 export type {FlowGraph} from "./utils/vueFlowUtils"
+export {diffFlowSources, mergeFlowGraphs} from "./utils/flowDiff"
+export type {FlowDiff, TaskDiff, TaskDiffStatus} from "./utils/flowDiff"
 export {
     LOOP_TYPE_SUFFIX,
     TASK_RUN_STATE_COUNTS_KEY,

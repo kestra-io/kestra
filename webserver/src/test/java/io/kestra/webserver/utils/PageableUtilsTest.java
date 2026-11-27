@@ -99,4 +99,27 @@ class PageableUtilsTest {
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
         assertThat(e.getMessage()).contains("unknownColumn");
     }
+
+    @Test
+    void shouldAcceptSortDirectionInAnyCase() {
+        // A typed API or CLI call can send ASC/Desc; it used to be read as descending
+        assertThat(PageableUtils.from(1, 10, List.of("id:ASC")).getSort().getOrderBy().getFirst()).isEqualTo(Sort.Order.asc("id"));
+        assertThat(PageableUtils.from(1, 10, List.of("id:Asc")).getSort().getOrderBy().getFirst()).isEqualTo(Sort.Order.asc("id"));
+        assertThat(PageableUtils.from(1, 10, List.of("id:DESC")).getSort().getOrderBy().getFirst()).isEqualTo(Sort.Order.desc("id"));
+        assertThat(PageableUtils.from(1, 10, List.of("id:desc")).getSort().getOrderBy().getFirst()).isEqualTo(Sort.Order.desc("id"));
+    }
+
+    @Test
+    void shouldThrowWhenSortDirectionIsUnknown() {
+        // A typo used to silently sort descending with a 200
+        for (String direction : new String[]{"acs", "ascending", ""}) {
+            HttpStatusException e = assertThrows(
+                HttpStatusException.class,
+                () -> PageableUtils.from(1, 10, List.of("id:" + direction))
+            );
+            assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+        }
+        HttpStatusException e = assertThrows(HttpStatusException.class, () -> PageableUtils.from(1, 10, List.of("id:acs")));
+        assertThat(e.getMessage()).contains("acs");
+    }
 }

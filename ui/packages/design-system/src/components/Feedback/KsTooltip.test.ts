@@ -7,7 +7,7 @@ import KsTooltip from "./KsTooltip.vue"
 const ElTooltipStub = {
     name: "ElTooltip",
     template: "<div><slot /></div>",
-    props: ["effect", "content", "placement", "trigger", "enterable", "rawContent", "disabled", "autoClose"],
+    props: ["effect", "content", "placement", "trigger", "enterable", "rawContent", "disabled", "autoClose", "popperClass"],
 }
 
 const globalConfig = {plugins: [KestraDesignSystem]}
@@ -77,5 +77,14 @@ describe("KsTooltip — default effect", () => {
         await nextTick()
 
         expect(wrapper.findComponent(ElTooltipStub).props("effect")).toBe("dark")
+    })
+
+    test("passes ks-tooltip and the caller's popperClass to ElTooltip", () => {
+        const wrapper = mount(KsTooltip, {
+            props: {popperClass: "my-tooltip"},
+            global: globalConfigWithStub,
+        })
+
+        expect(wrapper.findComponent(ElTooltipStub).props("popperClass")).toStrictEqual(["ks-tooltip", "my-tooltip"])
     })
 })

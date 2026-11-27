@@ -33,24 +33,29 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, useAttrs} from "vue"
-    import KsButton from "../KsButton/KsButton.vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {computed, useAttrs, type ButtonHTMLAttributes} from "vue"
+    import type {Placement} from "element-plus"
+    import KsButton, {type KsButtonProps, type KsButtonType} from "../KsButton/KsButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     type IconSize = "xs" | "sm" | "base" | "lg" | "xl"
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
+    interface KsIconButtonProps {
         tooltip?: string
-        placement?: string
+        placement?: Placement
         ariaLabel?: string
         disabled?: boolean
         to?: string | Record<string, unknown>
         replace?: boolean
         filled?: boolean
         size?: IconSize
-    }>(), {
+        type?: KsButtonType
+    }
+
+    const props = withDefaults(defineProps<KsIconButtonProps & /* @vue-ignore */ Omit<KsButtonProps & NativeAttributes<ButtonHTMLAttributes>, keyof KsIconButtonProps>>(), {
         tooltip: "",
         placement: "left",
         ariaLabel: "",
@@ -59,6 +64,7 @@
         replace: false,
         filled: false,
         size: "sm",
+        type: undefined,
     })
 
     defineSlots<{
@@ -68,6 +74,7 @@
     const attrs = useAttrs()
     const buttonAttrs = computed(() => ({
         ...attrs,
+        type: props.type,
         class: [
             "ks-icon-button",
             `ks-icon-button--${props.size}`,
@@ -83,7 +90,7 @@
 <style scoped>
     .ks-icon-button {
         --ks-icon-button-glyph: var(--ks-icon-size-sm);
-        color: var(--ks-text-primary);
+        color: var(--ks-icon-button-color, var(--ks-text-primary));
         width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
         height: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
         min-width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));

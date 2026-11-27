@@ -5,6 +5,8 @@
     "dockerfile": "Dockerfile"
   },
   "workspaceFolder": "/workspaces/kestra",
+  "containerUser": "root",
+  "remoteUser": "ubuntu",
   "forwardPorts": [5173, 8080],
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:4": {}

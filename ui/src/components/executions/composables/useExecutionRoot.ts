@@ -4,7 +4,9 @@ import {useI18n} from "vue-i18n"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
-import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
+import {useFlowSiblings, useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
+import {useLoopLineage} from "../../../composables/useLoopLineage"
+import {executionLineage} from "../../../utils/loopLineage"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
 import {useExecutionArtifacts} from "./useExecutionArtifacts"
 import {isExecutionTabEnabled} from "override/components/executions/executionTabsExtension"
@@ -25,6 +27,10 @@ export function useExecutionRoot() {
         root: {label: t("executions"), link: {name: "executions/list"}, scope: t("namespaces")},
     })
 
+    const flowSiblings = useFlowSiblings(() => route.params.namespace?.toString(), () => route.params.flowId?.toString())
+
+    const loopLevels = useLoopLineage(() => executionsStore.execution?.id === route.params.id ? executionsStore.execution : undefined)
+
     const routeInfo = computed(() => {
         const ns = route.params.namespace as string
         const flowId = route.params.flowId as string
@@ -33,13 +39,16 @@ export function useExecutionRoot() {
             return {title: ""}
         }
 
+        const lineage = loopLevels.value && executionLineage(loopLevels.value, {namespace: ns, flowId, t})
+
         return {
-            title: route.params.id as string,
+            title: lineage?.title ?? route.params.id as string,
             bookmarkLabel: `${ns}.${flowId}: ${route.params.id}`,
             breadcrumb: [
                 ...namespaceBreadcrumb.value,
                 {
                     label: flowId,
+                    siblings: flowSiblings.value,
                     link: {
                         name: "flows/update",
                         params: {
@@ -48,6 +57,7 @@ export function useExecutionRoot() {
                         },
                     },
                 },
+                ...(lineage?.crumbs ?? []),
             ],
         }
     })
@@ -76,7 +86,7 @@ export function useExecutionRoot() {
         return EXECUTION_TAB_ROUTES
             .filter((tabRoute) =>
                 isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace})
-                && (tabRoute.meta?.tab !== "artifacts" || executionArtifacts.artifacts.value.length > 0))
+                && (tabRoute.meta?.tab !== "artifacts" || executionArtifacts.artifacts.value.length > 0 || route.meta?.tab === "artifacts"))
             .map((tabRoute) => {
                 const meta = tabRoute.meta ?? {}
                 const name = meta.tab as string

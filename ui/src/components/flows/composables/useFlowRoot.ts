@@ -7,9 +7,10 @@ import {useFlowStore} from "../../../stores/flow"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 import {useActiveTab} from "../../../composables/useActiveTab"
-import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
+import {useFlowSiblings, useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
 import {isFlowTabEnabled} from "override/components/flows/flowTabsExtension"
+import {defaultTimeRange} from "../../executions/timeRangeWiden"
 
 export function useFlowRoot() {
     const {t} = useI18n()
@@ -92,24 +93,34 @@ export function useFlowRoot() {
         root: {label: t("flows"), link: {name: "flows/list"}, scope: t("namespaces")},
     })
 
+    const flowSiblings = useFlowSiblings(() => route.params.namespace?.toString(), () => route.params.id?.toString())
+
     const routeInfo = computed(() => ({
         title: route.params.id.toString(),
         breadcrumb: namespaceBreadcrumb.value,
+        titleSiblings: flowSiblings.value,
         bookmarkLabel: `${route.params.namespace}: ${route.params.id}`,
         beta: route.meta?.beta as boolean | undefined,
     }))
 
     const ready = computed(() => user.value && flowStore.flow)
 
+    const loadedFlowKey = ref(flowKey())
+    watch(() => isFlowLoaded() ? flowKey() : undefined, (key) => {
+        if (key) {
+            loadedFlowKey.value = key
+        }
+    })
+
     // Reload flow data when navigating to a different flow (namespace/id), regardless of
     // which tab that navigation lands on.
     watch(() => [route.params.namespace, route.params.id], () => load())
 
-    watch(activeTabName, (newTab) => {
-        if (newTab === "overview") {
+    watch(() => `${activeTabName.value}|${flowKey()}`, () => {
+        if (activeTabName.value === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+                const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
                 const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION}
                 router.replace({name: route.name as string, params: route.params, query: newQuery})
             }
@@ -123,7 +134,18 @@ export function useFlowRoot() {
             if (!namespace || !id) return
             flowStore.loadDependencies({subtype: "FLOW", namespace, id}, true)
         },
-        {debounce: 1000},
+        // Immediate because the route guard loads the flow before this page mounts, so the source may never change.
+        {debounce: 1000, immediate: true},
+    )
+
+    watch(
+        () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision, flowStore.flow?.draft] as const,
+        () => {
+            if (flowStore.flow) {
+                flowStore.loadHasPublishedRevision(flowStore.flow).catch(() => undefined)
+            }
+        },
+        {immediate: true},
     )
 
     function setupLifecycle() {
@@ -147,6 +169,7 @@ export function useFlowRoot() {
         routeName,
         routeInfo,
         ready,
+        loadedFlowKey,
         dependenciesCount,
         setupLifecycle,
     }

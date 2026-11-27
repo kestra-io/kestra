@@ -21,7 +21,7 @@ public class DistinctFilter implements Filter {
         int lineNumber) throws PebbleException {
 
         if (input == null) {
-            return "null";
+            return null;
         }
 
         // Check if the input is a list

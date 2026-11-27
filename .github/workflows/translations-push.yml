@@ -47,6 +47,7 @@ jobs:
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           owner: kestra-io
           repositories: kestra-ee
+          permission-contents: read
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout - EE sources
@@ -55,6 +56,8 @@ jobs:
           repository: kestra-io/kestra-ee
           ref: ${{ github.ref_name }}
           token: ${{ steps.ee-token.outputs.token }}
+          # Node with the checker runs below: it must not find the token in .git/config.
+          persist-credentials: false
           path: kestra-ee
           sparse-checkout: |
             ui-ee/src/

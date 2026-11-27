@@ -122,7 +122,7 @@
                                     secret('{{ secretKey(match.snippet) }}')
                                 </KsTag>
                                 <div v-else class="result-match-snippet">
-                                    <code v-html="renderSnippet(match.snippet)" />
+                                    <code><template v-for="(part, index) in snippetParts(match.snippet)" :key="index"><mark v-if="part.kind === 'match'">{{ part.old }}</mark><template v-else-if="part.kind === 'replace'"><del class="result-match-old">{{ part.old }}</del><template v-if="part.next"><span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">{{ part.next }}</ins></template></template><template v-else>{{ part.old }}</template></template></code>
                                 </div>
                                 <KsButton
                                     v-if="replaceContext && group.editable && !secretKey(match.snippet)"
@@ -245,7 +245,8 @@
                                 @keydown.enter="emit('select', {type: 'kv', namespace: group.namespace, key: entry.key})"
                             >
                                 <span class="result-row-icon"><DatabaseOutline /></span>
-                                <span class="result-key" v-html="renderTermHighlighted(entry.key)" />
+                                <!-- KV matches on query terms server-side, so highlight per term or a legitimate row renders unmarked. -->
+                                <span class="result-key"><template v-for="(segment, index) in buildTermHighlightSegments(entry.key, query, caseSensitive)" :key="index"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></template></span>
                                 <span v-if="entry.updateDate" class="result-row-meta">
                                     <KsDateAgo :date="entry.updateDate" />
                                 </span>
@@ -289,7 +290,7 @@
                                     <template #icon>
                                         <Lock />
                                     </template>
-                                    <span v-html="renderHighlighted(entry.key)" />
+                                    <span><template v-for="(segment, index) in buildHighlightSegments(entry.key, query, caseSensitive)" :key="index"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></template></span>
                                 </KsTag>
                             </div>
                         </div>
@@ -303,7 +304,6 @@
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, type Component} from "vue"
     import {useRoute} from "vue-router"
-    import {escapeHtml} from "@kestra-io/design-system"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -322,8 +322,8 @@
     import {
         SEARCH_RESOURCE_TYPES,
         buildPathSegments,
-        buildHighlightHtml,
-        buildTermHighlightHtml,
+        buildHighlightSegments,
+        buildTermHighlightSegments,
         crossSearchResultKey,
         type CrossSearchSelection,
         type SearchResourceType,
@@ -447,15 +447,6 @@
         return crossSearchResultKey(selection)
     }
 
-    function renderHighlighted(text: string) {
-        return buildHighlightHtml(text, props.query, props.caseSensitive)
-    }
-
-    // KV matches on query terms server-side, so highlight per term or a legitimate row renders unmarked.
-    function renderTermHighlighted(text: string) {
-        return buildTermHighlightHtml(text, props.query, props.caseSensitive)
-    }
-
     watch(
         () => [props.flowsResults, props.filesNamespaces, props.kvGroups, props.secretsGroups],
         () => {
@@ -509,26 +500,24 @@
         return snippet.replaceAll("[mark]", "").replaceAll("[/mark]", "")
     }
 
-    function renderSnippet(snippet: string) {
+    type SnippetPart =
+        | {kind: "text" | "match"; old: string}
+        | {kind: "replace"; old: string; next: string}
+
+    function snippetParts(snippet: string): SnippetPart[] {
         return snippet
             .split(/(\[mark\][\s\S]*?\[\/mark\])/)
-            .map((part) => {
+            .map((part): SnippetPart => {
                 const marked = part.match(/^\[mark\]([\s\S]*)\[\/mark\]$/)
                 if (!marked) {
-                    return escapeHtml(part)
+                    return {kind: "text", old: part}
                 }
                 const old = marked[1]
                 if (!props.replaceContext) {
-                    return `<mark>${escapeHtml(old)}</mark>`
+                    return {kind: "match", old}
                 }
-                const next = inlineReplacement(old, props.replaceContext)
-                const removed = `<del class="result-match-old">${escapeHtml(old)}</del>`
-                if (next === "") {
-                    return removed
-                }
-                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${escapeHtml(next)}</ins>`
+                return {kind: "replace", old, next: inlineReplacement(old, props.replaceContext)}
             })
-            .join("")
     }
 
     function collapseAll() {
@@ -803,14 +792,14 @@
         overflow-wrap: anywhere;
         color: var(--ks-text-dim);
 
-        & :deep(mark) {
+        & mark {
             background-color: var(--ks-status-background-warning);
             color: var(--ks-text-primary);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        & :deep(.result-match-old) {
+        & .result-match-old {
             background-color: var(--ks-status-background-failed);
             color: var(--ks-text-error);
             text-decoration: line-through;
@@ -818,14 +807,14 @@
             padding: 0 var(--ks-spacing-1);
         }
 
-        & :deep(.result-match-new) {
+        & .result-match-new {
             background-color: var(--ks-status-background-success);
             color: var(--ks-text-success);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        & :deep(.result-match-arrow) {
+        & .result-match-arrow {
             color: var(--ks-text-muted);
         }
     }
@@ -860,7 +849,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
-    & :deep(mark) {
+    & mark {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -877,7 +866,7 @@
     color: var(--ks-text-primary);
     max-width: 100%;
 
-    & :deep(mark) {
+    & mark {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

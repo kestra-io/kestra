@@ -23,7 +23,8 @@ public interface ApprovalRequestHandler {
 
     void decided(Execution execution, TaskRun taskRun, Approval approval, PausableTask.Decision decision, @Nullable PausableTask.Resumed resumed);
 
-    void closed(Execution execution, TaskRun taskRun, Approval approval, Resolution resolution);
+    /** {@code resumed} is who ended the request, null when nobody did (a kill, a deleted execution); {@code bulk} tells that it was one of several cancelled at once. */
+    void closed(Execution execution, TaskRun taskRun, Approval approval, Resolution resolution, @Nullable PausableTask.Resumed resumed, boolean bulk);
 
     /** Throws an {@link IllegalArgumentException} when the Approval uses a property the edition does not support. */
     void validate(Approval approval);
@@ -48,7 +49,7 @@ public interface ApprovalRequestHandler {
         }
 
         @Override
-        public void closed(Execution execution, TaskRun taskRun, Approval approval, Resolution resolution) {
+        public void closed(Execution execution, TaskRun taskRun, Approval approval, Resolution resolution, @Nullable PausableTask.Resumed resumed, boolean bulk) {
         }
 
         @Override

@@ -1,10 +1,10 @@
 package io.kestra.cli.commands.flows;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.net.URL;
 
 import org.junit.jupiter.api.Test;
+
+import io.kestra.cli.ConsoleCapture;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -16,17 +16,15 @@ class FlowDotCommandTest {
     @Test
     void run() {
         URL directory = FlowDotCommandTest.class.getClassLoader().getResource("flows/same/first.yaml");
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = {
                 directory.getPath(),
             };
-            Integer call = PicocliRunner.call(FlowDotCommand.class, ctx, args);
+            var result = ConsoleCapture.run(() -> PicocliRunner.call(FlowDotCommand.class, ctx, args));
 
-            assertThat(call).isZero();
-            assertThat(out.toString()).contains("\"root.date\"[shape=box];");
+            assertThat(result.value()).isZero();
+            assertThat(result.out()).contains("\"root.date\"[shape=box];");
         }
     }
 }

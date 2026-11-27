@@ -15,12 +15,14 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAutocomplete;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.AutocompleteUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
+import io.kestra.webserver.models.api.Pagination;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -32,9 +34,8 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.Valid;
 
 @Controller("/api/v1/{tenant}/namespaces")
 public class NamespaceController<N extends Namespace> {
@@ -116,7 +117,7 @@ public class NamespaceController<N extends Namespace> {
         return this.getNamespaces(
             AUTOCOMPLETE_PAGEABLE,
             autocomplete.getQ(),
-            Optional.ofNullable(autocomplete.getIds()).orElse(Collections.emptyList()),
+            ListUtils.emptyOnNull(autocomplete.getIds()),
             autocomplete.isExistingOnly()
         ).stream()
             .map(Namespace::getId)
@@ -136,9 +137,7 @@ public class NamespaceController<N extends Namespace> {
     @Operation(tags = { "Namespaces" }, summary = "Search for namespaces")
     @SuppressWarnings("unchecked")
     public PagedResults<N> searchNamespaces(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "Return only existing namespace") @QueryValue(value = "existing", defaultValue = "false") Boolean existingOnly,
         @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat(QueryFilter.Resource.NAMESPACE) List<QueryFilter> filters) throws HttpStatusException {
         List<Namespace> allNamespaces = Stream.concat(
@@ -149,7 +148,7 @@ public class NamespaceController<N extends Namespace> {
             .distinct()
             .map(id -> (Namespace) Namespace.builder().id(id).build())
             .toList();
-        return PagedResults.of((ArrayListTotal<N>) namespaceSearchable.filter(allNamespaces, page, size, sort, filters));
+        return PagedResults.of((ArrayListTotal<N>) namespaceSearchable.filter(allNamespaces, paging.page(), paging.size(), paging.sort(), filters));
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -1,5 +1,5 @@
 import {describe, it, expect, beforeEach, vi} from "vitest"
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
 import {ref} from "vue"
 
 // Stub the apply composable (it pulls in the router + flows SDK); assert wiring only.
@@ -8,6 +8,15 @@ const apply = vi.fn()
 // Mutable so a test can simulate the EE paths being present (apps and unit tests are unsupported in OSS).
 const appSupported = {value: false}
 const testSuiteSupported = {value: false}
+const draftBaseSource = vi.fn(() => Promise.resolve("id: before"))
+vi.mock("../../flows/changeReview/FlowChangeReview.vue", () => ({
+    __esModule: true,
+    default: {
+        name: "FlowChangeReview",
+        props: {before: String, after: String},
+        template: "<div />",
+    },
+}))
 vi.mock("./useApplyDraft", () => ({
     useApplyDraft: () => ({
         applying: ref(false),
@@ -16,6 +25,7 @@ vi.mock("./useApplyDraft", () => ({
         testSuiteSupported: testSuiteSupported.value,
         openInEditor,
         apply,
+        draftBaseSource,
     }),
 }))
 
@@ -41,6 +51,52 @@ describe("CopilotArtefactDraft", () => {
         expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: demo")
         // A valid draft shows no constraints alert.
         expect(w.find("[data-test='copilot-draft-constraints']").exists()).toBe(false)
+    })
+
+    it("offers the graph view only for a valid flow draft", () => {
+        const hasViewSwitch = (draft: Partial<ArtefactDraftEvent>) => mountDraft({
+            draftId: "v",
+            kind: "FLOW",
+            yaml: "id: f",
+            valid: true,
+            constraints: null,
+            ...draft,
+        }).find("[data-test='copilot-draft-view']").exists()
+
+        expect(hasViewSwitch({})).toBe(true)
+        expect(hasViewSwitch({valid: false, constraints: "bad"})).toBe(false)
+        expect(hasViewSwitch({kind: "DASHBOARD"})).toBe(false)
+    })
+
+    it("loads the current flow only when the graph view opens, and compares the draft with it", async () => {
+        const draft: ArtefactDraftEvent = {
+            draftId: "v4",
+            kind: "FLOW",
+            yaml: "id: after",
+            valid: true,
+            constraints: null,
+        }
+        const w = mountDraft(draft)
+        expect(draftBaseSource).not.toHaveBeenCalled()
+
+        w.findComponent({name: "KsTabs"}).vm.$emit("update:modelValue", "graph")
+        await flushPromises()
+
+        expect(draftBaseSource).toHaveBeenCalledWith(draft)
+        expect(w.find("[data-test='copilot-draft-yaml']").exists()).toBe(false)
+        const review = w.findComponent({name: "FlowChangeReview"})
+        expect(review.props()).toMatchObject({before: "id: before", after: "id: after"})
+    })
+
+    it("shows the graph error instead of an all-added graph when the current flow cannot be loaded", async () => {
+        draftBaseSource.mockRejectedValueOnce(new Error("500"))
+        const w = mountDraft({draftId: "v5", kind: "FLOW", yaml: "id: after", valid: true, constraints: null})
+
+        w.findComponent({name: "KsTabs"}).vm.$emit("update:modelValue", "graph")
+        await flushPromises()
+
+        expect(w.find("[data-test='copilot-draft-graph-error']").exists()).toBe(true)
+        expect(w.findComponent({name: "FlowChangeReview"}).exists()).toBe(false)
     })
 
     it("shows an error badge and the constraints when the draft is invalid", () => {

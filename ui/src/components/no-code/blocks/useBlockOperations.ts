@@ -35,18 +35,18 @@ export interface BlockOperationsContext {
     clipboard: BlockClipboardApi
 }
 
-interface PasteTarget {
+export interface PasteTarget {
     section: BlockSection
     parentPath: string
     refIndex: number
 }
 
-function pathParentAndIndex(path: string): {parentPath: string; index: number} | undefined {
+export function pathParentAndIndex(path: string): {parentPath: string; index: number} | undefined {
     const match = path.match(/^(.*)\[(\d+)\]$/)
     return match ? {parentPath: match[1], index: parseInt(match[2], 10)} : undefined
 }
 
-function blockDataAtPath(source: string, path: string): Record<string, unknown> | undefined {
+export function blockDataAtPath(source: string, path: string): Record<string, unknown> | undefined {
     const blockYaml = flowYamlUtils.extractBlockWithPath({source, path})
     const item = blockYaml ? flowYamlUtils.parse<Record<string, unknown>>(blockYaml) : undefined
     return item ? displayTaskOf(item) : undefined
@@ -278,6 +278,7 @@ export function useBlockOperations(ctx: BlockOperationsContext) {
         duplicateSelected,
         copyFocusedOrSelected,
         cutFocusedOrSelected,
+        pasteTarget,
         canPasteHere,
         pasteRelative,
         moveFocused,

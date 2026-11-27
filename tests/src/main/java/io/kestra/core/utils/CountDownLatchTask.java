@@ -8,10 +8,10 @@ import java.util.concurrent.TimeUnit;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.runners.RunContext;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -94,7 +94,7 @@ public class CountDownLatchTask extends Task implements RunnableTask<Output> {
 
     @SuppressWarnings("unchecked")
     public static CountDownLatchTask getTaskForCountDownLatch(CountDownLatch countDownLatch, CountDownLatch awaitCountDownLatch, Duration awaitCountDownLatchDuration,
-        WorkerSelector workerSelector) {
+        FlowWorkerSelector workerSelector) {
         CountDownLatchTaskBuilder<?, ?> builder = builder()
             .id("unit-test")
             .type(CountDownLatchTask.class.getName())

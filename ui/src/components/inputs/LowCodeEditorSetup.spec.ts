@@ -1,6 +1,5 @@
 import {afterEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {ref} from "vue"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}}),
@@ -9,17 +8,6 @@ vi.mock("vue-router", () => ({
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn()}),
-}))
-
-vi.mock("../../remoteComponents/useFederatedModule", () => ({
-    useFederatedModule: () => ({
-        RemoteComponent: {render: () => null},
-        taskAdditionalInfoRemote: ref({}),
-        manifestReady: ref(true),
-        resolveRemoteComponent: vi.fn(),
-        resolveRemoteComponent2: vi.fn(),
-        componentTypeFor: vi.fn(),
-    }),
 }))
 
 const {i18nMount} = await import("../../../tests/unit/i18nMount")

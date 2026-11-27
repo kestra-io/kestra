@@ -2,6 +2,7 @@ package io.kestra.core.validations;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -150,5 +151,15 @@ class ServerCommandValidatorTest {
             .as("A worker only requires kestra.storage.type")
             .hasSize(1)
             .allMatch(ConfigValidationResult::valid);
+    }
+
+    @Test
+    void shouldNotRequireStorageWhenWorkerReachesItThroughTheController() {
+        Environment environment = mock(Environment.class);
+        when(environment.getProperty("kestra.storage.worker-access", String.class)).thenReturn(Optional.of("controller"));
+
+        List<ConfigValidationResult> results = ServerCommandValidator.validateServerConfiguration(environment, ServerType.WORKER);
+
+        assertThat(results).isEmpty();
     }
 }

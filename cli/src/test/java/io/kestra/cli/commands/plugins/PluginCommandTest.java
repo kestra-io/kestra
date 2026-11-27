@@ -5,6 +5,8 @@ import java.io.PrintStream;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.cli.ConsoleCapture;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -15,13 +17,10 @@ class PluginCommandTest {
 
     @Test
     void shouldGetHelps() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
-
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-            PicocliRunner.call(PluginCommand.class, ctx);
+            String out = ConsoleCapture.run(() -> PicocliRunner.call(PluginCommand.class, ctx)).out();
 
-            assertThat(out.toString()).contains("Usage: kestra plugins");
+            assertThat(out).contains("Usage: kestra plugins");
         }
     }
 

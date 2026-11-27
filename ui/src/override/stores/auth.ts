@@ -1,6 +1,8 @@
 import {defineStore} from "pinia"
 
 export class Me {
+    instanceOwner = false
+
     hasAny(_permission: string, _namespace?: string) {
         return true
     }
@@ -54,7 +56,7 @@ export const useAuthStore = defineStore("auth", {
         correction(){
             return Promise.resolve(true)
         },
-        loadAuths(_options: Record<string, unknown>): Promise<AuthMethods | undefined> {
+        loadAuths(): Promise<AuthMethods | undefined> {
             return Promise.resolve(undefined)
         },
     },

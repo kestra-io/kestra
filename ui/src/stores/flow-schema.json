@@ -2,200 +2,314 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$ref": "#/definitions/io.kestra.core.models.flows.Flow",
   "definitions": {
-    "io.kestra.preload.tasks": {
-      "type": "array",
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/io.kestra.plugin.core.log.Log"
-          }
-        ]
-      }
-    },
-    "io.kestra.preload.triggers": {
-      "type": "array",
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/io.kestra.plugin.core.log.Log"
-          }
-        ]
-      }
-    },
-    "io.kestra.plugin.core.log.Log": {
+    "io.kestra.core.models.FieldCondition": {
       "type": "object",
       "properties": {
-        "allowFailure": {
-          "type": "boolean",
-          "default": false,
-          "$dynamic": false,
-          "$group": "core",
-          "markdownDescription": "Default value is : `false`"
-        },
-        "allowWarning": {
-          "type": "boolean",
-          "default": false,
-          "$dynamic": false,
-          "$group": "core",
-          "markdownDescription": "Default value is : `false`"
-        },
-        "description": {
+        "field": {
           "type": "string",
-          "$dynamic": false,
-          "$group": "core"
+          "title": "The field this condition reads.",
+          "minLength": 1
         },
-        "disabled": {
-          "type": "boolean",
-          "default": false,
-          "$dynamic": false,
-          "$group": "core",
-          "markdownDescription": "Default value is : `false`"
-        },
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256,
-          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*"
-        },
-        "level": {
+        "operator": {
           "type": "string",
           "enum": [
-            "ERROR",
-            "WARN",
-            "INFO",
-            "DEBUG",
-            "TRACE"
+            "CONTAINS",
+            "ENDS_WITH",
+            "EQUAL_TO",
+            "GREATER_THAN",
+            "GREATER_THAN_OR_EQUAL_TO",
+            "IN",
+            "IS_FALSE",
+            "IS_NOT_NULL",
+            "IS_NULL",
+            "IS_TRUE",
+            "LESS_THAN",
+            "LESS_THAN_OR_EQUAL_TO",
+            "NOT_CONTAINS",
+            "NOT_EQUAL_TO",
+            "NOT_IN",
+            "OR",
+            "REGEX",
+            "STARTS_WITH",
+            "PREFIX"
           ],
-          "title": "The level on which the message should be logged. Note that this is different from the core `logLevel` property which sets the minimum log level to be persisted in the backend database. The `level` property is used to determine the log level of the message emitted by the Log task, while `logLevel` is used to filter which logs should be stored in the backend. Both properties can be used together to control the log level of the message emitted by the task and the logs that are persisted in the backend. If not specified, the `level` defaults to `INFO`.",
-          "default": "INFO",
-          "$dynamic": true,
-          "markdownDescription": "Default value is : `INFO`"
+          "title": "How the field is compared to the value."
         },
-        "logLevel": {
-          "type": "string",
-          "enum": [
-            "ERROR",
-            "WARN",
-            "INFO",
-            "DEBUG",
-            "TRACE"
-          ],
-          "$dynamic": false,
-          "$group": "core"
-        },
-        "logToFile": {
-          "type": "boolean",
-          "default": false,
-          "$dynamic": false,
-          "$group": "core",
-          "markdownDescription": "Default value is : `false`"
-        },
-        "message": {
-          "title": "One or more message(s) to be sent to the backend as logs.",
-          "$dynamic": true,
-          "markdownDescription": "It can be a string or an array of strings.",
+        "value": {
+          "title": "The value the field is compared to.",
           "anyOf": [
             {
               "type": "string"
             },
             {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
               "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "items": {}
             }
-          ]
-        },
-        "retry": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Constant-2"
-                },
-                {
-                  "$dynamic": false,
-                  "$group": "core"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Exponential-2"
-                },
-                {
-                  "$dynamic": false,
-                  "$group": "core"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Random-2"
-                },
-                {
-                  "$dynamic": false,
-                  "$group": "core"
-                }
-              ]
-            }
-          ]
-        },
-        "runIf": {
+          ],
+          "markdownDescription": "A list for `IN` and `NOT_IN`, ignored by `IS_NULL` and `IS_NOT_NULL`."
+        }
+      },
+      "required": [
+        "field",
+        "operator"
+      ],
+      "title": "A condition on one field of a resource."
+    },
+    "io.kestra.core.models.Label": {
+      "type": "object",
+      "properties": {
+        "key": {
           "type": "string",
-          "default": "true",
-          "$dynamic": false,
-          "$group": "core",
-          "markdownDescription": "Default value is : `\"true\"`"
+          "minLength": 1,
+          "pattern": "^[\\p{Ll}][\\p{L}0-9._-]*$"
         },
-        "taskCache": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/io.kestra.core.models.tasks.Cache"
-            },
-            {
-              "$dynamic": false,
-              "$group": "core"
-            }
-          ]
-        },
-        "timeout": {
+        "value": {
           "type": "string",
-          "format": "duration",
-          "$dynamic": true,
-          "$group": "core"
+          "minLength": 1
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ],
+      "markdownDescription": "A key/value pair that can be attached to a Flow or Execution. Labels are often used to organize and categorize objects."
+    },
+    "io.kestra.core.models.assets.AssetIdentifier": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
         },
         "type": {
-          "const": "io.kestra.plugin.core.log.Log"
-        },
-        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "io.kestra.core.models.assets.AssetRelationRef": {
+      "type": "object",
+      "properties": {
+        "id": {
           "type": "string",
-          "title": "The version of the plugin to use.",
-          "pattern": "\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9-]+)?|([a-zA-Z0-9]+)",
-          "$dynamic": false,
-          "$group": "core"
+          "title": "The id of the referenced asset.",
+          "minLength": 1,
+          "maxLength": 150,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*"
         },
-        "workerGroup": {
-          "allOf": [
+        "namespace": {
+          "type": "string",
+          "title": "The namespace of the referenced asset, informational: asset ids are unique per tenant.",
+          "minLength": 1,
+          "maxLength": 150,
+          "pattern": "^[a-z0-9][a-z0-9._-]*"
+        },
+        "role": {
+          "type": "string",
+          "title": "The role this asset plays in the relation, for example primary or backup.",
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "A reference to another asset of the same tenant."
+    },
+    "io.kestra.core.models.assets.AssetsDeclaration": {
+      "type": "object",
+      "properties": {
+        "assetFailureBehavior": {
+          "type": "string",
+          "title": "Asset failure behavior",
+          "$dynamic": true,
+          "markdownDescription": "Behavior applied to the task state when a declared asset fails to render, emit, or be persisted (e.g. a lock conflict): FAIL escalates it to FAILED, WARN (default) warns it if it would otherwise succeed, IGNORE leaves the state untouched.",
+          "anyOf": [
             {
-              "$ref": "#/definitions/io.kestra.core.models.tasks.WorkerGroup"
+              "enum": [
+                "IGNORE",
+                "FAIL",
+                "WARN"
+              ]
             },
             {
-              "$dynamic": false,
-              "$group": "core"
+              "pattern": ".*(\\{\\{.*\\}\\}|\\{%.*%\\}).*"
             }
           ]
+        },
+        "enableAuto": {
+          "anyOf": [
+            {
+              "type": "boolean",
+              "$dynamic": true,
+              "markdownDescription": "Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs."
+            },
+            {
+              "type": "string",
+              "$dynamic": true,
+              "markdownDescription": "Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs."
+            }
+          ]
+        },
+        "inputs": {
+          "$dynamic": true,
+          "markdownDescription": "The assets consumed as inputs.",
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.assets.AssetIdentifier"
+              },
+              {
+                "$dynamic": true
+              }
+            ]
+          }
+        },
+        "outputs": {
+          "$dynamic": true,
+          "markdownDescription": "The assets produced as outputs.",
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.assets.Custom"
+              },
+              {
+                "$dynamic": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "io.kestra.core.models.assets.Custom": {
+      "type": "object",
+      "properties": {
+        "assetActions": {
+          "title": "The day-2 actions offered on this asset, each backing onto a flow.",
+          "maxItems": 100,
+          "markdownDescription": "Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. When it is omitted, the stored actions are kept. It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/io.kestra.core.models.flows.FlowAction"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150,
+          "anyOf": [
+            {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*"
+            },
+            {
+              "pattern": ".*(\\{\\{.*\\}\\}|\\{%.*%\\}).*"
+            }
+          ]
+        },
+        "metadata": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "Default value is : `{}`"
+        },
+        "namespace": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150,
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9][a-z0-9._-]*"
+            },
+            {
+              "pattern": ".*(\\{\\{.*\\}\\}|\\{%.*%\\}).*"
+            }
+          ]
+        },
+        "partOf": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.assets.AssetRelationRef"
+            },
+            {
+              "title": "The asset this one is part of.",
+              "markdownDescription": "At most one parent. Parent depth is limited by the service layer, not by this model."
+            }
+          ]
+        },
+        "related": {
+          "title": "Assets related to this one.",
+          "maxItems": 50,
+          "markdownDescription": "Declaration only: turned into RELATED relations when the asset is written, and not persisted on the asset by the platform.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/io.kestra.core.models.assets.AssetRelationRef"
+          }
+        },
+        "type": {
+          "type": "string",
+          "title": "Custom asset type",
+          "markdownDescription": "Any type that no asset plugin provides: the asset is stored with this type as is.",
+          "minLength": 1
         }
       },
       "required": [
         "id",
-        "message",
         "type"
-      ],
-      "title": "Log a message to the console.",
-      "markdownDescription": "##### Examples\n> \n```yaml\nlevel: DEBUG\nmessage: \"{{ task.id }} > {{ taskrun.startDate }}\"\n```\n\n> Log one or more messages to the console.\n```yaml\nid: hello_world\nnamespace: company.team\n\ntasks:\n  - id: greeting\n    type: io.kestra.plugin.core.log.Log\n    message:\n      - Kestra team wishes you a great day 👋\n      - If you need some help, reach out via Slack\n```"
+      ]
+    },
+    "io.kestra.core.models.flows.Concurrency": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "QUEUE",
+            "CANCEL",
+            "FAIL"
+          ],
+          "default": "QUEUE",
+          "markdownDescription": "Default value is : `QUEUE`"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "queueLimit": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "limit"
+      ]
+    },
+    "io.kestra.core.models.flows.DependsOn": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "io.kestra.core.models.flows.Flow": {
       "type": "object",
@@ -203,26 +317,41 @@
         "afterExecution": {
           "$ref": "#/definitions/io.kestra.preload.tasks"
         },
-        "concurrency": {
-          "$ref": "#/definitions/io.kestra.core.models.flows.Concurrency"
+        "checks": {
+          "title": "Conditions evaluated before the flow is executed.",
+          "$dynamic": false,
+          "markdownDescription": "A list of conditions that are evaluated before the flow is executed.  If no checks are defined, the flow executes normally.",
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.check.Check"
+              },
+              {
+                "$dynamic": false
+              }
+            ]
+          }
         },
-        "deleted": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Default value is : `false`"
+        "concurrency": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.Concurrency"
+            },
+            {
+              "title": "Concurrency",
+              "markdownDescription": "Limits the number of concurrent executions of the flow."
+            }
+          ]
         },
         "description": {
           "type": "string"
         },
         "disabled": {
           "type": "boolean",
+          "title": "Whether the flow is disabled.",
           "default": false,
-          "markdownDescription": "Default value is : `false`"
-        },
-        "draft": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Whether this flow revision is a draft. Draft revisions are not picked up by webhooks, schedules, subflows or executions started without an explicit revision. Default value is : `false`"
+          "markdownDescription": "A disabled flow does not run: its triggers are paused and new executions are rejected.\n\nDefault value is : `false`"
         },
         "errors": {
           "$ref": "#/definitions/io.kestra.preload.tasks"
@@ -242,9 +371,6 @@
             "anyOf": [
               {
                 "$ref": "#/definitions/io.kestra.core.models.flows.input.ArrayInput-2"
-              },
-              {
-                "$ref": "#/definitions/io.kestra.core.models.flows.input.BooleanInput-2"
               },
               {
                 "$ref": "#/definitions/io.kestra.core.models.flows.input.BoolInput-2"
@@ -271,13 +397,13 @@
                 "$ref": "#/definitions/io.kestra.core.models.flows.input.JsonInput-2"
               },
               {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.IonInput-2"
+              },
+              {
                 "$ref": "#/definitions/io.kestra.core.models.flows.input.SecretInput-2"
               },
               {
                 "$ref": "#/definitions/io.kestra.core.models.flows.input.StringInput-2"
-              },
-              {
-                "$ref": "#/definitions/io.kestra.core.models.flows.input.EnumInput-2"
               },
               {
                 "$ref": "#/definitions/io.kestra.core.models.flows.input.SelectInput-2"
@@ -296,34 +422,26 @@
               },
               {
                 "$ref": "#/definitions/io.kestra.core.models.flows.input.EmailInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.FormInput-2"
               }
             ]
           }
         },
         "labels": {
+          "markdownDescription": "Labels as a list of Label (key/value pairs) or as a map of string to string.",
           "anyOf": [
             {
               "type": "array",
-              "items": {}
+              "items": {
+                "$ref": "#/definitions/io.kestra.core.models.Label"
+              }
             },
             {
               "type": "object"
             }
           ]
-        },
-        "listeners": {
-          "$deprecated": true,
-          "type": "array",
-          "items": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/io.kestra.core.models.listeners.Listener"
-              },
-              {
-                "$deprecated": true
-              }
-            ]
-          }
         },
         "namespace": {
           "type": "string",
@@ -347,32 +465,71 @@
             ]
           }
         },
-        "pluginDefaults": {
+        "policyRefs": {
+          "title": "References to governance policies (Enterprise Edition).",
+          "$dynamic": false,
+          "markdownDescription": "Identifiers of `enforcement: REFERENCE` policies to attach to this flow, resolved within the flow's tenant/namespace scope chain. Enterprise Edition only; parsed but ignored in the open-source edition.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/io.kestra.core.models.flows.PluginDefault"
+            "type": "string",
+            "$dynamic": false
+          }
+        },
+        "quotas": {
+          "title": "Quotas evaluated before the flow is executed (EE only).",
+          "$dynamic": false,
+          "markdownDescription": "A list of quotas that are evaluated before the flow is executed. If no quotas are defined, the flow executes normally.\nQuotas can also be defined at the namespace and tenant level.",
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.quota.Quota"
+              },
+              {
+                "$dynamic": false
+              }
+            ]
           }
         },
         "retry": {
           "anyOf": [
             {
-              "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Constant-2"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Constant-2"
+                },
+                {
+                  "title": "Retry",
+                  "markdownDescription": "Retry policy applied when the flow fails."
+                }
+              ]
             },
             {
-              "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Exponential-2"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Exponential-2"
+                },
+                {
+                  "title": "Retry",
+                  "markdownDescription": "Retry policy applied when the flow fails."
+                }
+              ]
             },
             {
-              "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Random-2"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Random-2"
+                },
+                {
+                  "title": "Retry",
+                  "markdownDescription": "Retry policy applied when the flow fails."
+                }
+              ]
             }
           ]
         },
-        "revision": {
-          "type": "integer",
-          "minimum": 1
-        },
         "sla": {
           "$dynamic": false,
-          "$beta": true,
           "type": "array",
           "items": {
             "anyOf": [
@@ -382,8 +539,17 @@
                     "$ref": "#/definitions/io.kestra.core.models.flows.sla.types.MaxDurationSLA-2"
                   },
                   {
-                    "$dynamic": false,
-                    "$beta": true
+                    "$dynamic": false
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/io.kestra.core.models.flows.sla.types.AvgDurationSLA-2"
+                  },
+                  {
+                    "$dynamic": false
                   }
                 ]
               },
@@ -393,24 +559,9 @@
                     "$ref": "#/definitions/io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA-2"
                   },
                   {
-                    "$dynamic": false,
-                    "$beta": true
+                    "$dynamic": false
                   }
                 ]
-              }
-            ]
-          }
-        },
-        "taskDefaults": {
-          "$deprecated": true,
-          "type": "array",
-          "items": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/io.kestra.core.models.flows.PluginDefault"
-              },
-              {
-                "$deprecated": true
               }
             ]
           }
@@ -418,15 +569,21 @@
         "tasks": {
           "$ref": "#/definitions/io.kestra.preload.tasks"
         },
-        "tenantId": {
-          "type": "string",
-          "pattern": "^[a-z0-9][a-z0-9_-]*"
-        },
         "triggers": {
           "$ref": "#/definitions/io.kestra.preload.triggers"
         },
         "variables": {
           "type": "object"
+        },
+        "workerSelector": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.FlowWorkerSelector"
+            },
+            {
+              "markdownDescription": "Routing requirements (tags + fallback) for this flow."
+            }
+          ]
         }
       },
       "required": [
@@ -434,6 +591,2575 @@
         "namespace",
         "tasks"
       ]
+    },
+    "io.kestra.core.models.flows.FlowAction": {
+      "type": "object",
+      "properties": {
+        "flowId": {
+          "type": "string",
+          "title": "The id of the flow backing this action.",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "title": "The label displayed on this action."
+        },
+        "namespace": {
+          "type": "string",
+          "title": "The namespace of the flow backing this action.",
+          "minLength": 1
+        },
+        "when": {
+          "title": "The conditions under which this action is offered.",
+          "maxItems": 20,
+          "markdownDescription": "All conditions must hold, and an action without conditions is always offered. A field the resource does not have reads as null, so `NOT_EQUAL_TO`, `NOT_IN` and `NOT_CONTAINS` hold on it. A field is read as `status`, `namespace` or `metadata.<key>` on an asset.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/io.kestra.core.models.FieldCondition"
+          }
+        }
+      },
+      "required": [
+        "flowId",
+        "namespace"
+      ]
+    },
+    "io.kestra.core.models.flows.Output": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "searchable": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "INT",
+            "FLOAT",
+            "BOOL",
+            "DATETIME",
+            "DATE",
+            "TIME",
+            "DURATION",
+            "FILE",
+            "JSON",
+            "ION",
+            "URI",
+            "SECRET",
+            "ARRAY",
+            "YAML"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {},
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "value"
+      ]
+    },
+    "io.kestra.core.models.flows.check.Check": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "BLOCK_EXECUTION",
+            "FAIL_EXECUTION",
+            "CREATE_EXECUTION"
+          ],
+          "default": "BLOCK_EXECUTION",
+          "markdownDescription": "Default value is : `BLOCK_EXECUTION`"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "style": {
+          "type": "string",
+          "enum": [
+            "ERROR",
+            "SUCCESS",
+            "WARNING",
+            "INFO"
+          ],
+          "default": "INFO",
+          "markdownDescription": "Default value is : `INFO`"
+        },
+        "when": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "message",
+        "when"
+      ]
+    },
+    "io.kestra.core.models.flows.input.ArrayInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true,
+          "type": "array",
+          "items": {
+            "$dynamic": true
+          }
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "itemType": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "SELECT",
+            "INT",
+            "FLOAT",
+            "BOOL",
+            "DATETIME",
+            "DATE",
+            "TIME",
+            "DURATION",
+            "FILE",
+            "JSON",
+            "ION",
+            "URI",
+            "SECRET",
+            "ARRAY",
+            "MULTISELECT",
+            "YAML",
+            "EMAIL",
+            "FORM"
+          ],
+          "title": "Type of the array items.",
+          "markdownDescription": "Cannot be of type `ARRAY`."
+        },
+        "prefill": {
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value.",
+          "type": "array",
+          "items": {
+            "$dynamic": true
+          }
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "ARRAY"
+        }
+      },
+      "required": [
+        "id",
+        "itemType",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.BoolInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "anyOf": [
+            {
+              "type": "boolean",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "type": "boolean",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "BOOL"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.DateInput-2": {
+      "type": "object",
+      "properties": {
+        "after": {
+          "type": "string",
+          "format": "date",
+          "title": "Minimal value."
+        },
+        "before": {
+          "type": "string",
+          "format": "date",
+          "title": "Maximal value."
+        },
+        "defaults": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "DATE"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.DateTimeInput-2": {
+      "type": "object",
+      "properties": {
+        "after": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Minimal value."
+        },
+        "before": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Maximal value."
+        },
+        "defaults": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "DATETIME"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.DurationInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "duration",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "max": {
+          "type": "string",
+          "format": "duration",
+          "title": "Maximal value."
+        },
+        "min": {
+          "type": "string",
+          "format": "duration",
+          "title": "Minimal value."
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "duration",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "DURATION"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.EmailInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "type": "string",
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "type": "string",
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "EMAIL"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.FileInput-2": {
+      "type": "object",
+      "properties": {
+        "allowedFileExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaults": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "FILE"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.FloatInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "anyOf": [
+            {
+              "type": "number",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "max": {
+          "type": "number",
+          "title": "Maximal value."
+        },
+        "min": {
+          "type": "number",
+          "title": "Minimal value."
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "type": "number",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "FLOAT"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.FormInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/java.lang.Void"
+                },
+                {
+                  "title": "The default value to use if no value is specified.",
+                  "$dynamic": true
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "inputs": {
+          "title": "The inputs grouped under this form.",
+          "markdownDescription": "A FORM groups related inputs under a shared display name. Each child input is resolved under the form's id as a nested path — e.g. a `region` input inside an `environment` form is referenced as `{{ inputs.environment.region }}`. To depend on a sibling, use the full dotted path in `dependsOn` (e.g. `dependsOn: [environment.data_center]`). Forms cannot be nested.",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.ArrayInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.BoolInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.DateInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.DateTimeInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.DurationInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.FileInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.FloatInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.IntInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.JsonInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.IonInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.SecretInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.StringInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.SelectInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.TimeInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.URIInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.MultiselectInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.YamlInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.EmailInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.FormInput-2"
+              }
+            ]
+          }
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/java.lang.Void"
+                },
+                {
+                  "title": "The suggested value for the input.",
+                  "$dynamic": true,
+                  "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "FORM"
+        }
+      },
+      "required": [
+        "id",
+        "inputs",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.IntInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "max": {
+          "type": "integer",
+          "title": "Maximal value."
+        },
+        "min": {
+          "type": "integer",
+          "title": "Minimal value."
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "INT"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.IonInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "ION"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.JsonInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "jsonSchema": {
+          "type": "string",
+          "title": "A JSON schema used to validate the input value."
+        },
+        "prefill": {
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "JSON"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.MultiselectInput-2": {
+      "type": "object",
+      "properties": {
+        "allowCustomValue": {
+          "type": "boolean",
+          "title": "If the user can provide customs value.",
+          "default": false,
+          "markdownDescription": "When a value is provided at execution creation, the `expression` is not rendered.\n\nDefault value is : `false`"
+        },
+        "autoSelectFirst": {
+          "type": "boolean",
+          "title": "Whether the first value of the multi-select should be selected by default.",
+          "default": false,
+          "markdownDescription": "Default value is : `false`"
+        },
+        "defaults": {
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "$dynamic": true
+          }
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "expression": {
+          "type": "string",
+          "title": "Expression to be used for dynamically generating the list of values."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "itemType": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "SELECT",
+            "INT",
+            "FLOAT",
+            "BOOL",
+            "DATETIME",
+            "DATE",
+            "TIME",
+            "DURATION",
+            "FILE",
+            "JSON",
+            "ION",
+            "URI",
+            "SECRET",
+            "ARRAY",
+            "MULTISELECT",
+            "YAML",
+            "EMAIL",
+            "FORM"
+          ],
+          "title": "Type of the different values available.",
+          "default": "STRING",
+          "markdownDescription": "Cannot be of type `ARRAY` nor 'MULTISELECT'.\n\nDefault value is : `STRING`"
+        },
+        "prefill": {
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "$dynamic": true
+          }
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "MULTISELECT"
+        },
+        "values": {
+          "title": "List of values available.",
+          "markdownDescription": "Each item is either a plain string (used as both label and value) or an object `{label, value}` to decouple the displayed label from the workflow value.",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.ValueOption-ValueOptionObject"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.SecretInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.common.EncryptedString"
+                },
+                {
+                  "title": "The default value to use if no value is specified.",
+                  "$dynamic": true
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.common.EncryptedString"
+                },
+                {
+                  "title": "The suggested value for the input.",
+                  "$dynamic": true,
+                  "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "SECRET"
+        },
+        "validator": {
+          "type": "string",
+          "title": "Regular expression validating the value."
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.SelectInput-2": {
+      "type": "object",
+      "properties": {
+        "allowCustomValue": {
+          "type": "boolean",
+          "title": "If the user can provide a custom value.",
+          "default": false,
+          "markdownDescription": "When a value is provided at execution creation, the `expression` is not rendered.\n\nDefault value is : `false`"
+        },
+        "autoSelectFirst": {
+          "type": "boolean",
+          "title": "Whether the first value of the select should be selected by default.",
+          "default": false,
+          "markdownDescription": "Default value is : `false`"
+        },
+        "defaults": {
+          "type": "string",
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "expression": {
+          "type": "string",
+          "title": "Expression to be used for dynamically generating the list of values."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "isRadio": {
+          "type": "boolean",
+          "title": "Indicates if the input should be rendered as a radio button group.",
+          "default": false,
+          "markdownDescription": "Default value is : `false`"
+        },
+        "prefill": {
+          "type": "string",
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "SELECT"
+        },
+        "values": {
+          "title": "List of values.",
+          "markdownDescription": "Each item is either a plain string (used as both label and value) or an object `{label, value}` to decouple the displayed label from the workflow value.",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.ValueOption-ValueOptionObject"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.StringInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "type": "string",
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "type": "string",
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "STRING"
+        },
+        "validator": {
+          "type": "string",
+          "title": "Regular expression validating the value."
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.TimeInput-2": {
+      "type": "object",
+      "properties": {
+        "after": {
+          "type": "string",
+          "format": "partial-time",
+          "title": "Minimal value."
+        },
+        "before": {
+          "type": "string",
+          "format": "partial-time",
+          "title": "Maximal value."
+        },
+        "defaults": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "partial-time",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            },
+            {
+              "type": "string",
+              "title": "The default value to use if no value is specified.",
+              "$dynamic": true
+            }
+          ],
+          "title": "The default value to use if no value is specified."
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "partial-time",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            },
+            {
+              "type": "string",
+              "title": "The suggested value for the input.",
+              "$dynamic": true,
+              "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+            }
+          ],
+          "title": "The suggested value for the input."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "TIME"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.URIInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "type": "string",
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "type": "string",
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "URI"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.input.ValueOption-ValueOptionObject": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "markdownDescription": "Object form of a select option."
+    },
+    "io.kestra.core.models.flows.input.YamlInput-2": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "title": "The default value to use if no value is specified.",
+          "$dynamic": true
+        },
+        "dependsOn": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.DependsOn"
+            },
+            {
+              "title": "The dependencies of the input."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "title": "The description of the input."
+        },
+        "descriptionDisplayMode": {
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "TOOLTIP"
+          ],
+          "title": "How the description of the input is displayed.",
+          "markdownDescription": "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+        },
+        "displayName": {
+          "type": "string",
+          "title": "The display name of the input."
+        },
+        "id": {
+          "type": "string",
+          "title": "The ID of the input.",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][.a-zA-Z0-9_-]*"
+        },
+        "prefill": {
+          "title": "The suggested value for the input.",
+          "$dynamic": true,
+          "markdownDescription": "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Whether the input is required.",
+          "default": true,
+          "markdownDescription": "Default value is : `true`"
+        },
+        "searchable": {
+          "type": "boolean",
+          "title": "Whether the input is searchable.",
+          "markdownDescription": "A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.\nBy default, an input is not searchable.\n"
+        },
+        "type": {
+          "const": "YAML"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.quota.Quota": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "FAIL",
+            "CANCEL"
+          ]
+        },
+        "duration": {
+          "type": "string",
+          "format": "duration"
+        },
+        "limit": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "behavior",
+        "duration",
+        "limit"
+      ]
+    },
+    "io.kestra.core.models.flows.sla.types.AvgDurationSLA-2": {
+      "type": "object",
+      "properties": {
+        "averageOverStates": {
+          "title": "The states to consider when computing the average duration",
+          "default": [
+            "SUCCESS",
+            "WARNING"
+          ],
+          "markdownDescription": "Default value is : `- SUCCESS\n- WARNING`\n\nDefault value is : `- SUCCESS\n- WARNING`",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "SUBMITTED",
+              "RUNNING",
+              "PAUSING",
+              "PAUSED",
+              "RESTARTED",
+              "KILLING",
+              "SUCCESS",
+              "WARNING",
+              "FAILED",
+              "KILLED",
+              "CANCELLED",
+              "QUEUED",
+              "RETRYING",
+              "RETRIED",
+              "SKIPPED",
+              "BREAKPOINT",
+              "RESUBMITTED"
+            ]
+          }
+        },
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "FAIL",
+            "CANCEL",
+            "NONE"
+          ]
+        },
+        "durationThreshold": {
+          "type": "string",
+          "format": "duration",
+          "title": "The duration threshold after which the SLA is considered violated",
+          "markdownDescription": "AvgDurationSLA compute the execution duration deadline by averaging the duration of the last executions plus the duration threshold"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "labels": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "lookbackPeriod": {
+          "type": "string",
+          "format": "duration",
+          "title": "The lookback period to consider when computing the average duration"
+        },
+        "minExecutions": {
+          "type": "integer",
+          "title": "The minimum number of executions to consider when computing the average duration",
+          "default": 5,
+          "minimum": 1,
+          "markdownDescription": "If the number of executions is lower than this value, the SLA is never triggered.\n\nDefault value is : `5`"
+        },
+        "percentageThreshold": {
+          "type": "number",
+          "title": "The percentage threshold after which the SLA is considered violated",
+          "exclusiveMinimum": 0,
+          "markdownDescription": "AvgDurationSLA compute the execution duration deadline by averaging the duration of the last executions plus the percentage threshold.\nThe percentage must be set as a float, for example 0.5 for 50%"
+        },
+        "type": {
+          "const": "AVG_DURATION"
+        }
+      },
+      "required": [
+        "behavior",
+        "id",
+        "lookbackPeriod",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA-2": {
+      "type": "object",
+      "properties": {
+        "assert": {
+          "type": "string",
+          "minLength": 1
+        },
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "FAIL",
+            "CANCEL",
+            "NONE"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "labels": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "type": {
+          "const": "EXECUTION_ASSERTION"
+        }
+      },
+      "required": [
+        "assert",
+        "behavior",
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.flows.sla.types.MaxDurationSLA-2": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "FAIL",
+            "CANCEL",
+            "NONE"
+          ]
+        },
+        "duration": {
+          "type": "string",
+          "format": "duration",
+          "title": "The maximum duration of the execution after which the SLA is considered violated"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "labels": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "type": {
+          "const": "MAX_DURATION"
+        }
+      },
+      "required": [
+        "behavior",
+        "duration",
+        "id",
+        "type"
+      ]
+    },
+    "io.kestra.core.models.tasks.Cache": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "ttl": {
+          "type": "string",
+          "format": "duration"
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    },
+    "io.kestra.core.models.tasks.FlowWorkerSelector": {
+      "type": "object",
+      "properties": {
+        "fallback": {
+          "type": "string",
+          "enum": [
+            "FAIL",
+            "WAIT",
+            "CANCEL",
+            "IGNORE"
+          ],
+          "markdownDescription": "Strategy when no worker is available. Defaults to FAIL when null."
+        },
+        "match": {
+          "type": "string",
+          "enum": [
+            "ALL",
+            "ANY"
+          ],
+          "markdownDescription": "How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null."
+        },
+        "tags": {
+          "$dynamic": true,
+          "markdownDescription": "Required tags used to route to a matching Worker Queue. Each tag is an RFC 1123 label: lowercase alphanumerics and hyphens, must start and end with alphanumeric, max 63 chars per tag, max 20 tags. The list, or any of its tags, can be a Pebble expression, rendered when the job is routed; a tag rendering to an empty value is ignored, and when no tag is left the selector is treated as unset.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "$dynamic": true
+          }
+        }
+      }
+    },
+    "io.kestra.core.models.tasks.common.EncryptedString": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "io.kestra.core.models.tasks.retrys.Constant-2": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "RETRY_FAILED_TASK",
+            "RETRY_FLOWABLE",
+            "CREATE_NEW_EXECUTION"
+          ],
+          "default": "RETRY_FAILED_TASK",
+          "markdownDescription": "Default value is : `RETRY_FAILED_TASK`"
+        },
+        "interval": {
+          "type": "string",
+          "format": "duration"
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxDuration": {
+          "type": "string",
+          "format": "duration"
+        },
+        "type": {
+          "const": "constant"
+        },
+        "warningOnRetry": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Default value is : `false`"
+        }
+      },
+      "required": [
+        "interval",
+        "type"
+      ],
+      "title": "Constant retry",
+      "markdownDescription": "Retry with a fixed delay between attempts."
+    },
+    "io.kestra.core.models.tasks.retrys.Exponential-2": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "RETRY_FAILED_TASK",
+            "RETRY_FLOWABLE",
+            "CREATE_NEW_EXECUTION"
+          ],
+          "default": "RETRY_FAILED_TASK",
+          "markdownDescription": "Default value is : `RETRY_FAILED_TASK`"
+        },
+        "delayFactor": {
+          "type": "number"
+        },
+        "interval": {
+          "type": "string",
+          "format": "duration"
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxDuration": {
+          "type": "string",
+          "format": "duration"
+        },
+        "maxInterval": {
+          "type": "string",
+          "format": "duration"
+        },
+        "type": {
+          "const": "exponential"
+        },
+        "warningOnRetry": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Default value is : `false`"
+        }
+      },
+      "required": [
+        "interval",
+        "maxInterval",
+        "type"
+      ],
+      "title": "Exponential retry",
+      "markdownDescription": "Retry with exponentially increasing delays between attempts."
+    },
+    "io.kestra.core.models.tasks.retrys.Random-2": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "enum": [
+            "RETRY_FAILED_TASK",
+            "RETRY_FLOWABLE",
+            "CREATE_NEW_EXECUTION"
+          ],
+          "default": "RETRY_FAILED_TASK",
+          "markdownDescription": "Default value is : `RETRY_FAILED_TASK`"
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxDuration": {
+          "type": "string",
+          "format": "duration"
+        },
+        "maxInterval": {
+          "type": "string",
+          "format": "duration"
+        },
+        "minInterval": {
+          "type": "string",
+          "format": "duration"
+        },
+        "type": {
+          "const": "random"
+        },
+        "warningOnRetry": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Default value is : `false`"
+        }
+      },
+      "required": [
+        "maxInterval",
+        "minInterval",
+        "type"
+      ],
+      "title": "Random retry",
+      "markdownDescription": "Retry with a random delay within a configurable range between attempts."
+    },
+    "io.kestra.plugin.core.log.Log": {
+      "type": "object",
+      "properties": {
+        "allowFailure": {
+          "type": "boolean",
+          "default": false,
+          "$dynamic": false,
+          "$group": "reliability",
+          "markdownDescription": "Default value is : `false`"
+        },
+        "allowWarning": {
+          "type": "boolean",
+          "default": false,
+          "$dynamic": false,
+          "$group": "reliability",
+          "markdownDescription": "Default value is : `false`"
+        },
+        "assets": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.assets.AssetsDeclaration"
+            },
+            {
+              "$dynamic": false,
+              "$group": "advanced",
+              "markdownDescription": "Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition."
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "$dynamic": false,
+          "$group": "advanced"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "$dynamic": false,
+          "$group": "execution",
+          "markdownDescription": "Default value is : `false`"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*"
+        },
+        "level": {
+          "type": "string",
+          "title": "The level on which the message should be logged. Note that this is different from the core `logLevel` property which sets the minimum log level to be persisted in the backend database. The `level` property is used to determine the log level of the message emitted by the Log task, while `logLevel` is used to filter which logs should be stored in the backend. Both properties can be used together to control the log level of the message emitted by the task and the logs that are persisted in the backend. If not specified, the `level` defaults to `INFO`.",
+          "default": "INFO",
+          "$dynamic": true,
+          "markdownDescription": "Default value is : `INFO`",
+          "anyOf": [
+            {
+              "enum": [
+                "ERROR",
+                "WARN",
+                "INFO",
+                "DEBUG",
+                "TRACE"
+              ]
+            },
+            {
+              "pattern": ".*(\\{\\{.*\\}\\}|\\{%.*%\\}).*"
+            }
+          ]
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": [
+            "ERROR",
+            "WARN",
+            "INFO",
+            "DEBUG",
+            "TRACE"
+          ],
+          "$dynamic": false,
+          "$group": "logging"
+        },
+        "logToFile": {
+          "type": "boolean",
+          "default": false,
+          "$dynamic": false,
+          "$group": "logging",
+          "markdownDescription": "Default value is : `false`"
+        },
+        "message": {
+          "title": "One or more message(s) to be sent to the backend as logs",
+          "$dynamic": true,
+          "markdownDescription": "It can be a string or an array of strings.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "policyRefs": {
+          "$dynamic": false,
+          "$group": "advanced",
+          "markdownDescription": "Identifiers of `enforcement: REFERENCE` governance policies to attach to this task and everything nested under it (Enterprise Edition; ignored in the open-source edition).",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "$dynamic": false,
+            "$group": "advanced"
+          }
+        },
+        "retry": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Constant-2"
+                },
+                {
+                  "title": "Retry",
+                  "$dynamic": false,
+                  "$group": "reliability",
+                  "markdownDescription": "Retry policy applied when the task fails."
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Exponential-2"
+                },
+                {
+                  "title": "Retry",
+                  "$dynamic": false,
+                  "$group": "reliability",
+                  "markdownDescription": "Retry policy applied when the task fails."
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Random-2"
+                },
+                {
+                  "title": "Retry",
+                  "$dynamic": false,
+                  "$group": "reliability",
+                  "markdownDescription": "Retry policy applied when the task fails."
+                }
+              ]
+            }
+          ]
+        },
+        "runIf": {
+          "type": "string",
+          "default": "true",
+          "$dynamic": true,
+          "$group": "reliability",
+          "markdownDescription": "Default value is : `\"true\"`"
+        },
+        "taskCache": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.Cache"
+            },
+            {
+              "$dynamic": false,
+              "$group": "advanced"
+            }
+          ]
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "duration",
+              "$dynamic": true,
+              "$group": "execution"
+            },
+            {
+              "type": "string",
+              "$dynamic": true,
+              "$group": "execution"
+            }
+          ],
+          "$group": "execution"
+        },
+        "type": {
+          "const": "io.kestra.plugin.core.log.Log"
+        },
+        "version": {
+          "type": "string",
+          "title": "Plugin Version",
+          "$dynamic": false,
+          "$group": "advanced",
+          "markdownDescription": "Defines the version of the plugin to use.\n\nThe version must follow the Semantic Versioning (SemVer) specification:\n  - A single-digit MAJOR version (e.g., `1`).\n  - A MAJOR.MINOR version (e.g., `1.1`).\n  - A MAJOR.MINOR.PATCH version, optionally with any qualifier\n    (e.g., `1.1.2`, `1.1.0-SNAPSHOT`).\n"
+        },
+        "workerSelector": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.FlowWorkerSelector"
+            },
+            {
+              "$dynamic": false,
+              "$group": "execution",
+              "markdownDescription": "Routing requirements (tags + fallback) for this task."
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "message",
+        "type"
+      ],
+      "title": "Emit log entries from a flow.",
+      "markdownDescription": "Render one or many messages (strings or arrays) and write them to the task log at a specified level.\n\nUses the same templating engine as other tasks, so you can interpolate variables or secrets. The `level` property sets the severity of the emitted entry; the flow-level `logLevel` setting still controls which entries are persisted, so align both when troubleshooting missing logs.##### Examples\n> Log a DEBUG level message containing expressions.\n```yaml\nid: send_logs\nnamespace: company.team\n\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n    level: DEBUG\n    message: \"{{ task.id }} started at {{ taskrun.startDate }}\"\n\n```\n\n> Log one or more messages to the console.\n```yaml\nid: hello_world\nnamespace: company.team\n\ntasks:\n  - id: greeting\n    type: io.kestra.plugin.core.log.Log\n    message:\n      - Kestra team wishes you a great day 👋\n      - If you need some help, reach out via Slack\n```"
+    },
+    "io.kestra.preload.tasks": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/io.kestra.plugin.core.log.Log"
+          }
+        ]
+      }
+    },
+    "io.kestra.preload.triggers": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/io.kestra.plugin.core.log.Log"
+          }
+        ]
+      }
+    },
+    "java.lang.Void": {
+      "type": "object"
     }
   }
 }

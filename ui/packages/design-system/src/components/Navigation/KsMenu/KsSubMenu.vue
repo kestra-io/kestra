@@ -15,7 +15,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         index: string
         showTimeout?: number
         hideTimeout?: number
@@ -23,7 +23,7 @@
         disabled?: boolean
         teleported?: boolean
         popperOffset?: number
-    }>()
+    }>(), {teleported: undefined})
 
     defineSlots<{
         default?(): unknown

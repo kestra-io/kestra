@@ -58,6 +58,7 @@ import reactor.core.publisher.Flux;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -188,7 +189,7 @@ class ExecutionServiceTest {
     @LoadFlows({ "flows/valids/working-directory.yaml" })
     void restartDynamic() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory", null, (f, e) -> ImmutableMap.of("failed", "true"));
-        assertThat(execution.getTaskRunList()).hasSize(3);
+        assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         Flow flow = flowRepository.findByExecution(execution);
@@ -196,6 +197,8 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
 
+        // the whole WorkingDirectory runs again, its internal open and close tasks included
+        assertThat(restart.getTaskRunList()).extracting(TaskRun::getTaskId).containsExactly("worker");
         assertThat(restart.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getTaskRunList().getFirst().getState().getHistories()).hasSize(4);
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
@@ -722,6 +725,38 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/loop-pause-concurrent.yaml" })
+    void shouldSucceedWhenEveryPausedLoopIterationIsResumed() throws Exception {
+        Execution parent = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "loop-pause-concurrent");
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(
+            executionRepository.findLoopSubExecutions(MAIN_TENANT, parent.getId(), "each")
+        ).hasSize(2).allMatch(sub -> sub.getState().isPaused()));
+        List<Execution> subs = executionRepository.findLoopSubExecutions(MAIN_TENANT, parent.getId(), "each");
+
+        resume(subs.get(0));
+
+        // the second iteration is still paused, so the parent must stay paused
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(
+            executionRepository.findLoopSubExecutions(MAIN_TENANT, parent.getId(), "each").stream().filter(sub -> sub.getState().isPaused())
+        ).hasSize(1));
+        Execution stillPaused = executionRepository.findById(MAIN_TENANT, parent.getId()).orElseThrow();
+        assertThat(stillPaused.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+        assertThat(stillPaused.findTaskRunsByTaskId("each").getFirst().getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+
+        resume(subs.get(1));
+        Execution result = runnerUtils.awaitExecution(e -> e.getId().equals(parent.getId()) && e.getState().isTerminated(), parent, Duration.ofSeconds(30));
+
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(result.findTaskRunsByTaskId("last")).hasSize(1);
+    }
+
+    private void resume(Execution sub) throws Exception {
+        Flow flow = flowRepository.findByExecution(sub);
+        Execution resumed = executionService.resume(sub, flow, State.Type.RUNNING, PausableTask.Resumed.now());
+        runnerUtils.emitAndAwaitExecution(e -> e.getId().equals(sub.getId()) && e.getState().isTerminated(), resumed);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/approval-parallel-loop-pause.yaml" })
     void parentExecutionIsPausedWhenLoopIterationPausesViaFailingSiblingApproval() throws Exception {
         // approvalB's onWait fails after approvalA is already PAUSED, so the PAUSING -> PAUSED transition comes with no PAUSED result in that pass.
@@ -773,7 +808,7 @@ class ExecutionServiceTest {
             .withState(State.Type.CREATED);
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> executionService.resumeFromBreakpoint(execution, Optional.empty()));
-        assertThat(error.getMessage()).isEqualTo("Execution is not suspended");
+        assertThat(error.getMessage()).isEqualTo("Execution is not suspended at a breakpoint");
     }
 
     @Test
@@ -792,7 +827,7 @@ class ExecutionServiceTest {
             .withState(State.Type.BREAKPOINT);
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> executionService.resumeFromBreakpoint(execution, Optional.empty()));
-        assertThat(error.getMessage()).isEqualTo("Execution has no breakpoint");
+        assertThat(error.getMessage()).isEqualTo("Execution is not suspended at a breakpoint");
     }
 
     @Test

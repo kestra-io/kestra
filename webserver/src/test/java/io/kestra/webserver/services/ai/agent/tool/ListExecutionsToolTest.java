@@ -2,26 +2,31 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Integration check that {@code list-executions} returns real executions from the repository,
+ * Integration check that {@code list_executions} returns real executions from the repository,
  * including when a state filter is supplied, exercising the tool → repository wiring end to end.
  */
 @KestraTest(environments = "memory")
@@ -47,11 +52,14 @@ class ListExecutionsToolTest {
         String executionId = save(State.Type.SUCCESS);
 
         // When
-        ListExecutionsTool.Result result = tool.listExecutions(List.of(), CONTEXT);
+        ListExecutionsTool.Result result = tool.listExecutions(List.of(), null, CONTEXT);
 
         // Then
-        assertThat(result.executions())
-            .anyMatch(summary -> executionId.equals(summary.id()) && "SUCCESS".equals(summary.state()));
+        assertThat(result.executions()).filteredOn(summary -> executionId.equals(summary.id())).singleElement().satisfies(summary -> {
+            assertThat(summary.state()).isEqualTo("SUCCESS");
+            assertThat(summary.endDate()).isEqualTo("2026-01-01T00:00:10Z");
+            assertThat(summary.labels()).containsEntry("team", "data");
+        });
     }
 
     @Test
@@ -62,7 +70,7 @@ class ListExecutionsToolTest {
 
         // When — filtering on SUCCESS
         List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.STATE, QueryFilter.Op.EQUALS, "SUCCESS", null, null));
-        ListExecutionsTool.Result result = tool.listExecutions(filters, CONTEXT);
+        ListExecutionsTool.Result result = tool.listExecutions(filters, null, CONTEXT);
 
         // Then — only SUCCESS executions are returned, including the one we created
         assertThat(result.executions()).isNotEmpty();
@@ -70,7 +78,39 @@ class ListExecutionsToolTest {
         assertThat(result.executions()).anyMatch(summary -> successId.equals(summary.id()));
     }
 
+    @Test
+    void shouldReturnTotalBeyondReturnedExecutions() throws Exception {
+        // Given — more executions in a namespace than the tool returns
+        String tenant = "listexecutionstotal";
+        int executionCount = 52;
+        for (int i = 0; i < executionCount; i++) {
+            save(tenant, State.Type.SUCCESS);
+        }
+        QueryFilterToolExecutor executor = new QueryFilterToolExecutor(
+            tool,
+            ListExecutionsTool.class.getMethod("listExecutions", List.class, Integer.class, AgentCallContext.Context.class)
+        );
+        ToolExecutionRequest request = ToolExecutionRequest.builder()
+            .id("call-1")
+            .name("list_executions")
+            .arguments("""
+                { "NAMESPACE": { "operator": "EQUALS", "value": "%s" } }""".formatted(NAMESPACE))
+            .build();
+
+        // When — the model calls the tool as it would through the catalog
+        String json = executor.executeWithContext(request, AgentCallContext.into(AgentCallContext.Context.ofTenant(tenant))).resultText();
+
+        // Then — the model sees one page of executions plus the real total
+        Map<String, Object> result = JacksonMapper.toMap(json);
+        assertThat((List<?>) result.get("executions")).hasSize(50);
+        assertThat(((Number) result.get("total")).longValue()).isEqualTo(executionCount);
+    }
+
     private String save(final State.Type stateType) {
+        return save(MAIN_TENANT, stateType);
+    }
+
+    private String save(final String tenant, final State.Type stateType) {
         String executionId = IdUtils.create();
         State state = State.of(
             stateType, List.of(
@@ -81,12 +121,33 @@ class ListExecutionsToolTest {
         executionRepository.save(
             Execution.builder()
                 .id(executionId)
-                .tenantId(MAIN_TENANT)
+                .tenantId(tenant)
                 .namespace(NAMESPACE)
                 .flowId("flow-1")
+                .labels(List.of(new Label("team", "data")))
                 .state(state)
                 .build()
         );
         return executionId;
+    }
+
+    @Test
+    void shouldReturnRemainingExecutionsWhenReadingSecondPage() {
+        String tenant = "listexecutionspage";
+        for (int i = 0; i < 52; i++) {
+            save(tenant, State.Type.SUCCESS);
+        }
+        List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.NAMESPACE, QueryFilter.Op.EQUALS, NAMESPACE, null, null));
+
+        ListExecutionsTool.Result result = tool.listExecutions(filters, 2, AgentCallContext.Context.ofTenant(tenant));
+
+        assertThat(result.executions()).hasSize(2);
+        assertThat(result.total()).isEqualTo(52);
+        assertThat(result.page()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectPageBelowOne() {
+        assertThatThrownBy(() -> tool.listExecutions(List.of(), 0, CONTEXT)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Page must be 1 or greater");
     }
 }

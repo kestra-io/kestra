@@ -58,7 +58,7 @@
 
     import LabelInput from "../labels/LabelInput.vue"
     import {filterValidLabels} from "./utils"
-    import {hasInvalidLabelKeys} from "../../utils/executionLabels"
+    import {hasInvalidLabelKeys, type ExecutionLabelInput} from "../../utils/executionLabels"
     import action from "../../models/action"
     import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
@@ -91,7 +91,7 @@
     const authStore = useAuthStore()
 
     const isOpen = ref(false)
-    const executionLabels = ref<Label[]>([])
+    const executionLabels = ref<ExecutionLabelInput[]>([])
     const isSaving = ref(false)
 
     const hasInvalidLabels = computed(() => hasInvalidLabelKeys(executionLabels.value))
@@ -127,7 +127,7 @@
             })
 
             if (response) {
-                executionsStore.execution = response as any
+                executionsStore.execution = response
             }
 
             toast.success(t("Set labels done"))

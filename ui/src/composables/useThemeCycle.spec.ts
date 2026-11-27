@@ -1,13 +1,15 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent, h} from "vue"
+import {defineComponent, h, nextTick} from "vue"
 import {mount, VueWrapper} from "@vue/test-utils"
 import type {useMiscStore} from "override/stores/misc"
 import type {SelectedTheme} from "../utils/utils"
 
 const switchThemeMock = vi.hoisted(() => vi.fn())
+const selectedTheme = vi.hoisted(() => ({value: "light" as SelectedTheme}))
 
 vi.mock("../utils/utils", () => ({
     switchTheme: switchThemeMock,
+    getSelectedTheme: () => selectedTheme.value,
 }))
 
 import {useThemeCycle} from "./useThemeCycle"
@@ -150,5 +152,46 @@ describe("useThemeCycle", () => {
 
         addSpy.mockRestore()
         removeSpy.mockRestore()
+    })
+
+    describe("when the OS theme changes", () => {
+        const osListeners = new Set<(event: {matches: boolean}) => void>()
+
+        const switchOsTo = async (dark: boolean) => {
+            osListeners.forEach((listener) => listener({matches: dark}))
+            await nextTick()
+        }
+
+        beforeEach(() => {
+            osListeners.clear()
+            vi.stubGlobal("matchMedia", (query: string) => ({
+                media: query,
+                matches: false,
+                addEventListener: (_type: string, listener: (event: {matches: boolean}) => void) => osListeners.add(listener),
+                removeEventListener: (_type: string, listener: (event: {matches: boolean}) => void) => osListeners.delete(listener),
+            }))
+        })
+
+        afterEach(() => {
+            selectedTheme.value = "light"
+            vi.unstubAllGlobals()
+        })
+
+        it("re-applies Sync with system on any page, not only in Settings", async () => {
+            selectedTheme.value = "syncWithSystem"
+            wrapper = mountThemeCycle()
+
+            await switchOsTo(true)
+
+            expect(switchThemeMock).toHaveBeenCalledWith(stub, "syncWithSystem")
+        })
+
+        it("leaves an explicitly chosen theme alone", async () => {
+            wrapper = mountThemeCycle()
+
+            await switchOsTo(true)
+
+            expect(switchThemeMock).not.toHaveBeenCalled()
+        })
     })
 })

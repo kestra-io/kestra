@@ -34,7 +34,7 @@
             required: true,
         },
         execution: {
-            type: Object as PropType<object>,
+            type: Object as PropType<{id: string}>,
             required: true,
         },
     })

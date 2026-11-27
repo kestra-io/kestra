@@ -10,7 +10,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.annotations.ServerOwned;
-import io.kestra.core.models.tasks.WorkerSelector;
+import io.kestra.core.models.namespaces.NamespaceInterface;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
@@ -38,7 +39,7 @@ public abstract class AbstractFlow implements FlowInterface {
     String id;
 
     @NotNull
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
+    @Pattern(regexp = NamespaceInterface.ID_PATTERN)
     @Size(min = 1, max = 150)
     String namespace;
 
@@ -116,5 +117,5 @@ public abstract class AbstractFlow implements FlowInterface {
 
     @Valid
     @Schema(description = "Routing requirements (tags + fallback) for this flow.")
-    private WorkerSelector workerSelector;
+    private FlowWorkerSelector workerSelector;
 }

@@ -5,7 +5,7 @@
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'KsButton'">{{ $t('change state') }}</span>
+        <span v-if="labeled || component !== 'KsButton'">{{ $t('change state') }}</span>
 
         <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
@@ -23,7 +23,7 @@
                 </p>
 
                 <p>
-                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun?.state?.current ?? ''" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="status-badge" :status="taskRun?.state?.current ?? ''" />
                 </p>
 
                 <KsSelect
@@ -37,7 +37,7 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
+                            <KsExecutionStatus size="small" class="status-badge" :status="item.code" />
                             <i18n-t keypath="mark as" tag="span" scope="global">
                                 <template #status><code>{{ item.code }}</code></template>
                             </i18n-t>
@@ -45,7 +45,7 @@
                     </KsOption>
                 </KsSelect>
 
-                <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
+                <div v-if="selectedStatus" class="alert-status-change" role="alert">
                     <ul>
                         <li v-for="(text, i) in ($tm('change state hint') as Record<string, string[]>)[selectedStatus]" :key="i">
                             {{ $rt(text) }}
@@ -74,9 +74,11 @@
     import StateMachine from "vue-material-design-icons/StateMachine.vue"
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
+    import {asProblem} from "@kestra-io/kestra-sdk"
     import {type Execution, useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
+    import {problemBulkBody, problemTitle} from "../../utils/problem"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {State} from "@kestra-io/design-system"
@@ -84,16 +86,18 @@
 
     const props = withDefaults(defineProps<{
         component?: string
+        labeled?: boolean
         execution: Execution
         taskRun?: TaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",
+        labeled: false,
         taskRun: undefined,
         attemptIndex: undefined,
     })
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
     const toast = useToast()
@@ -138,7 +142,7 @@
         return State.isTerminated(execution.state.current) && execution.state.current !== State.KILLED
     })
 
-    function changeStatus() {
+    async function changeStatus() {
         visible.value = false
 
         const taskRun = props.taskRun
@@ -146,27 +150,37 @@
             return
         }
 
-        executionsStore
-            .changeStatus({
+        try {
+            await executionsStore.changeStatus({
                 executionId: props.execution.id,
                 taskRunId: taskRun.id,
                 state: selectedStatus.value,
             })
-            .then(() => executionsStore.waitForStateChange(props.execution))
-            .then((execution: Execution) => {
-                executionsStore.execution = execution
-                // Re-subscribe to the execution SSE stream directly via the store
-                // instead of bubbling a `follow` event up to the route component.
-                executionsStore.followExecution({id: props.execution.id}, t)
 
-                toast.success(t("change state done"))
-            })
+            const execution = await executionsStore.waitForStateChange(props.execution)
+            executionsStore.execution = execution
+            // Re-subscribe to the execution SSE stream directly via the store
+            // instead of bubbling a `follow` event up to the route component.
+            executionsStore.followExecution({id: props.execution.id}, t)
+
+            toast.success(t("change state done"))
+        } catch (error) {
+            executionsStore.followExecution({id: props.execution.id}, t)
+            const problem = asProblem(error)
+            toast.requestError(error, problemBulkBody(problem, t, te), problemTitle(problem, t, te))
+        }
     }
 </script>
 
 <style scoped>
+    .status-badge {
+        margin-right: var(--ks-spacing-1);
+    }
+
     .alert-status-change {
-        ul {
+        margin-top: var(--ks-spacing-2);
+
+        & ul {
             margin-bottom: 0;
             padding-left: 10px;
         }

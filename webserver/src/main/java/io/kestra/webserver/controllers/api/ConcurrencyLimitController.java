@@ -1,21 +1,34 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.webserver.models.api.UnsortedPagination;
 import io.kestra.webserver.responses.PagedResults;
-
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Put;
+import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Controller("/api/v1/{tenant}/concurrency-limit")
 public class ConcurrencyLimitController {
@@ -23,14 +36,37 @@ public class ConcurrencyLimitController {
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     @Inject
+    private ExecutionQueuedStateStore executionQueuedStateStore;
+
+    @Inject
     private TenantService tenantService;
+
+    @Inject
+    private ApplicationEventPublisher<CrudEvent<ConcurrencyLimit>> eventPublisher;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
-    @Operation(tags = { "Flows" }, summary = "Search for flow concurrency limits")
-    public PagedResults<ConcurrencyLimit> searchConcurrencyLimits() {
-        var results = concurrencyLimitRepository.find(tenantService.resolveTenant());
-        return PagedResults.of(new ArrayListTotal<>(results, results.size()));
+    @Operation(tags = { "Flows" }, summary = "Search for flow, namespace and tenant concurrency limits")
+    public PagedResults<ConcurrencyLimitSearchResult> searchConcurrencyLimits(
+        @Valid @RequestBean UnsortedPagination paging
+    ) {
+        String tenantId = tenantService.resolveTenant();
+        List<ConcurrencyLimit> limits = concurrencyLimitRepository.find(tenantId).stream()
+            .sorted(Comparator.comparing(ConcurrencyLimit::getNamespace).thenComparing(ConcurrencyLimit::getFlowId))
+            .toList();
+
+        List<ConcurrencyLimitSearchResult> results = limits.stream()
+            .skip((long) (paging.page() - 1) * paging.size())
+            .limit(paging.size())
+            .map(limit -> new ConcurrencyLimitSearchResult(
+                limit.getTenantId(),
+                limit.getNamespace(),
+                limit.getFlowId(),
+                limit.getRunning(),
+                countQueued(tenantId, limit)
+            ))
+            .toList();
+        return PagedResults.of(new ArrayListTotal<>(results, limits.size()));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -43,22 +79,36 @@ public class ConcurrencyLimitController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put("/{namespace}/{flowId}")
-    @Operation(tags = { "Flows" }, summary = "Update a flow concurrency limit")
-    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(String namespace, String flowId, @Body @Valid ConcurrencyLimit concurrencyLimit) {
+    @Put
+    @Operation(tags = { "Flows" }, summary = "Update a flow, namespace or tenant concurrency limit", description = "Leave the namespace and the flow empty to target the tenant limit, and the flow empty to target a namespace limit.")
+    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body @Valid ConcurrencyLimitUpdateRequest request) {
         String tenantId = tenantService.resolveTenant();
-        var existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
+        String namespace = Objects.requireNonNullElse(request.namespace(), "");
+        String flowId = Objects.requireNonNullElse(request.flowId(), "");
+
+        Optional<ConcurrencyLimit> existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
         if (existing.isEmpty()) {
-            return HttpResponse.notFound();
+            throw new NotFoundException("No concurrency limit was found for namespace '%s' and flow '%s'.".formatted(namespace, flowId));
         }
 
-        // The path identifies the resource; a body naming another flow must not retarget it.
-        ConcurrencyLimit toUpdate = ConcurrencyLimit.builder()
-            .tenantId(tenantId)
-            .namespace(namespace)
-            .flowId(flowId)
-            .running(concurrencyLimit.getRunning())
-            .build();
-        return HttpResponse.ok(concurrencyLimitRepository.update(toUpdate));
+        ConcurrencyLimit updated = concurrencyLimitRepository.update(
+            ConcurrencyLimit.builder().tenantId(tenantId).namespace(namespace).flowId(flowId).running(request.running()).build()
+        );
+        eventPublisher.publishEvent(CrudEvent.of(existing.get(), updated));
+
+        return HttpResponse.ok(updated);
     }
+
+    // Namespace and tenant counters are stored with an empty namespace or flow, which the store reads as a wider scope.
+    private int countQueued(String tenantId, ConcurrencyLimit limit) {
+        return executionQueuedStateStore.count(
+            tenantId,
+            limit.getNamespace().isEmpty() ? null : limit.getNamespace(),
+            limit.getFlowId().isEmpty() ? null : limit.getFlowId()
+        );
+    }
+
+    public record ConcurrencyLimitSearchResult(String tenantId, String namespace, String flowId, Integer running, int queued) {}
+
+    public record ConcurrencyLimitUpdateRequest(@Nullable String namespace, @Nullable String flowId, @NotNull @PositiveOrZero Integer running) {}
 }

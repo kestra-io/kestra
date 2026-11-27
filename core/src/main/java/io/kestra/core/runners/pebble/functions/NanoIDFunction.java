@@ -26,8 +26,8 @@ public class NanoIDFunction implements KestraFunction {
     public Object execute(
         Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         int length = DEFAULT_LENGTH;
-        if (args.containsKey(LENGTH) && (args.get(LENGTH) instanceof Long)) {
-            length = parseLength(args, self, lineNumber);
+        if (args.get(LENGTH) != null) {
+            length = parseLength(args.get(LENGTH), self, lineNumber);
         }
         char[] alphabet = DEFAULT_ALPHABET;
         if (args.containsKey(ALPHABET) && (args.get(ALPHABET) instanceof String)) {
@@ -52,8 +52,16 @@ public class NanoIDFunction implements KestraFunction {
         return createNanoID(length, alphabet);
     }
 
-    private static int parseLength(Map<String, Object> args, PebbleTemplate self, int lineNumber) {
-        var value = (Long) args.get(LENGTH);
+    private static int parseLength(Object lengthArg, PebbleTemplate self, int lineNumber) {
+        if (!(lengthArg instanceof Number)) {
+            throw new PebbleException(
+                null,
+                "The 'nanoId()' function field 'length' must be a number",
+                lineNumber,
+                self.getName()
+            );
+        }
+        long value = ((Number) lengthArg).longValue();
         if (value < 1) {
             throw new PebbleException(
                 null,
@@ -106,7 +114,7 @@ public class NanoIDFunction implements KestraFunction {
 
         final int safeByteCutoff = 256 - (256 % alphabet.length);
         int position = bytes.length;
-        for (int i = 0; i < length; ) {
+        for (int i = 0; i < length;) {
             if (position == bytes.length) {
                 secureRandom.nextBytes(bytes);
                 position = 0;

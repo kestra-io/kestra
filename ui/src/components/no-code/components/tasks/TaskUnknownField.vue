@@ -1,5 +1,5 @@
 <template>
-    <KsFormItem :data-test="`unknown-field-${fieldKey}`">
+    <KsFormItem stacked :data-test="`unknown-field-${fieldKey}`">
         <template #label>
             <div class="unknown-head">
                 <span class="label">{{ fieldKey }}</span>

@@ -1,5 +1,12 @@
 {
   "en": {
+    "support_links": {
+      "slack_title": "Community Slack",
+      "slack_description": "Discuss topics with other users and the Kestra team",
+      "github_description": "Give our open-source project a star",
+      "help_center_title": "Help Center",
+      "help_center_description": "Contact support for help with your Enterprise account"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra was upgraded to {version} and it may include breaking changes that require updates to your flows.",
       "cta": "See what changed"
@@ -176,6 +183,23 @@
     "publish_draft": "Publish draft",
     "draft": "Draft",
     "draft_flow_warning": "The latest revision of this flow is a draft. The execution will run against the latest published revision instead - publish the draft (or run it from the playground) to execute your latest changes.",
+    "save_draft": "Save draft",
+    "flow_publish": {
+      "description": "Makes this revision live: triggers start it, other flows can call it, and its failures reach alert flows.",
+      "done_title": "Published",
+      "failed": "Could not publish this draft.",
+      "done": "Revision {revision} of {name} is live: triggers start it, other flows can call it, and its failures reach alert flows."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "This flow is a draft",
+        "description": "It has no published revision, so triggers and other flows do not start it. Run it from the Playground, or publish it to make it live."
+      },
+      "over_published": {
+        "title": "The latest revision is a draft",
+        "description": "Schedules, webhooks and other flows still run the published revision until you publish this draft. Flow triggers do not start the flow meanwhile."
+      }
+    },
     "save task": "Save Task",
     "saved": "Successfully saved",
     "saved as draft": "Successfully saved as draft",
@@ -210,7 +234,7 @@
     "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
     "logs": "Logs",
     "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
-    "no_logs_data_title": "No logs found for the selected filters.",
+    "no_logs_data_title": "No logs found",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -292,6 +316,16 @@
     "last execution status": "Last execution status",
     "jump to": "Jump to",
     "jump to...": "Jump to...",
+    "global_search": {
+        "open_flow": "Open flow",
+        "flow_executions": "Flow executions",
+        "move": "Move",
+        "menu": "Menu",
+        "sources": "Menu + flows + namespaces",
+        "sources_flows": "Menu + flows",
+        "sources_namespaces": "Menu + namespaces",
+        "search_failed": "Couldn't load flows or namespaces"
+    },
     "contextBar": {
       "ai": "AI",
       "news": "News",
@@ -307,6 +341,7 @@
       "ongoing": "In progress",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Deleting {count} execution | Deleting {count} executions",
           "EXECUTION_KILL": "Killing {count} execution | Killing {count} executions",
           "EXECUTION_PAUSE": "Pausing {count} execution | Pausing {count} executions",
           "EXECUTION_RESUME": "Resuming {count} execution | Resuming {count} executions",
@@ -323,6 +358,25 @@
           "BACKFILL_PAUSE": "Pausing {count} backfill | Pausing {count} backfills",
           "BACKFILL_RESUME": "Resuming {count} backfill | Resuming {count} backfills",
           "BACKFILL_DELETE": "Deleting {count} backfill | Deleting {count} backfills"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Deletion requested for {count} execution | Deletion requested for {count} executions",
+          "EXECUTION_KILL": "Kill requested for {count} execution | Kill requested for {count} executions",
+          "EXECUTION_PAUSE": "Pause requested for {count} execution | Pause requested for {count} executions",
+          "EXECUTION_RESUME": "Resume requested for {count} execution | Resume requested for {count} executions",
+          "EXECUTION_RESTART": "Restart requested for {count} execution | Restart requested for {count} executions",
+          "EXECUTION_REPLAY": "Replay requested for {count} execution | Replay requested for {count} executions",
+          "EXECUTION_FORCE_RUN": "Force run requested for {count} execution | Force run requested for {count} executions",
+          "EXECUTION_UNQUEUE": "Unqueue requested for {count} execution | Unqueue requested for {count} executions",
+          "EXECUTION_CHANGE_STATUS": "Status change requested for {count} execution | Status change requested for {count} executions",
+          "EXECUTION_SET_LABELS": "Label update requested for {count} execution | Label update requested for {count} executions",
+          "TRIGGER_UNLOCK": "Unlock requested for {count} trigger | Unlock requested for {count} triggers",
+          "TRIGGER_DELETE": "Deletion requested for {count} trigger | Deletion requested for {count} triggers",
+          "TRIGGER_DISABLE": "Disable requested for {count} trigger | Disable requested for {count} triggers",
+          "TRIGGER_ENABLE": "Enable requested for {count} trigger | Enable requested for {count} triggers",
+          "BACKFILL_PAUSE": "Pause requested for {count} backfill | Pause requested for {count} backfills",
+          "BACKFILL_RESUME": "Resume requested for {count} backfill | Resume requested for {count} backfills",
+          "BACKFILL_DELETE": "Deletion requested for {count} backfill | Deletion requested for {count} backfills"
         },
         "processed": "{count} processed",
         "rejected": "{count} rejected",
@@ -344,6 +398,8 @@
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
+    "create_child_namespace": "Create child namespace",
+    "view_all_flows": "View all flows",
     "from": "From",
     "to": "To",
     "steps": "Steps",
@@ -451,7 +507,7 @@
         "whole_action": "Replay the whole execution instead",
         "whole_title": "Revision {revision} can be replayed as a whole execution.",
         "whole_description": "No earlier results are reused, so every task runs again on revision {revision}. The original execution is kept and linked.",
-        "confirm_from_task": "Replay from task",
+        "confirm_from_task": "Replay from {taskId}",
         "confirm_whole": "Replay whole execution"
     },
     "change execution state done": "Execution state updated",
@@ -488,17 +544,21 @@
         "decision": "Decision",
         "by": "Decided by",
         "on": "Decided on",
+        "cancelled by": "Cancelled by",
+        "cancelled on": "Cancelled on",
         "decisions": {
           "approved": "Approved",
           "denied": "Denied",
-          "expired": "Expired"
+          "expired": "Expired",
+          "cancelled": "Cancelled",
+          "killed": "Killed"
         }
       },
       "cancel request": "Cancel request",
       "cancel confirm": "Are you sure you want to cancel the approval request of execution {id}? No decision branch will run.",
       "cancel done": "The approval request has been cancelled",
       "banner": {
-        "pausing": "This execution is preparing an approval request and will pause for a review.",
+        "pausing": "This execution is pausing. The approval request can be reviewed as soon as all onWait tasks finish.",
         "paused": "This execution is waiting for a review. Approve or deny it to continue."
       }
     },
@@ -527,6 +587,7 @@
     "output": "Output",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "Failed to evaluate expression",
       "title": "Debug Expression",
       "preview": "Preview",
       "expression": "Expression"
@@ -540,7 +601,16 @@
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "filter by status": "Filter executions by {status} status",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
+      "retried": "This task was retried",
+      "task-details": "Details for {task}",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
       "zoom-out": "Zoom out",
@@ -561,6 +631,8 @@
         "all-iterations": "All iterations",
         "iteration-index": "index {index}",
         "iteration-value-index": "{value} · index {index}",
+        "first-iteration": "First iteration",
+        "last-iteration": "Last iteration",
         "previous-iteration": "Previous iteration",
         "next-iteration": "Next iteration",
         "previous-page": "Previous page",
@@ -610,6 +682,30 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "not started"
+      },
+      "diff": {
+        "added": "added",
+        "removed": "removed",
+        "changed": "changed",
+        "renamed": "renamed",
+        "moved": "moved"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Graph",
+      "yaml": "YAML",
+      "unchanged": "{count} unchanged",
+      "graph_error": "The graph could not be drawn. Open the YAML tab to see the change.",
+      "status": {
+        "added": "Added",
+        "removed": "Removed",
+        "changed": "Changed",
+        "renamed": "Renamed",
+        "moved": "Moved"
       }
     },
     "show task logs": "Show task logs",
@@ -669,6 +765,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
+    "task_run_popup": {
+      "open": "Task details",
+      "count_error": "Could not load the count",
+      "load_error": "Could not load this view.",
+      "retry": "Retry",
+      "child_runs_capped": "Showing the logs of the first {count} child task runs only.",
+      "no_artifacts": "This task does not provide an artifact.",
+      "task_source": "Task source",
+      "worker_info": "Worker info"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "No task of this flow provides an artifact.",
@@ -679,6 +785,7 @@
       "exit_fullscreen": "Exit fullscreen"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
       "tasks_outputs": "Tasks outputs",
@@ -711,7 +818,10 @@
     },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
-      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
+      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
+      "queued": "Queued",
+      "save_error": "Failed to update the concurrency limit, the previous value is kept.",
+      "invalid_running_count": "Enter a whole number between 0 and {max}."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -844,7 +954,7 @@
     "last execution date": "Last execution date",
     "revisions": "Revisions",
     "no revisions found": "Only one revision exists for this flow",
-    "no revisions": "No Revisions",
+    "no revisions": "No revisions found",
     "side-by-side": "side-by-side",
     "line-by-line": "line-by-line",
     "template": "Template",
@@ -1073,7 +1183,7 @@
       "heading": "All things Kestra.",
       "subheading": "The latest updates, guides and stories"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
     "restore": "Restore",
     "restore confirm": "Are you sure you want to restore the revision <code>{revision}</code>?",
     "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
@@ -1084,6 +1194,12 @@
     "bulk force run": "Are you sure you want to force run `{executionCount}` execution(s)?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task executions.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "bulk restart": "Are you sure you want to restart {executionCount} execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
+    "bulk action ineligible change state": "{count} of {total} selected executions are not eligible for a state change.",
+    "bulk action ineligible not state": "{count} of {total} selected executions are not in {state} state.",
+    "bulk action ineligible not pausable": "{count} of {total} selected executions cannot be paused.",
+    "bulk action ineligible not resumable": "{count} of {total} selected executions cannot be resumed.",
+    "bulk action ineligible not terminated": "{count} of {total} selected executions have not terminated.",
+    "bulk action ineligible already terminated": "{count} of {total} selected executions have already terminated.",
     "cancel": "Cancel",
     "errorLogs": "Error logs",
     "product_tour": "Product Tour",
@@ -1190,7 +1306,14 @@
     "unlock trigger": {
       "success": "Trigger is unlocked"
     },
+    "trigger blocked": "Blocked",
+    "trigger blocked policy check failed": "Governance policies could not be checked.",
+    "trigger blocked unknown": "Blocked for an unknown reason.",
     "trigger disabled": "Trigger is disabled within Flow source",
+    "trigger not toggleable": "This trigger is not evaluated by the Scheduler, disable it in the Flow source",
+    "bulk not toggleable warning": "{count} selected trigger(s) will be skipped: the Scheduler does not evaluate them, so they can only be disabled in the Flow source.",
+    "bulk none applied": "No triggers were affected: none of the selected ones could be processed.",
+    "bulk partially applied": "{count} of {requested} triggers were processed, the others were skipped.",
     "trigger enable dialog": {
       "title": "Enable trigger",
       "bulk title": "Enable {count} triggers",
@@ -1317,6 +1440,8 @@
     "pause backfill": "Pause the backfill",
     "continue backfills": "Continue backfills",
     "delete backfills": "Delete backfills",
+    "delete backfill confirm": "Delete the backfill of trigger {id}?",
+    "delete backfill success": "The backfill of trigger {id} has been deleted",
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
@@ -1335,11 +1460,22 @@
     "execution-include-non-terminated": "Include non-terminated executions?",
     "execution-warn-title": "Important Warning!",
     "execution-warn-deleting-still-running": "We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
+    "execution-warn-non-terminated-count": "{count} of {total} selected execution(s) are non-terminated.",
     "pluginPage": {
       "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
-      "noResults": "No plugins match your search.",
-      "loadError": "Could not load plugins. Please try again.",
+      "loadErrorTitle": "Could not load the plugin list",
+      "loadErrorDescription": "Your flows keep running. This page only reads the list of plugins.",
+      "showAll": "Show all plugins",
+      "view": {
+        "cards": "Cards",
+        "table": "Table",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "No plugin matches your filters",
+        "description": "Try a different search term, or clear the category filters."
+      },
       "notFound": "This plugin could not be found.",
       "elementType": {
         "tasks": "Task",
@@ -1348,8 +1484,13 @@
         "taskRunners": "Task runner",
         "charts": "Chart",
         "apps": "App",
+        "appBlocks": "App block",
+        "dataFilters": "Data filter",
+        "dataFiltersKPI": "KPI data filter",
         "logExporters": "Log exporter",
-        "secrets": "Secret"
+        "secrets": "Secret",
+        "assets": "Asset type",
+        "additionalPlugins": "Additional plugin"
       },
       "sortBy": "Sort by",
       "sort": {
@@ -1380,6 +1521,19 @@
         "enterpriseEdition": "Enterprise Edition",
         "certified": "Certified",
         "back": "Back to plugins"
+      },
+      "management": {
+        "upload": "Upload",
+        "addPlugin": "Add plugin",
+        "lockedTitle": "Plugin version management",
+        "lockedDescription": "Install plugins, keep several versions side by side and upgrade them without rebuilding the image, with the Enterprise Edition.",
+        "learnMore": "Learn more",
+        "includedWithKestra": "Included with Kestra",
+        "gateNote": "Installing and upgrading plugins is available on the Enterprise Edition.",
+        "upsellTitle": "Plugin versioning is an Enterprise feature",
+        "upsellDescription": "Every plugin below ships with this Kestra image and is ready to use in a flow. On the Enterprise Edition you can also install a plugin that is not bundled, pin a version per plugin, and upgrade without rebuilding the image.",
+        "talkToUs": "Talk to us",
+        "readTheDocs": "Read the docs"
       }
     },
     "no inputs": "This flow has no inputs.",
@@ -1402,6 +1556,7 @@
             "flow_default_tab": "Default Flow Tab",
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
+            "open_docs_tab": "Open Docs Tab",
             "auto_refresh_interval": "Auto Refresh Interval",
             "task_edit_default_mode": "Default Task Edit Mode",
             "flow_template": "Default Flow Template"
@@ -1418,6 +1573,7 @@
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground.",
+            "open_docs_tab": "Open the Docs tab next to the editor. Applies to new flows and flows you haven't opened before.",
             "task_edit_default_mode": "How a task opens by default from the no-code editor.",
             "flow_template": "YAML opened in the editor when you create a new flow. The id and namespace can be left out, since they are generated for you. When this is empty, the template configured for the instance is used."
           },
@@ -1440,10 +1596,13 @@
           "fields": {
             "app_font_size": "App Font Size",
             "color_mode": "Color mode",
+            "editor_dark_theme": "Editor Theme in Dark Mode",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "editor_font_family": "Editor Font Family",
             "editor_font_size": "Editor Font Size",
             "editor_hover_description": "Hover on property to see description",
+            "editor_pebble_hover": "Hover on Pebble reference to see its definition",
+            "editor_light_theme": "Editor Theme in Light Mode",
             "environment_color": "Environment Color",
             "environment_name": "Environment Name",
             "environment_name_tooltip": "This environment name is set from the config but can be changed.",
@@ -1460,12 +1619,15 @@
           },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
-            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
+            "color_mode_shortcut": "Tip: press {ctrl}+{shift}+{key} to cycle themes from anywhere.",
             "logs_font_size": "Font size used in log viewers and terminals.",
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
+            "editor_pebble_hover": "Show the definition and docs of an input, output, variable, label or trigger variable when hovering its Pebble reference in the flow editor.",
+            "editor_dark_theme": "Syntax colors of the code editor when the color mode is Dark 1.0 or Dark 2.0.",
+            "editor_light_theme": "Syntax colors of the code editor when the color mode is Light.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
             "environment_color": "Accent color used for the current environment in the navigation.",
             "app_font_size": "Scale factor applied to all interface font sizes."
@@ -1474,6 +1636,9 @@
             "small": "Small",
             "medium": "Medium",
             "large": "Large"
+          },
+          "editor_theme_options": {
+            "match_app": "Match the app theme"
           }
         },
         "localization": {
@@ -1664,7 +1829,12 @@
           },
           "flow_generated": {
             "title": "This is a flow",
-            "body": "The flow is written in YAML with two tasks:<ol><li><code>fetch_orders</code> to download the orders</li><li><code>summarize</code> to compute the revenue in Python</li></ol>Tasks are executed sequentially, in the order in which they are defined.",
+            "body": "The flow is written in YAML with two tasks:",
+            "tasks": {
+              "fetch_orders": "{task} to download the orders",
+              "summarize": "{task} to compute the revenue in Python"
+            },
+            "after_tasks": "Tasks are executed sequentially, in the order in which they are defined.",
             "next": "Save and execute"
           },
           "first_execution": {
@@ -1781,9 +1951,9 @@
         },
         "errors": {
           "first_execution": "The first execution finished as {state} instead of succeeding. Open the logs on this page to see why, then try again.",
-          "expected_failure": "This execution finished as {state}, so there is no failure to fix yet. Check that the flow still has the <code>notify</code> task, then try again.",
+          "expected_failure": "This execution finished as {state}, so there is no failure to fix yet. Check that the flow still has the {task} task, then try again.",
           "no_execution_to_replay": "There is no execution to replay yet. Run the flow on the previous step, then try again.",
-          "replay": "The replay finished as {state}. Open the logs on this page to see what <code>notify</code> reported, then try again.",
+          "replay": "The replay finished as {state}. Open the logs on this page to see what {task} reported, then try again.",
           "save_flow": "The tour flow could not be saved. {reason}",
           "test_event": "The webhook responded with {status}. Check that the flow is saved and the trigger is enabled, then try again."
         },
@@ -1848,9 +2018,11 @@
       "add": "Create",
       "update": "Update value for key '{key}'",
       "duplicate": "This key already exists",
+      "description_latin1": "The description can only contain Latin characters, without emoji.",
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
-        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
+        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deleted from the <code>{namespace}</code> namespace"
       },
       "inherited": "Inherited KV pairs",
       "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."
@@ -1906,6 +2078,11 @@
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
     "scheduleDateInPast": "Schedule date must be in the future",
+    "inputs_date_range": {
+      "between": "Earliest value is {after}, latest value is {before}.",
+      "after": "Earliest value is {after}.",
+      "before": "Latest value is {before}."
+    },
     "warning": "Warning",
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -1916,6 +2093,7 @@
       "title": "Start automating with Kestra",
       "sub_title": "Click on the Execute button to start your first workflow execution.",
       "namespace_sub_title": "Execute one or more flows from this namespace to populate this dashboard.",
+      "draft_sub_title": "This flow only has drafts: run it from the Playground in the editor, or publish it to execute it.",
       "need_help": "Need Help?"
     },
     "execution_guide": {
@@ -2007,7 +2185,7 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
-      "task_details": "Task details",
+      "unknown_schema": "Unknown Schema",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -2107,7 +2285,7 @@
       "label": "Keyboard shortcuts",
       "trigger_autocompletion": "Trigger autocompletion",
       "command_palette": "Show command palette",
-      "save_flow": "Save flow",
+      "save_flow": "Save draft",
       "execute_flow": "Execute flow",
       "toggle_ai_agent": "Toggle AI agent",
       "move_line": "Move line",
@@ -2119,6 +2297,11 @@
       "decrease_fontsize": "Decrease editor font size",
       "increase_fontsize": "Increase editor font size",
       "reset_fontsize": "Reset editor font size"
+    },
+    "pebble_hover": {
+      "toggle": "Toggle Pebble hover docs",
+      "enabled": "Pebble hover docs are on.",
+      "disabled": "Pebble hover docs are off."
     },
     "instance": "Instance",
     "something_went_wrong": {
@@ -2257,7 +2440,8 @@
       "close_all_panels": "Close all panels",
       "exit_fullscreen": "Exit fullscreen",
       "fullscreen": "Fullscreen",
-      "split_panel": "Split panel"
+      "split_panel": "Split panel",
+      "split_panel_no_room": "Not enough room for another panel"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",
@@ -2266,11 +2450,11 @@
     "test-badge-text": "Test",
     "test-badge-tooltip": "This execution was created by a Test",
     "no_results": {
-      "executions": "No Executions Found",
-      "triggers": "No Triggers Found",
-      "flows": "No Flows Found",
-      "kv_pairs": "No Key-Value pairs Found",
-      "secrets": "No Secrets Found",
+      "executions": "No executions found",
+      "triggers": "No triggers found",
+      "flows": "No flows found",
+      "kv_pairs": "No key-value pairs found",
+      "secrets": "No secrets found",
       "all_columns_hidden": "All columns are hidden",
       "all_columns_hidden_description": "Turn at least one column back on in Customize table columns to see the data again."
     },
@@ -2282,6 +2466,7 @@
       "default": "Default Dashboard",
       "set_default": "Set as default",
       "empty": "There are no results to be shown.",
+      "overdue": "Overdue — {date}",
       "edition": {
         "label": "Edit Dashboard",
         "chart": "Edit this chart"
@@ -2297,6 +2482,9 @@
         "csv": "Export to CSV"
       },
       "ignoredFilters": "The {filters} filter doesn't apply to this chart. | The {filters} filters don't apply to this chart.",
+      "dataFrom": "Updated {date}",
+      "dataUnavailable": "Data unavailable",
+      "dataTruncated": "Output file has been truncated to its {rows} first rows. See documentation for further details.",
       "show_all_statuses": "Show all statuses",
       "quick_filters": {
         "all": "All",
@@ -2304,7 +2492,8 @@
         "paused": "Paused",
         "success": "Success",
         "warning": "Warning",
-        "failed": "Failed"
+        "failed": "Failed",
+        "upcoming": "Upcoming"
       }
     },
     "setup": {
@@ -2373,6 +2562,13 @@
         "placeholder": "Tell me what to build…",
         "send": "Send",
         "stop": "Stop",
+        "usage": {
+          "remaining": "{percent}% left",
+          "help": "Share of this provider's AI usage limit left in the current window.",
+          "warning": "You are close to this provider's AI usage limit. Turns are refused once it is reached.",
+          "exceeded": "This provider's AI usage limit has been reached. It resets when the current period ends.",
+          "exceededUntil": "This provider's AI usage limit has been reached. It resets on {when}."
+        },
         "mode": {
           "ask": "Ask",
           "edit": "Edit",
@@ -2415,13 +2611,15 @@
           "planTitle": "Proposed plan",
           "actionTitle": "Proposed action",
           "approve": "Approve",
-          "approveExecute": "Approve & execute",
+          "approvePlan": "Approve plan",
           "reject": "Reject",
           "pending": "Pending approval",
           "revise": "Reply to revise"
         },
         "notice": {
           "emptyTurn": "The assistant didn't return a response. Please try again.",
+          "outputLimit": "The assistant ran out of output tokens before it could answer. Shorten your message or start a new chat.",
+          "contentFiltered": "The AI provider blocked the response. Rephrase your message or remove the content that may have triggered the provider's filters.",
           "retry": "Retry"
         },
         "cancelled": "Turn cancelled",
@@ -2432,11 +2630,16 @@
           "generic": "Something went wrong. Please try again."
         },
         "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "emptyHelperNoFlow": "I can create or edit flows, generate tests, scaffold related files, or explain how Kestra works.",
         "suggestions": {
           "errorHandling": "Add error handling",
           "unitTest": "Generate a unit test",
           "explain": "Explain this flow",
-          "dbt": "Run a dbt pipeline"
+          "dbt": "Run a dbt pipeline",
+          "createFlow": "Create a flow that…",
+          "createFlowPrefill": "Create a flow that",
+          "pythonSchedule": "Run a Python script every day",
+          "triggers": "How do triggers work?"
         },
         "voice": {
           "start": "Start voice input",
@@ -2446,7 +2649,15 @@
         "unavailable": {
           "title": "AI Copilot isn't available",
           "detail": "No AI provider is configured for this instance. Configure one in your Kestra configuration file to enable AI Copilot.",
-          "docs": "View documentation"
+          "docs": "View documentation",
+          "sendTooltip": "Sending is disabled because no AI provider is configured.",
+          "notSent": "Your prompt was not sent"
+        },
+        "mcpTip": {
+          "title": "Use Kestra from Claude Code, Cursor and other MCP clients",
+          "description": "Alongside the Copilot, Kestra provides an MCP server. Connect an external MCP client to it to manage your flows and executions from the tools you already use.",
+          "docs": "View documentation",
+          "dismiss": "Don't show again"
         },
         "thinkingWords": [
           "Orchestrating",
@@ -2489,7 +2700,8 @@
           "applied": "Applied",
           "previewBanner": "Reviewing an AI-suggested change. The editor is read-only until you apply or dismiss it.",
           "applyTitle": "Apply flow",
-          "applyConfirm": "Save {namespace}.{id} as a draft revision for review? It will be created, or a new draft revision added if it already exists. Drafts aren't picked up by triggers or subflows until published.",
+          "applyDraftTitle": "Applying saves a draft revision.",
+          "applyDraftHint": "Nothing goes live yet. Triggers and subflows ignore drafts until you publish.",
           "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
           "applyError": "Couldn't apply the flow. Please try again.",
           "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
@@ -2503,6 +2715,10 @@
           },
           "valid": "Valid",
           "invalid": "Needs changes"
+        },
+        "tray": {
+          "title": "Pending changes",
+          "applyFirst": "Apply {flow} first"
         }
       }
     },
@@ -2524,7 +2740,7 @@
     "reject": "Reject",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
-    "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Defaults to namespace file: {name}",
     "no_file_choosen": "No file chosen",
     "dependency": {
       "controls": {
@@ -2723,7 +2939,8 @@
         "tooltip": "View flow tests"
       },
       "errors": {
-        "label": "{count} Error(s)"
+        "label": "{count} Error(s)",
+        "action": "{count} error(s), go to the next error"
       }
     },
     "invalid_source_code": "Invalid source code",
@@ -2780,7 +2997,8 @@
       "open_in_secrets": "Open in secrets",
       "options_aria": "Search options",
       "path_only_hint": "Searches the file path only, not the file content. Cannot be replaced.",
-      "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
+      "preview_empty_title": "Select a result to preview.",
+      "preview_empty_description": "Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source",
       "previous_match": "Previous match",
       "rbac_banner": "{count} flows are excluded from replace. You have read access but not edit access on {namespace}. Ask a namespace admin for the {permission} permission to include them.",
@@ -2884,7 +3102,7 @@
         "no_match": "No match",
         "open": "Open {name}",
         "paste": "Paste",
-        "save": "Save flow",
+        "save": "Save draft",
         "search_placeholder": "Type a command or search a task…",
         "title": "Command menu"
       },
@@ -2992,7 +3210,7 @@
         "paste": "Paste",
         "redo": "Redo",
         "reorder": "Reorder up / down",
-        "save": "Save flow",
+        "save": "Save draft",
         "step_into": "Expand / step into a group",
         "step_out": "Collapse / step out to parent",
         "title": "Keyboard shortcuts",
@@ -3010,7 +3228,7 @@
       "undo": "Undo",
       "upstream_outputs": "Upstream outputs",
       "open_in_tabs": "Open in tabs",
-      "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
+      "open_mode_hint": "This editor opens in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
     "move_panel_to_bottom": "Move panel to bottom",
@@ -3074,6 +3292,8 @@
     "chart mode": {
       "counts": "Counts",
       "timeline": "Timeline"
-    }
+    },
+    "search_in_flow_source": "Search \"{query}\" in flow source",
+    "flows_matched_query": "{count} flow with \"{query}\" in the id or namespace. | {count} flows with \"{query}\" in the id or namespace."
   }
 }

@@ -980,9 +980,9 @@ public abstract class AbstractExecutionRepositoryTest {
         var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var executionCreateDate = Instant.now().minus(Duration.ofMinutes(5));
 
-        // sub-minute durations only: the Postgres state_duration column loses the minutes part of longer durations
+        // verify multi-minute durations keep both their minutes and sub-seconds parts
         executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(500)));
-        executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(1500)));
+        executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(65500)));
 
         var now = ZonedDateTime.now();
         ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
@@ -1002,8 +1002,8 @@ public abstract class AbstractExecutionRepositoryTest {
 
         assertThat(data.getTotal()).isEqualTo(1L);
         assertThat(data).first().extracting("total").hasToString("2");
-        // the DURATION column is exposed in seconds, keeping the sub-second part: 0.5s + 1.5s
-        assertThat(((Number) data.getFirst().get("duration")).doubleValue()).isCloseTo(2.0d, within(0.001d));
+        // the DURATION column is exposed in seconds, keeping both minutes and sub-seconds: 0.5s + 65.5s = 66.0s
+        assertThat(((Number) data.getFirst().get("duration")).doubleValue()).isCloseTo(66.0d, within(0.001d));
     }
 
     @Test

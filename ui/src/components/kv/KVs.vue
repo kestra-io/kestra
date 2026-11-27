@@ -2,7 +2,7 @@
     <TopNavBar :title="routeInfo.title">
         <template #actions>
             <ul>
-                <li>
+                <li v-if="canCreate">
                     <KsButton :icon="Plus" type="primary" data-test="kv-add" @click="namespacesStore.addKvModalVisible = true">
                         {{ $t("kv.add") }}
                     </KsButton>
@@ -19,12 +19,17 @@
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
     import useRouteContext from "../../composables/useRouteContext"
     import Plus from "vue-material-design-icons/Plus.vue"
     import TopNavBar from "../layout/TopNavBar.vue"
     import KVTable from "./KVTable.vue"
 
     const namespacesStore = useNamespacesStore()
+    const authStore = useAuthStore()
+    const canCreate = computed(() => authStore.user?.hasAnyActionOnAnyNamespace(resource.KVSTORE, action.CREATE))
 
     const {t} = useI18n({useScope: "global"})
     const routeInfo = computed(() => ({title: t("kv.name")}))

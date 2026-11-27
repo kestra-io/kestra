@@ -117,8 +117,35 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
         Map<String, List<String>> queryParams = source.getParameters().asMap();
         List<QueryFilter> filters = getQueryFilters(queryParams, maxDepth, maxWidth);
+        validate(filters, resource);
 
         return () -> Optional.of(filters);
+    }
+
+    @VisibleForTesting
+    static void validate(List<QueryFilter> filters, QueryFilter.Resource resource) {
+        QueryFilter.validateQueryFilters(withoutRewrittenFields(filters, resource), resource);
+    }
+
+    // Controllers rewrite these into a supported date field before the repository validates: timeRange everywhere, startDate and endDate on triggers.
+    private static List<QueryFilter> withoutRewrittenFields(List<QueryFilter> filters, QueryFilter.Resource resource) {
+        List<QueryFilter> kept = new ArrayList<>(filters.size());
+        for (QueryFilter filter : filters) {
+            if (filter.isNode()) {
+                List<QueryFilter> children = withoutRewrittenFields(filter.children(), resource);
+                if (!children.isEmpty()) {
+                    kept.add(QueryFilter.builder().logical(filter.logical()).children(children).build());
+                }
+            } else if (!isRewrittenByController(filter.field(), resource)) {
+                kept.add(filter);
+            }
+        }
+        return kept;
+    }
+
+    private static boolean isRewrittenByController(QueryFilter.Field field, QueryFilter.Resource resource) {
+        return QueryFilter.Field.TIME_RANGE == field
+            || QueryFilter.Resource.TRIGGER == resource && (QueryFilter.Field.START_DATE == field || QueryFilter.Field.END_DATE == field);
     }
 
     private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {

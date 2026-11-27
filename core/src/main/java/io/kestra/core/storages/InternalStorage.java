@@ -10,12 +10,15 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.FileUtils;
+import io.kestra.core.utils.Slugify;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -29,22 +32,16 @@ import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
 public class InternalStorage implements Storage {
 
     private static final String PATH_SEPARATOR = "/";
+    // {cache-id}/cache/..., relative to the flow storage folder
+    private static final Pattern OWN_FLOW_CACHE = Pattern.compile("[^/]+/cache/.*");
 
     private final Logger logger;
     private final StorageContext context;
     private final StorageInterface storage;
     private final NamespaceFactory namespaceFactory;
     private final NamespaceService namespaceService;
-
-    /**
-     * Creates a new {@link InternalStorage} instance.
-     *
-     * @param context The storage context.
-     * @param storage The storage to delegate operations.
-     */
-    public InternalStorage(StorageContext context, StorageInterface storage, NamespaceFactory namespaceFactory) {
-        this(log, context, storage, null, namespaceFactory);
-    }
+    @Nullable
+    private final String triggeringExecutionPrefix;
 
     /**
      * Creates a new {@link InternalStorage} instance.
@@ -54,10 +51,21 @@ public class InternalStorage implements Storage {
      * @param storage The storage to delegate operations.
      */
     public InternalStorage(Logger logger, StorageContext context, StorageInterface storage, NamespaceService namespaceService, NamespaceFactory namespaceFactory) {
+        this(logger, context, storage, namespaceService, namespaceFactory, null);
+    }
+
+    /**
+     * Creates a new {@link InternalStorage} instance.
+     *
+     * @param triggeringExecutionPrefix The storage path prefix of the execution that triggered the current one, see
+     *                                  {@link StorageContext#triggeringExecutionPrefix(java.util.Map)}.
+     */
+    public InternalStorage(Logger logger, StorageContext context, StorageInterface storage, NamespaceService namespaceService, NamespaceFactory namespaceFactory, @Nullable String triggeringExecutionPrefix) {
+        this.triggeringExecutionPrefix = triggeringExecutionPrefix;
         this.logger = logger;
         this.context = context;
         this.storage = storage;
-        this.namespaceService = namespaceService;
+        this.namespaceService = Objects.requireNonNull(namespaceService);
         this.namespaceFactory = namespaceFactory;
     }
 
@@ -76,7 +84,7 @@ public class InternalStorage implements Storage {
     public Namespace namespace(String namespace) {
         boolean isExternalNamespace = !namespace.equals(context.getNamespace());
         // Checks whether the contextual namespace is allowed to access the passed namespace.
-        if (isExternalNamespace && namespaceService != null) {
+        if (isExternalNamespace) {
             namespaceService.checkAllowedNamespace(
                 context.getTenantId(), namespace, // requested Tenant/Namespace
                 context.getTenantId(), context.getNamespace() // from Tenant/Namespace
@@ -90,6 +98,12 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public boolean isFileExist(URI uri) {
+        checkAccess(uri);
+
+        return exists(uri);
+    }
+
+    private boolean exists(URI uri) {
         return this.storage.exists(context.getTenantId(), context.getNamespace(), uri);
     }
 
@@ -98,7 +112,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public InputStream getFile(final URI uri) throws IOException {
-        uriGuard(uri);
+        checkAccess(uri);
 
         return this.storage.get(context.getTenantId(), context.getNamespace(), uri);
 
@@ -106,7 +120,7 @@ public class InternalStorage implements Storage {
 
     @Override
     public FileAttributes getAttributes(URI uri) throws IOException {
-        uriGuard(uri);
+        checkAccess(uri);
 
         return this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri);
     }
@@ -116,25 +130,58 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public boolean deleteFile(final URI uri) throws IOException {
-        uriGuard(uri);
+        checkAccess(uri);
 
         return this.storage.delete(context.getTenantId(), context.getNamespace(), uri);
 
     }
 
-    private static void uriGuard(URI uri) {
+    /**
+     * Rejects a URI that points outside what the current flow may reach: its own flow and namespace storage, the
+     * execution that triggered it, or a namespace allowed by the {@link NamespaceService}.
+     */
+    private void checkAccess(URI uri) {
         if (uri == null) {
-            throw new IllegalArgumentException("Invalid internal storage uri, got null");
+            throw new IllegalArgumentException("The internal storage URI must not be null.");
+        }
+        if (uri.getScheme() != null && !StorageContext.KESTRA_SCHEME.equals(uri.getScheme())) {
+            throw new IllegalArgumentException("The internal storage URI '%s' must use the '%s' scheme.".formatted(uri, StorageContext.KESTRA_SCHEME));
+        }
+        String path = uri.getPath();
+        if (path == null || FileUtils.isParentTraversal(uri)) {
+            throw new IllegalArgumentException("The internal storage URI '%s' must have a path without parent directory traversal.".formatted(uri));
         }
 
-        String scheme = uri.getScheme();
-        if (scheme == null) {
-            throw new IllegalArgumentException("Invalid internal storage uri, got uri '" + uri + "'");
+        String directoryPath = path.endsWith(PATH_SEPARATOR) ? path : path + PATH_SEPARATOR;
+        if (isInOwnStorage(uri, directoryPath) || (triggeringExecutionPrefix != null && directoryPath.startsWith(triggeringExecutionPrefix))) {
+            return;
         }
 
-        if (!scheme.equals("kestra")) {
-            throw new IllegalArgumentException("Invalid internal storage scheme, got uri '" + uri + "'");
+        // a candidate that is not a real namespace has no restriction of its own but would inherit its parents' ones
+        StorageContext.candidateNamespaces(uri).stream()
+            .filter(namespace -> !isSelfOrAncestor(namespace))
+            .filter(namespace -> !namespaceService.isAllowedNamespace(context.getTenantId(), namespace, context.getTenantId(), context.getNamespace()))
+            .filter(namespace -> namespaceService.isNamespaceExists(context.getTenantId(), namespace))
+            .forEach(namespace -> namespaceService.checkAllowedNamespace(context.getTenantId(), namespace, context.getTenantId(), context.getNamespace()));
+    }
+
+    private boolean isSelfOrAncestor(String namespace) {
+        String own = context.getNamespace();
+        return own != null && (own.equals(namespace) || own.startsWith(namespace + "."));
+    }
+
+    private boolean isInOwnStorage(URI uri, String directoryPath) {
+        if (context.getNamespace() == null || context.getFlowId() == null) {
+            return false;
         }
+
+        String namespacePath = PATH_SEPARATOR + context.getNamespaceAsPath() + PATH_SEPARATOR;
+        String flowPath = namespacePath + Slugify.of(context.getFlowId()) + PATH_SEPARATOR;
+        return directoryPath.startsWith(flowPath + StorageContext.EXECUTIONS_DIR_NAME + PATH_SEPARATOR)
+            || directoryPath.startsWith(flowPath + "states" + PATH_SEPARATOR)
+            || (directoryPath.startsWith(flowPath) && OWN_FLOW_CACHE.matcher(directoryPath.substring(flowPath.length())).matches())
+            || directoryPath.startsWith(namespacePath + "states" + PATH_SEPARATOR)
+            || StorageContext.isInNamespaceFiles(context.getNamespace(), uri);
     }
 
     /**
@@ -168,6 +215,12 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putFile(InputStream inputStream, URI uri) throws IOException {
+        checkAccess(uri);
+
+        return put(inputStream, uri);
+    }
+
+    private URI put(InputStream inputStream, URI uri) throws IOException {
         return this.storage.put(context.getTenantId(), context.getNamespace(), uri, new BufferedInputStream(inputStream));
     }
 
@@ -187,7 +240,7 @@ public class InternalStorage implements Storage {
         URI uri = context.getContextStorageURI();
         URI resolved = buildStorageUri(uri, name != null ? name : file.getName());
         try (InputStream is = new FileInputStream(file)) {
-            return putFile(is, resolved);
+            return put(is, resolved);
         } finally {
             FileUtils.deleteWithRetry(file.toPath())
                 .ifPresent(e -> logger.warn("Failed to delete temporary file '{}'", file.toPath(), e));
@@ -217,12 +270,12 @@ public class InternalStorage implements Storage {
             }
         }
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ? Optional.of(storage.get(context.getTenantId(), context.getNamespace(), uri)) : Optional.empty();
+        return exists(uri) ? Optional.of(storage.get(context.getTenantId(), context.getNamespace(), uri)) : Optional.empty();
     }
 
     private Optional<Long> getCacheFileLastModifiedTime(String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ? Optional.of(this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri).getLastModifiedTime()) : Optional.empty();
+        return exists(uri) ? Optional.of(this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri).getLastModifiedTime()) : Optional.empty();
     }
 
     /**
@@ -240,12 +293,12 @@ public class InternalStorage implements Storage {
     @Override
     public Optional<Boolean> deleteCacheFile(String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ? Optional.of(this.storage.delete(context.getTenantId(), context.getNamespace(), uri)) : Optional.empty();
+        return exists(uri) ? Optional.of(this.storage.delete(context.getTenantId(), context.getNamespace(), uri)) : Optional.empty();
     }
 
     private URI putFileAndDelete(File file, URI uri) throws IOException {
         try (InputStream is = new FileInputStream(file)) {
-            return this.putFile(is, uri);
+            return this.put(is, uri);
         } finally {
             FileUtils.deleteWithRetry(file.toPath())
                 .ifPresent(e -> logger.warn("Failed to delete temporary file '{}'", file.toPath(), e));
@@ -285,6 +338,8 @@ public class InternalStorage implements Storage {
 
     @Override
     public List<FileAttributes> list(URI uri) throws IOException {
+        checkAccess(uri);
+
         return this.storage.list(context.getTenantId(), context.getNamespace(), uri);
     }
 }

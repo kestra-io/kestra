@@ -1,0 +1,162 @@
+package io.kestra.core.searchable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.IntStream;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Data;
+import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.ArrayInput;
+import io.kestra.core.serializers.JacksonMapper;
+
+import static io.kestra.core.searchable.SearchableDataUtils.MAX_SEARCHABLE_ARRAY_ITEMS;
+import static io.kestra.core.searchable.SearchableDataUtils.MAX_SEARCHABLE_VALUE_LENGTH;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class SearchableDataUtilsTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchableDataUtilsTest.class);
+
+    private static final Execution EXECUTION = Execution.builder().id("execution").tenantId("tenant").namespace("io.kestra.test").flowId("flow").build();
+
+    private static Data data(OutputType type) {
+        return Output.builder().id("data").type(type).value("{{ x }}").searchable(true).build();
+    }
+
+    private static List<SearchableData> toSearchableData(Data data, Object value) {
+        return SearchableDataUtils.toSearchableData(LOGGER, EXECUTION, data, value);
+    }
+
+    static Stream<Arguments> temporalValues() {
+        return Stream.of(
+            Arguments.of(OutputType.DATETIME, Instant.parse("2026-10-27T10:00:00Z"), "2026-10-27T10:00:00Z"),
+            Arguments.of(OutputType.DATE, LocalDate.parse("2026-10-27"), "2026-10-27"),
+            Arguments.of(OutputType.TIME, LocalTime.parse("10:15"), "10:15:00"),
+            Arguments.of(OutputType.DURATION, Duration.parse("PT1H30M"), "PT1H30M"),
+            Arguments.of(OutputType.DURATION, Duration.parse("PT1.5S"), "PT1.5S"),
+            Arguments.of(OutputType.DURATION, Duration.ofMillis(-1500), "PT-1.5S")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("temporalValues")
+    void shouldStoreTheSameValueForTypedAndSerializedForms(OutputType type, Object typed, String expected) {
+        Object serialized = JacksonMapper.toMap(Map.of("v", typed)).get("v");
+
+        assertThat(toSearchableData(data(type), typed)).extracting(SearchableData::value).containsExactly(expected);
+        assertThat(toSearchableData(data(type), serialized)).extracting(SearchableData::value).containsExactly(expected);
+    }
+
+    @Test
+    void shouldNormalizeTheItemsOfAnArrayByItemType() {
+        Data array = ArrayInput.builder().id("data").type(Type.ARRAY).itemType(Type.DURATION).searchable(true).build();
+
+        assertThat(toSearchableData(array, List.of(Duration.parse("PT1H30M"), 60))).extracting(SearchableData::value)
+            .containsExactly("PT1H30M", "PT1M");
+    }
+
+    @Test
+    void shouldReturnASingleValueAtIndexZeroForAScalar() {
+        assertThat(toSearchableData(data(OutputType.INT), 42)).containsExactly(new SearchableData("tenant", "execution", "data", 0, "42"));
+    }
+
+    @Test
+    void shouldReturnOneValuePerItemForAnArray() {
+        assertThat(toSearchableData(data(OutputType.ARRAY), List.of("a", "b", "c"))).containsExactly(
+            new SearchableData("tenant", "execution", "data", 0, "a"),
+            new SearchableData("tenant", "execution", "data", 1, "b"),
+            new SearchableData("tenant", "execution", "data", 2, "c")
+        );
+    }
+
+    @Test
+    void shouldSkipNullItemsOfAnArray() {
+        assertThat(toSearchableData(data(OutputType.ARRAY), Arrays.asList("a", null, "b"))).containsExactly(
+            new SearchableData("tenant", "execution", "data", 0, "a"),
+            new SearchableData("tenant", "execution", "data", 1, "b")
+        );
+    }
+
+    @Test
+    void shouldReturnNothingForAnAbsentValueOrAnEmptyArray() {
+        assertThat(toSearchableData(data(OutputType.STRING), null)).isEmpty();
+        assertThat(toSearchableData(data(OutputType.ARRAY), List.of())).isEmpty();
+    }
+
+    @Test
+    void shouldRejectAnArrayDataWhoseValueIsNotAList() {
+        assertThatThrownBy(() -> toSearchableData(data(OutputType.ARRAY), "a"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("is not a list");
+    }
+
+    @Test
+    void shouldRejectANonScalarArrayItem() {
+        assertThatThrownBy(() -> toSearchableData(data(OutputType.ARRAY), List.of(List.of("a"))))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Only scalar items");
+    }
+
+    @Test
+    void shouldRejectADataOfAnUnsupportedType() {
+        assertThatThrownBy(() -> toSearchableData(data(OutputType.JSON), "{}"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("type JSON is not supported");
+    }
+
+    @Test
+    void shouldTruncateAValueLongerThanTheLimit() {
+        List<SearchableData> result = toSearchableData(data(OutputType.STRING), "a".repeat(MAX_SEARCHABLE_VALUE_LENGTH + 10));
+
+        assertThat(result).singleElement().satisfies(it -> assertThat(it.value()).hasSize(MAX_SEARCHABLE_VALUE_LENGTH));
+    }
+
+    @Test
+    void shouldKeepAValueOfExactlyTheLimit() {
+        String value = "a".repeat(MAX_SEARCHABLE_VALUE_LENGTH);
+
+        assertThat(toSearchableData(data(OutputType.STRING), value)).singleElement().satisfies(it -> assertThat(it.value()).isEqualTo(value));
+    }
+
+    @Test
+    void shouldNotCutASurrogatePairWhenTruncating() {
+        String value = "a".repeat(MAX_SEARCHABLE_VALUE_LENGTH - 1) + "😀" + "b";
+
+        assertThat(toSearchableData(data(OutputType.STRING), value)).singleElement()
+            .satisfies(it -> assertThat(it.value()).isEqualTo("a".repeat(MAX_SEARCHABLE_VALUE_LENGTH - 1)));
+    }
+
+    @Test
+    void shouldTruncateTheValuesOfAnArray() {
+        List<SearchableData> result = toSearchableData(data(OutputType.ARRAY), List.of("a".repeat(MAX_SEARCHABLE_VALUE_LENGTH + 10), "b"));
+
+        assertThat(result).extracting(it -> it.value().length()).containsExactly(MAX_SEARCHABLE_VALUE_LENGTH, 1);
+    }
+
+    @Test
+    void shouldKeepOnlyTheFirstItemsOfAnArrayLongerThanTheLimit() {
+        List<String> items = IntStream.range(0, MAX_SEARCHABLE_ARRAY_ITEMS + 5).mapToObj(i -> "ORD-" + i).toList();
+
+        List<SearchableData> result = toSearchableData(data(OutputType.ARRAY), items);
+
+        assertThat(result).hasSize(MAX_SEARCHABLE_ARRAY_ITEMS);
+        assertThat(result.getLast().value()).isEqualTo("ORD-" + (MAX_SEARCHABLE_ARRAY_ITEMS - 1));
+    }
+}

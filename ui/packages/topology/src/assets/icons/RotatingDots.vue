@@ -1,5 +1,5 @@
 <template>
-    <DotsCircleIcon class="loading-dots-circle" :alt="alt" />
+    <DotsCircleIcon class="loading-dots-circle" :title="alt" />
 </template>
 
 <script lang="ts" setup>

@@ -26,6 +26,7 @@ import {
     type ConfirmActionRequest,
     type CreateThreadRequest,
     type DoneEvent,
+    type EmptyTurnReason,
     type ErrorEvent,
     type ProposedActionEvent,
     type ScopeBinding,
@@ -40,7 +41,13 @@ import {
 export type ErrorCode = "turnInProgress" | "turnCap" | "request" | "generic"
 
 /** Locale-agnostic non-error notice identifier; the component maps it to `ai.copilot.notice.<code>`. */
-export type NoticeCode = "emptyTurn"
+export type NoticeCode = "emptyTurn" | "outputLimit" | "contentFiltered"
+
+/** The notice for each reason the backend gives for an empty turn; anything else falls back to `emptyTurn`. */
+const EMPTY_TURN_NOTICES: Partial<Record<EmptyTurnReason, NoticeCode>> = {
+    OUTPUT_LIMIT: "outputLimit",
+    CONTENT_FILTERED: "contentFiltered",
+}
 
 /** A display-only transcript line noting a focus change (a context resource added or removed). */
 export interface ContextNotice {
@@ -96,8 +103,9 @@ export function useAiChat() {
     /** The proposal awaiting a confirm/reject decision, if any. */
     const pendingConfirmation = ref<ProposedActionEvent | null>(null)
     /**
-     * True when the copilot has no provider to run on — either the backend said so mid-turn (503) or
-     * the caller knew from `/configs` before sending. Renders the "unavailable" state.
+     * True when the last send was refused because the copilot has no provider to run on (503, or 404
+     * when the agentic endpoints aren't registered). The refused turn is rolled back, never kept in
+     * the transcript, and the flag clears on the next send.
      */
     const unavailable = ref(false)
     /** Title for the next thread created by `ensureThread` (e.g. a seeded "Fix with AI" turn); consumed once. */
@@ -108,6 +116,8 @@ export function useAiChat() {
     let abort: AbortController | null = null
     /** The last chat/confirm request, so an empty/failed turn can be retried without retyping. */
     let lastTurn: {url: string; body: unknown} | null = null
+    /** The reason the backend gave on `done` for a turn without output, for the current stream. */
+    let emptyTurnReason: EmptyTurnReason | null = null
 
     /** True when a new chat turn may be sent. */
     const canSend = computed(() => status.value === "IDLE" && !streaming.value)
@@ -128,9 +138,9 @@ export function useAiChat() {
             idleWaitGeneration++
         })
     }
-    const rememberThread = (uid: string) => {
+    const rememberThread = (threadUid: string) => {
         try {
-            localStorage.setItem(THREAD_STORAGE_KEY, uid)
+            localStorage.setItem(THREAD_STORAGE_KEY, threadUid)
         } catch { /* storage unavailable (private mode) — resume simply won't persist */ }
     }
     const forgetThread = () => {
@@ -145,12 +155,12 @@ export function useAiChat() {
         if (nextThreadTitle.value) {
             request = {...request, title: nextThreadTitle.value}
         }
-        // The 404 is kept out of the global error toast: when no AI provider is
+        // The 404 and 503 are kept out of the global error toast: when no AI provider is
         // configured the agentic endpoints (`AiAgentController`, `@Requires` the AiServiceManager
-        // bean) aren't registered, so this create 404s — surfaced as the copilot's own
-        // "unavailable" state by sendChat instead.
+        // bean) aren't registered, so this create 404s, and an unreachable provider 503s — both
+        // surfaced as the copilot's own "not sent" alert by sendChat instead.
         const {data} = await client.post<ThreadSummary>(base(), request).catch(e => {
-            handledIf(e, [404])
+            handledIf(e, [404, 503])
             throw e
         })
         thread.value = data
@@ -222,7 +232,8 @@ export function useAiChat() {
                 toolCall: m.toolCall
                     ? {tool: m.toolCall.tool, kind: m.toolCall.kind, family: m.toolCall.family, arguments: m.toolCall.arguments}
                     : undefined,
-                toolResult: (m.toolResult as unknown as ToolResultEvent) ?? undefined,
+                // The backend persists the result as an open `Map<String, Object>`, so its shape is stated here.
+                toolResult: (m.toolResult as ToolResultEvent | null | undefined) ?? undefined,
                 draft: m.draft ?? undefined,
             }))
 
@@ -252,14 +263,16 @@ export function useAiChat() {
     async function sendChat(request: ChatTurnRequest): Promise<void> {
         if (!canSend.value) return
 
+        unavailable.value = false
+
         // Thread creation can fail before any stream starts (e.g. 503 when no AI provider
-        // is configured). Surface that as the dedicated "unavailable" state, not a generic error.
+        // is configured). Surface that as the dedicated "unavailable" flag, not a generic error.
         let active: ThreadSummary
         try {
             active = await ensureThread({mode: request.mode})
         } catch (e) {
             // 503 (provider unreachable) or 404 (agentic endpoints not registered — no provider bean)
-            // both mean the copilot can't run: show the "unavailable" state, never a page redirect.
+            // both mean the copilot can't run: flag it, never redirect the page.
             if (is503(e) || is404(e)) unavailable.value = true
             else error.value = toErrorCode(e)
             return
@@ -268,8 +281,13 @@ export function useAiChat() {
         error.value = null
         notice.value = null
         pendingConfirmation.value = null
+        const countBefore = messages.value.length
         push({id: uid(), role: "USER", type: "TEXT", content: request.prompt})
         await runStream(`${base()}/${active.uid}/chat`, request)
+
+        // The provider refused the turn, so it never happened: drop the prompt from the transcript
+        // and let the caller put it back in the composer.
+        if (unavailable.value) messages.value.splice(countBefore)
     }
 
     /** Re-runs the last chat/confirm turn — used by the empty-turn notice to retry without retyping. */
@@ -327,17 +345,19 @@ export function useAiChat() {
         activeAssistant = null
         abort = new AbortController()
         lastTurn = {url, body}
+        emptyTurnReason = null
         const countBefore = messages.value.length
         let waitForServerIdle = false
 
         try {
             await streamSse({url, body, signal: abort.signal, onFrame: reduce})
             // The stream closed cleanly but added nothing to the transcript and left no proposal —
-            // e.g. a transient provider hiccup returned only `done`; surface a notice rather than
+            // e.g. a transient provider hiccup returned only `done`; surface a notice (specific to
+            // the reason the backend gave, when it gave one) rather than
             // leaving the panel silent. A streamed error event already surfaces its own reason, so
             // don't stack the empty-turn notice on top of it.
             if (messages.value.length === countBefore && !pendingConfirmation.value && !errorDetail.value && !error.value) {
-                notice.value = "emptyTurn"
+                notice.value = (emptyTurnReason && EMPTY_TURN_NOTICES[emptyTurnReason]) || "emptyTurn"
             }
         } catch (e) {
             if (isAbortError(e)) {
@@ -348,7 +368,7 @@ export function useAiChat() {
                     waitForServerIdle = true
                 }
             } else {
-                // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
+                // 503 mid-stream (provider removed) → the unavailable flag; otherwise a generic error.
                 if (is503(e)) unavailable.value = true
                 else error.value = toErrorCode(e)
                 // A stream error never leaves us in RUNNING; fall back to a safe resting state.
@@ -442,7 +462,9 @@ export function useAiChat() {
             }
             case AiEvent.DONE: {
                 // The resting state the stream closed into — authoritative.
-                status.value = (frame.data as DoneEvent).status
+                const done = frame.data as DoneEvent
+                status.value = done.status
+                emptyTurnReason = done.reason ?? null
                 break
             }
             case AiEvent.ERROR: {
@@ -467,9 +489,9 @@ export function useAiChat() {
      * to the backend or persisted. Suppressed until a conversation has started: before that the context
      * pills already convey the focus, so the empty state stays clean.
      */
-    function noteContext(notice: ContextNotice): void {
+    function noteContext(contextNotice: ContextNotice): void {
         if (messages.value.length === 0) return
-        push({id: uid(), role: "SYSTEM", type: "CONTEXT", context: notice})
+        push({id: uid(), role: "SYSTEM", type: "CONTEXT", context: contextNotice})
     }
 
     /**

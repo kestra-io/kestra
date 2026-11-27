@@ -1,7 +1,8 @@
 package io.kestra.core.models.validations;
 
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -50,10 +51,17 @@ public record ValidationError(
         if (e.getConstraintViolations() == null || e.getConstraintViolations().isEmpty()) {
             return List.of(of(e.getMessage()));
         }
-        Stream<? extends ConstraintViolation<?>> violations = e instanceof InvalidTypeConstraintViolationException
-            ? e.getConstraintViolations().stream().filter(v -> v.getMessage().equals(e.getMessage()))
-            : e.getConstraintViolations().stream();
-        return violations.map(ValidationError::ofViolation).toList();
+        return reportedViolations(e).stream().map(ValidationError::ofViolation).toList();
+    }
+
+    /** The violations of {@code e} worth showing: an invalid type also carries Jackson's raw message for the same field. */
+    public static Set<ConstraintViolation<?>> reportedViolations(ConstraintViolationException e) {
+        if (!(e instanceof InvalidTypeConstraintViolationException)) {
+            return e.getConstraintViolations();
+        }
+        return e.getConstraintViolations().stream()
+            .filter(v -> v.getMessage().equals(e.getMessage()))
+            .collect(Collectors.toSet());
     }
 
     public static ValidationError ofViolation(ConstraintViolation<?> violation) {

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.webserver.errors.ProblemError;
 import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.errors.ProblemFactory;
@@ -64,7 +65,7 @@ public class ErrorController {
     /** Bean validation: one {@code errors} entry per violated constraint. */
     @Error(global = true)
     public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ConstraintViolationException e) {
-        List<ProblemError> errors = ProblemError.ofViolations(e.getConstraintViolations());
+        List<ProblemError> errors = ProblemError.ofViolations(ValidationError.reportedViolations(e));
         // The default message of a method-level validation starts with the controller method and parameter names.
         String detail = isMethodValidation(e)
             ? errors.stream().map(error -> error.path() + ": " + error.detail()).collect(Collectors.joining(", "))

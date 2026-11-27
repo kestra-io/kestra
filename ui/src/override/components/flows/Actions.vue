@@ -35,8 +35,8 @@
         <template #secondary>
             <NavBarAction
                 v-if="(isEditTab && editorIsAllowedEdit && !deleted) && flowStore.isCreating"
-                :icon="Plus"
-                :label="$t('create')"
+                :icon="ContentSave"
+                :label="$t('save_as_draft')"
                 :disabled="editorIsReadOnly"
                 data-test="flow-create"
                 @click="editorCreateDraft"
@@ -93,7 +93,7 @@
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import Publish from "vue-material-design-icons/Publish.vue"
-    import Plus from "vue-material-design-icons/Plus.vue"
+    import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
     import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"

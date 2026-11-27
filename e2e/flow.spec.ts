@@ -49,7 +49,7 @@ test.describe("Flow Page", () => {
 
             await openEditor(page)
 
-            await page.getByRole("button", {name: "Create", exact: true}).click()
+            await page.getByRole("button", {name: "Save as draft", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved as draft"})).toBeVisible()
             await page.locator("[data-test=\"flow-publish\"]").click()
             await expect(page.getByRole("heading", {name: "Published", exact: true})).toBeVisible()
@@ -89,7 +89,7 @@ test.describe("Flow Page", () => {
             await monacoEditor.blur()
             await expect(page.getByTestId("monaco-editor").getByText(flowId)).toBeVisible()
 
-            await page.getByRole("button", {name: "Create", exact: true}).click()
+            await page.getByRole("button", {name: "Save as draft", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved as draft"})).toBeVisible()
             await page.locator("[data-test=\"flow-publish\"]").click()
             await expect(page.getByRole("heading", {name: "Published", exact: true})).toBeVisible()

@@ -1232,7 +1232,7 @@
       "viewChanges": "Visualizza modifiche",
       "discard": "Scarta bozza",
       "discardConfirm": "Scartare la bozza e tornare alla revisione {revision}? Le modifiche non pubblicate andranno perse.",
-      "executeBlocked": "Esegui avvia la revisione pubblicata. Pubblica prima le tue modifiche, oppure provale nel Playground.",
+      "executeBlocked": "Esegui esegue la revisione pubblicata. Pubblica prima le tue modifiche, oppure esegui un Task dall'editor per provarle.",
       "executeBlockedInvalid": "Correggi {count} errore, quindi pubblica per eseguire le tue modifiche. | Correggi {count} errori, quindi pubblica per eseguire le tue modifiche."
     },
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
@@ -2742,7 +2742,8 @@
     },
     "playground": {
       "title": "Playground",
-      "run_task_info": "Passa il mouse su qualsiasi task nell'editor del Flow Code e fai clic sul pulsante \"Run task\" per testare il tuo task.",
+      "run_task_info": "Fai clic sull'icona Riproduci accanto a un task nel margine dell'editor del codice Flow per testarlo.",
+      "run_task_gutter": "Esegui il task {id}. Maiusc+clic esegue anche i task a valle.",
       "play_icon_info": "Puoi anche fare clic sull'icona Play nelle viste No Code o Topology.",
       "toggle": "Playground",
       "run_task": "Esegui il task",

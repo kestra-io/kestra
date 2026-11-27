@@ -1232,7 +1232,7 @@
       "viewChanges": "変更を表示",
       "discard": "ドラフトを破棄",
       "discardConfirm": "下書きを破棄してリビジョン {revision} に戻しますか？未公開の変更は失われます。",
-      "executeBlocked": "実行すると、公開されたリビジョンが実行されます。まず変更を公開するか、Playground で試してください。",
+      "executeBlocked": "実行すると、公開されたリビジョンが実行されます。まず変更を公開するか、エディターからTaskを実行して試してください。",
       "executeBlockedInvalid": "{count}つのエラーを修正してから、公開して変更を実行してください。"
     },
     "flow export": "<code>{flowCount}</code>件のflowをエクスポートしてもよろしいですか？",
@@ -2742,7 +2742,8 @@
     },
     "playground": {
       "title": "プレイグラウンド",
-      "run_task_info": "Flow Codeエディタ内の任意のtaskにカーソルを合わせ、「Run task」ボタンをクリックしてtaskをテストします。",
+      "run_task_info": "Flow CodeエディターのガターにあるTaskの横の再生アイコンをクリックしてテストします。",
+      "run_task_gutter": "Task {id} を実行します。Shift+クリックすると、ダウンストリームのTaskも実行されます。",
       "play_icon_info": "ノーコードまたはトポロジービューで再生アイコンをクリックすることもできます。",
       "toggle": "プレイグラウンド",
       "run_task": "タスクを実行",

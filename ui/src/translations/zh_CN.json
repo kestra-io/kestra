@@ -1232,7 +1232,7 @@
       "viewChanges": "查看更改",
       "discard": "放弃草稿",
       "discardConfirm": "放弃草稿并返回版本 {revision}？您未发布的更改将丢失。",
-      "executeBlocked": "执行将运行已发布的修订版本。请先发布您的更改，或在 Playground 中尝试。",
+      "executeBlocked": "执行将运行已发布的修订版本。请先发布您的更改，或从编辑器运行一个 Task 来试用它们。",
       "executeBlockedInvalid": "修复 {count} 个错误，然后发布以运行您的更改。"
     },
     "flow export": "确定要导出 <code>{flowCount}</code> 个流程吗？",
@@ -2742,7 +2742,8 @@
     },
     "playground": {
       "title": "游乐场",
-      "run_task_info": "将鼠标悬停在Flow Code编辑器中的任何task上，然后点击“Run task”按钮以测试您的task。",
+      "run_task_info": "点击 Flow 代码编辑器侧边栏中 Task 旁边的播放图标进行测试。",
+      "run_task_gutter": "运行 Task {id}。按住 Shift 键并点击可同时运行下游 Task。",
       "play_icon_info": "您还可以在无代码或拓扑视图中点击播放图标。",
       "toggle": "游乐场",
       "run_task": "运行 task",

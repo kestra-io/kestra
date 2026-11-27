@@ -1315,7 +1315,7 @@ class TriggerSchedulerTest {
             workerJobPublisher,
             new TriggerKillPublisher(executionKilledQueue),
             triggerExecutionPublisher,
-            new SchedulerConfiguration(1, Duration.ZERO, 100)
+            new SchedulerConfiguration(1, Duration.ZERO, 100, Duration.ofMinutes(5))
         );
     }
 

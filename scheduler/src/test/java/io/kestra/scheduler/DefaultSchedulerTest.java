@@ -65,7 +65,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @MicronautTest
 class DefaultSchedulerTest {
 
-    private static final SchedulerConfiguration SCHEDULER_CONFIGURATION = new SchedulerConfiguration(16, Duration.ofSeconds(5), 100);
+    private static final SchedulerConfiguration SCHEDULER_CONFIGURATION = new SchedulerConfiguration(16, Duration.ofSeconds(5), 100, Duration.ofMinutes(5));
 
     // The injected publisher would run ServiceLivenessManager on this thread, where its state write
     // contends with the heartbeat for the whole 30s H2 lock timeout; no assertion reads those events.

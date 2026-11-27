@@ -416,7 +416,7 @@ class TriggerEventHandlerTest {
             TEST_VNODE_COUNT,
             List.of(withRevision(Fixtures.flowWithTrigger(Webhook.builder().id("other").type(Webhook.class.getName()).key("a-key").build()), 3))
         );
-        CachedFlowMetaStore flowMetaStore = new CachedFlowMetaStore(delegate, new SchedulerConfiguration(TEST_VNODE_COUNT, Duration.ofSeconds(5), 100));
+        CachedFlowMetaStore flowMetaStore = new CachedFlowMetaStore(delegate, new SchedulerConfiguration(TEST_VNODE_COUNT, Duration.ofSeconds(5), 100, Duration.ofMinutes(5)));
         flowMetaStore.init(Set.of(0));
         delegate.add(withRevision(Fixtures.defaultFlow(), 4));
         handler = newTriggerEventHandler(flowMetaStore);

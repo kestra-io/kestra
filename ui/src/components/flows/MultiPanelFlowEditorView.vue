@@ -2,6 +2,7 @@
     <div class="flow-editor-shell">
         <MultiPanelGenericEditorView
             ref="editorView"
+            :key="`${route.params.namespace}/${route.params.id}`"
             :editorElements="EDITOR_ELEMENTS"
             :defaultActiveTabs="tabs"
             :saveKey

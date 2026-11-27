@@ -1,14 +1,12 @@
 package io.kestra.jdbc.repository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 
@@ -16,14 +14,11 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import lombok.SneakyThrows;
 
 public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepository<Setting> implements SettingRepositoryInterface {
-    private final ApplicationEventPublisher<CrudEvent<Setting>> eventPublisher;
-
     @SuppressWarnings("unchecked")
     public AbstractJdbcSettingRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Setting> jdbcRepository,
         ApplicationEventPublisher<CrudEvent<Setting>> eventPublisher) {
-        super(jdbcRepository);
-        this.eventPublisher = eventPublisher;
+        super(jdbcRepository, eventPublisher);
     }
 
     public Boolean isTaskRunEnabled() {
@@ -42,17 +37,12 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Setting save(Setting setting) {
-        this.eventPublisher.publishEvent(new CrudEvent<>(setting, null, CrudEventType.UPDATE));
-
-        return internalSave(setting);
+        return this.update(setting);
     }
 
     @Override
     public Setting internalSave(Setting setting) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(setting);
-        this.jdbcRepository.persist(setting, fields);
-
-        return setting;
+        return super.save(setting);
     }
 
     @SneakyThrows
@@ -63,10 +53,7 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
             throw new IllegalStateException("Setting " + setting.getKey() + " doesn't exists");
         }
 
-        this.jdbcRepository.delete(setting);
-        this.eventPublisher.publishEvent(CrudEvent.delete(setting));
-
-        return setting;
+        return super.delete(setting);
     }
 
     @Override

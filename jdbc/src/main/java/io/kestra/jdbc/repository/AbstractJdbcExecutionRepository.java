@@ -93,6 +93,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         this.filterService = filterService;
     }
 
+    // The executor re-creates an already persisted execution on restart and replay, so this must stay an upsert.
+    @Override
+    public Execution create(Execution execution) {
+        return this.save(execution);
+    }
+
     @Override
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         return super.defaultFilter(tenantId, allowDeleted).and(aclCondition(Resource.EXECUTION));

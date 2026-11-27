@@ -6,14 +6,19 @@ import java.util.Optional;
 
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.models.HasUID;
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.AlreadyExistsException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
 
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -44,19 +49,44 @@ import reactor.core.publisher.FluxSink;
  */
 public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcRepository {
     protected io.kestra.jdbc.AbstractJdbcRepository<T> jdbcRepository;
+    @Nullable
+    private final ApplicationEventPublisher<CrudEvent<T>> eventPublisher;
 
     public AbstractJdbcCrudRepository(io.kestra.jdbc.AbstractJdbcRepository<T> jdbcRepository) {
+        this(jdbcRepository, null);
+    }
+
+    public AbstractJdbcCrudRepository(io.kestra.jdbc.AbstractJdbcRepository<T> jdbcRepository, @Nullable ApplicationEventPublisher<CrudEvent<T>> eventPublisher) {
         this.jdbcRepository = jdbcRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
-     * Creates an item: persist it inside the database and return it.
-     * It uses an insert on conflict update to avoid concurrent write issues.
+     * Creates an item: insert it inside the database and return it.
+     * It uses a plain insert, so concurrent creations of the same item cannot both succeed.
+     *
+     * @throws AlreadyExistsException if an item with the same key already exists.
      */
     public T create(T item) {
+        String key = this.jdbcRepository.key(item);
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(item);
-        this.jdbcRepository.persist(item, fields);
+        try {
+            this.jdbcRepository.getDslContextWrapper().transaction(
+                configuration -> DSL.using(configuration)
+                    .insertInto(this.jdbcRepository.getTable())
+                    .set(KEY_FIELD, key)
+                    .set(fields)
+                    .execute()
+            );
+        } catch (IntegrityConstraintViolationException e) {
+            // MySQL reports a duplicate key and a NOT NULL violation with the same SQL state, so check the key itself.
+            if (!this.keyExists(key)) {
+                throw e;
+            }
+            throw AlreadyExistsException.of(item.getClass().getSimpleName(), key);
+        }
 
+        this.publishEvent(CrudEvent.create(item));
         return item;
     }
 
@@ -94,29 +124,13 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     }
 
     /**
-     * Update an item: persist it inside the database and return it.
-     * It uses an update statement, so the item must be already present in the database.
+     * Update an item: persist it like {@link #save(Object)} then publish an {@link CrudEventType#UPDATE} {@link CrudEvent}.
      */
-    public T update(T current) {
+    public T update(T item) {
+        this.jdbcRepository.persist(item, this.jdbcRepository.persistFields(item));
+        this.publishEvent(new CrudEvent<>(item, null, CrudEventType.UPDATE));
 
-        if (!(current instanceof HasUID hasUID)) {
-            throw new IllegalArgumentException("Cannot update entity: '" + current.getClass().getName() + "' doesn't implement HasUID");
-        }
-
-        String uid = hasUID.uid();
-
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                DSL.using(configuration)
-                    .update(this.jdbcRepository.getTable())
-                    .set(this.jdbcRepository.persistFields((current)))
-                    .where(KEY_FIELD.eq(uid))
-                    .execute();
-
-                return current;
-            });
+        return item;
     }
 
     @SuppressWarnings("unchecked")
@@ -138,10 +152,12 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
         if (item instanceof SoftDeletable<?> softDeletable) {
             T deleted = (T) softDeletable.toDeleted();
             this.jdbcRepository.persist(deleted);
+            this.publishEvent(CrudEvent.delete(item));
             return deleted;
         }
 
         this.jdbcRepository.delete(item);
+        this.publishEvent(CrudEvent.delete(item));
         return item;
     }
 
@@ -531,6 +547,18 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     }
 
     /**
+     * Check whether an item matches the condition.
+     */
+    protected boolean exists(String tenantId, Condition condition) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> DSL.using(configuration)
+                    .fetchExists(this.jdbcRepository.getTable(), this.defaultFilter(tenantId).and(condition))
+            );
+    }
+
+    /**
      * Count items that match the condition.
      *
      * @see #countAll(String)
@@ -559,5 +587,20 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      */
     public long countAllForAllTenants() {
         return this.jdbcRepository.count(this.defaultFilter());
+    }
+
+    private boolean keyExists(String key) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> DSL.using(configuration)
+                    .fetchExists(this.jdbcRepository.getTable(), KEY_FIELD.eq(key))
+            );
+    }
+
+    private void publishEvent(CrudEvent<T> event) {
+        if (this.eventPublisher != null) {
+            this.eventPublisher.publishEvent(event);
+        }
     }
 }

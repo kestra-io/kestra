@@ -1,0 +1,25 @@
+id: replay-flow-errors
+namespace: io.kestra.tests
+
+tasks:
+  - id: fetch
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      code: "KR-0412"
+  - id: fail
+    type: io.kestra.plugin.core.execution.Fail
+
+errors:
+  - id: alert
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.code }}"
+
+finally:
+  - id: cleanup
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.code }}"
+
+afterExecution:
+  - id: notify
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.code }}"

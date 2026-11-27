@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.In;
+import io.kestra.core.models.dashboards.filters.NotEqualTo;
+import io.kestra.core.models.dashboards.filters.NotIn;
 import io.kestra.core.models.dashboards.filters.Or;
 
 class JdbcFilterServiceTest {
@@ -54,6 +56,46 @@ class JdbcFilterServiceTest {
 
         // Then
         assertThat(sql).contains("\"namespace\" in ('a', 'b')").doesNotContain("not in");
+    }
+
+    @Test
+    void shouldKeepNullRowsForNegatedFilters() {
+        // Given
+        List<AbstractFilter<Fields>> filters = List.of(
+            NotEqualTo.<Fields> builder().field(Fields.NAMESPACE).value("a").build(),
+            NotIn.<Fields> builder().field(Fields.NAMESPACE).values(List.of("b", "c")).build()
+        );
+
+        // When
+        String sql = render(filters);
+
+        // Then
+        assertThat(sql).endsWith(
+            "where (tenant_id = 'tenant-a' and (\"namespace\" <> 'a' or \"namespace\" is null) and (\"namespace\" not in ('b', 'c') or \"namespace\" is null))"
+        );
+    }
+
+    @Test
+    void shouldKeepNullRowsForNegatedFiltersInsideOrFilter() {
+        // Given
+        List<AbstractFilter<Fields>> filters = List.of(
+            Or.<Fields> builder()
+                .values(
+                    List.of(
+                        NotEqualTo.<Fields> builder().field(Fields.NAMESPACE).value("a").build(),
+                        NotIn.<Fields> builder().field(Fields.NAMESPACE).values(List.of("b", "c")).build()
+                    )
+                )
+                .build()
+        );
+
+        // When
+        String sql = render(filters);
+
+        // Then
+        assertThat(sql).endsWith(
+            "where (tenant_id = 'tenant-a' and (false or \"namespace\" <> 'a' or \"namespace\" is null or \"namespace\" not in ('b', 'c') or \"namespace\" is null))"
+        );
     }
 
     private String render(List<AbstractFilter<Fields>> filters) {

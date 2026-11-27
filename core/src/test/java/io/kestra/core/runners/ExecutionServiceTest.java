@@ -1247,11 +1247,11 @@ class ExecutionServiceTest {
         executionService.resume(execution, flow, State.Type.RUNNING, inputs, PausableTask.Resumed.now("john"));
 
         ExecutionResumedEvent event = ResumeEventListener.find(execution.getId());
-        assertThat(event.getTaskRunId()).isEqualTo(paused.getId());
-        assertThat(event.getTaskId()).isEqualTo("pause");
-        assertThat(event.getDecision()).isNull();
-        assertThat(event.getState()).isEqualTo(State.Type.RUNNING);
-        assertThat(event.getInputs())
+        assertThat(event.getResume().taskRunId()).isEqualTo(paused.getId());
+        assertThat(event.getResume().taskId()).isEqualTo("pause");
+        assertThat(event.getResume().decision()).isNull();
+        assertThat(event.getResume().state()).isEqualTo(State.Type.RUNNING);
+        assertThat(event.getResume().inputs())
             .containsEntry("asked", "yes")
             .containsEntry("secret_pause", ExecutionResumedEvent.MASK)
             .containsEntry("data", inputs.get("data"));
@@ -1268,11 +1268,11 @@ class ExecutionServiceTest {
         executionService.decide(execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.DENIED, "no"), Map.of("reason", "too risky"));
 
         ExecutionResumedEvent event = ResumeEventListener.find(execution.getId());
-        assertThat(event.getTaskRunId()).isEqualTo(taskRunId);
-        assertThat(event.getTaskId()).isEqualTo("approval");
-        assertThat(event.getDecision()).isEqualTo(PausableTask.Decision.Type.DENIED);
-        assertThat(event.getState()).isEqualTo(State.Type.RUNNING);
-        assertThat(event.getInputs()).containsExactlyEntriesOf(Map.of("reason", "too risky"));
+        assertThat(event.getResume().taskRunId()).isEqualTo(taskRunId);
+        assertThat(event.getResume().taskId()).isEqualTo("approval");
+        assertThat(event.getResume().decision()).isEqualTo(PausableTask.Decision.Type.DENIED);
+        assertThat(event.getResume().state()).isEqualTo(State.Type.RUNNING);
+        assertThat(event.getResume().inputs()).containsExactlyEntriesOf(Map.of("reason", "too risky"));
     }
 
     @Test
@@ -1283,7 +1283,7 @@ class ExecutionServiceTest {
 
         executionService.resume(execution, flow, State.Type.RUNNING, Map.of("asked", "yes", "secret_pause", "s3cr3t"), PausableTask.Resumed.now("john"));
 
-        assertThat(ResumeEventListener.find(execution.getId()).getInputs())
+        assertThat(ResumeEventListener.find(execution.getId()).getResume().inputs())
             .containsEntry("asked", "yes")
             .containsEntry("secret_pause", ExecutionResumedEvent.MASK);
     }
@@ -1298,11 +1298,11 @@ class ExecutionServiceTest {
         executionService.cancelApproval(execution, flow, taskRunId, null, false);
 
         ExecutionResumedEvent event = ResumeEventListener.find(execution.getId());
-        assertThat(event.getTaskRunId()).isEqualTo(taskRunId);
-        assertThat(event.getTaskId()).isEqualTo("approval");
-        assertThat(event.getState()).isEqualTo(State.Type.CANCELLED);
-        assertThat(event.getDecision()).isNull();
-        assertThat(event.getInputs()).isEmpty();
+        assertThat(event.getResume().taskRunId()).isEqualTo(taskRunId);
+        assertThat(event.getResume().taskId()).isEqualTo("approval");
+        assertThat(event.getResume().state()).isEqualTo(State.Type.CANCELLED);
+        assertThat(event.getResume().decision()).isNull();
+        assertThat(event.getResume().inputs()).isNull();
     }
 
     @Test

@@ -30,6 +30,6 @@ class ExecutionResumedEventTest {
         ExecutionResumedEvent event = new ExecutionResumedEvent(execution, execution, null, null, State.Type.RUNNING,
             Map.of("credentials", Map.of("token", "plain-text", "user", "john")), definitions);
 
-        assertThat(event.getInputs()).isEqualTo(Map.of("credentials", Map.of("token", ExecutionResumedEvent.MASK, "user", "john")));
+        assertThat(event.getResume().inputs()).isEqualTo(Map.of("credentials", Map.of("token", ExecutionResumedEvent.MASK, "user", "john")));
     }
 }

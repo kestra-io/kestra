@@ -28,14 +28,7 @@ import lombok.Getter;
 public class ExecutionResumedEvent extends CrudEvent<Execution> {
     public static final String MASK = "******";
 
-    @Nullable
-    private final String taskRunId;
-    @Nullable
-    private final String taskId;
-    @Nullable
-    private final PausableTask.Decision.Type decision;
-    private final State.Type state;
-    private final Map<String, Object> inputs;
+    private final Resume resume;
 
     public ExecutionResumedEvent(
         Execution before,
@@ -46,11 +39,13 @@ public class ExecutionResumedEvent extends CrudEvent<Execution> {
         @Nullable Map<String, Object> inputs,
         @Nullable List<Input<?>> inputDefinitions) {
         super(after, before, CrudEventType.UPDATE);
-        this.taskRunId = taskRun == null ? null : taskRun.getId();
-        this.taskId = taskRun == null ? null : taskRun.getTaskId();
-        this.decision = decision == null ? null : decision.type();
-        this.state = state;
-        this.inputs = inputs == null ? Map.of() : mask(inputs, inputDefinitions);
+        this.resume = new Resume(
+            taskRun == null ? null : taskRun.getId(),
+            taskRun == null ? null : taskRun.getTaskId(),
+            decision == null ? null : decision.type(),
+            state,
+            inputs == null || inputs.isEmpty() ? null : mask(inputs, inputDefinitions)
+        );
     }
 
     @SuppressWarnings("unchecked")
@@ -76,4 +71,12 @@ public class ExecutionResumedEvent extends CrudEvent<Execution> {
         return value instanceof EncryptedString
             || value instanceof Map<?, ?> map && EncryptedString.TYPE.equals(map.get("type"));
     }
+
+    public record Resume(
+        @Nullable String taskRunId,
+        @Nullable String taskId,
+        @Nullable PausableTask.Decision.Type decision,
+        State.Type state,
+        @Nullable Map<String, Object> inputs
+    ) {}
 }

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public class TextFileRenderer implements FileRenderer {
 
     @Override
     public boolean supports(String extension) {
-        return extension != null && SUPPORTED_EXTENSIONS.contains(extension.toLowerCase());
+        return extension != null && SUPPORTED_EXTENSIONS.contains(extension.toLowerCase(Locale.ROOT));
     }
 
     @Override
@@ -87,7 +88,10 @@ public class TextFileRenderer implements FileRenderer {
     }
 
     private FilePreview.Type computeType(String extension) {
-        return switch (extension.toLowerCase()) {
+        if (extension == null) {
+            return FilePreview.Type.TEXT;
+        }
+        return switch (extension.toLowerCase(Locale.ROOT)) {
             case "md" -> FilePreview.Type.MARKDOWN;
             default -> FilePreview.Type.TEXT;
         };

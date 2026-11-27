@@ -1,7 +1,10 @@
 package io.kestra.core.metrics;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -306,6 +309,8 @@ public class MetricRegistry {
 
     private final MetricConfig metricConfig;
 
+    private final Map<GaugeKey, Map<Object, Supplier<? extends Number>>> summedGauges = new ConcurrentHashMap<>();
+
     public MetricRegistry(MeterRegistry meterRegistry, MetricConfig metricConfig) {
         this.meterRegistry = meterRegistry;
         this.metricConfig = metricConfig;
@@ -338,7 +343,7 @@ public class MetricRegistry {
      *         statement.
      */
     public <T extends Number> T gauge(String name, String description, T number, String... tags) {
-        gauge(name, description, (Supplier<T>) () -> number, tags);
+        register(name, description, number, (Supplier<T>) () -> number, tags);
         return number;
     }
 
@@ -354,10 +359,46 @@ public class MetricRegistry {
      *         statement.
      */
     public <T extends Number> Gauge gauge(String name, String description, Supplier<T> supplier, String... tags) {
-        return Gauge.builder(metricName(name), supplier)
+        return register(name, description, supplier, supplier, tags);
+    }
+
+    /**
+     * Gauges that become identical once the excluded tags are dropped would otherwise be silently ignored by
+     * Micrometer, so they are reported as the sum of their sources.
+     */
+    private <T extends Number> Gauge register(String name, String description, Object source, Supplier<T> supplier, String[] tags) {
+        String[] keptTags = withoutExcludedTags(metricName(name), tags);
+        if (keptTags.length == tags.length) {
+            return Gauge.builder(metricName(name), supplier)
+                .description(description)
+                .tags(tags)
+                .register(this.meterRegistry);
+        }
+
+        Map<Object, Supplier<? extends Number>> sources = summedGauges.computeIfAbsent(
+            new GaugeKey(metricName(name), Tags.of(keptTags)),
+            key -> new ConcurrentHashMap<>()
+        );
+        sources.put(source, supplier);
+
+        return Gauge.builder(metricName(name), () -> sources.values().stream().mapToDouble(s -> s.get().doubleValue()).sum())
             .description(description)
-            .tags(tags)
+            .tags(keptTags)
             .register(this.meterRegistry);
+    }
+
+    private String[] withoutExcludedTags(String meterName, String[] tags) {
+        List<String> kept = new ArrayList<>(tags.length);
+        for (int i = 0; i + 1 < tags.length; i += 2) {
+            if (!metricConfig.isTagExcluded(meterName, tags[i])) {
+                kept.add(tags[i]);
+                kept.add(tags[i + 1]);
+            }
+        }
+        return kept.size() == tags.length ? tags : kept.toArray(String[]::new);
+    }
+
+    private record GaugeKey(String name, Tags tags) {
     }
 
     /**
@@ -450,6 +491,7 @@ public class MetricRegistry {
      * @param meter The meter to remove
      */
     public void removeMeter(Meter meter) {
+        summedGauges.remove(new GaugeKey(meter.getId().getName(), Tags.of(meter.getId().getTags())));
         meterRegistry.remove(meter);
     }
 

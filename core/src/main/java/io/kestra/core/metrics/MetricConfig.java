@@ -7,12 +7,12 @@ import java.util.Set;
 import io.kestra.core.server.ServiceType;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.env.Environment;
+import jakarta.inject.Inject;
 import io.micronaut.core.convert.format.MapFormat;
 import lombok.*;
 
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
 @ConfigurationProperties("kestra.metrics")
 public class MetricConfig {
     String prefix;
@@ -26,4 +26,33 @@ public class MetricConfig {
     List<String> labels;
 
     Map<ServiceType, Set<String>> sharedServiceInstanceMetrics = Map.of();
+
+    /**
+     * Rules dropping tags from metrics, see {@link MetricTagRules}.
+     */
+    MetricTagRules tagRules = MetricTagRules.NONE;
+
+    @Inject
+    public MetricConfig() {
+    }
+
+    public MetricConfig(String prefix, Map<String, String> tags, List<String> labels, Map<ServiceType, Set<String>> sharedServiceInstanceMetrics) {
+        this.prefix = prefix;
+        this.tags = tags;
+        this.labels = labels;
+        this.sharedServiceInstanceMetrics = sharedServiceInstanceMetrics;
+    }
+
+    @Inject
+    void loadTagRules(Environment environment) {
+        this.tagRules = MetricTagRules.fromEnvironment(environment);
+    }
+
+    public void useTagRules(MetricTagRules tagRules) {
+        this.tagRules = tagRules;
+    }
+
+    public boolean isTagExcluded(String meterName, String tagKey) {
+        return tagRules.isExcluded(meterName, tagKey);
+    }
 }

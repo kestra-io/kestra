@@ -244,6 +244,41 @@ export const Scrollable: Story = {
     },
 }
 
+export const ScrollableStickyFooter: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            const paragraphs = Array.from({length: 40}, (_, i) => `Paragraph ${i + 1} of a very tall dialog body.`)
+            return {visible, paragraphs}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open dialog with a sticky footer</ks-button>
+                <ks-dialog v-model="visible" title="Sticky footer" scrollable destroy-on-close>
+                    <p v-for="p in paragraphs" :key="p">{{ p }}</p>
+                    <div style="position:sticky;bottom:0;padding:var(--ks-spacing-2) 0;background:var(--ks-bg-surface)">
+                        Pinned to the bottom of the dialog body while it scrolls
+                    </div>
+                    <template #footer>
+                        <ks-button type="primary" @click="visible = false">Close</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await userEvent.click(canvas.getByRole("button", {name: "Open dialog with a sticky footer"}))
+        const footer = await within(document.body).findByText("Pinned to the bottom of the dialog body while it scrolls")
+        const scrollbar = document.querySelector(".kel-dialog .kel-dialog__scrollable-body .kel-scrollbar__wrap") as HTMLElement
+        await waitFor(() => expect(scrollbar.scrollHeight).toBeGreaterThan(scrollbar.clientHeight))
+        scrollbar.scrollTop = 0
+        await waitFor(() => expect(Math.abs(footer.getBoundingClientRect().bottom - scrollbar.getBoundingClientRect().bottom)).toBeLessThan(2))
+    },
+}
+
 /** Destroy on close – remounts content each time */
 export const DestroyOnClose: Story = {
     parameters: {controls: {disable: true}},

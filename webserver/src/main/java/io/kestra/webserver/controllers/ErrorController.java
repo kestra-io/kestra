@@ -3,11 +3,13 @@ package io.kestra.webserver.controllers;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
+import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
 import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.webserver.errors.ProblemDetail;
@@ -25,6 +27,7 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.server.exceptions.NotAllowedException;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ElementKind;
 import jakarta.validation.Path;
@@ -63,7 +66,11 @@ public class ErrorController {
     /** Bean validation: one {@code errors} entry per violated constraint. */
     @Error(global = true)
     public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ConstraintViolationException e) {
-        List<ProblemError> errors = ProblemError.ofViolations(e.getConstraintViolations());
+        // An invalid type also carries Jackson's raw message for the same field; report only the readable one.
+        Set<ConstraintViolation<?>> violations = e instanceof InvalidTypeConstraintViolationException
+            ? e.getConstraintViolations().stream().filter(v -> v.getMessage().equals(e.getMessage())).collect(Collectors.toSet())
+            : e.getConstraintViolations();
+        List<ProblemError> errors = ProblemError.ofViolations(violations);
         // The default message of a method-level validation starts with the controller method and parameter names.
         String detail = isMethodValidation(e)
             ? errors.stream().map(error -> error.path() + ": " + error.detail()).collect(Collectors.joining(", "))

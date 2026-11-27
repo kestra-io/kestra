@@ -9,6 +9,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -16,6 +20,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.KVStoreService;
@@ -321,6 +326,64 @@ class InternalKVStoreTest {
 
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), "new"), false);
         assertThat(kv.getValue(TEST_KV_KEY)).contains(new KVValue("new"));
+    }
+
+    @Test
+    void shouldAlwaysReadAValueWhileItIsBeingOverwritten() throws Exception {
+        // Given
+        InternalKVStore kv = kv();
+        AtomicBoolean writing = new AtomicBoolean(true);
+        ExecutorService writer = Executors.newSingleThreadExecutor();
+        writer.submit(() ->
+        {
+            kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, 0));
+            return null;
+        }).get();
+        Future<?> writes = writer.submit(() ->
+        {
+            try {
+                for (int i = 1; i <= 200; i++) {
+                    kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, i));
+                }
+                return null;
+            } finally {
+                writing.set(false);
+            }
+        });
+
+        // When
+        int missing = 0;
+        while (writing.get()) {
+            if (kv.getValue(TEST_KV_KEY).isEmpty()) {
+                missing++;
+            }
+            Thread.sleep(1);
+        }
+
+        // Then
+        writes.get();
+        writer.shutdown();
+        assertThat(missing).isZero();
+    }
+
+    @Test
+    void shouldFallBackToPreviousRevisionWhenLatestRevisionFileIsMissing() throws Exception {
+        // Given
+        InternalKVStore kv = kv();
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, "previous"));
+        kvMetadataStateStore.save(PersistedKvMetadata.builder()
+            .tenantId(MAIN_TENANT)
+            .namespace(kv.namespace())
+            .name(TEST_KV_KEY)
+            .deleted(false)
+            .build());
+
+        // When
+        Optional<KVValue> value = kv.getValue(TEST_KV_KEY);
+
+        // Then
+        assertThat(value).isPresent();
+        assertThat(value.get().value()).isEqualTo("previous");
     }
 
     private InternalKVStore kv() {

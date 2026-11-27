@@ -158,7 +158,7 @@
 
 <script setup lang="ts">
     import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted, type CSSProperties} from "vue"
-    import {useRoute} from "vue-router"
+    import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
@@ -263,14 +263,17 @@
 
     type LogsMode = "execution" | "merged"
 
+    const router = useRouter()
     const hasLoopIterations = computed(() => !props.playground && flowHasLoop(executionsStore.flow))
-    const modeOverride = ref<LogsMode>()
+    const modeInUrl = route.query.mode === "execution" || route.query.mode === "merged" ? route.query.mode as LogsMode : undefined
+    const modeOverride = ref<LogsMode | undefined>(modeInUrl)
     const mode = computed<LogsMode>(() => modeOverride.value ?? (hasLoopIterations.value ? "merged" : "execution"))
     const merged = computed(() => hasLoopIterations.value && mode.value === "merged")
     const selectedMode = computed({
         get: () => mode.value,
         set: (value: string) => {
             modeOverride.value = value as LogsMode
+            router.replace({query: {...route.query, mode: value}})
         },
     })
     const modeOptions = computed(() => [
@@ -284,7 +287,8 @@
         () => localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO",
     )
 
-    const levelInUrlAtMount = readRouteLevelFilter(route.query) !== undefined
+    const ERRORS_ONLY: LevelFilterValue = {value: "ERROR", direction: "min"}
+    const levelAtMount = readRouteLevelFilter(route.query)
 
     const {
         routeValue: routeLevel,
@@ -296,7 +300,10 @@
         applyDefaultIfMissing: () => true,
         fallbackValue: () => ({value: "TRACE", direction: "min" as const}),
         readFromRoute: readRouteLevelFilter,
-        writeToRoute: normalizeRouteLevelFilter,
+        writeToRoute: (query: LocationQueryRaw, level: LevelFilterValue | undefined) => ({
+            ...normalizeRouteLevelFilter(query, level),
+            ...(modeOverride.value ? {mode: modeOverride.value} : {}),
+        }),
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
         readFromAppliedFilters: readAppliedLevelFilter,
     })
@@ -305,17 +312,16 @@
     const effectiveLevelValue = computed(() => effectiveLevel.value as LevelFilterValue | undefined)
     const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
 
-    const ERRORS_ONLY: LevelFilterValue = {value: "ERROR", direction: "min"}
     const defaultLevelValue = (): LevelFilterValue => ({value: defaultLogLevel.value, direction: "min"})
-    const levelPicked = ref(levelInUrlAtMount)
-    let levelBeforeErrorsOnly: LevelFilterValue | undefined = !levelInUrlAtMount && merged.value ? defaultLevelValue() : undefined
+    const levelPicked = ref(levelAtMount !== undefined && !(modeInUrl !== "execution" && levelAtMount.value === ERRORS_ONLY.value))
+    let levelBeforeErrorsOnly: LevelFilterValue | undefined = !levelPicked.value && merged.value ? defaultLevelValue() : undefined
     const mergedUsesDefaultLevel = computed(() => merged.value && !levelPicked.value)
     const mergedLevelParams = computed(() => levelToRequestParams(mergedUsesDefaultLevel.value ? ERRORS_ONLY : effectiveLevelValue.value))
 
     watch(merged, (isMerged) => {
         if (levelPicked.value) return
         if (isMerged) {
-            levelBeforeErrorsOnly = routeLevelValue.value ?? defaultLevelValue()
+            levelBeforeErrorsOnly = routeLevelValue.value && routeLevelValue.value.value !== ERRORS_ONLY.value ? routeLevelValue.value : defaultLevelValue()
             if (routeLevelValue.value?.value !== ERRORS_ONLY.value) setRouteLevel(ERRORS_ONLY)
         } else if (levelBeforeErrorsOnly) {
             setRouteLevel(levelBeforeErrorsOnly)

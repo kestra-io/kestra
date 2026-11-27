@@ -180,4 +180,36 @@ describe("executions/Logs loop iterations mode", () => {
         expect(routeState.route.query[LEVEL_KEY]).toBe("ERROR")
         expect(wrapper.find("[data-test='loop-merged-logs-stub']").exists()).toBe(true)
     })
+
+    test("shouldWriteTheChosenModeToTheUrl", async () => {
+        const wrapper = mountLogs(loopFlow)
+        await flushPromises()
+
+        await wrapper.findAll("[data-test='logs-mode-switch'] input")[0].setValue(true)
+        await flushPromises()
+
+        expect(routeState.route.query.mode).toBe("execution")
+        expect(routeState.route.query[LEVEL_KEY]).toBe("INFO")
+    })
+
+    test("shouldOpenALinkSharedFromThisExecutionOnThisExecution", async () => {
+        routeState.route.query = {mode: "execution", [LEVEL_KEY]: "INFO"}
+        const wrapper = mountLogs(loopFlow)
+        await flushPromises()
+
+        expect(wrapper.find("[data-test='task-run-details']").exists()).toBe(true)
+        expect(wrapper.find("[data-test='loop-merged-logs-stub']").exists()).toBe(false)
+        expect(routeState.route.query[LEVEL_KEY]).toBe("INFO")
+    })
+
+    test("shouldTreatTheErrorLevelOfASharedMergedLinkAsTheMergedDefault", async () => {
+        routeState.route.query = {[LEVEL_KEY]: "ERROR"}
+        const wrapper = mountLogs(loopFlow)
+        await flushPromises()
+
+        await wrapper.findAll("[data-test='logs-mode-switch'] input")[0].setValue(true)
+        await flushPromises()
+
+        expect(routeState.route.query[LEVEL_KEY]).toBe("INFO")
+    })
 })

@@ -7,7 +7,7 @@ import type {TimelineExecution} from "../../../utils/executionsTimeline"
 
 const stubs = {
     KsIconButton: defineComponent({name: "KsIconButton", template: "<button type=\"button\"><slot /></button>"}),
-    TimelineBar: defineComponent({name: "TimelineBar", props: ["leftPercent", "widthPercent"], template: "<div />"}),
+    TimelineBar: defineComponent({name: "TimelineBar", props: ["leftPercent", "widthPercent", "bucket", "zoomable"], emits: ["zoom-to-range"], template: "<div />"}),
 }
 
 const executions: TimelineExecution[] = [
@@ -139,5 +139,51 @@ describe("TimelineRow", () => {
         const bar = wrapper.getComponent({name: "TimelineBar"})
         expect(bar.props("leftPercent")).toBe(80)
         expect(bar.props("leftPercent") + bar.props("widthPercent")).toBe(100)
+    })
+
+    it("should draw its bars from the aggregated counts at their granularity when it has no executions to draw", () => {
+        const HOUR_MS = 3_600_000
+        const wrapper = i18nMount(TimelineRow, {
+            props: {
+                label: "company.team",
+                executions: [],
+                densityPoints: [
+                    {startMs: HOUR_MS, state: "SUCCESS", count: 700},
+                    {startMs: 2 * HOUR_MS, state: "FAILED", count: 300},
+                ],
+                densityGranularityMs: HOUR_MS,
+                rangeStartMs: 0,
+                rangeEndMs: 24 * HOUR_MS,
+                availableWidthPx: 1200,
+                packLanes: false,
+                dimmedStates: new Set<string>(),
+            },
+            global: {stubs},
+        })
+
+        const bars = wrapper.findAllComponents({name: "TimelineBar"})
+        expect(bars.map(bar => bar.props("bucket").total)).toEqual([700, 300])
+        expect(bars.every(bar => bar.props("zoomable"))).toBe(true)
+    })
+
+    it("should relay the zoom request of an aggregated bucket", () => {
+        const wrapper = i18nMount(TimelineRow, {
+            props: {
+                label: "company.team",
+                executions: [],
+                densityPoints: [{startMs: 0, state: "SUCCESS", count: 5}],
+                densityGranularityMs: 1000,
+                rangeStartMs: 0,
+                rangeEndMs: 10_000,
+                availableWidthPx: 600,
+                packLanes: false,
+                dimmedStates: new Set<string>(),
+            },
+            global: {stubs},
+        })
+
+        wrapper.getComponent({name: "TimelineBar"}).vm.$emit("zoom-to-range", {startMs: 0, endMs: 1000})
+
+        expect(wrapper.emitted("zoom-to-range")).toEqual([[{startMs: 0, endMs: 1000}]])
     })
 })

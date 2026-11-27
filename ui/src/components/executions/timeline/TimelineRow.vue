@@ -32,7 +32,9 @@
                     :widthPercent="bar.widthPercent"
                     :dimmed="bar.dimmed"
                     :intensity="bar.intensity"
+                    :zoomable="densityPoints !== undefined"
                     @show-only-flow="$emit('show-only-flow', $event)"
+                    @zoom-to-range="$emit('zoom-to-range', $event)"
                 />
             </div>
             <div v-if="nowPercent !== undefined" class="timeline-now" :style="{left: `${nowPercent}%`}" :title="$t('now')" />
@@ -48,7 +50,9 @@
     import {
         assignLanes,
         bucketize,
+        bucketizeDensity,
         shouldBucketRow,
+        type DensityPoint,
         type StateBucket,
         type TimelineExecution,
     } from "../../../utils/executionsTimeline"
@@ -58,6 +62,8 @@
     const props = withDefaults(defineProps<{
         label: string;
         executions: TimelineExecution[];
+        densityPoints?: DensityPoint[];
+        densityGranularityMs?: number;
         total?: number;
         failed?: number;
         rangeStartMs: number;
@@ -66,12 +72,13 @@
         packLanes: boolean;
         dimmedStates: Set<string>;
         drillable?: boolean;
-    }>(), {drillable: false})
+    }>(), {drillable: false, densityPoints: undefined, densityGranularityMs: undefined})
 
     defineEmits<{
         "drill-in": [];
         "open-own-page": [];
         "show-only-flow": [{namespace: string; flowId: string}];
+        "zoom-to-range": [{startMs: number; endMs: number}];
     }>()
 
     interface RenderedBar {
@@ -108,26 +115,32 @@
         ),
     )
 
+    function toBucketBars(buckets: StateBucket[], lane: number): RenderedBar[] {
+        const maxBucketTotal = Math.max(...buckets.map(b => b.total), 1)
+        return buckets.map((bucket, index) => ({
+            key: `bucket-${lane}-${index}`,
+            lane,
+            leftPercent: toPercent(bucket.startMs),
+            widthPercent: toPercent(bucket.endMs) - toPercent(bucket.startMs),
+            dimmed: Object.keys(bucket.byState).every(state => props.dimmedStates.has(state)),
+            bucket,
+            intensity: bucket.total / maxBucketTotal,
+        }))
+    }
+
     const bars = computed<RenderedBar[]>(() => {
+        if (props.densityPoints) {
+            const buckets = bucketizeDensity(props.densityPoints, props.rangeStartMs, props.rangeEndMs, props.availableWidthPx, props.densityGranularityMs ?? 1)
+            return toBucketBars(buckets, 0)
+        }
+
         const result: RenderedBar[] = []
 
         for (let lane = 0; lane < laneCount.value; lane++) {
             const laneExecutions = laned.value.filter(e => e.lane === lane)
 
             if (isBucketedByLane.value[lane]) {
-                const buckets = bucketize(laneExecutions, props.rangeStartMs, props.rangeEndMs, props.availableWidthPx)
-                const maxBucketTotal = Math.max(...buckets.map(b => b.total), 1)
-                buckets.forEach((bucket, index) => {
-                    result.push({
-                        key: `bucket-${lane}-${index}`,
-                        lane,
-                        leftPercent: toPercent(bucket.startMs),
-                        widthPercent: toPercent(bucket.endMs) - toPercent(bucket.startMs),
-                        dimmed: Object.keys(bucket.byState).every(state => props.dimmedStates.has(state)),
-                        bucket,
-                        intensity: bucket.total / maxBucketTotal,
-                    })
-                })
+                result.push(...toBucketBars(bucketize(laneExecutions, props.rangeStartMs, props.rangeEndMs, props.availableWidthPx), lane))
             } else {
                 for (const execution of laneExecutions) {
                     const left = toPercent(execution.startMs)

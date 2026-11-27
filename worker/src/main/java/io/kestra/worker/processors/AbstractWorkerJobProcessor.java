@@ -13,6 +13,7 @@ import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.AbstractWorkerCallable;
+import io.kestra.worker.processors.internals.WorkerTriggerRealtimeCallable;
 import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.opentelemetry.api.common.Attributes;
@@ -78,13 +79,16 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     protected io.kestra.core.models.flows.State.Type callJob(AbstractWorkerCallable workerJobCallable) {
         this.currentWorkerCallable.set(workerJobCallable);
-        // Propagate an interrupt that arrived before currentWorkerCallable was set
-        // (between register() and here, interrupt() was a no-op).
+        // Propagate an interrupt or a stop that arrived before currentWorkerCallable was set
+        // (between register() and here, interrupt() and stop() were no-ops).
         State.Type pendingState = pendingInterruptState.get();
         if (pendingState != null) {
             workerJobCallable.kill(pendingState);
         } else if (pendingTimeoutKill.get()) {
             workerJobCallable.kill(null);
+        } else if (stopped.get() && workerJobCallable instanceof WorkerTriggerRealtimeCallable) {
+            // A kill supersedes a stop; tasks are left out because one picked up by a stopping worker is meant to run through the drain.
+            workerJobCallable.signalStop();
         }
         try {
             return tracer.inCurrentContext(

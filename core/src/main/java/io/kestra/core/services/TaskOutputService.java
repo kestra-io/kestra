@@ -72,6 +72,18 @@ public class TaskOutputService extends AbstractOutputService {
     }
 
     /**
+     * Save the outputs of a task run that ran again after a retry or a restart: outputs left by its previous run are
+     * deleted when this run produced none, so they cannot be mistaken for this run's.
+     */
+    public void replaceOutputs(TaskRun taskRun, Map<String, Object> outputMap) throws InternalException {
+        if (MapUtils.isEmpty(outputMap)) {
+            outputRepository.deleteById(taskRun.getTenantId(), taskRun.getId());
+            return;
+        }
+        saveOutputs(taskRun, outputMap);
+    }
+
+    /**
      * Get the outputs of a task run. This method will read the outputs from the database or from the internal storage depending on where they are stored.
      */
     @SuppressWarnings("deprecation")

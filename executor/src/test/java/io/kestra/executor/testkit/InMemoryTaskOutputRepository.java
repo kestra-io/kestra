@@ -35,6 +35,11 @@ public class InMemoryTaskOutputRepository implements TaskOutputRepositoryInterfa
     }
 
     @Override
+    public void deleteById(String tenantId, String taskRunId) {
+        outputs.remove(key(tenantId, taskRunId));
+    }
+
+    @Override
     public int purgeByExecutionIds(List<String> executionIds) {
         int before = outputs.size();
         outputs.values().removeIf(output -> executionIds.contains(output.executionId()));

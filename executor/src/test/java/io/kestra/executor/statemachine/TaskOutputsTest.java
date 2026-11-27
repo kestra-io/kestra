@@ -5,12 +5,17 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskOutput;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.executor.testkit.Executions;
 import io.kestra.executor.testkit.ExecutorTestHarness;
 import io.kestra.executor.testkit.Flows;
@@ -27,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TaskOutputsTest {
 
     private static final Instant T0 = Instant.parse("2026-01-01T00:00:00Z");
+    private static final Instant AFTER_ANY_RETRY_DELAY = Instant.parse("2100-01-01T00:00:00Z");
 
     private final ExecutorTestHarness harness = ExecutorTestHarness.create();
 
@@ -183,6 +189,98 @@ class TaskOutputsTest {
         // Then
         assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
         assertThat(executionOutputs(created)).isEqualTo(Map.of("fromChild", "from the child"));
+    }
+
+    @Test
+    void shouldDeleteThePreviousAttemptOutputsWhenARetriedWorkingDirectoryEndsWithNone() {
+        // Given
+        FlowWithSource flow = Flows.yaml("""
+            id: working-directory-retry-outputs
+            namespace: io.kestra.tests
+            tasks:
+              - id: working-directory
+                type: io.kestra.plugin.core.flow.WorkingDirectory
+                retry:
+                  type: constant
+                  interval: PT1S
+                  maxAttempts: 2
+                tasks:
+                  - id: child
+                    type: io.kestra.plugin.core.log.Log
+                    message: child
+            """);
+
+        // When
+        Execution created = runWithAFirstAttemptThatFailsAfterSavingOutputs(flow);
+
+        // Then
+        TaskRun workingDirectory = taskRun(created, "working-directory");
+        assertThat(workingDirectory.getAttempts()).hasSize(2);
+        assertThat(harness.taskOutputRepository().findById(workingDirectory.getTenantId(), workingDirectory.getId())).isEmpty();
+    }
+
+    @Test
+    void shouldKeepThePreviousAttemptOutputsWhenAnotherRetriedFlowableEndsWithNone() {
+        // Given: a resumed Pause keeps the outputs of its resume this way
+        FlowWithSource flow = Flows.yaml("""
+            id: flowable-retry-outputs
+            namespace: io.kestra.tests
+            tasks:
+              - id: flowable
+                type: io.kestra.plugin.core.flow.Sequential
+                retry:
+                  type: constant
+                  behavior: RETRY_FLOWABLE
+                  interval: PT1S
+                  maxAttempts: 2
+                tasks:
+                  - id: child
+                    type: io.kestra.plugin.core.log.Log
+                    message: child
+            """);
+
+        // When
+        Execution created = runWithAFirstAttemptThatFailsAfterSavingOutputs(flow);
+
+        // Then
+        TaskRun flowable = taskRun(created, "flowable");
+        assertThat(flowable.getAttempts()).hasSize(2);
+        assertThat(harness.taskOutputRepository().findById(flowable.getTenantId(), flowable.getId())).isPresent();
+    }
+
+    private Execution runWithAFirstAttemptThatFailsAfterSavingOutputs(FlowWithSource flow) {
+        harness.registerFlow(flow);
+        Execution created = Executions.created(flow);
+        AtomicBoolean childFailed = new AtomicBoolean();
+        ScriptedWorker worker = task ->
+        {
+            if (!"child".equals(task.getTaskRun().getTaskId()) || childFailed.getAndSet(true)) {
+                return onWorker(Results.success(task, T0));
+            }
+            TaskRun child = task.getTaskRun();
+            harness.taskOutputRepository().save(new TaskOutput(child.getParentTaskRunId(), child.getTenantId(), child.getExecutionId(), "{}".getBytes(), null));
+            return onWorker(Results.failed(task, T0));
+        };
+
+        harness.run(created, worker);
+        for (int i = 0; i < 4; i++) {
+            harness.tickExecutionDelays(AFTER_ANY_RETRY_DELAY);
+            harness.run(List.of(), worker);
+        }
+
+        assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
+        return created;
+    }
+
+    private static WorkerTaskResult onWorker(WorkerTaskResult result) {
+        List<TaskRunAttempt> attempts = result.getTaskRun().getAttempts().stream()
+            .map(attempt -> TaskRunAttempt.builder().state(attempt.getState()).workerId("worker").build())
+            .toList();
+        return new WorkerTaskResult(result.getTaskRun().withAttempts(attempts));
+    }
+
+    private TaskRun taskRun(Execution execution, String taskId) {
+        return harness.executionStateStore().findByIdWithoutAcl(execution.getId()).findTaskRunsByTaskId(taskId).getFirst();
     }
 
     private Map<String, Object> executionOutputs(Execution execution) throws Exception {

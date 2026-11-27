@@ -92,6 +92,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class HttpClient implements Closeable {
+
     private transient CloseableHttpClient client;
     private transient BasicCredentialsProvider defaultCredentialsProvider;
     private boolean hasProxy;
@@ -108,7 +109,8 @@ public class HttpClient implements Closeable {
     private static final HttpRequestInterceptor ACCEPT_ENCODING_INTERCEPTOR = (request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate");
 
     @Builder
-    public HttpClient(RunContext runContext, @Nullable HttpConfiguration configuration) throws IllegalVariableEvaluationException {
+    public HttpClient(RunContext runContext, @Nullable HttpConfiguration configuration)
+            throws IllegalVariableEvaluationException {
         this.runContext = runContext;
         this.configuration = configuration == null ? HttpConfiguration.builder().build() : configuration;
         if (runContext instanceof DefaultRunContext defaultRunContext) {
@@ -148,11 +150,12 @@ public class HttpClient implements Closeable {
         );
 
         if (observationRegistry != null) {
-            // micrometer, must be placed before the retry strategy (see https://docs.micrometer.io/micrometer/reference/reference/httpcomponents.html#_retry_strategy_considerations)
+            // micrometer, must be placed before the retry strategy (see
+            // https://docs.micrometer.io/micrometer/reference/reference/httpcomponents.html#_retry_strategy_considerations)
             builder.addExecInterceptorAfter(
-                ChainElement.RETRY.name(), "micrometer",
-                new ObservationExecChainHandler(observationRegistry, new CustomApacheHttpClientObservationConvention())
-            );
+                    ChainElement.RETRY.name(), "micrometer",
+                    new ObservationExecChainHandler(observationRegistry,
+                            new CustomApacheHttpClientObservationConvention()));
         }
 
         // logger
@@ -202,12 +205,11 @@ public class HttpClient implements Closeable {
         // TCP Keep-Alive extended socket options (disabled for Windows compatibility)
         if (!this.tcpExtendedKeepAliveEnabled()) {
             connectionManagerBuilder.setDefaultSocketConfig(
-                SocketConfig.custom()
-                    .setTcpKeepIdle(0)
-                    .setTcpKeepInterval(0)
-                    .setTcpKeepCount(0)
-                    .build()
-            );
+                    SocketConfig.custom()
+                            .setTcpKeepIdle(0)
+                            .setTcpKeepInterval(0)
+                            .setTcpKeepCount(0)
+                            .build());
         }
 
         // builder object
@@ -473,18 +475,19 @@ public class HttpClient implements Closeable {
      * Send a request
      *
      * @param request the request
-     * @param cls the class of the response
-     * @param <T> the type of response expected
+     * @param cls     the class of the response
+     * @param <T>     the type of response expected
      * @return the response
      */
-    public <T> HttpResponse<T> request(HttpRequest request, Class<T> cls) throws HttpClientException, IllegalVariableEvaluationException {
+    public <T> HttpResponse<T> request(HttpRequest request, Class<T> cls)
+            throws HttpClientException, IllegalVariableEvaluationException {
         boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
-        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
-            : null;
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null
+                ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
+                : null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, r ->
-        {
+        return this.request(request, httpClientContext, r -> {
             this.throwIfResponseNotAllowed(r, httpClientContext, allowFailed, allowedResponseCodes);
             T body = bodyHandler(cls, r.getEntity());
 
@@ -495,25 +498,25 @@ public class HttpClient implements Closeable {
     /**
      * Send a request, getting the response with body as input stream
      *
-     * @param request the request
+     * @param request  the request
      * @param consumer the consumer of the response
      * @return the response without the body
      */
-    public HttpResponse<Void> request(HttpRequest request, Consumer<HttpResponse<InputStream>> consumer) throws HttpClientException, IllegalVariableEvaluationException {
+    public HttpResponse<Void> request(HttpRequest request, Consumer<HttpResponse<InputStream>> consumer)
+            throws HttpClientException, IllegalVariableEvaluationException {
         boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
-        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
-            : null;
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null
+                ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
+                : null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, r ->
-        {
+        return this.request(request, httpClientContext, r -> {
             this.throwIfResponseNotAllowed(r, httpClientContext, allowFailed, allowedResponseCodes);
             HttpResponse<InputStream> from = HttpResponse.from(
-                r,
-                r.getEntity() != null ? r.getEntity().getContent() : null,
-                request,
-                httpClientContext
-            );
+                    r,
+                    r.getEntity() != null ? r.getEntity().getContent() : null,
+                    request,
+                    httpClientContext);
 
             consumer.accept(from);
 
@@ -525,17 +528,18 @@ public class HttpClient implements Closeable {
      * Send a request and expect a json response
      *
      * @param request the request
-     * @param <T> the type of response expected
+     * @param <T>     the type of response expected
      * @return the response
      */
-    public <T> HttpResponse<T> request(HttpRequest request) throws HttpClientException, IllegalVariableEvaluationException {
+    public <T> HttpResponse<T> request(HttpRequest request)
+            throws HttpClientException, IllegalVariableEvaluationException {
         boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
-        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
-            : null;
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null
+                ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
+                : null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, response ->
-        {
+        return this.request(request, httpClientContext, response -> {
             this.throwIfResponseNotAllowed(response, httpClientContext, allowFailed, allowedResponseCodes);
             T body = JacksonMapper.ofJson().readValue(response.getEntity().getContent(), new TypeReference<>() {
             });
@@ -547,20 +551,20 @@ public class HttpClient implements Closeable {
     /**
      * Send an SSE (Server-Sent Events) request and consume events with typed data.
      *
-     * @param request the HTTP request
-     * @param cls the class type for deserializing event data
+     * @param request       the HTTP request
+     * @param cls           the class type for deserializing event data
      * @param eventConsumer consumer that processes each SSE event with typed data
-     * @param <T> the type of data in the SSE events
-     * @return the HTTP response without the body, as events are consumed through the eventConsumer
+     * @param <T>           the type of data in the SSE events
+     * @return the HTTP response without the body, as events are consumed through
+     *         the eventConsumer
      */
     public <T> HttpResponse<Void> sseRequest(
-        HttpRequest request,
-        Class<T> cls,
-        Consumer<HttpSseEvent<T>> eventConsumer) throws HttpClientException, IllegalVariableEvaluationException {
+            HttpRequest request,
+            Class<T> cls,
+            Consumer<HttpSseEvent<T>> eventConsumer) throws HttpClientException, IllegalVariableEvaluationException {
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        HttpClientResponseHandler<HttpResponse<Void>> responseHandler = response ->
-        {
+        HttpClientResponseHandler<HttpResponse<Void>> responseHandler = response -> {
 
             parseSse(response.getEntity().getContent(), cls, eventConsumer);
 
@@ -570,7 +574,8 @@ public class HttpClient implements Closeable {
         return this.request(request, httpClientContext, responseHandler);
     }
 
-    private <T> void parseSse(InputStream inputStream, Class<T> cls, Consumer<HttpSseEvent<T>> eventConsumer) throws IOException {
+    private <T> void parseSse(InputStream inputStream, Class<T> cls, Consumer<HttpSseEvent<T>> eventConsumer)
+            throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             String line;
             StringBuilder dataBuffer = new StringBuilder();
@@ -666,13 +671,13 @@ public class HttpClient implements Closeable {
 
     @SuppressWarnings("unchecked")
     private <T> void sendSseData(
-        Class<T> cls,
-        Consumer<HttpSseEvent<T>> eventConsumer,
-        StringBuilder dataBuffer,
-        String eventId,
-        String eventName,
-        String comment,
-        Duration retry) {
+            Class<T> cls,
+            Consumer<HttpSseEvent<T>> eventConsumer,
+            StringBuilder dataBuffer,
+            String eventId,
+            String eventName,
+            String comment,
+            Duration retry) {
         String dataStr = dataBuffer.toString();
         T parsedData = null;
 
@@ -690,13 +695,13 @@ public class HttpClient implements Closeable {
             }
         }
 
-        HttpSseEvent<T> event = HttpSseEvent.<T> builder()
-            .data(parsedData)
-            .id(eventId)
-            .name(eventName)
-            .comment(comment)
-            .retry(retry)
-            .build();
+        HttpSseEvent<T> event = HttpSseEvent.<T>builder()
+                .data(parsedData)
+                .id(eventId)
+                .name(eventName)
+                .comment(comment)
+                .retry(retry)
+                .build();
 
         if (eventConsumer != null) {
             eventConsumer.accept(event);
@@ -721,10 +726,10 @@ public class HttpClient implements Closeable {
 
             int port = uri.getPort() != -1 ? uri.getPort() : ("https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80);
             AuthScope digestScope = new AuthScope(uri.getHost(), port);
-            UsernamePasswordCredentials digestCredentials = new UsernamePasswordCredentials(username, password.toCharArray());
+            UsernamePasswordCredentials digestCredentials = new UsernamePasswordCredentials(username,
+                    password.toCharArray());
 
-            httpClientContext.setCredentialsProvider((authScope, context) ->
-            {
+            httpClientContext.setCredentialsProvider((authScope, context) -> {
                 if (digestScope.match(authScope) >= 0) {
                     return digestCredentials;
                 }
@@ -736,10 +741,10 @@ public class HttpClient implements Closeable {
     }
 
     private void throwIfResponseNotAllowed(
-        org.apache.hc.core5.http.HttpResponse response,
-        HttpClientContext context,
-        boolean allowFailed,
-        List<Integer> allowedResponseCodes) throws IOException {
+            org.apache.hc.core5.http.HttpResponse response,
+            HttpClientContext context,
+            boolean allowFailed,
+            List<Integer> allowedResponseCodes) throws IOException {
         if (isAllowedStatusCode(response.getCode(), allowFailed, allowedResponseCodes)) {
             return;
         }
@@ -747,7 +752,8 @@ public class HttpClient implements Closeable {
         throw new IOException(HttpResponseFailure.exception(response, context));
     }
 
-    private static boolean isAllowedStatusCode(int statusCode, boolean allowFailed, List<Integer> allowedResponseCodes) {
+    private static boolean isAllowedStatusCode(int statusCode, boolean allowFailed,
+            List<Integer> allowedResponseCodes) {
         if (allowedResponseCodes != null && !allowedResponseCodes.isEmpty()) {
             return allowedResponseCodes.contains(statusCode);
         }
@@ -760,45 +766,42 @@ public class HttpClient implements Closeable {
     }
 
     private <T> HttpResponse<T> request(
-        HttpRequest request,
-        HttpClientContext httpClientContext,
-        HttpClientResponseHandler<HttpResponse<T>> responseHandler) throws HttpClientException, IllegalVariableEvaluationException {
+            HttpRequest request,
+            HttpClientContext httpClientContext,
+            HttpClientResponseHandler<HttpResponse<T>> responseHandler)
+            throws HttpClientException, IllegalVariableEvaluationException {
         validateUri(request.getUri());
 
         String method = request.getMethod();
         List<Integer> retryableCodes = resolveRetryableStatusCodes(method);
         boolean retryTransportFailures = isMethodEligibleForTransportRetry(method);
 
-        return RetryUtils.<HttpResponse<T>, HttpClientException> of(
-            configuration.getRetry(),
-            retryFailed ->
-            {
-                if (retryFailed.getCause() instanceof HttpClientException ex) {
-                    return ex;
-                }
-
-                throw new IllegalStateException(
-                    "Retry failed with an unexpected exception type",
-                    retryFailed.getCause()
-                );
-            }
-        ).run(
-            (res, throwable) ->
-            {
-                if (throwable instanceof HttpClientResponseException ex) {
-                    return retryableCodes.contains(
-                        ex.getResponse().getStatus().getCode()
-                    );
-                }
-
-                if (throwable instanceof HttpClientRequestException httpEx) {
-                    // ConnectException means the request never reached the server, so any method is safe to retry.
-                    Throwable cause = httpEx.getCause();
-                    if (cause instanceof SSLHandshakeException) {
-                        return false;
+        return RetryUtils.<HttpResponse<T>, HttpClientException>of(
+                configuration.getRetry(),
+                retryFailed -> {
+                    if (retryFailed.getCause() instanceof HttpClientException ex) {
+                        return ex;
                     }
-                    return cause instanceof ConnectException || retryTransportFailures;
-                }
+
+                    throw new IllegalStateException(
+                            "Retry failed with an unexpected exception type",
+                            retryFailed.getCause());
+                }).run(
+                        (res, throwable) -> {
+                            if (throwable instanceof HttpClientResponseException ex) {
+                                return retryableCodes.contains(
+                                        ex.getResponse().getStatus().getCode());
+                            }
+
+                            if (throwable instanceof HttpClientRequestException httpEx) {
+                                // ConnectException means the request never reached the server, so any method is
+                                // safe to retry.
+                                Throwable cause = httpEx.getCause();
+                                if (cause instanceof SSLHandshakeException) {
+                                    return false;
+                                }
+                                return cause instanceof ConnectException || retryTransportFailures;
+                            }
 
                 return false;
             },
@@ -837,16 +840,18 @@ public class HttpClient implements Closeable {
     }
 
     /**
-     * Resolves the retryable status codes for a given HTTP method: the method's entry in
-     * {@code retryOnStatusCodesByMethod} if one is configured (matched case-insensitively), otherwise the
+     * Resolves the retryable status codes for a given HTTP method: the method's
+     * entry in
+     * {@code retryOnStatusCodesByMethod} if one is configured (matched
+     * case-insensitively), otherwise the
      * global {@code retryOnStatusCodes} for GET/HEAD methods only.
      */
     @SuppressWarnings("unchecked")
     private List<Integer> resolveRetryableStatusCodes(String method) throws IllegalVariableEvaluationException {
         if (configuration.getRetryOnStatusCodesByMethod() != null) {
             Map<String, List<Integer>> byMethod = runContext
-                .render(configuration.getRetryOnStatusCodesByMethod())
-                .asMap(String.class, List.class);
+                    .render(configuration.getRetryOnStatusCodesByMethod())
+                    .asMap(String.class, List.class);
 
             for (Map.Entry<String, List<Integer>> entry : byMethod.entrySet()) {
                 if (entry.getKey().equalsIgnoreCase(method)) {
@@ -855,7 +860,8 @@ public class HttpClient implements Closeable {
             }
         }
 
-        // Methods other than GET and HEAD are not retried on a status code unless configured per method.
+        // Methods other than GET and HEAD are not retried on a status code unless
+        // configured per method.
         if (!IDEMPOTENT_METHODS.contains(method.toUpperCase(Locale.ROOT))) {
             return List.of();
         }
@@ -869,18 +875,18 @@ public class HttpClient implements Closeable {
      */
     private boolean isMethodEligibleForTransportRetry(String method) throws IllegalVariableEvaluationException {
         return runContext
-            .render(configuration.getRetryableTransportFailureMethods())
-            .asList(String.class)
-            .stream()
-            .anyMatch(configured -> configured.equalsIgnoreCase(method));
+                .render(configuration.getRetryableTransportFailureMethods())
+                .asList(String.class)
+                .stream()
+                .anyMatch(configured -> configured.equalsIgnoreCase(method));
     }
 
     @SuppressWarnings("unchecked")
     private List<String> deniedList() {
-        return (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
+        return (List<String>) ((DefaultRunContext) runContext)
+                .getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
     }
 
-    @SuppressWarnings("unchecked")
     private void validateUri(URI uri) {
         List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
         List<String> deniedList = deniedList();
@@ -942,7 +948,8 @@ public class HttpClient implements Closeable {
             return (T) EntityUtils.toString(entity);
         } else if (Byte[].class.isAssignableFrom(cls)) {
             return (T) ArrayUtils.toObject(EntityUtils.toByteArray(entity));
-        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType()) || KestraMediaTypes.APPLICATION_X_YAML.equals(entity.getContentType())) {
+        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType())
+                || KestraMediaTypes.APPLICATION_X_YAML.equals(entity.getContentType())) {
             return (T) JacksonMapper.ofYaml().readValue(entity.getContent(), cls);
         } else {
             return (T) JacksonMapper.ofJson(false).readValue(entity.getContent(), cls);
@@ -956,13 +963,13 @@ public class HttpClient implements Closeable {
         }
     }
 
-    public static class CustomApacheHttpClientObservationConvention extends DefaultApacheHttpClientObservationConvention {
+    public static class CustomApacheHttpClientObservationConvention
+            extends DefaultApacheHttpClientObservationConvention {
         @Override
         public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
             return KeyValues.concat(
-                super.getLowCardinalityKeyValues(context),
-                KeyValues.of("type", "core-client")
-            );
+                    super.getLowCardinalityKeyValues(context),
+                    KeyValues.of("type", "core-client"));
         }
     }
 }

@@ -29,7 +29,7 @@ JAVA_UNSAFE_MEMORY_ACCESS="--sun-misc-unsafe-memory-access=allow"
 
 # Java options that Kestra engineers think are best for Kestra, they should be added before JAVA_OPTS so they are overridable:
 # -XX:MaxRAMPercentage=50.0: configure max heap to 50% of available RAM (default 25%)
-KESTRA_JAVA_OPTS="-XX:MaxRAMPercentage=50.0"
+KESTRA_JAVA_OPTS="-XX:MaxRAMPercentage=50.0 -XX:+UseCompactObjectHeaders"
 
 # Exec
 exec java ${KESTRA_JAVA_OPTS} ${JAVA_OPTS} ${JAVA_ADD_OPENS} ${JAVA_UNSAFE_MEMORY_ACCESS} --enable-native-access=ALL-UNNAMED -jar "$0" "$@"

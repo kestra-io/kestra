@@ -216,6 +216,24 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().get(2).attemptNumber()).isEqualTo(2);
     }
 
+    public void shouldRetryTaskWhenItIsInFlowableErrors(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("flowable").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("alert").getFirst().getAttempts()).satisfiesExactly(
+            attempt1 -> assertThat(attempt1.getState().getCurrent()).isEqualTo(State.Type.FAILED),
+            attempt2 -> assertThat(attempt2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS)
+        );
+    }
+
+    public void shouldRetryTaskWhenItIsInFlowableFinally(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("cleanup").getFirst().getAttempts()).satisfiesExactly(
+            attempt1 -> assertThat(attempt1.getState().getCurrent()).isEqualTo(State.Type.FAILED),
+            attempt2 -> assertThat(attempt2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS)
+        );
+        assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
     public void retryFlowableBehavior(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         // the flowable is retried as a unit, up to maxAttempts

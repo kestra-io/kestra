@@ -1,0 +1,17 @@
+id: retry-flowable-errors-task
+namespace: io.kestra.tests
+
+tasks:
+  - id: flowable
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: failed
+        type: io.kestra.plugin.core.execution.Fail
+    errors:
+      - id: alert
+        type: io.kestra.plugin.core.execution.Fail
+        condition: "{{ taskrun.attemptsCount == 0 }}"
+        retry:
+          type: constant
+          interval: PT0.25S
+          maxAttempts: 3

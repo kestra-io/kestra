@@ -205,7 +205,8 @@ public class ExecutionService {
             if (maybeParentTaskRun.isPresent()) {
                 TaskRun parentTaskRun = maybeParentTaskRun.get();
                 Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
-                if (parentTask instanceof FlowableTask<?> flowableTask) {
+                // a retried errors or finally task keeps the task runs of its own block, as it is one of them
+                if (parentTask instanceof FlowableTask<?> flowableTask && !isErrorsOrFinallyTask(flowableTask, taskRun)) {
                     if (flowableTask.getErrors() != null) {
                         List<Task> allErrors = Stream.concat(
                             flowableTask.getErrors().stream()
@@ -234,6 +235,11 @@ public class ExecutionService {
         }
 
         return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
+    }
+
+    private static boolean isErrorsOrFinallyTask(FlowableTask<?> flowableTask, TaskRun taskRun) {
+        return Stream.concat(ListUtils.emptyOnNull(flowableTask.getErrors()).stream(), ListUtils.emptyOnNull(flowableTask.getFinally()).stream())
+            .anyMatch(task -> task.getId().equals(taskRun.getTaskId()));
     }
 
     /**

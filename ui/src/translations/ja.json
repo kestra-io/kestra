@@ -2009,9 +2009,26 @@
       "description": "説明",
       "descriptionPlaceholder": "このシークレットの説明",
       "tags": "タグ",
-      "addTag": "タグを追加"
+      "addTag": "タグを追加",
+      "value_hidden": "非表示。Secret値は表示されません。",
+      "pebble_expression": "Pebble式"
     },
     "workerId": "Worker Id",
+    "key_usages": {
+      "title": "使用元",
+      "title_count": "{count} Flowで使用 | {count} Flowで使用",
+      "show_more": "さらに {count} 件表示",
+      "count": "{count} Flow | {count} Flow",
+      "count_none": "参照されていません",
+      "count_failed": "利用不可",
+      "rotation": "このSecretをローテーションすると、次回の実行時にこのFlowが読み取る内容が変更されます。 | このSecretをローテーションすると、次回の実行時にこれらの{count} Flowが読み取る内容が変更されます。",
+      "open_source_search": "ソース検索で開く",
+      "line": "行 {line}",
+      "error": "Flowソースを検索できませんでした。",
+      "empty": "このkeyを参照しているFlowはありません。",
+      "incomplete": "ここに表示できる数よりも多くのFlowがこの参照を含んでいます。すべてを表示するには、ソース検索を開いてください。",
+      "caveat": "静的参照のみ: 例えばinputから実行時に構築されたkeyは検出できません。"
+    },
     "kv": {
       "name": "KV Store",
       "type": "タイプ",

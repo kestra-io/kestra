@@ -2009,9 +2009,26 @@
       "description": "描述",
       "descriptionPlaceholder": "描述此 secret",
       "tags": "标签",
-      "addTag": "添加标签"
+      "addTag": "添加标签",
+      "value_hidden": "隐藏。Secret 值永不显示。",
+      "pebble_expression": "Pebble 表达式"
     },
     "workerId": "工作者ID",
+    "key_usages": {
+      "title": "使用方",
+      "title_count": "被 {count} 个 Flow 使用",
+      "show_more": "显示另外 {count} 个",
+      "count": "{count} 个 flow",
+      "count_none": "未引用",
+      "count_failed": "不可用",
+      "rotation": "轮换此 Secret 会更改此 flow 在下次运行时读取的内容。| 轮换此 Secret 会更改这 {count} 个 flow 在下次运行时读取的内容。",
+      "open_source_search": "在源搜索中打开",
+      "line": "行 {line}",
+      "error": "无法搜索 flow 源代码。",
+      "empty": "没有 flow 在其 source 中引用此 key。",
+      "incomplete": "包含此引用的Flows数量超出此处可列出的范围。打开源搜索以查看所有Flows。",
+      "caveat": "仅限静态引用：运行时构建的键（例如来自 input 的键）无法被检测到。"
+    },
     "kv": {
       "name": "键值存储",
       "type": "类型",

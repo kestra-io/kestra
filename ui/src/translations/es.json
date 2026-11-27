@@ -2009,9 +2009,26 @@
       "description": "Descripción",
       "descriptionPlaceholder": "Describe este secreto",
       "tags": "Etiquetas",
-      "addTag": "Añadir etiqueta"
+      "addTag": "Añadir etiqueta",
+      "value_hidden": "Oculto. Los valores Secret nunca se muestran.",
+      "pebble_expression": "Expresión Pebble"
     },
     "workerId": "Worker Id",
+    "key_usages": {
+      "title": "Utilizado por",
+      "title_count": "Utilizado por {count} Flow | Utilizado por {count} Flows",
+      "show_more": "Mostrar {count} más",
+      "count": "{count} flow | {count} flows",
+      "count_none": "No referenciado",
+      "count_failed": "No disponible",
+      "rotation": "Al rotar este secret, se cambia lo que este flow lee en su próxima ejecución. | Al rotar este secret, se cambia lo que estos {count} flows leen en su próxima ejecución.",
+      "open_source_search": "Abrir en la búsqueda de origen",
+      "line": "Línea {line}",
+      "error": "No se pudieron buscar las fuentes del Flow.",
+      "empty": "Ningún flow hace referencia a esta key en su código fuente.",
+      "incomplete": "Más Flows contienen esta referencia de los que se pueden listar aquí. Abre la búsqueda de origen para verlos todos.",
+      "caveat": "Solo referencias estáticas: las claves creadas en tiempo de ejecución, por ejemplo, a partir de un input, no se pueden detectar."
+    },
     "kv": {
       "name": "KV Store",
       "type": "Tipo",

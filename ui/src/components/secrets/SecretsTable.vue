@@ -45,7 +45,17 @@
                 :label="keyOnly ? $t('secret.names') : $t('key')"
             >
                 <template #default="scope">
-                    <KsId v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
+                    <KsId v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" @click="viewSecret = scope.row as NamespaceSecret" />
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn v-if="!paneView" columnKey="usedBy" :label="$t('key_usages.title')">
+                <template #default="scope">
+                    <KeyUsageCount
+                        v-if="scope.row?.key !== undefined"
+                        :target="{kind: 'secret', namespace: keyOnly ? undefined : scope.row.namespace, key: scope.row.key}"
+                        @open="viewSecret = scope.row as NamespaceSecret"
+                    />
                 </template>
             </KsTableColumn>
 
@@ -136,6 +146,40 @@
                 </template>
             </KsTableColumn>
         </KsDataTable>
+
+        <KsDrawer
+            v-if="viewSecret"
+            :modelValue="true"
+            @update:modelValue="viewSecret = undefined"
+        >
+            <template #header>
+                <span class="secret-drawer__title" data-test="secret-drawer-title">
+                    <KsId :value="viewSecret.key" :shrink="false" />
+                    <KsTag v-if="viewSecret.namespace" size="small">{{ viewSecret.namespace }}</KsTag>
+                </span>
+            </template>
+            <div class="secret-drawer">
+                <div class="secret-drawer__field">
+                    <KsText tag="p" size="small" class="secret-drawer__label">{{ $t("value") }}</KsText>
+                    <div class="secret-drawer__box">
+                        <KsText type="secondary" size="small" class="secret-drawer__hidden">
+                            <Lock />
+                            {{ $t("secret.value_hidden") }}
+                        </KsText>
+                    </div>
+                </div>
+                <div class="secret-drawer__field">
+                    <KsText tag="p" size="small" class="secret-drawer__label">{{ $t("secret.pebble_expression") }}</KsText>
+                    <div class="secret-drawer__box">
+                        <code class="secret-drawer__expression">{{ secretExpression(viewSecret.key) }}</code>
+                        <KsIconButton :tooltip="$t('copy_pebble_expression')" placement="left" @click="copyKey(viewSecret.key)">
+                            <ContentCopy />
+                        </KsIconButton>
+                    </div>
+                </div>
+                <KeyUsages compact :target="{kind: 'secret', namespace: keyOnly ? undefined : viewSecret.namespace, key: viewSecret.key}" />
+            </div>
+        </KsDrawer>
 
         <KsDialog
             v-if="addSecretDrawerVisible"
@@ -231,6 +275,8 @@
 
     import {KsId, KsIconButton, KsPassword, rowKey, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
+    import KeyUsages from "../usages/KeyUsages.vue"
+    import KeyUsageCount from "../usages/KeyUsageCount.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
@@ -307,6 +353,8 @@
     const hasData = ref<boolean>()
     const areNamespaceSecretsReadOnly = ref(false)
     const secrets = ref<(NamespaceSecret & {namespace?: string})[]>()
+
+    const viewSecret = ref<NamespaceSecret>()
 
     const secret = ref<SecretForm>({
         namespace: props.namespace,
@@ -560,8 +608,10 @@
         secret.value?.tags?.splice(index, 1)
     }
 
+    const secretExpression = (key: string) => `{{ secret('${key}') }}`
+
     const copyKey = async (key: string) => {
-        await Utils.copy(`{{ secret('${key}') }}`)
+        await Utils.copy(secretExpression(key))
         toast.success(t("copied"))
     }
 
@@ -703,6 +753,61 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
+    }
+
+    .secret-drawer__title {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        min-width: 0;
+    }
+
+    .secret-drawer {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-5);
+    }
+
+    .secret-drawer__field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+    }
+
+    .secret-drawer > .key-usages {
+        margin-top: 0;
+    }
+
+    .secret-drawer__label {
+        align-self: flex-start;
+        margin: 0;
+        font-weight: var(--ks-font-weight-semibold);
+    }
+
+    .secret-drawer__box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-2);
+        min-height: 2.5rem;
+        padding: var(--ks-spacing-1) var(--ks-spacing-1) var(--ks-spacing-1) var(--ks-spacing-3);
+        background-color: var(--ks-bg-input);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+    }
+
+    .secret-drawer__hidden {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
+
+    .secret-drawer__expression {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-primary);
     }
 
     .lock-icon {

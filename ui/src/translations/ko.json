@@ -2009,9 +2009,26 @@
       "description": "설명",
       "descriptionPlaceholder": "이 비밀을 설명하세요",
       "tags": "태그",
-      "addTag": "태그 추가"
+      "addTag": "태그 추가",
+      "value_hidden": "숨김. Secret 값은 절대 표시되지 않습니다.",
+      "pebble_expression": "Pebble 표현식"
     },
     "workerId": "Worker Id",
+    "key_usages": {
+      "title": "사용됨",
+      "title_count": "{count} Flow 사용 중 | {count} Flow 사용 중",
+      "show_more": "{count}개 더 보기",
+      "count": "{count} Flow | {count} Flow | {count} Flow",
+      "count_none": "참조되지 않음",
+      "count_failed": "사용 불가",
+      "rotation": "이 Secret을 순환하면 다음 실행 시 이 Flow가 읽는 내용이 변경됩니다. | 이 Secret을 순환하면 다음 실행 시 이 {count}개의 Flow가 읽는 내용이 변경됩니다.",
+      "open_source_search": "소스 검색에서 열기",
+      "line": "줄 {line}",
+      "error": "Flow 소스를 검색할 수 없습니다.",
+      "empty": "어떤 flow도 소스에서 이 key를 참조하지 않습니다.",
+      "incomplete": "여기에 나열할 수 있는 것보다 더 많은 Flow가 이 참조를 포함합니다. 모든 Flow를 보려면 소스 검색을 여세요.",
+      "caveat": "정적 참조만 해당: 예를 들어 input에서 런타임에 빌드된 key는 감지할 수 없습니다."
+    },
     "kv": {
       "name": "KV Store",
       "type": "유형",

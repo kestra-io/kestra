@@ -2009,9 +2009,26 @@
       "description": "विवरण",
       "descriptionPlaceholder": "इस secret का वर्णन करें",
       "tags": "टैग",
-      "addTag": "टैग जोड़ें"
+      "addTag": "टैग जोड़ें",
+      "value_hidden": "छिपा हुआ। Secret मान कभी प्रदर्शित नहीं होते।",
+      "pebble_expression": "Pebble एक्सप्रेशन"
     },
     "workerId": "Worker Id",
+    "key_usages": {
+      "title": "द्वारा उपयोग किया गया",
+      "title_count": "{count} Flow द्वारा उपयोग किया गया | {count} Flows द्वारा उपयोग किया गया",
+      "show_more": "{count} और दिखाएं",
+      "count": "{count} flow | {count} flows",
+      "count_none": "संदर्भित नहीं",
+      "count_failed": "अनुपलब्ध",
+      "rotation": "इस secret को घुमाने से यह बदल जाता है कि यह flow अपने अगले रन पर क्या पढ़ता है। | इस secret को घुमाने से यह बदल जाता है कि ये {count} flow अपने अगले रन पर क्या पढ़ते हैं।",
+      "open_source_search": "स्रोत खोज में खोलें",
+      "line": "लाइन {line}",
+      "error": "Flow स्रोतों को खोजा नहीं जा सका।",
+      "empty": "कोई भी flow अपने स्रोत में इस key को संदर्भित नहीं करता है।",
+      "incomplete": "यहां सूचीबद्ध किए जा सकने वाले से अधिक Flow में यह संदर्भ शामिल है। उन सभी को देखने के लिए स्रोत खोज खोलें।",
+      "caveat": "केवल स्थिर संदर्भ: रनटाइम पर निर्मित key, उदाहरण के लिए किसी input से, का पता नहीं लगाया जा सकता है।"
+    },
     "kv": {
       "name": "KV Store",
       "type": "प्रकार",

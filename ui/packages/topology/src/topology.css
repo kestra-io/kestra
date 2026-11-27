@@ -107,8 +107,9 @@ html.dark {
         outline: none !important;
     }
 
-    & .vue-flow__node.topology-node-hovered .node-wrapper {
-        border-color: var(--ks-border-default) !important;
+    & .vue-flow__node:not(.vue-flow__node-cluster),
+    & .vue-flow__edge {
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
     }
 
     & .top-button-div {
@@ -148,6 +149,22 @@ html.dark {
     & .ks-topology-errors-border {
         background-color: var(--ks-topology-bg-errors);
         border: 1px solid var(--ks-topology-border-errors);
+    }
+}
+
+.vue-flow.topology-tracing-path {
+    & .vue-flow__node:not(.vue-flow__node-cluster, .topology-path-linked),
+    & .vue-flow__edge:not(.topology-path-linked) {
+        opacity: 0.3;
+    }
+
+    & .vue-flow__edge.topology-path-linked .vue-flow__edge-path:not(.edge-diff-added, .edge-diff-removed) {
+        stroke-width: 2;
+        stroke-dasharray: none;
+    }
+
+    & .vue-flow__edge.topology-path-linked .vue-flow__edge-path:not(.stroke-danger, .stroke-error, .stroke-warning, .edge-diff-added, .edge-diff-removed) {
+        stroke: var(--ks-border-focus);
     }
 }
 

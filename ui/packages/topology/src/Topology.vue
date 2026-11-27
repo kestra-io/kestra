@@ -12,6 +12,7 @@
 
         <VueFlow
             :id="id"
+            :class="{'topology-tracing-path': tracedPath.length > 0}"
             @mouseenter="canvasHovered = true"
             @mouseleave="canvasHovered = false"
             :defaultMarkerColor="cssVariable('--ks-topology-dash')"
@@ -472,6 +473,7 @@
 
     function onTaskDragStart({nodeId, label, cls}: {nodeId: string; label: string; cls?: string}) {
         closeHoverPeek()
+        tracedNodeUid.value = undefined
         draggingNodeId.value = nodeId
         dragGhost.value = {label, cls, x: -9999, y: -9999}
         window.addEventListener("dragover", onGhostMove)
@@ -635,6 +637,7 @@
     }
 
     const HOVERED_NODE_CLASS = "topology-node-hovered"
+    const LINKED_ELEMENT_CLASS = "topology-path-linked"
 
     function setNodeInteractionClass(node: GraphNode | GraphEdge, cls: string, add: boolean) {
         const classes = (typeof node.class === "string" ? node.class : "").split(" ").filter(Boolean)
@@ -647,18 +650,28 @@
         node.class = classes.join(" ")
     }
 
+    const tracedNodeUid = ref<string | undefined>(undefined)
+    const tracedPath = shallowRef<(GraphNode | GraphEdge)[]>([])
+
+    watch([tracedNodeUid, getEdges], ([uid]) => {
+        tracedPath.value.forEach((element) => {
+            setNodeInteractionClass(element, LINKED_ELEMENT_CLASS, false)
+            setNodeInteractionClass(element, HOVERED_NODE_CLASS, false)
+        })
+        const hoveredNode = uid ? vueFlowStore.findNode(uid) : undefined
+        tracedPath.value = hoveredNode ? VueFlowUtils.linkedElements(props.id, hoveredNode.id) : []
+        tracedPath.value.forEach((element) => setNodeInteractionClass(element, LINKED_ELEMENT_CLASS, true))
+        if (hoveredNode) setNodeInteractionClass(hoveredNode, HOVERED_NODE_CLASS, true)
+    })
+
     const onMouseOver = (node: {uid: string}) => {
         schedulePeekOpen(node.uid)
-        VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
-            if (n?.type === "task") {
-                setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
-            }
-        })
+        tracedNodeUid.value = node.uid
     }
 
     const onMouseLeave = () => {
         schedulePeekClose()
-        resetNodesStyle()
+        tracedNodeUid.value = undefined
     }
 
     const NODE_TYPES_THE_PEEK_MUST_NOT_COVER = new Set(["task", "custom", "trigger", "collapsedcluster"])
@@ -716,14 +729,6 @@
         const task = (node.data as {node?: {task?: {type?: string}}} | undefined)?.node?.task
         return {uid: node.id, node, title: afterLastDot(node.id) ?? node.id, type: shortPluginType(task?.type), ...placement}
     })
-
-    const resetNodesStyle = () => {
-        getNodes.value.filter(n => n.type === "task" || n.type === "trigger")
-            .forEach(n => {
-                n.style = {...n.style, opacity: "1"}
-                setNodeInteractionClass(n, HOVERED_NODE_CLASS, false)
-            })
-    }
 
     // The flow-level `errors:` lane is synthesized by the frontend, so it is absent from
     // `flowGraph.clusters` and collapsing it silently did nothing (kestra-io/kestra#19787).

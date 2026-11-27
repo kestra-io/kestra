@@ -1,5 +1,6 @@
 package io.kestra.core.storages.kv;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +17,7 @@ import io.kestra.core.storages.StorageObject;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -23,6 +25,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * The default {@link KVBackend}: the metadata goes to the {@link KVMetadataStateStore}, and the value to the
  * internal storage, under one file per revision.
  */
+@Slf4j
 @Singleton
 public class StorageKVBackend implements KVBackend {
 
@@ -46,6 +49,13 @@ public class StorageKVBackend implements KVBackend {
                 );
             }
 
+            byte[] content = value.readAllBytes();
+            int expectedRevision = this.kvMetadataStateStore.findByName(tenant, namespace, key)
+                .map(PersistedKvMetadata::getRevision)
+                .orElse(0) + 1;
+            putValue(tenant, namespace, key, expectedRevision, metadata, content);
+
+            // The metadata is what makes a revision visible, so it must be saved once its value is stored.
             PersistedKvMetadata saved = this.kvMetadataStateStore.save(
                 PersistedKvMetadata.builder()
                     .tenantId(tenant)
@@ -56,13 +66,19 @@ public class StorageKVBackend implements KVBackend {
                     .deleted(false)
                     .build()
             );
-            this.storage.put(
-                tenant, namespace, KVStore.storageUri(key, namespace, saved.getRevision()), new StorageObject(
-                    new KVValueAndMetadata(metadata, null).metadataAsMap(),
-                    value
-                )
-            );
+            if (saved.getRevision() != expectedRevision) {
+                putValue(tenant, namespace, key, saved.getRevision(), metadata, content);
+            }
         }
+    }
+
+    private void putValue(String tenant, String namespace, String key, int revision, @Nullable KVMetadata metadata, byte[] content) throws IOException {
+        this.storage.put(
+            tenant, namespace, KVStore.storageUri(key, namespace, revision), new StorageObject(
+                new KVValueAndMetadata(metadata, null).metadataAsMap(),
+                new ByteArrayInputStream(content)
+            )
+        );
     }
 
     @Override
@@ -81,11 +97,7 @@ public class StorageKVBackend implements KVBackend {
             }
         }
 
-        try {
-            return Optional.of(this.storage.get(tenant, namespace, KVStore.storageUri(key, namespace, revision)));
-        } catch (FileNotFoundException e) {
-            return Optional.empty();
-        }
+        return readExistingRevision(key, namespace, revision, candidate -> this.storage.get(tenant, namespace, KVStore.storageUri(key, namespace, candidate)));
     }
 
     @Override
@@ -96,11 +108,10 @@ public class StorageKVBackend implements KVBackend {
         }
 
         int revision = maybeMetadata.map(PersistedKvMetadata::getRevision).orElse(1);
-        try {
-            return Optional.of(new KVMetadata(this.storage.getAttributes(tenant, namespace, KVStore.storageUri(key, namespace, revision)).getMetadata()));
-        } catch (FileNotFoundException e) {
-            return Optional.empty();
-        }
+        return readExistingRevision(
+            key, namespace, revision,
+            candidate -> new KVMetadata(this.storage.getAttributes(tenant, namespace, KVStore.storageUri(key, namespace, candidate)).getMetadata())
+        );
     }
 
     @Override
@@ -130,6 +141,33 @@ public class StorageKVBackend implements KVBackend {
 
         this.kvMetadataStateStore.delete(maybeMetadata.get());
         return true;
+    }
+
+    /**
+     * Reads the given revision, falling back to the most recent lower revision that exists in storage
+     * when the metadata and the storage have drifted.
+     */
+    private <T> Optional<T> readExistingRevision(String key, String namespace, int revision, RevisionReader<T> reader) throws IOException {
+        for (int candidate = revision; candidate >= 1; candidate--) {
+            try {
+                T value = reader.read(candidate);
+                if (candidate != revision) {
+                    log.warn(
+                        "KV '{}' revision {} is missing from storage in namespace '{}' (metadata/storage drift); serving the latest available revision {} instead.",
+                        key, revision, namespace, candidate
+                    );
+                }
+                return Optional.of(value);
+            } catch (FileNotFoundException e) {
+                // try the previous revision
+            }
+        }
+        return Optional.empty();
+    }
+
+    @FunctionalInterface
+    private interface RevisionReader<T> {
+        T read(int revision) throws IOException;
     }
 
     private static boolean isExpired(PersistedKvMetadata metadata) {

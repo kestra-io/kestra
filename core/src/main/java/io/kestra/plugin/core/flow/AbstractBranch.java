@@ -22,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-abstract class AbstractBranch<T extends Output> extends Task implements FlowableTask<T> {
+public abstract class AbstractBranch<T extends Output> extends Task implements FlowableTask<T> {
     protected List<@Valid Task> errors;
 
     @JsonProperty("finally")

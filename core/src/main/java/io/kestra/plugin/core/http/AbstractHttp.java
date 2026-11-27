@@ -168,10 +168,14 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                         .stream()
                         .map(
                             throwFunction(
-                                e -> new AbstractMap.SimpleEntry<>(
-                                    e.getKey().toString(),
-                                    runContext.render(e.getValue().toString())
-                                )
+                                e -> {
+                                    String key = e.getKey().toString().strip();
+                                    String value = runContext.render(e.getValue().toString());
+                                    return new AbstractMap.SimpleEntry<>(
+                                        key,
+                                        value != null ? value.strip() : ""
+                                    );
+                                }
                             )
                         )
                         .collect(Collectors.groupingBy(AbstractMap.SimpleEntry::getKey, Collectors.mapping(AbstractMap.SimpleEntry::getValue, Collectors.toList()))),

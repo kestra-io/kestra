@@ -589,8 +589,13 @@
             : undefined
     }
 
-    function taskType(taskRun: TaskRun): string | undefined {
+    function taskType(taskRun: TaskRun | undefined): string | undefined {
+        if (!taskRun) return undefined
         const task = FlowUtils.findTaskById(executionsStore.flow, taskRun.taskId)
+        const parentTaskRunId = taskRun.parentTaskRunId
+        if (task === undefined && parentTaskRunId) {
+            return taskType(execution.value?.taskRunList?.find(parent => parent.id === parentTaskRunId))
+        }
         return task?.type
     }
 

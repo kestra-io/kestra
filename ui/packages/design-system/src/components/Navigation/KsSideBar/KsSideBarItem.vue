@@ -72,6 +72,12 @@
         color: var(--ks-text-secondary);
     }
 
+    /* Inset because KsSideBarSection hides overflow, which clips a ring drawn outside the item. */
+    &:focus-visible {
+        outline: var(--ks-border-width-base) solid var(--ks-border-focus);
+        outline-offset: calc(-1 * var(--ks-border-width-base));
+    }
+
     &.is-active {
         background-color: var(--ks-bg-active);
         color: var(--ks-text-link);

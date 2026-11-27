@@ -1,10 +1,13 @@
 package io.kestra.core.runners;
 
+import java.util.List;
 import java.util.Objects;
 
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.utils.ListUtils;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -47,6 +50,19 @@ public record ScopedConcurrencyLimit(
 
     public static ScopedConcurrencyLimit ofTenant(String tenantId, Concurrency concurrency) {
         return new ScopedConcurrencyLimit(Scope.TENANT, tenantId, null, null, concurrency);
+    }
+
+    /**
+     * The limits the given execution has to claim a slot in: the scopes a waiting ancestor
+     * already holds on its behalf are left out.
+     */
+    public static List<ScopedConcurrencyLimit> claimableBy(List<ScopedConcurrencyLimit> limits, Execution execution) {
+        List<String> heldByParent = execution.getMetadata() == null ? null : execution.getMetadata().getConcurrencyScopesHeldByParent();
+        if (ListUtils.isEmpty(heldByParent)) {
+            return limits;
+        }
+
+        return limits.stream().filter(limit -> !heldByParent.contains(limit.uid())).toList();
     }
 
     /**

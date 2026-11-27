@@ -326,6 +326,7 @@
     import {usePageSize} from "../../composables/usePageSize"
     import {useKvFilter} from "../filter/configurations/kvFilter"
     import {latestRequest} from "../../utils/latestRequest"
+    import {handledIf} from "../../utils/kestraHttp"
 
     import {dateUtils, dayjs, sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
@@ -632,12 +633,21 @@
 
     const total = ref(0)
 
+    /** The table only holds the current page, so a key missing from it is looked up on the server before a create overwrites it. */
     function kvKeyDuplicate(_rule: FormItemRule, value: string, callback: (error?: Error) => void) {
-        if (kv.value.update === undefined && kvs.value && kvs.value.find(r => r.namespace === kv.value.namespace && r.key === value)) {
-            return callback(new Error(t("kv.duplicate")))
-        } else {
-            callback()
+        const namespace = kv.value.namespace
+        if (kv.value.update !== undefined || !value || !namespace) {
+            return callback()
         }
+        if (kvs.value?.some(r => r.namespace === namespace && r.key === value)) {
+            return callback(new Error(t("kv.duplicate")))
+        }
+        namespacesStore.kv({namespace, key: value})
+            .then(() => callback(new Error(t("kv.duplicate"))))
+            .catch((e: unknown) => {
+                handledIf(e, [403, 404])
+                callback()
+            })
     }
 
     async function updateKvModal(entry: KvEntry) {

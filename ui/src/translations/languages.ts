@@ -24,6 +24,7 @@ export const LANGUAGES: ReadonlyArray<readonly [string, string]> = [
     ["pt", "Portuguese"],
     ["pt_BR", "Portuguese (Brazil)"],
     ["ru", "Russian"],
+    ["tr", "Turkish"],
     ["zh_CN", "Simplified Chinese (Mandarin)"],
 ]
 

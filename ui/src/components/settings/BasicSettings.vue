@@ -538,6 +538,7 @@
         {value: "ja", text: "Japanese"},
         {value: "ko", text: "Korean"},
         {value: "hi", text: "Hindi"},
+        {value: "tr", text: "Turkish"},
     ])
 
     const themeOptions = computed<ThemeOption[]>(() => [

@@ -18,6 +18,7 @@ const LOCALE_LOADERS: Record<string, () => Promise<unknown>> = {
     pt: () => import("dayjs/locale/pt"),
     "pt-br": () => import("dayjs/locale/pt-br"),
     ru: () => import("dayjs/locale/ru"),
+    tr: () => import("dayjs/locale/tr"),
     "zh-cn": () => import("dayjs/locale/zh-cn"),
 }
 

@@ -77,11 +77,19 @@ vi.mock("../../utils/triggers", async (importOriginal) => ({
     })),
 }))
 
+const createBackfill = vi.hoisted(() => vi.fn())
+
+vi.mock("@kestra-io/kestra-sdk/triggers", async (importOriginal) => ({
+    ...await importOriginal<typeof import("@kestra-io/kestra-sdk/triggers")>(),
+    createBackfill,
+}))
+
 vi.mock("../../stores/productTour", () => ({
     useProductTourStore: () => ({isGuidedActive: false}),
 }))
 
 import FlowTriggers from "./FlowTriggers.vue"
+import {normalize} from "../../utils/inputs"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 const RouterLinkStub = defineComponent({
@@ -311,9 +319,9 @@ describe("FlowTriggers - execute backfill button", () => {
         document.body.innerHTML = ""
     })
 
-    async function openBackfill() {
+    async function openBackfill(inputs: Record<string, unknown>[] = flowInputs) {
         permissions.isAllowed = (resource: string, action: string) => resource === "TRIGGER" && action === "BACKFILL"
-        Object.assign(flowStore.flow, {inputs: flowInputs})
+        Object.assign(flowStore.flow, {inputs})
 
         const wrapper = i18nMount(FlowTriggers, {
             props: {embed: true},
@@ -378,6 +386,22 @@ describe("FlowTriggers - execute backfill button", () => {
 
         await fillInputs(wrapper, {region: "", batchSize: 100})
         expect(executeButton()?.disabled).toBe(true)
+    })
+
+    // https://github.com/kestra-io/kestra/issues/22959
+    it("sends DATE and TIME defaults in the format Execute sends", async () => {
+        createBackfill.mockReset().mockResolvedValue({})
+        const wrapper = await openBackfill([
+            {id: "day", type: "DATE", required: false, defaults: "2026-01-15"},
+            {id: "at", type: "TIME", required: false, defaults: "09:30:00"},
+        ])
+
+        await fillInputs(wrapper, {day: normalize("DATE", "2026-01-15"), at: normalize("TIME", "09:30:00")})
+        executeButton()?.click()
+        await flushPromises()
+
+        expect(createBackfill).toHaveBeenCalledTimes(1)
+        expect(createBackfill.mock.calls[0][0].backfill.inputs).toEqual({day: "2026-01-15", at: "09:30:00"})
     })
 })
 

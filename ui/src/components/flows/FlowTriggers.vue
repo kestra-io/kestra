@@ -388,7 +388,8 @@
 
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {hasMissingRequiredInputs} from "../../utils/inputs"
+    import {flattenInputs, hasMissingRequiredInputs} from "../../utils/inputs"
+    import {normalizeInputValues} from "../../utils/submitTask"
     import type {ExecutionLabelInput} from "../../utils/executionLabels"
 
     import {useFlowStore} from "../../stores/flow"
@@ -580,7 +581,7 @@
             start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
-            inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
+            inputs: normalizeInputValues(flattenInputs(flowStore.flow?.inputs), backfill.value.inputs ?? {}) as BackfillRequest["inputs"],
             labels: labels.length ? labels : undefined,
         }
     })

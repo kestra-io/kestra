@@ -72,6 +72,10 @@ public class ExecutionResumedEvent extends CrudEvent<Execution> {
             || value instanceof Map<?, ?> map && EncryptedString.TYPE.equals(map.get("type"));
     }
 
+    /**
+     * @param state the state the paused task run was resumed to, which can differ from the execution's state when
+     *              another task of the execution is still paused
+     */
     public record Resume(
         @Nullable String taskRunId,
         @Nullable String taskId,

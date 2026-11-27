@@ -154,8 +154,8 @@ class PurgeFlowsTest {
         String namespace = TestsUtils.randomNamespace();
         String flowId = IdUtils.create();
         FlowWithSource revision1 = flowRepository.create(testingFlow(namespace, flowId, "published", false));
-        FlowWithSource revision2 = flowRepository.update(testingFlow(namespace, flowId, "draft", true), revision1);
-        flowRepository.update(testingFlow(namespace, flowId, "draft again", true), revision2);
+        FlowWithSource revision2 = flowRepository.update(testingFlow(namespace, flowId, "published again", false), revision1);
+        flowRepository.update(testingFlow(namespace, flowId, "draft", true), revision2);
 
         PurgeFlows purgeFlows = PurgeFlows.builder()
             .type(PurgeFlows.class.getName())
@@ -168,7 +168,7 @@ class PurgeFlowsTest {
         assertThat(output.getSize()).isEqualTo(1L);
         assertThat(flowRepository.findRevisions(MAIN_TENANT, namespace, flowId, false))
             .extracting(FlowWithSource::getRevision)
-            .containsExactlyInAnyOrder(1, 3);
+            .containsExactlyInAnyOrder(2, 3);
     }
 
     @Test

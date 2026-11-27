@@ -211,6 +211,20 @@ describe("Topology view refit", () => {
     })
 })
 
+describe("Topology task focus", () => {
+    it("should fit the view on the node of the focused task", async () => {
+        const id = `topology-${Math.random()}`
+        const vueFlow = useVueFlow(id)
+        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
+
+        const wrapper = mountForRefit(id)
+        await settle()
+        wrapper.vm.focusTask("2")
+
+        expect(fitView).toHaveBeenCalledWith(expect.objectContaining({nodes: ["2"]}))
+    })
+})
+
 describe("Topology details peek", () => {
     function mountWithViewportZoom(zoom: number) {
         const id = `peek-${Math.random()}`

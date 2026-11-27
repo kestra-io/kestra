@@ -246,7 +246,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, onUnmounted, provide, ref, shallowRef, useSlots, watch} from "vue"
-    import {getRectOfNodes, Panel, useVueFlow, VueFlow, type GraphEdge, type GraphNode} from "@vue-flow/core"
+    import {getRectOfNodes, isEdge, isNode, Panel, useVueFlow, VueFlow, type Edge, type GraphNode, type Node} from "@vue-flow/core"
     import type {ViewportTransform} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
@@ -361,7 +361,7 @@
     })
 
     const vueFlowStore = useVueFlow(props.id)
-    const {getNodes, getEdges, getElements, onNodesInitialized, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
+    const {getNodes, getEdges, onNodesInitialized, zoomIn, zoomOut, setNodes, setEdges, removeEdges, removeNodes, vueFlowRef} = vueFlowStore
     const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -574,6 +574,15 @@
     const shell = ref<HTMLDivElement>()
     const {fitGraph} = useViewportRefit(shell, vueFlowStore)
 
+    const FOCUS_MAX_ZOOM = 1
+
+    function focusTask(taskId: string) {
+        const node = getNodes.value.find((candidate) => afterLastDot(candidate.id) === taskId)
+        if (node) vueFlowStore.fitView({nodes: [node.id], maxZoom: FOCUS_MAX_ZOOM, duration: 300})
+    }
+
+    defineExpose({focusTask})
+
     const refitOnNodesInitialized = ref(false)
     onNodesInitialized(() => {
         if (!initialFitDone.value) {
@@ -596,7 +605,6 @@
     const generateGraph = (shouldFit = false) => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
-        removeSelectedElements(getElements.value)
 
         nextTick(() => {
             emit("loading", true)
@@ -627,7 +635,8 @@
             )
 
             if (elements) {
-                setElements(elements)
+                setNodes(elements.filter(isNode))
+                setEdges(elements.filter(isEdge))
                 if (shouldFit) refitOnNodesInitialized.value = true
                 emit("loading", false)
             }
@@ -636,7 +645,7 @@
 
     const HOVERED_NODE_CLASS = "topology-node-hovered"
 
-    function setNodeInteractionClass(node: GraphNode | GraphEdge, cls: string, add: boolean) {
+    function setNodeInteractionClass(node: Node | Edge, cls: string, add: boolean) {
         const classes = (typeof node.class === "string" ? node.class : "").split(" ").filter(Boolean)
         if (add) {
             if (!classes.includes(cls)) classes.push(cls)
@@ -649,7 +658,7 @@
 
     const onMouseOver = (node: {uid: string}) => {
         schedulePeekOpen(node.uid)
-        VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
+        VueFlowUtils.linkedElements(getNodes.value, getEdges.value, node.uid).forEach((n) => {
             if (n?.type === "task") {
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
             }

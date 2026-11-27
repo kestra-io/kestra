@@ -106,6 +106,8 @@ import {useVueFlow} from "@vue-flow/core"
 const {fitView, zoomIn, zoomOut} = useVueFlow("hello-world")
 ```
 
+The component instance also exposes `focusTask(taskId)`, which centres the canvas on one task.
+
 ## Props
 
 | Prop | Type | Default | |

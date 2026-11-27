@@ -2851,7 +2851,7 @@
       "your_servers": "Ваши серверы",
       "servers_count": "{count} сервер MCP | {count} сервера MCP | {count} серверов MCP",
       "managed_by_kestra": "Управляется Kestra",
-      "servers": "Серверы MCP",
+      "servers": "MCP Flows",
       "client_setup": "Настройка клиента",
       "page_description": "Предоставьте ваши Kestra flows как инструменты для MCP-совместимых AI агентов",
       "create": "Создать сервер",

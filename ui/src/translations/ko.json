@@ -2851,7 +2851,7 @@
       "your_servers": "내 서버",
       "servers_count": "{count} MCP 서버 | {count} MCP 서버",
       "managed_by_kestra": "Kestra에서 관리",
-      "servers": "MCP 서버",
+      "servers": "MCP Flow",
       "client_setup": "클라이언트 설정",
       "page_description": "Kestra flow를 MCP 호환 AI 에이전트의 도구로 노출하십시오.",
       "create": "서버 생성",

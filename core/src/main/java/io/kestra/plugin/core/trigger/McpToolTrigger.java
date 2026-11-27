@@ -162,7 +162,7 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
     @Schema(
         title = "ID of the MCP server on which this tool is registered.",
         description = """
-            Must match the `id` of an existing MCP server configured in **Admin → MCP Servers**. \
+            Must match the `id` of an existing MCP server configured in **Tenant → MCP Flows**. \
             Defaults to `default`, the server that is automatically provisioned for every tenant.
             """
     )

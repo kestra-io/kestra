@@ -2851,7 +2851,7 @@
       "your_servers": "あなたのサーバー",
       "servers_count": "{count} MCPサーバー | {count} MCPサーバー",
       "managed_by_kestra": "Kestraによって管理されています",
-      "servers": "MCPサーバー",
+      "servers": "MCP Flow",
       "client_setup": "クライアント設定",
       "page_description": "KestraのflowをMCP互換のAIエージェント用ツールとして公開する",
       "create": "サーバーを作成",

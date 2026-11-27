@@ -2851,7 +2851,7 @@
       "your_servers": "您的服务器",
       "servers_count": "{count} 个 MCP Server",
       "managed_by_kestra": "由 Kestra 管理",
-      "servers": "MCP 服务器",
+      "servers": "MCP Flow",
       "client_setup": "客户端设置",
       "page_description": "将您的Kestra flow公开为MCP兼容AI代理的工具",
       "create": "创建服务器",

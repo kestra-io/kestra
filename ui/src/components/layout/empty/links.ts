@@ -24,7 +24,7 @@ export const links: Record<string, string> = {
     "dependencies.NAMESPACE": "https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-namespace#dependencies",
     "dependencies.ASSET": "https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-asset#dependencies",
     triggers: "https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=triggers",
-    mcpToolFlows: "https://kestra.io/docs/ai-tools/mcp-server?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-flows",
+    mcpToolFlows: "https://kestra.io/docs/ai-orchestration/mcp-server?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-flows",
     concurrency_executions: "https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-executions",
     concurrency_limit: "https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-limit",
     concurrency_limits: "https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-limits",

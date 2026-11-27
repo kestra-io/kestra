@@ -2851,7 +2851,7 @@
       "your_servers": "Twoje Serwery",
       "servers_count": "{count} serwer MCP | {count} serwery MCP | {count} serwerów MCP",
       "managed_by_kestra": "Zarządzane przez Kestra",
-      "servers": "Serwery MCP",
+      "servers": "Flowy MCP",
       "client_setup": "Konfiguracja klienta",
       "page_description": "Udostępnij swoje Flowy Kestry jako narzędzia dla agentów AI zgodnych z MCP",
       "create": "Utwórz serwer",

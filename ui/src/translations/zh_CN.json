@@ -2187,6 +2187,7 @@
     "no_code": {
       "unknown_schema": "未知架构",
       "toggle_pebble": "切换Pebble编辑器",
+      "policy_supplied": "由策略设置",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",

@@ -2187,6 +2187,7 @@
     "no_code": {
       "unknown_schema": "Schéma inconnu",
       "toggle_pebble": "Basculer l'éditeur Pebble",
+      "policy_supplied": "Défini par une politique",
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins",
       "adding": "+ Ajouter un {what}",
       "adding_default": "+ Ajouter une nouvelle valeur",

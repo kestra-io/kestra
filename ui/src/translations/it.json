@@ -2187,6 +2187,7 @@
     "no_code": {
       "unknown_schema": "Schema sconosciuto",
       "toggle_pebble": "Attiva/disattiva editor Pebble",
+      "policy_supplied": "Impostato da una policy",
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition",
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",

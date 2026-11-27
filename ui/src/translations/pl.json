@@ -2748,10 +2748,8 @@
       "run_task": "Uruchom Task",
       "run_this_task": "Uruchom ten Task",
       "run_task_and_downstream": "Uruchom Task i downstream",
-      "run_all_tasks": "Uruchom wszystkie Taski",
       "history": "Ostatnie 10 uruchomień",
-      "clear_history": "Wyczyść historię",
-      "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
+      "clear_history": "Wyczyść historię"
     },
     "submit": "Wyślij",
     "accept": "Zaakceptuj",

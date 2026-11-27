@@ -457,7 +457,7 @@
                         })
                     } else {
                         if (flow.value) {
-                            if (playgroundStore.enabled) {
+                            if (playgroundStore.showInputPrompt) {
                                 const formData = normalizeInputValues(flattenInputs(flow.value.inputs), inputs.value)
                                 await playgroundStore.runUntilTask(
                                     playgroundStore.actionOptions?.taskId, 

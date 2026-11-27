@@ -2748,10 +2748,8 @@
       "run_task": "Task ausführen",
       "run_this_task": "Diesen Task ausführen",
       "run_task_and_downstream": "Task & Downstream ausführen",
-      "run_all_tasks": "Alle Tasks ausführen",
       "history": "Letzte 10 Runs",
-      "clear_history": "Verlauf löschen",
-      "tooltip_persistence": "Wenn du den Playground aus- und wieder einschaltest, bleiben die Informationen erhalten, solange du auf der Seite bleibst."
+      "clear_history": "Verlauf löschen"
     },
     "submit": "Absenden",
     "accept": "Akzeptieren",

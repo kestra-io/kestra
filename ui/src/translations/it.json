@@ -2748,10 +2748,8 @@
       "run_task": "Esegui il task",
       "run_this_task": "Esegui questo task",
       "run_task_and_downstream": "Esegui task e downstream",
-      "run_all_tasks": "Esegui Tutti i Task",
       "history": "Ultime 10 esecuzioni",
-      "clear_history": "Cancella cronologia",
-      "tooltip_persistence": "Se disattivi e riattivi il Playground, le informazioni rimangono finché resti sulla pagina."
+      "clear_history": "Cancella cronologia"
     },
     "submit": "Invia",
     "accept": "Accetta",

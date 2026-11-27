@@ -401,7 +401,7 @@
     )
 
     const isRunnable = computed(() =>
-        playgroundStore.enabled
+        playgroundStore.available
         && !props.readOnly
         && props.section?.toLowerCase() !== "triggers"
         && Boolean(runnableTaskId.value),

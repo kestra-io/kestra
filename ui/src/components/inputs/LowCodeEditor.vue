@@ -17,7 +17,7 @@
             :loadIcon="pluginsStore.loadIcon"
             :execution="executionsStore.execution"
             :subflowsExecutions="executionsStore.graphExecutions"
-            :playgroundEnabled="playgroundStore.enabled"
+            :playgroundEnabled="playgroundStore.available"
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :replayEnabled="replayEnabled"
             :validationIssuesByTask="validationIssuesByTask"
@@ -436,7 +436,7 @@
     const flowSource = computed(() => flowStore.flowYaml || props.source)
 
     const effectiveFlowGraph = computed(() =>
-        playgroundStore.enabled ? (executionsStore.scopedFlowGraph ?? props.flowGraph) : props.flowGraph,
+        playgroundStore.panelOpen ? (executionsStore.scopedFlowGraph ?? props.flowGraph) : props.flowGraph,
     )
 
     const isTask = (value: unknown): value is FlowTask & Task =>

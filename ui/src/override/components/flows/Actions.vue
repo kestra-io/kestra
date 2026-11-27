@@ -1,7 +1,4 @@
 <template>
-    <FlowPlaygroundToggle
-        v-if="isEditTab && isPlaygroundAllowed && editorIsAllowedEdit && !deleted"
-    />
     <template v-if="showDashboards">
         <Dashboards @dashboard="onSelectDashboard" />
         <KsDivider direction="vertical" />
@@ -96,7 +93,6 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
-    import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
@@ -109,7 +105,6 @@
     import {useAuthStore} from "override/stores/auth"
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
     import {useLogsStore} from "../../../stores/logs"
-    import {usePlaygroundStore} from "../../../stores/playground"
     import {useToast} from "../../../utils/toast"
     import {useFlowEditorActions} from "../../../components/flows/useFlowEditorActions"
 
@@ -118,7 +113,6 @@
     const unsavedChangesStore = useUnsavedChangesStore()
     const flowStore = useFlowStore()
     const logsStore = useLogsStore()
-    const playgroundStore = usePlaygroundStore()
     const router = useRouter()
     const route = useRoute()
     const toast = useToast()
@@ -141,7 +135,6 @@
         hasErrors: editorHasErrors,
         isReadOnly: editorIsReadOnly,
         isAllowedEdit: editorIsAllowedEdit,
-        isPlaygroundAllowed,
         publish: editorPublish,
         exportYaml: editorExportYaml,
         copyFlow: editorCopyFlow,
@@ -161,8 +154,8 @@
     const shouldShowExecute = computed(() => {
         if (!flow.value || deleted.value) return false
         if (flowStore.isCreating) return false
-        // on a draft-only flow, only the Playground's Run all tasks can run it
-        if (flowStore.isDraftOnly && !(isEditTab.value && playgroundStore.enabled)) return false
+        // Execute runs the published revision, and a draft-only flow has none
+        if (flowStore.isDraftOnly) return false
         return !!canExecute.value
     })
 

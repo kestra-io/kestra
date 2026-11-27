@@ -2748,10 +2748,8 @@
       "run_task": "Task चलाएँ",
       "run_this_task": "इस task को चलाएं",
       "run_task_and_downstream": "टास्क चलाएं और डाउनस्ट्रीम",
-      "run_all_tasks": "सभी Tasks चलाएं",
       "history": "पिछले 10 रन",
-      "clear_history": "इतिहास साफ़ करें",
-      "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
+      "clear_history": "इतिहास साफ़ करें"
     },
     "submit": "प्रस्तुत करें",
     "accept": "स्वीकारें",

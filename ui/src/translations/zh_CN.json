@@ -2748,10 +2748,8 @@
       "run_task": "运行 task",
       "run_this_task": "运行此task",
       "run_task_and_downstream": "运行 task 和下游",
-      "run_all_tasks": "运行所有Tasks",
       "history": "最近10次运行",
-      "clear_history": "清除历史记录",
-      "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
+      "clear_history": "清除历史记录"
     },
     "submit": "提交",
     "accept": "接受",

@@ -2748,10 +2748,8 @@
       "run_task": "Запустить task",
       "run_this_task": "Запустить этот task",
       "run_task_and_downstream": "Запустить task и downstream",
-      "run_all_tasks": "Запустить все Tasks",
       "history": "Последние 10 запусков",
-      "clear_history": "Очистить историю",
-      "tooltip_persistence": "Если вы выключите и снова включите Playground, информация останется, пока вы находитесь на странице."
+      "clear_history": "Очистить историю"
     },
     "submit": "Отправить",
     "accept": "Принять",

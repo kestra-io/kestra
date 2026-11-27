@@ -356,7 +356,7 @@ export const F2PlaygroundRunTask: Story = {
             const flowStore = useFlowStore()
             const playgroundStore = usePlaygroundStore()
             flowStore.flowYaml = CICD_PIPELINE_YAML
-            playgroundStore.enabled = true
+            playgroundStore.panelOpen = true
             return () => <BlockEditorHost initialParentPath="tasks" initialRefPath={1} />
         },
     }),

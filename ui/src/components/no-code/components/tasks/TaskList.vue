@@ -18,7 +18,7 @@
                         :label="cardLabel(element)"
                         :draggable="filteredElements.length > 1"
                         :dragOver="dragOverIndex === elementIndex"
-                        :runnable="playgroundStore.enabled && hasId(element)"
+                        :runnable="playgroundStore.available && hasId(element)"
                         :showDuplicate="hasId(element)"
                         :icons="pluginsStore.icons"
                         @select="onSelect(elementIndex)"

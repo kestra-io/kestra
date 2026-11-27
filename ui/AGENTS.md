@@ -420,7 +420,7 @@ If your `<style>` block needs to exist:
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
 | `KsUpload` | File upload; `--ks-upload-dragger-padding` and `--ks-upload-dragger-bg` style the drop area, and a background set this way holds while a file is dragged over |
-| `KsEditor` | Code editor (Monaco); `--ks-editor-height` / `--ks-editor-max-height` size the editor area, `--ks-editor-overflow-x` clips it horizontally, `--ks-editor-placeholder-top` moves the placeholder |
+| `KsEditor` | Code editor (Monaco); `--ks-editor-height` / `--ks-editor-max-height` size the editor area, `--ks-editor-overflow-x` clips it horizontally, `--ks-editor-placeholder-top` moves the placeholder; `setGutterActions([{id, line, title?}])` draws a clickable run glyph in the gutter of each line and a click emits `gutter-action` with `{id, shiftKey}` (the flow editor's per-task run) |
 | `KsForm` / `KsFormItem` | Form container with validation; `inline` on a `KsFormItem` puts the label and the control on one row, `stacked` puts each child of the content on its own full-width line (the no-code fields); `wideLabel` stretches the label across the row for a `#label` slot that lays out its own content; `--ks-form-item-label-font-size`, `--ks-form-item-label-font-weight` and `--ks-form-item-label-color` style the labels below where they are set; `--ks-form-item-content-width` fixes the control column of an `inline` item |
 
 ### Data Display

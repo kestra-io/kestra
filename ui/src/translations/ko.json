@@ -2748,10 +2748,8 @@
       "run_task": "Task 실행",
       "run_this_task": "이 task 실행",
       "run_task_and_downstream": "Task 및 다운스트림 실행",
-      "run_all_tasks": "모든 Task 실행",
       "history": "최근 10회 실행",
-      "clear_history": "기록 지우기",
-      "tooltip_persistence": "Playground를 끄고 다시 켜면, 페이지에 머무르는 동안 정보가 유지됩니다."
+      "clear_history": "기록 지우기"
     },
     "submit": "제출",
     "accept": "수락",

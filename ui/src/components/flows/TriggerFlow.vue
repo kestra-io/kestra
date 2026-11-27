@@ -38,7 +38,7 @@
                     <template #id><code>{{ flowId }}</code></template>
                 </i18n-t>
             </template>
-            <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" @execution-trigger="handleExecutionStart" />
             <template #footer>
                 <FlowRunActions :flowRun="flowRunRef" />
             </template>
@@ -87,7 +87,7 @@
                 </KsFormItem>
                 <KsFormItem v-if="localFlow" :label="$t('inputs')">
                     <div class="flow-inputs">
-                        <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+                        <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" />
                     </div>
                 </KsFormItem>
             </KsForm>
@@ -105,7 +105,6 @@
     import {useToast} from "../../utils/toast"
     import {useApiStore} from "../../stores/api"
     import {useExecutionsStore} from "../../stores/executions"
-    import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
     import FlowRun, {type ReplaySubmitOptions} from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
@@ -145,7 +144,6 @@
     const toast = useToast()
     const apiStore = useApiStore()
     const executionsStore = useExecutionsStore()
-    const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
 
     const isOpen = ref(false)
@@ -226,32 +224,16 @@
             emit("blocked")
             return
         }
-        if (playgroundStore.enabled) {
-            playgroundStore.runUntilTask()
-        } else {
-            onClick()
-        }
+        onClick()
     }
 
-    const actionId = computed(() =>
-        playgroundStore.enabled ? "run-all-button" : "execute-button",
-    )
+    const actionId = "execute-button"
 
-    const actionDisabled = computed(() => {
-        if (playgroundStore.enabled) {
-            return isDisabled() || !playgroundStore.readyToStart
-        }
-        return isDisabled()
-    })
+    const actionDisabled = computed(() => isDisabled())
 
-    // The Playground runs what is on screen, so only a regular execution waits on Publish.
-    const isBlocked = computed(() => Boolean(props.blockedReason) && !playgroundStore.enabled)
+    const isBlocked = computed(() => Boolean(props.blockedReason))
 
-    const actionLabel = computed(() =>
-        playgroundStore.enabled
-            ? t("playground.run_all_tasks")
-            : t("execute"),
-    )
+    const actionLabel = computed(() => t("execute"))
 
     const computedFlowId = computed(() =>
         props.flowId ?? localFlow.value?.id,

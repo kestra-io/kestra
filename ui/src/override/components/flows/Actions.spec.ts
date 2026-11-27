@@ -8,7 +8,6 @@ const publish = vi.fn().mockResolvedValue(undefined)
 const routeState = {tab: "edit"}
 const flowState = {deleted: false, exists: true, isCreating: false, isDraftOnly: false}
 const editorState = {isAllowedEdit: true}
-const playgroundState = {enabled: false}
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {tab: routeState.tab}, query: {}}),
@@ -28,10 +27,6 @@ vi.mock("../../../stores/flow", () => ({
         isDraftOnly: flowState.isDraftOnly,
         createFlow: vi.fn(),
     }),
-}))
-
-vi.mock("../../../stores/playground", () => ({
-    usePlaygroundStore: () => playgroundState,
 }))
 
 vi.mock("../../../stores/unsavedChanges", () => ({
@@ -60,12 +55,10 @@ vi.mock("../../../components/flows/useFlowEditorActions", () => ({
         get isAllowedEdit() {
             return editorState.isAllowedEdit
         },
-        isPlaygroundAllowed: false,
         publish,
         exportYaml: vi.fn(),
         copyFlow: vi.fn(),
         deleteFlow: vi.fn(),
-        togglePlayground: vi.fn(),
     }),
 }))
 
@@ -97,7 +90,7 @@ function mountActions() {
         messages,
         global: {
             plugins: [KestraDesignSystem],
-            stubs: {TriggerFlow: true, Dashboards: true, FlowPlaygroundToggle: true},
+            stubs: {TriggerFlow: true, Dashboards: true},
         },
     })
 
@@ -144,7 +137,6 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
         flowState.exists = true
         flowState.isCreating = false
         flowState.isDraftOnly = false
-        playgroundState.enabled = false
         editorState.isAllowedEdit = true
     })
 
@@ -173,14 +165,6 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
         flowState.isDraftOnly = true
 
         expect(findExecute(mountActions()).exists()).toBe(false)
-    })
-
-    it("keeps the Playground's Run all tasks on a flow with only drafts", () => {
-        routeState.tab = "edit"
-        flowState.isDraftOnly = true
-        playgroundState.enabled = true
-
-        expect(findExecute(mountActions()).exists()).toBe(true)
     })
 
     it("offers no Edit flow on the create page, where there is no flow to edit yet", () => {

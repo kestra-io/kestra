@@ -67,7 +67,7 @@ describe("playground run saves a draft", () => {
         flowStore.isCreating = true
         flowStore.saveAsDraft.mockResolvedValue("redirect_to_update")
         const store = await loadStore()
-        store.enabled = false
+        store.panelOpen = false
         let readyWhenNavigating: boolean | undefined
         push.mockImplementation(async () => {
             readyWhenNavigating = store.readyToStart
@@ -81,7 +81,7 @@ describe("playground run saves a draft", () => {
             name: "flows/update/edit",
             query: expect.objectContaining({playground: "on", runUntilTaskId: "a"}),
         }))
-        expect(store.enabled).toBe(true)
+        expect(store.panelOpen).toBe(true)
         expect(readyWhenNavigating).toBe(true)
     })
 

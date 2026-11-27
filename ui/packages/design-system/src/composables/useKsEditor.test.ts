@@ -63,6 +63,7 @@ vi.mock("monaco-editor/editor/editor.api", () => ({
             onDidChangeCursorPosition: vi.fn(() => ({dispose: vi.fn()})),
             onKeyDown: vi.fn(() => ({dispose: vi.fn()})),
             onMouseDown: vi.fn(() => ({dispose: vi.fn()})),
+            createDecorationsCollection: vi.fn(() => ({set: vi.fn()})),
             onMouseMove: vi.fn(() => ({dispose: vi.fn()})),
             onMouseLeave: vi.fn(() => ({dispose: vi.fn()})),
             onDidChangeModelContent: vi.fn(() => ({dispose: vi.fn()})),

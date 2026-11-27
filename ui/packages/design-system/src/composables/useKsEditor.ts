@@ -18,6 +18,7 @@ import {createPebbleEntryTracker, cursorPebbleBlockKey, isCursorInPebbleBlock, i
 import PlaceholderContentWidget from "./PlaceholderContentWidget"
 import {useEditorDecorations} from "./useEditorDecorations"
 import {useEditorContentWidget} from "./useEditorContentWidget"
+import {useEditorGutterActions} from "./useEditorGutterActions"
 import {useEditorScrollMemory} from "./useEditorScrollMemory"
 import {useEditorDatePicker} from "./useEditorDatePicker"
 import {useFlowYamlEditor} from "./useFlowYamlEditor"
@@ -139,6 +140,8 @@ export function useKsEditor(
         modifiedEditor: () => getModifiedEditor() as monaco.editor.IStandaloneCodeEditor | undefined,
     })
     const {highlightPebble, highlightLinesRange, clearLinesRangeHighlights, highlightInitial} = decorationsApi
+
+    const gutterActionsApi = useEditorGutterActions(event => emit("gutter-action", event))
 
     const {showWidgetContent, addContentWidget, removeContentWidget} = useEditorContentWidget({
         codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
@@ -506,6 +509,7 @@ export function useKsEditor(
         if (!isCodeEditor(ed)) return
 
         const codeEditor = ed
+        gutterActionsApi.attach(codeEditor)
 
         scrollMemory.restoreAndTrack(codeEditor)
 
@@ -755,6 +759,7 @@ export function useKsEditor(
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
+        setGutterActions: gutterActionsApi.setGutterActions,
         insertTextAtCursor,
         getEditor,
     }

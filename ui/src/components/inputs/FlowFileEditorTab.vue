@@ -58,15 +58,11 @@
                 @editorMounted="onEditorMounted"
                 @save="flow ? saveFlowYaml(): saveFileContent()"
                 @execute="execute"
-                @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
-                @mouse-leave="() => highlightHoveredTask(-1)"
+                @gutter-action="runGutterAction"
                 @editor-warnings="onKsEditorWarnings"
             >
                 <template #absolute>
                     <ContentSave v-if="!flow" data-test="file-save" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
-                </template>
-                <template v-if="playgroundStore.enabled" #widget-content>
-                    <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
                 </template>
             </KsEditor>
         </template>
@@ -120,7 +116,6 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import {humanFileSize} from "../../utils/utils"
-    import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
     import {authoringSurfaceAnswersKeyFor} from "../no-code/blocks/useAuthoringSurface"
@@ -490,11 +485,7 @@
         flowStore.executeFlow = true
     }
 
-    const {
-        playgroundStore,
-        highlightHoveredTask,
-        highlightedLines,
-    } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
+    const {runGutterAction} = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
 </script>
 
 <style scoped>

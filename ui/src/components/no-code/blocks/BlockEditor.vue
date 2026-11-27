@@ -518,7 +518,7 @@
         errors: flowLevelErrors.value,
         finally: flowLevelFinally.value,
         afterExecution: flowLevelAfterExecution.value,
-    }, playgroundStore.enabled))
+    }, playgroundStore.available))
 
     function openFocusedSplit() {
         const path = focusedBlockPath()

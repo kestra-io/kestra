@@ -66,16 +66,13 @@ vi.mock("../../composables/useEditorBindings", () => ({
     useEditorBindings: () => ({}),
 }))
 vi.mock("../../composables/playground/useFlowEditorRunTaskButton", () => ({
-    default: () => ({playgroundStore: {enabled: false}, highlightHoveredTask: vi.fn(), highlightedLines: ref(undefined)}),
+    default: () => ({runGutterAction: vi.fn()}),
 }))
 vi.mock("@kestra-io/topology", () => ({
     flowYamlUtils: {getTypeAtPosition: vi.fn(), getVersionAtPosition: vi.fn()},
 }))
 vi.mock("@kestra-io/design-system", () => ({
     KsEditor: defineComponent({name: "KsEditor", methods: {getEditor: () => ({})}, template: "<div data-test=\"ks-editor\" />"}),
-}))
-vi.mock("./PlaygroundRunTaskButton.vue", () => ({
-    default: defineComponent({name: "PlaygroundRunTaskButton", template: "<div />"}),
 }))
 vi.mock("./FileExplorer.vue", () => ({
     FILES_CLOSE_TAB_INJECTION_KEY: Symbol("files-close-tab-injection-key"),

@@ -12,6 +12,7 @@ import {
     findIterationByNumber,
     loadIterationExecution,
     LoopIterationError,
+    runningIterationsOf,
     type LoopIteration,
 } from "../utils/loopIterations"
 import {iterationNumber, withScopedIteration, type LoopScopeEntry} from "../utils/loopScope"
@@ -181,9 +182,10 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
             if (!host?.id || !taskRun) return []
             const cacheKey = `${taskRun.id}:${taskRun.state.current}:${host.id}`
             const cached = outputsByLane.value[lane.uid]
-            const terminal = State.isTerminated(taskRun.state.current)
-            hasRunningLane ||= !terminal
-            if (cached?.key === cacheKey && (terminal || now - cached.fetchedAt < AUTO_REFRESH_MS)) return []
+            const current = cached?.key === cacheKey ? cached : undefined
+            const running = !State.isTerminated(taskRun.state.current) || runningIterationsOf(current?.outputs) > 0
+            hasRunningLane ||= running
+            if (current && (!running || now - current.fetchedAt < AUTO_REFRESH_MS)) return []
             return [{uid: lane.uid, cacheKey, hostId: host.id, taskRunId: taskRun.id}]
         })
 
@@ -197,6 +199,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         loaded.forEach((item) => (next[item.uid] = {key: item.cacheKey, outputs: item.outputs, fetchedAt: now}))
         outputsByLane.value = next
 
+        hasRunningLane ||= loaded.some((item) => runningIterationsOf(item.outputs) > 0)
         if (hasRunningLane && outputsTimer === undefined) {
             outputsTimer = setTimeout(() => {
                 outputsTimer = undefined

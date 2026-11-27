@@ -4,6 +4,9 @@ import {latestRequest} from "../utils/latestRequest"
 
 export const LOOP_ITERATIONS_PAGE_SIZE = 10
 
+// The API rejects a page size above PageableUtils.MAX_PAGE_SIZE.
+const MAX_RELOAD_SIZE = 1000
+
 export interface LoopIterationRow {
     id: string;
     value: string;
@@ -127,24 +130,41 @@ export function useLoopIterations(parentExecutionId: string, taskId: string, opt
 
     const startFetch = latestRequest()
     let pendingFetch: Promise<void> = Promise.resolve()
+    let requestedPages = 1
 
     function fetchPage(targetPage: number): Promise<void> {
-        pendingFetch = runFetch(targetPage)
+        requestedPages = targetPage
+        pendingFetch = runFetch(
+            targetPage,
+            LOOP_ITERATIONS_PAGE_SIZE,
+            (rows) => targetPage === 1 ? rows : [...iterations.value, ...rows],
+            targetPage,
+        )
         return pendingFetch
     }
 
-    async function runFetch(targetPage: number): Promise<void> {
+    function fetchRequestedPages(): Promise<void> {
+        const size = Math.min(requestedPages * LOOP_ITERATIONS_PAGE_SIZE, MAX_RELOAD_SIZE)
+        pendingFetch = runFetch(1, size, (rows) => [...rows, ...iterations.value.slice(size)], requestedPages)
+        return pendingFetch
+    }
+
+    async function runFetch(
+        requestPage: number,
+        size: number,
+        merge: (rows: LoopIterationRow[]) => LoopIterationRow[],
+        resultPage: number,
+    ): Promise<void> {
         const isLatest = startFetch()
         loading.value = true
         error.value = undefined
         try {
-            const response = await executionsStore.findExecutions({...listFilters(), page: targetPage, size: LOOP_ITERATIONS_PAGE_SIZE})
+            const response = await executionsStore.findExecutions({...listFilters(), page: requestPage, size})
             if (!isLatest()) return
-            const rows = (response.results ?? []).map(toLoopIterationRow)
 
-            iterations.value = targetPage === 1 ? rows : [...iterations.value, ...rows]
+            iterations.value = merge((response.results ?? []).map(toLoopIterationRow))
             total.value = response.total ?? 0
-            page.value = targetPage
+            page.value = resultPage
             loaded.value = true
         } catch (e) {
             if (!isLatest()) return
@@ -161,8 +181,10 @@ export function useLoopIterations(parentExecutionId: string, taskId: string, opt
     }
 
     function loadMore() {
-        if (!hasMore.value || loading.value) return Promise.resolve()
-        return fetchPage(page.value + 1)
+        if (!hasMore.value) return Promise.resolve()
+        if (!loading.value) return fetchPage(page.value + 1)
+        requestedPages = Math.max(requestedPages, page.value + 1)
+        return fetchRequestedPages()
     }
 
     function retry() {
@@ -172,7 +194,7 @@ export function useLoopIterations(parentExecutionId: string, taskId: string, opt
 
     function reload(): Promise<void> {
         const counts = totalCount.value !== undefined ? loadCounts({force: true}) : Promise.resolve()
-        const rows = loaded.value || loading.value ? fetchPage(1) : Promise.resolve()
+        const rows = loaded.value || loading.value ? fetchRequestedPages() : Promise.resolve()
         return Promise.all([counts, rows]).then(() => undefined)
     }
 

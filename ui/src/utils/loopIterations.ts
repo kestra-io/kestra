@@ -1,4 +1,5 @@
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
+import {State} from "@kestra-io/design-system"
 import type {ApiLoopRun, QueryFilter} from "@kestra-io/kestra-sdk"
 import type {Execution} from "../stores/executions"
 import {handled, type KestraHttpError} from "./kestraHttp"
@@ -7,6 +8,20 @@ import {iterationNumber, type LoopScopeEntry} from "./loopScope"
 export const ITERATIONS_PAGE_SIZE = 50
 export const CANDIDATE_PAGE_SIZE = 10
 export const MAX_CANDIDATE_PAGES = 10
+
+function everyIterationTerminated(outputs: Record<string, unknown> | undefined): boolean {
+    const total = outputs?.iterationCount
+    const terminated = outputs?.terminatedIterations as Record<string, number | undefined> | undefined
+    if (typeof total !== "number" || terminated === undefined || outputs?.runningIterations !== 0) return false
+    return Object.values(terminated).reduce<number>((sum, count) => sum + (count ?? 0), 0) >= total
+}
+
+export const runningIterationsOf = (outputs: Record<string, unknown> | undefined): number =>
+    typeof outputs?.runningIterations === "number" ? outputs.runningIterations : 0
+
+export function hasRunningIterations(loopState: string, outputs: Record<string, unknown> | undefined): boolean {
+    return State.isTerminated(loopState) ? runningIterationsOf(outputs) > 0 : !everyIterationTerminated(outputs)
+}
 
 export type LoopIterationFailure = "forbidden" | "not-found" | "ambiguous" | "unknown"
 

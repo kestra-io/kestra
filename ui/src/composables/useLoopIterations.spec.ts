@@ -336,4 +336,48 @@ describe("useLoopIterations", () => {
         expect(await fetchAt(-1)).toBeUndefined()
         expect(findExecutions).toHaveBeenCalledTimes(1)
     })
+
+    describe("reload racing load more", () => {
+        const resolvers: Array<() => void> = []
+
+        function deferredPages(total: number) {
+            resolvers.length = 0
+            return vi.spyOn(useExecutionsStore(), "findExecutions").mockImplementation(((options: {page: number; size: number}) => new Promise((resolve) => {
+                const start = (options.page - 1) * options.size
+                const results = Array.from({length: Math.max(0, Math.min(options.size, total - start))}, (_, i) => makeExecution(`it-${start + i}`, `V${start + i}`, start + i))
+                resolvers.push(() => resolve({results, total}))
+            })) as never)
+        }
+
+        async function loadedFirstPage() {
+            deferredPages(25)
+            const handle = useLoopIterations("parent-1", "loopTask")
+            const first = handle.ensureLoaded()
+            resolvers.shift()!()
+            await first
+            return handle
+        }
+
+        it("keeps the next page when a reload lands while it loads", async () => {
+            const {iterations, loadMore, reload} = await loadedFirstPage()
+
+            const more = loadMore()
+            const tick = reload()
+            resolvers.forEach((resolve) => resolve())
+            await Promise.all([more, tick])
+
+            expect(iterations.value).toHaveLength(20)
+        })
+
+        it("still loads the next page when it is asked for during a reload", async () => {
+            const {iterations, loadMore, reload} = await loadedFirstPage()
+
+            const tick = reload()
+            const more = loadMore()
+            resolvers.forEach((resolve) => resolve())
+            await Promise.all([more, tick])
+
+            expect(iterations.value).toHaveLength(20)
+        })
+    })
 })

@@ -103,6 +103,7 @@
         useGanttTree,
         type TaskRunNode,
     } from "./gantt/ganttTree"
+    import {useLoopRefresh} from "./gantt/useLoopRefresh"
     import {useGanttTimeline} from "./ganttTimeline"
 
     const props = defineProps<{
@@ -125,6 +126,7 @@
         needsPreview,
         failedOnly,
         ensureLoaded,
+        reload,
         loadMore,
         retry,
         setFailedOnly,
@@ -140,6 +142,8 @@
             "filters[taskId][EQUALS]": props.node.taskRun.taskId,
         },
     }
+
+    useLoopRefresh(() => props.node, {rows: () => iterations.value, refresh: reload})
 
     onMounted(ensureLoaded)
 </script>

@@ -88,6 +88,7 @@ describe("GanttLoopStateBar", () => {
         expect(requestTimes.length).toBeGreaterThanOrEqual(3)
         requestTimes.slice(1).forEach((time, index) => expect(time - requestTimes[index]).toBeGreaterThanOrEqual(LOOP_OUTPUTS_REFRESH_MS))
 
+        outputsByTaskRun["tr-b"] = {iterationCount: 10, runningIterations: 0, terminatedIterations: {SUCCESS: 10}}
         await wrapper.setProps({node: loopNode("tr-b", "SUCCESS")})
         await flushPromises()
         const settled = loadTaskRunOutputs.mock.calls.length
@@ -149,6 +150,21 @@ describe("GanttLoopStateBar", () => {
         await vi.advanceTimersByTimeAsync(LOOP_OUTPUTS_REFRESH_MS * 4)
 
         expect(loadTaskRunOutputs).toHaveBeenCalledTimes(1)
+        expect(vi.getTimerCount()).toBe(0)
+    })
+
+    it("shouldKeepRefreshingAnEndedLoopWhileItsIterationsStillRunThenStop", async () => {
+        outputsByTaskRun["tr-b"] = {iterationCount: 4, runningIterations: 2, terminatedIterations: {FAILED: 1, SUCCESS: 1}}
+        const wrapper = mountBar(loopNode("tr-b", "FAILED"))
+        await flushPromises()
+
+        outputsByTaskRun["tr-b"] = {iterationCount: 4, runningIterations: 0, terminatedIterations: {FAILED: 1, SUCCESS: 3}}
+        await vi.advanceTimersByTimeAsync(LOOP_OUTPUTS_REFRESH_MS)
+
+        expect(segmentsOf(wrapper)).toEqual([["SUCCESS", "3"], ["FAILED", "1"]])
+        const settled = loadTaskRunOutputs.mock.calls.length
+        await vi.advanceTimersByTimeAsync(LOOP_OUTPUTS_REFRESH_MS * 3)
+        expect(loadTaskRunOutputs).toHaveBeenCalledTimes(settled)
         expect(vi.getTimerCount()).toBe(0)
     })
 

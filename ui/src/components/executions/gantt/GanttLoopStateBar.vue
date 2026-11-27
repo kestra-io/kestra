@@ -3,10 +3,11 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, watch} from "vue"
+    import {computed, watch} from "vue"
     import {LoopStateBar, type StateCounts} from "@kestra-io/topology"
     import {State} from "@kestra-io/design-system"
-    import {LOOP_OUTPUTS_REFRESH_MS, useGanttTree, type TaskRunNode} from "./ganttTree"
+    import {useGanttTree, type TaskRunNode} from "./ganttTree"
+    import {useLoopRefresh} from "./useLoopRefresh"
 
     const props = defineProps<{
         node: TaskRunNode;
@@ -25,26 +26,7 @@
         return {counts: terminated, total, running: terminal.value ? 0 : running}
     })
 
-    const everyIterationTerminated = computed(() => {
-        const total = outputs.value?.iterationCount
-        const terminated = outputs.value?.terminatedIterations as StateCounts | undefined
-        if (typeof total !== "number" || terminated === undefined || outputs.value?.runningIterations !== 0) return false
-        return Object.values(terminated).reduce<number>((sum, count) => sum + (count ?? 0), 0) >= total
-    })
-
-    let timer: ReturnType<typeof setInterval> | undefined
-
-    function stopPolling() {
-        clearInterval(timer)
-        timer = undefined
-    }
-
-    watch(() => !terminal.value && !everyIterationTerminated.value, (active) => {
-        stopPolling()
-        if (active) timer = setInterval(() => tree.loadLoopOutputs(props.node), LOOP_OUTPUTS_REFRESH_MS / 2)
-    }, {immediate: true})
-
-    onBeforeUnmount(stopPolling)
+    useLoopRefresh(() => props.node)
 
     watch(() => [props.node.taskRun.id, state.value], () => tree.loadLoopOutputs(props.node), {immediate: true})
 </script>

@@ -508,4 +508,19 @@ describe("useLoopScoping", () => {
         await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS * 3)
         expect(mocks.loadTaskRunOutputs).toHaveBeenCalledTimes(3)
     })
+
+    it("shouldKeepRefreshingAnEndedLoopLaneWhileItsIterationsStillRunThenStop", async () => {
+        vi.useFakeTimers({toFake: ["setTimeout", "clearTimeout", "Date"]})
+        mocks.loadTaskRunOutputs.mockResolvedValue({iterationCount: 4, runningIterations: 2, terminatedIterations: {FAILED: 1, SUCCESS: 1}})
+        const {scoping} = setup(true, graph, executionWithRuns(taskRun("tr-loop", "FAILED")))
+        await vi.advanceTimersByTimeAsync(0)
+
+        mocks.loadTaskRunOutputs.mockResolvedValue({iterationCount: 4, runningIterations: 0, terminatedIterations: {FAILED: 1, SUCCESS: 3}})
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS)
+
+        expect(scoping.lanes.value.per_region).toMatchObject({runningIterations: 0, terminatedIterations: {FAILED: 1, SUCCESS: 3}})
+        const settled = mocks.loadTaskRunOutputs.mock.calls.length
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS * 3)
+        expect(mocks.loadTaskRunOutputs).toHaveBeenCalledTimes(settled)
+    })
 })

@@ -34,6 +34,7 @@ export type Schema = {
     $secret?: boolean;
     $deprecated?: boolean;
     $group?: string;
+    $requiredGroups?: string[];
     $index?: number;
     $dynamic?: boolean;
 }

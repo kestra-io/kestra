@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "Propriétés obsolètes",
+        "operators": "Opérateurs",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "errors": "Gestionnaires d'erreurs",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "Votre YAML reste inchangé. Rien n'est réécrit dans le flow tant que vous n'avez pas remplacé l'implémentation."
       },
       "required_missing": "Champ obligatoire non défini",
+      "required_group_missing": "Définissez au moins une de ces propriétés",
       "required_unset_jump": "Aller au premier",
       "required_unset_plural": "{count} champs obligatoires ne sont pas encore renseignés",
       "required_unset_singular": "1 champ obligatoire n'est pas encore renseigné",

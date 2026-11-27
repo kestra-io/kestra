@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "不推荐使用的属性",
+        "operators": "操作员",
         "tasks": "任务",
         "triggers": "触发器",
         "errors": "错误处理程序",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "您的 YAML 未被修改。在您替换该实现之前，不会向 flow 写入任何内容。"
       },
       "required_missing": "必填字段未设置",
+      "required_group_missing": "设置这些属性中的至少一个",
       "required_unset_jump": "跳转到第一个",
       "required_unset_plural": "还有 {count} 个必填字段未设置",
       "required_unset_singular": "还有 1 个必填字段未设置",

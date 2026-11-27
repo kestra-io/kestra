@@ -2,6 +2,7 @@ import type {Schema} from "../components/tasks/getTaskComponent"
 import {shouldDrillItem, describeArrayItem} from "../components/tasks/fieldNesting"
 import {resolveDiscriminator} from "../components/tasks/discriminatedUnion"
 import type {NavFrame} from "./useFieldNavigation"
+import {isUnset, unsetRequiredGroups} from "./requiredGroups"
 
 export interface UnsetRequiredField {
     path: string
@@ -63,10 +64,6 @@ function resolveAnyOfBranch(value: unknown, schema: PartialSchema, definitions: 
     return resolvedBranches.find((branch) => branch.type === jsTypeToSchemaType[jsType])
 }
 
-function isUnset(value: unknown): boolean {
-    return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
-}
-
 /**
  * Walks a task's data alongside its schema to find required properties left unset, recursing into
  * nested objects, array items and the anyOf branch matching the current value — independent of
@@ -99,7 +96,11 @@ export function countUnsetRequiredFields(
     const value = model && typeof model === "object" && !Array.isArray(model) ? model as Record<string, unknown> : {}
     const keys = new Set([...Object.keys(resolved.properties ?? {}), ...(resolved.required ?? [])])
 
-    return [...keys].flatMap((key) => {
+    const unsetGroups = [...unsetRequiredGroups(model, resolved)].map(([group, [firstKey]]) =>
+        ({path: path ? `${path}.${firstKey}` : firstKey, label: group}),
+    )
+
+    return [...unsetGroups, ...[...keys].flatMap((key) => {
         const childSchema = resolved.properties?.[key]
         const childValue = value[key]
         const childPath = path ? `${path}.${key}` : key
@@ -111,7 +112,7 @@ export function countUnsetRequiredFields(
         return childValue !== undefined && childSchema
             ? countUnsetRequiredFields(childValue, childSchema, definitions, childPath)
             : []
-    })
+    })]
 }
 
 /**

@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "अप्रचलित गुण",
+        "operators": "ऑपरेटर",
         "tasks": "कार्य",
         "triggers": "ट्रिगर्स",
         "errors": "त्रुटि हैंडलर्स",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "आपका YAML अपरिवर्तित है। जब तक आप कार्यान्वयन नहीं बदलते, तब तक फ़्लो में कुछ भी नहीं लिखा जाएगा।"
       },
       "required_missing": "आवश्यक फ़ील्ड सेट नहीं है",
+      "required_group_missing": "इनमें से कम से कम एक प्रॉपर्टी सेट करें",
       "required_unset_jump": "पहले पर जाएं",
       "required_unset_plural": "{count} आवश्यक फ़ील्ड अभी तक सेट नहीं हैं",
       "required_unset_singular": "1 आवश्यक फ़ील्ड अभी तक सेट नहीं है",

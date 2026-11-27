@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "사용되지 않는 속성",
+        "operators": "운영자",
         "tasks": "작업",
         "triggers": "트리거",
         "errors": "오류 처리기",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "YAML은 변경되지 않았습니다. 구현체를 교체하기 전까지는 flow에 아무것도 기록되지 않습니다."
       },
       "required_missing": "필수 필드가 설정되지 않았습니다.",
+      "required_group_missing": "이 속성 중 하나 이상을 설정하세요",
       "required_unset_jump": "첫 번째로 이동",
       "required_unset_plural": "{count}개의 필수 필드가 아직 설정되지 않았습니다",
       "required_unset_singular": "필수 필드 1개가 아직 설정되지 않았습니다",

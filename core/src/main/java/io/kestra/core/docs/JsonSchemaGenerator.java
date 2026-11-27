@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.RequiredGroups;
 import io.kestra.core.models.annotations.ServerOwned;
 import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Asset;
@@ -998,6 +999,12 @@ public class JsonSchemaGenerator {
                 Deprecated deprecated = scope.getType().getErasedType().getAnnotation(Deprecated.class);
                 if ((schema != null && schema.deprecated()) || deprecated != null) {
                     collectedTypeAttributes.put("$deprecated", "true");
+                }
+
+                RequiredGroups requiredGroups = scope.getType().getErasedType().getAnnotation(RequiredGroups.class);
+                if (requiredGroups != null) {
+                    ArrayNode groups = collectedTypeAttributes.putArray("$requiredGroups");
+                    Arrays.stream(requiredGroups.value()).forEach(groups::add);
                 }
             });
 

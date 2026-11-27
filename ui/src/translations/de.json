@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "Veraltete Eigenschaften",
+        "operators": "Operatoren",
         "tasks": "Tasks",
         "triggers": "Trigger",
         "errors": "Error-Handler",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "Ihr YAML bleibt unverändert. Es wird nichts in den Flow zurückgeschrieben, bis Sie die Implementierung ersetzen."
       },
       "required_missing": "Erforderliches Feld nicht gesetzt",
+      "required_group_missing": "Setze mindestens eine dieser Eigenschaften",
       "required_unset_jump": "Zum ersten springen",
       "required_unset_plural": "{count} Pflichtfelder sind noch nicht gesetzt",
       "required_unset_singular": "1 Pflichtfeld ist noch nicht gesetzt",

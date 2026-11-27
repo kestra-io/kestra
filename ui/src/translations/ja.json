@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "非推奨プロパティ",
+        "operators": "オペレーター",
         "tasks": "タスク",
         "triggers": "トリガー",
         "errors": "エラーハンドラー",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "YAMLは変更されていません。実装を置き換えるまで、フローには何も書き込まれません。"
       },
       "required_missing": "必須フィールドが設定されていません",
+      "required_group_missing": "これらのプロパティの少なくとも1つを設定してください",
       "required_unset_jump": "最初へ移動",
       "required_unset_plural": "{count} 件の必須フィールドがまだ設定されていません",
       "required_unset_singular": "1 件の必須フィールドがまだ設定されていません",

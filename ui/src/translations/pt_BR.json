@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "Propriedades obsoletas",
+        "operators": "Operadores",
         "tasks": "Tarefas",
         "triggers": "Triggers",
         "errors": "Manipuladores de Erro",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "Seu YAML permanece inalterado. Nada é gravado no flow até que você substitua a implementação."
       },
       "required_missing": "Campo obrigatório não preenchido",
+      "required_group_missing": "Defina pelo menos uma dessas propriedades",
       "required_unset_jump": "Ir para o primeiro",
       "required_unset_plural": "{count} campos obrigatórios ainda não foram definidos",
       "required_unset_singular": "1 campo obrigatório ainda não foi definido",

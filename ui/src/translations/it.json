@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "Proprietà deprecate",
+        "operators": "Operatori",
         "tasks": "Attività",
         "triggers": "Trigger",
         "errors": "Gestori degli Errori",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "Il tuo YAML resta invariato. Non viene scritto nulla nel flow finché non sostituisci l'implementazione."
       },
       "required_missing": "Campo obbligatorio non impostato",
+      "required_group_missing": "Imposta almeno una di queste proprietà",
       "required_unset_jump": "Vai al primo",
       "required_unset_plural": "{count} campi obbligatori non sono ancora impostati",
       "required_unset_singular": "1 campo obbligatorio non è ancora impostato",

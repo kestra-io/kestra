@@ -28,6 +28,7 @@
                     :class="{'is-open': activeNames.includes(section.key)}"
                     data-collapsible-group
                     :data-group-open="activeNames.includes(section.key)"
+                    :data-required-path="requiredGroupPath(section.key)"
                 >
                     <button
                         type="button"
@@ -37,10 +38,15 @@
                         @click="toggleGroup(section.key)"
                     >
                         <ChevronDown class="gh-caret" />
-                        <span class="gh-title">{{ groupTitle(section.key) }}</span>
+                        <span class="gh-title" :class="{'is-required': isRequiredGroup(section.key)}">{{ groupTitle(section.key) }}</span>
                         <span class="gh-count">{{ section.properties.length }}</span>
                     </button>
                     <div v-show="activeNames.includes(section.key)" class="group-body">
+                        <FieldValidationErrors
+                            v-if="unsetGroups.has(section.key)"
+                            :errors="[$t('block_editor.required_group_missing')]"
+                            dataTest="group-required-missing"
+                        />
                         <Wrapper v-for="[fieldKey, fieldSchema] in section.properties" :key="fieldKey">
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -99,6 +105,8 @@
     import Wrapper from "./Wrapper.vue"
     import TaskObjectField from "./TaskObjectField.vue"
     import TaskUnknownField from "./TaskUnknownField.vue"
+    import FieldValidationErrors from "../FieldValidationErrors.vue"
+    import {schemaGroup, unsetRequiredGroups} from "../../utils/requiredGroups"
     import {unknownPropertiesOf} from "./unknownProperties"
     import {collapseEmptyValues} from "./MixinTask"
     import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
@@ -138,7 +146,7 @@
     const GROUP_ORDER = ["connection", "source", "processing", "execution", "destination", "reliability", "advanced"]
     const GROUPS_EXPANDED_BY_DEFAULT = new Set(["connection", "source", "destination"])
 
-    const activeNames = ref<string[]>([...GROUPS_EXPANDED_BY_DEFAULT, "optional", "advanced"])
+    const activeNames = ref<string[]>([...GROUPS_EXPANDED_BY_DEFAULT, "optional", "advanced", ...(props.schema?.$requiredGroups ?? [])])
 
     function toggleGroup(key: string) {
         const index = activeNames.value.indexOf(key)
@@ -199,22 +207,6 @@
         return false
     }
 
-    function getGroup(value: Schema): string | null {
-        if (value?.allOf) {
-            for (const item of value.allOf) {
-                const g = getGroup(item)
-                if (g) return g
-            }
-        }
-        if (value?.anyOf) {
-            for (const item of value.anyOf) {
-                const g = getGroup(item)
-                if (g) return g
-            }
-        }
-        return value?.$group ?? null
-    }
-
     function getIndex(value: Schema): number {
         if (value?.allOf) {
             for (const item of value.allOf) {
@@ -251,6 +243,21 @@
 
     const isRequired = (key: string) => Boolean(props.schema?.required?.includes(key))
 
+    const isRequiredGroup = (group: string) => Boolean(props.schema?.$requiredGroups?.includes(group))
+
+    const unsetGroups = computed(() => props.modelValue == null
+        ? new Map<string, string[]>()
+        : unsetRequiredGroups(props.modelValue, {
+            properties: props.properties ?? props.schema?.properties,
+            $requiredGroups: props.schema?.$requiredGroups,
+        }))
+
+    function requiredGroupPath(group: string): string | undefined {
+        const firstKey = unsetGroups.value.get(group)?.[0]
+        if (!firstKey) return undefined
+        return props.root ? `${props.root}.${firstKey}` : firstKey
+    }
+
     const dataTypesMap = inject(DATA_TYPES_MAP_INJECTION_KEY, ref<Record<string, string[] | undefined>>({}))
 
     const mainProperties = computed<Entry[]>(() => {
@@ -283,7 +290,7 @@
             const [p, v] = entry
             if (!v || isRequired(p) || isPartOfGroup(v, ["main"]) || isDeprecated(v)) continue
 
-            const group = getGroup(v)
+            const group = schemaGroup(v)
             if (group === "main") continue
 
             if (!buckets.has(group)) buckets.set(group, [])
@@ -291,14 +298,17 @@
         }
 
         const sorted = (g: string | null) => sortByIndex(buckets.get(g)!)
-        const known = GROUP_ORDER.filter(g => buckets.has(g)).map(g => ({key: g, properties: sorted(g)}))
+        const required = [...buckets.keys()]
+            .filter((g): g is string => g !== null && isRequiredGroup(g))
+            .map(g => ({key: g, properties: sorted(g)}))
+        const known = GROUP_ORDER.filter(g => buckets.has(g) && !isRequiredGroup(g)).map(g => ({key: g, properties: sorted(g)}))
         const unknown = [...buckets.keys()]
-            .filter((g): g is string => g !== null && !GROUP_ORDER.includes(g))
+            .filter((g): g is string => g !== null && !GROUP_ORDER.includes(g) && !isRequiredGroup(g))
             .sort()
             .map(g => ({key: g, properties: sorted(g)}))
         const ungrouped = buckets.has(null) ? [{key: "optional", properties: sorted(null)}] : []
 
-        return [...known, ...unknown, ...ungrouped]
+        return [...required, ...known, ...unknown, ...ungrouped]
     })
 
     const deprecatedProperties = computed<Entry[]>(() => {
@@ -468,6 +478,12 @@
     color: var(--ks-icon-muted);
     transition: transform 0.15s;
     transform: rotate(-90deg);
+}
+
+.gh-title.is-required::before {
+    content: "*";
+    margin-inline-end: var(--ks-spacing-1);
+    color: var(--ks-text-error);
 }
 
 .group.is-open .gh-caret {

@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "Właściwości przestarzałe",
+        "operators": "Operatory",
         "tasks": "Taski",
         "triggers": "Triggery",
         "errors": "Error Handlery",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "Twój YAML pozostaje niezmieniony. Nic nie zostanie zapisane w przepływie, dopóki nie zastąpisz implementacji."
       },
       "required_missing": "Wymagane pole nieustawione",
+      "required_group_missing": "Ustaw co najmniej jedną z tych właściwości",
       "required_unset_jump": "Przejdź do pierwszego",
       "required_unset_plural": "{count} wymaganych pól nie jest jeszcze ustawionych",
       "required_unset_singular": "1 wymagane pole nie jest jeszcze ustawione",

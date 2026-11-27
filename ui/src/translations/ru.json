@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "Устаревшие свойства",
+        "operators": "Операторы",
         "tasks": "Задачи",
         "triggers": "Триггеры",
         "errors": "Обработчики ошибок",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "Ваш YAML не изменён. Ничего не будет записано в flow, пока вы не замените реализацию."
       },
       "required_missing": "Обязательное поле не заполнено",
+      "required_group_missing": "Установите хотя бы одно из этих свойств",
       "required_unset_jump": "Перейти к первому",
       "required_unset_plural": "{count} обязательных полей ещё не заполнено",
       "required_unset_singular": "1 обязательное поле ещё не заполнено",

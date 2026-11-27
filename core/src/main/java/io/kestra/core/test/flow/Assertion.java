@@ -9,6 +9,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.TypeConversionException;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.RequiredGroups;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -29,7 +31,10 @@ import static io.kestra.core.test.flow.Assertion.Operator.*;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @TestSuiteAssertionValidation
+@RequiredGroups(Assertion.OPERATORS_GROUP)
 public class Assertion {
+    public static final String OPERATORS_GROUP = "operators";
+
     @NotNull
     private Property<Object> value;
 
@@ -39,18 +44,31 @@ public class Assertion {
 
     private Property<String> description;
 
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<String> endsWith;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<String> startsWith;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<String> contains;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<Object> equalTo;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<Object> notEqualTo;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<Double> greaterThan;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<Double> greaterThanOrEqualTo;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<Double> lessThan;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<Double> lessThanOrEqualTo;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<List<Object>> in;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<List<Object>> notIn;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<Boolean> isNull;
+    @PluginProperty(group = OPERATORS_GROUP)
     private Property<Boolean> isNotNull;
 
     public boolean hasAtLeastOneAssertion() {

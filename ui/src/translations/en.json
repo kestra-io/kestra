@@ -2197,6 +2197,7 @@
       },
       "sections": {
         "deprecated": "Deprecated properties",
+        "operators": "Operators",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "errors": "Error Handlers",
@@ -3177,6 +3178,7 @@
         "unresolved_untouched": "Your YAML is untouched. Nothing is written back to the flow until you replace the implementation."
       },
       "required_missing": "Required field not set",
+      "required_group_missing": "Set at least one of these properties",
       "required_unset_jump": "Jump to first",
       "required_unset_plural": "{count} required fields are not set yet",
       "required_unset_singular": "1 required field is not set yet",

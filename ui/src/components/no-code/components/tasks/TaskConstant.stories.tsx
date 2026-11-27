@@ -36,7 +36,7 @@ export const Default: Story = {
     },
     async play({canvasElement}) {
         const canvas = within(canvasElement);
-        expect(canvas.getByTestId("result").textContent).toBe(
+        await expect(canvas.getByTestId("result").textContent).toBe(
             JSON.stringify("io.kestra.plugin.core.log.Log"),
         );
     },

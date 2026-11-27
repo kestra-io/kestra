@@ -210,7 +210,7 @@ export const Fullscreen: Story = {
         scroller.dispatchEvent(new Event("scroll"));
         await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
         const inlineScrollTop = scroller.scrollTop;
-        expect(inlineScrollTop).toBeGreaterThan(0);
+        await expect(inlineScrollTop).toBeGreaterThan(0);
 
         await userEvent.click(fullscreenButton);
 
@@ -221,9 +221,9 @@ export const Fullscreen: Story = {
         });
 
         const exitFullscreenButton = within(dialog).getByRole("button", {name: /exit fullscreen/i});
-        expect(exitFullscreenButton).toHaveAttribute("aria-pressed", "true");
-        expect(dialog.querySelector("[data-test='logs-toolbar']")).toBeInTheDocument();
-        expect(dialog.querySelector("[data-test='logs-scroller']")).toBeInTheDocument();
+        await expect(exitFullscreenButton).toHaveAttribute("aria-pressed", "true");
+        await expect(dialog.querySelector("[data-test='logs-toolbar']")).toBeInTheDocument();
+        await expect(dialog.querySelector("[data-test='logs-scroller']")).toBeInTheDocument();
         await waitFor(() => expect(Math.abs(scroller.scrollTop - inlineScrollTop)).toBeLessThan(50));
 
         const fullscreenScrollTop = scroller.scrollTop;
@@ -233,7 +233,7 @@ export const Fullscreen: Story = {
         await waitFor(() => expect(Math.abs(scroller.scrollTop - fullscreenScrollTop)).toBeLessThan(50));
         const reopenFullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']");
         if (!reopenFullscreenButton) throw new Error("fullscreen logs button not found after closing the dialog");
-        expect(reopenFullscreenButton).toHaveAttribute("aria-pressed", "false");
+        await expect(reopenFullscreenButton).toHaveAttribute("aria-pressed", "false");
 
         await userEvent.click(reopenFullscreenButton);
         await waitFor(() => expect(dialog).toBeVisible());
@@ -256,7 +256,7 @@ function compactFullscreenPlay(lastTaskId = "task-3") {
         const rawFilter = canvas.getByRole("textbox");
         await userEvent.clear(rawFilter);
         await userEvent.type(rawFilter, COMPACT_FILTERS);
-        expect(rawFilter).toHaveValue(COMPACT_FILTERS);
+        await expect(rawFilter).toHaveValue(COMPACT_FILTERS);
         await userEvent.keyboard("{Enter}");
         await userEvent.click(canvas.getByRole("button", {name: "Edit visually"}));
         await waitFor(() => expect(canvas.getByRole("button", {name: "4 rules"})).toBeVisible());
@@ -272,38 +272,38 @@ function compactFullscreenPlay(lastTaskId = "task-3") {
         await waitFor(() => expect(compactScroller.scrollTop).toBeGreaterThan(400));
         const inlinePosition = compactScroller.scrollTop;
         await userEvent.click(fullscreenButton);
-        const dialog = await waitFor(() => {
+        const dialog = await waitFor(async () => {
             const element = iframeBody.querySelector<HTMLElement>("[data-test='logs-fullscreen-dialog']");
             if (!element) throw new Error("fullscreen dialog not found");
-            expect(element).toBeVisible();
+            await expect(element).toBeVisible();
             return element;
         });
 
-        await waitFor(() => {
+        await waitFor(async () => {
             compactScroller = dialog.querySelector<HTMLElement>("[data-scroll-key='task-run-1']")!;
             const bounds = compactScroller.getBoundingClientRect();
             const dialogBounds = dialog.getBoundingClientRect();
-            expect(bounds.height).toBeGreaterThan(0);
-            expect(bounds.bottom).toBeLessThanOrEqual(dialogBounds.bottom);
-            expect(getComputedStyle(compactScroller).maxHeight).toBe("none");
-            expect(compactScroller.scrollHeight).toBeGreaterThan(compactScroller.clientHeight);
-            expect(Math.abs(compactScroller.scrollTop - inlinePosition)).toBeLessThan(50);
+            await expect(bounds.height).toBeGreaterThan(0);
+            await expect(bounds.bottom).toBeLessThanOrEqual(dialogBounds.bottom);
+            await expect(getComputedStyle(compactScroller).maxHeight).toBe("none");
+            await expect(compactScroller.scrollHeight).toBeGreaterThan(compactScroller.clientHeight);
+            await expect(Math.abs(compactScroller.scrollTop - inlinePosition)).toBeLessThan(50);
         });
 
         const fullscreenPosition = compactScroller.scrollTop;
         await userEvent.click(within(dialog).getByRole("button", {name: /exit fullscreen/i}));
-        await waitFor(() => {
+        await waitFor(async () => {
             expect(dialog).not.toBeVisible();
             compactScroller = canvasElement.querySelector<HTMLElement>("[data-scroll-key='task-run-1']")!;
-            expect(Math.abs(compactScroller.scrollTop - fullscreenPosition)).toBeLessThan(50);
+            await expect(Math.abs(compactScroller.scrollTop - fullscreenPosition)).toBeLessThan(50);
         });
         await userEvent.click(fullscreenButton);
         await waitFor(() => expect(dialog).toBeVisible());
         await userEvent.keyboard("{Escape}");
-        await waitFor(() => {
+        await waitFor(async () => {
             expect(dialog).not.toBeVisible();
             compactScroller = canvasElement.querySelector<HTMLElement>("[data-scroll-key='task-run-1']")!;
-            expect(Math.abs(compactScroller.scrollTop - fullscreenPosition)).toBeLessThan(50);
+            await expect(Math.abs(compactScroller.scrollTop - fullscreenPosition)).toBeLessThan(50);
         });
         await userEvent.click(fullscreenButton);
         await waitFor(() => expect(dialog).toBeVisible());
@@ -325,9 +325,9 @@ function compactFullscreenPlay(lastTaskId = "task-3") {
                 const bounds = element.getBoundingClientRect();
                 return bounds.top >= scrollerBounds.top && bounds.bottom <= dialogBounds.bottom;
             });
-            expect(visibleTail).toBeDefined();
+            await expect(visibleTail).toBeDefined();
         });
-        expect(within(dialog).queryAllByText(/^task-\d entry \d+$/).length).toBeLessThan(300);
+        await expect(within(dialog).queryAllByText(/^task-\d entry \d+$/).length).toBeLessThan(300);
     };
 }
 
@@ -336,34 +336,36 @@ export const CompactFullscreen: Story = {
     parameters: {
         viewport: {
             options: {narrow: {name: "Narrow log viewport", styles: {width: "900px", height: "720px"}}},
-            defaultViewport: "narrow",
         },
     },
+    globals: {viewport: {value: "narrow", isRotated: false}},
     play: compactFullscreenPlay(),
 };
 
 export const CompactFullscreenDark: Story = {
     ...CompactFullscreen,
-    globals: {theme: "dark"},
+    globals: {...CompactFullscreen.globals, theme: "dark"},
 };
 
 export const CompactFullscreenSingleTask: Story = {
     parameters: CompactFullscreen.parameters,
+    globals: CompactFullscreen.globals,
     decorators: makeDecorators(false, COMPACT_LOGS.slice(0, 1700), {...COMPACT_EXECUTION, taskRunList: COMPACT_EXECUTION.taskRunList.slice(0, 1)}),
     play: compactFullscreenPlay("task-1"),
 };
 
 export const CompactFullscreenVirtualizedTasks: Story = {
     parameters: CompactFullscreen.parameters,
+    globals: CompactFullscreen.globals,
     decorators: makeDecorators(false, VIRTUALIZED_LOGS, VIRTUALIZED_EXECUTION),
     play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
         const iframeBody = canvasElement.ownerDocument.body;
         const fullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']")!;
         await userEvent.click(fullscreenButton);
-        const dialog = await waitFor(() => {
+        const dialog = await waitFor(async () => {
             const element = iframeBody.querySelector<HTMLElement>("[data-test='logs-fullscreen-dialog']");
             if (!element) throw new Error("fullscreen dialog not ready");
-            expect(element).toBeVisible();
+            await expect(element).toBeVisible();
             return element;
         });
         const firstTaskScroller = await waitFor(() => {
@@ -396,7 +398,7 @@ export const CompactFullscreenVirtualizedTasks: Story = {
             recycledFirstTaskScroller.scrollTop = 50;
             recycledFirstTaskScroller.dispatchEvent(new Event("scroll"));
             await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-            expect(Math.abs(recycledFirstTaskScroller.scrollTop - 50)).toBeLessThan(2);
+            await expect(Math.abs(recycledFirstTaskScroller.scrollTop - 50)).toBeLessThan(2);
         });
     },
 };
@@ -508,10 +510,10 @@ export const WithLogLinks: Story = {
 
         // linkify runs in nextTick after renderedHtml — wait for the <a> to appear.
         await waitFor(
-            () => {
+            async () => {
                 const anchor = linkLine.querySelector("a");
                 if (!anchor) throw new Error("no <a> anchor in Subflow triggered line");
-                expect(anchor.getAttribute("href")).toContain("test-exec-id");
+                await expect(anchor.getAttribute("href")).toContain("test-exec-id");
             },
             {timeout: 3000}
         );

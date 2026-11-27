@@ -967,9 +967,11 @@ public class FlowController {
                 Import flows as a ZIP archive of yaml sources or a multi-objects YAML file.
                 When sending a Yaml that contains one or more flows, a list of index is returned.
                 When sending a ZIP archive, a list of files that couldn't be imported is returned.
+                When a flow targets a namespace the user cannot import into, the allowed flows are still imported and a 403 is returned instead of the list.
             """
     )
     @ApiResponse(responseCode = "200", description = "On success")
+    @ApiResponse(responseCode = "403", description = "At least one flow targets a namespace the user is not allowed to import into")
     public HttpResponse<List<String>> importFlows(
         @Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file")
         @Part CompletedFileUpload fileUpload,

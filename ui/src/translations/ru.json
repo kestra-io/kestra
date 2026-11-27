@@ -399,6 +399,7 @@
     "create": "Создать",
     "create_flow": "Создать Flow",
     "create_child_namespace": "Создать дочерний namespace",
+    "view_all_flows": "Показать все flow",
     "from": "От",
     "to": "До",
     "steps": "Шаги",
@@ -2017,6 +2018,7 @@
       "add": "Создать",
       "update": "Обновить значение для key '{key}'",
       "duplicate": "Этот key уже существует",
+      "description_latin1": "Описание может содержать только латинские символы, без эмодзи.",
       "delete multiple": {
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>",
@@ -2633,7 +2635,11 @@
           "errorHandling": "Добавить обработку ошибок",
           "unitTest": "Сгенерировать модульный тест",
           "explain": "Объяснить этот flow",
-          "dbt": "Запустить dbt конвейер"
+          "dbt": "Запустить dbt конвейер",
+          "createFlow": "Создайте flow, который…",
+          "createFlowPrefill": "Создайте Flow, который",
+          "pythonSchedule": "Запускать Python-скрипт каждый день",
+          "triggers": "Как работают Trigger'ы?"
         },
         "voice": {
           "start": "Начать голосовой ввод",

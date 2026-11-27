@@ -18,6 +18,7 @@ import io.kestra.core.ai.agent.models.AgentThinking;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.MapUtils;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
@@ -173,7 +174,7 @@ public final class ChatMessageAdaptor {
         }
         try {
             Map<String, Object> parsed = MAPPER.readValue(json, Map.class);
-            return parsed == null ? Map.of() : parsed;
+            return MapUtils.emptyOnNull(parsed);
         } catch (Exception e) {
             return Map.of();
         }

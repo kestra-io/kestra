@@ -1,4 +1,5 @@
 import {setup} from "@storybook/vue3-vite"
+import "../src/utils/monacoFeatures"
 import {withThemeByClassName} from "@storybook/addon-themes"
 import type {Preview} from "@storybook/vue3-vite"
 import {createI18n} from "vue-i18n"

@@ -399,6 +399,7 @@
     "create": "Créer",
     "create_flow": "Créer Flow",
     "create_child_namespace": "Créer un namespace enfant",
+    "view_all_flows": "Voir tous les flows",
     "from": "De",
     "to": "à",
     "steps": "Étapes",
@@ -2017,6 +2018,7 @@
       "add": "Créer",
       "update": "Mettre à jour la valeur pour la clé '{key}'",
       "duplicate": "Cette clé existe déjà",
+      "description_latin1": "La description ne peut contenir que des caractères latins, sans emoji.",
       "delete multiple": {
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>",
@@ -2633,7 +2635,11 @@
           "errorHandling": "Ajouter la gestion des erreurs",
           "unitTest": "Générer un test unitaire",
           "explain": "Expliquer ce flow",
-          "dbt": "Exécuter un pipeline dbt"
+          "dbt": "Exécuter un pipeline dbt",
+          "createFlow": "Créer un flow qui…",
+          "createFlowPrefill": "Créez un Flow qui",
+          "pythonSchedule": "Exécuter un script Python tous les jours",
+          "triggers": "Comment fonctionnent les triggers ?"
         },
         "voice": {
           "start": "Démarrer la saisie vocale",

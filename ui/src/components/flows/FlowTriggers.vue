@@ -69,9 +69,7 @@
                 :minWidth="140"
             >
                 <template #default="scope">
-                    <code>
-                        {{ scope.row.id }}
-                    </code>
+                    <code class="identifier"><BreakableText :value="scope.row.id" /></code>
                     <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
                         <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
                             <AlertCircle />
@@ -120,14 +118,15 @@
                             </KsTag>
                         </KsTooltip>
                         <KsTag
-                            v-else-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate && scope.row.kind !== 'UNSCHEDULED'"
+                            data-test="trigger-never-evaluated"
                             type="warning"
                             size="small"
                             effect="light"
                         >
                             {{ $t("datepicker.never") }}
                         </KsTag>
-                        <KsDateAgo v-else :inverted="true" :date="scope.row.nextEvaluationDate" />
+                        <KsDateAgo v-else-if="scope.row.nextEvaluationDate" :inverted="true" :date="scope.row.nextEvaluationDate" />
                     </template>
                     <template v-else-if="col.prop === 'evaluatedAt'">
                         <KsDateAgo :inverted="true" :date="scope.row.evaluatedAt" />
@@ -153,6 +152,7 @@
                             </KsIconButton>
                         </div>
                     </template>
+                    <span v-else-if="col.prop === 'type'" class="identifier"><BreakableText :value="scope.row.type" /></span>
                     <template v-else>
                         {{ scope.row[col.prop] }}
                     </template>
@@ -388,7 +388,8 @@
 
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {hasMissingRequiredInputs} from "../../utils/inputs"
+    import {flattenInputs, hasMissingRequiredInputs} from "../../utils/inputs"
+    import {normalizeInputValues} from "../../utils/submitTask"
     import type {ExecutionLabelInput} from "../../utils/executionLabels"
 
     import {useFlowStore} from "../../stores/flow"
@@ -405,6 +406,7 @@
     import {blockerMessage, searchTriggersForFlow} from "../../utils/triggers"
     import {useProductTourStore} from "../../stores/productTour"
     import TestEventDialog, {type TestEventTarget} from "./TestEventDialog.vue"
+    import BreakableText from "../BreakableText"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
 
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
@@ -472,13 +474,13 @@
             label: t("type"),
             prop: "type",
             default: true,
-            minWidth: 260,
+            minWidth: 150,
         },
         {
             label: t("execution id"),
             prop: "executionId",
             default: true,
-            minWidth: 140,
+            minWidth: 100,
         },
         {
             label: t("last trigger date"),
@@ -579,7 +581,7 @@
             start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
-            inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
+            inputs: normalizeInputValues(flattenInputs(flowStore.flow?.inputs), backfill.value.inputs ?? {}) as BackfillRequest["inputs"],
             labels: labels.length ? labels : undefined,
         }
     })
@@ -908,6 +910,11 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--ks-spacing-1);
+}
+
+.identifier {
+    overflow-wrap: normal;
+    word-break: normal;
 }
 
 .execution-cell {

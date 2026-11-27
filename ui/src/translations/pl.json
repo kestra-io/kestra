@@ -399,6 +399,7 @@
     "create": "Utwórz",
     "create_flow": "Utwórz Flow",
     "create_child_namespace": "Utwórz podrzędny namespace",
+    "view_all_flows": "Zobacz wszystkie flow",
     "from": "Od",
     "to": "Do",
     "steps": "Kroki",
@@ -2017,6 +2018,7 @@
       "add": "Utwórz",
       "update": "Zaktualizuj Value dla Key '{key}'",
       "duplicate": "Ten Key już istnieje",
+      "description_latin1": "Opis może zawierać tylko znaki łacińskie, bez emoji.",
       "delete multiple": {
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
         "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>",
@@ -2633,7 +2635,11 @@
           "errorHandling": "Dodaj obsługę błędów",
           "unitTest": "Wygeneruj test jednostkowy",
           "explain": "Wyjaśnij ten Flow",
-          "dbt": "Uruchom potok dbt"
+          "dbt": "Uruchom potok dbt",
+          "createFlow": "Utwórz Flow, który…",
+          "createFlowPrefill": "Utwórz Flow, który",
+          "pythonSchedule": "Uruchamiaj skrypt Python codziennie",
+          "triggers": "Jak działają Triggery?"
         },
         "voice": {
           "start": "Rozpocznij wprowadzanie głosowe",

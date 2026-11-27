@@ -399,6 +399,7 @@
     "create": "बनाएँ",
     "create_flow": "फ़्लो बनाएं",
     "create_child_namespace": "चाइल्ड namespace बनाएँ",
+    "view_all_flows": "सभी flow देखें",
     "from": "से",
     "to": "तक",
     "steps": "चरण",
@@ -2017,6 +2018,7 @@
       "add": "बनाएँ",
       "update": "key '{key}' के लिए value अपडेट करें",
       "duplicate": "यह key पहले से मौजूद है",
+      "description_latin1": "विवरण में केवल लैटिन अक्षर हो सकते हैं, इमोजी नहीं।",
       "delete multiple": {
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>",
@@ -2633,7 +2635,11 @@
           "errorHandling": "त्रुटि प्रबंधन जोड़ें",
           "unitTest": "इकाई परीक्षण उत्पन्न करें",
           "explain": "यह flow समझाएं",
-          "dbt": "dbt पाइपलाइन चलाएँ"
+          "dbt": "dbt पाइपलाइन चलाएँ",
+          "createFlow": "एक Flow बनाएं जो…",
+          "createFlowPrefill": "एक Flow बनाएँ जो",
+          "pythonSchedule": "हर दिन एक Python स्क्रिप्ट चलाएँ",
+          "triggers": "ट्रिगर कैसे काम करते हैं?"
         },
         "voice": {
           "start": "वॉयस input शुरू करें",

@@ -399,6 +399,7 @@
     "create": "Create",
     "create_flow": "Create Flow",
     "create_child_namespace": "Create child namespace",
+    "view_all_flows": "View all flows",
     "from": "From",
     "to": "To",
     "steps": "Steps",
@@ -2017,6 +2018,7 @@
       "add": "Create",
       "update": "Update value for key '{key}'",
       "duplicate": "This key already exists",
+      "description_latin1": "The description can only contain Latin characters, without emoji.",
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
         "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>",
@@ -2633,7 +2635,11 @@
           "errorHandling": "Add error handling",
           "unitTest": "Generate a unit test",
           "explain": "Explain this flow",
-          "dbt": "Run a dbt pipeline"
+          "dbt": "Run a dbt pipeline",
+          "createFlow": "Create a flow that…",
+          "createFlowPrefill": "Create a flow that",
+          "pythonSchedule": "Run a Python script every day",
+          "triggers": "How do triggers work?"
         },
         "voice": {
           "start": "Start voice input",

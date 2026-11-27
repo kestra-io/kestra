@@ -62,8 +62,10 @@
         bottom: 0;
         z-index: 9;
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        gap: var(--ks-spacing-4);
+        align-content: flex-start;
+        column-gap: var(--ks-spacing-4);
         height: var(--status-bar-height);
         padding: 0 var(--ks-spacing-4);
         background: var(--ks-bg-surface);
@@ -73,18 +75,10 @@
         overflow: hidden;
     }
 
-    .block-editor-footer::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: var(--ks-spacing-8);
-        background: linear-gradient(to right, transparent, var(--ks-bg-surface));
-        pointer-events: none;
-    }
 
     .block-editor-footer-context {
+        max-width: 100%;
+        line-height: var(--status-bar-height);
         margin-right: auto;
         flex-shrink: 1;
         color: var(--ks-text-muted);
@@ -96,6 +90,7 @@
     .block-editor-footer-hint {
         display: inline-flex;
         align-items: center;
+        height: var(--status-bar-height);
         gap: var(--ks-spacing-1);
         flex-shrink: 0;
         white-space: nowrap;

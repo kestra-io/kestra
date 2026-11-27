@@ -399,6 +399,7 @@
     "create": "생성",
     "create_flow": "Flow 생성",
     "create_child_namespace": "하위 namespace 생성",
+    "view_all_flows": "모든 flow 보기",
     "from": "시작",
     "to": "종료",
     "steps": "단계",
@@ -2017,6 +2018,7 @@
       "add": "생성",
       "update": "키 '{key}'의 값을 업데이트하세요",
       "duplicate": "이 키는 이미 존재합니다",
+      "description_latin1": "설명에는 라틴 문자만 사용할 수 있으며 이모지는 사용할 수 없습니다.",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>",
@@ -2633,7 +2635,11 @@
           "errorHandling": "오류 처리 추가",
           "unitTest": "단위 테스트 생성",
           "explain": "이 flow 설명",
-          "dbt": "dbt 파이프라인 실행"
+          "dbt": "dbt 파이프라인 실행",
+          "createFlow": "다음과 같은 flow 생성",
+          "createFlowPrefill": "Flow 생성",
+          "pythonSchedule": "매일 Python 스크립트 실행",
+          "triggers": "트리거는 어떻게 작동하나요?"
         },
         "voice": {
           "start": "음성 입력 시작",

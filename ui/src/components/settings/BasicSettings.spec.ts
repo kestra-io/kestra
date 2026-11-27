@@ -34,7 +34,7 @@ describe("BasicSettings", () => {
         i18nMount(BasicSettings, {
             global: {
                 plugins: [pinia],
-                stubs: {TopNavBar: true, SidebarCustomizeModal: true, KsEditor: true},
+                stubs: {TopNavBar: true, SidebarCustomizeModal: true, KsEditor: {template: "<div />"}},
             },
         })
         await flushPromises()

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 
 import dev.langchain4j.agent.tool.P;
@@ -70,7 +71,7 @@ public final class AiToolSpecifications {
         }
 
         Map<String, JsonSchemaElement> properties = new LinkedHashMap<>(params.properties());
-        List<String> required = new ArrayList<>(params.required() == null ? List.of() : params.required());
+        List<String> required = new ArrayList<>(ListUtils.emptyOnNull(params.required()));
 
         for (Parameter filterParam : filterParams) {
             String name = parameterName(filterParam);

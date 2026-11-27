@@ -600,6 +600,16 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.EXECUTION_KIND, Resource.CASE,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.EXPIRED_AT, Resource.INVITATION,
                 Set.of()
             ),
@@ -1563,6 +1573,21 @@ public class QueryFilterTest {
 
             buildQueryFiltersForOperations(
                 Field.ASSIGNEE, Resource.CASE,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.EXECUTION_KIND, Resource.CASE,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,

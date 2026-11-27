@@ -399,6 +399,7 @@
     "create": "Erstellen",
     "create_flow": "Flow erstellen",
     "create_child_namespace": "Untergeordneten Namespace erstellen",
+    "view_all_flows": "Alle Flows anzeigen",
     "from": "Von",
     "to": "Bis",
     "steps": "Schritte",
@@ -2017,6 +2018,7 @@
       "add": "Erstellen",
       "update": "Wert für Key '{key}' aktualisieren",
       "duplicate": "Dieser Key existiert bereits",
+      "description_latin1": "Die Beschreibung darf nur lateinische Zeichen enthalten, ohne Emoji.",
       "delete multiple": {
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
         "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>",
@@ -2633,7 +2635,11 @@
           "errorHandling": "Fehlerbehandlung hinzufügen",
           "unitTest": "Unit-Test generieren",
           "explain": "Diesen Flow erklären",
-          "dbt": "Eine dbt-Pipeline ausführen"
+          "dbt": "Eine dbt-Pipeline ausführen",
+          "createFlow": "Erstelle einen Flow, der …",
+          "createFlowPrefill": "Erstelle einen Flow, der",
+          "pythonSchedule": "Führe jeden Tag ein Python-Skript aus",
+          "triggers": "Wie funktionieren Trigger?"
         },
         "voice": {
           "start": "Spracheingabe starten",

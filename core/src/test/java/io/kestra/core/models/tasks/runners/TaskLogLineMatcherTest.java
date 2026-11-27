@@ -6,10 +6,13 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
 import io.kestra.core.checkpoint.Checkpoint;
 import io.kestra.core.context.TestRunContextFactory;
@@ -227,6 +230,31 @@ class TaskLogLineMatcherTest {
 
         assertThat(listAppender.list).hasSize(1);
         assertThat(listAppender.list.getFirst().getLevel()).isEqualTo(Level.INFO);
+    }
+
+    @Test
+    @ResourceLock(Resources.LOCALE)
+    void shouldMapSeverityUnderTurkishLocale() throws IOException {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            var runContext = runContext();
+            var listAppender = appender(runContext);
+
+            matcher.matches(
+                framed(logRecord("{\"severityText\":\"warning\",\"body\":{\"stringValue\":\"warn message\"}}")),
+                runContext.logger(),
+                runContext,
+                FALLBACK_INSTANT
+            );
+
+            assertThat(listAppender.list).anySatisfy(event -> {
+                assertThat(event.getFormattedMessage()).isEqualTo("warn message");
+                assertThat(event.getLevel()).isEqualTo(Level.WARN);
+            });
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 
     @Test

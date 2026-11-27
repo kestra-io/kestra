@@ -309,6 +309,10 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     }
 
     public void preExecuteTasks(RunContext runContext) throws Exception {
+        if (this.outputFiles != null) {
+            runContext.storage().deleteFile(outputsFile(workingDirectoryContextBaseURI(runContext)));
+        }
+
         if (cache != null) {
             // May download cached file if it exists and is not expired, and extract its content
             var maybeCacheFile = runContext.storage().getCacheFile(getId(), cacheObjectId(runContext), runContext.render(cache.ttl).as(Duration.class).orElse(null));

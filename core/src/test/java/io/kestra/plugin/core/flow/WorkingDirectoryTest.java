@@ -292,6 +292,12 @@ public class WorkingDirectoryTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/working-directory-outputs-retry.yml" })
+    void shouldNotReportThePreviousAttemptOutputFilesWhenARetryCapturesNone() throws Exception {
+        suite.outputFilesRetry(runnerUtils);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/working-directory-taskrun-encrypted.yml" })
     void encryption() throws Exception {
         suite.encryption(runnerUtils, runContextFactory);
@@ -368,6 +374,14 @@ public class WorkingDirectoryTest {
             assertThat(subSubSubExecutions).hasSize(1);
 
             assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("2_end").getFirst()).get("value")).startsWith("kestra://");
+        }
+
+        public void outputFilesRetry(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-outputs-retry");
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("workingDir").getFirst());
+            assertThat(outputs).doesNotContainKey("outputFiles");
         }
 
         @SuppressWarnings("unchecked")

@@ -197,6 +197,27 @@ public abstract class AbstractTaskOutputRepositoryTest {
     }
 
     @Test
+    void shouldDeleteOnlyTheGivenTaskRunOutputWhenDeletingById() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+        String deletedTaskRunId = IdUtils.create();
+        String keptTaskRunId = IdUtils.create();
+        Execution execution = createExecution(tenant, executionId, deletedTaskRunId, keptTaskRunId);
+
+        byte[] value = "output".getBytes(StandardCharsets.UTF_8);
+        taskOutputRepository.save(new TaskOutput(deletedTaskRunId, tenant, executionId, value, "kestra://outputs/" + deletedTaskRunId));
+        taskOutputRepository.save(new TaskOutput(keptTaskRunId, tenant, executionId, value, "kestra://outputs/" + keptTaskRunId));
+
+        taskOutputRepository.deleteById(tenant, deletedTaskRunId);
+        taskOutputRepository.deleteById(tenant, IdUtils.create());
+
+        assertThat(taskOutputRepository.findById(tenant, deletedTaskRunId)).isEmpty();
+        assertThat(taskOutputRepository.findByExecution(execution))
+            .extracting(TaskOutput::taskRunId)
+            .containsExactly(keptTaskRunId);
+    }
+
+    @Test
     protected void should_purge_task_output() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String executionId1 = IdUtils.create();

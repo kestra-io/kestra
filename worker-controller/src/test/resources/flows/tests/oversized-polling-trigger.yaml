@@ -1,0 +1,11 @@
+id: oversized-polling-trigger-flow
+namespace: io.kestra.tests
+
+tasks:
+  - id: result
+    type: io.kestra.plugin.core.debug.Return
+    format: accepted
+
+triggers:
+  - id: oversized-polling-trigger
+    type: io.kestra.controller.grpc.services.OversizedPollingTrigger

@@ -1,5 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
@@ -7,7 +9,7 @@ import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.models.api.UnsortedPagination;
 import io.kestra.webserver.responses.PagedResults;
-
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
@@ -26,6 +28,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Controller("/api/v1/{tenant}/concurrency-limit")
 public class ConcurrencyLimitController {
@@ -37,6 +40,9 @@ public class ConcurrencyLimitController {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private ApplicationEventPublisher<CrudEvent<ConcurrencyLimit>> eventPublisher;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -79,13 +85,18 @@ public class ConcurrencyLimitController {
         String tenantId = tenantService.resolveTenant();
         String namespace = Objects.requireNonNullElse(request.namespace(), "");
         String flowId = Objects.requireNonNullElse(request.flowId(), "");
-        if (concurrencyLimitRepository.findById(tenantId, namespace, flowId).isEmpty()) {
-            return HttpResponse.notFound();
+
+        Optional<ConcurrencyLimit> existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
+        if (existing.isEmpty()) {
+            throw new NotFoundException("No concurrency limit was found for namespace '%s' and flow '%s'.".formatted(namespace, flowId));
         }
 
-        return HttpResponse.ok(concurrencyLimitRepository.update(
+        ConcurrencyLimit updated = concurrencyLimitRepository.update(
             ConcurrencyLimit.builder().tenantId(tenantId).namespace(namespace).flowId(flowId).running(request.running()).build()
-        ));
+        );
+        eventPublisher.publishEvent(CrudEvent.of(existing.get(), updated));
+
+        return HttpResponse.ok(updated);
     }
 
     // Namespace and tenant counters are stored with an empty namespace or flow, which the store reads as a wider scope.

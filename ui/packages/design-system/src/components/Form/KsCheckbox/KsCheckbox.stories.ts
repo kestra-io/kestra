@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {within, expect} from "storybook/test"
 import {ref, type ConcreteComponent} from "vue"
 import KsCheckbox from "./KsCheckbox.vue"
 import KsCheckboxGroup from "./KsCheckboxGroup.vue"
@@ -120,4 +121,24 @@ export const Indeterminate: Story = {
             </div>
         `,
     }),
+}
+
+export const ButtonWithAccessibleLabel: Story = {
+    render: () => ({
+        components: {KsCheckboxButton},
+        setup() {
+            const value = ref(false)
+            return {value}
+        },
+        template: `
+            <div style="padding:24px">
+                <KsCheckboxButton v-model="value" ariaLabel="Match case" title="Match case">Aa</KsCheckboxButton>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await expect(canvas.getByRole("checkbox", {name: "Match case"})).toBeTruthy()
+        await expect(canvas.getByTitle("Match case")).toBeTruthy()
+    },
 }

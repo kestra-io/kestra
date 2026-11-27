@@ -146,7 +146,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "value1", "input2", "value2");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -179,7 +179,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "v1", "input2", "v2", "input3", "v3");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -213,7 +213,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "v1", "input2", "v2", "input3", "v3");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -247,7 +247,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "value1", "input2", "value2");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -280,7 +280,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "value1", "input2", "value2");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(2, values.size());
@@ -329,7 +329,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input42", "foo");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -363,7 +363,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input42", "foo");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -390,6 +390,143 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertEquals("******", results.getFirst().value());
+    }
+
+    @Test
+    void shouldComputeOnRealSecretValueAndMaskOnlyTheOutputWhenValidatingInputs() {
+        // Given
+        StringInput length = StringInput.builder()
+            .id("length")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') | length }}"))
+            .required(false)
+            .build();
+        StringInput prefixed = StringInput.builder()
+            .id("prefixed")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("prefix-{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(length, prefixed), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results.get(0).value()).isEqualTo(String.valueOf(TEST_SECRET_VALUE.length()));
+        assertThat(results.get(1).value()).isEqualTo("prefix-******");
+    }
+
+    @Test
+    void shouldComputeOnRealSecretValueOfDependencyWhenValidatingInputs() {
+        // Given
+        StringInput dependency = StringInput.builder()
+            .id("dependency")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+        StringInput dependent = StringInput.builder()
+            .id("dependent")
+            .type(Type.STRING)
+            .dependsOn(new DependsOn(List.of("dependency"), null))
+            .defaults(Property.ofExpression("{{ inputs.dependency | length }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(dependency, dependent), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results.get(0).value()).isEqualTo("******");
+        assertThat(results.get(1).value()).isEqualTo(String.valueOf(TEST_SECRET_VALUE.length()));
+    }
+
+    @Test
+    void shouldMaskSecretInputsReferencedByAnotherInputWhenValidatingInputs() {
+        // Given
+        SecretInput password = SecretInput.builder()
+            .id("password")
+            .type(Type.SECRET)
+            .required(false)
+            .build();
+        StringInput dependent = StringInput.builder()
+            .id("dependent")
+            .type(Type.STRING)
+            .dependsOn(new DependsOn(List.of("password"), null))
+            .description("Password: {{ inputs.password }}")
+            .defaults(Property.ofExpression("value-{{ inputs.password }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.resolveResumeInputs(List.of(password, dependent), null, DEFAULT_TEST_EXECUTION, Map.of("password", "hunter2-plain"));
+
+        // Then
+        InputAndValue result = results.get(1);
+        assertThat(String.valueOf(result.value())).doesNotContain("hunter2-plain");
+        assertThat(result.input().getDescription()).doesNotContain("hunter2-plain");
+        assertThat(String.valueOf(results.get(0).value())).doesNotContain("hunter2-plain");
+    }
+
+    @Test
+    void shouldMaskSecretsInErrorMessagesWhenValidatingInputs() {
+        // Given
+        IntInput input = IntInput.builder()
+            .id("input")
+            .type(Type.INT)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results.getFirst().exceptions()).isNotEmpty();
+        assertThat(results.getFirst().exceptions()).noneMatch(e -> e.getMessage().contains(TEST_SECRET_VALUE));
+    }
+
+    @Test
+    void shouldNotMaskSecretsWhenReadingExecutionInputs() {
+        // Given
+        StringInput secret = StringInput.builder()
+            .id("secret")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+        StringInput length = StringInput.builder()
+            .id("length")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') | length }}"))
+            .required(false)
+            .build();
+
+        // When
+        Map<String, Object> inputs = flowInputOutput.readExecutionInputs(List.of(secret, length), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(inputs).containsEntry("secret", TEST_SECRET_VALUE);
+        assertThat(inputs).containsEntry("length", String.valueOf(TEST_SECRET_VALUE.length()));
+    }
+
+    @Test
+    void shouldMaskSecretsOnlyWhenResolvingInputsMasked() {
+        // Given
+        StringInput secret = StringInput.builder()
+            .id("secret")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> masked = flowInputOutput.resolveInputsMasked(List.of(secret), null, DEFAULT_TEST_EXECUTION, Map.of());
+        List<InputAndValue> plain = flowInputOutput.resolveInputsWithPlainTextSecrets(List.of(secret), null, DEFAULT_TEST_EXECUTION, Map.of());
+
+        // Then
+        assertThat(masked.getFirst().value()).isEqualTo("******");
+        assertThat(plain.getFirst().value()).isEqualTo(TEST_SECRET_VALUE);
     }
 
     @ParameterizedTest
@@ -607,7 +744,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> results = flowInputOutput.resolveInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("select", "custom"));
+        List<InputAndValue> results = flowInputOutput.resolveInputsMasked(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("select", "custom"));
 
         // Then
         assertThat(((SelectInput) results.getFirst().input()).getValues()).extracting(ValueOption::value).containsExactly("a", "b");
@@ -769,7 +906,7 @@ class FlowInputOutputTest {
             .required(true)
             .build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(brokenExpression, brokenDefault, requiredMissing), null, DEFAULT_TEST_EXECUTION, Map.of()
         );
 
@@ -1423,9 +1560,9 @@ class FlowInputOutputTest {
 
         // When resolving submitted dotted part names. resolveInputs is the synchronous core of
         // validateExecutionInputs — i.e. the /validate response the Flow Execute wizard (Part B) consumes.
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsWithPlainTextSecrets(
             flow.getInputs(), flow, DEFAULT_TEST_EXECUTION,
-            Map.of("environment.region", "EU", "api_key", "secret"), true
+            Map.of("environment.region", "EU", "api_key", "secret")
         );
 
         // Then the contract is a FLAT list keyed by dotted leaf id: no raw FORM node, no bare child id.
@@ -1448,7 +1585,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", "")
         );
 
@@ -1469,7 +1606,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", "")
         );
 
@@ -1490,7 +1627,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", "")
         );
 
@@ -1512,7 +1649,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("textValue", "")
         );
 
@@ -1532,7 +1669,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("floatValue", "")
         );
 
@@ -1553,7 +1690,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("emailValue", "")
         );
 
@@ -1574,7 +1711,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input),
             null,
             DEFAULT_TEST_EXECUTION,
@@ -1600,7 +1737,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input),
             null,
             DEFAULT_TEST_EXECUTION,
@@ -1623,7 +1760,7 @@ class FlowInputOutputTest {
             .build();
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(input),
             null,
             DEFAULT_TEST_EXECUTION,
@@ -1666,7 +1803,7 @@ class FlowInputOutputTest {
 
     @Test
     void shouldReportEveryInvalidTableCellWithItsRow() {
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(disksInput(null, null)),
             null,
             DEFAULT_TEST_EXECUTION,
@@ -1676,18 +1813,18 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions())
             .extracting(Throwable::getMessage)
             .containsExactlyInAnyOrder(
-                "Invalid value for input `disks`. Cause: row 2, column `size_gb`: it must be less than `2048`",
+                "Invalid value for input `disks`. Cause: row 2, column `size_gb`: it must be at most `2048`, but received `4096`",
                 "Invalid value for input `disks`. Cause: row 2, column `mountpoint`: it must match the pattern `^/.*`",
                 "Invalid value for input `disks`. Cause: row 3: expected an object"
             );
         assertThat(values.getFirst().exceptions())
             .extracting(InputOutputValidationException::getPath, InputOutputValidationException::getDetail)
-            .contains(tuple("disks[1].size_gb", "it must be less than `2048`"), tuple("disks[2]", "expected an object"));
+            .contains(tuple("disks[1].size_gb", "it must be at most `2048`, but received `4096`"), tuple("disks[2]", "expected an object"));
     }
 
     @Test
     void shouldValidateEveryColumnOfEveryRow() {
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(disksInput(null, null)),
             null,
             DEFAULT_TEST_EXECUTION,
@@ -1703,7 +1840,7 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions())
             .extracting(Throwable::getMessage)
             .containsExactlyInAnyOrder(
-                "Invalid value for input `disks`. Cause: row 1, column `size_gb`: it must be more than `10`",
+                "Invalid value for input `disks`. Cause: row 1, column `size_gb`: it must be at least `10`, but received `5`",
                 "Invalid value for input `disks`. Cause: row 1, column `mountpoint`: it must match the pattern `^/.*`",
                 "Invalid value for input `disks`. Cause: row 3, column `size_gb`: Cannot convert value 'big' to Integer",
                 "Invalid value for input `disks`. Cause: row 3, column `mountpoint`: it must match the pattern `^/.*`",
@@ -1713,7 +1850,7 @@ class FlowInputOutputTest {
 
     @Test
     void shouldRejectTableRowWithUndeclaredColumn() {
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.of(disksInput(null, null)),
             null,
             DEFAULT_TEST_EXECUTION,
@@ -1728,7 +1865,7 @@ class FlowInputOutputTest {
     @Test
     void shouldRejectTableValueThatIsNotAList() {
         for (String value : List.of("{\"size_gb\": 20}", "not json")) {
-            List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
                 List.of(disksInput(null, null)), null, DEFAULT_TEST_EXECUTION, Map.of("disks", value)
             );
 
@@ -1740,11 +1877,11 @@ class FlowInputOutputTest {
     void shouldEnforceTableRowBounds() {
         TableInput input = disksInput(1, 2);
 
-        List<InputAndValue> tooMany = flowInputOutput.resolveInputs(
+        List<InputAndValue> tooMany = flowInputOutput.resolveInputsMasked(
             List.of(input), null, DEFAULT_TEST_EXECUTION,
             Map.of("disks", "[{\"size_gb\": 20}, {\"size_gb\": 20}, {\"size_gb\": 20}]")
         );
-        List<InputAndValue> tooFew = flowInputOutput.resolveInputs(
+        List<InputAndValue> tooFew = flowInputOutput.resolveInputsMasked(
             List.of(input), null, DEFAULT_TEST_EXECUTION,
             Map.of("disks", "[]")
         );
@@ -1764,7 +1901,7 @@ class FlowInputOutputTest {
             .defaults(Property.ofValue(List.of(Map.of("size_gb", 10, "mountpoint", "/"))))
             .build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of());
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of());
 
         assertThat(values.getFirst().exceptions()).isNull();
         assertThat(values.getFirst().isDefault()).isTrue();
@@ -1797,7 +1934,7 @@ class FlowInputOutputTest {
         MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
         TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.<Input<?>>of(types, components), null, DEFAULT_TEST_EXECUTION, Map.of("component_types", List.of("linux")));
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(List.<Input<?>>of(types, components), null, DEFAULT_TEST_EXECUTION, Map.of("component_types", List.of("linux")));
 
         InputAndValue table = values.get(1);
         assertThat(table.exceptions()).isNull();
@@ -1808,7 +1945,7 @@ class FlowInputOutputTest {
 
     private List<InputAndValue> submitComponents(TableInput components, String rows) {
         MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
-        return flowInputOutput.resolveInputs(
+        return flowInputOutput.resolveInputsMasked(
             List.<Input<?>>of(types, components),
             null,
             DEFAULT_TEST_EXECUTION,
@@ -1869,7 +2006,7 @@ class FlowInputOutputTest {
             .columns(List.of(SelectInput.builder().id("type").type(Type.SELECT).expression("{{ inputs.component_types }}").build()))
             .build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        List<InputAndValue> values = flowInputOutput.resolveInputsMasked(
             List.<Input<?>>of(types, components),
             null,
             DEFAULT_TEST_EXECUTION,

@@ -11,7 +11,6 @@
             <KsDropdownMenu class="m-dropdown-menu">
                 <KsDropdownItem
                     :icon="StopCircleOutline"
-                    size="large"
                     danger
                     @click="kill(true)"
                 >
@@ -19,7 +18,6 @@
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="StopCircleOutline"
-                    size="large"
                     danger
                     @click="kill(false)"
                 >

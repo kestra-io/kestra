@@ -85,10 +85,12 @@ class SLAServiceTest {
     void shouldWeightBucketAveragesByExecutionCount() {
         var sla = avgSla().minExecutions(5).build();
 
-        Optional<Duration> duration = computeDuration(sla, List.of(
-            bucket(Duration.ofSeconds(10), 1),
-            bucket(Duration.ofSeconds(20), 9)
-        ));
+        Optional<Duration> duration = computeDuration(
+            sla, List.of(
+                bucket(Duration.ofSeconds(10), 1),
+                bucket(Duration.ofSeconds(20), 9)
+            )
+        );
 
         assertThat(duration).contains(Duration.ofSeconds(19));
     }
@@ -97,10 +99,12 @@ class SLAServiceTest {
     void shouldIgnoreBucketsWithoutAverage() {
         var sla = avgSla().minExecutions(5).build();
 
-        Optional<Duration> duration = computeDuration(sla, List.of(
-            bucket(Duration.ofSeconds(10), 5),
-            bucket(null, 5)
-        ));
+        Optional<Duration> duration = computeDuration(
+            sla, List.of(
+                bucket(Duration.ofSeconds(10), 5),
+                bucket(null, 5)
+            )
+        );
 
         assertThat(duration).contains(Duration.ofSeconds(10));
     }
@@ -109,10 +113,12 @@ class SLAServiceTest {
     void shouldNotCountBucketsWithoutAverageTowardsMinExecutions() {
         var sla = avgSla().minExecutions(5).build();
 
-        Optional<Duration> duration = computeDuration(sla, List.of(
-            bucket(Duration.ofSeconds(10), 2),
-            bucket(null, 5)
-        ));
+        Optional<Duration> duration = computeDuration(
+            sla, List.of(
+                bucket(Duration.ofSeconds(10), 2),
+                bucket(null, 5)
+            )
+        );
 
         assertThat(duration).isEmpty();
     }
@@ -164,10 +170,12 @@ class SLAServiceTest {
     void shouldAddDurationThresholdOnceAcrossMultipleBuckets() {
         var sla = avgSla().durationThreshold(Duration.ofSeconds(10)).build();
 
-        Optional<Duration> duration = computeDuration(sla, List.of(
-            bucket(Duration.ofSeconds(10), 3),
-            bucket(Duration.ofSeconds(20), 3)
-        ));
+        Optional<Duration> duration = computeDuration(
+            sla, List.of(
+                bucket(Duration.ofSeconds(10), 3),
+                bucket(Duration.ofSeconds(20), 3)
+            )
+        );
 
         assertThat(duration).contains(Duration.ofSeconds(25));
     }

@@ -14,9 +14,8 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.ConflictException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -25,9 +24,6 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
@@ -50,11 +46,14 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
+import io.kestra.scheduler.internals.TriggerFlowParser;
 import io.kestra.scheduler.internals.TriggerResumer;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
+import io.kestra.scheduler.pubsub.TriggerKillPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
 
 import jakarta.inject.Inject;
@@ -75,8 +74,9 @@ public class TriggerEventHandler {
     private final TriggerExecutionPublisher triggerExecutionPublisher;
     private final RunContextFactory runContextFactory;
     private final ConditionService conditionService;
-    private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
+    private final TriggerKillPublisher triggerKillPublisher;
     private final AsyncOperationService asyncOperationService;
+    private final FlowParsingService flowParsingService;
 
     @Inject
     public TriggerEventHandler(@Named("cached") TriggerStateStore triggerStateStore,
@@ -84,15 +84,17 @@ public class TriggerEventHandler {
         TriggerExecutionPublisher triggerExecutionPublisher,
         RunContextFactory runContextFactory,
         ConditionService conditionService,
-        BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
-        AsyncOperationService asyncOperationService) {
+        TriggerKillPublisher triggerKillPublisher,
+        AsyncOperationService asyncOperationService,
+        FlowParsingService flowParsingService) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
-        this.executionKilledQueue = executionKilledQueue;
+        this.triggerKillPublisher = triggerKillPublisher;
         this.asyncOperationService = asyncOperationService;
+        this.flowParsingService = flowParsingService;
     }
 
     /**
@@ -242,7 +244,7 @@ public class TriggerEventHandler {
             // Stop the running instance: the disabled flag alone has no effect on a realtime
             // trigger already running on a worker.
             if (!wasDisabled && event.disabled()) {
-                maySendExecutionKilled(state);
+                triggerKillPublisher.maySendExecutionKilled(state);
             }
             state = state
                 .lastEventId(clock, event.eventId())
@@ -432,7 +434,7 @@ public class TriggerEventHandler {
             // the worker just started. Only do so when the state is truly missing, not when
             // the event was de-duplicated.
             if (triggerStateStore.findByIdWithoutAcl(event.id()).isEmpty()) {
-                sendExecutionKilled(event.id());
+                triggerKillPublisher.sendExecutionKilled(event.id());
             }
             return;
         }
@@ -440,7 +442,7 @@ public class TriggerEventHandler {
         // The trigger was disabled while its worker job was in flight: the kill broadcast
         // found no holder at that time, so kill the instance now that a worker reports it.
         if (state.isDisabled() || isDisabledInDefinition(event)) {
-            maySendExecutionKilled(state);
+            triggerKillPublisher.maySendExecutionKilled(state);
         }
         triggerStateStore.save(
             state
@@ -503,14 +505,16 @@ public class TriggerEventHandler {
     void onTriggerUpdated(Clock clock, TriggerUpdated event) {
         findTriggerState(event).filter(state -> !isStale(state, event, event.revision())).ifPresent(state ->
         {
-            Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
+            FlowWithSource stored = findFlow(event, event.revision());
+            Pair<Flow, AbstractTrigger> data = findTriggerIn(event, stored);
             if (data.getRight() != null) {
                 // Kill the running instance so the updated definition is applied: its termination
                 // unlocks the state and the scheduler resubmits the trigger with the new configuration.
-                maySendExecutionKilled(state);
+                triggerKillPublisher.maySendExecutionKilled(state);
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight(), event.revision());
+                    .update(clock, data.getRight(), event.revision())
+                    .sourceDisabled(clock, isDisabledIn(event, stored));
                 if (TriggerType.isEvaluatedByScheduler(state.getType())) {
                     state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
                 }
@@ -543,42 +547,8 @@ public class TriggerEventHandler {
             .ifPresent(state ->
             {
                 triggerStateStore.delete(event.id());
-                maySendExecutionKilled(state);
+                triggerKillPublisher.maySendExecutionKilled(state);
             });
-    }
-
-    /**
-     * Kills the running instance of a realtime trigger, if any. A realtime trigger runs for its whole
-     * lifetime on a worker and is not affected by state changes (update, disable, delete) until killed.
-     */
-    private void maySendExecutionKilled(TriggerState state) {
-        if (TriggerType.REALTIME.equals(state.getType())) {
-            sendExecutionKilled(state, state.getDispatchEpoch());
-        }
-    }
-
-    private void sendExecutionKilled(TriggerId id) {
-        sendExecutionKilled(id, null);
-    }
-
-    private void sendExecutionKilled(TriggerId id, Long dispatchEpoch) {
-        try {
-            this.executionKilledQueue.emit(
-                ExecutionKilledTrigger
-                    .builder()
-                    // Trigger kills are not processed by the Executor: emit them directly in the
-                    // EXECUTED state, the only state forwarded to the workers.
-                    .state(ExecutionKilled.State.EXECUTED)
-                    .tenantId(id.getTenantId())
-                    .namespace(id.getNamespace())
-                    .flowId(id.getFlowId())
-                    .triggerId(id.getTriggerId())
-                    .dispatchEpoch(dispatchEpoch)
-                    .build()
-            );
-        } catch (QueueException e) {
-            Logs.logTrigger(id, Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);
-        }
     }
 
     /**
@@ -593,12 +563,14 @@ public class TriggerEventHandler {
         }
 
         // Built from the latest revision, so a late event can neither recreate a removed trigger nor apply an outdated definition.
-        Pair<Flow, AbstractTrigger> data = findTriggerIn(event, findLatestFlow(event, event.revision()));
+        FlowWithSource stored = findLatestFlow(event, event.revision());
+        Pair<Flow, AbstractTrigger> data = findTriggerIn(event, stored);
         if (data.getRight() != null && !data.getLeft().isDeleted()) {
             Flow flow = data.getLeft();
             AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
                 .of(event.id(), trigger, vNode)
+                .sourceDisabled(clock, isDisabledIn(event, stored))
                 .flowRevision(clock, flow.getRevision())
                 .lastEventId(clock, event.eventId());
             // A trigger the scheduler does not evaluate has no next evaluation date to show.
@@ -625,7 +597,14 @@ public class TriggerEventHandler {
     }
 
     private boolean isDisabledInDefinition(TriggerEvent event) {
-        AbstractTrigger trigger = findTrigger(event, null).getRight();
+        return isDisabledIn(event, findFlow(event, null));
+    }
+
+    /**
+     * Reads the authored flag, which {@code sourceDisabled} mirrors, so a trigger disabled by governance is not reported as disabled in its definition.
+     */
+    private boolean isDisabledIn(TriggerEvent event, FlowWithSource stored) {
+        AbstractTrigger trigger = findStoredTriggerIn(event, stored).getRight();
         return trigger != null && trigger.isDisabled();
     }
 
@@ -660,17 +639,42 @@ public class TriggerEventHandler {
         if (flow == null) {
             return Pair.of(null, null);
         }
+        FlowWithSource governed = governed(flow);
+        // A trigger removed by governance keeps its state from the stored definition; the evaluation loop skips it while the policy applies.
+        return triggerIn(event, governed).isPresent() ? findStoredTriggerIn(event, governed) : findStoredTriggerIn(event, flow);
+    }
 
-        AbstractTrigger trigger = ListUtils.emptyOnNull(flow.getTriggers()).stream()
-            .filter(it -> it.getId().equals(event.id().getTriggerId()))
-            .findFirst()
-            .orElse(null);
+    /**
+     * Applies runtime governance, so trigger states are computed from the configuration the evaluation loop
+     * uses. A blocked or unparsable flow falls back to its stored definition: the evaluation loop owns that
+     * reaction.
+     */
+    private FlowWithSource governed(FlowWithSource flow) {
+        try {
+            return TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOG);
+        } catch (FlowProcessingException e) {
+            return flow;
+        }
+    }
+
+    private Pair<Flow, AbstractTrigger> findStoredTriggerIn(TriggerEvent event, FlowWithSource flow) {
+        if (flow == null) {
+            return Pair.of(null, null);
+        }
+
+        AbstractTrigger trigger = triggerIn(event, flow).orElse(null);
 
         if (trigger == null) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event '{}'. Cause: Trigger not found", event.type());
         }
 
         return Pair.of(flow, trigger);
+    }
+
+    private static Optional<AbstractTrigger> triggerIn(TriggerEvent event, FlowWithSource flow) {
+        return ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(it -> it.getId().equals(event.id().getTriggerId()))
+            .findFirst();
     }
 
     private FlowWithSource findFlow(TriggerEvent event, Integer revision) {

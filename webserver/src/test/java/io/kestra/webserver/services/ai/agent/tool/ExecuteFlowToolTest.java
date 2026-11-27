@@ -41,7 +41,7 @@ class ExecuteFlowToolTest {
         assertThat(result).containsEntry("state", "SUCCESS").containsEntry("terminated", true);
         Execution execution = executionRepository.findById(MAIN_TENANT, (String) result.get("executionId")).orElseThrow();
         assertThat(execution.getInputs()).containsEntry("name", "Ada");
-        assertThat(execution.getLabels()).contains(new Label("team", "data"));
+        assertThat(execution.getLabels()).contains(new Label("team", "data"), new Label(Label.FROM, Label.FromLabel.API.value));
     }
 
     @Test

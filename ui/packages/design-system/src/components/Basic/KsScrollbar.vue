@@ -10,14 +10,11 @@
     import type {NativeAttributes} from "../../utils/nativeAttributes"
     import {useTemplateRef, type HTMLAttributes} from "vue"
     import {ElScrollbar, type ScrollbarInstance, type ScrollbarProps} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        maxHeight?: string | number
-        height?: string | number
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
+    const props = defineProps<ScrollbarProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof ScrollbarProps>>()
 
     defineSlots<{
         default?(): unknown
@@ -25,7 +22,7 @@
 
     const scrollbarRef = useTemplateRef<ScrollbarInstance>("scrollbarRef")
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 
     function scrollTo(xCord: number, yCord?: number): void
     function scrollTo(options: ScrollToOptions): void

@@ -870,6 +870,41 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldNotDeleteOrUpdateAnyFlowWhenOneFlowOfABulkUpdateIsInvalid() {
+        String namespace = "io.kestra.bulk.atomic";
+        client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/main/flows/" + namespace,
+                generateFlow("flow_a", namespace, "v1").sourceOrGenerateIfNull() + "\n---\n" + generateFlow("flow_b", namespace, "v1").sourceOrGenerateIfNull()
+            ).contentType(MediaType.APPLICATION_YAML)
+        );
+        String invalidFlow = """
+            id: flow_c
+            namespace: %s
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Lgo
+                message: typo in the task type
+            """.formatted(namespace);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/flows/" + namespace,
+                    generateFlow("flow_a", namespace, "v2").sourceOrGenerateIfNull() + "\n---\n" + invalidFlow
+                ).contentType(MediaType.APPLICATION_YAML)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_b"), Flow.class).getId())
+            .isEqualTo("flow_b");
+        Flow flowA = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_a"), Flow.class);
+        assertThat(flowA.getRevision()).isEqualTo(1);
+        assertThat(flowA.getInputs().getFirst().getId()).isEqualTo("v1");
+    }
+
+    @Test
     void shouldCreateBothFlowsGivenSameIdInDifferentNamespacesWhenBulkUpdate() {
         String id = "samebulkid";
         String flows = String.join(

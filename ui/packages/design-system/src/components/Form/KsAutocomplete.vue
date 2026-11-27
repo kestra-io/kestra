@@ -1,6 +1,7 @@
 <template>
     <ElAutocomplete
-        v-model="model"
+        :modelValue="props.modelValue"
+        @update:modelValue="(value: string | number) => emit('update:modelValue', value as string)"
         v-bind="({...filteredProps(), ...$attrs} as AutocompleteProps)"
         @select="emit('select', $event as T)"
     >
@@ -29,11 +30,10 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string>()
-
-    const props = defineProps<KsAutocompleteProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsAutocompleteProps>>()
+    const props = defineProps<KsAutocompleteProps & {modelValue?: string} & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsAutocompleteProps>>()
 
     const emit = defineEmits<{
+        "update:modelValue": [value: string]
         select: [item: T]
     }>()
 
@@ -43,7 +43,7 @@
         suffix?(): unknown
     }>()
 
-    const filteredProps = usePassedProps(props)
+    const filteredProps = usePassedProps(props, ["modelValue"])
 </script>
 
 <style lang="scss">

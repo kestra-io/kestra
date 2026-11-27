@@ -211,12 +211,13 @@
         percent?: number
     }
 
-    /** Resolves the standard ECharts per-series `tooltip.valueFormatter` option, honored by the external tooltip. */
+    /** Resolves the ECharts `tooltip.valueFormatter` option, honored by the external tooltip: per series first, then chart-wide. */
     function seriesValueFormatter(seriesIndex?: number): ((value: unknown) => string) | undefined {
-        if (seriesIndex === undefined) return undefined
         const series = props.options.series
-        const tooltip = (Array.isArray(series) ? series[seriesIndex] : undefined)?.tooltip as Record<string, unknown> | undefined
-        return typeof tooltip?.valueFormatter === "function" ? tooltip.valueFormatter as (value: unknown) => string : undefined
+        const seriesTooltip = seriesIndex === undefined ? undefined : (Array.isArray(series) ? series[seriesIndex] : undefined)?.tooltip as Record<string, unknown> | undefined
+        const chartTooltip = props.options.tooltip as Record<string, unknown> | undefined
+        const formatter = seriesTooltip?.valueFormatter ?? chartTooltip?.valueFormatter
+        return typeof formatter === "function" ? formatter as (value: unknown) => string : undefined
     }
 
     function displayName(name: string): string {

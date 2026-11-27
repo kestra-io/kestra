@@ -28,8 +28,8 @@ vi.mock(import("../../utils/toast"), async (importOriginal) => ({...await import
 
 import KVTable from "./KVTable.vue"
 
-async function mountKvList(rows: KvEntry[]) {
-    listAllKeys.mockResolvedValue({results: rows, total: rows.length})
+async function mountKvList(rows: KvEntry[], total = rows.length) {
+    listAllKeys.mockResolvedValue({results: rows, total})
     const router = createRouter({
         history: createMemoryHistory(),
         routes: [{name: "kv/list", path: "/:tenant?/kv", component: {template: "<div/>"}}],
@@ -93,5 +93,17 @@ describe("KVTable delete prompts", () => {
         )
         expect(deleteKeyValues).toHaveBeenCalledExactlyOnceWith({namespace: "company.team", keys: ["a", "b"]})
         expect(toast.success).toHaveBeenCalledWith("<code>2</code> KV(s) deleted from the <code>company.team</code> namespace", "Successfully deleted")
+    })
+
+    it("offers to select only the keys of the current page, since the bulk delete sends the selected keys", async () => {
+        const wrapper = await mountKvList([
+            {namespace: "company.team", key: "a", description: "", updateDate: "2026-10-01T08:00:00Z"},
+            {namespace: "company.team", key: "b", description: "", updateDate: "2026-10-01T08:00:00Z"},
+        ], 60)
+
+        await wrapper.findAll("tbody input[type=\"checkbox\"]")[0].setValue(true)
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: "KsBulkSelect"}).props("total")).toBe(2)
     })
 })

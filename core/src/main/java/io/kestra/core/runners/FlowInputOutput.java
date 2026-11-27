@@ -13,6 +13,7 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import io.kestra.core.searchable.SearchableData;
@@ -23,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Suppliers;
 
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.encryption.EncryptionService;
@@ -36,7 +36,9 @@ import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
@@ -387,28 +389,27 @@ public class FlowInputOutput {
     }
 
     /**
-     * Utility method for retrieving types inputs.
-     *
-     * @param inputs The Flow's inputs
-     * @param execution The Execution.
-     * @param data The Execution's inputs data.
-     * @return The Map of typed inputs.
+     * Resolves inputs with secrets MASKED: SAFE to return to a client (API, UI, MCP, logs).
+     * Never use resolveInputsWithPlainTextSecrets for anything that leaves the server.
      */
-    public List<InputAndValue> resolveInputs(
+    public List<InputAndValue> resolveInputsMasked(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        return resolveInputs(inputs, flow, execution, data, true);
+        return resolveInputs(inputs, flow, execution, data, false, false, false);
     }
 
-    public List<InputAndValue> resolveInputs(
+    /**
+     * Resolves inputs with secrets DECRYPTED in plain text: UNSAFE to return to a client.
+     * Only for server-side use that needs the real values, e.g. building the actual execution.
+     */
+    public List<InputAndValue> resolveInputsWithPlainTextSecrets(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
-        final Map<String, ?> data,
-        final boolean decryptSecrets) {
-        return resolveInputs(inputs, flow, execution, data, decryptSecrets, false, false);
+        final Map<String, ?> data) {
+        return resolveInputs(inputs, flow, execution, data, true, false, false);
     }
 
     /** Resolves Pause resume form defaults and descriptions with secrets masked. */
@@ -442,9 +443,87 @@ public class FlowInputOutput {
                 .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new))
         );
 
-        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets, renderDescriptions, forExecution));
+        // Inputs are always rendered with the real secret values (e.g. `secret('X') | length` must be right), the
+        // secrets used are then masked in what is returned, as it is done for logs, unless they must be decrypted.
+        final Map<String, Object> nullDefaults = nullDefaultInputs(flow);
+        final DefaultRunContext runContext = (DefaultRunContext) runContextFactory.get().of(flow, execution, vars -> vars.withInputs(MapUtils.flattenToNestedMap(nullDefaults)));
+        final InputRendering rendering = new InputRendering(runContext, nullDefaults);
 
-        return resolvableInputMap.values().stream().map(ResolvableInput::get).toList();
+        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, rendering, renderDescriptions, forExecution));
+
+        List<InputAndValue> resolved = resolvableInputMap.values().stream().map(ResolvableInput::get).toList();
+        if (decryptSecrets || !runContext.hasSecrets()) {
+            return resolved;
+        }
+        return resolved.stream().map(it -> maskSecrets(it, runContext::maskSecrets)).toList();
+    }
+
+    /**
+     * Masks the secret values used while resolving an input in everything that is returned for display: the value,
+     * the rendered input (e.g. a description) and the error messages.
+     * <p>
+     * The rendered options of a SELECT or MULTISELECT are deliberately left as is: they are the values a user submits,
+     * so masking them would make the field unusable when an {@code expression} returns a secret (see #12045).
+     */
+    @SuppressWarnings("unchecked")
+    private static InputAndValue maskSecrets(final InputAndValue inputAndValue, final UnaryOperator<String> masker) {
+        Input<?> input = inputAndValue.input();
+        Map<String, Object> serialized = JacksonMapper.toMap(input);
+        Map<String, Object> toMask = new HashMap<>(serialized);
+        boolean hasOptions = input instanceof SelectInput || input instanceof MultiselectInput;
+        Object options = hasOptions ? toMask.remove("values") : null;
+        Map<String, Object> masked = (Map<String, Object>) mask(toMask, masker);
+        if (hasOptions && options != null) {
+            masked.put("values", options);
+        }
+        if (!serialized.equals(masked)) {
+            input = (Input<?>) JacksonMapper.toMap(masked, input.getClass());
+        }
+
+        Set<InputOutputValidationException> exceptions = inputAndValue.exceptions() == null ? null
+            : inputAndValue.exceptions().stream()
+                .map(e -> new InputOutputValidationException((String) mask(e.getMessage(), masker), e.isRenderError(), e.getPath(), (String) mask(e.getDetail(), masker)))
+                .collect(Collectors.toSet());
+
+        return new InputAndValue(input, mask(inputAndValue.value(), masker), inputAndValue.enabled(), inputAndValue.isDefault(), exceptions);
+    }
+
+    private static Object mask(final Object object, final UnaryOperator<String> masker) {
+        if (object instanceof String string) {
+            return masker.apply(string);
+        } else if (object instanceof Map<?, ?> map) {
+            Map<Object, Object> result = new LinkedHashMap<>();
+            map.forEach((key, value) -> result.put(mask(key, masker), mask(value, masker)));
+            return result;
+        } else if (object instanceof Collection<?> collection) {
+            return collection.stream().map(element -> mask(element, masker)).toList();
+        }
+        return object;
+    }
+
+    /**
+     * The run context shared by all the inputs of a resolution, and the inputs that have a default, set to
+     * {@code null} until they are resolved: {@link RunVariables} would otherwise render all the defaults when
+     * building the run context, which could fail on a Pebble expression.
+     */
+    private record InputRendering(RunContext runContext, Map<String, Object> nullDefaults) {
+        Map<String, Object> variablesFor(final Map<String, InputAndValue> dependencies) {
+            Map<String, Object> flatInputs = new HashMap<>(nullDefaults);
+            dependencies.forEach((id, dependency) -> flatInputs.put(id, dependency.value()));
+            return Map.of("inputs", MapUtils.flattenToNestedMap(flatInputs));
+        }
+    }
+
+    private Map<String, Object> nullDefaultInputs(final FlowInterface flow) {
+        // FORM inputs are expanded to dotted leaves first, and defaults are injected into the flat map
+        // before nesting so they end up under the form key (e.g. inputs.environment.region).
+        Map<String, Object> nullDefaults = new HashMap<>();
+        for (Input<?> input : flow == null ? List.<Input<?>>of() : flow.resolvableInputs(reusableInputsExpander)) {
+            if (input.getDefaults() != null) {
+                nullDefaults.put(input.getId(), null);
+            }
+        }
+        return nullDefaults;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -453,7 +532,7 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final @NotNull Execution execution,
         final @NotNull Map<String, ResolvableInput> inputs,
-        final boolean decryptSecrets,
+        final @NotNull InputRendering rendering,
         final boolean renderDescriptions,
         final boolean forExecution) {
 
@@ -465,9 +544,10 @@ public class FlowInputOutput {
 
         try {
             // Resolve all input dependencies and check whether input is enabled
-            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, decryptSecrets, renderDescriptions, forExecution);
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, rendering, renderDescriptions, forExecution);
             // Note: Secrets are always decrypted here because they can be part of expressions used to render inputs such as SELECT & MULTI_SELECT.
-            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
+            final RunContext runContext = rendering.runContext();
+            final Map<String, Object> variables = rendering.variablesFor(dependencies);
 
             boolean isInputEnabled = dependencies.isEmpty() ||
                 dependencies.values().stream().allMatch(it -> it.enabled() && it.value() != null);
@@ -475,7 +555,7 @@ public class FlowInputOutput {
             final Optional<String> dependsOnCondition = Optional.ofNullable(input.getDependsOn()).map(DependsOn::condition);
             if (dependsOnCondition.isPresent() && isInputEnabled) {
                 try {
-                    isInputEnabled = Boolean.TRUE.equals(runContext.renderTyped(dependsOnCondition.get()));
+                    isInputEnabled = Boolean.TRUE.equals(runContext.renderTyped(dependsOnCondition.get(), variables));
                 } catch (IllegalVariableEvaluationException e) {
                     resolvable.resolveWithError(
                         InputOutputValidationException.of("Invalid condition: " + e.getMessage())
@@ -502,7 +582,7 @@ public class FlowInputOutput {
                     input = RenderableInput.mayRenderInput(input, expression ->
                     {
                         try {
-                            return runContext.renderTyped(expression);
+                            return runContext.renderTyped(expression, variables);
                         } catch (IllegalVariableEvaluationException e) {
                             throw new RuntimeException(e.getMessage(), e);
                         }
@@ -512,17 +592,16 @@ public class FlowInputOutput {
                 resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                 return resolvable.get();
             }
-            final Supplier<RunContext> nonDecryptingContext = Suppliers.memoize(() -> buildRunContextForExecutionAndInputs(flow, execution, dependencies, false));
             if (renderDescriptions && input.getDescription() != null && PebbleUtil.containsOpeningBlockDelimiter(input.getDescription())) {
                 try {
-                    input = input.withDescription(nonDecryptingContext.get().render(input.getDescription()));
+                    input = input.withDescription(runContext.render(input.getDescription(), variables));
                 } catch (IllegalVariableEvaluationException ignored) {
                     // Descriptions can contain literal Pebble examples with unavailable variables.
                 }
             }
             if (input instanceof TableInput table && !ListUtils.isEmpty(table.getFilters()) && table.getDefaults() != null) {
                 try {
-                    input = table.withMatchingDefaults(resolveDefaultValue(table, nonDecryptingContext.get()) instanceof List<?> rows ? rows : List.of());
+                    input = table.withMatchingDefaults(resolveDefaultValue(table, runContext, variables) instanceof List<?> rows ? rows : List.of());
                 } catch (Exception e) {
                     resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                     return resolvable.get();
@@ -549,9 +628,8 @@ public class FlowInputOutput {
             // resolve default if needed; a `defaults` that is a Pebble expression (e.g. subflow()/secret())
             // can itself fail to render — that is also a broken field, so flag it as a render error.
             if (value == null && input.getDefaults() != null) {
-                RunContext runContextForDefault = decryptSecrets ? runContext : nonDecryptingContext.get();
                 try {
-                    value = resolveDefaultValue(input, runContextForDefault);
+                    value = resolveDefaultValue(input, runContext, variables);
                     if (input instanceof TableInput table && value instanceof List<?> rows) {
                         value = table.matchingRows(rows);
                     }
@@ -612,23 +690,27 @@ public class FlowInputOutput {
     }
 
     public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {
+        return resolveDefaultValue(input, renderer, Map.of());
+    }
+
+    private static Object resolveDefaultValue(Input<?> input, PropertyContext renderer, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return switch (input.getType()) {
-            case STRING, SELECT, SECRET, EMAIL -> resolveDefaultPropertyAs(input, renderer, String.class);
-            case INT -> resolveDefaultPropertyAs(input, renderer, Integer.class);
-            case FLOAT -> resolveDefaultPropertyAs(input, renderer, Float.class);
-            case BOOL -> resolveDefaultPropertyAs(input, renderer, Boolean.class);
-            case DATETIME -> resolveDefaultPropertyAs(input, renderer, Instant.class);
-            case DATE -> resolveDefaultPropertyAs(input, renderer, LocalDate.class);
-            case TIME -> resolveDefaultPropertyAs(input, renderer, LocalTime.class);
-            case DURATION -> resolveDefaultPropertyAs(input, renderer, Duration.class);
-            case FILE, URI -> resolveDefaultPropertyAs(input, renderer, URI.class);
-            case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
-            case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
-            case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
-            case TABLE -> resolveDefaultPropertyAsList(input, renderer, Object.class);
+            case STRING, SELECT, SECRET, EMAIL -> resolveDefaultPropertyAs(input, renderer, variables, String.class);
+            case INT -> resolveDefaultPropertyAs(input, renderer, variables, Integer.class);
+            case FLOAT -> resolveDefaultPropertyAs(input, renderer, variables, Float.class);
+            case BOOL -> resolveDefaultPropertyAs(input, renderer, variables, Boolean.class);
+            case DATETIME -> resolveDefaultPropertyAs(input, renderer, variables, Instant.class);
+            case DATE -> resolveDefaultPropertyAs(input, renderer, variables, LocalDate.class);
+            case TIME -> resolveDefaultPropertyAs(input, renderer, variables, LocalTime.class);
+            case DURATION -> resolveDefaultPropertyAs(input, renderer, variables, Duration.class);
+            case FILE, URI -> resolveDefaultPropertyAs(input, renderer, variables, URI.class);
+            case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, variables, Object.class);
+            case ARRAY -> resolveDefaultPropertyAsList(input, renderer, variables, Object.class);
+            case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, variables, String.class);
+            case TABLE -> resolveDefaultPropertyAsList(input, renderer, variables, Object.class);
             case ASSET -> Boolean.TRUE.equals(((AssetInput) input).getMultiple())
-                ? resolveDefaultPropertyAsList(input, renderer, String.class)
-                : resolveDefaultPropertyAs(input, renderer, String.class);
+                ? resolveDefaultPropertyAsList(input, renderer, variables, String.class)
+                : resolveDefaultPropertyAs(input, renderer, variables, String.class);
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }
@@ -645,36 +727,17 @@ public class FlowInputOutput {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Object resolveDefaultPropertyAs(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return Property.as((Property<T>) input.getDefaults(), renderer, clazz);
+    private static <T> Object resolveDefaultPropertyAs(Input<?> input, PropertyContext renderer, Map<String, Object> variables, Class<T> clazz) throws IllegalVariableEvaluationException {
+        return Property.as((Property<T>) input.getDefaults(), renderer, clazz, variables);
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Object resolveDefaultPropertyAsList(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz);
-    }
-
-    private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
-        Map<String, Object> flatInputs = dependencies.entrySet()
-            .stream()
-            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll);
-        // Hack: Pre-inject all inputs that have a default value with 'null' to prevent
-        // RunContextFactory from attempting to render them when absent, which could
-        // otherwise cause an exception if a Pebble expression is involved.
-        // FORM inputs are expanded to dotted leaves first, and defaults are injected into the flat map
-        // before nesting so they end up under the form key (e.g. inputs.environment.region).
-        List<Input<?>> inputs = flow == null ? List.of() : flow.resolvableInputs(reusableInputsExpander);
-        for (Input<?> input : inputs) {
-            if (input.getDefaults() != null && !flatInputs.containsKey(input.getId())) {
-                flatInputs.put(input.getId(), null);
-            }
-        }
-        Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(flatInputs);
-        return runContextFactory.get().of(flow, execution, vars -> vars.withInputs(flattenInputs), decryptSecrets);
+    private static <T> Object resolveDefaultPropertyAsList(Input<?> input, PropertyContext renderer, Map<String, Object> variables, Class<T> clazz) throws IllegalVariableEvaluationException {
+        return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz, variables);
     }
 
     private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs,
-        final boolean decryptSecrets, final boolean renderDescriptions, final boolean forExecution) {
+        final InputRendering rendering, final boolean renderDescriptions, final boolean forExecution) {
         return Optional.ofNullable(input.getDependsOn())
             .map(DependsOn::inputs)
             .stream()
@@ -682,7 +745,7 @@ public class FlowInputOutput {
             .filter(id -> !id.equals(input.getId()))
             .map(inputs::get)
             .filter(Objects::nonNull) // input may declare unknown or non-necessary dependencies. Let's ignore.
-            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets, renderDescriptions, forExecution))
+            .map(it -> resolveInputValue(it, flow, execution, inputs, rendering, renderDescriptions, forExecution))
             .collect(Collectors.toMap(it -> it.input().getId(), Function.identity()));
     }
 

@@ -439,6 +439,20 @@ describe("CopilotChat", () => {
         expect(alert.text()).toContain("The assistant didn't return a response. Please try again.")
     })
 
+    it("explains an output-limit empty turn without offering a retry", () => {
+        state.notice.value = "outputLimit"
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-notice\"]").text()).toContain("ran out of output tokens")
+        expect(w.find("[data-test=\"copilot-notice-retry\"]").exists()).toBe(false)
+    })
+
+    it("explains a provider-blocked empty turn without offering a retry", () => {
+        state.notice.value = "contentFiltered"
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-notice\"]").text()).toContain("blocked the response")
+        expect(w.find("[data-test=\"copilot-notice-retry\"]").exists()).toBe(false)
+    })
+
     it("restores the last conversation on mount", () => {
         mountChat()
         expect(state.restoreThread).toHaveBeenCalled()

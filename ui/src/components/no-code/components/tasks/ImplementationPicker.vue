@@ -30,6 +30,7 @@
                 @click="select(option.branch)"
             >
                 <TaskIcon
+                    v-if="isPluginClass(option.branch.type)"
                     class="implementation-picker-option-icon"
                     :cls="option.branch.type"
                     :icons="pluginsStore.icons"
@@ -60,6 +61,7 @@
     import Check from "vue-material-design-icons/Check.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
+    import {isPluginClass} from "../../../../utils/pluginUtils"
     import {branchDisplayName, simpleClassName, type ImplementationBranch} from "./discriminatedUnion"
 
     const props = defineProps<{

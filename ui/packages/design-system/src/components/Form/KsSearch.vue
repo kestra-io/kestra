@@ -23,7 +23,7 @@
     import {ref, type HTMLAttributes} from "vue"
     import {ElInput, type InputProps} from "element-plus"
     import Magnify from "vue-material-design-icons/Magnify.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
@@ -37,16 +37,12 @@
 
     const model = defineModel<string>({default: ""})
 
-    const props = defineProps<{
-        placeholder?: string
-        disabled?: boolean
-        clearable?: boolean
-        readonly?: boolean
-        name?: string
-        id?: string
+    type KsSearchProps = Omit<InputProps, "modelValue"> & {
         /** Drop the border, shadow and background so the field sits flush in a container that draws them (the global search). */
         borderless?: boolean
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
+    }
+
+    const props = defineProps<KsSearchProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsSearchProps> & {onInput?: (value: string) => void})>()
 
     const emit = defineEmits<{
         change: [value: string | number]
@@ -57,7 +53,7 @@
         suffix?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["borderless"])
+    const filteredProps = usePassedProps(props, ["borderless"])
 </script>
 
 <style>

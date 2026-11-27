@@ -182,6 +182,6 @@ export class FilesEditor {
     }
 
     async clickSave() {
-        await this.page.getByRole("button", {name: "Save", exact: true}).click()
+        await this.page.getByRole("button", {name: "Save draft", exact: true}).click()
     }
 }

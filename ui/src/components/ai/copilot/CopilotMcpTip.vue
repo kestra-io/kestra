@@ -1,6 +1,6 @@
 <template>
     <KsAlert
-        v-if="!dismissed"
+        v-if="mcpServerEnabled && !dismissed"
         type="info"
         :title="$t('ai.copilot.mcpTip.title')"
         :closable="false"
@@ -29,10 +29,15 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import {useStorage} from "@vueuse/core"
+    import {useMiscStore} from "override/stores/misc"
     import {storageKeys} from "../../../utils/constants"
 
     const DOCS_URL = "https://kestra.io/docs/ai-orchestration/mcp-server?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-mcp#platform-mcp-server"
+
+    const miscStore = useMiscStore()
+    const mcpServerEnabled = computed(() => miscStore.configs?.isMcpServerEnabled === true)
 
     const dismissed = useStorage(storageKeys.COPILOT_MCP_TIP_DISMISSED, false, undefined, {writeDefaults: false})
 </script>

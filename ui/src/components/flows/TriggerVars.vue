@@ -1,5 +1,5 @@
 <template>
-    <KsTable tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+    <KsTable tableLayout="auto" :data="Object.entries(data).map(([key, value]) => ({key, value}))">
         <KsTableColumn prop="key" :label="$t('name')">
             <template #default="scope">
                 {{ getHumanizeLabel(scope.row.key) }}

@@ -1,5 +1,7 @@
 package io.kestra.core.models.assets;
 
+import io.kestra.core.models.namespaces.NamespaceInterface;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -14,7 +16,7 @@ public record AssetRelationRef(
     @Schema(title = "The id of the referenced asset.") String id,
 
     @Nullable
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
+    @Pattern(regexp = NamespaceInterface.ID_PATTERN)
     @Size(min = 1, max = 150)
     @Schema(title = "The namespace of the referenced asset, informational: asset ids are unique per tenant.") String namespace,
 

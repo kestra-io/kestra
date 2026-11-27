@@ -13,7 +13,7 @@ import {validationErrorLines, type ValidationError} from "../utils/validationErr
 import {routeFamily} from "../utils/routeFamily"
 import resource from "../models/resource"
 import action from "../models/action"
-import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
+import type {Dashboard, Chart, ChartStateCounts, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
@@ -239,13 +239,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const {data} = await axios.put<Dashboard>(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
+        const {data} = await axios.put<Dashboard>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${id}`)
+        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${encodeURIComponent(id)}`)
 
         const bookmarksStore = useBookmarksStore()
         const encodedId = encodeURIComponent(id)
@@ -279,13 +279,28 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
+            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}/charts/${chartId}`, parameters)
             return data
         } catch (e: unknown) {
             if (handledIf(e, [404])) return undefined
             if (handledIf(e, [410, 400])) return {results: [], total: 0, warning: asProblem(e)?.detail}
             throw e
         }
+    }
+
+    async function stateCounts(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
+        try {
+            const {data} = await axios.post<ChartStateCounts>(`${apiUrl()}/dashboards/${encodeURIComponent(id)}/charts/${chartId}/state-counts`, parameters)
+            return data
+        } catch (e: unknown) {
+            if (handledIf(e, [404])) return undefined
+            throw e
+        }
+    }
+
+    async function chartPreviewStateCounts(request: {chart: string; globalFilter: ChartFiltersOverrides}) {
+        const {data} = await axios.post<ChartStateCounts>(`${apiUrl()}/dashboards/charts/state-counts`, request)
+        return data
     }
 
     async function validateChart(source: string) {
@@ -401,6 +416,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         delete: deleteDashboard,
         validateDashboard,
         generate,
+        stateCounts,
+        chartPreviewStateCounts,
         validateChart,
         chartPreview,
         export: exportDashboard,

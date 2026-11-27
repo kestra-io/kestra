@@ -1,8 +1,9 @@
 <template>
     <ElSwitch
-        v-model="model"
+        :modelValue="model"
+        @update:modelValue="(value: boolean | string | number) => (model = value as boolean)"
         v-bind="({...filteredProps(), ...$attrs} as SwitchProps)"
-        @change="emit('change', $event)"
+        @change="emit('change', $event as boolean)"
     />
 </template>
 
@@ -14,14 +15,14 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<boolean | string | number>()
+    const model = defineModel<boolean>({default: false})
 
-    export type KsSwitchProps = Omit<SwitchProps, "modelValue">
+    export type KsSwitchProps = Omit<SwitchProps, "modelValue" | "activeValue" | "inactiveValue">
 
     const props = defineProps<KsSwitchProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsSwitchProps>>()
 
     const emit = defineEmits<{
-        change: [value: boolean | string | number]
+        change: [value: boolean]
     }>()
 
     const filteredProps = usePassedProps(props)

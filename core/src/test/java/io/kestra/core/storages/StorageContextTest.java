@@ -5,13 +5,50 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StorageContextTest {
+
+    @ParameterizedTest
+    @ValueSource(strings = { "team.", "team..product", ".team" })
+    void shouldRejectNamespaceWithAnEmptySegmentOnPathsMadeOfTheNamespaceAlone(String namespace) {
+        StorageContext context = forNamespace(namespace);
+
+        assertThatThrownBy(() -> StorageContext.namespaceFilePrefix(namespace)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining(namespace);
+        assertThatThrownBy(() -> StorageContext.kvPrefix(namespace)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StorageContext.namespaceRootUri(namespace)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StorageContext.executionsRootUri(namespace, "flowid")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> context.getStateStorePrefix("id", false, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> context.getCacheURI("cache", null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldStillBuildExecutionScopedPathsForANamespaceWithAnEmptySegment() {
+        StorageContext context = forNamespace("team.");
+
+        assertThat(context.getExecutionStorageURI().getPath()).endsWith("/flowid/executions/executionid");
+        assertThat(StorageContext.namespaceAsPath("team.")).isEqualTo("team/");
+        assertThat(StorageContext.isInNamespaceFiles("team.", context.getExecutionStorageURI())).isFalse();
+    }
+
+    private static StorageContext forNamespace(String namespace) {
+        return StorageContext.forExecution(
+            Execution
+                .builder()
+                .tenantId("tenantId")
+                .id("executionid")
+                .namespace(namespace)
+                .flowId("flowid")
+                .build()
+        );
+    }
 
     @Test
     void shouldGetValidUriForFlowContext() {

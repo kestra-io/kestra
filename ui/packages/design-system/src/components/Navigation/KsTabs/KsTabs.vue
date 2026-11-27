@@ -1,6 +1,7 @@
 <template>
     <ElTabs
-        v-model="model"
+        :modelValue="props.modelValue"
+        @update:modelValue="(name: TabPaneName) => emit('update:modelValue', name as T)"
         v-bind="({...filteredProps(), ...$attrs} as TabsProps)"
         :type="type"
         :class="{
@@ -16,24 +17,28 @@
     </ElTabs>
 </template>
 
-<script setup lang="ts">
-    import {computed, type HTMLAttributes} from "vue"
-    import {ElTabs, type TabsProps, type TabsPropsPublic} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
-    import type {NativeAttributes} from "../../../utils/nativeAttributes"
-
-    defineOptions({inheritAttrs: false})
-
-    const model = defineModel<string>()
-
+<script lang="ts">
     export interface KsTabsProps {
         type?: "" | "card" | "border-card" | "box" | "segmented"
         paneScroll?: boolean
         /** Hides a scroll arrow once it is disabled, at either end of the tab list. */
         hideDisabledArrows?: boolean
     }
+</script>
 
-    const props = defineProps<KsTabsProps & /* @vue-ignore */ Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue">>()
+<script setup lang="ts" generic="T extends string = string">
+    import {computed, type HTMLAttributes} from "vue"
+    import {ElTabs, type TabPaneName, type TabsProps, type TabsPropsPublic} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+
+    defineOptions({inheritAttrs: false})
+
+    const props = defineProps<KsTabsProps & {modelValue?: T} & /* @vue-ignore */ (Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue"> & {onTabChange?: (name: TabPaneName) => void})>()
+
+    const emit = defineEmits<{
+        "update:modelValue": [name: T]
+    }>()
 
     defineSlots<{
         default?(): unknown
@@ -43,7 +48,7 @@
         (props.type === "box" || props.type === "segmented" ? "" : props.type),
     )
 
-    const filteredProps = useFilteredProps(props, ["type", "paneScroll", "hideDisabledArrows"])
+    const filteredProps = useFilteredProps(props, ["type", "paneScroll", "hideDisabledArrows", "modelValue"])
 </script>
 
 <style lang="scss">

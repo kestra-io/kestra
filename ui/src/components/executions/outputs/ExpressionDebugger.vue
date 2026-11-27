@@ -176,7 +176,7 @@
                 resultLang.value = ""
             }
         } catch (err) {
-            error.value = (err as Error).message ?? "Failed to evaluate expression"
+            error.value = (err as Error).message ?? t("eval.failed")
         }
     }
 </script>

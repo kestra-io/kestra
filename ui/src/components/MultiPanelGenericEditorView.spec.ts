@@ -208,12 +208,21 @@ describe("MultiPanelGenericEditorView view placement", () => {
         expect(wrapper.vm.panels.map(p => p.tabs.map(t => t.uid))).toEqual([[], ["doc"], ["blueprints"]])
     })
 
-    test("focuses a view that is already open instead of closing it", () => {
+    test("focuses an open view hidden behind another tab of its panel", () => {
         const wrapper = mountPlacement(["code", "doc"])
         wrapper.vm.setTabValue("nocode")
 
         wrapper.vm.setTabValue("code")
 
         expect(layout(wrapper)[0]).toEqual({tabs: ["code", "nocode"], active: "code"})
+    })
+
+    test("closes an open view that is already shown in its panel", () => {
+        const wrapper = mountPlacement(["code", "doc"])
+        wrapper.vm.setTabValue("nocode")
+
+        wrapper.vm.setTabValue("nocode")
+
+        expect(layout(wrapper)[0]).toEqual({tabs: ["code"], active: "code"})
     })
 })

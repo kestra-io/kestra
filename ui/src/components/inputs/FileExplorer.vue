@@ -61,10 +61,6 @@
                     ref="folderPicker"
                     type="file"
                     webkitdirectory
-                    mozdirectory
-                    msdirectory
-                    odirectory
-                    directory
                     class="hidden"
                     @change="importFiles"
                 >
@@ -1003,8 +999,8 @@
             // succeeds; a rejected upload (e.g. missing permission) surfaces the error instead
             await filesStore.importFiles(importedFiles)
             toast.success(t("namespace files.import.success"))
-        } catch {
-            toast.error(t("namespace files.import.error"))
+        } catch (error) {
+            toast.requestError(error, t("namespace files.import.error"))
         } finally {
             (event.target as HTMLInputElement).value = ""
             dialog.value = {...DIALOG_DEFAULTS}

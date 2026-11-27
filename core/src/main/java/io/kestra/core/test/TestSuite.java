@@ -10,6 +10,7 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.annotations.ServerOwned;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.test.flow.UnitTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TenantId;
@@ -44,7 +45,7 @@ public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSui
     private String description;
 
     @NotNull
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
+    @Pattern(regexp = NamespaceInterface.ID_PATTERN)
     @Size(min = 1, max = 150)
     private String namespace;
 

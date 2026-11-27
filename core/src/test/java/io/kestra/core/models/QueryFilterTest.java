@@ -824,6 +824,7 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.RESOURCES, Resource.AUDIT_LOG,
                 Set.of(
+                    Op.EQUALS,
                     Op.IN
                 )
             ),
@@ -1864,7 +1865,6 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.RESOURCES, Resource.AUDIT_LOG,
                 Set.of(
-                    Op.EQUALS,
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,

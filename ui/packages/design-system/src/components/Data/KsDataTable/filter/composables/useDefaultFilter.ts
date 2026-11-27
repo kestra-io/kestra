@@ -94,7 +94,7 @@ export function useDefaultFilter(
         const merged = {...readSavedRestoreState(route), ...route.query}
         const {query, change} = applyDefaultFilters(merged, defaultOptions)
         if(change) {
-            router.replace({...route, query})
+            router.replace({query, hash: route.hash})
         }
     })
 

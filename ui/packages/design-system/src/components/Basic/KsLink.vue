@@ -13,19 +13,23 @@
 </template>
 
 <script setup lang="ts">
+    import type {AnchorHTMLAttributes} from "vue"
     import {ElLink, type LinkProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    interface KsLinkProps {
         type?: "" | "default" | "primary" | "success" | "warning" | "danger" | "info"
         underline?: "" | "always" | "hover" | "never"
         disabled?: boolean
         href?: string
         target?: string
         icon?: LinkProps["icon"]
-    }>()
+    }
+
+    const props = defineProps<KsLinkProps & /* @vue-ignore */ Omit<NativeAttributes<AnchorHTMLAttributes>, keyof KsLinkProps>>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

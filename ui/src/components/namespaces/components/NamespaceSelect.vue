@@ -22,7 +22,7 @@
                 :key="value"
                 closable
                 type="info"
-                @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
+                @close="modelValue = (modelValue as string[]).filter(v => v !== value) as T"
             >
                 <FolderOpenOutline />
                 <span class="tag-label" :title="value">{{ value }}</span>
@@ -45,7 +45,7 @@
     </KsSelect>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string | string[] = string">
     import {computed, onMounted} from "vue"
     import {useNamespacesStore} from "override/stores/namespaces"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
@@ -53,6 +53,7 @@
     import {defaultNamespace} from "../../../composables/useNamespaces"
 
     const props = withDefaults(defineProps<{
+        modelValue?: T,
         multiple?: boolean,
         readOnly?: boolean,
         clearable?: boolean,
@@ -75,7 +76,17 @@
         inheritAttrs: false,
     })
 
-    const modelValue = defineModel<string | string[]>()
+    // A single select can be cleared; a multiple one always sends its array.
+    type Selection = T extends string[] ? T : T | undefined
+
+    const emit = defineEmits<{
+        "update:modelValue": [value: Selection]
+    }>()
+
+    const modelValue = computed({
+        get: () => props.modelValue,
+        set: (value) => emit("update:modelValue", value as Selection),
+    })
 
     const namespacesStore = useNamespacesStore()
 
@@ -111,10 +122,10 @@
             const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {
-                    modelValue.value = [defaultNamespaceVal]
+                    modelValue.value = [defaultNamespaceVal] as T
                 }
             } else {
-                modelValue.value = defaultNamespaceVal ?? modelValue.value
+                modelValue.value = (defaultNamespaceVal ?? modelValue.value) as T
             }
         }
     })

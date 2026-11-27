@@ -78,7 +78,6 @@
     import {type Execution, useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
-    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     import {problemBulkBody, problemTitle} from "../../utils/problem"
     import resource from "../../models/resource"
     import action from "../../models/action"
@@ -167,13 +166,8 @@
             toast.success(t("change state done"))
         } catch (error) {
             executionsStore.followExecution({id: props.execution.id}, t)
-            if (!isReportedCentrally(error as KestraHttpError)) {
-                const problem = asProblem(error)
-                toast.error(
-                    problemBulkBody(problem, t, te),
-                    problemTitle(problem, t, te),
-                )
-            }
+            const problem = asProblem(error)
+            toast.requestError(error, problemBulkBody(problem, t, te), problemTitle(problem, t, te))
         }
     }
 </script>

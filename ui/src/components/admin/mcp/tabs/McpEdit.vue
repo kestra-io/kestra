@@ -158,7 +158,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref, watch} from "vue"
+    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
 
@@ -168,6 +168,7 @@
     import {useAuthStore} from "override/stores/auth"
 
     import {useToast} from "../../../../utils/toast"
+    import {useUnsavedChangesStore} from "../../../../stores/unsavedChanges"
 
     import Lock from "vue-material-design-icons/Lock.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
@@ -210,6 +211,17 @@
 
     const formRef = ref<FormInstance>()
     const form = ref<McpForm>(defaultForm())
+    const savedForm = ref(JSON.stringify(form.value))
+    const unsavedChangesStore = useUnsavedChangesStore()
+    const markSaved = () => savedForm.value = JSON.stringify(form.value)
+
+    watch(() => JSON.stringify(form.value) !== savedForm.value, (dirty) => {
+        unsavedChangesStore.unsavedChange = dirty
+    })
+
+    onBeforeUnmount(() => {
+        unsavedChangesStore.unsavedChange = false
+    })
     const submitting = ref(false)
 
     const isOss = computed(() => miscStore.configs?.edition === "OSS")
@@ -320,9 +332,11 @@
             try {
                 if (isUpdate.value) {
                     await mcpStore.update(form.value.id, buildPayload())
+                    markSaved()
                     toast.saved(form.value.id)
                 } else {
                     const created = await mcpStore.create(buildPayload())
+                    markSaved()
                     toast.saved(created.id)
                     router.push({
                         name: "admin/mcp-servers/update",
@@ -338,12 +352,13 @@
     }
 
     const cancel = (): void => {
+        markSaved()
         router.push(listRoute.value)
     }
 
     onMounted(() => {
         if (!authStore.auths) {
-            authStore.loadAuths({})
+            authStore.loadAuths()
         }
     })
 
@@ -361,8 +376,10 @@
                     oauthScopesSupported: server.oauthScopesSupported ?? [],
                     disabled: server.disabled,
                 }
+                markSaved()
             } else if (!isUpdate.value) {
                 form.value = defaultForm()
+                markSaved()
             }
         },
         {immediate: true},

@@ -1,5 +1,12 @@
 {
   "ru": {
+    "support_links": {
+      "slack_title": "Сообщество в Slack",
+      "slack_description": "Обсуждайте темы с другими пользователями и командой Kestra",
+      "github_description": "Поставьте звезду нашему open-source-проекту",
+      "help_center_title": "Центр помощи",
+      "help_center_description": "Обратитесь в поддержку за помощью с учетной записью Enterprise"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra был обновлен до версии {version} и может включать критические изменения, требующие обновления ваших Flow.",
       "cta": "Посмотреть изменения"
@@ -176,6 +183,23 @@
     "publish_draft": "Опубликовать черновик",
     "draft": "Черновик",
     "draft_flow_warning": "Последняя ревизия этого flow является черновиком. Выполнение будет запущено для последней опубликованной ревизии — опубликуйте черновик (или запустите его из Playground), чтобы выполнить последние изменения.",
+    "save_draft": "Сохранить черновик",
+    "flow_publish": {
+      "description": "Делает эту ревизию активной: Trigger'ы запускают ее, другие Flow'ы могут вызывать ее, а ее сбои достигают Flow'ов оповещений.",
+      "done_title": "Опубликовано",
+      "failed": "Не удалось опубликовать этот черновик.",
+      "done": "Ревизия {revision} Flow {name} активна: Trigger'ы запускают его, другие Flow'ы могут вызывать его, а его сбои достигают Flow'ов оповещений."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Этот Flow является черновиком",
+        "description": "У него нет опубликованной ревизии, поэтому Trigger'ы и другие Flow'ы не запускают его. Запустите его из Playground или опубликуйте, чтобы он стал активным."
+      },
+      "over_published": {
+        "title": "Последняя версия — черновик",
+        "description": "Расписания, вебхуки и другие Flow по-прежнему запускают опубликованную версию, пока вы не опубликуете этот черновик. Trigger Flow не запускают Flow в это время."
+      }
+    },
     "save task": "Сохранить задачу",
     "saved": "Успешно сохранено",
     "saved as draft": "Успешно сохранено как черновик",
@@ -375,6 +399,7 @@
     "create": "Создать",
     "create_flow": "Создать Flow",
     "create_child_namespace": "Создать дочерний namespace",
+    "view_all_flows": "Показать все flow",
     "from": "От",
     "to": "До",
     "steps": "Шаги",
@@ -562,6 +587,7 @@
     "output": "Вывод",
     "flow_outputs": "Выходы Flow",
     "eval": {
+      "failed": "Не удалось вычислить выражение",
       "title": "Отладка выражения",
       "preview": "Предварительный просмотр",
       "expression": "Выражение"
@@ -583,6 +609,7 @@
     },
     "topology-graph": {
       "retried": "Эта Task была повторена",
+      "task-details": "Сведения о {task}",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
       "graph-orientation": "Ориентация графика",
       "zoom-in": "Увеличить",
@@ -604,6 +631,8 @@
         "all-iterations": "Все итерации",
         "iteration-index": "индекс {index}",
         "iteration-value-index": "{value} · индекс {index}",
+        "first-iteration": "Первая итерация",
+        "last-iteration": "Последняя итерация",
         "previous-iteration": "Предыдущая итерация",
         "next-iteration": "Следующая итерация",
         "previous-page": "Предыдущая страница",
@@ -791,7 +820,8 @@
       "dialog_title": "Ограничения на параллельность",
       "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit.",
       "queued": "В очереди",
-      "save_error": "Не удалось обновить лимит Concurrency, сохранено предыдущее значение."
+      "save_error": "Не удалось обновить лимит Concurrency, сохранено предыдущее значение.",
+      "invalid_running_count": "Введите целое число от 0 до {max}."
     },
     "flowConcurrency": {
       "loadError": "Не удалось загрузить ограничение параллелизма для этого flow.",
@@ -1164,6 +1194,12 @@
     "bulk force run": "Вы уверены, что хотите принудительно запустить `{executionCount}` выполнение(й)?\n\nВНИМАНИЕ: принудительный запуск выполнения не гарантирован и может привести к дублированию выполнений task.\n\nБудут выполнены следующие переходы:\n\n- CREATED tasks будут переведены в состояние RUNNING.\n- RUNNING tasks будут повторно отправлены.\n- QUEUED tasks будут удалены из очереди.\n- PAUSED tasks будут возобновлены.",
     "bulk restart": "Вы уверены, что хотите перезапустить {executionCount} выполнение(я)?",
     "bulk kill": "Вы уверены, что хотите убить <code>{executionCount}</code> выполнение(я)?",
+    "bulk action ineligible change state": "У {count} из {total} выбранных executions нельзя изменить состояние.",
+    "bulk action ineligible not state": "{count} из {total} выбранных executions находятся не в состоянии {state}.",
+    "bulk action ineligible not pausable": "{count} из {total} выбранных executions нельзя приостановить.",
+    "bulk action ineligible not resumable": "{count} из {total} выбранных executions нельзя возобновить.",
+    "bulk action ineligible not terminated": "{count} из {total} выбранных executions не завершены.",
+    "bulk action ineligible already terminated": "{count} из {total} выбранных executions уже завершены.",
     "cancel": "Отмена",
     "errorLogs": "Логи ошибок",
     "product_tour": "Тур по продукту",
@@ -1424,6 +1460,7 @@
     "execution-include-non-terminated": "Включить незавершенные выполнения?",
     "execution-warn-title": "Важное предупреждение!",
     "execution-warn-deleting-still-running": "Мы настоятельно рекомендуем отменить это действие и сначала завершить все текущие executions. Удаление незавершенных executions может привести к проблемам с concurrency, несоответствиям в управлении зависимостями flow и появлению \"зомби\"-процессов на вашем экземпляре, что может ухудшить производительность системы. Убедитесь, что вы полностью понимаете эти риски, прежде чем продолжить удаление.",
+    "execution-warn-non-terminated-count": "{count} из {total} выбранных execution не завершены.",
     "pluginPage": {
       "search": "Поиск по {count}+ плагинам",
       "searchTasks": "Искать {count} tasks",
@@ -1519,6 +1556,7 @@
             "flow_default_tab": "Вкладка Flow по умолчанию",
             "triggers_default_tab": "Вкладка по умолчанию Triggers",
             "playground": "Песочница",
+            "open_docs_tab": "Открыть вкладку Docs",
             "auto_refresh_interval": "Интервал автоматического обновления",
             "task_edit_default_mode": "Режим редактирования Task по умолчанию",
             "flow_template": "Шаблон flow по умолчанию"
@@ -1535,6 +1573,7 @@
             "triggers_default_tab": "Вкладка выбрана при переходе на страницу триггеров.",
             "auto_refresh_interval": "Секунды между автоматическими обновлениями данных на страницах списков.",
             "playground": "Запускайте задачи по отдельности в редакторе playground.",
+            "open_docs_tab": "Откройте вкладку Docs рядом с редактором. Применяется к новым Flow и Flow, которые вы ранее не открывали.",
             "task_edit_default_mode": "Как task открывается по умолчанию из no-code редактора.",
             "flow_template": "YAML открывается в редакторе при создании нового flow. id и namespace можно не указывать, так как они генерируются автоматически. Если это поле пусто, используется шаблон, настроенный для экземпляра."
           },
@@ -1979,6 +2018,7 @@
       "add": "Создать",
       "update": "Обновить значение для key '{key}'",
       "duplicate": "Этот key уже существует",
+      "description_latin1": "Описание может содержать только латинские символы, без эмодзи.",
       "delete multiple": {
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>",
@@ -2053,6 +2093,7 @@
       "title": "Начните автоматизацию с Kestra",
       "sub_title": "Нажмите на кнопку Execute, чтобы начать выполнение вашего первого workflow.",
       "namespace_sub_title": "Выполните один или несколько flow из этого namespace, чтобы заполнить эту панель.",
+      "draft_sub_title": "Этот Flow содержит только черновики: запустите его из Playground в редакторе или опубликуйте для выполнения.",
       "need_help": "Нужна помощь?"
     },
     "execution_guide": {
@@ -2144,6 +2185,7 @@
     "custom value": "Пользовательское значение",
     "chart": "График",
     "no_code": {
+      "unknown_schema": "Неизвестная схема",
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",
@@ -2243,7 +2285,7 @@
       "label": "Горячие клавиши",
       "trigger_autocompletion": "Запустить автозаполнение",
       "command_palette": "Показать палитру команд",
-      "save_flow": "Сохранить flow",
+      "save_flow": "Сохранить черновик",
       "execute_flow": "Запустить flow",
       "toggle_ai_agent": "Переключить AI agent",
       "move_line": "Переместить строку",
@@ -2576,6 +2618,8 @@
         },
         "notice": {
           "emptyTurn": "Помощник не вернул ответ. Пожалуйста, попробуйте еще раз.",
+          "outputLimit": "У помощника закончились выходные токены, прежде чем он смог ответить. Сократите сообщение или начните новый чат.",
+          "contentFiltered": "Поставщик AI заблокировал ответ. Перефразируйте сообщение или удалите контент, который мог вызвать срабатывание фильтров поставщика.",
           "retry": "Повторить"
         },
         "cancelled": "Ход отменен",
@@ -3054,7 +3098,7 @@
         "no_match": "Нет совпадений",
         "open": "Открыть {name}",
         "paste": "Вставить",
-        "save": "Сохранить flow",
+        "save": "Сохранить черновик",
         "search_placeholder": "Введите команду или найдите task…",
         "title": "Меню команд"
       },
@@ -3162,7 +3206,7 @@
         "paste": "Вставить",
         "redo": "Повторить",
         "reorder": "Изменить порядок вверх / вниз",
-        "save": "Сохранить flow",
+        "save": "Сохранить черновик",
         "step_into": "Развернуть / перейти в группу",
         "step_out": "Свернуть / выйти к родительскому элементу",
         "title": "Сочетания клавиш",
@@ -3180,7 +3224,7 @@
       "undo": "Отменить",
       "upstream_outputs": "Выходные данные Upstream",
       "open_in_tabs": "Открыть в новых вкладках",
-      "open_mode_hint": "Задачи по умолчанию открываются в модальном окне. Вы можете сделать вкладки по умолчанию в {settings}."
+      "open_mode_hint": "Этот редактор по умолчанию открывается в модальном окне. Вы можете сделать вкладки по умолчанию в {settings}."
     },
     "blocks": "Блоки",
     "move_panel_to_bottom": "Переместить панель вниз",
@@ -3244,6 +3288,8 @@
     "chart mode": {
       "counts": "Счётчики",
       "timeline": "Временная шкала"
-    }
+    },
+    "search_in_flow_source": "Искать «{query}» в исходном коде потока",
+    "flows_matched_query": "{count} поток с «{query}» в идентификаторе или пространстве имен. | {count} потока с «{query}» в идентификаторе или пространстве имен. | {count} потоков с «{query}» в идентификаторе или пространстве имен."
   }
 }

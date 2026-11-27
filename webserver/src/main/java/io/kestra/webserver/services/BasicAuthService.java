@@ -1,11 +1,8 @@
 package io.kestra.webserver.services;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.*;
-import java.util.HexFormat;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -19,6 +16,8 @@ import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.AuthUtils;
+import io.kestra.core.utils.Hashing;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.models.events.OssAuthEvent;
 
 import io.micronaut.context.annotation.ConfigurationInject;
@@ -278,7 +277,7 @@ public class BasicAuthService {
         }
         try {
             String token = encoded.get();
-            String tokenSha256 = sha256Hex(token);
+            String tokenSha256 = Hashing.sha256Hex(token);
             String credentialsFingerprint = credentialsFingerprint(credentials);
 
             // Fast path: same token verified against these exact credentials — skip bcrypt
@@ -330,7 +329,7 @@ public class BasicAuthService {
      * from one verified against a since-replaced username/password.
      */
     private static String credentialsFingerprint(SaltedBasicAuthCredentials credentials) {
-        return sha256Hex(credentials.getUsername() + ":" + credentials.getSalt() + ":" + credentials.getPassword());
+        return Hashing.sha256Hex(credentials.getUsername() + ":" + credentials.getSalt() + ":" + credentials.getPassword());
     }
 
     private Optional<String> extractFromCookie(HttpRequest<?> request) {
@@ -364,21 +363,6 @@ public class BasicAuthService {
             .map(cred -> cred.substring("Basic ".length()));
     }
 
-    /**
-     * Returns the lower-hex SHA-256 of {@code input} for use as a cache key.
-     * The raw token is never stored in the cache.
-     */
-    private static String sha256Hex(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] bytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(bytes);
-        } catch (NoSuchAlgorithmException e) {
-            // SHA-256 is guaranteed by the JVM spec – this cannot happen.
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
-    }
-
     @Getter
     @NoArgsConstructor
     @EqualsAndHashCode
@@ -400,7 +384,7 @@ public class BasicAuthService {
             this.username = username;
             this.password = password;
             this.realm = Optional.ofNullable(realm).orElse("Kestra");
-            this.openUrls = Optional.ofNullable(openUrls).orElse(Collections.emptyList());
+            this.openUrls = ListUtils.emptyOnNull(openUrls);
         }
     }
 

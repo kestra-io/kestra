@@ -1,5 +1,12 @@
 {
   "ko": {
+    "support_links": {
+      "slack_title": "커뮤니티 Slack",
+      "slack_description": "다른 사용자 및 Kestra 팀과 토론하세요",
+      "github_description": "오픈 소스 프로젝트에 별을 눌러 주세요",
+      "help_center_title": "도움말 센터",
+      "help_center_description": "Enterprise 계정에 대한 도움이 필요하면 지원팀에 문의하세요"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra가 {version}으로 업그레이드되었습니다. 이 버전에는 Flow 업데이트가 필요한 변경 사항이 포함될 수 있습니다.",
       "cta": "변경 사항 확인"
@@ -176,6 +183,23 @@
     "publish_draft": "초안 게시",
     "draft": "초안",
     "draft_flow_warning": "이 flow의 최신 리비전은 초안입니다. 실행은 대신 최신 게시된 리비전을 기준으로 수행됩니다. 최신 변경 사항을 실행하려면 초안을 게시하거나 Playground에서 실행하세요.",
+    "save_draft": "초안 저장",
+    "flow_publish": {
+      "description": "이 버전을 활성화합니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다.",
+      "done_title": "게시됨",
+      "failed": "이 초안을 게시할 수 없습니다.",
+      "done": "{name}의 리비전 {revision}이 활성화되었습니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "이 Flow는 초안입니다.",
+        "description": "게시된 revision이 없으므로 trigger 및 다른 flow가 시작하지 않습니다. Playground에서 실행하거나 게시하여 활성화하세요."
+      },
+      "over_published": {
+        "title": "최신 버전은 초안입니다.",
+        "description": "일정, 웹훅 및 기타 flow는 이 초안을 게시할 때까지 게시된 revision을 계속 실행합니다. Flow trigger는 그동안 flow를 시작하지 않습니다."
+      }
+    },
     "save task": "Task 저장",
     "saved": "성공적으로 저장됨",
     "saved as draft": "초안으로 저장되었습니다",
@@ -375,6 +399,7 @@
     "create": "생성",
     "create_flow": "Flow 생성",
     "create_child_namespace": "하위 namespace 생성",
+    "view_all_flows": "모든 flow 보기",
     "from": "시작",
     "to": "종료",
     "steps": "단계",
@@ -562,6 +587,7 @@
     "output": "Output",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "표현식을 평가하지 못했습니다",
       "title": "디버그 표현식",
       "preview": "미리보기",
       "expression": "표현식"
@@ -583,6 +609,7 @@
     },
     "topology-graph": {
       "retried": "이 Task는 재시도되었습니다.",
+      "task-details": "{task} 세부 정보",
       "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
       "graph-orientation": "그래프 방향",
       "zoom-in": "확대",
@@ -604,6 +631,8 @@
         "all-iterations": "모든 반복",
         "iteration-index": "인덱스 {index}",
         "iteration-value-index": "{value} · 인덱스 {index}",
+        "first-iteration": "첫 번째 반복",
+        "last-iteration": "마지막 반복",
         "previous-iteration": "이전 반복",
         "next-iteration": "다음 반복",
         "previous-page": "이전 페이지",
@@ -791,7 +820,8 @@
       "dialog_title": "동시성 제한",
       "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다.",
       "queued": "대기 중",
-      "save_error": "동시성 limit 업데이트에 실패했습니다. 이전 value가 유지됩니다."
+      "save_error": "동시성 limit 업데이트에 실패했습니다. 이전 value가 유지됩니다.",
+      "invalid_running_count": "0에서 {max} 사이의 정수를 입력하세요."
     },
     "flowConcurrency": {
       "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
@@ -1164,6 +1194,12 @@
     "bulk force run": "`{executionCount}`개의 실행을 강제로 실행하시겠습니까?\n\n경고: 실행 강제 실행은 보장되지 않으며 중복 Task 실행을 생성할 수 있습니다.\n\n다음 전환이 수행됩니다:\n\n- CREATED Task는 실행 중 상태로 이동됩니다.\n- RUNNING Task는 다시 제출됩니다.\n- QUEUED Task는 대기열에서 제거됩니다.\n- PAUSED Task는 재개됩니다.",
     "bulk restart": "{executionCount} 개의 실행을 재시작하시겠습니까?",
     "bulk kill": "<code>{executionCount}</code> 개의 실행을 강제 종료하시겠습니까?",
+    "bulk action ineligible change state": "선택한 실행 {total}개 중 {count}개는 상태를 변경할 수 없습니다.",
+    "bulk action ineligible not state": "선택한 실행 {total}개 중 {count}개는 {state} 상태가 아닙니다.",
+    "bulk action ineligible not pausable": "선택한 실행 {total}개 중 {count}개는 일시 중지할 수 없습니다.",
+    "bulk action ineligible not resumable": "선택한 실행 {total}개 중 {count}개는 재개할 수 없습니다.",
+    "bulk action ineligible not terminated": "선택한 실행 {total}개 중 {count}개는 종료되지 않았습니다.",
+    "bulk action ineligible already terminated": "선택한 실행 {total}개 중 {count}개는 이미 종료되었습니다.",
     "cancel": "취소",
     "errorLogs": "오류 log",
     "product_tour": "제품 둘러보기",
@@ -1424,6 +1460,7 @@
     "execution-include-non-terminated": "종료되지 않은 실행을 포함하시겠습니까?",
     "execution-warn-title": "중요한 WARNING!",
     "execution-warn-deleting-still-running": "이 작업을 취소하고 진행 중인 실행을 먼저 중지할 것을 강력히 권장합니다. 종료되지 않은 실행을 삭제하면 concurrency 문제, flow 종속성 관리 불일치, 인스턴스에서의 좀비 프로세스가 발생할 수 있으며, 이는 시스템 성능을 저하시킬 수 있습니다. 삭제를 진행하기 전에 이러한 위험을 충분히 이해했는지 확인하십시오.",
+    "execution-warn-non-terminated-count": "선택한 실행 {total}개 중 {count}개가 종료되지 않았습니다.",
     "pluginPage": {
       "search": "{count}+개 플러그인 검색",
       "searchTasks": "{count}개의 task 검색",
@@ -1519,6 +1556,7 @@
             "flow_default_tab": "기본 Flow 탭",
             "triggers_default_tab": "기본 Trigger 탭",
             "playground": "플레이그라운드",
+            "open_docs_tab": "Docs 탭 열기",
             "auto_refresh_interval": "자동 새로고침 간격",
             "task_edit_default_mode": "기본 Task 편집 모드",
             "flow_template": "기본 flow 템플릿"
@@ -1535,6 +1573,7 @@
             "triggers_default_tab": "트리거 페이지로 이동할 때 선택된 탭.",
             "auto_refresh_interval": "목록 페이지에서 자동 데이터 새로 고침 간격(초).",
             "playground": "편집기 플레이그라운드에서 개별적으로 task 실행.",
+            "open_docs_tab": "편집기 옆의 Docs 탭을 엽니다. 새 flow 및 이전에 열지 않은 flow에 적용됩니다.",
             "task_edit_default_mode": "노코드 편집기에서 task가 기본적으로 열리는 방식입니다.",
             "flow_template": "새 flow를 생성할 때 YAML이 에디터에서 열립니다. id와 namespace는 자동으로 생성되므로 비워둘 수 있습니다. 이 필드가 비어 있으면 인스턴스에 구성된 템플릿이 사용됩니다."
           },
@@ -1979,6 +2018,7 @@
       "add": "생성",
       "update": "키 '{key}'의 값을 업데이트하세요",
       "duplicate": "이 키는 이미 존재합니다",
+      "description_latin1": "설명에는 라틴 문자만 사용할 수 있으며 이모지는 사용할 수 없습니다.",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>",
@@ -2053,6 +2093,7 @@
       "title": "Kestra로 자동화를 시작하세요",
       "sub_title": "실행 버튼을 클릭하여 첫 번째 workflow 실행을 시작하세요.",
       "namespace_sub_title": "이 대시보드를 채우기 위해 이 namespace에서 하나 이상의 flow를 실행하십시오.",
+      "draft_sub_title": "이 Flow에는 초안만 있습니다. 편집기에서 Playground 모드로 실행하거나 게시하여 실행하세요.",
       "need_help": "도움이 필요하신가요?"
     },
     "execution_guide": {
@@ -2144,6 +2185,7 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "no_code": {
+      "unknown_schema": "알 수 없는 스키마",
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",
@@ -2243,7 +2285,7 @@
       "label": "키보드 단축키",
       "trigger_autocompletion": "자동 완성 트리거",
       "command_palette": "명령 팔레트 표시",
-      "save_flow": "Flow 저장",
+      "save_flow": "초안 저장",
       "execute_flow": "flow 실행",
       "toggle_ai_agent": "AI 에이전트 전환",
       "move_line": "줄 이동",
@@ -2576,6 +2618,8 @@
         },
         "notice": {
           "emptyTurn": "어시스턴트가 응답을 반환하지 않았습니다. 다시 시도해 주세요.",
+          "outputLimit": "어시스턴트가 답변하기 전에 output 토큰이 부족했습니다. 메시지를 줄이거나 새 채팅을 시작하세요.",
+          "contentFiltered": "AI 공급자가 응답을 차단했습니다. 메시지를 다시 작성하거나 공급자의 필터를 트리거했을 수 있는 콘텐츠를 제거하세요.",
           "retry": "재시도"
         },
         "cancelled": "회차 취소됨",
@@ -3054,7 +3098,7 @@
         "no_match": "일치하는 항목 없음",
         "open": "{name} 열기",
         "paste": "붙여넣기",
-        "save": "flow 저장",
+        "save": "초안 저장",
         "search_placeholder": "명령어를 입력하거나 task를 검색하세요...",
         "title": "명령 메뉴"
       },
@@ -3162,7 +3206,7 @@
         "paste": "붙여넣기",
         "redo": "다시 실행",
         "reorder": "위/아래로 재정렬",
-        "save": "flow 저장",
+        "save": "초안 저장",
         "step_into": "그룹 확장 / 단계별 진입",
         "step_out": "접기 / 상위로 이동",
         "title": "키보드 단축키",
@@ -3180,7 +3224,7 @@
       "undo": "실행 취소",
       "upstream_outputs": "업스트림 output",
       "open_in_tabs": "탭에서 열기",
-      "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
+      "open_mode_hint": "이 에디터는 기본적으로 모달로 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
     "blocks": "블록",
     "move_panel_to_bottom": "패널을 하단으로 이동",
@@ -3244,6 +3288,8 @@
     "chart mode": {
       "counts": "카운트",
       "timeline": "타임라인"
-    }
+    },
+    "search_in_flow_source": "플로우 소스에서 \"{query}\" 검색",
+    "flows_matched_query": "ID 또는 네임스페이스에 \"{query}\"이(가) 포함된 {count}개의 플로우. | ID 또는 네임스페이스에 \"{query}\"이(가) 포함된 {count}개의 플로우."
   }
 }

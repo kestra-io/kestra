@@ -2,7 +2,6 @@ import type {Ref} from "vue"
 import {useI18n} from "vue-i18n"
 import {asProblem} from "@kestra-io/kestra-sdk"
 import {useToast} from "../utils/toast"
-import {isReportedCentrally, type KestraHttpError} from "../utils/kestraHttp"
 import {problemBulkBody, problemTitle} from "../utils/problem"
 
 /** Runs a list page's bulk action on every match or on the ticked rows, then reports, unselects and refreshes; a refusal is listed per item. Pass `report` instead of `success` when the outcome is not always a success. */
@@ -30,11 +29,8 @@ export function useBulkAction(
                 refresh()
             })
             .catch((error: unknown) => {
-                if (isReportedCentrally(error as KestraHttpError)) {
-                    return
-                }
                 const problem = asProblem(error)
-                toast.error(problemBulkBody(problem, t, te), problemTitle(problem, t, te))
+                toast.requestError(error, problemBulkBody(problem, t, te), problemTitle(problem, t, te))
             })
     }
 

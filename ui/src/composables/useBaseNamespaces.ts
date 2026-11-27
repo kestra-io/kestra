@@ -224,7 +224,7 @@ export const useBaseNamespacesStore = () => {
         const BLOB = new Blob([payload.content], {type: "text/plain"})
         DATA.append("fileContent", BLOB)
 
-        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(payload.path)}`
+        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`
         // Don't set Content-Type - the browser must generate the multipart boundary itself.
         await axios.post(URL, Utils.toFormData(DATA))
     }

@@ -941,6 +941,29 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldReturnUnprocessableEntityWhenCreatingBackfillWithMissingFields() {
+        // GIVEN
+        List<ApiCreateBackfillRequest> requests = List.of(
+            new ApiCreateBackfillRequest(null, "flow", "trigger", new ApiCreateBackfillRequest.Backfill(ZonedDateTime.now(), null, null, null)),
+            new ApiCreateBackfillRequest("ns", " ", "trigger", new ApiCreateBackfillRequest.Backfill(ZonedDateTime.now(), null, null, null)),
+            new ApiCreateBackfillRequest("ns", "flow", null, new ApiCreateBackfillRequest.Backfill(ZonedDateTime.now(), null, null, null)),
+            new ApiCreateBackfillRequest("ns", "flow", "trigger", null),
+            new ApiCreateBackfillRequest("ns", "flow", "trigger", new ApiCreateBackfillRequest.Backfill(null, null, null, null))
+        );
+
+        for (ApiCreateBackfillRequest request : requests) {
+            // WHEN
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(HttpRequest.PUT(TRIGGER_PATH + "/backfill/create", request), ApiTriggerState.class)
+            );
+
+            // THEN
+            Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+        }
+    }
+
+    @Test
     void shouldReturnUnprocessableEntityWhenCreatingBackfillWithEndNotAfterStart() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlowWithTrigger("ns-" + IdUtils.create().toLowerCase());

@@ -1,5 +1,12 @@
 {
   "en": {
+    "support_links": {
+      "slack_title": "Community Slack",
+      "slack_description": "Discuss topics with other users and the Kestra team",
+      "github_description": "Give our open-source project a star",
+      "help_center_title": "Help Center",
+      "help_center_description": "Contact support for help with your Enterprise account"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra was upgraded to {version} and it may include breaking changes that require updates to your flows.",
       "cta": "See what changed"
@@ -176,6 +183,23 @@
     "publish_draft": "Publish draft",
     "draft": "Draft",
     "draft_flow_warning": "The latest revision of this flow is a draft. The execution will run against the latest published revision instead - publish the draft (or run it from the playground) to execute your latest changes.",
+    "save_draft": "Save draft",
+    "flow_publish": {
+      "description": "Makes this revision live: triggers start it, other flows can call it, and its failures reach alert flows.",
+      "done_title": "Published",
+      "failed": "Could not publish this draft.",
+      "done": "Revision {revision} of {name} is live: triggers start it, other flows can call it, and its failures reach alert flows."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "This flow is a draft",
+        "description": "It has no published revision, so triggers and other flows do not start it. Run it from the Playground, or publish it to make it live."
+      },
+      "over_published": {
+        "title": "The latest revision is a draft",
+        "description": "Schedules, webhooks and other flows still run the published revision until you publish this draft. Flow triggers do not start the flow meanwhile."
+      }
+    },
     "save task": "Save Task",
     "saved": "Successfully saved",
     "saved as draft": "Successfully saved as draft",
@@ -375,6 +399,7 @@
     "create": "Create",
     "create_flow": "Create Flow",
     "create_child_namespace": "Create child namespace",
+    "view_all_flows": "View all flows",
     "from": "From",
     "to": "To",
     "steps": "Steps",
@@ -562,6 +587,7 @@
     "output": "Output",
     "flow_outputs": "Flow Outputs",
     "eval": {
+      "failed": "Failed to evaluate expression",
       "title": "Debug Expression",
       "preview": "Preview",
       "expression": "Expression"
@@ -583,6 +609,7 @@
     },
     "topology-graph": {
       "retried": "This task was retried",
+      "task-details": "Details for {task}",
       "artifacts": "no artifacts | {count} artifact | {count} artifacts",
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
@@ -604,6 +631,8 @@
         "all-iterations": "All iterations",
         "iteration-index": "index {index}",
         "iteration-value-index": "{value} · index {index}",
+        "first-iteration": "First iteration",
+        "last-iteration": "Last iteration",
         "previous-iteration": "Previous iteration",
         "next-iteration": "Next iteration",
         "previous-page": "Previous page",
@@ -791,7 +820,8 @@
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
       "queued": "Queued",
-      "save_error": "Failed to update the concurrency limit, the previous value is kept."
+      "save_error": "Failed to update the concurrency limit, the previous value is kept.",
+      "invalid_running_count": "Enter a whole number between 0 and {max}."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -1164,6 +1194,12 @@
     "bulk force run": "Are you sure you want to force run `{executionCount}` execution(s)?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task executions.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "bulk restart": "Are you sure you want to restart {executionCount} execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
+    "bulk action ineligible change state": "{count} of {total} selected executions are not eligible for a state change.",
+    "bulk action ineligible not state": "{count} of {total} selected executions are not in {state} state.",
+    "bulk action ineligible not pausable": "{count} of {total} selected executions cannot be paused.",
+    "bulk action ineligible not resumable": "{count} of {total} selected executions cannot be resumed.",
+    "bulk action ineligible not terminated": "{count} of {total} selected executions have not terminated.",
+    "bulk action ineligible already terminated": "{count} of {total} selected executions have already terminated.",
     "cancel": "Cancel",
     "errorLogs": "Error logs",
     "product_tour": "Product Tour",
@@ -1424,6 +1460,7 @@
     "execution-include-non-terminated": "Include non-terminated executions?",
     "execution-warn-title": "Important Warning!",
     "execution-warn-deleting-still-running": "We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
+    "execution-warn-non-terminated-count": "{count} of {total} selected execution(s) are non-terminated.",
     "pluginPage": {
       "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
@@ -1519,6 +1556,7 @@
             "flow_default_tab": "Default Flow Tab",
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
+            "open_docs_tab": "Open Docs Tab",
             "auto_refresh_interval": "Auto Refresh Interval",
             "task_edit_default_mode": "Default Task Edit Mode",
             "flow_template": "Default Flow Template"
@@ -1535,6 +1573,7 @@
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground.",
+            "open_docs_tab": "Open the Docs tab next to the editor. Applies to new flows and flows you haven't opened before.",
             "task_edit_default_mode": "How a task opens by default from the no-code editor.",
             "flow_template": "YAML opened in the editor when you create a new flow. The id and namespace can be left out, since they are generated for you. When this is empty, the template configured for the instance is used."
           },
@@ -1979,6 +2018,7 @@
       "add": "Create",
       "update": "Update value for key '{key}'",
       "duplicate": "This key already exists",
+      "description_latin1": "The description can only contain Latin characters, without emoji.",
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
         "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>",
@@ -2053,6 +2093,7 @@
       "title": "Start automating with Kestra",
       "sub_title": "Click on the Execute button to start your first workflow execution.",
       "namespace_sub_title": "Execute one or more flows from this namespace to populate this dashboard.",
+      "draft_sub_title": "This flow only has drafts: run it from the Playground in the editor, or publish it to execute it.",
       "need_help": "Need Help?"
     },
     "execution_guide": {
@@ -2144,6 +2185,7 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
+      "unknown_schema": "Unknown Schema",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -2243,7 +2285,7 @@
       "label": "Keyboard shortcuts",
       "trigger_autocompletion": "Trigger autocompletion",
       "command_palette": "Show command palette",
-      "save_flow": "Save flow",
+      "save_flow": "Save draft",
       "execute_flow": "Execute flow",
       "toggle_ai_agent": "Toggle AI agent",
       "move_line": "Move line",
@@ -2576,6 +2618,8 @@
         },
         "notice": {
           "emptyTurn": "The assistant didn't return a response. Please try again.",
+          "outputLimit": "The assistant ran out of output tokens before it could answer. Shorten your message or start a new chat.",
+          "contentFiltered": "The AI provider blocked the response. Rephrase your message or remove the content that may have triggered the provider's filters.",
           "retry": "Retry"
         },
         "cancelled": "Turn cancelled",
@@ -3054,7 +3098,7 @@
         "no_match": "No match",
         "open": "Open {name}",
         "paste": "Paste",
-        "save": "Save flow",
+        "save": "Save draft",
         "search_placeholder": "Type a command or search a task…",
         "title": "Command menu"
       },
@@ -3162,7 +3206,7 @@
         "paste": "Paste",
         "redo": "Redo",
         "reorder": "Reorder up / down",
-        "save": "Save flow",
+        "save": "Save draft",
         "step_into": "Expand / step into a group",
         "step_out": "Collapse / step out to parent",
         "title": "Keyboard shortcuts",
@@ -3180,7 +3224,7 @@
       "undo": "Undo",
       "upstream_outputs": "Upstream outputs",
       "open_in_tabs": "Open in tabs",
-      "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
+      "open_mode_hint": "This editor opens in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
     "move_panel_to_bottom": "Move panel to bottom",
@@ -3244,6 +3288,8 @@
     "chart mode": {
       "counts": "Counts",
       "timeline": "Timeline"
-    }
+    },
+    "search_in_flow_source": "Search \"{query}\" in flow source",
+    "flows_matched_query": "{count} flow with \"{query}\" in the id or namespace. | {count} flows with \"{query}\" in the id or namespace."
   }
 }

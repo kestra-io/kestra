@@ -303,6 +303,32 @@ class PluginSchemaBundleServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldMergeOnceWhenTheSameLocalSchemaIsRequestedAgain() throws IOException {
+        Files.writeString(tempDir.resolve("plugins-schema.json"), """
+            {
+              "definitions": {
+                "io.kestra.core.models.tasks.Task": {"anyOf": [{"$ref": "#/definitions/io.kestra.plugin.algolia.Search"}]},
+                "io.kestra.plugin.algolia.Search": {"type": "object"}
+              },
+              "roots": {"task": "#/definitions/io.kestra.core.models.tasks.Task"}
+            }
+            """);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null), versionProvider);
+        String localJson = """
+            {"$ref": "#/definitions/io.kestra.core.models.tasks.Task", "definitions": {"io.kestra.core.models.tasks.Task": {"anyOf": []}}}
+            """;
+        Map<String, Object> localSchema = JacksonMapper.ofJson().readValue(localJson, Map.class);
+        Map<String, Object> regeneratedSchema = JacksonMapper.ofJson().readValue(localJson, Map.class);
+
+        Map<String, Object> first = service.mergeWithBundle(SchemaType.TASK, localSchema);
+
+        // An equal schema regenerated after a plugin change must not be served the previous merge.
+        assertThat(service.mergeWithBundle(SchemaType.TASK, localSchema)).isSameAs(first);
+        assertThat(service.mergeWithBundle(SchemaType.TASK, regeneratedSchema)).isEqualTo(first).isNotSameAs(first);
+    }
+
+    @Test
     void shouldPreferExplicitPathOverClasspathAndUrl() throws Exception {
         // Given: all three sources present
         Path localFile = Files.writeString(tempDir.resolve("plugins-schema.json"), "{}");

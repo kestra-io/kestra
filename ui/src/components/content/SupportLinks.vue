@@ -15,27 +15,30 @@
     import GithubIcon from "vue-material-design-icons/Github.vue"
     import SlackIcon from "vue-material-design-icons/Slack.vue"
     import LifebuoyIcon from "vue-material-design-icons/Lifebuoy.vue"
+    import {useI18n} from "vue-i18n"
 
     defineProps<{
         title: string
     }>()
 
+    const {t} = useI18n()
+
     const buttons = [
         {
-            label: "Community Slack",
-            description: "Discuss topics with other users and kestra Team",
+            label: t("support_links.slack_title"),
+            description: t("support_links.slack_description"),
             href: "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=support-link",
             icon: SlackIcon,
         },
         {
             label: "GitHub",
-            description: "Give our open-source project a star",
+            description: t("support_links.github_description"),
             href: "https://github.com/kestra-io/kestra",
             icon: GithubIcon,
         },
         {
-            label: "Help Center",
-            description: "Contact support for help with your Enterprise account",
+            label: t("support_links.help_center_title"),
+            description: t("support_links.help_center_description"),
             href: "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=support-link",
             icon: LifebuoyIcon,
         },

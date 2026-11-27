@@ -10,7 +10,13 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
+
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -88,7 +94,39 @@ class TriggerStateTest {
         assertThat(enabled.updateOnExecutionTerminated(clockAt(NOW), State.Type.SUCCESS).isDisabled()).isFalse();
     }
 
+    @Test
+    void shouldNotReportDefinitionChangeWhenPluginUpgradeAddsDefaultedProperty() {
+        TriggerState computedBeforeUpgrade = TriggerState.of(TRIGGER_ID, TriggerV1.builder().id("trigger").type("io.kestra.tests.Trigger").build(), 0);
+
+        boolean changed = computedBeforeUpgrade.hasDefinitionChanged(TriggerV2.builder().id("trigger").type("io.kestra.tests.Trigger").build());
+
+        assertThat(changed).isFalse();
+    }
+
+    @Test
+    void shouldReportDefinitionChangeWhenDefaultedPropertyIsOverridden() {
+        TriggerState computed = TriggerState.of(TRIGGER_ID, TriggerV2.builder().id("trigger").type("io.kestra.tests.Trigger").build(), 0);
+
+        boolean changed = computed.hasDefinitionChanged(TriggerV2.builder().id("trigger").type("io.kestra.tests.Trigger").batchSize(50).build());
+
+        assertThat(changed).isTrue();
+    }
+
     private static Clock clockAt(Instant instant) {
         return Clock.fixed(instant, ZoneOffset.UTC);
+    }
+
+    @SuperBuilder
+    @NoArgsConstructor
+    @Getter
+    public static class TriggerV1 extends AbstractTrigger {
+    }
+
+    @SuperBuilder
+    @NoArgsConstructor
+    @Getter
+    public static class TriggerV2 extends AbstractTrigger {
+        @Builder.Default
+        private int batchSize = 10;
     }
 }

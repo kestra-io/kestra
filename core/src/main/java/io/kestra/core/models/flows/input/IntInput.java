@@ -23,7 +23,7 @@ public class IntInput extends Input<Integer> {
     public void validate(Integer input) throws ConstraintViolationException {
         if (min != null && input.compareTo(min) < 0) {
             throw ManualConstraintViolation.toConstraintViolationException(
-                "it must be more than `" + min + "`",
+                "it must be at least `%s`, but received `%s`".formatted(min, input),
                 this,
                 IntInput.class,
                 getId(),
@@ -33,7 +33,7 @@ public class IntInput extends Input<Integer> {
 
         if (max != null && input.compareTo(max) > 0) {
             throw ManualConstraintViolation.toConstraintViolationException(
-                "it must be less than `" + max + "`",
+                "it must be at most `%s`, but received `%s`".formatted(max, input),
                 this,
                 IntInput.class,
                 getId(),

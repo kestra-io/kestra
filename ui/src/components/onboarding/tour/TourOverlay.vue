@@ -3,13 +3,14 @@
 
     <div
         v-if="tourStore.isGuidedActive && !showFinale"
+        ref="areaEl"
         class="tour-overlay"
         :style="{zIndex: topLayer}"
         aria-live="polite"
     >
         <template v-if="spotlight">
             <div
-                v-if="spotlight.scrim"
+                v-if="spotlight.scrim && !isMinimized"
                 class="tour-scrim"
                 :style="spotlight.scrim"
             />
@@ -23,12 +24,24 @@
 
         <div
             ref="cardEl"
-            class="guide-card"
-            :class="{'is-left': !showIntro && scene.placement === 'left'}"
+            class="guide-float"
+            :class="[isMinimized ? 'guide-pill' : 'guide-card', {'is-dragging': isDragging}]"
+            :data-corner="corner"
+            data-test="tour-card"
             :style="cardInlineStyle"
             @mousedown="onCardMouseDown"
         >
-            <template v-if="showIntro">
+            <KsButton
+                v-if="isMinimized"
+                :icon="ArrowExpand"
+                :title="$t('expand')"
+                data-test="tour-expand"
+                @click="toggleMinimized(false)"
+            >
+                {{ $t(translationKey("step_of"), {current: sceneIndex + 1, total: totalSteps}) }}
+            </KsButton>
+
+            <template v-else-if="showIntro">
                 <div class="guide-top">
                     <span class="guide-step">{{ $t(translationKey("intro.kicker")) }}</span>
                     <KsButton link class="guide-skip" @click="skipTour">
@@ -70,6 +83,14 @@
                     <KsButton link class="guide-skip" @click="skipTour">
                         {{ $t(translationKey("actions.skip")) }}
                     </KsButton>
+                    <KsIconButton
+                        :tooltip="$t('collapse')"
+                        placement="top"
+                        data-test="tour-collapse"
+                        @click="toggleMinimized(true)"
+                    >
+                        <ArrowCollapse />
+                    </KsIconButton>
                 </div>
 
                 <div class="guide-progress">
@@ -162,14 +183,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
-    import {useEventListener, useResizeObserver} from "@vueuse/core"
+    import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {useEventListener, useIntervalFn, useResizeObserver} from "@vueuse/core"
     import {cssVar, useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue"
+    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
     import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf, workingLabelKey} from "./tourScenes"
+    import {bestCorner, cornerOrder, cornerRect, coverScore, shiftRect, type Corner} from "./tourPlacement"
     import {scrimClipPath, type Hole} from "./tourScrim"
+    import {TourQueryMode} from "./tourVariant"
     import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
     import {useMiscStore} from "override/stores/misc"
@@ -197,12 +222,19 @@
     const translationKey = (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 
     const consumeStartQuery = async () => {
-        if (route.query.tour !== "start") {
+        const mode = route.query.tour
+        if (mode !== TourQueryMode.START && mode !== TourQueryMode.AUTO) {
             return false
         }
         const query = {...route.query}
         delete query.tour
         await router.replace({name: route.name ?? undefined, params: route.params, query})
+        if (mode === TourQueryMode.AUTO) {
+            syncTourScope()
+            if (!tourStore.canAutoStart) {
+                return false
+            }
+        }
         tourStore.startGuided(variant)
         return true
     }
@@ -221,7 +253,7 @@
             return false
         }
         syncTourScope()
-        if (tourStore.state.status !== "not_started" || tourStore.isDismissed) {
+        if (!tourStore.canAutoStart) {
             return false
         }
         try {
@@ -253,6 +285,21 @@
     const showIntro = computed(
         () => tourStore.isGuidedActive && !tourStore.state.tour.introSeen,
     )
+
+    const isMinimized = computed(
+        () => tourStore.state.tour.minimized && !showIntro.value && !error.value,
+    )
+
+    const setMinimized = (minimized: boolean) => tourStore.setTourState({minimized})
+
+    // The clicked button is replaced by the other one, which would drop keyboard focus to <body>.
+    const toggleMinimized = async (minimized: boolean) => {
+        setMinimized(minimized)
+        await nextTick()
+        cardEl.value
+            ?.querySelector<HTMLElement>(`[data-test="${minimized ? "tour-expand" : "tour-collapse"}"]`)
+            ?.focus()
+    }
 
     const sceneKey = (suffix: string) => translationKey(`scenes.${scene.value.id}.${suffix}`)
     const sceneTasks = computed(() => Object.keys(tm(sceneKey("tasks"))))
@@ -443,13 +490,48 @@
     // Keep in sync with the `cursor: text` rule listing the same selectors in the style block.
     const SELECTABLE_TEXT = ".guide-title, .guide-body, .guide-plan, .guide-alert, .guide-callout, .milestone, code"
 
+    const areaEl = ref<HTMLElement | null>(null)
     const cardEl = ref<HTMLElement | null>(null)
+    const corner = ref<Corner>(cornerOrder()[0])
     const dragOffset = ref({x: 0, y: 0})
     const cardInlineStyle = computed(() => ({
         transform: `translate(${dragOffset.value.x}px, ${dragOffset.value.y}px)`,
     }))
 
     let stopDrag: (() => void) | null = null
+    const isDragging = ref(false)
+    let placedKey: string | null = null
+    let draggedKey: string | null = null
+
+    const placementKey = () => (showIntro.value ? "intro" : scene.value?.id ?? "")
+
+    const visibleRects = (elements: Iterable<Element>) =>
+        Array.from(elements, (element) => element.getBoundingClientRect())
+            .filter((rect) => rect.width > 0 && rect.height > 0)
+
+    const placeCard = () => {
+        const card = cardEl.value?.getBoundingClientRect()
+        const area = areaEl.value?.getBoundingClientRect()
+        const placed = showIntro.value ? undefined : scene.value
+        const key = placementKey()
+        if (!card || !area || !isReady.value || isDragging.value || draggedKey === key || dialogOpen()) {
+            return
+        }
+        const targets = visibleRects(highlighted.value)
+        const avoid = visibleRects(placed?.avoid ? document.querySelectorAll(placed.avoid) : [])
+        const best = bestCorner(card, area, targets, avoid, cornerOrder(placed?.placement))
+        const {x, y} = dragOffset.value
+        const isDragged = x !== 0 || y !== 0
+        const current = shiftRect(cornerRect(corner.value, card, area), dragOffset.value)
+        const staysPut = (placedKey === key || isDragged)
+            && coverScore(current, targets, avoid) <= best.score
+        placedKey = key
+        if (staysPut) {
+            return
+        }
+        corner.value = best.corner
+        dragOffset.value = {x: 0, y: 0}
+    }
 
     const DRAG_MARGIN = 20
 
@@ -493,6 +575,8 @@
             const proposedTop = startRect.top + (moveEvent.clientY - start.y)
             const clampedLeft = Math.max(margin, Math.min(proposedLeft, window.innerWidth - startRect.width - margin))
             const clampedTop = Math.max(margin, Math.min(proposedTop, window.innerHeight - startRect.height - margin))
+            isDragging.value = true
+            draggedKey = placementKey()
             dragOffset.value = {
                 x: startOffset.x + (clampedLeft - startRect.left),
                 y: startOffset.y + (clampedTop - startRect.top),
@@ -503,6 +587,7 @@
             window.removeEventListener("mousemove", onMouseMove)
             window.removeEventListener("mouseup", onMouseUp)
             stopDrag = null
+            isDragging.value = false
         }
         stopDrag = onMouseUp
 
@@ -568,6 +653,7 @@
             return
         }
         tourStore.setStep(id)
+        setMinimized(false)
         await runScene()
     }
 
@@ -639,7 +725,7 @@
 
     watch(() => scene.value?.id, () => applyHighlight())
 
-    watch(() => scene.value?.placement, () => (dragOffset.value = {x: 0, y: 0}))
+    useIntervalFn(placeCard, 200)
 
     useResizeObserver(cardEl, clampDragOffset)
     useEventListener(window, "resize", clampDragOffset)
@@ -719,30 +805,62 @@
 
 <style scoped>
     .tour-overlay {
+        --guide-width: min(460px, calc(100vw - var(--ks-spacing-16)));
         position: fixed;
-        inset: 0;
+        inset: calc(var(--top-navbar-height) + var(--ks-spacing-4))
+            var(--ks-spacing-8)
+            var(--ks-spacing-8)
+            min(calc(var(--menu-width) + var(--ks-spacing-4)), calc(100vw - var(--ks-spacing-8) - var(--guide-width)));
         pointer-events: none;
     }
 
-    .guide-card {
+    .guide-float {
+        --guide-x: 0%;
+        --guide-y: 0%;
         position: absolute;
-        right: var(--ks-spacing-8);
-        bottom: var(--ks-spacing-8);
-        width: min(460px, calc(100vw - var(--ks-spacing-16)));
+        top: var(--guide-y);
+        left: var(--guide-x);
+        translate: calc(-1 * var(--guide-x)) calc(-1 * var(--guide-y));
+        transition-property: top, left, translate, transform;
+        transition-duration: var(--ks-duration-slow);
+        transition-timing-function: var(--ks-ease-standard);
+        pointer-events: auto;
+    }
+
+    .guide-float[data-corner^="bottom"] {
+        --guide-y: 100%;
+    }
+
+    .guide-float[data-corner$="right"] {
+        --guide-x: 100%;
+    }
+
+    .guide-float.is-dragging {
+        transition: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .guide-float {
+            transition: none;
+        }
+    }
+
+    .guide-pill {
+        filter: drop-shadow(var(--ks-shadow-base));
+    }
+
+    .guide-card {
+        width: var(--guide-width);
+        max-height: 100%;
+        overflow-y: auto;
         background: var(--ks-bg-surface);
         border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-top: var(--ks-border-width-thick) solid var(--ks-btn-primary-bg-default);
         box-shadow: var(--ks-shadow-lg);
         border-radius: var(--ks-radius-base);
         padding: var(--ks-spacing-4);
-        pointer-events: auto;
         cursor: move;
         user-select: none;
-    }
-
-    .guide-card.is-left {
-        right: auto;
-        left: calc(var(--menu-width) + var(--ks-spacing-4));
     }
 
     /* Same list as SELECTABLE_TEXT in the script above. */

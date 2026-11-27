@@ -28,7 +28,7 @@
             :maxVisible="6"
             center
             :chart="ksPieRef"
-            :formatValue="isDuration ? durationUtils.humanDuration : undefined"
+            :formatValue="isDuration ? durationUtils.humanDuration : formatNumber"
         />
     </div>
 </template>
@@ -40,11 +40,10 @@
     import {KsPie, KsSkeleton, ChartFeature, TooltipType, dateUtils, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, toEchartsParams, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, formatNumber, toEchartsParams, type EchartsParams} from "../composables/charts"
     import type {Column} from "../types.ts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
-    import {getLanguageTag} from "../../../utils/utils"
     import {useTheme} from "../../../composables/useTheme"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
@@ -110,7 +109,7 @@
     const total = computed(() => pieData.value.reduce((acc, item) => acc + Number(item.value), 0))
 
     const totalValue = computed(() =>
-        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(getLanguageTag()),
+        isDuration ? durationUtils.humanDuration(total.value) : formatNumber(total.value),
     )
 
     const showSuccessRatio = computed(() => !isDuration && pieData.value.some((item) => item.name === "SUCCESS"))
@@ -133,10 +132,11 @@
 
     const pieOptions = computed(() => ({
         tooltip: {
+            valueFormatter: (v: unknown) => isDuration ? durationUtils.humanDuration(Number(v)) : formatNumber(Number(v)),
             formatter: (params: EchartsParams) =>
                 isDuration
                     ? `${params.name}: ${durationUtils.humanDuration(Number(params.value))} (${params.percent}%)`
-                    : `${params.name}: ${params.value} (${params.percent}%)`,
+                    : `${params.name}: ${formatNumber(Number(params.value))} (${params.percent}%)`,
         },
     }))
 

@@ -60,6 +60,20 @@
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                 />
+
+                <div v-if="!embed && searchQuery" class="source-row">
+                    <KsIcon :size="16"><TextBoxSearch /></KsIcon>
+                    <KsText type="secondary">{{ $t("flows_matched_query", {count: flowStore.total, query: searchQuery}) }}</KsText>
+                    <router-link
+                        :to="{name: 'flows/search', query: sourceSearchQuery}"
+                        custom
+                        v-slot="{href, navigate}"
+                    >
+                        <KsLink :href="href" @click="navigate" type="primary">
+                            {{ $t("search_in_flow_source", {query: searchQuery}) }}
+                        </KsLink>
+                    </router-link>
+                </div>
             </template>
 
             <template #bulk-actions>
@@ -338,7 +352,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue"
     import Play from "vue-material-design-icons/Play.vue"
 
-    import {KsExecutionStatus, KsIconButton, deepMerge} from "@kestra-io/design-system"
+    import {KsExecutionStatus, KsIcon, KsIconButton, KsLink, KsText, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import TriggerAvatar from "./TriggerAvatar.vue"
 
@@ -358,6 +372,7 @@
 
     import {useFlowStore} from "../../stores/flow"
     import {useApiStore} from "../../stores/api"
+    import {parseFlowsSearchQuery} from "../../utils/flowSearchQuery"
     import {useAuthStore} from "override/stores/auth"
     import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
@@ -504,6 +519,13 @@
     const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
     const canExecute = (flow: Flow) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
+
+    const parsedSearch = computed(() => {
+        const explicitNs = props.namespace ? (route.params.id as string || props.namespace) : undefined
+        return parseFlowsSearchQuery(route.query, explicitNs)
+    })
+    const searchQuery = computed(() => parsedSearch.value.searchQuery)
+    const sourceSearchQuery = computed(() => parsedSearch.value.sourceSearchQuery)
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
@@ -781,5 +803,13 @@
     justify-content: center;
     gap: 0.25rem;
     padding-right: var(--ks-spacing-4);
+}
+
+.source-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ks-spacing-2);
+    padding-top: var(--ks-spacing-3);
 }
 </style>

@@ -1,11 +1,11 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import KsTabs from "./KsTabs.vue"
 import KsTabPane from "./KsTabPane.vue"
 
 const meta: Meta<typeof KsTabs> = {
     title: "Components/Navigation/KsTabs",
-    component: KsTabs,
+    component: KsTabs as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         type: {control: "select", options: ["", "box", "segmented", "card", "border-card"]},

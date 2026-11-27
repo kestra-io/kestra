@@ -888,19 +888,49 @@ public class HttpClient implements Closeable {
     }
 
     private void validateUri(URI uri) {
-        HttpUriValidator.validate(uri, (DefaultRunContext) runContext, this.hasProxy);
+        List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
+        List<String> deniedList = deniedList();
+
+        UriAccessGuard.checkUri(uri, allowedList, deniedList).ifPresent(HttpClient::reject);
+
+        if (this.hasProxy && !deniedList.isEmpty()) {
+            // The proxy resolves the target, so the best Kestra can do is resolve it too; a name only the proxy can resolve is let through.
+            String host = UriAccessGuard.resolveAuthority(uri).host();
+            if (UriAccessGuard.parseIpLiteral(host).isEmpty()) {
+                try {
+                    UriAccessGuard.checkAddresses(host, SystemDefaultDnsResolver.INSTANCE.resolve(host), deniedList).ifPresent(HttpClient::reject);
+                } catch (UnknownHostException e) {
+                    log.debug("Cannot resolve the host '{}' locally to check it against the denied list, leaving it to the proxy.", host);
+                }
+            }
+        }
     }
 
+    private static void reject(UriAccessGuard.Violation violation) {
+        throw new IllegalArgumentException(switch (violation.reason()) {
+            // A list is configured but the URI carries no authority at all, so there is no host to check it
+            // against: fail closed on both directions instead of silently letting an unmatchable URI through.
+            case NO_HOST -> "The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(violation.target());
+            case NOT_ALLOWED -> "The URI %s is not in the configured allowed list (kestra.tasks.http.allowed-list).".formatted(violation.target());
+            case DENIED -> "The URI %s is in the configured denied list (kestra.tasks.http.denied-list).".formatted(violation.target());
+            case DENIED_ADDRESS -> "The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(violation.target(), violation.address());
+        });
+    }
+
+    /**
+     * The addresses returned are the ones connected to, so a name cannot resolve to something else after the check.
+     * IP literals are left to {@link #validateUri(URI)}, which also honors the scheme, port and path of an entry.
+     */
     private final class DeniedAddressDnsResolver implements DnsResolver {
         @Override
         public InetAddress[] resolve(String host) throws UnknownHostException {
             InetAddress[] addresses = SystemDefaultDnsResolver.INSTANCE.resolve(host);
             // The proxy host may legitimately sit in a denied range, the target behind it is checked in validateUri.
-            if (parseIpLiteral(host).isPresent() || proxyHosts.contains(host.toLowerCase(Locale.ROOT))) {
+            if (UriAccessGuard.parseIpLiteral(host).isPresent() || proxyHosts.contains(host.toLowerCase(Locale.ROOT))) {
                 return addresses;
             }
 
-            HttpUriValidator.rejectDeniedAddresses(host, addresses, deniedList());
+            UriAccessGuard.checkAddresses(host, addresses, deniedList()).ifPresent(HttpClient::reject);
             return addresses;
         }
 

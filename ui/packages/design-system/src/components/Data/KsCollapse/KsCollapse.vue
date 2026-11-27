@@ -1,9 +1,10 @@
 <template>
     <ElCollapse
-        v-model="model"
+        :modelValue="props.modelValue"
+        @update:modelValue="(value: CollapseModelValue) => emit('update:modelValue', value as T)"
         v-bind="({...filteredProps(), ...$attrs} as CollapseProps)"
         :class="{'is-flush': flush}"
-        @change="emit('change', $event)"
+        @change="(value: CollapseModelValue) => emit('change', value as T)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -11,30 +12,30 @@
     </ElCollapse>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends CollapseModelValue = CollapseModelValue">
     import {ElCollapse, type CollapseModelValue, type CollapseProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<CollapseModelValue>({default: () => []})
-
     const props = defineProps<{
+        modelValue?: T
         accordion?: boolean
         /** Compact navigation tree: no padding on headers or content, and the arrow sits next to the title (the docs table of contents). */
         flush?: boolean
     }>()
 
     const emit = defineEmits<{
-        change: [value: CollapseModelValue]
+        "update:modelValue": [value: T]
+        change: [value: T]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["flush"])
+    const filteredProps = useFilteredProps(props, ["flush", "modelValue"])
 </script>
 
 <style lang="scss">

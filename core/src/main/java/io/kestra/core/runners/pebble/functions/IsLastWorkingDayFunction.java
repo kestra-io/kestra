@@ -11,6 +11,7 @@ import java.util.Set;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Enums;
 
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -85,7 +86,7 @@ public class IsLastWorkingDayFunction implements KestraFunction {
                 continue;
             }
             try {
-                result.add(DayOfWeek.valueOf(trimmed.toUpperCase()));
+                result.add(Enums.getForNameIgnoreCase(trimmed, DayOfWeek.class));
             } catch (IllegalArgumentException e) {
                 throw new PebbleException(
                     e,

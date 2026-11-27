@@ -99,7 +99,7 @@
     }>()
 
     const layoutMode = defineModel<LayoutMode>("layoutMode", {required: true})
-    const groupField = defineModel<string>("groupField", {required: true})
+    const groupField = defineModel<string | undefined>("groupField", {required: true})
 
     const {t} = useI18n({useScope: "global"})
 

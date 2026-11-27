@@ -4,11 +4,16 @@ import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.mockito.Mockito;
 
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.plugin.core.trigger.ScheduleOnDates;
@@ -19,6 +24,22 @@ public interface Fixtures {
     String TEST_NAMESPACE = "io.kestra.unittest";
     String TEST_FLOW_ID = "test";
     String TEST_TRIGGER_ID = "trigger";
+
+    static FlowParsingService passThroughFlowParsingService() {
+        return Mockito.mock(
+            FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
+                ? ProcessedFlow.of((FlowWithSource) invocation.getArgument(0))
+                : Mockito.RETURNS_DEFAULTS.answer(invocation)
+        );
+    }
+
+    static FlowParsingService governedAs(Supplier<Function<Schedule.ScheduleBuilder<?, ?>, Schedule>> governed) {
+        return Mockito.mock(
+            FlowParsingService.class, invocation -> "parseForRuntime".equals(invocation.getMethod().getName())
+                ? ProcessedFlow.of(defaultFlow(governed.get()).toBuilder().revision(((FlowWithSource) invocation.getArgument(0)).getRevision()).build())
+                : Mockito.RETURNS_DEFAULTS.answer(invocation)
+        );
+    }
 
     static TriggerId triggerId() {
         return triggerId(TEST_TRIGGER_ID);

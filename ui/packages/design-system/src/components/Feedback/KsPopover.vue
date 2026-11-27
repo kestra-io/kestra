@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElPopover} from "element-plus"
+    import {ElPopover} from "../../utils/elementPlusListeners"
     import type {PopoverProps} from "element-plus"
     import {onBeforeUnmount, ref, watch, type HTMLAttributes} from "vue"
     import {usePassedProps} from "../../utils/filteredProps"

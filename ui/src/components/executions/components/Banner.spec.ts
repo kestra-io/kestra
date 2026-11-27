@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
-import {reactive} from "vue"
+import {reactive, type Plugin} from "vue"
 import {setActivePinia} from "pinia"
+import {createMemoryHistory, createRouter} from "vue-router"
 import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import {flushPromises} from "@vue/test-utils"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -16,12 +17,13 @@ vi.mock("@kestra-io/kestra-sdk/searchable-data", () => ({
 }))
 
 const triggerScope = reactive({visible: false, enabled: false})
-const logsAllowed = vi.hoisted(() => ({value: true}))
+const denied = vi.hoisted(() => new Set<string>())
 
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {
         isAllowed: (resource: string, act: string, namespace: string) =>
-            (resource === "EXECUTION" && act === "ACCESS_LOGS" && namespace === "io.kestra.tests") === logsAllowed.value,
+            namespace === "io.kestra.tests" && !denied.has(`${resource}.${act}`),
+        hasAny: (resource: string) => !denied.has(resource),
     }}),
 }))
 
@@ -67,11 +69,11 @@ function buildExecution(current = "SUCCESS"): Execution {
     } as Execution
 }
 
-function mountBanner(execution = buildExecution()) {
+function mountBanner(execution = buildExecution(), plugins: Plugin[] = []) {
     return i18nMount(Banner, {
         messages: {execution_banner: {more_searchable_values: "+{count} more searchable values"}},
         props: {execution},
-        global: globalConfig,
+        global: {...globalConfig, plugins},
     })
 }
 
@@ -81,15 +83,43 @@ describe("Banner", () => {
         setActivePinia(routedPinia())
         triggerScope.visible = false
         triggerScope.enabled = false
-        logsAllowed.value = true
+        denied.clear()
     })
 
     test("offers to copy the logs only to a user who can access them", () => {
         expect(mountBanner().text()).toContain("copy logs")
 
-        logsAllowed.value = false
+        denied.add("EXECUTION.ACCESS_LOGS")
 
         expect(mountBanner().text()).not.toContain("copy logs")
+    })
+
+    test("leaves copying the logs to the logs toolbar on the Logs tab", async () => {
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [{path: "/:pathMatch(.*)*", component: {render: () => null}, meta: {tab: "logs"}}],
+        })
+        await router.push("/logs")
+
+        expect(mountBanner(buildExecution(), [router]).text()).not.toContain("copy logs")
+    })
+
+    test("hides the labels that repeat the execution id and the user shown above them", () => {
+        const labelled = (correlationId: string) => ({
+            ...buildExecution(),
+            labels: [
+                {key: "system.from", value: "api"},
+                {key: "system.username", value: "someone@yourcompany.com"},
+                {key: "system.correlationId", value: correlationId},
+            ],
+        }) as Execution
+
+        const own = mountBanner(labelled("execution-id")).text()
+        expect(own).toContain("system.from: api")
+        expect(own).not.toContain("system.correlationId")
+        expect(own.match(/someone@yourcompany\.com/g)).toHaveLength(1)
+
+        expect(mountBanner(labelled("parent-id")).text()).toContain("system.correlationId: parent-id")
     })
 
     test("renders no chevron when the state change trigger is disabled", () => {
@@ -116,6 +146,24 @@ describe("Banner", () => {
 
         expect(wrapper.findComponent(ChevronUp).exists()).toBe(true)
         expect(wrapper.findComponent(ChevronDown).exists()).toBe(false)
+    })
+
+    test("offers to fix with AI only to a user who can use the copilot", () => {
+        expect(mountBanner(buildExecution("FAILED")).find(".fix-with-ai").exists()).toBe(true)
+
+        denied.add("COPILOT")
+
+        expect(mountBanner(buildExecution("FAILED")).find(".fix-with-ai").exists()).toBe(false)
+    })
+
+    test("links the flow id to the flow only for a user who can view it", () => {
+        expect(mountBanner().find(".execution-banner__flow").element.tagName).toBe("A")
+
+        denied.add("FLOW.VIEW")
+
+        const flow = mountBanner().find(".execution-banner__flow")
+        expect(flow.element.tagName).toBe("SPAN")
+        expect(flow.text()).toBe(buildExecution().flowId)
     })
 
     test("fix with AI asks only for the first page of ERROR logs", async () => {

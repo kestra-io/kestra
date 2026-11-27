@@ -89,4 +89,10 @@ describe("namespaces store saveOrCreateFile", () => {
         second.resolve()
         await Promise.all(saves)
     })
+
+    test("saves to the file whose name holds characters reserved in a query string", async () => {
+        await save("dir/a&b #1.txt", "v1")
+
+        expect(postMock.mock.calls[0][0]).toBe("http://localhost:8080/api/v1/main/namespaces/io.kestra.test/files?path=/dir/a%26b%20%231.txt")
+    })
 })

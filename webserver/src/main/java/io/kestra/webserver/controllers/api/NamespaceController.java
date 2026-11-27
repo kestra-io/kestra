@@ -15,6 +15,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAutocomplete;
 import io.kestra.webserver.responses.PagedResults;
@@ -116,7 +117,7 @@ public class NamespaceController<N extends Namespace> {
         return this.getNamespaces(
             AUTOCOMPLETE_PAGEABLE,
             autocomplete.getQ(),
-            Optional.ofNullable(autocomplete.getIds()).orElse(Collections.emptyList()),
+            ListUtils.emptyOnNull(autocomplete.getIds()),
             autocomplete.isExistingOnly()
         ).stream()
             .map(Namespace::getId)

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.TreeMap;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
@@ -21,12 +22,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Read-only agent tool searching the installed plugin types by keyword and kind, matching on the
+ * Read-only agent tool searching the installed plugin types by keywords and kind, matching on the
  * fully-qualified class name and on the {@code @Schema} title. Deprecated types are skipped unless asked for.
  */
 @Singleton
 public class SearchPluginsTool implements McpPlatformTool {
     private static final int PAGE_SIZE = 50;
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private final PluginRegistry pluginRegistry;
 
@@ -59,11 +61,11 @@ public class SearchPluginsTool implements McpPlatformTool {
             + "`total` is the number of all matching types, which can exceed the length of `plugins`; pass `page` to read the next ones."
     )
     public Result searchPlugins(
-        @P(name = "query", value = "Keyword matched case-insensitively against the plugin type name and title; omit to list every type of the given kind", required = false) String query,
+        @P(name = "query", value = "Keywords separated by spaces, e.g. `slack webhook`; a type matches when its name or title contains every keyword, case-insensitively and in any order. Omit to list every type of the given kind", required = false) String query,
         @P(name = "kind", value = "Only return plugin types of this kind, e.g. TASK or TRIGGER; omit for every kind", required = false) PluginKind kind,
         @P(name = "includeDeprecated", value = "Whether deprecated plugin types are included; omit to leave them out", required = false) Boolean includeDeprecated,
         @P(name = "page", value = "The 1-based page of plugin types to read; omit for the first page", required = false) Integer page) {
-        String needle = query == null ? "" : query.toLowerCase(Locale.ROOT).trim();
+        List<String> keywords = keywords(query);
         boolean withDeprecated = Boolean.TRUE.equals(includeDeprecated);
         int pageNumber = ToolPages.pageNumber(page);
 
@@ -80,7 +82,7 @@ public class SearchPluginsTool implements McpPlatformTool {
                         continue;
                     }
                     String title = title(pluginClass);
-                    if (matches(pluginClass.getName(), title, needle)) {
+                    if (matches(pluginClass.getName(), title, keywords)) {
                         matches.putIfAbsent(
                             pluginClass.getName(),
                             new PluginMatch(pluginClass.getName(), groupKind.get(), title, plugin.title(), deprecated)
@@ -104,9 +106,17 @@ public class SearchPluginsTool implements McpPlatformTool {
         return schema == null || schema.title().isBlank() ? null : schema.title();
     }
 
-    private static boolean matches(final String type, final String title, final String needle) {
-        return type.toLowerCase(Locale.ROOT).contains(needle)
-            || (title != null && title.toLowerCase(Locale.ROOT).contains(needle));
+    private static List<String> keywords(final String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        return List.of(WHITESPACE.split(query.toLowerCase(Locale.ROOT).trim()));
+    }
+
+    private static boolean matches(final String type, final String title, final List<String> keywords) {
+        String lowerType = type.toLowerCase(Locale.ROOT);
+        String lowerTitle = title == null ? "" : title.toLowerCase(Locale.ROOT);
+        return keywords.stream().allMatch(keyword -> lowerType.contains(keyword) || lowerTitle.contains(keyword));
     }
 
     /**

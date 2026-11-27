@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref, watch} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useExecutionsStore} from "../../stores/executions"
 
     defineOptions({inheritAttrs: false})
@@ -26,23 +26,17 @@
 
     defineEmits(["expand-subflow"])
 
-    function fetchExecutions() {
-        if (flow.value?.id) {
-            loaded.value = false
-            executionsStore
-                .findExecutions({"filters[namespace][EQUALS]": flow.value.namespace, "filters[flowId][EQUALS]": flow.value.id})
-                .then((r) => {
-                    total.value = r.total ?? 0
-                    loaded.value = true
-                })
-        }
-    }
+    const flowKey = computed(() => flow.value?.id ? `${flow.value.namespace}/${flow.value.id}` : undefined)
 
-    onMounted(fetchExecutions)
-
-    watch(() => flow.value?.id, (newId, oldId) => {
-        if (newId && newId !== oldId && !loaded.value) {
-            fetchExecutions()
-        }
-    })
+    watch(flowKey, (key) => {
+        if (!key || !flow.value) return
+        loaded.value = false
+        executionsStore
+            .findExecutions({"filters[namespace][EQUALS]": flow.value.namespace, "filters[flowId][EQUALS]": flow.value.id})
+            .then((r) => {
+                if (key !== flowKey.value) return
+                total.value = r.total ?? 0
+                loaded.value = true
+            })
+    }, {immediate: true})
 </script>

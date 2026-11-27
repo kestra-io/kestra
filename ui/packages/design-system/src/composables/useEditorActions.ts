@@ -45,7 +45,7 @@ export function registerEditorActions(editor: AnyEditor, ctx: EditorActionsConte
 
     editor.addAction({
         id: "moveCursor",
-        label: "Move cursor",
+        label: ctx.t("ks_editor.move_cursor"),
         run: (e, args?: {lineNumber: number, column: number}) => {
             if (!args?.lineNumber || !args?.column) return
             e.setPosition({lineNumber: args.lineNumber, column: args.column})

@@ -13,8 +13,9 @@
 {{- $type = $name }}
 {{- end }}
 {{- end }}
+{{- $isWorkerGroup := and (eq $type "worker") (ne $name "worker") }}
 {{- $resourceName := printf "%s-%s" (include "kestra.fullname" $) $name }}
-{{- if and (eq $type "worker") (ne $name "worker") }}
+{{- if $isWorkerGroup }}
 {{- $resourceName = printf "%s-workergroup-%s" (include "kestra.fullname" $) $name }}
 {{- end }}
 {{- $dind := false }}
@@ -25,6 +26,7 @@
 {{- $dind = true }}
 {{- end }}
 {{- $kind := default $common.kind $content.kind }}
+{{- $hpa := default $common.autoscaler $content.autoscaler }}
 apiVersion: apps/v1
 kind: {{ $kind }}
 metadata:
@@ -47,12 +49,20 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  {{- /* an autoscaler owns spec.replicas, and rendering it makes every upgrade conflict with or reset it */}}
+  {{- if not (or $hpa.enabled $hpa.external) }}
   replicas: {{ kindIs "invalid" $content.replicas | ternary $common.replicas $content.replicas }}
+  {{- end }}
   revisionHistoryLimit: {{ default $common.revisionHistoryLimit $content.revisionHistoryLimit }}
   selector:
     matchLabels:
       {{- include "kestra.selectorLabels" $ | nindent 6 }}
       app.kubernetes.io/component: {{ $type }}
+      {{- if $isWorkerGroup }}
+      {{- /* own label per worker group: otherwise all worker groups share one selector, and Kubernetes won't
+             autoscale (HPA/KEDA) a workload whose pods are also selected by another autoscaled workload */}}
+      kestra.io/worker-group: {{ $name | quote }}
+      {{- end }}
   {{- if eq $kind "Deployment" }}
   {{- with (default $common.strategy $content.strategy) }}
   strategy:
@@ -73,6 +83,9 @@ spec:
       labels:
         {{- include "kestra.selectorLabels" $ | nindent 8 }}
         app.kubernetes.io/component: {{ $type }}
+        {{- if $isWorkerGroup }}
+        kestra.io/worker-group: {{ $name | quote }}
+        {{- end }}
         {{- with $common.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -331,10 +344,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
 
-{{- $hpa := default $common.autoscaler $content.autoscaler }}
 {{- if $hpa.enabled }}
 ---
-{{- if semverCompare ">=1.23-0" $.Capabilities.KubeVersion.GitVersion -}}
+{{ if semverCompare ">=1.23-0" $.Capabilities.KubeVersion.GitVersion -}}
 apiVersion: autoscaling/v2
 {{- else -}}
 apiVersion: autoscaling/v2beta2

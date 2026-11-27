@@ -552,7 +552,7 @@ class FlowValidationTest {
         assertThat(validate.get().getMessage())
             .contains("Invalid default for input 'components'")
             .contains("it must have at most `3` rows")
-            .contains("row 2, column `cpus`: it must be more than `1`")
+            .contains("row 2, column `cpus`: it must be at least `1`, but received `0`")
             .contains("row 3, column `cpus`: `many` is not a valid INT value")
             .contains("row 3, column `os`: it must match the values")
             .contains("row 4, column `disk`: it is not declared")
@@ -599,7 +599,7 @@ class FlowValidationTest {
 
         assertThat(validate).isPresent();
         assertThat(validate.get().getMessage())
-            .contains("row 2, column `cpus`: it must be more than `1`")
+            .contains("row 2, column `cpus`: it must be at least `1`, but received `0`")
             .doesNotContain("rows");
     }
 
@@ -1465,6 +1465,25 @@ class FlowValidationTest {
             """.formatted(maxId), Flow.class);
 
         assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void shouldFailValidationForNullInputId() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - type: STRING
+                defaults: value
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hello World! 🚀
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("inputs[null].id: must not be null");
     }
 
     private Flow parse(String path) {

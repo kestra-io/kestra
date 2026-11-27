@@ -13,6 +13,7 @@
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
         selectable
+        :rowSelectable="isRowSelectable"
         :showSelection="!paneView"
         :rowKey="(row: KvEntry) => `${row.namespace}-${row.key}`"
     >
@@ -359,6 +360,8 @@
     const namespaceFilter = (namespace: string): QueryFilter[] =>
         [{field: "namespace", operation: "EQUALS", value: namespace}]
 
+    const isRowSelectable = () => true
+
     const startLoad = latestRequest()
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
@@ -579,6 +582,18 @@
         ],
         ttl: [
             {validator: durationValidator, trigger: "change"},
+        ],
+        description: [
+            {
+                validator: (_rule: FormItemRule, value: string | undefined, callback: (error?: Error) => void) => {
+                    if ([...(value ?? "")].some(char => (char.codePointAt(0) ?? 0) > 0xff)) {
+                        callback(new Error(t("kv.description_latin1")))
+                    } else {
+                        callback()
+                    }
+                },
+                trigger: "change",
+            },
         ],
     })
 

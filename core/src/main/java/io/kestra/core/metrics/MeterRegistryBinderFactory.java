@@ -16,7 +16,7 @@ import static io.micronaut.core.util.StringUtils.FALSE;
 @RequiresMetrics
 
 public class MeterRegistryBinderFactory {
-    @Bean
+    @Bean(preDestroy = "close")
     @Primary
     @Singleton
     @Requires(property = MICRONAUT_METRICS_BINDERS + ".jvm.enabled", notEquals = FALSE)

@@ -171,6 +171,11 @@
         "details": "Salva per sovrascrivere e creare una nuova revisione."
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flow eliminato",
+      "description": "Questo flow è stato eliminato dopo che lo hai aperto. Vuoi ricrearlo con le tue modifiche?",
+      "recreate": "Ricrea"
+    },
     "override": {
       "title": "Stai per sovrascrivere il flow corrente",
       "details": "Il flow precedente può essere ripristinato dalla scheda Revisions."

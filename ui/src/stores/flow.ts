@@ -225,7 +225,17 @@ export const useFlowStore = defineStore("flow", () => {
         return outcome
     }
 
-    function confirmFlowOutdatedSave(): Promise<boolean> {
+    async function confirmFlowOutdatedSave(): Promise<boolean> {
+        if (flow.value) {
+            const deleted = await loadFlow({namespace: flow.value.namespace, id: flow.value.id, store: false})
+                .then(() => false, (error: unknown) => {
+                    if (handledIf(error, [404])) return true
+                    throw error
+                })
+            if (deleted) {
+                return true
+            }
+        }
         const key = "outdated revision save confirmation.update"
         return confirmOutdatedSave(t, `${t(`${key}.description`)} ${t(`${key}.details`)}`)
     }
@@ -434,10 +444,23 @@ export const useFlowStore = defineStore("flow", () => {
                 throw error
             }
         } else {
-            await saveFlow({flow: flowSource, draft})
-                .then((response: Flow) => {
-                    notifySaved(response, draft)
-                })
+            try {
+                notifySaved(await saveFlow({flow: flowSource, draft}), draft)
+            } catch (error: unknown) {
+                if (!handledIf(error, [404])) throw error
+                const recreate = await KsMessageBox({
+                    title: t("deleted flow save confirmation.title"),
+                    message: () => h("p", null, t("deleted flow save confirmation.description")),
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: t("deleted flow save confirmation.recreate"),
+                    cancelButtonText: t("cancel"),
+                    center: false,
+                    showClose: false,
+                }).then(() => true, () => false)
+                if (!recreate) return "blocked"
+                notifySaved(await createFlow({flow: flowSource, draft, restore: true}), draft)
+            }
         }
 
         if (isCreatingBackup || overrideFlow) {

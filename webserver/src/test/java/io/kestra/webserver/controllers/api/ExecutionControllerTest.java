@@ -1384,7 +1384,7 @@ class ExecutionControllerTest {
         String content = client.toBlocking().retrieve(GET(filesUrl + "?path=" + encodedPath), String.class);
 
         // Then
-        assertThat(fileUri.toString()).isEqualTo("kestra:///io/kestra/test-nsfile-uri/_files/orders.csv");
+        assertThat(fileUri.toString()).isEqualTo("kestra://io/kestra/test-nsfile-uri/_files/orders.csv");
         assertThat(metas.getSize()).isEqualTo(csv.length());
         assertThat(preview).containsEntry("extension", "csv");
         assertThat(content).isEqualTo(csv);
@@ -1407,7 +1407,7 @@ class ExecutionControllerTest {
         String second = client.toBlocking().retrieve(GET(filesUrl + URLEncoder.encode(secondUri.toString(), StandardCharsets.UTF_8)), String.class);
 
         // Then
-        assertThat(secondUri.toString()).isEqualTo("kestra:///io/kestra/test-nsfile-revision/_files/orders.csv.v2");
+        assertThat(secondUri.toString()).isEqualTo("kestra://io/kestra/test-nsfile-revision/_files/orders.csv.v2");
         assertThat(first).isEqualTo("first");
         assertThat(second).isEqualTo("second");
     }
@@ -1471,6 +1471,44 @@ class ExecutionControllerTest {
             .state(new State().withState(State.Type.SUCCESS))
             .build();
         return executionRepository.save(execution);
+    }
+
+    @Test
+    void shouldRejectAFileUriThatTraversesOutOfTheExecution() throws Exception {
+        String execId = IdUtils.create();
+        String ns = "io.kestra.test-traversal";
+        Execution execution = Execution.builder()
+            .id(execId)
+            .tenantId(MAIN_TENANT)
+            .namespace(ns)
+            .flowId("flow-traversal")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.SUCCESS))
+            .build();
+        executionRepository.save(execution);
+
+        String otherNs = "io.kestra.other";
+        storageInterface.put(
+            MAIN_TENANT,
+            otherNs,
+            URI.create("/" + otherNs.replace(".", "/") + "/secret.txt"),
+            new ByteArrayInputStream("sensitive-data".getBytes(StandardCharsets.UTF_8))
+        );
+
+        // The execution prefix is a string prefix of this path, and the ".." segments are hidden in the authority.
+        String escaped = "kestra://" + (
+            ns.replace(".", "/") + "/flow-traversal/executions/" + execId + "/../../../../../../" + otherNs.replace(".", "/") + "/secret.txt"
+        ).replace("/", "%2F");
+        String encodedPath = URLEncoder.encode(escaped, StandardCharsets.UTF_8);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/" + execId + "/file?path=" + encodedPath),
+                String.class
+            )
+        );
+        assertThat(exception.getResponse().getBody(String.class).orElse("")).doesNotContain("sensitive-data");
     }
 
     @Test

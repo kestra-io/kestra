@@ -73,6 +73,7 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
@@ -582,8 +583,8 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getState().getHistories()).map(State.History::getState).contains(State.Type.CREATED);
         assertThat(result.getFlowId()).isEqualTo("inputs");
         assertThat(result.getInputs().get("float")).isEqualTo(42.42);
-        assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
-        assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
+        assertThat(result.getInputs().get("file").toString()).startsWith("kestra://io/kestra/tests/inputs/executions/");
+        assertThat(result.getInputs().get("file").toString()).startsWith("kestra://io/kestra/tests/inputs/executions/");
         assertThat(result.getInputs().containsKey("bool")).isTrue();
         assertThat(result.getInputs().get("bool")).isNull();
         assertThat(result.getLabels()).containsExactlyInAnyOrder(
@@ -1826,9 +1827,10 @@ class ExecutionControllerRunnerTest {
 
         URI uri = URI.create((String) variables.get("uri"));
         assertThat(uri.getScheme()).isEqualTo("kestra");
-        assertThat(uri.getPath()).isEqualTo(
+        assertThat(StorageContext.logicalPath(uri)).isEqualTo(
             "/io/kestra/tests/webhook-store-body/executions/" + execution.getId() + "/webhook/body"
         );
+        assertThat(uri.toString()).startsWith("kestra://io/");
         assertThat(storageInterface.get(TENANT_ID, TESTS_FLOW_NS, uri).readAllBytes()).isEqualTo(content);
         assertThat(variables.get("body")).isNull();
     }

@@ -87,6 +87,7 @@ public class WorkerJobProcessorFactory {
                 workerQueueRegistry.getOrCreate(context, LogEntry.class),
                 workerQueueRegistry.getOrCreate(context, WorkerTriggerResult.class),
                 executionKilledManager,
+                serverConfig,
                 workerConfig.pollingTriggerTimeout()
             );
         }

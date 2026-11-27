@@ -171,7 +171,7 @@ public class InputsTest {
         assertThat(typeds.get("date")).isEqualTo(LocalDate.parse("2019-10-06"));
         assertThat(typeds.get("time")).isEqualTo(LocalTime.parse("18:27:49"));
         assertThat(typeds.get("duration")).isEqualTo(Duration.parse("PT5M6S"));
-        assertThat((URI) typeds.get("file")).isEqualTo(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml"));
+        assertThat((URI) typeds.get("file")).isEqualTo(new URI("kestra://io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get("tenant1", null, (URI) typeds.get("file")))))
             .isEqualTo(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))));
         assertThat(typeds.get("uri")).isEqualTo("https://www.google.com");
@@ -232,7 +232,7 @@ public class InputsTest {
         assertThat(subExecutions).hasSize(3);
 
         assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("file").getFirst()).get("value"))
-            .matches("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application-test.yml");
+            .matches("kestra://io/kestra/tests/inputs/executions/.*/inputs/file/application-test.yml");
         // secret inputs are decrypted to be used as task properties
         assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("secret").getFirst()).get("value")).isEqualTo("secret");
         // null inputs are serialized

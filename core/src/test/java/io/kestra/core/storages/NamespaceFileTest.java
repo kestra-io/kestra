@@ -27,7 +27,7 @@ class NamespaceFileTest {
     void shouldCreateValidNamespaceFileGivenSlashURI() {
         NamespaceFile expected = new NamespaceFile(
             Path.of(""),
-            URI.create("kestra:///io/kestra/test/_files/"),
+            URI.create("kestra://io/kestra/test/_files/"),
             NAMESPACE
         );
 
@@ -56,13 +56,31 @@ class NamespaceFileTest {
     }
 
     @Test
+    void shouldRejectNamespaceFileUriThatTraversesOutOfTheNamespace() {
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> NamespaceFile.of(NAMESPACE, URI.create("kestra://io/kestra/test/_files/../../secret.txt"))
+        );
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> NamespaceFile.of(NAMESPACE, URI.create("kestra://io%2Fkestra%2Ftest%2F_files%2F..%2F..%2Fsecret.txt"))
+        );
+    }
+
+    @Test
+    void shouldAllowANamespaceFileWhoseNameContainsTwoDots() {
+        NamespaceFile file = NamespaceFile.of(NAMESPACE, URI.create("kestra://io/kestra/test/_files/my..file.txt"));
+        assertThat(file.storagePath().toString()).endsWith("my..file.txt");
+    }
+
+    @Test
     void shouldCreateGivenNamespaceAndValidStorageURI() {
         Assertions.assertEquals(
             new NamespaceFile(
                 Path.of("sub/dir/file.txt"),
-                URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
+                URI.create("kestra://io/kestra/test/_files/sub/dir/file.txt"),
                 NAMESPACE
-            ), NamespaceFile.of(NAMESPACE, URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"))
+            ), NamespaceFile.of(NAMESPACE, URI.create("kestra://io/kestra/test/_files/sub/dir/file.txt"))
         );
     }
 
@@ -71,7 +89,7 @@ class NamespaceFileTest {
         Assertions.assertEquals(
             new NamespaceFile(
                 Path.of("sub/dir/file.txt"),
-                URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
+                URI.create("kestra://io/kestra/test/_files/sub/dir/file.txt"),
                 NAMESPACE
             ), NamespaceFile.of(NAMESPACE, URI.create("/sub/dir/file.txt"))
         );
@@ -81,7 +99,7 @@ class NamespaceFileTest {
     void shouldCreateGivenNamespaceAndPath() {
         NamespaceFile expected = new NamespaceFile(
             Path.of("sub/dir/file.txt"),
-            URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
+            URI.create("kestra://io/kestra/test/_files/sub/dir/file.txt"),
             NAMESPACE
         );
 
@@ -95,7 +113,7 @@ class NamespaceFileTest {
         Assertions.assertEquals(
             new NamespaceFile(
                 Path.of(""),
-                URI.create("kestra:///io/kestra/test/_files/"),
+                URI.create("kestra://io/kestra/test/_files/"),
                 NAMESPACE
             ), NamespaceFile.of(NAMESPACE)
         );
@@ -106,7 +124,7 @@ class NamespaceFileTest {
         Assertions.assertEquals(
             new NamespaceFile(
                 Path.of(""),
-                URI.create("kestra:///io/kestra/test/_files/"),
+                URI.create("kestra://io/kestra/test/_files/"),
                 NAMESPACE
             ), NamespaceFile.of(NAMESPACE, Path.of("/"))
         );
@@ -116,7 +134,7 @@ class NamespaceFileTest {
     void shouldGetStoragePath() {
         NamespaceFile namespaceFile = new NamespaceFile(
             Path.of("sub/dir/file.txt"),
-            URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
+            URI.create("kestra://io/kestra/test/_files/sub/dir/file.txt"),
             NAMESPACE
         );
         Assertions.assertEquals(Path.of("/io/kestra/test/_files/sub/dir/file.txt"), namespaceFile.storagePath());
@@ -128,7 +146,7 @@ class NamespaceFileTest {
         Assertions.assertEquals(
             new NamespaceFile(
                 Path.of("sub/dir"),
-                URI.create("kestra:///io/kestra/test/_files/sub/dir/"),
+                URI.create("kestra://io/kestra/test/_files/sub/dir/"),
                 NAMESPACE
             ), namespaceFile
         );

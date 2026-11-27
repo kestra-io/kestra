@@ -224,3 +224,90 @@ export const ExpandsCollapsedLogGroup: Story = {
         );
     },
 };
+
+const FAILED_TASK_RUN_ID = "failed-task-run";
+const ERRORS_TASK_RUN_ID = "errors-task-run";
+const FAILED_STATE: SerializedState = {
+    current: "FAILED",
+    startDate: "2025-01-01T00:00:00Z",
+    endDate: "2025-01-01T00:00:06Z",
+    duration: "PT6S",
+    histories: [
+        {state: "CREATED", date: "2025-01-01T00:00:00Z"},
+        {state: "RUNNING", date: "2025-01-01T00:00:00Z"},
+        {state: "FAILED", date: "2025-01-01T00:00:06Z"},
+    ],
+};
+const FAILED_TASK_LOGS: Log[] = [
+    ...Array.from({length: 40}, (_, i) => ({
+        ...BASE_LOG,
+        taskRunId: FAILED_TASK_RUN_ID,
+        taskId: "first",
+        index: i,
+        timestamp: `2025-01-01T00:00:${String(i).padStart(2, "0")}.000Z`,
+        message: `line ${i + 1}`,
+    })),
+    {
+        ...BASE_LOG,
+        taskRunId: FAILED_TASK_RUN_ID,
+        taskId: "first",
+        index: 40,
+        level: "ERROR",
+        timestamp: "2025-01-01T00:00:41.000Z",
+        message: "Command failed with exit code 1",
+    },
+    {
+        ...BASE_LOG,
+        taskRunId: ERRORS_TASK_RUN_ID,
+        taskId: "second",
+        index: 41,
+        timestamp: "2025-01-01T00:00:42.000Z",
+        message: "done",
+    },
+];
+
+export const OpensFailedTaskLogsAtTheirLastLine: Story = {
+    args: {taskRunId: undefined},
+    decorators: [
+        () => ({
+            setup() {
+                const executionsStore = useExecutionsStore();
+                executionsStore.execution = {
+                    ...FAKE_EXECUTION,
+                    state: FAILED_STATE,
+                    taskRunList: [
+                        {id: FAILED_TASK_RUN_ID, taskId: "first", state: FAILED_STATE, attempts: [{state: FAILED_STATE}]},
+                        {id: ERRORS_TASK_RUN_ID, taskId: "second", state: TASK_RUN_STATE, attempts: [{state: TASK_RUN_STATE}]},
+                    ],
+                } as Execution;
+                executionsStore.loadLogs = async () => FAILED_TASK_LOGS;
+            },
+            template: "<story />",
+        }),
+    ],
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const scroller = await waitFor(() => {
+            const el = canvasElement.querySelector<HTMLElement>(`[data-scroll-key="${FAILED_TASK_RUN_ID}"]`);
+            expect(el).not.toBeNull();
+            return el!;
+        });
+        await waitFor(
+            () => {
+                const errorLine = [...scroller.querySelectorAll<HTMLElement>(".line")].find((line) =>
+                    line.textContent?.includes("Command failed with exit code 1"),
+                );
+                expect(errorLine).toBeDefined();
+                const lineBox = errorLine!.getBoundingClientRect();
+                const viewport = scroller.getBoundingClientRect();
+                expect(scroller.scrollTop).toBeGreaterThan(0);
+                expect(lineBox.top).toBeGreaterThanOrEqual(viewport.top - 1);
+                expect(lineBox.bottom).toBeLessThanOrEqual(viewport.bottom + 1);
+            },
+            {timeout: 3000},
+        );
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await waitFor(() => {
+            expect(scroller.scrollTop).toBeGreaterThan(0);
+        });
+    },
+};

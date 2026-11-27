@@ -928,6 +928,13 @@ export type Execution = {
     loopRun?: LoopRun | null;
 };
 
+export type ExecutionControllerApiResumeAllowed = {
+    /**
+     * Whether the current user may resume the paused execution
+     */
+    allowed?: boolean;
+};
+
 export type ExecutionControllerApiReviewAllowed = {
     /**
      * Whether the current user may review or cancel the Approval task run
@@ -7896,6 +7903,49 @@ export type ResumeExecutionFromBreakpointResponses = {
 };
 
 export type ResumeExecutionFromBreakpointResponse = ResumeExecutionFromBreakpointResponses[keyof ResumeExecutionFromBreakpointResponses];
+
+export type IsResumeAllowedData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/resume/allowed';
+};
+
+export type IsResumeAllowedErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution does not exist
+     */
+    404: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type IsResumeAllowedError = IsResumeAllowedErrors[keyof IsResumeAllowedErrors];
+
+export type IsResumeAllowedResponses = {
+    /**
+     * On success
+     */
+    200: ExecutionControllerApiResumeAllowed;
+};
+
+export type IsResumeAllowedResponse = IsResumeAllowedResponses[keyof IsResumeAllowedResponses];
 
 export type ValidateResumeExecutionInputsData = {
     /**

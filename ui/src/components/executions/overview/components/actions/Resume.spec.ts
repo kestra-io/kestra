@@ -6,8 +6,10 @@ import {i18nMount} from "../../../../../../tests/unit/i18nMount"
 import {routedPinia} from "../../../../../../tests/unit/memoryRouter"
 import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
 
+const isAllowed = vi.hoisted(() => vi.fn())
+
 vi.mock("override/stores/auth", () => ({
-    useAuthStore: () => ({user: {isAllowed: () => true}}),
+    useAuthStore: () => ({user: {isAllowed}}),
 }))
 
 vi.mock("../../../../../utils/toast", () => ({
@@ -25,12 +27,78 @@ import Resume from "./Resume.vue"
 
 const mounted: VueWrapper[] = []
 
+const pausedExecution = {
+    id: "exec1",
+    namespace: "tests",
+    flowId: "flow1",
+    state: {current: "PAUSED"},
+    taskRunList: [{id: "tr1", taskId: "wait", state: {current: "PAUSED"}}],
+} as unknown as Execution
+
+function mountResume(serverAllows: boolean) {
+    setActivePinia(routedPinia())
+    const executionsStore = useExecutionsStore()
+    executionsStore.isResumeAllowed = vi.fn().mockResolvedValue(serverAllows)
+    const wrapper = i18nMount(Resume, {props: {execution: pausedExecution}})
+    mounted.push(wrapper)
+    return {wrapper, executionsStore}
+}
+
 afterEach(() => mounted.splice(0).forEach((wrapper) => wrapper.unmount()))
 
 describe("Resume", () => {
-    it("resumes with the inputs of a FORM under their dotted id, next to the other inputs", async () => {
+    it("shows Resume to a user holding RESUME without UPDATE once the server allows it", async () => {
+        isAllowed.mockImplementation((_resource: string, action: string) => action === "RESUME")
+        const {wrapper, executionsStore} = mountResume(true)
+        await flushPromises()
+
+        expect(executionsStore.isResumeAllowed).toHaveBeenCalledWith("exec1")
+        expect(wrapper.find("button").exists()).toBe(true)
+    })
+
+    it("hides Resume when the server refuses it, e.g. to a user the human task is not assigned to", async () => {
+        isAllowed.mockReturnValue(true)
+        const {wrapper} = mountResume(false)
+        await flushPromises()
+
+        expect(wrapper.find("button").exists()).toBe(false)
+    })
+
+    it("ignores a late answer for an execution that is no longer the shown one", async () => {
+        isAllowed.mockReturnValue(true)
         setActivePinia(routedPinia())
         const executionsStore = useExecutionsStore()
+        let allowFirst: (allowed: boolean) => void = () => {}
+        executionsStore.isResumeAllowed = vi.fn((id: string) =>
+            id === "exec1" ? new Promise<boolean>(resolve => allowFirst = resolve) : Promise.resolve(false),
+        )
+        const wrapper = i18nMount(Resume, {props: {execution: pausedExecution}})
+        mounted.push(wrapper)
+        await flushPromises()
+
+        await wrapper.setProps({execution: {...pausedExecution, id: "exec2"} as Execution})
+        await flushPromises()
+        allowFirst(true)
+        await flushPromises()
+
+        expect(executionsStore.isResumeAllowed).toHaveBeenCalledWith("exec2")
+        expect(wrapper.find("button").exists()).toBe(false)
+    })
+
+    it("does not ask the server when the user cannot resume executions of the namespace", async () => {
+        isAllowed.mockImplementation((_resource: string, action: string) => action !== "RESUME")
+        const {wrapper, executionsStore} = mountResume(true)
+        await flushPromises()
+
+        expect(executionsStore.isResumeAllowed).not.toHaveBeenCalled()
+        expect(wrapper.find("button").exists()).toBe(false)
+    })
+
+    it("resumes with the inputs of a FORM under their dotted id, next to the other inputs", async () => {
+        isAllowed.mockReturnValue(true)
+        setActivePinia(routedPinia())
+        const executionsStore = useExecutionsStore()
+        executionsStore.isResumeAllowed = vi.fn().mockResolvedValue(true)
         executionsStore.flow = {
             id: "flow1",
             namespace: "tests",
@@ -60,6 +128,7 @@ describe("Resume", () => {
             global: {stubs: {InputsForm: InputsFormStub, KsDialog: {template: "<div><slot /><slot name=\"footer\" /></div>"}}},
         })
         mounted.push(wrapper)
+        await flushPromises()
 
         await wrapper.find("button").trigger("click")
         wrapper.findComponent(InputsFormStub).vm.$emit("update:modelValue", {"approval.approver": "adii", note: "approved"})

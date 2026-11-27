@@ -1,5 +1,5 @@
-import {MarkerType, Position, useVueFlow} from "@vue-flow/core"
-import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
+import {MarkerType, Position} from "@vue-flow/core"
+import type {Node, Edge} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
 import {
@@ -114,16 +114,20 @@ export type NodeDimensionsFn = (
 ) => {width: number; height: number}
 
 // A loop's return edge closes a cycle, so these walks follow the flow's own direction only.
-function forwardEdges(vueFlowId: string): GraphEdge[] {
-    return useVueFlow(vueFlowId).getEdges.value.filter((edge) => !edge.data?.loopReturn)
+function forwardEdges(edges: Edge[]): Edge[] {
+    return edges.filter((edge) => !edge.data?.loopReturn)
 }
 
-export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
+function findNode(nodes: Node[], nodeUid: string): Node | undefined {
+    return nodes.find((node) => node.id === nodeUid)
+}
+
+export function predecessorsEdge(edges: Edge[], nodeUid: string): Edge[] {
     const nodes = []
-    for (const edge of forwardEdges(vueFlowId)) {
+    for (const edge of forwardEdges(edges)) {
         if (edge.target === nodeUid) {
             nodes.push(edge)
-            const recursiveEdge = predecessorsEdge(vueFlowId, edge.source)
+            const recursiveEdge = predecessorsEdge(edges, edge.source)
             if (recursiveEdge.length > 0) {
                 nodes.push(...recursiveEdge)
             }
@@ -132,12 +136,12 @@ export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[
     return nodes
 }
 
-export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
+export function successorsEdge(edges: Edge[], nodeUid: string): Edge[] {
     const nodes = []
-    for (const edge of forwardEdges(vueFlowId)) {
+    for (const edge of forwardEdges(edges)) {
         if (edge.source === nodeUid) {
             nodes.push(edge)
-            const recursiveEdge = successorsEdge(vueFlowId, edge.target)
+            const recursiveEdge = successorsEdge(edges, edge.target)
             if (recursiveEdge.length > 0) {
                 nodes.push(...recursiveEdge)
             }
@@ -146,43 +150,42 @@ export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] 
     return nodes
 }
 
-export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge | GraphNode)[] {
-    const {findNode} = useVueFlow(vueFlowId)
-    const foundNode = findNode(nodeUid)
-    const nodes: (GraphEdge | GraphNode)[] = foundNode ? [foundNode] : []
-    for (const edge of forwardEdges(vueFlowId)) {
+export function predecessorsNode(nodes: Node[], edges: Edge[], nodeUid: string): Node[] {
+    const foundNode = findNode(nodes, nodeUid)
+    const linked = foundNode ? [foundNode] : []
+    for (const edge of forwardEdges(edges)) {
         if (edge.target === nodeUid) {
-            nodes.push(edge.sourceNode)
-            const recursiveEdge = predecessorsNode(vueFlowId, edge.source)
+            const sourceNode = findNode(nodes, edge.source)
+            if (sourceNode) linked.push(sourceNode)
+            const recursiveEdge = predecessorsNode(nodes, edges, edge.source)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge)
+                linked.push(...recursiveEdge)
             }
         }
     }
-    return nodes
+    return linked
 }
 
-export function successorsNode(vueFlowId: string, nodeUid: string) {
-    const {findNode} = useVueFlow(vueFlowId)
-    const nodes = [findNode(nodeUid)]
-    for (const edge of forwardEdges(vueFlowId)) {
+export function successorsNode(nodes: Node[], edges: Edge[], nodeUid: string) {
+    const linked = [findNode(nodes, nodeUid)]
+    for (const edge of forwardEdges(edges)) {
         if (edge.source === nodeUid) {
-            nodes.push(edge.targetNode)
-            const recursiveEdge = successorsNode(vueFlowId, edge.target)
+            linked.push(findNode(nodes, edge.target))
+            const recursiveEdge = successorsNode(nodes, edges, edge.target)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge)
+                linked.push(...recursiveEdge)
             }
         }
     }
-    return nodes
+    return linked
 }
 
-export function linkedElements(vueFlowId: string, nodeUid: string) {
+export function linkedElements(nodes: Node[], edges: Edge[], nodeUid: string) {
     return [
-        ...predecessorsEdge(vueFlowId, nodeUid),
-        ...predecessorsNode(vueFlowId, nodeUid),
-        ...successorsEdge(vueFlowId, nodeUid),
-        ...successorsNode(vueFlowId, nodeUid),
+        ...predecessorsEdge(edges, nodeUid),
+        ...predecessorsNode(nodes, edges, nodeUid),
+        ...successorsEdge(edges, nodeUid),
+        ...successorsNode(nodes, edges, nodeUid),
     ]
 }
 
@@ -417,14 +420,6 @@ export function replaceIfCollapsed(
         return null
     }
     return {target: newTarget, source: newSource}
-}
-
-export function cleanGraph(vueflowId: string) {
-    const {getEdges, getNodes, getElements, removeEdges, removeNodes, removeSelectedElements} =
-        useVueFlow(vueflowId)
-    removeEdges(getEdges.value)
-    removeNodes(getNodes.value)
-    removeSelectedElements(getElements.value)
 }
 
 export function flowHaveTasks(source: string): boolean {
@@ -819,8 +814,8 @@ export function generateGraph(
         height: heightFn(node),
     }),
     animated: boolean = true,
-): Elements | undefined {
-    const elements: Elements = []
+): (Node | Edge)[] | undefined {
+    const elements: (Node | Edge)[] = []
 
     if (!flowGraph || (flowSource && !flowHaveTasks(flowSource))) {
         console.warn("No flow graph or tasks found")

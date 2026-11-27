@@ -27,6 +27,10 @@ public class Random extends AbstractRetry {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(
+        title = "The retry type.",
+        description = "Fixed to `random`, selecting a retry policy with a random delay within a configurable range between attempts."
+    )
     protected String type = "random";
 
     @NotNull

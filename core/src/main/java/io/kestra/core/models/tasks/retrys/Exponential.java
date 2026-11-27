@@ -27,6 +27,10 @@ public class Exponential extends AbstractRetry {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(
+        title = "The retry type.",
+        description = "Fixed to `exponential`, selecting a retry policy with exponentially increasing delays between attempts."
+    )
     protected String type = "exponential";
 
     @NotNull

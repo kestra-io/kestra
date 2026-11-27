@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -9,9 +10,17 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.kv.KVMetadata;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.core.type.Argument;
@@ -45,6 +54,15 @@ class ExpressionControllerTest {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private KVStoreService kvStoreService;
 
     @MockBean(TenantValidationFilter.class)
     public TenantValidationFilter getTenantValidationFilter() {
@@ -116,6 +134,73 @@ class ExpressionControllerTest {
         Map<String, String> rendered = result.rendered();
         assertThat(rendered).containsEntry("{{ execution.id }}", execution.getId());
         assertThat(rendered).containsEntry("{{ flow.id }}", "minimal");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldRenderAgainstTaskRunWithTaskLocalBindings() throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
+        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
+        String taskRunId = execution.getTaskRunList().getFirst().getId();
+
+        var withTaskRun = render(
+            Map.of(
+                "executionId", execution.getId(),
+                "taskRunId", taskRunId,
+                "expressions", List.of("{{ taskrun.startDate }}", "{{ taskrun.id }}")
+            )
+        );
+        assertThat(withTaskRun.rendered().get("{{ taskrun.id }}")).isEqualTo(taskRunId);
+        assertThat(withTaskRun.rendered().get("{{ taskrun.startDate }}")).isNotEqualTo("{{ taskrun.startDate }}");
+
+        var executionOnly = render(
+            Map.of(
+                "executionId", execution.getId(),
+                "expressions", List.of("{{ taskrun.id }}")
+            )
+        );
+        assertThat(executionOnly.rendered()).containsEntry("{{ taskrun.id }}", "{{ taskrun.id }}");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldMaskKvInInputDefaultsWhenRenderingAgainstTaskRun() throws Exception {
+        when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
+        Execution ran = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
+        kvStoreService.get(TENANT_ID, TESTS_FLOW_NS)
+            .put("RENDER_MASKED_DEFAULT", new KVValueAndMetadata(new KVMetadata(null, (Instant) null), "kv-plaintext"));
+        FlowWithSource flow = flowRepository.create(GenericFlow.fromYaml(TENANT_ID, """
+            id: render-masked-defaults
+            namespace: io.kestra.tests
+            inputs:
+              - id: token
+                type: STRING
+                defaults: "{{ kv('RENDER_MASKED_DEFAULT') }}"
+            tasks:
+              - id: date
+                type: io.kestra.plugin.core.debug.Return
+                format: "{{ taskrun.startDate }}"
+            """));
+        Execution withoutInputs = executionRepository.save(
+            ran.toBuilder().id(IdUtils.create()).flowId(flow.getId()).flowRevision(flow.getRevision()).inputs(null).build()
+        );
+
+        var executionOnly = render(
+            Map.of(
+                "executionId", withoutInputs.getId(),
+                "expressions", List.of("{{ inputs.token }}")
+            )
+        );
+        var withTaskRun = render(
+            Map.of(
+                "executionId", withoutInputs.getId(),
+                "taskRunId", withoutInputs.getTaskRunList().getFirst().getId(),
+                "expressions", List.of("{{ inputs.token }}")
+            )
+        );
+
+        assertThat(executionOnly.rendered().get("{{ inputs.token }}")).doesNotContain("kv-plaintext");
+        assertThat(withTaskRun.rendered().get("{{ inputs.token }}")).doesNotContain("kv-plaintext");
     }
 
     @Test

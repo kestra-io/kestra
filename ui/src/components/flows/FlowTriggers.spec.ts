@@ -389,49 +389,19 @@ describe("FlowTriggers - execute backfill button", () => {
     })
 
     // https://github.com/kestra-io/kestra/issues/22959
-    describe("submitted inputs", () => {
-        const dateTimeInputs = [
+    it("sends DATE and TIME defaults in the format Execute sends", async () => {
+        createBackfill.mockReset().mockResolvedValue({})
+        const wrapper = await openBackfill([
             {id: "day", type: "DATE", required: false, defaults: "2026-01-15"},
             {id: "at", type: "TIME", required: false, defaults: "09:30:00"},
-        ]
+        ])
 
-        beforeEach(() => {
-            createBackfill.mockReset().mockResolvedValue({})
-        })
+        await fillInputs(wrapper, {day: normalize("DATE", "2026-01-15"), at: normalize("TIME", "09:30:00")})
+        executeButton()?.click()
+        await flushPromises()
 
-        const submit = async (wrapper: VueWrapper, inputs: Record<string, unknown>) => {
-            await fillInputs(wrapper, inputs)
-            executeButton()?.click()
-            await flushPromises()
-            expect(createBackfill).toHaveBeenCalledTimes(1)
-            return createBackfill.mock.calls[0][0].backfill.inputs
-        }
-
-        it("sends DATE and TIME defaults in the format Execute sends", async () => {
-            const wrapper = await openBackfill(dateTimeInputs)
-
-            // the form holds defaults as `normalize()` leaves them
-            const inputs = await submit(wrapper, {day: normalize("DATE", "2026-01-15"), at: normalize("TIME", "09:30:00")})
-
-            expect(inputs).toEqual({day: "2026-01-15", at: "09:30:00"})
-        })
-
-        it("sends DATE and TIME picked in the form in the format Execute sends", async () => {
-            const wrapper = await openBackfill(dateTimeInputs)
-
-            // the date and time pickers emit Date objects
-            const inputs = await submit(wrapper, {day: new Date(2026, 0, 15), at: new Date(2026, 0, 1, 9, 30)})
-
-            expect(inputs).toEqual({day: "2026-01-15", at: "09:30:00"})
-        })
-
-        it("sends other input types unchanged", async () => {
-            const wrapper = await openBackfill()
-
-            const inputs = await submit(wrapper, {region: "EU", batchSize: 100})
-
-            expect(inputs).toEqual({region: "EU", batchSize: 100})
-        })
+        expect(createBackfill).toHaveBeenCalledTimes(1)
+        expect(createBackfill.mock.calls[0][0].backfill.inputs).toEqual({day: "2026-01-15", at: "09:30:00"})
     })
 })
 

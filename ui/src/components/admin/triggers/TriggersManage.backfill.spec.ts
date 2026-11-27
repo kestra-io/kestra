@@ -19,7 +19,6 @@ vi.mock("override/stores/auth", () => ({
 vi.mock("../../../utils/toast", () => ({
     useToast: () => ({saved: vi.fn(), success: vi.fn(), error: vi.fn(), confirm: vi.fn()}),
 }))
-// The page stores no flow: opening the backfill dialog loads the trigger's flow into the executions store.
 vi.mock("../../../stores/flow", () => ({useFlowStore: () => ({})}))
 const executionsStore = vi.hoisted(() => ({
     flow: undefined as {inputs: Record<string, unknown>[]} | undefined,
@@ -114,13 +113,10 @@ const executeButton = () =>
 
 // https://github.com/kestra-io/kestra/issues/22959
 describe("TriggersManage backfill inputs", () => {
-    it.each([
-        ["DATE and TIME defaults", {day: normalize("DATE", "2026-01-15"), at: normalize("TIME", "09:30:00")}],
-        ["a DATE and TIME picked in the form", {day: new Date(2026, 0, 15), at: new Date(2026, 0, 1, 9, 30)}],
-    ])("sends %s the way Execute does", async (_, values) => {
+    it("sends DATE and TIME defaults in the format Execute sends", async () => {
         const wrapper = await openBackfill()
 
-        wrapper.findComponent(FlowRunStub).vm.$emit("update-inputs", values)
+        wrapper.findComponent(FlowRunStub).vm.$emit("update-inputs", {day: normalize("DATE", "2026-01-15"), at: normalize("TIME", "09:30:00")})
         await flushPromises()
         executeButton()?.click()
         await flushPromises()

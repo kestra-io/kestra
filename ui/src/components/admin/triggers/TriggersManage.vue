@@ -701,7 +701,6 @@
         return {
             start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
-            // setBackfillModal loads the trigger's flow into executionsStore
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
             inputs: normalizeInputValues(flattenInputs(executionsStore.flow?.inputs), backfill.value.inputs ?? {}) as BackfillRequest["inputs"],
             labels: labels.length ? labels : undefined,

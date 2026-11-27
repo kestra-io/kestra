@@ -12,6 +12,7 @@ const loadTaskRunOutputs = vi.hoisted(() => vi.fn())
 vi.mock("../../../composables/useTaskRunOutputs", () => ({loadTaskRunOutputs}))
 
 import {useTaskRunPopupData} from "./useTaskRunPopupData"
+import type {LevelKey} from "../../../utils/logs"
 
 function deferred<T>() {
     let resolve!: (value: T | PromiseLike<T>) => void
@@ -31,6 +32,7 @@ describe("useTaskRunPopupData", () => {
     let logTaskRunId: Ref<string>
     let logAttemptNumber: Ref<number>
     let logChildTaskRunIds: Ref<string[]>
+    let logLevel: Ref<LevelKey>
     let taskRunState: Ref<string | undefined>
 
     beforeEach(() => {
@@ -42,6 +44,7 @@ describe("useTaskRunPopupData", () => {
         logTaskRunId = ref("tr1")
         logAttemptNumber = ref(0)
         logChildTaskRunIds = ref([])
+        logLevel = ref("INFO")
         taskRunState = ref("RUNNING")
 
         searchByExecution.mockResolvedValue({total: 5})
@@ -58,6 +61,7 @@ describe("useTaskRunPopupData", () => {
             logTaskRunId: () => logTaskRunId.value,
             logAttemptNumber: () => logAttemptNumber.value,
             logChildTaskRunIds: () => logChildTaskRunIds.value,
+            logLevel: () => logLevel.value,
             taskRunState: () => taskRunState.value,
         }
     }
@@ -340,5 +344,20 @@ describe("useTaskRunPopupData", () => {
         }))
         expect(searchByExecution).toHaveBeenCalledTimes(1)
         expect(loadTaskRunOutputs).toHaveBeenCalledTimes(1)
+    })
+
+    it("changing the selected log level reloads the logs count with that level", async () => {
+        useTaskRunPopupData(createSource())
+        await flushPromises()
+        expect(searchLogs).toHaveBeenCalledTimes(1)
+
+        logLevel.value = "DEBUG"
+        await flushPromises()
+
+        expect(searchLogs).toHaveBeenCalledTimes(2)
+        expect(searchLogs).toHaveBeenLastCalledWith(expect.objectContaining({
+            filters: expect.arrayContaining([{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "DEBUG"}]),
+        }))
+        expect(searchByExecution).toHaveBeenCalledTimes(1)
     })
 })

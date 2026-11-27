@@ -44,8 +44,8 @@ describe("exportGeometry", () => {
 })
 
 describe("untilNodesMeasured", () => {
-    const measured = {dimensions: {width: 100, height: 40}}
-    const unmeasured = {dimensions: {width: 0, height: 0}}
+    const measured = {measured: {width: 100, height: 40}}
+    const unmeasured = {measured: undefined}
 
     beforeEach(() => {
         vi.useFakeTimers()
@@ -132,7 +132,7 @@ describe("useScreenshot", () => {
         container.className = "vue-flow"
         container.style.backgroundColor = "rgb(1, 2, 3)"
         pane = document.createElement("div")
-        pane.className = "vue-flow__transformationpane"
+        pane.className = "vue-flow__viewport"
         container.append(pane)
         document.body.append(container)
     })
@@ -193,8 +193,8 @@ describe("useScreenshot", () => {
     it("falls back to the on-screen container when the bounds are unusable", async () => {
         const {capture} = useScreenshot()
 
-        // `getRectOfNodes([])`: no node, so no finite box.
-        await capture(container, {type: "png", bounds: {x: Infinity, y: Infinity, width: -Infinity, height: -Infinity}})
+        // `getNodesBounds([])`: no node, so an empty box.
+        await capture(container, {type: "png", bounds: {x: 0, y: 0, width: 0, height: 0}})
         await capture(container, {type: "png"})
 
         expect(toPng).toHaveBeenCalledTimes(2)

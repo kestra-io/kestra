@@ -83,7 +83,7 @@
 <script setup lang="ts">
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
-    import {Handle, Position} from "@vue-flow/core"
+    import {Handle, Position} from "@xyflow/vue"
     import {
         KsTooltip,
         SECTIONS,

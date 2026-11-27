@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {MarkerType} from "@vue-flow/core"
+import {MarkerType} from "@xyflow/vue"
 import {dagEdgeStyle} from "./dagEdge"
 
 const resolve = (token: string) => `resolved:${token}`

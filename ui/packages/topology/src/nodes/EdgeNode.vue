@@ -58,7 +58,7 @@
 <script lang="ts" setup>
     import {computed, inject, ref} from "vue"
     import type {PropType} from "vue"
-    import {getSmoothStepPath, EdgeLabelRenderer, Position} from "@vue-flow/core"
+    import {getSmoothStepPath, EdgeLabelRenderer, Position} from "@xyflow/vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {
         edgeTurnPosition,

@@ -1,15 +1,15 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {defineComponent, h, nextTick, ref} from "vue"
-import type {ViewportTransform, VueFlowStore} from "@vue-flow/core"
+import type {Viewport, VueFlowInstance} from "@xyflow/vue"
 import {mount} from "@vue/test-utils"
 import {REFIT_DELAY_MS, useViewportRefit} from "./useViewportRefit"
 
-const FITTED_VIEW: ViewportTransform = {x: 10, y: 20, zoom: 0.8}
+const FITTED_VIEW: Viewport = {x: 10, y: 20, zoom: 0.8}
 
 let resize: (width: number, height: number) => void
 
 function mountRefit() {
-    const viewport = ref<ViewportTransform>({x: 0, y: 0, zoom: 1})
+    const viewport = ref<Viewport>({x: 0, y: 0, zoom: 1})
     const fitView = vi.fn(async () => {
         viewport.value = {...FITTED_VIEW}
         return true
@@ -19,7 +19,7 @@ function mountRefit() {
     const wrapper = mount(defineComponent({
         setup() {
             const container = ref<HTMLElement>()
-            refit = useViewportRefit(container, {fitView, viewport} as unknown as Pick<VueFlowStore, "fitView" | "viewport">)
+            refit = useViewportRefit(container, {fitView, viewport} as unknown as Pick<VueFlowInstance, "fitView" | "viewport">)
             return () => h("div", {ref: container})
         },
     }))

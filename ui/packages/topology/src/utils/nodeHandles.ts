@@ -1,4 +1,4 @@
-import {Position} from "@vue-flow/core"
+import {Position} from "@xyflow/vue"
 import {NODE_SIZES} from "./constants"
 
 export function statusRowHandleStyle(position: Position | undefined, reservesRow: boolean) {

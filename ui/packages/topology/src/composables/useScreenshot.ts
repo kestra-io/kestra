@@ -1,6 +1,6 @@
 import {ref} from "vue"
 import type {Ref} from "vue"
-import type {Rect} from "@vue-flow/core"
+import type {Rect} from "@xyflow/vue"
 import {cssVar} from "@kestra-io/design-system"
 import {toJpeg as ElToJpg, toPng as ElToPng} from "html-to-image"
 import type {Options as HTMLToImageOptions} from "html-to-image/es/types"
@@ -12,7 +12,7 @@ interface UseScreenshotOptions extends HTMLToImageOptions {
   type?: ImageType;
   fileName?: string;
   shouldDownload?: boolean;
-  // Bounding box of the graph in flow coordinates (see `getRectOfNodes`). When set, the export
+  // Bounding box of the graph in flow coordinates (see `getNodesBounds`). When set, the export
   // covers that whole box instead of whatever part of it the on-screen viewport shows.
   bounds?: Rect;
 }
@@ -120,17 +120,17 @@ function composeOnBackground(captured: string, bounds: Rect, geometry: ExportGeo
 }
 
 interface MeasurableNode {
-  dimensions: {width: number; height: number};
+  measured?: {width?: number; height?: number};
 }
 
-// Vue Flow leaves a node's dimensions at 0 until its ResizeObserver has measured it, and
-// `getRectOfNodes` covers such a node with an empty box. Pass only the nodes that are rendered:
+// Vue Flow leaves a node unmeasured until its ResizeObserver has seen it, and
+// `getNodesBounds` covers such a node with an empty box. Pass only the nodes that are rendered:
 // a hidden one is never measured, so waiting on it would always run out of frames.
-export function untilNodesMeasured(renderedNodes: () => MeasurableNode[], maxFrames = 60): Promise<void> {
+export function untilNodesMeasured(renderedNodes: () => readonly MeasurableNode[], maxFrames = 60): Promise<void> {
   return new Promise((resolve) => {
     let framesLeft = maxFrames
     const check = (): void => {
-      const measured = renderedNodes().every(({dimensions}) => dimensions.width > 0 && dimensions.height > 0)
+      const measured = renderedNodes().every(({measured}) => (measured?.width ?? 0) > 0 && (measured?.height ?? 0) > 0)
       if (measured || --framesLeft <= 0) {
         resolve()
       } else {
@@ -141,7 +141,7 @@ export function untilNodesMeasured(renderedNodes: () => MeasurableNode[], maxFra
   })
 }
 
-// `getRectOfNodes([])` yields infinite coordinates, and a graph of unmeasured nodes a 0x0 box.
+// `getNodesBounds` yields a 0x0 box for no node and for a graph of unmeasured nodes.
 function isExportable(bounds?: Rect): bounds is Rect {
   return !!bounds
     && Number.isFinite(bounds.width) && Number.isFinite(bounds.height)
@@ -159,7 +159,7 @@ export function useScreenshot(): UseScreenshot {
     // The pane is rendered with its own translate/scale so the image can extend past the
     // viewport. It carries no background, and the grid behind it cannot be captured, so both
     // are painted onto the canvas afterwards - hence a transparent capture here.
-    const pane = el.querySelector<HTMLElement>(".vue-flow__transformationpane")
+    const pane = el.querySelector<HTMLElement>(".vue-flow__viewport")
     const geometry = pane && isExportable(bounds) ? exportGeometry(bounds, window.devicePixelRatio) : undefined
     const background = imageOptions.backgroundColor ?? getComputedStyle(el).backgroundColor
     const target = geometry ? pane! : el

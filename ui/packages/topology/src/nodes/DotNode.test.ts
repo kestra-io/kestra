@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {Handle, Position} from "@vue-flow/core"
+import {Handle, Position} from "@xyflow/vue"
 import DotNode from "./DotNode.vue"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 

@@ -27,6 +27,7 @@
             <template #node-cluster="clusterProps">
                 <ClusterNode
                     v-bind="clusterProps"
+                    :data="slotData(clusterProps.data)"
                     :icons="icons"
                     :loadIcon="loadIcon"
                     :replayEnabled="replayEnabled"
@@ -56,12 +57,14 @@
             <template #node-dot="dotProps">
                 <DotNode
                     v-bind="dotProps"
+                    :data="slotData(dotProps.data)"
                 />
             </template>
 
             <template #node-task="taskProps">
                 <TaskNode
                     v-bind="taskProps"
+                    :data="slotData(taskProps.data)"
                     :icons="icons"
                     :loadIcon="loadIcon"
                     :playgroundEnabled="playgroundEnabled"
@@ -101,6 +104,7 @@
             <template #node-custom="taskProps">
                 <BasicNode
                     v-bind="taskProps"
+                    :data="slotData(taskProps.data)"
                     :icons="icons"
                     :loadIcon="loadIcon"
                 />
@@ -109,6 +113,7 @@
             <template #node-trigger="triggerProps">
                 <TriggerNode
                     v-bind="triggerProps"
+                    :data="slotData(triggerProps.data)"
                     :icons="icons"
                     :loadIcon="loadIcon"
                     @delete="emit(EVENTS.DELETE, $event)"
@@ -120,6 +125,7 @@
             <template #node-collapsedcluster="CollapsedProps">
                 <CollapsedClusterNode
                     v-bind="CollapsedProps"
+                    :data="slotData(CollapsedProps.data)"
                     :icons="icons"
                     :loadIcon="loadIcon"
                     @expand="expand($event)"
@@ -246,10 +252,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, onUnmounted, provide, ref, shallowRef, useSlots, watch} from "vue"
-    import {getRectOfNodes, isEdge, isNode, Panel, useVueFlow, VueFlow, type Edge, type GraphNode, type Node} from "@vue-flow/core"
-    import type {ViewportTransform} from "@vue-flow/core"
-    import {ControlButton, Controls} from "@vue-flow/controls"
-    import {Background} from "@vue-flow/background"
+    import {Background, ControlButton, Controls, getNodesBounds, isEdge, isNode, Panel, setupVueFlow, useVueFlowStore, VueFlow, type Node, type Viewport} from "@xyflow/vue"
     import ClusterNode from "./nodes/ClusterNode.vue"
     import DotNode from "./nodes/DotNode.vue"
     import FlowSummaryChip from "./nodes/FlowSummaryChip.vue"
@@ -318,7 +321,7 @@
         diffStatuses?: Map<string, TaskDiffStatus>;
         selectedNodeUid?: string;
         // For Storybook / tests only, to start the canvas pre-zoomed at a given level of detail.
-        defaultViewport?: Partial<ViewportTransform>;
+        defaultViewport?: Partial<Viewport>;
     }>(), {
         isHorizontal: false,
         isReadOnly: true,
@@ -360,8 +363,13 @@
         return current !== undefined && State.isRunning(current) === true
     })
 
-    const vueFlowStore = useVueFlow(props.id)
-    const {getNodes, getEdges, onNodesInitialized, zoomIn, zoomOut, setNodes, setEdges, removeEdges, removeNodes, vueFlowRef} = vueFlowStore
+    const vueFlowStore = setupVueFlow({id: props.id})
+    const vueFlowState = useVueFlowStore()
+    const {getNodes, getEdges, getInternalNode, onNodesInitialized, zoomIn, zoomOut, setNodes, setEdges} = vueFlowStore
+    // `<VueFlow>` infers its node type from a `nodes` prop, and these nodes reach the store
+    // through `setNodes`, so each slot gets `data` untyped and its component names the type.
+    const slotData = <Data>(data: Record<string, unknown>) => data as Data
+
     const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -578,7 +586,7 @@
 
     function focusTask(taskId: string) {
         const node = getNodes.value.find((candidate) => afterLastDot(candidate.id) === taskId)
-        if (node) vueFlowStore.fitView({nodes: [node.id], maxZoom: FOCUS_MAX_ZOOM, duration: 300})
+        if (node) vueFlowStore.fitView({nodes: [{id: node.id}], maxZoom: FOCUS_MAX_ZOOM, duration: 300})
     }
 
     defineExpose({focusTask})
@@ -603,8 +611,8 @@
     })
 
     const generateGraph = (shouldFit = false) => {
-        removeEdges(getEdges.value)
-        removeNodes(getNodes.value)
+        setEdges([])
+        setNodes([])
 
         nextTick(() => {
             emit("loading", true)
@@ -645,29 +653,29 @@
 
     const HOVERED_NODE_CLASS = "topology-node-hovered"
 
-    function setNodeInteractionClass(node: Node | Edge, cls: string, add: boolean) {
-        const classes = (typeof node.class === "string" ? node.class : "").split(" ").filter(Boolean)
-        if (add) {
-            if (!classes.includes(cls)) classes.push(cls)
-        } else {
-            const idx = classes.indexOf(cls)
-            if (idx > -1) classes.splice(idx, 1)
-        }
-        node.class = classes.join(" ")
+    const nodeClasses = (node: Node) => (typeof node.class === "string" ? node.class : "").split(" ").filter(Boolean)
+
+    // Vue Flow's nodes are immutable: a class only reaches the DOM through a new node object.
+    function setHoveredNodes(hoveredIds: Set<string>) {
+        const isUpToDate = getNodes.value.every((node) => nodeClasses(node).includes(HOVERED_NODE_CLASS) === hoveredIds.has(node.id))
+        if (isUpToDate) return
+        setNodes((nodes) => nodes.map((node) => {
+            const classes = nodeClasses(node).filter((cls) => cls !== HOVERED_NODE_CLASS)
+            if (hoveredIds.has(node.id)) classes.push(HOVERED_NODE_CLASS)
+            return classes.length === nodeClasses(node).length ? node : {...node, class: classes.join(" ")}
+        }))
     }
 
     const onMouseOver = (node: {uid: string}) => {
         schedulePeekOpen(node.uid)
-        VueFlowUtils.linkedElements(getNodes.value, getEdges.value, node.uid).forEach((n) => {
-            if (n?.type === "task") {
-                setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
-            }
-        })
+        const linkedTaskIds = VueFlowUtils.linkedElements(getNodes.value, getEdges.value, node.uid)
+            .flatMap((element) => (element?.type === "task" ? [element.id] : []))
+        setHoveredNodes(new Set(linkedTaskIds))
     }
 
     const onMouseLeave = () => {
         schedulePeekClose()
-        resetNodesStyle()
+        setHoveredNodes(new Set())
     }
 
     const NODE_TYPES_THE_PEEK_MUST_NOT_COVER = new Set(["task", "custom", "trigger", "collapsedcluster"])
@@ -680,7 +688,7 @@
         return getNodes.value.find((n) => n.type === "task" && afterLastDot(n.id) === focused)?.id
     })
 
-    const anchoredNode = shallowRef<GraphNode | undefined>(undefined)
+    const anchoredNode = shallowRef<Node | undefined>(undefined)
 
     watch([peekUid, getNodes], ([uid, nodes]) => {
         if (!uid) {
@@ -703,14 +711,18 @@
         if (!node || !slots.taskDetails) return undefined
 
         const {x: offsetX, y: offsetY, zoom} = vueFlowStore.viewport.value
-        const {width: canvasWidth, height: canvasHeight} = vueFlowStore.dimensions.value
+        const {width: canvasWidth, height: canvasHeight} = vueFlowState.dimensions
 
-        const screenRect = (n: GraphNode): PeekRect => ({
-            x: offsetX + n.computedPosition.x * zoom,
-            y: offsetY + n.computedPosition.y * zoom,
-            width: (n.dimensions?.width ?? 0) * zoom,
-            height: (n.dimensions?.height ?? 0) * zoom,
-        })
+        const screenRect = (n: Node): PeekRect => {
+            const internal = getInternalNode(n.id)
+            const position = internal?.internals.positionAbsolute ?? n.position
+            return {
+                x: offsetX + position.x * zoom,
+                y: offsetY + position.y * zoom,
+                width: (internal?.measured.width ?? 0) * zoom,
+                height: (internal?.measured.height ?? 0) * zoom,
+            }
+        }
 
         const placement = placePeek({
             anchor: screenRect(node),
@@ -718,21 +730,13 @@
             canvas: {x: 0, y: 0, width: canvasWidth, height: canvasHeight},
             isHorizontal: props.isHorizontal,
             otherRects: getNodes.value
-                .filter((n) => n.id !== node.id && !n.hidden && NODE_TYPES_THE_PEEK_MUST_NOT_COVER.has(n.type))
+                .filter((n) => n.id !== node.id && !n.hidden && n.type !== undefined && NODE_TYPES_THE_PEEK_MUST_NOT_COVER.has(n.type))
                 .map(screenRect),
         })
 
         const task = (node.data as {node?: {task?: {type?: string}}} | undefined)?.node?.task
         return {uid: node.id, node, title: afterLastDot(node.id) ?? node.id, type: shortPluginType(task?.type), ...placement}
     })
-
-    const resetNodesStyle = () => {
-        getNodes.value.filter(n => n.type === "task" || n.type === "trigger")
-            .forEach(n => {
-                n.style = {...n.style, opacity: "1"}
-                setNodeInteractionClass(n, HOVERED_NODE_CLASS, false)
-            })
-    }
 
     // The flow-level `errors:` lane is synthesized by the frontend, so it is absent from
     // `flowGraph.clusters` and collapsing it silently did nothing (kestra-io/kestra#19787).
@@ -831,7 +835,8 @@
     // Always the whole graph, whichever way it is laid out and wherever the viewport sits: the
     // capture covers the bounding box of every rendered node, so there is nothing to crop it to.
     async function exportAsImage(type: "jpeg" | "png") {
-        if (!vueFlowRef.value) {
+        const vueFlowEl = vueFlowState.vueFlowRef
+        if (!vueFlowEl) {
             console.warn("Flow not found")
             return
         }
@@ -840,7 +845,8 @@
 
         try {
             await untilNodesMeasured(renderedNodes)
-            await capture(vueFlowRef.value, {type, bounds: getRectOfNodes(renderedNodes()), shouldDownload: true})
+            const bounds = getNodesBounds(renderedNodes(), {nodeLookup: vueFlowState.nodeLookup})
+            await capture(vueFlowEl, {type, bounds, shouldDownload: true})
         } finally {
             isDropdownOpen.value = false
         }
@@ -911,7 +917,7 @@
         }
     }
 
-    /* Must stay a sibling of `.vue-flow__transformationpane`, whose transform traps node z-index (kestra-io/kestra#20642). */
+    /* Must stay a sibling of `.vue-flow__viewport`, whose transform traps node z-index (kestra-io/kestra#20642). */
     .node-details-layer {
         position: absolute;
         inset: 0;

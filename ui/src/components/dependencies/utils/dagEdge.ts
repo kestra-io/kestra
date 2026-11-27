@@ -1,4 +1,4 @@
-import {MarkerType} from "@vue-flow/core"
+import {MarkerType} from "@xyflow/vue"
 import {edgeKindToken} from "./relationKind"
 
 export interface DagEdgeState {

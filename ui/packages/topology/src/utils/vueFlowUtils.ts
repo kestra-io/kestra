@@ -1,5 +1,5 @@
-import {MarkerType, Position} from "@vue-flow/core"
-import type {Node, Edge} from "@vue-flow/core"
+import {MarkerType, Position} from "@xyflow/vue"
+import type {Node, Edge} from "@xyflow/vue"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
 import {
@@ -114,15 +114,15 @@ export type NodeDimensionsFn = (
 ) => {width: number; height: number}
 
 // A loop's return edge closes a cycle, so these walks follow the flow's own direction only.
-function forwardEdges(edges: Edge[]): Edge[] {
+function forwardEdges(edges: readonly Edge[]): Edge[] {
     return edges.filter((edge) => !edge.data?.loopReturn)
 }
 
-function findNode(nodes: Node[], nodeUid: string): Node | undefined {
+function findNode(nodes: readonly Node[], nodeUid: string): Node | undefined {
     return nodes.find((node) => node.id === nodeUid)
 }
 
-export function predecessorsEdge(edges: Edge[], nodeUid: string): Edge[] {
+export function predecessorsEdge(edges: readonly Edge[], nodeUid: string): Edge[] {
     const nodes = []
     for (const edge of forwardEdges(edges)) {
         if (edge.target === nodeUid) {
@@ -136,7 +136,7 @@ export function predecessorsEdge(edges: Edge[], nodeUid: string): Edge[] {
     return nodes
 }
 
-export function successorsEdge(edges: Edge[], nodeUid: string): Edge[] {
+export function successorsEdge(edges: readonly Edge[], nodeUid: string): Edge[] {
     const nodes = []
     for (const edge of forwardEdges(edges)) {
         if (edge.source === nodeUid) {
@@ -150,7 +150,7 @@ export function successorsEdge(edges: Edge[], nodeUid: string): Edge[] {
     return nodes
 }
 
-export function predecessorsNode(nodes: Node[], edges: Edge[], nodeUid: string): Node[] {
+export function predecessorsNode(nodes: readonly Node[], edges: readonly Edge[], nodeUid: string): Node[] {
     const foundNode = findNode(nodes, nodeUid)
     const linked = foundNode ? [foundNode] : []
     for (const edge of forwardEdges(edges)) {
@@ -166,7 +166,7 @@ export function predecessorsNode(nodes: Node[], edges: Edge[], nodeUid: string):
     return linked
 }
 
-export function successorsNode(nodes: Node[], edges: Edge[], nodeUid: string) {
+export function successorsNode(nodes: readonly Node[], edges: readonly Edge[], nodeUid: string) {
     const linked = [findNode(nodes, nodeUid)]
     for (const edge of forwardEdges(edges)) {
         if (edge.source === nodeUid) {
@@ -180,7 +180,7 @@ export function successorsNode(nodes: Node[], edges: Edge[], nodeUid: string) {
     return linked
 }
 
-export function linkedElements(nodes: Node[], edges: Edge[], nodeUid: string) {
+export function linkedElements(nodes: readonly Node[], edges: readonly Edge[], nodeUid: string) {
     return [
         ...predecessorsEdge(edges, nodeUid),
         ...predecessorsNode(nodes, edges, nodeUid),
@@ -826,8 +826,9 @@ export function generateGraph(
             style: {width: "5px", height: "5px"},
             sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
             targetPosition: isHorizontal ? Position.Left : Position.Top,
-            parentNode: undefined,
+            parentId: undefined,
             draggable: false,
+            data: {},
         })
         elements.push({
             id: "end",
@@ -836,8 +837,9 @@ export function generateGraph(
             style: {width: "5px", height: "5px"},
             sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
             targetPosition: isHorizontal ? Position.Left : Position.Top,
-            parentNode: undefined,
+            parentId: undefined,
             draggable: false,
+            data: {},
         })
         elements.push({
             id: "start|end",
@@ -939,7 +941,7 @@ export function generateGraph(
             elements.push({
                 id: clusterUid,
                 type: "cluster",
-                parentNode: parentNode,
+                parentId: parentNode,
                 // Without this the cluster falls back to vue-flow's global `nodesDraggable`, and
                 // dropping one on an edge emits a move for whatever its uid ends with.
                 draggable: false,
@@ -1046,7 +1048,7 @@ export function generateGraph(
                 },
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
-                parentNode: cluster ? cluster.uid : undefined,
+                parentId: cluster ? cluster.uid : undefined,
                 // The drag is the browser's own (HTML5), like the No-code block cards, so vue-flow
                 // must not also reposition the node under the pointer.
                 draggable: false,
@@ -1118,11 +1120,6 @@ export function generateGraph(
                 markerEnd: isClusterRootOrEnd(nodeByUid[newEdge.target])
                     ? ""
                     : {
-                          id:
-                              "marker-" +
-                              (nodeByUid[newEdge.target].branchType
-                                  ? nodeByUid[newEdge.target].branchType?.toLocaleLowerCase()
-                                  : "custom"),
                           type: MarkerType.ArrowClosed,
                           color: getEdgeColorToken(edgeColor),
                       },
@@ -1175,7 +1172,6 @@ export function generateGraph(
             target: cluster.start,
             type: "edge",
             markerEnd: {
-                id: "marker-custom",
                 type: MarkerType.ArrowClosed,
                 color: getEdgeColorToken(null),
             },

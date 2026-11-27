@@ -13,6 +13,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.storages.StorageInterface;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class ThreadUncaughtExceptionHandlerTest {
 
@@ -67,16 +68,42 @@ class ThreadUncaughtExceptionHandlerTest {
         assertThat(newerContext.shutdownCalled).isFalse();
     }
 
+    @Test
+    void shouldNotPropagateWhenContextShutdownFails() {
+        // Given: a context whose shutdown fails
+        var context = new RecordingContext(new AssertionError("shutdown failed"));
+        var handler = new ThreadUncaughtExceptionHandler(context);
+
+        // When
+        assertThatCode(() -> handler.uncaughtException(Thread.currentThread(), new RuntimeException("boom")))
+            .doesNotThrowAnyException();
+
+        // Then
+        assertThat(context.shutdownCalled).isTrue();
+    }
+
     /**
      * A recording {@link KestraContext} whose environments contain "test" so the handler never
      * calls {@code Runtime.getRuntime().exit(1)}.
      */
     private static final class RecordingContext extends KestraContext {
+        private final Error shutdownError;
         private volatile boolean shutdownCalled = false;
+
+        private RecordingContext() {
+            this(null);
+        }
+
+        private RecordingContext(Error shutdownError) {
+            this.shutdownError = shutdownError;
+        }
 
         @Override
         public void shutdown() {
             this.shutdownCalled = true;
+            if (shutdownError != null) {
+                throw shutdownError;
+            }
         }
 
         @Override

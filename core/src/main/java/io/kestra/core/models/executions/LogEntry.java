@@ -66,6 +66,12 @@ public class LogEntry implements TenantInterface, DispatchEvent {
     @Nullable
     ExecutionKind executionKind;
 
+    @Nullable
+    String traceId;
+
+    @Nullable
+    String spanId;
+
     // Opaque plugin-defined step token; wrap in a record if percent/total is ever needed
     @Nullable
     String progress;
@@ -173,10 +179,20 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // enrich with the active OpenTelemetry trace context, a no-op when tracing is disabled
-        SpanContext spanContext = Span.current().getSpanContext();
-        if (spanContext.isValid()) {
-            map.put("trace_id", spanContext.getTraceId());
-            map.put("span_id", spanContext.getSpanId());
+        if (this.traceId != null) {
+            map.put("trace_id", this.traceId);
+        }
+
+        if (this.spanId != null) {
+            map.put("span_id", this.spanId);
+        }
+
+        if (this.traceId == null && this.spanId == null) {
+            SpanContext spanContext = Span.current().getSpanContext();
+            if (spanContext.isValid()) {
+                map.put("trace_id", spanContext.getTraceId());
+                map.put("span_id", spanContext.getSpanId());
+            }
         }
 
         return map;

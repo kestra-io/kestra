@@ -158,6 +158,11 @@
         "details": "Guardar para sobrescribir y crear una nueva revisión."
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flow eliminado",
+      "description": "Este flow se eliminó después de que lo abrieras. ¿Quieres volver a crearlo con tus cambios?",
+      "recreate": "Volver a crear"
+    },
     "override": {
       "title": "Vas a sobrescribir el flujo actual",
       "details": "El flow anterior se puede restaurar desde la pestaña de Revisions."

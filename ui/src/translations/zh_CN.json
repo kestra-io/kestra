@@ -158,6 +158,11 @@
         "details": "保存以覆盖并创建新版本。"
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flow 已删除",
+      "description": "此 Flow 在您打开后已被删除。要使用您的更改重新创建它吗？",
+      "recreate": "重新创建"
+    },
     "override": {
       "title": "你将覆盖当前流程",
       "details": "先前的flow可以从Revisions标签页恢复。"

@@ -158,6 +158,11 @@
         "details": "Enregistrer pour remplacer et créer une nouvelle révision."
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flow supprimé",
+      "description": "Ce flow a été supprimé après son ouverture. Voulez-vous le recréer avec vos modifications ?",
+      "recreate": "Recréer"
+    },
     "override": {
       "title": "Vous allez écraser le flow actuel",
       "details": "Le flow précédent peut être restauré depuis l'onglet Revisions."

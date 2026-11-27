@@ -158,6 +158,11 @@
         "details": "덮어쓰기를 저장하고 새 버전을 생성합니다."
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flow 삭제됨",
+      "description": "이 Flow는 연 후에 삭제되었습니다. 변경 사항으로 다시 만드시겠습니까?",
+      "recreate": "다시 만들기"
+    },
     "override": {
       "title": "현재 Flow를 덮어쓸 예정입니다.",
       "details": "이전 flow는 Revisions 탭에서 복원할 수 있습니다."

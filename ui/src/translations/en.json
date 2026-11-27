@@ -158,6 +158,11 @@
         "details": "Save to override and create a new revision."
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flow deleted",
+      "description": "This flow was deleted after you opened it. Do you want to recreate it with your changes?",
+      "recreate": "Recreate"
+    },
     "override": {
       "title": "You are going to override the current flow",
       "details": "Previous flow can be restored from the Revisions tab."

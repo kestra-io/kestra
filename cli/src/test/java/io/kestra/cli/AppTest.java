@@ -91,6 +91,38 @@ class AppTest {
     }
 
     @Test
+    void configLoadedWhenRequiredParamsMissing() throws Exception {
+        // Regression test for Pylon #1698: when a subcommand is invoked without its required
+        // positional parameters, continueOnParsingErrors detaches the subcommand chain so the
+        // leaf resolved to the root App and the config file was never loaded — on EE builds this
+        // surfaced as a misleading NoSuchBeanException (TenantRepository) instead of a proper
+        // "Missing required parameters" message. Fix: getCommandLine() recovers the real leaf via
+        // resolveSubcommandByName() so the config is loaded for the right command.
+        Path configFile = Files.createTempFile("kestra-test-", ".yml");
+        try {
+            Files.writeString(configFile, "kestra:\n  test:\n    marker: config-loaded\n");
+
+            // "flow namespace update" requires the <namespace> and <directory> positionals; they
+            // are deliberately omitted here so the parse fails and the leaf would otherwise be App.
+            String[] args = { "flow", "namespace", "update", "--config", configFile.toString() };
+
+            Method getCommandLine = App.class.getDeclaredMethod("getCommandLine", Class.class, String[].class);
+            getCommandLine.setAccessible(true);
+            CommandLine leafCmd = (CommandLine) getCommandLine.invoke(null, App.class, args);
+
+            Object userObject = leafCmd.getCommandSpec().userObject();
+            assertThat(userObject)
+                .as("leaf should be recovered as the real subcommand, not the root App")
+                .isInstanceOf(AbstractCommand.class);
+            AbstractCommand abstractCmd = (AbstractCommand) userObject;
+            assertThat(abstractCmd.propertiesFromConfig())
+                .containsEntry("kestra.test.marker", "config-loaded");
+        } finally {
+            Files.deleteIfExists(configFile);
+        }
+    }
+
+    @Test
     void missingRequiredParamsPrintHelpInsteadOfException() {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setErr(new PrintStream(out));

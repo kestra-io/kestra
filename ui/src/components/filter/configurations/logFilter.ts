@@ -86,11 +86,13 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "kind",
                     label: t("filter.kind.label"),
                     description: t("filter.kind.description"),
-                    comparators: [Comparators.IN],
-                    valueType: "multi-select",
+                    comparators: [Comparators.EQUALS],
+                    valueType: "radio",
+                    allLabel: t("filter.execution_kind.standard"),
+                    allDescription: t("filter.execution_kind.standard_description"),
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs")
-                        return VALUES.KINDS
+                        return VALUES.KINDS.filter(kind => kind.value !== "NORMAL")
                     },
                 },
                 {

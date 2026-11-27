@@ -27,7 +27,9 @@ public interface ILogs extends IData<ILogs.Fields> {
 
         if (filters != null) {
 
-            List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
+            List<QueryFilter> leaves = filters.stream().filter(QueryFilter::isLeaf).toList();
+
+            List<QueryFilter> namespaceFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
             if (!namespaceFilters.isEmpty()) {
                 namespaceFilters.forEach(f ->
                 {
@@ -35,7 +37,7 @@ public interface ILogs extends IData<ILogs.Fields> {
                 });
             }
 
-            List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
+            List<QueryFilter> flowFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
             if (!flowFilters.isEmpty()) {
                 flowFilters.forEach(f ->
                 {
@@ -43,7 +45,7 @@ public interface ILogs extends IData<ILogs.Fields> {
                 });
             }
 
-            List<QueryFilter> levelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LEVEL)).toList();
+            List<QueryFilter> levelFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.LEVEL)).toList();
             if (!levelFilters.isEmpty()) {
                 levelFilters.forEach(f ->
                 {

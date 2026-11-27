@@ -145,6 +145,38 @@ export const routeQueryToQueryFilters = (query: Record<string, unknown>): QueryF
     return root.build()
 }
 
+const NULL_KIND: QueryFilter = {field: "kind", operation: "IS_NULL"}
+
+const kindValues = (value: unknown): string[] => [value].flat().flatMap(item => String(item).split(","))
+
+const isSatisfiedByNormalKind = (filter: QueryFilter): boolean => {
+    if (filter.field !== "kind") return false
+    const selectsNormal = kindValues(filter.value).includes("NORMAL")
+    switch (filter.operation) {
+    case "EQUALS":
+    case "IN":
+        return selectsNormal
+    case "NOT_EQUALS":
+    case "NOT_IN":
+        return !selectsNormal
+    default:
+        return false
+    }
+}
+
+/** Sends a top-level kind filter NORMAL satisfies as `kind IS_NULL OR <filter>`, normal runs having no kind (kestra-io/kestra#21536). */
+export const withNullKindForNormal = (filters: QueryFilter[]): QueryFilter[] => {
+    if (!filters.some(isSatisfiedByNormalKind)) return filters
+    const rewritten = filters.map(filter => isSatisfiedByNormalKind(filter) ? queryFilterNode("OR", [NULL_KIND, filter]) : filter)
+    const groups = rewritten.filter(filter => filter.children)
+    return groups.length > 1
+        ? [...rewritten.filter(filter => !filter.children), queryFilterNode("AND", groups)]
+        : rewritten
+}
+
+export const routeQueryToExecutionQueryFilters = (query: Record<string, unknown>): QueryFilter[] =>
+    withNullKindForNormal(routeQueryToQueryFilters(query))
+
 /**
  * Keeps only the top-level `filters[...]` params of a route query that sit on one of `fields`.
  *

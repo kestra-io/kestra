@@ -246,7 +246,8 @@ public class QueryFilterTest {
                     Op.EQUALS,
                     Op.NOT_EQUALS,
                     Op.IN,
-                    Op.NOT_IN
+                    Op.NOT_IN,
+                    Op.IS_NULL
                 )
             ),
 

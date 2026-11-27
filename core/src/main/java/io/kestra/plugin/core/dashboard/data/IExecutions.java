@@ -5,7 +5,9 @@ import java.util.ArrayList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
@@ -20,6 +22,7 @@ import io.kestra.core.models.dashboards.filters.NotContains;
 import io.kestra.core.models.dashboards.filters.NotEqualTo;
 import io.kestra.core.models.dashboards.filters.NotIn;
 import io.kestra.core.models.dashboards.filters.Or;
+import io.kestra.core.utils.ListUtils;
 
 public interface IExecutions extends IData<IExecutions.Fields> {
     Set<Fields> DURATION_FIELDS = Set.of(Fields.DURATION);
@@ -33,7 +36,9 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         List<AbstractFilter<Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();
 
         if (filters != null) {
-            List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
+            List<QueryFilter> leaves = filters.stream().filter(QueryFilter::isLeaf).toList();
+
+            List<QueryFilter> namespaceFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
             if (!namespaceFilters.isEmpty()) {
                 namespaceFilters.forEach(f ->
                 {
@@ -41,7 +46,7 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 });
             }
 
-            List<QueryFilter> labelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LABELS)).toList();
+            List<QueryFilter> labelFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.LABELS)).toList();
             if (!labelFilters.isEmpty()) {
                 labelFilters.forEach(f ->
                 {
@@ -62,7 +67,7 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 });
             }
 
-            List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
+            List<QueryFilter> flowFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
             if (!flowFilters.isEmpty()) {
                 flowFilters.forEach(f ->
                 {
@@ -70,15 +75,21 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 });
             }
 
-            List<QueryFilter> kindFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.KIND)).toList();
+            List<QueryFilter> kindFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.KIND)).toList();
             if (!kindFilters.isEmpty()) {
-                kindFilters.forEach(f ->
-                {
-                    updatedWhere.add(f.toDashboardFilterBuilder(Fields.KIND, kindFilterValue(f.value())));
-                });
+                kindFilters.forEach(f -> updatedWhere.add(kindFilter(f)));
             }
 
-            List<QueryFilter> stateFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
+            filters.stream().filter(QueryFilter::isNode).forEach(group ->
+            {
+                if (QueryFilter.Logical.AND == group.logical()) {
+                    updatedWhere.addAll(whereWithGlobalFilters(group.children(), null, null, null));
+                } else {
+                    orFilter(group).ifPresent(updatedWhere::add);
+                }
+            });
+
+            List<QueryFilter> stateFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
             if (!stateFilters.isEmpty()) {
                 stateFilters.forEach(f ->
                 {
@@ -86,7 +97,7 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 });
             }
 
-            List<QueryFilter> scopeFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.SCOPE)).toList();
+            List<QueryFilter> scopeFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.SCOPE)).toList();
             if (!scopeFilters.isEmpty()) {
                 scopeFilters.forEach(f -> updatedWhere.add(f.toDashboardFilterBuilder(Fields.SCOPE, f.value())));
             }
@@ -106,11 +117,47 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         return updatedWhere;
     }
 
+    /** Also reports the fields of the OR groups {@link #whereWithGlobalFilters} cannot map, since it leaves those groups out. */
+    @Override
+    default List<QueryFilter.Field> ignoredGlobalFilterFields(List<QueryFilter> filters) {
+        return Stream.concat(IData.super.ignoredGlobalFilterFields(filters).stream(), unmappedGroupFields(ListUtils.emptyOnNull(filters)))
+            .filter(field -> !TIME_FILTER_FIELDS.contains(field))
+            .distinct()
+            .toList();
+    }
+
+    /** An OR group maps to an {@link Or} filter only when each branch maps to exactly one filter on the same field, since repositories read the field of an {@link Or} from its root. */
+    private Optional<AbstractFilter<Fields>> orFilter(QueryFilter group) {
+        List<List<AbstractFilter<Fields>>> branches = group.children().stream()
+            .map(child -> whereWithGlobalFilters(List.of(child), null, null, null))
+            .toList();
+        if (branches.stream().anyMatch(branch -> branch.size() != 1)) {
+            return Optional.empty();
+        }
+        List<AbstractFilter<Fields>> values = branches.stream().map(List::getFirst).toList();
+        if (values.stream().map(AbstractFilter::getField).distinct().count() != 1) {
+            return Optional.empty();
+        }
+        return Optional.of(Or.<Fields>builder().field(values.getFirst().getField()).values(values).build());
+    }
+
+    private Stream<QueryFilter.Field> unmappedGroupFields(List<QueryFilter> filters) {
+        return filters.stream()
+            .filter(QueryFilter::isNode)
+            .flatMap(group -> QueryFilter.Logical.AND == group.logical()
+                ? unmappedGroupFields(group.children())
+                : orFilter(group).isPresent() ? Stream.empty() : IData.leafFields(group.children()));
+    }
+
+    private static AbstractFilter<Fields> kindFilter(QueryFilter filter) {
+        return filter.toDashboardFilterBuilder(Fields.KIND, kindFilterValue(filter.value()));
+    }
+
     private static Object kindFilterValue(Object value) {
         if (value instanceof List<?> values) {
             return values.stream().map(Object::toString).toList();
         }
-        return value.toString();
+        return value == null ? null : value.toString();
     }
 
     private static AbstractFilter<Fields> labelFilter(QueryFilter.Op operation, String key, Object value) {

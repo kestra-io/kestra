@@ -2032,6 +2032,34 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void shouldMatchNormalRunsStoredWithoutKindWhenFilteringOnKindIsNull() throws IOException {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution normal = executionRepository.save(builder(tenant, State.Type.SUCCESS, "flowA").kind(null).build());
+        Execution playground = executionRepository.save(builder(tenant, State.Type.SUCCESS, "flowA").kind(ExecutionKind.PLAYGROUND).build());
+        executionRepository.save(builder(tenant, State.Type.SUCCESS, "flowA").kind(ExecutionKind.TEST).build());
+        QueryFilter kindIsNull = QueryFilter.builder().field(Field.KIND).operation(Op.IS_NULL).build();
+        QueryFilter kindIsNullOrPlayground = QueryFilter.builder()
+            .logical(Logical.OR)
+            .children(List.of(kindIsNull, QueryFilter.builder().field(Field.KIND).operation(Op.EQUALS).value(ExecutionKind.PLAYGROUND).build()))
+            .build();
+
+        assertThat(executionRepository.find(Pageable.UNPAGED, tenant, List.of(kindIsNull))).map(Execution::getId).containsExactly(normal.getId());
+        assertThat(executionRepository.find(Pageable.UNPAGED, tenant, List.of(kindIsNullOrPlayground))).map(Execution::getId)
+            .containsExactlyInAnyOrder(normal.getId(), playground.getId());
+
+        var dataFilter = Executions.builder()
+            .type(Executions.class.getName())
+            .columns(Map.of("id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build()))
+            .build();
+        dataFilter.updateWhereWithGlobalFilters(List.of(kindIsNullOrPlayground), null, null);
+        var now = ZonedDateTime.now();
+
+        assertThat(executionRepository.fetchData(tenant, dataFilter, now.minusHours(1), now.plusMinutes(1), null))
+            .map(row -> row.get("id"))
+            .containsExactlyInAnyOrder(normal.getId(), playground.getId());
+    }
+
+    @Test
     protected void shouldFindExecutionByTrigger() {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());

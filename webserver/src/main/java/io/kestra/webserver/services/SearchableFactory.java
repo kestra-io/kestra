@@ -239,6 +239,10 @@ public class SearchableFactory {
                 QueryFilter.Field.KIND, QueryFilter.Op.NOT_IN,
                 (event, v) -> asKindList(v).stream().noneMatch(item -> kindMatches(event, item))
             )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.KIND, QueryFilter.Op.IS_NULL,
+                (event, v) -> event.executionKind() == null
+            )
             .build();
     }
 

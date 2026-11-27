@@ -17,7 +17,9 @@ public interface IFlows extends IData<IFlows.Fields> {
             return updatedWhere;
         }
 
-        List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
+        List<QueryFilter> leaves = filters.stream().filter(QueryFilter::isLeaf).toList();
+
+        List<QueryFilter> namespaceFilters = leaves.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
         if (!namespaceFilters.isEmpty()) {
             namespaceFilters.forEach(f ->
             {

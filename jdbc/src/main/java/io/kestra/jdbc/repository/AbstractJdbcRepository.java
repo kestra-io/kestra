@@ -589,6 +589,7 @@ public abstract class AbstractJdbcRepository {
                 yield column.eq(s)
                     .or(column.startsWith(s + "."));
             }
+            case IS_NULL -> column.isNull();
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
     }

@@ -30,6 +30,7 @@ describe("execution kind choices", () => {
     it.each([
         {name: "executions", useFilter: useExecutionFilter},
         {name: "flow executions", useFilter: useFlowExecutionFilter},
+        {name: "logs", useFilter: useLogFilter},
     ])("combines normal executions with the default option in $name", async ({useFilter}) => {
         const {kind, options} = setup(() => {
             const key = useFilter().value.keys.find(candidate => candidate.key === "kind")!
@@ -43,11 +44,8 @@ describe("execution kind choices", () => {
         expect(values).not.toContain("NORMAL")
     })
 
-    it.each([
-        {name: "logs", useFilter: useLogFilter},
-        {name: "execution logs", useFilter: () => useLogExecutionsFilter(false, "PLAYGROUND")},
-    ])("preserves normal in the logs multi-select in $name", async ({useFilter}) => {
-        const options = await setup(() => useFilter().value.keys.find(key => key.key === "kind")!.valueProvider!())
+    it("preserves normal in the execution logs multi-select", async () => {
+        const options = await setup(() => useLogExecutionsFilter(false, "PLAYGROUND").value.keys.find(key => key.key === "kind")!.valueProvider!())
 
         expect(options.map(option => option.value)).toEqual(expect.arrayContaining(["NORMAL", "PLAYGROUND", "LOOP"]))
     })

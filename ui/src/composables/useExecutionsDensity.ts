@@ -2,6 +2,7 @@ import type {LocationQuery} from "vue-router"
 import {decodeSearchParams} from "@kestra-io/design-system"
 import type {QueryFilter, QueryFilterField} from "@kestra-io/kestra-sdk"
 import {useDashboardStore} from "../stores/dashboard"
+import {withNullKindForNormal} from "../utils/queryFilters"
 import DENSITY_CHART from "../components/executions/timeline/executions_density_chart.yaml?raw"
 import {densityPointsFrom, planDensityRequests, type DensityPoint} from "../utils/executionsTimeline"
 
@@ -17,7 +18,7 @@ export function useExecutionsDensity() {
     const dashboardStore = useDashboardStore()
 
     async function fetchDensity(query: Record<string, unknown>, startMs: number, endMs: number, nowMs: number = Date.now()): Promise<ExecutionsDensity> {
-        const scopeFilters = (decodeSearchParams(query as LocationQuery) as QueryFilter[])
+        const scopeFilters = withNullKindForNormal(decodeSearchParams(query as LocationQuery) as QueryFilter[])
             .filter(filter => !TIME_FIELDS.has(String(filter.field)))
         const plan = planDensityRequests(startMs, endMs, nowMs)
 

@@ -11,6 +11,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.webserver.utils.Searchable;
@@ -69,6 +70,11 @@ class FollowLogEventSearchableTest {
     private static final FollowLogEvent futureEvent = new FollowLogEvent(
         null, "io.kestra.demo", "demo-flow", "load-data", "exec-future",
         "tr-future", 0, "demo-trigger", T_FUTURE, Level.INFO, "main", "future", null, null
+    );
+
+    private static final FollowLogEvent playgroundEvent = new FollowLogEvent(
+        null, "io.kestra.demo", "demo-flow", "load-data", "exec-playground",
+        "tr-playground", 0, "demo-trigger", T_NOW, Level.INFO, "main", "playground", ExecutionKind.PLAYGROUND, null
     );
 
     private static QueryFilter filter(Field field, Op op, Object value) {
@@ -235,6 +241,9 @@ class FollowLogEventSearchableTest {
         new PredicateCase(baseEvent, filter(Field.ATTEMPT_NUMBER, Op.IN, List.of(0, 1)), true),
         new PredicateCase(baseEvent, filter(Field.ATTEMPT_NUMBER, Op.IN, List.of(1, 2)), false),
         new PredicateCase(baseEvent, filter(Field.ATTEMPT_NUMBER, Op.NOT_IN, List.of(1, 2)), true),
-        new PredicateCase(baseEvent, filter(Field.ATTEMPT_NUMBER, Op.NOT_IN, List.of(0, 1)), false)
+        new PredicateCase(baseEvent, filter(Field.ATTEMPT_NUMBER, Op.NOT_IN, List.of(0, 1)), false),
+
+        new PredicateCase(baseEvent, filter(Field.KIND, Op.IS_NULL, null), true),
+        new PredicateCase(playgroundEvent, filter(Field.KIND, Op.IS_NULL, null), false)
     );
 }

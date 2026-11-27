@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
@@ -35,10 +36,14 @@ public interface IData<F extends Enum<F>> {
     default List<QueryFilter.Field> ignoredGlobalFilterFields(List<QueryFilter> filters) {
         Set<QueryFilter.Field> applied = globalFilterFields();
 
-        return ListUtils.emptyOnNull(filters).stream()
-            .map(QueryFilter::field)
+        return leafFields(ListUtils.emptyOnNull(filters))
             .filter(field -> !TIME_FILTER_FIELDS.contains(field) && !applied.contains(field))
             .distinct()
             .toList();
+    }
+
+    /** The fields of the given filters, read through their nested groups. */
+    static Stream<QueryFilter.Field> leafFields(List<QueryFilter> filters) {
+        return filters.stream().flatMap(filter -> filter.isNode() ? leafFields(filter.children()) : Stream.of(filter.field()));
     }
 }

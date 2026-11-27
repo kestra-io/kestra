@@ -171,6 +171,11 @@
         "details": "Zapisz, aby nadpisać i utworzyć nową wersję."
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flow usunięty",
+      "description": "Ten flow został usunięty po jego otwarciu. Czy chcesz utworzyć go ponownie z wprowadzonymi zmianami?",
+      "recreate": "Utwórz ponownie"
+    },
     "override": {
       "title": "Zamierzasz nadpisać bieżący Flow",
       "details": "Poprzedni Flow można przywrócić z zakładki Wersje."

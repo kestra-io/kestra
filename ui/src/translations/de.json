@@ -171,6 +171,11 @@
         "details": "Speichern, um zu überschreiben und eine neue Revision zu erstellen."
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flow gelöscht",
+      "description": "Dieser Flow wurde gelöscht, nachdem du ihn geöffnet hast. Möchtest du ihn mit deinen Änderungen neu erstellen?",
+      "recreate": "Neu erstellen"
+    },
     "override": {
       "title": "Du überschreibst gleich den aktuellen Flow",
       "details": "Der vorherige Flow kann über den Tab „Revisionen“ wiederhergestellt werden."

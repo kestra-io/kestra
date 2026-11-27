@@ -171,6 +171,11 @@
         "details": "上書きして新しいリビジョンを作成するために保存します。"
       }
     },
+    "deleted flow save confirmation": {
+      "title": "Flowが削除されました",
+      "description": "このFlowは開いた後に削除されました。変更内容で再作成しますか？",
+      "recreate": "再作成"
+    },
     "override": {
       "title": "現在のflowを上書きしようとしています",
       "details": "以前のflowはRevisionsタブから復元できます。"

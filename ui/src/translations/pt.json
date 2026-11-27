@@ -2635,7 +2635,11 @@
           "errorHandling": "Adicionar tratamento de erros",
           "unitTest": "Gerar um teste unitário",
           "explain": "Explicar este flow",
-          "dbt": "Executar uma pipeline dbt"
+          "dbt": "Executar uma pipeline dbt",
+          "createFlow": "Crie um flow que…",
+          "createFlowPrefill": "Criar um flow que",
+          "pythonSchedule": "Executar um script Python todos os dias",
+          "triggers": "Como os triggers funcionam?"
         },
         "voice": {
           "start": "Iniciar entrada de voz",

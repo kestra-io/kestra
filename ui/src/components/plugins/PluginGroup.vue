@@ -188,7 +188,7 @@
 
     const isEnterpriseEdition = computed<boolean>(() => isEnterpriseEditionPlugin(groupPlugin.value?.group))
 
-    const sidebarPlugins = computed<Plugin[]>(() => pluginsStore.sidebarPluginsFor({owner: groupPlugin.value}))
+    const sidebarPlugins = computed<Plugin[]>(() => groupPlugin.value ? pluginsStore.sidebarPluginsFor({owner: groupPlugin.value}) : [])
 
     const backTo = computed(() => {
         const parent = parentGroup.value

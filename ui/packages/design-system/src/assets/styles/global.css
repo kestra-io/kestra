@@ -44,7 +44,7 @@ body {
 
 a {
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: color var(--ks-duration-base) var(--ks-ease-standard), background-color var(--ks-duration-base) var(--ks-ease-standard), border-color var(--ks-duration-base) var(--ks-ease-standard);
 }
 
 b {

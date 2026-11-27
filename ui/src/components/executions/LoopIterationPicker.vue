@@ -13,7 +13,7 @@
                     data-test="loop-picker-trigger"
                     :aria-label="$t('topology-graph.loop.picker-label', {loop: lane.taskId})"
                 >
-                    <span>{{ triggerLabel }}</span>
+                    <span class="loop-picker-label" :title="triggerLabel">{{ triggerLabel }}</span>
                     <MenuDown class="loop-picker-caret" />
                 </KsButton>
             </template>
@@ -315,6 +315,20 @@
     .loop-picker-trigger {
         max-width: 12rem;
         white-space: nowrap;
+    }
+
+    .loop-picker-label {
+        display: inline-block;
+        max-width: 10rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+    }
+
+    @container lane-header (max-width: 24rem) {
+        .loop-picker-label {
+            max-width: 6rem;
+        }
     }
 
     .loop-picker-caret {

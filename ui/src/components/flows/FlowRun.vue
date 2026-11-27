@@ -33,11 +33,7 @@
                         @update:checks="onChecksUpdate"
                         @update:on-recap="value => inputsOnRecap = value"
                         @clear-validation="onClearValidation"
-                    >
-                        <template #footer>
-                            <FailingChecksAlert :checks="checks" />
-                        </template>
-                    </InputsForm>
+                    />
                     <KsText v-else type="info">
                         {{ $t('no inputs') }}
                     </KsText>
@@ -84,6 +80,10 @@
                     <WebhookCurl :flow="flow" />
                 </KsTabPane>
             </KsTabs>
+
+            <div class="failing-checks-footer">
+                <FailingChecksAlert :checks="checks" />
+            </div>
 
             <div class="bottom-buttons" v-if="!embed">
                 <div class="secondary-actions">
@@ -510,6 +510,13 @@
 </script>
 
 <style scoped>
+    .failing-checks-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: var(--ks-z-sticky);
+        background: var(--ks-bg-surface);
+    }
+
     .draft-publish-action {
         margin-top: var(--ks-spacing-2);
     }

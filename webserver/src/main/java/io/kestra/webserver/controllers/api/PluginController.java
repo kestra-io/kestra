@@ -335,7 +335,7 @@ public class PluginController {
     public HttpResponse<?> getPluginTypeAliases(
         @Parameter(description = "The canonical plugin type or one of its aliases") @PathVariable String type) {
         return pluginAliasService.findByType(type)
-            .map(aliases -> HttpResponse.ok(new ApiPluginAliases(aliases.type(), aliases.aliases()))
+            .<HttpResponse<?>>map(aliases -> HttpResponse.ok(new ApiPluginAliases(aliases.type(), aliases.aliases()))
                 .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE))
             .orElseGet(() -> HttpResponse.notFound(new ApiMessage("Plugin type not found.")));
     }

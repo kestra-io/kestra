@@ -22,6 +22,9 @@ permissions:
   checks: write
   pull-requests: write
   packages: read
+  # SEC-2311: lets security-scan.yml (kestra-io/actions) read Artifact Registry as ci-reader through Workload
+  # Identity Federation for the Gradle SBOM build, instead of the GCP service account key.
+  id-token: write
 
 jobs:
   scan:

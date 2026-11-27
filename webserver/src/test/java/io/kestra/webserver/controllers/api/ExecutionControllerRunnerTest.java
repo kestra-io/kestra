@@ -2453,6 +2453,41 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/pause_on_resume.yaml" })
+    void shouldRefuseToBulkResumeWhenPauseHasRequiredOnResumeInput() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause_on_resume");
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/main/executions/resume/by-ids", List.of(paused.getId())))
+        );
+
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
+        Problems.assertErrors(e).singleElement().satisfies(error -> assertThat(error.detail()).contains("Missing required input:asked"));
+        assertThat(executionRepositoryInterface.findById(TENANT_ID, paused.getId()).orElseThrow().getState().isPaused()).isTrue();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    @LoadFlows({ "flows/valids/pause-dynamic-resume-inputs.yaml" })
+    void shouldApplyOnResumeDefaultsWhenBulkResumed() throws QueueException, InternalException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-dynamic-resume-inputs");
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/resume/by-ids", List.of(paused.getId())),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        Execution resumed = awaitExecution(paused.getId(), exec -> !exec.getState().isPaused());
+        Map<String, Object> outputs = taskOutputService.getOutputs(resumed.findTaskRunsByTaskId("pause").getFirst().toBuilder().tenantId(TENANT_ID).build());
+        assertThat((Map<String, Object>) outputs.get("onResume"))
+            .containsEntry("decision", "approve")
+            .containsEntry("count", 0)
+            .containsEntry("reason", "Approved by reviewer");
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/pause-test.yaml" })
     void shouldReturn202WithOperationIdAndTotalItemsWhenResumeExecutionsByIdsCalled() throws QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");

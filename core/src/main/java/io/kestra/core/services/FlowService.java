@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -137,6 +139,8 @@ public class FlowService {
     private FlowMetaStoreInterface flowMetaStore;
 
     private final ExecutorService executorService;
+    private final ConcurrentMap<String, Map<String, FlowWithSource>> pendingTopologyUpdates = new ConcurrentHashMap<>();
+    private final Set<String> drainingTopologyUpdates = ConcurrentHashMap.newKeySet();
 
     @Inject
     public FlowService(ExecutorsUtils executorsUtils) {
@@ -239,8 +243,7 @@ public class FlowService {
 
     // overridden in EE
     protected void impactDownstreamConsumers(FlowWithSource flow) throws QueueException {
-        // update the topology asynchronously
-        executorService.submit(() -> updateTopology(flow));
+        scheduleTopologyUpdate(flow);
 
         // compute triggers events for the Scheduler
         recomputeTriggers(flow);
@@ -252,16 +255,58 @@ public class FlowService {
         updateConcurrencyLimit(flow);
     }
 
+    // One drain per tenant reads all flows once per batch, so loading N flows no longer reads all flows N times.
+    private void scheduleTopologyUpdate(FlowWithSource flow) {
+        String tenantKey = Objects.toString(flow.getTenantId(), "");
+        pendingTopologyUpdates.compute(tenantKey, (key, pending) ->
+        {
+            Map<String, FlowWithSource> flows = pending == null ? new LinkedHashMap<>() : pending;
+            flows.put(flow.uidWithoutRevision(), flow);
+            return flows;
+        });
+        if (drainingTopologyUpdates.add(tenantKey)) {
+            executorService.submit(() -> drainTopologyUpdates(tenantKey, flow.getTenantId()));
+        }
+    }
+
+    private void drainTopologyUpdates(String tenantKey, String tenantId) {
+        try {
+            Map<String, FlowWithSource> batch;
+            while ((batch = pendingTopologyUpdates.remove(tenantKey)) != null) {
+                updateTopologies(tenantId, batch.values());
+            }
+        } finally {
+            drainingTopologyUpdates.remove(tenantKey);
+        }
+        // A flow scheduled after the last remove() saw this drain still running and did not submit one.
+        if (pendingTopologyUpdates.containsKey(tenantKey) && drainingTopologyUpdates.add(tenantKey)) {
+            executorService.submit(() -> drainTopologyUpdates(tenantKey, tenantId));
+        }
+    }
+
     @VisibleForTesting
     void updateTopology(FlowWithSource flow) {
+        updateTopologies(flow.getTenantId(), List.of(flow));
+    }
+
+    private void updateTopologies(String tenantId, Collection<FlowWithSource> flows) {
+        List<FlowWithSource> allFlows;
         try {
             // Runs on a background thread with no HTTP request / user context, so the ACL-aware
             // findAllWithSource() would return zero flows in EE: bypass ACLs with findAllWithSourceWithNoAcl().
-            List<FlowWithSource> allFlows = flowRepository.findAllWithSourceWithNoAcl(flow.getTenantId())
+            allFlows = flowRepository.findAllWithSourceWithNoAcl(tenantId)
                 .stream()
                 .filter(candidate -> !candidate.isDeleted())
                 .toList();
+        } catch (Exception e) {
+            log.error("Unable to load the flows of tenant '{}' to update {} flow topologies.", tenantId, flows.size(), e);
+            return;
+        }
+        flows.forEach(flow -> updateTopology(flow, allFlows));
+    }
 
+    private void updateTopology(FlowWithSource flow, List<FlowWithSource> allFlows) {
+        try {
             // Taken from the same snapshot as the edges, so "does this flow still exist" and "what are its
             // edges" can never be answered from two different states of the repository.
             Optional<FlowWithSource> current = allFlows.stream()

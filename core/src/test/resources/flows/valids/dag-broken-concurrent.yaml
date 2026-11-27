@@ -1,0 +1,11 @@
+id: dag-broken-concurrent
+namespace: io.kestra.tests
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.flow.Dag
+    concurrent: "{{ inputs.missing }}"
+    tasks:
+      - task:
+          id: a
+          type: io.kestra.plugin.core.log.Log
+          message: hello

@@ -102,7 +102,7 @@ async function mountGroup(name: string, subGroup?: string) {
         global: {
             plugins: [KestraDesignSystem],
             stubs: {
-                PluginLayout: {template: "<div><slot /><slot name=\"versions\" /></div>"},
+                PluginLayout: {name: "PluginLayout", props: ["sidebarPlugins", "headerTitle"], template: "<div><slot /><slot name=\"versions\" /></div>"},
                 TaskIcon: true,
             },
         },
@@ -157,5 +157,14 @@ describe("PluginGroup", () => {
 
         expect(artifactPage.find("[data-test=plugin-versions-locked]").exists()).toBe(true)
         expect(subGroupPage.find("[data-test=plugin-versions-locked]").exists()).toBe(false)
+    })
+
+    test("shows only the not-found state for a group that does not exist", async () => {
+        const wrapper = await mountGroup("unknown")
+        const layout = wrapper.findComponent({name: "PluginLayout"})
+
+        expect(wrapper.text()).toContain("pluginPage.notFound")
+        expect(layout.props("headerTitle")).toBe("")
+        expect(layout.props("sidebarPlugins")).toEqual([])
     })
 })

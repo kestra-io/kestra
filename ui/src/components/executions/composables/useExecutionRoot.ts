@@ -86,7 +86,7 @@ export function useExecutionRoot() {
         return EXECUTION_TAB_ROUTES
             .filter((tabRoute) =>
                 isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace})
-                && (tabRoute.meta?.tab !== "artifacts" || executionArtifacts.artifacts.value.length > 0))
+                && (tabRoute.meta?.tab !== "artifacts" || executionArtifacts.artifacts.value.length > 0 || route.meta?.tab === "artifacts"))
             .map((tabRoute) => {
                 const meta = tabRoute.meta ?? {}
                 const name = meta.tab as string

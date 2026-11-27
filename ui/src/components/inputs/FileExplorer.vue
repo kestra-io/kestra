@@ -1033,6 +1033,12 @@
     }
 
     ul.tabs-context {
+        /* Element Plus falls back to a light primary tint for the hover fill, which is near-white in dark mode */
+        --el-menu-bg-color: var(--ks-dropdown-background);
+        --el-menu-hover-bg-color: var(--bs-gray-300);
+        --el-menu-text-color: var(--ks-content-primary);
+        --el-menu-hover-text-color: var(--ks-content-primary);
+
         position: fixed;
         z-index: 9999;
         border: 1px solid var(--ks-border-primary);
@@ -1042,10 +1048,6 @@
             padding: 16px;
             font-size: var(--el-font-size-small);
             color: var(--ks-content-primary);
-
-            &:hover {
-                color: var(--ks-content-secondary);
-            }
         }
     }
 

@@ -9397,7 +9397,7 @@ export type ImportFlowsErrors = {
      */
     401: ProblemDetail;
     /**
-     * Access denied
+     * At least one flow targets a namespace the user is not allowed to import into
      */
     403: ProblemDetail;
     /**

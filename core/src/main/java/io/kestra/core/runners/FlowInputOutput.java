@@ -389,28 +389,27 @@ public class FlowInputOutput {
     }
 
     /**
-     * Utility method for retrieving types inputs.
-     *
-     * @param inputs The Flow's inputs
-     * @param execution The Execution.
-     * @param data The Execution's inputs data.
-     * @return The Map of typed inputs.
+     * Resolves inputs with secrets MASKED: SAFE to return to a client (API, UI, MCP, logs).
+     * Never use resolveInputsWithPlainTextSecrets for anything that leaves the server.
      */
-    public List<InputAndValue> resolveInputs(
+    public List<InputAndValue> resolveInputsMasked(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        return resolveInputs(inputs, flow, execution, data, true);
+        return resolveInputs(inputs, flow, execution, data, false, false, false);
     }
 
-    public List<InputAndValue> resolveInputs(
+    /**
+     * Resolves inputs with secrets DECRYPTED in plain text: UNSAFE to return to a client.
+     * Only for server-side use that needs the real values, e.g. building the actual execution.
+     */
+    public List<InputAndValue> resolveInputsWithPlainTextSecrets(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
-        final Map<String, ?> data,
-        final boolean decryptSecrets) {
-        return resolveInputs(inputs, flow, execution, data, decryptSecrets, false, false);
+        final Map<String, ?> data) {
+        return resolveInputs(inputs, flow, execution, data, true, false, false);
     }
 
     /** Resolves Pause resume form defaults and descriptions with secrets masked. */

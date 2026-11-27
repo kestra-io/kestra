@@ -26,6 +26,7 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.FlowValidation;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -595,8 +596,8 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
     private static Optional<TriggerInputs> inputsSuppliedBy(AbstractTrigger trigger) {
         return switch (trigger) {
-            case Schedule schedule -> Optional.of(new TriggerInputs("Schedule", schedule.getInputs() == null ? Map.of() : schedule.getInputs()));
-            case AbstractWebhookTrigger webhook -> Optional.of(new TriggerInputs("Webhook", webhook.getInputs() == null ? Map.of() : webhook.getInputs()));
+            case Schedule schedule -> Optional.of(new TriggerInputs("Schedule", MapUtils.emptyOnNull(schedule.getInputs())));
+            case AbstractWebhookTrigger webhook -> Optional.of(new TriggerInputs("Webhook", MapUtils.emptyOnNull(webhook.getInputs())));
             default -> Optional.empty();
         };
     }

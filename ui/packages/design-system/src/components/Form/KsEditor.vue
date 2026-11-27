@@ -83,7 +83,8 @@
 
 <script setup lang="ts">
     import type {NativeAttributes} from "../../utils/nativeAttributes"
-    import {ref, type HTMLAttributes} from "vue"
+    import {ref, watch, type HTMLAttributes} from "vue"
+    import {useFormItem} from "element-plus"
     import KsDatePicker from "./KsDatePicker.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
@@ -155,6 +156,9 @@
         insertTextAtCursor,
         getEditor,
     } = useKsEditor(props, emit, {editorRef, container, datePickerWrapper, datePicker})
+
+    const {formItem} = useFormItem()
+    watch(() => props.modelValue, () => formItem?.validate("change").catch(() => {}))
 
     defineExpose<KsEditorExposes>({
         focus,

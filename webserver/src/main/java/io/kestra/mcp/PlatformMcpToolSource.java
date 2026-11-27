@@ -14,6 +14,7 @@ import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.AgentPrincipalResolver;
 import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
@@ -105,7 +106,7 @@ public class PlatformMcpToolSource implements McpToolSource {
     }
 
     private McpSchema.CallToolResult call(String toolName, KestraMcpTransportContext context, McpSchema.CallToolRequest request) {
-        Map<String, Object> arguments = new LinkedHashMap<>(request.arguments() == null ? Map.of() : request.arguments());
+        Map<String, Object> arguments = new LinkedHashMap<>(MapUtils.emptyOnNull(request.arguments()));
         Object requestedTenant = arguments.remove(TENANT_ARGUMENT);
         try {
             String tenant = tenant(requestedTenant, tenants(context.getUserId()));

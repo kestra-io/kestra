@@ -35,6 +35,7 @@ import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ChartDataService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.TenantId;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
 import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
@@ -155,7 +156,7 @@ public class DashboardController {
             return null;
         }
 
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters != null ? filters : List.of());
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(ListUtils.emptyOnNull(filters));
         validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 
         ZonedDateTime endDate = timeLineSearch.getEndDate();

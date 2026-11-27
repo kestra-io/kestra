@@ -383,8 +383,8 @@ public final class RunVariables {
         public Map<String, Object> build(final RunContextLogger logger, final PropertyContext propertyContext) {
             ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
-            builder.put(ENVS, envs != null ? envs : Map.of());
-            builder.put("globals", globals != null ? globals : Map.of());
+            builder.put(ENVS, MapUtils.emptyOnNull(envs));
+            builder.put("globals", MapUtils.emptyOnNull(globals));
 
             // Flow
             if (flow != null) {

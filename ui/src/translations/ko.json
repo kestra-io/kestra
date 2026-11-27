@@ -3201,10 +3201,6 @@
       "required_unset_jump": "첫 번째로 이동",
       "required_unset_plural": "{count}개의 필수 필드가 아직 설정되지 않았습니다",
       "required_unset_singular": "필수 필드 1개가 아직 설정되지 않았습니다",
-      "save_blocked": {
-        "message": "저장하기 전에 오류를 수정하세요.",
-        "title": "flow를 저장할 수 없습니다"
-      },
       "schema_default_tooltip": "필드가 설정되지 않은 경우 사용되는 기본값",
       "search_task_placeholder": "Task 검색 또는 설명…",
       "shortcuts": {

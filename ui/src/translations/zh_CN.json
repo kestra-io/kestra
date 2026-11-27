@@ -3201,10 +3201,6 @@
       "required_unset_jump": "跳转到第一个",
       "required_unset_plural": "还有 {count} 个必填字段未设置",
       "required_unset_singular": "还有 1 个必填字段未设置",
-      "save_blocked": {
-        "message": "保存前请修正错误。",
-        "title": "无法保存 flow"
-      },
       "schema_default_tooltip": "字段未设置时使用的默认值",
       "search_task_placeholder": "搜索或描述一个 task…",
       "shortcuts": {

@@ -3201,10 +3201,6 @@
       "required_unset_jump": "最初へ移動",
       "required_unset_plural": "{count} 件の必須フィールドがまだ設定されていません",
       "required_unset_singular": "1 件の必須フィールドがまだ設定されていません",
-      "save_blocked": {
-        "message": "保存する前にエラーを修正してください。",
-        "title": "flowを保存できません"
-      },
       "schema_default_tooltip": "フィールドが設定されていない場合に使用されるデフォルト値",
       "search_task_placeholder": "タスクを検索または記述…",
       "shortcuts": {

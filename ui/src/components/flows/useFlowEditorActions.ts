@@ -1,4 +1,4 @@
-import {computed, h} from "vue"
+import {computed, h, nextTick} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 
@@ -204,6 +204,8 @@ export function useFlowEditorActions() {
         }
         try {
             const autosave = useFlowAutosaveStore()
+            // The last form edit can reach the YAML a tick after the shortcut fires.
+            await nextTick()
             await autosave.sync()
             await flushDirtyFiles()
             if (autosave.status === "idle" && flowStore.flow?.draft) {

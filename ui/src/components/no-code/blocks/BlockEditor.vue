@@ -158,7 +158,7 @@
     import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
     import {useFlowStore} from "../../../stores/flow"
-    import {useCoreStore} from "../../../stores/core"
+    import {useFlowEditorActions} from "../../flows/useFlowEditorActions"
     import {usePluginsStore} from "../../../stores/plugins"
     import {
         groupValidationIssuesByTask,
@@ -212,7 +212,7 @@
 
     const {t} = useI18n()
     const flowStore = useFlowStore()
-    const coreStore = useCoreStore()
+    const {saveAsDraft} = useFlowEditorActions()
     const pluginsStore = usePluginsStore()
     const {runTask: onRunTask, playgroundStore} = usePlaygroundRun()
 
@@ -413,16 +413,9 @@
     const editorEl = ref<HTMLElement>()
 
     const inlineTaskEditRef = ref<InstanceType<typeof TaskEdit>>()
-    async function saveFlowWithPendingEdits() {
+    function saveFlowWithPendingEdits() {
         inlineTaskEditRef.value?.flushPendingEdit()
-        const outcome = await flowStore.save?.(true)
-        if (outcome === "blocked") {
-            coreStore.message = {
-                variant: "error",
-                title: t("block_editor.save_blocked.title"),
-                content: flowStore.flowErrors?.join("\n") ?? t("block_editor.save_blocked.message"),
-            }
-        }
+        return saveAsDraft()
     }
     const focus = useCanvasFocus(editorEl, sectionList)
     const {

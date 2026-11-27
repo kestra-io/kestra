@@ -3201,10 +3201,6 @@
       "required_unset_jump": "Przejdź do pierwszego",
       "required_unset_plural": "{count} wymaganych pól nie jest jeszcze ustawionych",
       "required_unset_singular": "1 wymagane pole nie jest jeszcze ustawione",
-      "save_blocked": {
-        "message": "Napraw błędy przed zapisaniem.",
-        "title": "Nie można zapisać Flow"
-      },
       "schema_default_tooltip": "Wartość domyślna używana, gdy pole nie jest ustawione",
       "search_task_placeholder": "Wyszukaj lub opisz Task…",
       "shortcuts": {

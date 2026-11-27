@@ -130,6 +130,12 @@ class PluginControllerTest {
         assertThat(fromCanonicalType.type()).isEqualTo("io.kestra.core.runners.test.TaskWithAlias");
         assertThat(fromCanonicalType.aliases()).containsExactly("io.kestra.core.runners.test.task.Alias");
 
+        HttpResponse<PluginController.ApiPluginAliases> cachedResponse = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/aliases/io.kestra.core.runners.test.TaskWithAlias"),
+            PluginController.ApiPluginAliases.class
+        );
+        assertThat(cachedResponse.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("public, max-age=3600");
+
         PluginController.ApiPluginAliases fromAlias = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/aliases/io.kestra.core.runners.test.task.Alias"),
             PluginController.ApiPluginAliases.class

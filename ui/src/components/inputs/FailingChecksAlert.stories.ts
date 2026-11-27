@@ -28,6 +28,7 @@ export const Blocking: Story = {
             "A load balancer row cannot request vCPU or RAM.",
             "Rows without an owner will be assigned to the requester.",
         ])
+        await expect(alerts.map(alert => alert.dataset.type)).toEqual(["error", "info"])
         await expect(canvas.queryByRole("button")).toBeNull()
     },
 }
@@ -65,6 +66,7 @@ export const ManyCollapsed: Story = {
         const canvas = within(canvasElement)
         await expect(canvas.getAllByRole("alert")).toHaveLength(1)
         await expect(canvas.getByRole("alert").textContent).toContain("4 checks failing")
+        await expect(canvas.getByRole("alert").dataset.type).toBe("error")
 
         const toggle = canvas.getByRole("button")
         await expect(toggle.getAttribute("aria-expanded")).toBe("false")

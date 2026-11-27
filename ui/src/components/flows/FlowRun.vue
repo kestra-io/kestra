@@ -33,7 +33,11 @@
                         @update:checks="onChecksUpdate"
                         @update:on-recap="value => inputsOnRecap = value"
                         @clear-validation="onClearValidation"
-                    />
+                    >
+                        <template #footer>
+                            <FailingChecksAlert :checks="checks" />
+                        </template>
+                    </InputsForm>
                     <KsText v-else type="info">
                         {{ $t('no inputs') }}
                     </KsText>
@@ -81,10 +85,6 @@
                 </KsTabPane>
             </KsTabs>
 
-            <div class="failing-checks-footer">
-                <FailingChecksAlert :checks="checks" />
-            </div>
-
             <div class="bottom-buttons" v-if="!embed">
                 <div class="secondary-actions">
                     <KsButton
@@ -100,7 +100,7 @@
                 </div>
                 <div class="execute-row" v-if="!hasFormInputs || inputsOnRecap">
                     <ValidationMessages :messages="validationMessages" />
-                    <KsTooltip :disabled="!hasBlockingChecks" :content="$t('checks_failing', {count: checks.length}, checks.length)">
+                    <KsTooltip :disabled="!hasBlockingChecks" :content="$t('checks_failing', {count: blockingChecksCount}, blockingChecksCount)">
                         <span data-onboarding-target="flow-execute-confirm-button">
                             <KsButton
                                 :icon="buttonIcon"
@@ -318,9 +318,10 @@
         )
     })
 
-    const hasBlockingChecks = computed(() =>
-        checks.value.some(check => check.behavior === "BLOCK_EXECUTION"),
+    const blockingChecksCount = computed(() =>
+        checks.value.filter(check => check.behavior === "BLOCK_EXECUTION").length,
     )
+    const hasBlockingChecks = computed(() => blockingChecksCount.value > 0)
 
     // The dialog-footer Execute (FlowRunActions) must follow the wizard: hidden until the recap when
     // the flow has FORM inputs, so only one primary button shows (Next in-step, Execute on recap).
@@ -343,7 +344,7 @@
         canPrefill,
         flowCanBeExecuted,
         hasBlockingChecks,
-        failingChecksCount: computed(() => checks.value.length),
+        blockingChecksCount,
         showExecuteButton,
         validationMessages,
         buttonText: props.buttonText,
@@ -509,13 +510,6 @@
 </script>
 
 <style scoped>
-    .failing-checks-footer {
-        position: sticky;
-        bottom: 0;
-        z-index: var(--ks-z-sticky);
-        background: var(--ks-bg-surface);
-    }
-
     .draft-publish-action {
         margin-top: var(--ks-spacing-2);
     }

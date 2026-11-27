@@ -12,7 +12,7 @@
         <KsTooltip
             v-if="flowRun?.showExecuteButton"
             :disabled="!flowRun.hasBlockingChecks"
-            :content="$t('checks_failing', {count: flowRun.failingChecksCount}, flowRun.failingChecksCount)"
+            :content="$t('checks_failing', {count: flowRun.blockingChecksCount}, flowRun.blockingChecksCount)"
         >
             <span data-onboarding-target="flow-execute-confirm-button">
                 <KsButton
@@ -41,7 +41,7 @@
         canPrefill: boolean
         flowCanBeExecuted: boolean
         hasBlockingChecks: boolean
-        failingChecksCount: number
+        blockingChecksCount: number
         buttonText: string
         buttonIcon: Component
         buttonTestId: string

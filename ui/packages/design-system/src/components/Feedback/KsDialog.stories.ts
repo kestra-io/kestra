@@ -244,6 +244,12 @@ export const Scrollable: Story = {
     },
 }
 
+function scrollParent(element: HTMLElement): HTMLElement {
+    let node = element.parentElement
+    while (node && !/auto|scroll/.test(getComputedStyle(node).overflowY)) node = node.parentElement
+    return node ?? document.documentElement
+}
+
 export const ScrollableStickyFooter: Story = {
     parameters: {controls: {disable: true}},
     render: () => ({
@@ -272,7 +278,7 @@ export const ScrollableStickyFooter: Story = {
         const canvas = within(canvasElement)
         await userEvent.click(canvas.getByRole("button", {name: "Open dialog with a sticky footer"}))
         const footer = await within(document.body).findByText("Pinned to the bottom of the dialog body while it scrolls")
-        const scrollbar = document.querySelector(".kel-dialog .kel-dialog__scrollable-body .kel-scrollbar__wrap") as HTMLElement
+        const scrollbar = scrollParent(footer)
         await waitFor(() => expect(scrollbar.scrollHeight).toBeGreaterThan(scrollbar.clientHeight))
         scrollbar.scrollTop = 0
         await waitFor(() => expect(Math.abs(footer.getBoundingClientRect().bottom - scrollbar.getBoundingClientRect().bottom)).toBeLessThan(2))

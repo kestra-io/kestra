@@ -11,7 +11,7 @@ function makeFlowRun(over: Record<string, unknown> = {}) {
         canPrefill: false,
         flowCanBeExecuted: true,
         hasBlockingChecks: false,
-        failingChecksCount: 0,
+        blockingChecksCount: 0,
         buttonText: "launch execution",
         buttonIcon: {},
         buttonTestId: "execute-dialog-button",
@@ -83,7 +83,7 @@ describe("FlowRunActions validation message", () => {
     test("shows the number of failing checks on the disabled Execute button while a check blocks", () => {
         const wrapper = i18nMount(FlowRunActions, {
             messages: {...enMessages, checks_failing: "{count} check failing | {count} checks failing"},
-            props: {flowRun: makeFlowRun({hasBlockingChecks: true, failingChecksCount: 2})},
+            props: {flowRun: makeFlowRun({hasBlockingChecks: true, blockingChecksCount: 2})},
             global: {stubs: {KsTooltip: {props: ["content", "disabled"], template: "<div data-test=\"tooltip\" :data-disabled=\"disabled\">{{ content }}<slot/></div>"}}},
         })
 

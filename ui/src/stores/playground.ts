@@ -9,6 +9,7 @@ import {State, isDeepEqual} from "@kestra-io/design-system"
 import {Flow, isSuccessfulFlowSaveOutcome, useFlowStore} from "./flow"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
+import {useProductTourStore} from "./productTour"
 import type {KestraHttpError} from "../utils/kestraHttp"
 
 import {storageKeys} from "../utils/constants"
@@ -58,12 +59,19 @@ function reusedTaskRunIds(previous: Execution, replay: Execution): Map<string, s
 export const usePlaygroundStore = defineStore("playground", () => {
 
     const flowStore = useFlowStore()
+    const tourStore = useProductTourStore()
     const params = useUrlSearchParams("history", {
         removeFalsyValues: true,
     })
 
-    const enabled = ref<boolean>(params.playground === "on" && localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false")
-    watch(enabled, (newValue) => {
+    /** Task runs are offered everywhere unless the user turned the Playground off in their settings. */
+    const available = computed(() =>
+        localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false" && !tourStore.isGuidedActive,
+    )
+
+    /** Whether the results panel is shown; a task run opens it, there is no mode to switch on first. */
+    const panelOpen = ref<boolean>(params.playground === "on" && available.value)
+    watch(panelOpen, (newValue) => {
         if (newValue) {
             params.playground = "on"
         } else {
@@ -307,11 +315,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
             }
             if (isSuccessfulFlowSaveOutcome(outcome)) {
                 await navigateToEdit(taskId, runDownstreamTasks)
-                enabled.value = true
+                panelOpen.value = true
             }
             return
         }
         starting.value = true
+        panelOpen.value = true
         try {
             await startRun(taskId, runDownstreamTasks, customFormData)
         } finally {
@@ -417,7 +426,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const dropdownOpened = ref<boolean>(false)
 
     return {
-        enabled,
+        available,
+        panelOpen,
         dropdownOpened,
         showInputPrompt,
         actionOptions,

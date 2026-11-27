@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!hideRunButton && playgroundStore.enabled && isTask && taskModel?.id && !navStack.length" class="flow-playground">
+    <div v-if="!hideRunButton && playgroundStore.available && isTask && taskModel?.id && !navStack.length" class="flow-playground">
         <PlaygroundRunTaskButton :taskId="taskModel?.id" />
     </div>
 

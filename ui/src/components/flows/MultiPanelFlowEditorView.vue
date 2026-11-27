@@ -6,14 +6,14 @@
             :defaultActiveTabs="tabs"
             :saveKey
             :preSerializePanels="preSerializePanels"
-            :bottomVisible="playgroundMode"
+            :bottomVisible="playgroundPanelOpen"
             @set-tab-value="setTabValue"
         >
             <template #actions>
                 <FlowEditorStats />
             </template>
             <template #bottom-panel>
-                <FlowPlayground v-if="playgroundMode" />
+                <FlowPlayground v-if="playgroundPanelOpen" />
             </template>
             <template #footer>
                 <KeyShortcuts />
@@ -157,11 +157,11 @@
     const pluginsStore = usePluginsStore()
     const playgroundStore = usePlaygroundStore()
 
-    const playgroundMode = computed(() => playgroundStore.enabled)
+    const playgroundPanelOpen = computed(() => playgroundStore.panelOpen)
 
     onUnmounted(() => {
         autosaveStore.stop()
-        playgroundStore.enabled = false
+        playgroundStore.panelOpen = false
         playgroundStore.clearExecutions()
     })
 

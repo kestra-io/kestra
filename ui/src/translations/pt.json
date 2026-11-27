@@ -1232,7 +1232,7 @@
       "viewChanges": "Ver alterações",
       "discard": "Descartar rascunho",
       "discardConfirm": "Descartar o rascunho e voltar para a revisão {revision}? Suas alterações não publicadas serão perdidas.",
-      "executeBlocked": "Executar executa a revisão publicada. Publique suas alterações primeiro ou teste-as no Playground.",
+      "executeBlocked": "Executar executa a revisão publicada. Publique suas alterações primeiro ou execute uma task do editor para testá-las.",
       "executeBlockedInvalid": "Corrija {count} erro e publique para executar suas alterações. | Corrija {count} erros e publique para executar suas alterações."
     },
     "flow export": "Tem certeza de que deseja exportar <code>{flowCount}</code> flow(s)?",
@@ -2742,16 +2742,15 @@
     },
     "playground": {
       "title": "Playground",
-      "run_task_info": "Passe o cursor sobre qualquer task no editor de Flow Code e clique no botão \"Run task\" para testar sua task.",
+      "run_task_info": "Clique no ícone Reproduzir ao lado de uma task na medianiz do editor de código do Flow para testá-la.",
+      "run_task_gutter": "Executar task {id}. Shift+clique também executa as tasks downstream.",
       "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No Code ou Topology.",
       "toggle": "Playground",
       "run_task": "Executar task",
       "run_this_task": "Execute esta task",
       "run_task_and_downstream": "Executar task & downstream",
-      "run_all_tasks": "Executar Todas as Tasks",
       "history": "Últimas 10 execuções",
-      "clear_history": "Limpar histórico",
-      "tooltip_persistence": "Se você desligar e ligar o Playground novamente, as informações permanecem enquanto você estiver na página."
+      "clear_history": "Limpar histórico"
     },
     "submit": "Enviar",
     "accept": "Aceitar",

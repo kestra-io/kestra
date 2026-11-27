@@ -1232,7 +1232,7 @@
       "viewChanges": "Ver cambios",
       "discard": "Descartar borrador",
       "discardConfirm": "¿Descartar el borrador y volver a la revisión {revision}? Tus cambios no publicados se perderán.",
-      "executeBlocked": "Ejecutar ejecuta la revisión publicada. Publica tus cambios primero, o pruébalos en el Playground.",
+      "executeBlocked": "Ejecutar ejecuta la revisión publicada. Publica tus cambios primero, o ejecuta una Task desde el editor para probarlos.",
       "executeBlockedInvalid": "Corrige {count} error y luego publica para ejecutar tus cambios. | Corrige {count} errores y luego publica para ejecutar tus cambios."
     },
     "flow export": "¿Estás seguro de que quieres exportar <code>{flowCount}</code> flow(s)?",
@@ -2742,16 +2742,15 @@
     },
     "playground": {
       "title": "Área de Pruebas",
-      "run_task_info": "Pasa el cursor sobre cualquier task en el editor de Flow Code y haz clic en el botón \"Run task\" para probar tu task.",
+      "run_task_info": "Haz clic en el icono de Reproducir junto a una Task en el margen del editor de código del Flow para probarla.",
+      "run_task_gutter": "Ejecutar Task {id}. Shift+clic también ejecuta los Tasks posteriores.",
       "play_icon_info": "También puedes presionar el ícono de Play en las vistas No Code o Topology.",
       "toggle": "Área de pruebas",
       "run_task": "Ejecutar task",
       "run_this_task": "Ejecutar esta task",
       "run_task_and_downstream": "Ejecutar task y downstream",
-      "run_all_tasks": "Ejecutar Todas las Tasks",
       "history": "Últimas 10 ejecuciones",
-      "clear_history": "Borrar historial",
-      "tooltip_persistence": "Si desactivas y vuelves a activar el Playground, la información permanece mientras te mantengas en la página."
+      "clear_history": "Borrar historial"
     },
     "submit": "Enviar",
     "accept": "Aceptar",

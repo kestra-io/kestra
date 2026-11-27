@@ -1,7 +1,6 @@
 <template>
     <KsTopNavBar
         v-show="store.ownerId !== null"
-        :class="{playgroundMode: isPlaygroundActive}"
         :title="store.title"
         :description="store.description"
         :breadcrumb="store.breadcrumb"
@@ -76,7 +75,6 @@
     import {useRouteTabsStore} from "../../stores/routeTabs"
     import {useMiscStore} from "override/stores/misc"
     import {useLeftMenu, type MenuItem} from "override/components/useLeftMenu"
-    import {usePlaygroundStore} from "../../stores/playground"
 
     const route = useRoute()
     const router = useRouter()
@@ -85,10 +83,7 @@
     const store = useTopNavStore()
     const routeTabsStore = useRouteTabsStore()
     const miscStore = useMiscStore()
-    const playgroundStore = usePlaygroundStore()
     const {menu} = useLeftMenu()
-
-    const isPlaygroundActive = computed(() => playgroundStore.enabled)
 
     function togglePanel() {
         miscStore.contextInfoBarOpenTab = miscStore.contextInfoBarOpenTab ? "" : miscStore.lastContextTab
@@ -270,22 +265,5 @@
         display: flex;
         gap: var(--ks-spacing-2);
         align-items: center;
-    }
-
-    .playgroundMode {
-        background:
-            linear-gradient(
-                to right,
-                color-mix(in srgb, var(--ks-toggle-playground) 22%, transparent) 0%,
-                color-mix(in srgb, var(--ks-toggle-playground) 8%, transparent) 45%,
-                transparent 80%
-            ),
-            var(--ks-bg-overlay);
-
-        .dark & {
-            background:
-                linear-gradient(color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent), color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent)),
-                var(--ks-bg-overlay);
-        }
     }
 </style>

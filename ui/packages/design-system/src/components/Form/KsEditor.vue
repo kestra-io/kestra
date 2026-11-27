@@ -91,6 +91,7 @@
     import * as monaco from "monaco-editor/editor/editor.api"
     import {useKsEditor} from "../../composables/useKsEditor"
     import type {KsEditorExposes, KsEditorProps} from "../../utils/editorTypes"
+    import type {EditorGutterActionEvent} from "../../composables/useEditorGutterActions"
 
     defineOptions({name: "KsEditor"})
 
@@ -123,6 +124,7 @@
         (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
         (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
         (e: "editor-warnings", warnings: {line: number, message: string}[]): void
+        (e: "gutter-action", event: EditorGutterActionEvent): void
     }>()
 
     const editorRef = ref<HTMLDivElement | null>(null)
@@ -153,6 +155,7 @@
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
+        setGutterActions,
         insertTextAtCursor,
         getEditor,
     } = useKsEditor(props, emit, {editorRef, container, datePickerWrapper, datePicker})
@@ -167,6 +170,7 @@
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
+        setGutterActions,
         insertTextAtCursor,
         monaco,
         getEditor,
@@ -183,6 +187,16 @@
 
     .ks-readonly-yaml-line {
         background-color: var(--ks-bg-inactive);
+    }
+
+    .ks-editor-gutter-action {
+        cursor: pointer;
+        background-color: var(--ks-icon-default);
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5.14v14l11-7z'/%3E%3C/svg%3E") center / 1rem no-repeat;
+
+        &:hover {
+            background-color: var(--ks-icon-hover);
+        }
     }
 
     .editor-content-widget-content {

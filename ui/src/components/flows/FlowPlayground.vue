@@ -17,7 +17,7 @@
                             <KsDropdownItem :icon="Backspace" @click="playgroundStore.clearExecutions()">
                                 <span class="small-text">{{ $t('playground.clear_history') }}</span>
                             </KsDropdownItem>
-                            <KsDropdownItem :icon="CloseIcon" @click="playgroundStore.enabled = false">
+                            <KsDropdownItem :icon="CloseIcon" @click="playgroundStore.panelOpen = false">
                                 <span class="small-text">{{ $t('close') }} {{ $t('playground.toggle').toLowerCase() }}</span>
                             </KsDropdownItem>
                         </KsDropdownMenu>
@@ -27,7 +27,7 @@
                     :icon="CloseIcon"
                     link
                     class="tab-icon"
-                    @click="playgroundStore.enabled = false"
+                    @click="playgroundStore.panelOpen = false"
                     :title="$t('close')"
                 />
             </div>

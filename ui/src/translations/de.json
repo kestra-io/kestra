@@ -1232,7 +1232,7 @@
       "viewChanges": "Änderungen anzeigen",
       "discard": "Entwurf verwerfen",
       "discardConfirm": "Entwurf verwerfen und zu Revision {revision} zurückkehren? Deine unveröffentlichten Änderungen gehen verloren.",
-      "executeBlocked": "Execute führt die veröffentlichte Revision aus. Veröffentliche zuerst deine Änderungen oder probiere sie im Playground aus.",
+      "executeBlocked": "„Ausführen“ startet die veröffentlichte Revision. Veröffentliche zuerst deine Änderungen oder starte einen Task aus dem Editor, um sie auszuprobieren.",
       "executeBlockedInvalid": "Behebe {count} Fehler und veröffentliche dann, um deine Änderungen auszuführen. | Behebe {count} Fehler und veröffentliche dann, um deine Änderungen auszuführen."
     },
     "flow export": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich exportieren?",
@@ -2742,16 +2742,15 @@
     },
     "playground": {
       "title": "Playground",
-      "run_task_info": "Bewege den Mauszeiger über einen Task im Flow-Code-Editor und klicke auf „Run task“, um deinen Task zu testen.",
+      "run_task_info": "Klicke auf das Play-Symbol neben einem Task im Flow-Code-Editor, um ihn zu testen.",
+      "run_task_gutter": "Task {id} ausführen. Shift+Klick führt auch die nachgelagerten Tasks aus.",
       "play_icon_info": "Du kannst auch auf das Play-Symbol in der No-Code- oder Topologie-Ansicht klicken.",
       "toggle": "Playground",
       "run_task": "Task ausführen",
       "run_this_task": "Diesen Task ausführen",
       "run_task_and_downstream": "Task & Downstream ausführen",
-      "run_all_tasks": "Alle Tasks ausführen",
       "history": "Letzte 10 Runs",
-      "clear_history": "Verlauf löschen",
-      "tooltip_persistence": "Wenn du den Playground aus- und wieder einschaltest, bleiben die Informationen erhalten, solange du auf der Seite bleibst."
+      "clear_history": "Verlauf löschen"
     },
     "submit": "Absenden",
     "accept": "Akzeptieren",

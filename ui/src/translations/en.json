@@ -1232,7 +1232,7 @@
       "viewChanges": "View changes",
       "discard": "Discard draft",
       "discardConfirm": "Discard the draft and go back to revision {revision}? Your unpublished changes are lost.",
-      "executeBlocked": "Execute runs the published revision. Publish your changes first, or try them in the Playground.",
+      "executeBlocked": "Execute runs the published revision. Publish your changes first, or run a task from the editor to try them.",
       "executeBlockedInvalid": "Fix {count} error, then publish to run your changes. | Fix {count} errors, then publish to run your changes."
     },
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
@@ -2742,16 +2742,15 @@
     },
     "playground": {
       "title": "Playground",
-      "run_task_info": "Hover over any task in the Flow Code editor and click the \"Run task\" button to test your task.",
+      "run_task_info": "Click the Play icon beside a task in the Flow Code editor gutter to test it.",
+      "run_task_gutter": "Run task {id}. Shift+click also runs the downstream tasks.",
       "play_icon_info": "You can also hit the Play icon in the No Code or Topology views.",
       "toggle": "Playground",
       "run_task": "Run task",
       "run_this_task": "Run this task",
       "run_task_and_downstream": "Run task & downstream",
-      "run_all_tasks": "Run All Tasks",
       "history": "Last 10 runs",
-      "clear_history": "Clear history",
-      "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page."
+      "clear_history": "Clear history"
     },
     "submit": "Submit",
     "accept": "Accept",

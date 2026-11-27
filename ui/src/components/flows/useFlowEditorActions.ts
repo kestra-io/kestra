@@ -5,7 +5,6 @@ import {useI18n} from "vue-i18n"
 import * as localUtils from "../../utils/utils"
 import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow"
 import {useExecutionsStore} from "../../stores/executions"
-import {useProductTourStore} from "../../stores/productTour"
 import {usePlaygroundStore} from "../../stores/playground"
 import {useFlowAutosaveStore} from "../../stores/flowAutosave"
 import {useFlowSaveStatus} from "./useFlowSaveStatus"
@@ -18,11 +17,9 @@ import {asProblem} from "@kestra-io/kestra-sdk"
 import type {KestraHttpError} from "../../utils/kestraHttp"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
-import {storageKeys} from "../../utils/constants"
 export function useFlowEditorActions() {
     const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
-    const tourStore = useProductTourStore()
     const playgroundStore = usePlaygroundStore()
     const pluginsStore = usePluginsStore()
     const router = useRouter()
@@ -69,7 +66,7 @@ export function useFlowEditorActions() {
                 },
                 query: {
                     ...route.query,
-                    playground: playgroundStore.enabled ? "on" : undefined,
+                    playground: playgroundStore.panelOpen ? "on" : undefined,
                 },
             })
         }
@@ -304,7 +301,7 @@ export function useFlowEditorActions() {
                     },
                     query: {
                         ...route.query,
-                        playground: playgroundStore.enabled ? "on" : undefined,
+                        playground: playgroundStore.panelOpen ? "on" : undefined,
                     },
                 })
             }
@@ -350,16 +347,6 @@ export function useFlowEditorActions() {
             })
     }
 
-    function togglePlayground() {
-        playgroundStore.enabled = !playgroundStore.enabled
-    }
-
-    const isPlaygroundEnabled = computed(() => playgroundStore.enabled)
-    const isPlaygroundAllowed = computed(
-        () => localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false"
-            && !tourStore.isGuidedActive,
-    )
-
     return {
         // state
         haveChange,
@@ -373,8 +360,6 @@ export function useFlowEditorActions() {
         isReadOnly,
         isAllowedEdit,
         isDraft,
-        isPlaygroundEnabled,
-        isPlaygroundAllowed,
         // actions
         publish,
         /** @deprecated since 2.1, use `publish` instead. */
@@ -386,6 +371,5 @@ export function useFlowEditorActions() {
         exportYaml,
         copyFlow,
         deleteFlow,
-        togglePlayground,
     }
 }

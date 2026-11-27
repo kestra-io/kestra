@@ -25,14 +25,9 @@ vi.mock("../../composables/useEditorBindings", () => ({
     useEditorBindings: () => ({}),
 }))
 
-vi.mock("../../composables/playground/useFlowEditorRunTaskButton", async () => {
-    const {ref} = await import("vue")
+vi.mock("../../composables/playground/useFlowEditorRunTaskButton", () => {
     return {
-        default: () => ({
-            playgroundStore: {enabled: false},
-            highlightHoveredTask: vi.fn(),
-            highlightedLines: ref(undefined),
-        }),
+        default: () => ({runGutterAction: vi.fn()}),
     }
 })
 

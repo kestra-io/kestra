@@ -1,133 +1,28 @@
-import {computed, ref, Ref, watch} from "vue"
+import {computed, Ref, watch} from "vue"
+import {useI18n} from "vue-i18n"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-import {KsEditor, isDeepEqual} from "@kestra-io/design-system"
+import type {EditorGutterActionEvent, KsEditor} from "@kestra-io/design-system"
 
 import {usePlaygroundStore} from "../../stores/playground"
+import {useFlowStore} from "../../stores/flow"
 
+/** Puts a run glyph in the gutter beside each task of the flow; a click runs it, Shift+click also runs what follows. */
 export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean>, editorRefElement: Ref<InstanceType<typeof KsEditor> | undefined>, source: Ref<string>) {
-    const taskLineMap = computed(() => {
-        return isCurrentTabFlow.value ? YAML_UTILS.getTasksLines(source.value) : {}
-    })
-
+    const {t} = useI18n()
     const playgroundStore = usePlaygroundStore()
+    const flowStore = useFlowStore()
 
-    const highlightedLines = ref<{
-        taskId: string,
-        start: number,
-        end: number,
-        longestLineLength: number,
-        firstLineLength: number
-    }>()
-
-    const ln = ref<number>(-1)
-
-    const hoveredTaskProperties = computed(() => {
-        const lineNumber = ln.value
-        const hoveredTaskIds = Object.keys(taskLineMap.value).filter(taskId => {
-            const {start, end} = taskLineMap.value[taskId]
-            return start <= lineNumber && end >= lineNumber
-        }).sort((aId, bId) => {
-            const a = taskLineMap.value[aId]
-            const b = taskLineMap.value[bId]
-            // make the longest distance between start and end appear last
-            return (a.end - a.start) - (b.end - b.start)
-        })
-
-        // take the shortest task that matches the line number
-        // in case of task nesting
-        const taskId = hoveredTaskIds[0]
-
-        if(!taskId) {
-            return undefined
-        }
-
-        const {start, end} = taskLineMap.value[taskId]
-
-        // get this hovered tasks code, find the longest line
-        const taskCodeLines = source.value.split("\n").slice(start - 1, end)
-        const longestLineLength = taskCodeLines.reduce((longest, current) => {
-            return Math.max(longest, current.length)
-        }, 0)
-
-        return {
-            taskId,
-            start,
-            end,
-            longestLineLength,
-            firstLineLength: taskCodeLines[0].length,
-        }
+    const gutterActions = computed(() => {
+        if (!isCurrentTabFlow.value || !playgroundStore.available || flowStore.isReadOnly) return []
+        return Object.entries(YAML_UTILS.getTasksLines(source.value))
+            .map(([taskId, {start}]) => ({id: taskId, line: start, title: t("playground.run_task_gutter", {id: taskId})}))
     })
 
-    function highlightLines(range?: {start: number, end: number}) {
-        if(!range) {
-            editorRefElement.value?.clearLinesRangeHighlights()
-            return
-        }
+    watch([gutterActions, editorRefElement], ([actions, editor]) => editor?.setGutterActions(actions), {immediate: true})
 
-        editorRefElement.value?.highlightLinesRange(range)
+    function runGutterAction({id, shiftKey}: EditorGutterActionEvent) {
+        playgroundStore.runUntilTask(id, shiftKey)
     }
 
-    function addButtonToHoveredTask(taskCode?: {taskId: string, start: number, end: number, longestLineLength:number, firstLineLength: number}) {
-        if(!taskCode || playgroundStore.dropdownOpened) {
-            return
-        }
-
-        editorRefElement.value?.removeContentWidget(`task-hovered-${taskCode.taskId}`)
-
-        // now the size of this longest line determines where
-        // we will want to add the editor content widget
-        editorRefElement.value?.addContentWidget({
-            id: `task-hovered-${taskCode.taskId}`,
-            position: {
-                lineNumber: taskCode.start,
-                column: 0,
-            },
-            height: Math.max(taskCode.end - taskCode.start + 1, 1),
-            right: "1rem",
-        })
-    }
-
-    const highlightedTaskId = ref<string | undefined>(undefined)
-
-    watch(hoveredTaskProperties, (res) => {
-        if (playgroundStore.dropdownOpened) {
-            return
-        }
-
-        if(!res || !playgroundStore.enabled || !isCurrentTabFlow.value) {
-            highlightedLines.value = undefined
-            editorRefElement.value?.clearLinesRangeHighlights()
-            editorRefElement.value?.removeContentWidget(`task-hovered-${highlightedTaskId.value}`)
-            highlightedTaskId.value = undefined
-            return
-        }
-
-        // in case identical setting change nothing
-        if (isDeepEqual(highlightedLines.value, res)) {
-            return
-        }
-
-        highlightedTaskId.value = res.taskId
-
-        highlightLines(res)
-        addButtonToHoveredTask(res)
-
-        highlightedLines.value = res
-    }, {deep: true})
-
-
-    function highlightHoveredTask(lineNumber?:number){
-        if(!playgroundStore.enabled || !isCurrentTabFlow.value){
-            ln.value = -1
-            return
-        }
-        if(lineNumber === undefined) return
-        ln.value = lineNumber
-    }
-
-    return {
-        highlightHoveredTask,
-        playgroundStore,
-        highlightedLines,
-    }
+    return {runGutterAction}
 }

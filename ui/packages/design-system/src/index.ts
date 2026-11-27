@@ -105,6 +105,7 @@ const KsEditor = asyncComponent("KsEditor",
     () => import("./components/Form/KsEditor.vue"),
 ) as unknown as typeof KsEditorSfc
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
+export type {EditorGutterAction, EditorGutterActionEvent} from "./composables/useEditorGutterActions"
 export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
 export type {TaskIconProps, PluginIconData, PluginIconMap} from "./composables/taskIcon"
 export {findDuplicateTaskIds} from "./utils/yamlValidation"

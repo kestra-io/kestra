@@ -1,6 +1,7 @@
 import type * as monaco from "monaco-editor/editor/editor.api"
 import type {TaskIconProps} from "../composables/taskIcon"
 import type {DatePickerInstance} from "../composables/useEditorDatePicker"
+import type {EditorGutterAction, EditorGutterActionEvent} from "../composables/useEditorGutterActions"
 
 export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & {
     renderSideBySide?: boolean
@@ -39,6 +40,8 @@ export interface KsEditorExposes {
     clearLinesRangeHighlights: () => void
     addContentWidget: (widget: {id: string, position: monaco.IPosition, height: number, right: string}) => Promise<void>
     removeContentWidget: (id: string) => void
+    /** Draws a clickable run glyph in the gutter of each given line; a click emits `gutter-action`. */
+    setGutterActions: (actions: EditorGutterAction[]) => void
     insertTextAtCursor: (text: string) => void
     monaco: typeof monaco
     getEditor: () => monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined
@@ -78,6 +81,7 @@ export interface KsEditorEmit {
     (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
     (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
     (e: "editor-warnings", warnings: {line: number, message: string}[]): void
+    (e: "gutter-action", event: EditorGutterActionEvent): void
 }
 
 export interface KsEditorTemplateRefs {

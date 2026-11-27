@@ -235,7 +235,7 @@ export const ExposedApi: Story = {
         await settled("api")
         const api = handles["api"]!
 
-        for (const method of ["focus", "destroy", "highlightLinesRange", "clearLinesRangeHighlights", "addContentWidget", "removeContentWidget", "insertTextAtCursor", "getEditor"] as const) {
+        for (const method of ["focus", "destroy", "highlightLinesRange", "clearLinesRangeHighlights", "addContentWidget", "removeContentWidget", "setGutterActions", "insertTextAtCursor", "getEditor"] as const) {
             if (typeof api[method] !== "function") throw new Error(`KsEditor no longer exposes ${method}`)
         }
         if (!api.monaco) throw new Error("KsEditor no longer exposes monaco")
@@ -243,6 +243,20 @@ export const ExposedApi: Story = {
         const editor = api.getEditor()
         if (!editor) throw new Error("getEditor() returned nothing after mount")
         if (editor.getValue?.() !== YAML_SAMPLE) throw new Error("the mounted editor does not hold the bound model value")
+    },
+}
+
+export const GutterActions: Story = {
+    parameters: {controls: {disable: true}},
+    render: handleStory("gutter", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>"),
+    play: async ({canvasElement}) => {
+        await settled("gutter")
+        handles["gutter"]!.setGutterActions([{id: "first", line: 1, title: "Run first"}, {id: "third", line: 3}])
+
+        await waitFor(() => expect(canvasElement.querySelectorAll(".ks-editor-gutter-action")).toHaveLength(2))
+
+        handles["gutter"]!.setGutterActions([])
+        await waitFor(() => expect(canvasElement.querySelectorAll(".ks-editor-gutter-action")).toHaveLength(0))
     },
 }
 

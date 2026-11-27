@@ -1232,7 +1232,7 @@
       "viewChanges": "Voir les modifications",
       "discard": "Supprimer le brouillon",
       "discardConfirm": "Annuler le brouillon et revenir à la révision {revision} ? Vos modifications non publiées seront perdues.",
-      "executeBlocked": "Exécuter lance la révision publiée. Publiez d'abord vos modifications, ou essayez-les dans le Playground.",
+      "executeBlocked": "Exécuter lance la révision publiée. Publiez d'abord vos modifications, ou exécutez une task depuis l'éditeur pour les essayer.",
       "executeBlockedInvalid": "Corrigez {count} erreur, puis publiez pour appliquer vos modifications. | Corrigez {count} erreurs, puis publiez pour appliquer vos modifications."
     },
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
@@ -2742,16 +2742,15 @@
     },
     "playground": {
       "title": "Aire de jeu",
-      "run_task_info": "Survolez n'importe quelle task dans l'éditeur de Flow Code et cliquez sur le bouton \"Run task\" pour tester votre task.",
+      "run_task_info": "Cliquez sur l'icône Lecture à côté d'une Task dans la gouttière de l'éditeur de code Flow pour la tester.",
+      "run_task_gutter": "Exécuter la task {id}. Maj+clic exécute également les tasks en aval.",
       "play_icon_info": "Vous pouvez également cliquer sur l'icône Play dans les vues No Code ou Topology.",
       "toggle": "Terrain de jeu",
       "run_task": "Exécuter la task",
       "run_this_task": "Exécuter cette task",
       "run_task_and_downstream": "Exécuter la task et en aval",
-      "run_all_tasks": "Exécuter toutes les tasks",
       "history": "Dernières 10 exécutions",
-      "clear_history": "Effacer l'historique",
-      "tooltip_persistence": "Si vous désactivez et réactivez le Playground, les informations restent tant que vous restez sur la page."
+      "clear_history": "Effacer l'historique"
     },
     "submit": "Soumettre",
     "accept": "Accepter",

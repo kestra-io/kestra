@@ -59,7 +59,7 @@ type FlatDict = {[key: string]: string};
 
 const LANGUAGE_BY_CODE: {[code: string]: string} = Object.fromEntries(LANGUAGES)
 
-const MODEL = "gemini-2.5-flash"
+const MODEL = "gemini-3.8-flash"
 
 
 // How many translation requests may be in flight at once, across every language and every file.

@@ -18,7 +18,7 @@ import lombok.Builder;
 public record GeminiConfiguration(
     @Nullable String baseUrl,
     String apiKey,
-    @Bindable(defaultValue = "gemini-2.5-flash") String modelName,
+    @Bindable(defaultValue = "gemini-3.8-flash") String modelName,
     @Bindable(defaultValue = "0.7") Double temperature,
     @Nullable Double topP,
     @Nullable Integer topK,
@@ -37,7 +37,7 @@ public record GeminiConfiguration(
     @Nullable AiUsageLimitConfiguration usageLimit) implements AiConfiguration {
     public GeminiConfiguration {
         if (modelName == null)
-            modelName = "gemini-2.5-flash";
+            modelName = "gemini-3.8-flash";
         if (temperature == null)
             temperature = 0.7;
         if (maxOutputTokens == 0)

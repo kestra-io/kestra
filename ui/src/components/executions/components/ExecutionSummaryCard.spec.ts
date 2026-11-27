@@ -62,6 +62,7 @@ describe("ExecutionSummaryCard", () => {
 
         expect(wrapper.find(`[data-test='${rendered}']`).exists()).toBe(true)
         expect(wrapper.find(`[data-test='${absent}']`).exists()).toBe(false)
+        wrapper.unmount()
     })
 
     it.each([
@@ -89,6 +90,7 @@ describe("ExecutionSummaryCard", () => {
         await flushPromises()
 
         expect(wrapper.find("[data-test='execution-progress']").exists()).toBe(true)
+        wrapper.unmount()
     })
 
     it("should not render execution progress when execution is completed", async () => {
@@ -112,5 +114,6 @@ describe("ExecutionSummaryCard", () => {
         await flushPromises()
 
         expect(wrapper.find("[data-test='execution-progress']").exists()).toBe(false)
+        wrapper.unmount()
     })
 })

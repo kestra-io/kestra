@@ -82,6 +82,16 @@ describe("ExecutionProgress", () => {
         await flushPromises()
 
         expect(wrapper.text()).toBe("")
+        wrapper.unmount()
+    })
+
+    it("should render nothing when the average duration is zero", async () => {
+        averageDuration.mockResolvedValue({avgDurationMs: 0})
+        const wrapper = mountProgress()
+        await flushPromises()
+
+        expect(wrapper.text()).toBe("")
+        wrapper.unmount()
     })
 
     it("should render nothing when the request fails", async () => {

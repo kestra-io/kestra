@@ -20,7 +20,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
@@ -140,7 +139,8 @@ public class FlowService {
 
     @Inject
     public FlowService(ExecutorsUtils executorsUtils) {
-        this.executorService = executorsUtils.maxCachedThreadPool(KestraContext.getContext().getAllocatedCpuCores(), "flow-service");
+        // Topology updates load every tenant flow, so serialize them to bound peak heap usage.
+        this.executorService = executorsUtils.singleThreadExecutor("flow-service");
     }
 
     @PreDestroy

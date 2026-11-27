@@ -72,8 +72,19 @@
 
                         <div v-else-if="!isLoading">
                             <KsNoData
+                                v-if="hasUserFilters"
                                 :title="$t('no_logs_data_title')"
                                 :description="$t('no_logs_data_description')"
+                            />
+                            <KsNoData
+                                v-else-if="hiddenBelowLevel"
+                                :title="$t('no_logs_in_range_at_level_title', {level: hiddenBelowLevel})"
+                                :description="$t('no_logs_in_range_description')"
+                            />
+                            <KsNoData
+                                v-else
+                                :title="$t('no_logs_in_range_title')"
+                                :description="$t('no_logs_in_range_description')"
                             />
                         </div>
 
@@ -137,7 +148,7 @@
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, applyDefaultFilters, deepMerge} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
@@ -174,6 +185,7 @@
     import LogDisplaySettings from "./LogDisplaySettings.vue"
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
+    import {hasUserLogFilters} from "./logsEmptyState"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
     import {buildBrushClearQuery, buildBrushTimeRangeQuery, readBrushRange, withoutTimeFilters, type BrushRange} from "../../utils/logsBrushMappers"
 
@@ -268,6 +280,20 @@
                     routeQuery[key] !== value,
             )
         },
+    })
+    const filterDefaultQuery = computed(() => applyDefaultFilters({}, {
+        namespace: logFilter.value.keys?.some((key) => key.key === "namespace") ? undefined : null,
+        includeTimeRange: true,
+        includeScope: false,
+    }).query)
+    const hasUserFilters = computed(() => hasUserLogFilters(props.filters ?? route.query, {
+        defaultLevel: defaultLogLevel.value,
+        defaultQuery: props.filters ? undefined : filterDefaultQuery.value,
+        scopeFields: props.filters ? ["namespace", "flowId", "triggerId"] : [],
+    }))
+    const hiddenBelowLevel = computed(() => {
+        const level = effectiveLogLevel.value
+        return level?.direction === "min" && level.value !== "TRACE" ? level.value : undefined
     })
     const searchTerm = computed(() => {
         const key = Object.keys(route.query).find((k) => k.startsWith("filters[q]"))

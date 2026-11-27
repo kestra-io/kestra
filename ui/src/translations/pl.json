@@ -1271,6 +1271,7 @@
     "collapse all": "Zwiń wszystko",
     "expand": "Rozwiń",
     "collapse": "Zwiń",
+    "checks_failing": "{count} nieudany check | {count} nieudane checki | {count} nieudanych checków",
     "filter_for": "Filtruj według",
     "filter_out": "Filtruj",
     "copy_value": "Kopiuj wartość",

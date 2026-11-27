@@ -11,6 +11,7 @@ function makeFlowRun(over: Record<string, unknown> = {}) {
         canPrefill: false,
         flowCanBeExecuted: true,
         hasBlockingChecks: false,
+        blockingChecksCount: 0,
         buttonText: "launch execution",
         buttonIcon: {},
         buttonTestId: "execute-dialog-button",
@@ -77,5 +78,18 @@ describe("FlowRunActions validation message", () => {
             global: {stubs},
         })
         expect(wrapper.find(".ks-text-stub").exists()).toBe(false)
+    })
+
+    test("shows the number of failing checks on the disabled Execute button while a check blocks", () => {
+        const wrapper = i18nMount(FlowRunActions, {
+            messages: {...enMessages, checks_failing: "{count} check failing | {count} checks failing"},
+            props: {flowRun: makeFlowRun({hasBlockingChecks: true, blockingChecksCount: 2})},
+            global: {stubs: {KsTooltip: {props: ["content", "disabled"], template: "<div data-test=\"tooltip\" :data-disabled=\"disabled\">{{ content }}<slot/></div>"}}},
+        })
+
+        const tooltip = wrapper.find("[data-test='tooltip']")
+        expect(tooltip.attributes("data-disabled")).toBe("false")
+        expect(tooltip.text()).toContain("2 checks failing")
+        expect(wrapper.find("[data-test='execute-dialog-button']").attributes("disabled")).toBeDefined()
     })
 })

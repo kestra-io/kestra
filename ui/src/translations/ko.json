@@ -1271,6 +1271,7 @@
     "collapse all": "모두 축소",
     "expand": "확장",
     "collapse": "축소",
+    "checks_failing": "{count} 확인 실패 | {count}개 확인 실패",
     "filter_for": "필터링",
     "filter_out": "필터링",
     "copy_value": "값 복사",

@@ -1271,6 +1271,7 @@
     "collapse all": "Masquer tout",
     "expand": "Afficher",
     "collapse": "Masquer",
+    "checks_failing": "{count} vérification échouée | {count} vérifications échouées",
     "filter_for": "Filtrer pour",
     "filter_out": "Filtrer",
     "copy_value": "Copier la valeur",

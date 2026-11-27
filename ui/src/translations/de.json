@@ -1271,6 +1271,7 @@
     "collapse all": "Alle einklappen",
     "expand": "Ausklappen",
     "collapse": "Einklappen",
+    "checks_failing": "{count} Prüfung fehlgeschlagen | {count} Prüfungen fehlgeschlagen",
     "filter_for": "Filtern nach",
     "filter_out": "Herausfiltern",
     "copy_value": "Wert kopieren",

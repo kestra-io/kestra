@@ -9,18 +9,24 @@
         >
             {{ $t("prefill inputs") }}
         </KsButton>
-        <span v-if="flowRun?.showExecuteButton" data-onboarding-target="flow-execute-confirm-button">
-            <KsButton
-                class="flow-run-trigger-button"
-                type="primary"
-                :icon="flowRun?.buttonIcon"
-                :disabled="!flowRun?.flowCanBeExecuted || flowRun?.hasBlockingChecks"
-                :data-test="flowRun?.buttonTestId"
-                @click="flowRun?.submit()"
-            >
-                {{ $t(flowRun?.buttonText ?? "launch execution") }}
-            </KsButton>
-        </span>
+        <KsTooltip
+            v-if="flowRun?.showExecuteButton"
+            :disabled="!flowRun.hasBlockingChecks"
+            :content="$t('checks_failing', {count: flowRun.blockingChecksCount}, flowRun.blockingChecksCount)"
+        >
+            <span data-onboarding-target="flow-execute-confirm-button">
+                <KsButton
+                    class="flow-run-trigger-button"
+                    type="primary"
+                    :icon="flowRun.buttonIcon"
+                    :disabled="!flowRun.flowCanBeExecuted || flowRun.hasBlockingChecks"
+                    :data-test="flowRun.buttonTestId"
+                    @click="flowRun.submit()"
+                >
+                    {{ $t(flowRun.buttonText ?? "launch execution") }}
+                </KsButton>
+            </span>
+        </KsTooltip>
     </div>
 </template>
 
@@ -35,6 +41,7 @@
         canPrefill: boolean
         flowCanBeExecuted: boolean
         hasBlockingChecks: boolean
+        blockingChecksCount: number
         buttonText: string
         buttonIcon: Component
         buttonTestId: string

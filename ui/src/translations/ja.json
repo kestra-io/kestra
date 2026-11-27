@@ -1271,6 +1271,7 @@
     "collapse all": "すべて折りたたむ",
     "expand": "展開",
     "collapse": "折りたたむ",
+    "checks_failing": "{count}個のチェックが失敗 | {count}個のチェックが失敗",
     "filter_for": "フィルタ",
     "filter_out": "除外する",
     "copy_value": "値をコピー",

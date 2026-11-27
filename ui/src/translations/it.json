@@ -1271,6 +1271,7 @@
     "collapse all": "Comprimi tutto",
     "expand": "Espandi",
     "collapse": "Comprimi",
+    "checks_failing": "{count} controllo fallito | {count} controlli falliti",
     "filter_for": "Filtra per",
     "filter_out": "Filtra",
     "copy_value": "Copia valore",

@@ -68,6 +68,7 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.authentication.AuthorizationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -987,11 +988,14 @@ public class FlowController {
         @Parameter(description = "If should fail on invalid flows") @QueryValue(defaultValue = "false") Boolean failOnError) throws IOException {
         String tenantId = tenantService.resolveTenant();
         final List<String> wrongFiles = new ArrayList<>();
+        final List<AuthorizationException> refusals = new ArrayList<>();
         try {
             HasSource.readSourceFile(securityConfiguration.zipBombProtection(), fileUpload, (source, name) ->
             {
                 try {
                     this.importFlow(tenantId, source);
+                } catch (AuthorizationException e) {
+                    refusals.add(e);
                 } catch (Exception e) {
                     wrongFiles.add(name);
                 }
@@ -1000,6 +1004,9 @@ public class FlowController {
             log.error("Unexpected error while importing flows", e);
             fileUpload.discard();
             return HttpResponse.badRequest();
+        }
+        if (!refusals.isEmpty()) {
+            throw refusals.getFirst();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
             throw new IllegalArgumentException("Following invalid flows were not imported: " + String.join(", ", wrongFiles));

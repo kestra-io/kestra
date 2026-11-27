@@ -186,7 +186,7 @@ dependencies {
         api "io.kestra:storage-local:$version"
         api "io.kestra:scheduler:$version"
         api "io.kestra:worker:$version"
-        api "io.kestra.libs:copilot:0.3.5"
+        api "io.kestra.libs:copilot:0.3.6"
         api 'io.modelcontextprotocol.sdk:mcp:2.1.0'
         // Micronaut's BOM manages mcp-core at its own version (2.0.1 as of Micronaut 5.2) -
         // pinned to keep both artifacts of the one SDK at the same version.

@@ -3,7 +3,7 @@
         <template #actions>
             <NavBarActions>
                 <NavBarAction v-if="canRead" :icon="Download" :label="$t('export_csv')" @click="exportFlowsAsStream(route.query)" />
-                <NavBarAction :icon="Upload" :label="$t('import')" @click="file?.click()" />
+                <NavBarAction v-if="canImport" :icon="Upload" :label="$t('import')" @click="file?.click()" />
                 <NavBarAction :icon="TextBoxSearch" :to="{name: 'flows/search'}" :label="$t('source search')" />
 
                 <template #primary>
@@ -476,6 +476,7 @@
     const user = computed(() => authStore.user)
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value)
     const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
+    const canImport = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.IMPORT))
     const routeNamespace = computed(() => route.query.namespace as string | undefined)
     const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value))
     const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))

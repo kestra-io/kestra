@@ -72,7 +72,9 @@
                     {{ $t("copy logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
+                    v-if="canDeleteLogs"
                     :icon="Delete"
+                    data-test="task-run-delete-logs"
                     @click="deleteLogs(taskRun.id)"
                 >
                     {{ $t("delete logs") }}
@@ -163,6 +165,10 @@
 
     const canReadFlow = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.VIEW, route.params.namespace),
+    )
+
+    const canDeleteLogs = computed(() =>
+        authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.execution.namespace),
     )
 
     function downloadNameFor(currentTaskRunId: string): string {

@@ -1,9 +1,55 @@
 <template>
+    <div
+        v-if="splitButton"
+        class="kel-dropdown"
+        :class="{'is-disabled': disabled}"
+        v-bind="rootAttrs"
+    >
+        <ElButtonGroup>
+            <ElButton
+                v-bind="buttonProps"
+                :size="size"
+                :type="type"
+                :disabled="disabled || mainButtonDisabled"
+                @click="emit('click', $event)"
+            >
+                <slot />
+            </ElButton>
+            <ElButton
+                ref="caret"
+                v-bind="{...buttonProps, id: triggerId, 'aria-label': $t('ks_dropdown.toggle')}"
+                class="kel-dropdown__caret-button"
+                :size="size"
+                :type="type"
+                :disabled="disabled"
+            >
+                <ElIcon class="kel-dropdown__icon"><ChevronDown /></ElIcon>
+            </ElButton>
+        </ElButtonGroup>
+        <ElDropdown
+            ref="dropdown"
+            :persistent="false"
+            :popperOptions="POPPER_OPTIONS"
+            v-bind="menuAttrs"
+            :id="triggerId"
+            :size="size"
+            :disabled="disabled"
+            :virtualRef="caret?.ref"
+            virtualTriggering
+        >
+            <template v-if="$slots.dropdown" #dropdown>
+                <slot name="dropdown" />
+            </template>
+        </ElDropdown>
+    </div>
     <ElDropdown
+        v-else
         ref="dropdown"
         :persistent="false"
         :popperOptions="POPPER_OPTIONS"
         v-bind="$attrs"
+        :size="size"
+        :disabled="disabled"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -15,16 +61,34 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, type ExtractPublicPropTypes, type HTMLAttributes} from "vue"
-    import {ElDropdown, dropdownProps, type DropdownInstance} from "element-plus"
+    import {camelize, computed, ref, useAttrs, useId, type ExtractPublicPropTypes, type HTMLAttributes} from "vue"
+    import {
+        ElButton, ElButtonGroup, ElDropdown, ElIcon, dropdownProps,
+        type ButtonInstance, type ButtonProps, type ButtonType, type DropdownInstance,
+    } from "element-plus"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    defineProps</* @vue-ignore */ (NativeAttributes<ExtractPublicPropTypes<typeof dropdownProps> & HTMLAttributes> & {
+    interface KsDropdownProps {
+        splitButton?: boolean
+        disabled?: boolean
+        /** Disables the label half of a split button only; the caret and its menu stay usable. */
+        mainButtonDisabled?: boolean
+        type?: ButtonType
+        size?: "" | "default" | "small" | "large"
+        buttonProps?: Partial<ButtonProps>
+    }
+
+    defineProps<KsDropdownProps & /* @vue-ignore */ (NativeAttributes<Omit<ExtractPublicPropTypes<typeof dropdownProps>, keyof KsDropdownProps> & HTMLAttributes> & {
         onCommand?: (command: never) => void
         onVisibleChange?: (visible: boolean) => void
     })>()
+
+    const emit = defineEmits<{
+        click: [event: MouseEvent]
+    }>()
 
     const POPPER_OPTIONS = {
         modifiers: [
@@ -37,6 +101,15 @@
         default?(): unknown
         dropdown?(): unknown
     }>()
+
+    // Element Plus binds one `disabled` to both halves of its split button, so the pair is rendered here
+    // with the same markup and the caret handed to ElDropdown as a virtual trigger.
+    const triggerId = useId()
+    const caret = ref<ButtonInstance>()
+    const attrs = useAttrs()
+    const isMenuAttr = (name: string) => camelize(name) in dropdownProps || name === "onCommand" || name === "onVisibleChange"
+    const rootAttrs = computed(() => Object.fromEntries(Object.entries(attrs).filter(([name]) => !isMenuAttr(name))))
+    const menuAttrs = computed(() => Object.fromEntries(Object.entries(attrs).filter(([name]) => isMenuAttr(name))))
 
     // Forward the underlying ElDropdown open/close controls so callers can dismiss the menu
     // programmatically — needed when the dropdown holds custom content (not KsDropdownItems,

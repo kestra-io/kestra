@@ -3,7 +3,7 @@
         <KsDropdown
             splitButton
             :disabled="isReadOnly || (!isPublishPrimary && !canSave)"
-            :buttonProps="{disabled: isPublishPrimary && hasErrors}"
+            :mainButtonDisabled="isPublishPrimary && hasErrors"
             @click="isPublishPrimary ? publish() : saveAsDraft()"
         >
             {{ isPublishPrimary ? $t("publish") : $t("save_draft") }}

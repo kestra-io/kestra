@@ -1,12 +1,12 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 import {ref} from "vue"
 import KsButton from "../../Basic/KsButton/KsButton.vue"
 import KsDropdown from "./KsDropdown.vue"
 import KsDropdownItem from "./KsDropdownItem.vue"
 import KsDropdownMenu from "./KsDropdownMenu.vue"
 
-// KsDropdown declares no props of its own and forwards these to ElDropdown through $attrs.
+// KsDropdown forwards these to ElDropdown.
 type DropdownArgs = {
     trigger?: "hover" | "click" | "contextmenu";
     placement?: "top" | "top-start" | "top-end" | "bottom" | "bottom-start" | "bottom-end";
@@ -226,5 +226,42 @@ export const SplitButton: Story = {
             await expect(divider.opacity).toBe("1")
             await expect(divider.backgroundColor).not.toBe(getComputedStyle(caret).backgroundColor)
         }
+    },
+}
+
+/** `mainButtonDisabled` blocks the default action only: the caret still opens the menu. */
+export const SplitButtonMainDisabled: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsDropdown, KsDropdownItem, KsDropdownMenu},
+        template: `
+            <div style="padding:48px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+                <ks-dropdown split-button main-button-disabled trigger="click">
+                    Save
+                    <template #dropdown>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item>Save as draft</ks-dropdown-item>
+                        </ks-dropdown-menu>
+                    </template>
+                </ks-dropdown>
+                <ks-dropdown split-button type="primary" main-button-disabled>
+                    Publish
+                    <template #dropdown>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item>Save as draft</ks-dropdown-item>
+                        </ks-dropdown-menu>
+                    </template>
+                </ks-dropdown>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await expect(canvas.getByRole("button", {name: "Save"})).toBeDisabled()
+
+        await userEvent.click(canvas.getAllByRole("button", {name: /toggle/i})[0])
+
+        const item = await within(document.body).findByText("Save as draft")
+        await waitFor(() => expect(item).toBeVisible())
     },
 }

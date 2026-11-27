@@ -91,6 +91,18 @@ describe("FlowSaveActions", () => {
         expect(publish).toHaveBeenCalledOnce()
     })
 
+    it("blocks Publish on an invalid saved draft, and keeps the menu reachable", async () => {
+        Object.assign(state, {isDraft: true, hasErrors: true})
+
+        const button = mainButton()
+        expect(button.text()).toBe("Publish")
+        expect(button.attributes("disabled")).toBeDefined()
+        await button.trigger("click")
+
+        expect(publish).not.toHaveBeenCalled()
+        expect(wrapper!.findAll("button").at(-1)!.attributes("disabled")).toBeUndefined()
+    })
+
     it("keeps an invalid draft savable, but not publishable", async () => {
         Object.assign(state, {isDraft: true, haveChange: true, hasErrors: true})
 

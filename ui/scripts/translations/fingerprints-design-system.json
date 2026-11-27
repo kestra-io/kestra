@@ -324,6 +324,7 @@
   "../../packages/design-system/src/components/Navigation/KsBreadcrumb/KsBreadcrumb.locale.ts|breadcrumb_in": "313e011c9fd2",
   "../../packages/design-system/src/components/Navigation/KsBreadcrumb/KsBreadcrumb.locale.ts|breadcrumb_loading": "47d2a515ef2f",
   "../../packages/design-system/src/components/Navigation/KsBreadcrumb/KsBreadcrumb.locale.ts|breadcrumb_siblings": "29706c6e3b59",
+  "../../packages/design-system/src/components/Navigation/KsDropdown/KsDropdown.locale.ts|ks_dropdown|toggle": "d350c62bec1b",
   "../../packages/design-system/src/components/Navigation/KsSideBar/KsSideBar.locale.ts|ks_sidebar|label": "f7efa7bc1fc5",
   "../../packages/design-system/src/components/Navigation/KsTopNavBar/KsTopNavBar.locale.ts|topnav_bookmark": "e90b220bc470",
   "../../packages/design-system/src/components/Navigation/KsTopNavBar/KsTopNavBar.locale.ts|topnav_dock_toggle": "ed98852805c9",

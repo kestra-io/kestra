@@ -468,7 +468,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsTabs` / `KsTabPane` | Tabbed interface; in `box` tabs a disabled tab cannot be clicked through; `hideDisabledArrows` hides a scroll arrow once it is disabled; `--ks-tabs-header-margin` spaces the header of `box` and `segmented` tabs |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
-| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover; `--ks-dropdown-danger-bg` / `--ks-dropdown-danger-color` replace that hover's colours |
+| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; on a `splitButton`, `mainButtonDisabled` disables the label half only, leaving the caret and its menu usable (`disabled` blocks both, and `buttonProps.disabled` is ignored); pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover; `--ks-dropdown-danger-bg` / `--ks-dropdown-danger-color` replace that hover's colours |
 | `KsTopNavBar` | Top navigation bar; `titleSiblings` reaches the breadcrumb's current page |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
 | `KsSelectableListItem` | Button list item with title, optional subtitle and leading slot, selected and disabled states |

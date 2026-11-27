@@ -71,6 +71,7 @@ import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
+import io.kestra.core.security.InternalCallContext;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.server.CoreAsyncOperationType;
 import io.kestra.core.server.ServerConfig;
@@ -110,6 +111,7 @@ import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.services.WebhookBodyService;
+import io.kestra.webserver.services.playground.PlaygroundService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -237,6 +239,9 @@ public class ExecutionController {
 
     @Inject
     private SseConnectionMetrics sseConnectionMetrics;
+
+    @Inject
+    private PlaygroundService playgroundService;
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -1067,6 +1072,9 @@ public class ExecutionController {
         ExecutionCreationService.ExecutableFlow executable = executionCreationService.findExecutableFlow(tenantId, namespace, id, revision, kind.orElse(null));
         final Flow flow = executable.flow();
         List<Label> parsedLabels = parseLabels(labels);
+        if (kind.filter(ExecutionKind.PLAYGROUND::equals).isPresent()) {
+            playgroundService.ownerLabel().ifPresent(parsedLabels::add);
+        }
 
         var executionId = IdUtils.create();
         // Capture the OTel context on the current thread before entering the reactive chain.
@@ -1099,6 +1107,7 @@ public class ExecutionController {
                     try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
                         eventPublisher.publishEvent(CrudEvent.create(res.body()));
                     }
+                    endPreviousPlaygroundRuns(res.body());
 
                     var executionUrl = executionCreationService.executionUrl(finalCreateCommand.executionFullId());
                     if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
@@ -1614,10 +1623,23 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.CONFLICT, "Replay failed: " + processed.error());
         }
 
-        return HttpResponse.ok(
-            executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
-                .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"))
-        );
+        Execution replayed = executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
+            .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"));
+        endPreviousPlaygroundRuns(replayed);
+        return HttpResponse.ok(replayed);
+    }
+
+    /** The purge blocks and may run on the polling thread, which has no principal, so it runs elsewhere as an internal call. */
+    private void endPreviousPlaygroundRuns(Execution run) {
+        if (ExecutionKind.PLAYGROUND == run.getKind()) {
+            Schedulers.boundedElastic().schedule(() ->
+            {
+                // the propagated context holds the request's database connection, closed by the time this runs
+                try (PropagatedContext.Scope ignored = PropagatedContext.empty().propagate()) {
+                    InternalCallContext.runAsInternalCall(() -> playgroundService.onNewRun(run));
+                }
+            });
+        }
     }
 
     private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId, @Nullable Actor actor)

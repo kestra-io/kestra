@@ -157,8 +157,7 @@
     const playgroundMode = computed(() => playgroundStore.enabled)
 
     onUnmounted(() => {
-        playgroundStore.enabled = false
-        playgroundStore.clearExecutions()
+        playgroundStore.leaveEditor()
     })
 
     function setTabValue(tabValue: string) {

@@ -1,0 +1,21 @@
+package io.kestra.webserver.services.playground;
+
+import java.util.Optional;
+
+import jakarta.inject.Singleton;
+
+/**
+ * The caller's stable, unique id, written in the {@code system.playgroundOwner} label of the runs they start.
+ * Empty when runs carry no owner, so a session spans the whole flow.
+ */
+@Singleton
+public class PlaygroundOwnerResolver {
+    public Optional<String> owner() {
+        return Optional.empty();
+    }
+
+    /** Whether sessions are scoped to their owner; when they are, a caller with no resolved owner sees no run. */
+    public boolean isPerUser() {
+        return false;
+    }
+}

@@ -1,0 +1,18 @@
+id: playground-session
+namespace: io.kestra.tests
+
+tasks:
+  - id: a
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }}"
+  - id: b
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.a.value }}-{{ task.id }}"
+  - id: c
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }}"
+
+afterExecution:
+  - id: after
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }}"

@@ -137,7 +137,7 @@ public class Flow extends AbstractFlow implements HasUID {
 
     public Stream<String> allTypes() {
         return Stream.of(
-            Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
+            ListUtils.emptyOnNull(triggers).stream().map(AbstractTrigger::getType),
             allTasks().map(Task::getType)
         ).reduce(Stream::concat).orElse(Stream.empty())
             .distinct();

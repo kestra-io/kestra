@@ -401,7 +401,8 @@
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
     import {usePageSize} from "../../../composables/usePageSize"
-    import {hasMissingRequiredInputs} from "../../../utils/inputs"
+    import {flattenInputs, hasMissingRequiredInputs} from "../../../utils/inputs"
+    import {normalizeInputValues} from "../../../utils/submitTask"
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
     import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
@@ -701,7 +702,7 @@
             start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
-            inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
+            inputs: normalizeInputValues(flattenInputs(executionsStore.flow?.inputs), backfill.value.inputs ?? {}) as BackfillRequest["inputs"],
             labels: labels.length ? labels : undefined,
         }
     })

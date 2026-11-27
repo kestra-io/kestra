@@ -71,6 +71,7 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.authentication.AuthorizationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -966,20 +967,25 @@ public class FlowController {
                 Import flows as a ZIP archive of yaml sources or a multi-objects YAML file.
                 When sending a Yaml that contains one or more flows, a list of index is returned.
                 When sending a ZIP archive, a list of files that couldn't be imported is returned.
+                When a flow targets a namespace the user cannot import into, the allowed flows are still imported and a 403 is returned instead of the list.
             """
     )
     @ApiResponse(responseCode = "200", description = "On success")
+    @ApiResponse(responseCode = "403", description = "At least one flow targets a namespace the user is not allowed to import into")
     public HttpResponse<List<String>> importFlows(
         @Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file")
         @Part CompletedFileUpload fileUpload,
         @Parameter(description = "If should fail on invalid flows") @QueryValue(defaultValue = "false") Boolean failOnError) throws IOException {
         String tenantId = tenantService.resolveTenant();
         final List<String> wrongFiles = new ArrayList<>();
+        final List<AuthorizationException> refusals = new ArrayList<>();
         try {
             HasSource.readSourceFile(securityConfiguration.zipBombProtection(), fileUpload, (source, name) ->
             {
                 try {
                     this.importFlow(tenantId, source);
+                } catch (AuthorizationException e) {
+                    refusals.add(e);
                 } catch (Exception e) {
                     wrongFiles.add(name);
                 }
@@ -988,6 +994,9 @@ public class FlowController {
             log.error("Unexpected error while importing flows", e);
             IOUtils.closeQuietly(fileUpload);
             return HttpResponse.badRequest();
+        }
+        if (!refusals.isEmpty()) {
+            throw refusals.getFirst();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
             throw new IllegalArgumentException("Following invalid flows were not imported: " + String.join(", ", wrongFiles));

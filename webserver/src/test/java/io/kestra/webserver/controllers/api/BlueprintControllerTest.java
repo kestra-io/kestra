@@ -52,6 +52,9 @@ class BlueprintControllerTest {
     @Inject
     VersionProvider versionProvider;
 
+    @Inject
+    BlueprintController blueprintController;
+
     @SuppressWarnings("unchecked")
     @Test
     void shouldFindSearchBlueprintsTranslatesFiltersToLegacyQueryParams(WireMockRuntimeInfo wmRuntimeInfo) {
@@ -81,6 +84,22 @@ class BlueprintControllerTest {
                 .withQueryParam("page", equalTo("1"))
                 .withQueryParam("size", equalTo("5"))
                 .withQueryParam("sort", equalTo("title:asc"))
+        );
+    }
+
+    @Test
+    void shouldCallConfiguredApiWhenIncomingRequestUriIsAbsolute(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/v1/blueprints/tags")).willReturn(aResponse().withBody("ok")));
+
+        String body = blueprintController.fastForwardToKestraApi(
+            HttpRequest.GET("http://evil.example:9999" + API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "?page=1"),
+            "/v1/blueprints/tags",
+            Argument.STRING
+        );
+
+        assertThat(body).isEqualTo("ok");
+        wmRuntimeInfo.getWireMock().verifyThat(
+            getRequestedFor(urlPathEqualTo("/v1/blueprints/tags")).withQueryParam("page", equalTo("1"))
         );
     }
 

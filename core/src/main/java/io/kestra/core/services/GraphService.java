@@ -16,6 +16,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
 
 import io.micronaut.data.model.Pageable;
@@ -43,11 +44,11 @@ public class GraphService {
     }
 
     public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException, FlowProcessingException {
-        return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
+        return FlowGraph.of(this.of(flow, ListUtils.emptyOnNull(expandedSubflows), new HashMap<>(), execution));
     }
 
     public FlowGraph executionGraph(FlowWithSource flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException, FlowProcessingException {
-        return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
+        return FlowGraph.of(this.of(flow, ListUtils.emptyOnNull(expandedSubflows), new HashMap<>(), execution));
     }
 
     public GraphCluster of(FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid, Execution execution)

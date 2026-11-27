@@ -174,7 +174,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
-        Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(Collections.emptyMap());
+        Map<String, Object> incomingMetadata = MapUtils.emptyOnNull(this.metadata);
         Map<String, Object> previousMetadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null);
         Map<String, Object> mergedMetadata = previousMetadata == null
             ? new HashMap<>(incomingMetadata)

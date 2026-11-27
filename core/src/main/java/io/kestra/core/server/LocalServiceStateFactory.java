@@ -1,9 +1,9 @@
 package io.kestra.core.server;
 
+import io.kestra.core.utils.MapUtils;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -46,7 +46,7 @@ public class LocalServiceStateFactory {
             now,
             now,
             serverConfig,
-            Optional.ofNullable(properties).orElse(Map.of()),
+            MapUtils.emptyOnNull(properties),
             service.getMetrics()
         );
         return new LocalServiceState(service, instance);

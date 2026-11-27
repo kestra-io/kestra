@@ -2,6 +2,7 @@ package io.kestra.webserver.filter;
 
 import java.util.Objects;
 
+import io.kestra.core.utils.Strings;
 import io.kestra.webserver.configuration.SecurityHeadersConfiguration;
 import io.kestra.webserver.utils.RequestUtils;
 
@@ -9,7 +10,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.order.Ordered;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.ResponseFilter;
@@ -53,14 +53,14 @@ public class SecurityHeadersFilter implements Ordered {
 
     public SecurityHeadersFilter(SecurityHeadersConfiguration configuration) {
         Objects.requireNonNull(configuration);
-        this.frameOptions = blankToNull(configuration.frameOptions());
-        this.contentTypeOptions = blankToNull(configuration.contentTypeOptions());
-        this.referrerPolicy = blankToNull(configuration.referrerPolicy());
-        this.contentSecurityPolicy = blankToNull(configuration.contentSecurityPolicy());
+        this.frameOptions = Strings.nullIfBlank(configuration.frameOptions());
+        this.contentTypeOptions = Strings.nullIfBlank(configuration.contentTypeOptions());
+        this.referrerPolicy = Strings.nullIfBlank(configuration.referrerPolicy());
+        this.contentSecurityPolicy = Strings.nullIfBlank(configuration.contentSecurityPolicy());
         this.contentSecurityPolicyHeaderName = configuration.contentSecurityPolicyReportOnly()
             ? CONTENT_SECURITY_POLICY_REPORT_ONLY
             : CONTENT_SECURITY_POLICY;
-        this.strictTransportSecurity = blankToNull(configuration.strictTransportSecurity());
+        this.strictTransportSecurity = Strings.nullIfBlank(configuration.strictTransportSecurity());
     }
 
     @ResponseFilter
@@ -80,11 +80,6 @@ public class SecurityHeadersFilter implements Ordered {
         if (value != null && !response.getHeaders().contains(name)) {
             response.getHeaders().set(name, value);
         }
-    }
-
-    @Nullable
-    private static String blankToNull(@Nullable String value) {
-        return StringUtils.hasText(value) ? value : null;
     }
 
     @Override

@@ -6,6 +6,7 @@ import {globalI18n} from "../translations/i18n"
 import {useFlowStore, type Flow, type FlowValidations} from "./flow"
 import {useServerReachability} from "../composables/useServerReachability"
 import {handled, type KestraHttpError} from "../utils/kestraHttp"
+import {AUTOSAVE_STORAGE_PREFIX as STORAGE_PREFIX} from "../utils/flowAutosaveStorage"
 
 export const AUTOSAVE_DELAY = 1_000
 export const OFFLINE_RETRY_DELAY = 10_000
@@ -23,8 +24,6 @@ export interface AutosaveConflict {
     local: string
     server: Flow
 }
-
-const STORAGE_PREFIX = "kestra.flowAutosave."
 
 /** Java's `String.hashCode()`, which the draft endpoint compares against the head source. */
 export function sourceHash(source: string): number {

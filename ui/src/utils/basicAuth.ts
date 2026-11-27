@@ -6,17 +6,19 @@ import {useClient} from "@kestra-io/kestra-sdk"
 // The server also issues this non-HttpOnly cookie in lockstep, mirroring whether BASIC_AUTH is set;
 const AUTH_FLAG_COOKIE_NAME = "kestraBasicAuthenticated"
 
+/** Resolves to whether the server confirmed the logout; offline, the session cookies stay set. */
 export async function logout() {
     try {
-        await fetch(`${apiUrlWithoutTenants()}/logout`, {
+        const response = await fetch(`${apiUrlWithoutTenants()}/logout`, {
             method: "POST",
             credentials: "include",
             headers: {"X-CSRF-TOKEN": getCsrfToken() ?? ""},
         })
+        return response.ok
     } catch {
         // best-effort: if this fails, the cookies (and thus isLoggedIn()) remain as the server last set them
+        return false
     }
-    return true
 }
 
 export async function signIn(credentials: {username: string, password: string}) {

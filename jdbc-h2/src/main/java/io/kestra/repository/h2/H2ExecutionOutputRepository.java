@@ -10,6 +10,7 @@ import jakarta.inject.Named;
 @H2RepositoryEnabled
 public class H2ExecutionOutputRepository extends AbstractJdbcExecutionOutputRepository {
     public H2ExecutionOutputRepository(@Named("executionoutputs") H2Repository<ExecutionOutput> jdbcRepository) {
+        // FIXME dont commit
         super(jdbcRepository);
     }
 }

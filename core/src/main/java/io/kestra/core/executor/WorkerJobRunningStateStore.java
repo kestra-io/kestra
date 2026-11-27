@@ -15,6 +15,9 @@ import io.kestra.core.runners.WorkerTask;
  */
 public interface WorkerJobRunningStateStore {
 
+    /** Returns whether a running worker job exists, reading the latest write rather than a search index. */
+    boolean existsByKey(String key);
+
     /**
      * Deletes a running worker job for the given key.
      *

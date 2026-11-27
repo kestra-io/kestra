@@ -36,7 +36,7 @@
             @update:model-value="onTaskInput"
             :schema
             :properties
-            filterType
+            :filterType="isTaskDefinitionBasedOnType"
         />
         <TaskObjectField
             v-else-if="navCurrent"

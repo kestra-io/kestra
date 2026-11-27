@@ -16,6 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyScopeState;
 import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.ExecutionRunning;
@@ -63,7 +64,7 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
     @Override
     public synchronized void decrementAndPop(FlowInterface flow, ExecutionQueuedStateStore executionQueuedStateStore, BiConsumer<TransactionContext, Execution> consumer) {
         int running = decrement(flow);
-        if (flow.getConcurrency() != null && running < flow.getConcurrency().getLimit()) {
+        if (flow.getConcurrency() != null && !new ConcurrencyScopeState(ScopedConcurrencyLimit.ofFlow(flow), running).isFull()) {
             executionQueuedStateStore.pop(
                 NoopTransactionContext.INSTANCE,
                 flow.getTenantId(),
@@ -143,7 +144,7 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
             }
             List<ScopedConcurrencyLimit> candidateScopes = candidateLimits.apply(candidate.getExecution());
             Optional<ScopedConcurrencyLimit> fullScope = candidateScopes.stream()
-                .filter(scope -> running(scope) >= scope.concurrency().getLimit())
+                .filter(scope -> state(scope).isFull())
                 .findFirst();
             if (fullScope.isEmpty()) {
                 candidateScopes.forEach(this::increment);
@@ -165,7 +166,11 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
     }
 
     private boolean hasRoom(ScopedConcurrencyLimit scope) {
-        return scope.concurrency() == null || running(scope) < scope.concurrency().getLimit();
+        return !state(scope).isFull();
+    }
+
+    private ConcurrencyScopeState state(ScopedConcurrencyLimit scope) {
+        return new ConcurrencyScopeState(scope, running(scope));
     }
 
     /**

@@ -51,7 +51,7 @@ class ConcurrencySlotReleaseProcessorTest {
         this.stateStore = Mockito.mock(ConcurrencyLimitStateStore.class);
         this.processor = new ConcurrencySlotReleaseProcessor(
             stateStore,
-            resolver,
+            new ConcurrencyClaims(resolver),
             Mockito.mock(ExecutionQueuedStateStore.class),
             Mockito.mock(FlowMetaStoreInterface.class),
             Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
@@ -169,7 +169,7 @@ class ConcurrencySlotReleaseProcessorTest {
         Mockito.when(noLimit.resolveLimits(Mockito.any())).thenReturn(List.of());
         ConcurrencySlotReleaseProcessor unlimited = new ConcurrencySlotReleaseProcessor(
             stateStore,
-            noLimit,
+            new ConcurrencyClaims(noLimit),
             Mockito.mock(ExecutionQueuedStateStore.class),
             Mockito.mock(FlowMetaStoreInterface.class),
             Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
@@ -194,7 +194,7 @@ class ConcurrencySlotReleaseProcessorTest {
         Mockito.when(noLimit.resolveLimits(Mockito.any())).thenReturn(List.of());
         ConcurrencySlotReleaseProcessor unlimited = new ConcurrencySlotReleaseProcessor(
             stateStore,
-            noLimit,
+            new ConcurrencyClaims(noLimit),
             Mockito.mock(ExecutionQueuedStateStore.class),
             Mockito.mock(FlowMetaStoreInterface.class),
             Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)

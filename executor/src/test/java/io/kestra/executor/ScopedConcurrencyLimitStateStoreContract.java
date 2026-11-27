@@ -234,7 +234,7 @@ public abstract class ScopedConcurrencyLimitStateStoreContract {
         ConcurrencyLimitResolver resolver = Mockito.mock(ConcurrencyLimitResolver.class);
         Mockito.when(resolver.resolveLimits(Mockito.any())).thenReturn(List.of());
         ConcurrencySlotReleaseProcessor processor = new ConcurrencySlotReleaseProcessor(
-            store(), resolver, queuedStore(), Mockito.mock(FlowMetaStoreInterface.class), metricRegistry()
+            store(), new ConcurrencyClaims(resolver), queuedStore(), Mockito.mock(FlowMetaStoreInterface.class), metricRegistry()
         );
 
         // When: the execution terminates, carrying the claim stamp the gate persisted at

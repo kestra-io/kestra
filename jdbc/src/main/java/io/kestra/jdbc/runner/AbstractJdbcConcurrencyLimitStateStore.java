@@ -14,8 +14,10 @@ import org.jooq.impl.DSL;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyScopeState;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.ExecutionRunning;
+import io.kestra.core.runners.ScopedConcurrencyLimit;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.ConcurrencyLimitStateStore;
@@ -108,7 +110,7 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
                 ).orElse(0);
 
                 // Only pop if we're below the limit
-                if (newLimit < flow.getConcurrency().getLimit()) {
+                if (!new ConcurrencyScopeState(ScopedConcurrencyLimit.ofFlow(flow), newLimit).isFull()) {
                     executionQueuedStateStore.pop(
                         new JdbcTransactionContext(dslContext),
                         flow.getTenantId(),

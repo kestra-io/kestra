@@ -82,6 +82,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.StickyWorkerRouting;
+import io.kestra.executor.ConcurrencyClaims;
 import io.kestra.executor.ConcurrencySlotReleaseProcessor;
 import io.kestra.executor.DefaultExecutor;
 import io.kestra.executor.ExecutionDelayProcessor;
@@ -361,7 +362,7 @@ public final class ExecutorTestHarness {
             executionDelayStateStore,
             slaMonitorStateStore,
             concurrencyLimitStateStore,
-            concurrencyLimitResolver,
+            new ConcurrencyClaims(concurrencyLimitResolver),
             executorService,
             quotaService,
             flowMetaStore,
@@ -453,7 +454,7 @@ public final class ExecutorTestHarness {
         );
         this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
             concurrencyLimitStateStore,
-            concurrencyLimitResolver,
+            new ConcurrencyClaims(concurrencyLimitResolver),
             executionQueuedStateStore,
             flowMetaStore,
             metricRegistry

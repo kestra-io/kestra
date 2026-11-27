@@ -10,7 +10,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ScopedConcurrencyLimit;
-import io.kestra.core.services.ConcurrencyLimitResolver;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -38,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ConcurrencySlotReleaseProcessor {
     private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
-    private final ConcurrencyLimitResolver concurrencyLimitResolver;
+    private final ConcurrencyClaims concurrencyClaims;
     private final ExecutionQueuedStateStore executionQueuedStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
     private final MetricRegistry metricRegistry;
@@ -46,12 +45,12 @@ public class ConcurrencySlotReleaseProcessor {
     @Inject
     public ConcurrencySlotReleaseProcessor(
         ConcurrencyLimitStateStore concurrencyLimitStateStore,
-        ConcurrencyLimitResolver concurrencyLimitResolver,
+        ConcurrencyClaims concurrencyClaims,
         ExecutionQueuedStateStore executionQueuedStateStore,
         FlowMetaStoreInterface flowMetaStore,
         MetricRegistry metricRegistry) {
         this.concurrencyLimitStateStore = concurrencyLimitStateStore;
-        this.concurrencyLimitResolver = concurrencyLimitResolver;
+        this.concurrencyClaims = concurrencyClaims;
         this.executionQueuedStateStore = executionQueuedStateStore;
         this.flowMetaStore = flowMetaStore;
         this.metricRegistry = metricRegistry;
@@ -87,7 +86,7 @@ public class ConcurrencySlotReleaseProcessor {
             // (current definitions, when still present, are carried along for the pop). Executions
             // without the claim stamp (admitted before it existed, or never admitted) fall back to
             // the current definitions.
-            List<ScopedConcurrencyLimit> currentLimits = concurrencyLimitResolver.resolveLimits(executor.getFlow());
+            List<ScopedConcurrencyLimit> currentLimits = concurrencyClaims.of(executor.getFlow(), execution);
             List<String> admittedScopes = execution.getMetadata() == null ? null : execution.getMetadata().getConcurrencyScopes();
             List<ScopedConcurrencyLimit> limits = admittedScopes == null
                 ? currentLimits
@@ -192,7 +191,7 @@ public class ConcurrencySlotReleaseProcessor {
 
     private List<ScopedConcurrencyLimit> candidateLimits(Execution candidate) {
         return flowMetaStore.findByExecution(candidate)
-            .map(concurrencyLimitResolver::resolveLimits)
+            .map(flow -> concurrencyClaims.of(flow, candidate))
             .orElse(List.of());
     }
 }

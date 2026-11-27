@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Gatherers;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
@@ -28,7 +29,6 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
-import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
@@ -60,7 +60,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private final ExecutionDelayStateStore executionDelayStateStore;
     private final SLAMonitorStateStore slaMonitorStateStore;
     private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
-    private final ConcurrencyLimitResolver concurrencyLimitResolver;
+    private final ConcurrencyClaims concurrencyClaims;
     private final ExecutorService executorService;
     private final QuotaService quotaService;
     private final FlowMetaStoreInterface flowMetaStore;
@@ -82,7 +82,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         ExecutionDelayStateStore executionDelayStateStore,
         SLAMonitorStateStore slaMonitorStateStore,
         ConcurrencyLimitStateStore concurrencyLimitStateStore,
-        ConcurrencyLimitResolver concurrencyLimitResolver,
+        ConcurrencyClaims concurrencyClaims,
         ExecutorService executorService,
         QuotaService quotaService,
         FlowMetaStoreInterface flowMetaStore,
@@ -104,7 +104,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         this.executionDelayStateStore = executionDelayStateStore;
         this.slaMonitorStateStore = slaMonitorStateStore;
         this.concurrencyLimitStateStore = concurrencyLimitStateStore;
-        this.concurrencyLimitResolver = concurrencyLimitResolver;
+        this.concurrencyClaims = concurrencyClaims;
         this.executorService = executorService;
         this.quotaService = quotaService;
         this.flowMetaStore = flowMetaStore;
@@ -223,7 +223,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             // LOOP executions are virtual iterations of the parent flow; they must not consume
                             // a separate FLOW concurrency slot since the parent already holds it
                             if (execution.getKind() != ExecutionKind.LOOP) {
-                                List<ScopedConcurrencyLimit> concurrencyLimits = concurrencyLimitResolver.resolveLimits(flow);
+                                List<ScopedConcurrencyLimit> concurrencyLimits = concurrencyClaims.of(flow, execution);
                                 if (!concurrencyLimits.isEmpty()) {
                                     ExecutionRunning executionRunning = ExecutionRunning.builder()
                                         .tenantId(executor.getFlow().getTenantId())
@@ -252,8 +252,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                 );
 
                                             ExecutionRunning computed = executorService.processExecutionRunning(
-                                                concurrencyLimits,
-                                                runningCounts,
+                                                scopeStates(concurrencyLimits, runningCounts),
                                                 queuedCount,
                                                 executionRunning.withExecution(execution)
                                             );
@@ -482,4 +481,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
 
+
+    private static List<ConcurrencyScopeState> scopeStates(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts) {
+        return IntStream.range(0, limits.size()).mapToObj(i -> new ConcurrencyScopeState(limits.get(i), runningCounts.get(i))).toList();
+    }
 }

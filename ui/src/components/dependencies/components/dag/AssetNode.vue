@@ -60,7 +60,7 @@
 <script setup lang="ts">
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
-    import {Handle, Position} from "@vue-flow/core"
+    import {Handle, Position} from "@xyflow/vue"
     import {stringUtils, useTaskIcon} from "@kestra-io/design-system"
     import Sitemap from "vue-material-design-icons/Sitemap.vue"
     import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"

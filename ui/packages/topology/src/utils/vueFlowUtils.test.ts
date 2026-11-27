@@ -535,7 +535,7 @@ interface GeneratedElement {
     draggable?: boolean
     source?: string
     target?: string
-    parentNode?: string
+    parentId?: string
     position?: {x: number; y: number}
     style?: Record<string, string>
     markerEnd?: unknown
@@ -812,7 +812,7 @@ describe("generateGraph triggers lane join dot", () => {
         elements.filter((element) => element.type === "edge").map((edge) => `${edge.source}|${edge.target}`)
 
     const laneMembers = (elements: GeneratedElement[]) =>
-        elements.filter((element) => element.parentNode === TRIGGERS_CLUSTER).map((element) => element.id).sort()
+        elements.filter((element) => element.parentId === TRIGGERS_CLUSTER).map((element) => element.id).sort()
 
     test("drops the flow root dot so one joint sits between the trigger and the first task", () => {
         const elements = generateTriggered(triggeredFlowGraph())
@@ -831,7 +831,7 @@ describe("generateGraph triggers lane join dot", () => {
 
         const laneEnd = elements.find((element) => element.id === TRIGGERS_END)
         expect(laneEnd?.type).toBe("dot")
-        expect(laneEnd?.parentNode).toBe(TRIGGERS_CLUSTER)
+        expect(laneEnd?.parentId).toBe(TRIGGERS_CLUSTER)
         expect(laneMembers(elements)).toEqual([TRIGGERS_START, TRIGGER_UID, TRIGGERS_END].sort())
     })
 
@@ -864,7 +864,7 @@ describe("generateGraph triggers lane join dot", () => {
         // inside the green box rather than below it.
         expect(laneMembers(elements))
             .toEqual([TRIGGERS_START, TRIGGER_UID, SECOND_TRIGGER_UID, TRIGGERS_END].sort())
-        expect(elements.find((element) => element.id === TRIGGERS_END)?.parentNode).toBe(TRIGGERS_CLUSTER)
+        expect(elements.find((element) => element.id === TRIGGERS_END)?.parentId).toBe(TRIGGERS_CLUSTER)
 
         const insideLane = [
             `${TRIGGERS_START}|${TRIGGER_UID}`,
@@ -882,7 +882,7 @@ describe("generateGraph triggers lane join dot", () => {
         for (const flowGraph of [triggeredFlowGraph(), withSecondTrigger()]) {
             const elements = generateTriggered(flowGraph)
             const outside = elements
-                .filter((element) => element.type === "dot" && element.parentNode === undefined)
+                .filter((element) => element.type === "dot" && element.parentId === undefined)
                 .map((element) => element.id)
 
             // Only the flow's own end marker below the task; nothing orphaned in the gap above it.
@@ -907,7 +907,7 @@ describe("generateGraph triggers lane join dot", () => {
 
         // The root is a junction here, so it is not folded and nothing moves into the lane.
         expect(elements.map((element) => element.id)).toContain(FLOW_ROOT)
-        expect(elements.find((element) => element.id === FLOW_ROOT)?.parentNode).toBeUndefined()
+        expect(elements.find((element) => element.id === FLOW_ROOT)?.parentId).toBeUndefined()
         expect(edgePairs(elements)).toEqual(expect.arrayContaining([
             `${TRIGGERS_END}|${FLOW_ROOT}`,
             `${FLOW_ROOT}|root.notify_team`,
@@ -961,7 +961,7 @@ describe("generateGraph triggers lane join dot", () => {
             `${REAL_FLOW_ROOT}|root.handle_error`,
         ]))
         // The lane keeps its own end marker, so the box is unchanged.
-        expect(elements.find((element) => element.id === REAL_TRIGGERS_END)?.parentNode).toBe(TRIGGERS_CLUSTER)
+        expect(elements.find((element) => element.id === REAL_TRIGGERS_END)?.parentId).toBe(TRIGGERS_CLUSTER)
     })
 
     // The red Errors lane is synthesized by withSyntheticErrorsLane for flow-level `errors:` tasks
@@ -971,7 +971,7 @@ describe("generateGraph triggers lane join dot", () => {
         const errorsLane = CLUSTER_PREFIX + "root.Errors"
 
         expect(elements.find((element) => element.id === errorsLane)?.type).toBe("cluster")
-        expect(elements.find((element) => element.id === "root.handle_error")?.parentNode).toBe(errorsLane)
+        expect(elements.find((element) => element.id === "root.handle_error")?.parentId).toBe(errorsLane)
     })
 
     test("leaves the finally marker and the chains running into it untouched", () => {
@@ -1131,7 +1131,7 @@ describe("generateGraph triggers lane join dot", () => {
         expect(ids).not.toContain(FLOW_ROOT)
         expect(ids).not.toContain("root.seq")
         expect(ids).toContain(TRIGGERS_END)
-        expect(elements.find((element) => element.id === "root.seq.child")?.parentNode)
+        expect(elements.find((element) => element.id === "root.seq.child")?.parentId)
             .toBe(CLUSTER_PREFIX + "root.seq")
     })
 })
@@ -1647,7 +1647,7 @@ describe("generateGraph synthetic errors lane", () => {
         expect(errorsLane?.class).toBe("ks-topology-errors-border")
 
         const errorTask = elements.find((e) => e.id === "root.error_handler")
-        expect(errorTask?.parentNode).toBe("cluster_root.Errors")
+        expect(errorTask?.parentId).toBe("cluster_root.Errors")
     })
 
     // The two halves the edge geometry relies on: an edge crossing a lane border carries how far
@@ -1801,7 +1801,7 @@ describe("generateGraph horizontal lane headers", () => {
 
     const absoluteBox = (elements: GeneratedElement[], id: string): {top: number; bottom: number} => {
         const element = elements.find((e) => e.id === id)!
-        const parentTop = element.parentNode ? absoluteBox(elements, element.parentNode).top : 0
+        const parentTop = element.parentId ? absoluteBox(elements, element.parentId).top : 0
         const top = parentTop + element.position!.y
         return {top, bottom: top + parseFloat(String(element.style!.height))}
     }
@@ -1923,7 +1923,7 @@ describe("generateGraph collapsed cluster nested in an expanded one", () => {
             flowGraph, hiddenNodes, false, edgeReplacer, new Set(["root.loop.inner"]), [],
         )
 
-        expect(elements.find((e) => e.id === "root.loop.inner" && e.type === "collapsedcluster")!.parentNode).toBe("cluster_root.loop")
+        expect(elements.find((e) => e.id === "root.loop.inner" && e.type === "collapsedcluster")!.parentId).toBe("cluster_root.loop")
         expect(dagreGraph.parent("root.loop.inner")).toBe("cluster_root.loop")
     })
 

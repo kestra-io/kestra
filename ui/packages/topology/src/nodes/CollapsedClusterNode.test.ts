@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {computed} from "vue"
-import {Position} from "@vue-flow/core"
+import {Position} from "@xyflow/vue"
 import CollapsedClusterNode from "./CollapsedClusterNode.vue"
 import NodeMenu from "./NodeMenu.vue"
 import {CLUSTER_TAG_STATUS, EVENTS} from "../utils/constants"

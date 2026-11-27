@@ -1,6 +1,6 @@
 import {onMounted, onUnmounted} from "vue"
 import type {Ref} from "vue"
-import type {ViewportTransform, VueFlowStore} from "@vue-flow/core"
+import type {Viewport, VueFlowInstance} from "@xyflow/vue"
 import {debounce} from "@kestra-io/design-system"
 
 export const REFIT_DELAY_MS = 100
@@ -12,8 +12,8 @@ export const REFIT_DELAY_MS = 100
  *
  * @returns `fitGraph`, which every full fit must go through for resizes to refit after it.
  */
-export function useViewportRefit(container: Ref<HTMLElement | undefined>, vueFlow: Pick<VueFlowStore, "fitView" | "viewport">) {
-    let fittedView: ViewportTransform | undefined
+export function useViewportRefit(container: Ref<HTMLElement | undefined>, vueFlow: Pick<VueFlowInstance, "fitView" | "viewport">) {
+    let fittedView: Viewport | undefined
     let containerSize: {width: number, height: number} | undefined
     let resizeObserver: ResizeObserver | undefined
 

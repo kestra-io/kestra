@@ -31,7 +31,7 @@ export function baseConfig({root, mode, apiProxyPath}) {
             },
         },
         resolve: {
-            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
+            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@xyflow/vue"],
             alias: [
                 {find: "override", replacement: path.resolve(root, "src/override/")},
             ],
@@ -76,8 +76,6 @@ export function baseConfig({root, mode, apiProxyPath}) {
                 "format",
                 "humanize-duration",
                 "dagre",
-                "@vue-flow/background",
-                "@vue-flow/controls",
                 "html-to-image",
                 "js-yaml",
             ],

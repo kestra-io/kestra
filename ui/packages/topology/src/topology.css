@@ -31,8 +31,9 @@ html.dark {
     cursor: pointer;
 }
 
+/* Vue Flow paints this on the canvas and again on its background pattern. */
 .vue-flow {
-    background-color: var(--ks-bg-base);
+    --xy-background-color: var(--ks-bg-base);
 }
 
 .vue-flow .material-design-icon {
@@ -62,6 +63,8 @@ html.dark {
 }
 
 .vue-flow .vue-flow__controls-button {
+    width: 1.5rem;
+    height: 1.5rem;
     padding: var(--ks-spacing-1);
     border: none;
     border-radius: var(--ks-radius-xs);

@@ -44,8 +44,7 @@
 <script setup lang="ts">
     import {computed, nextTick, provide, ref, useTemplateRef, watch} from "vue"
     import {useResizeObserver} from "@vueuse/core"
-    import {VueFlow, useVueFlow, Position} from "@vue-flow/core"
-    import {Background} from "@vue-flow/background"
+    import {Background, Position, setupVueFlow, useVueFlowStore, VueFlow} from "@xyflow/vue"
     import {GRAPH_BACKGROUND, MIN_ZOOM, untilNodesMeasured, useScreenshot} from "@kestra-io/topology"
     import {cssVar, stringUtils} from "@kestra-io/design-system"
     import {useTheme} from "../../../../composables/useTheme"
@@ -74,7 +73,8 @@
         "pane-click": [];
     }>()
 
-    const {fitBounds, zoomIn, zoomOut, viewport, vueFlowRef, getNodes} = useVueFlow("asset-dag")
+    const {fitBounds, zoomIn, zoomOut, viewport, getNodes, getInternalNode} = setupVueFlow({id: "asset-dag"})
+    const vueFlowState = useVueFlowStore()
     const theme = useTheme()
     const {capture} = useScreenshot()
 
@@ -236,7 +236,7 @@
      */
     const applyFit = (): void => {
         if (bounds.value) {
-            fitBounds(bounds.value, {padding: 0.1})
+            fitBounds(bounds.value)
         }
         lastAppliedView = {...viewport.value}
     }
@@ -277,15 +277,16 @@
          * the whole graph: render every card for its duration, then capture the graph's bounds.
          */
         exportAsImage: async (type: "jpeg" | "png", fileName?: string): Promise<void> => {
-            if (!vueFlowRef.value || !bounds.value) {
+            const vueFlowEl = vueFlowState.vueFlowRef
+            if (!vueFlowEl || !bounds.value) {
                 return
             }
 
             exporting.value = true
             try {
                 await nextTick()
-                await untilNodesMeasured(() => getNodes.value)
-                await capture(vueFlowRef.value, {type, fileName, bounds: bounds.value, shouldDownload: true})
+                await untilNodesMeasured(() => getNodes.value.map((node) => getInternalNode(node.id) ?? node))
+                await capture(vueFlowEl, {type, fileName, bounds: bounds.value, shouldDownload: true})
             } finally {
                 exporting.value = false
             }

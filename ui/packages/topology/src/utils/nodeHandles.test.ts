@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {Position} from "@vue-flow/core"
+import {Position} from "@xyflow/vue"
 import {statusRowHandleStyle} from "./nodeHandles"
 import {NODE_SIZES} from "./constants"
 

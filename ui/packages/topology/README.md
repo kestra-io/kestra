@@ -12,10 +12,10 @@ Give it a flow's YAML and the graph Kestra's API computes for it. It lays out th
 ## Install
 
 ```bash
-npm install @kestra-io/topology @kestra-io/design-system element-plus @vue-flow/core @vue-flow/controls @vue-flow/background vue-i18n
+npm install @kestra-io/topology @kestra-io/design-system element-plus @xyflow/vue vue-i18n
 ```
 
-`vue`, `@vue-flow/core`, `@vue-flow/controls`, `@vue-flow/background`, `@kestra-io/design-system`, `element-plus` and `vue-i18n` are peer dependencies, so the app owns their versions. The design system brings peers of its own, listed in [its README](https://github.com/kestra-io/kestra/tree/develop/ui/packages/design-system#readme).
+`vue`, `@xyflow/vue`, `@kestra-io/design-system`, `element-plus` and `vue-i18n` are peer dependencies, so the app owns their versions. The design system brings peers of its own, listed in [its README](https://github.com/kestra-io/kestra/tree/develop/ui/packages/design-system#readme).
 
 npm lists `vue-i18n` as optional, but the nodes call `useI18n()`, so the app has to install it (`app.use(createI18n({legacy: false, locale: "en"}))` is enough).
 
@@ -98,15 +98,13 @@ The labels are keys of the Kestra UI's messages (`topology-graph.*`, `state_hist
 
 ### Controlling the canvas
 
-`id` names the Vue Flow store of the graph. Call `useVueFlow` with the same id to drive it from outside:
+The graph owns its Vue Flow store. The component instance exposes `focusTask(taskId)`, which centres the canvas on one task, and a component rendered in one of the graph's slots reaches the rest of the store with `useVueFlow()`:
 
 ```ts
-import {useVueFlow} from "@vue-flow/core"
+import {useVueFlow} from "@xyflow/vue"
 
-const {fitView, zoomIn, zoomOut} = useVueFlow("hello-world")
+const {fitView, zoomIn, zoomOut} = useVueFlow()
 ```
-
-The component instance also exposes `focusTask(taskId)`, which centres the canvas on one task.
 
 ## Props
 

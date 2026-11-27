@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {nextTick} from "vue"
-import {useVueFlow} from "@vue-flow/core"
+import {defineComponent, h, nextTick} from "vue"
+import {useVueFlow, type VueFlowInstance} from "@xyflow/vue"
 import Topology from "./Topology.vue"
 import {NODE_DETAILS_PEEK} from "./utils/constants"
 import type {FlowGraph} from "./utils/vueFlowUtils"
@@ -55,15 +55,31 @@ const FLOW_GRAPH: FlowGraph = {
     clusters: [],
 }
 
-function mountForRefit(id: string) {
-    return i18nMount(Topology, {
+// Topology owns its store, so a test reaches it from where `<VueFlow>` sits: inside Topology.
+function vueFlowProbe({zoom, rendersContent = false}: {zoom?: number; rendersContent?: boolean} = {}) {
+    const probe = {} as {vueFlow: VueFlowInstance; fitView: ReturnType<typeof vi.fn>}
+    const VueFlow = defineComponent({
+        setup(_, {slots}) {
+            probe.vueFlow = useVueFlow()
+            probe.fitView = vi.spyOn(probe.vueFlow, "fitView").mockResolvedValue(true)
+            if (zoom !== undefined) probe.vueFlow.setState({transform: [0, 0, zoom]})
+            return () => h("div", rendersContent ? slots.default?.() : undefined)
+        },
+    })
+    return {probe, VueFlow}
+}
+
+function mountForRefit() {
+    const {probe, VueFlow} = vueFlowProbe()
+    const wrapper = i18nMount(Topology, {
         props: {
-            id,
+            id: "vfid",
             flowGraph: FLOW_GRAPH,
             source: "",
         },
-        global: {stubs: {VueFlow: {template: "<div></div>"}}},
+        global: {stubs: {VueFlow}},
     })
+    return {wrapper, ...probe}
 }
 
 async function settle() {
@@ -74,11 +90,7 @@ async function settle() {
 
 describe("Topology view refit", () => {
     it("should fit the view once on the initial render", async () => {
-        const id = `topology-${Math.random()}`
-        const vueFlow = useVueFlow(id)
-        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
-
-        mountForRefit(id)
+        const {vueFlow, fitView} = mountForRefit()
         await settle()
         vueFlow.emits.nodesInitialized([])
 
@@ -86,11 +98,7 @@ describe("Topology view refit", () => {
     })
 
     it("should not recentre the view when the graph data is refreshed", async () => {
-        const id = `topology-${Math.random()}`
-        const vueFlow = useVueFlow(id)
-        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
-
-        const wrapper = mountForRefit(id)
+        const {wrapper, vueFlow, fitView} = mountForRefit()
         await settle()
         vueFlow.emits.nodesInitialized([])
         expect(fitView).toHaveBeenCalledTimes(1)
@@ -103,11 +111,7 @@ describe("Topology view refit", () => {
     })
 
     it("should not recentre the view when live task progress bumps taskDetailsVersion", async () => {
-        const id = `topology-${Math.random()}`
-        const vueFlow = useVueFlow(id)
-        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
-
-        const wrapper = mountForRefit(id)
+        const {wrapper, vueFlow, fitView} = mountForRefit()
         await settle()
         vueFlow.emits.nodesInitialized([])
         expect(fitView).toHaveBeenCalledTimes(1)
@@ -120,11 +124,7 @@ describe("Topology view refit", () => {
     })
 
     it("should refit when a subflow expansion reloads the graph", async () => {
-        const id = `topology-${Math.random()}`
-        const vueFlow = useVueFlow(id)
-        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
-
-        const wrapper = mountForRefit(id)
+        const {wrapper, vueFlow, fitView} = mountForRefit()
         await settle()
         vueFlow.emits.nodesInitialized([])
         expect(fitView).toHaveBeenCalledTimes(1)
@@ -157,10 +157,8 @@ describe("Topology view refit", () => {
             vi.unstubAllGlobals()
         })
 
-        async function mountFitted(id: string) {
-            const vueFlow = useVueFlow(id)
-            const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
-            const wrapper = mountForRefit(id)
+        async function mountFitted() {
+            const {wrapper, vueFlow, fitView} = mountForRefit()
             await settle()
             vueFlow.emits.nodesInitialized([])
             await settle()
@@ -170,7 +168,7 @@ describe("Topology view refit", () => {
         }
 
         it("should refit the graph to the new size", async () => {
-            const {fitView} = await mountFitted(`topology-${Math.random()}`)
+            const {fitView} = await mountFitted()
 
             resize(500, 600)
             vi.runAllTimers()
@@ -179,9 +177,9 @@ describe("Topology view refit", () => {
         })
 
         it("should refit again once a layout change fits a moved view", async () => {
-            const {vueFlow, fitView, wrapper} = await mountFitted(`topology-${Math.random()}`)
+            const {vueFlow, fitView, wrapper} = await mountFitted()
 
-            vueFlow.viewport.value = {x: 120, y: 40, zoom: 2}
+            vueFlow.setState({transform: [120, 40, 2]})
             await wrapper.setProps({isHorizontal: true})
             await settle()
             vueFlow.emits.nodesInitialized([])
@@ -194,11 +192,7 @@ describe("Topology view refit", () => {
     })
 
     it("should refit when the orientation is toggled explicitly", async () => {
-        const id = `topology-${Math.random()}`
-        const vueFlow = useVueFlow(id)
-        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
-
-        const wrapper = mountForRefit(id)
+        const {wrapper, vueFlow, fitView} = mountForRefit()
         await settle()
         vueFlow.emits.nodesInitialized([])
         expect(fitView).toHaveBeenCalledTimes(1)
@@ -213,29 +207,23 @@ describe("Topology view refit", () => {
 
 describe("Topology task focus", () => {
     it("should fit the view on the node of the focused task", async () => {
-        const id = `topology-${Math.random()}`
-        const vueFlow = useVueFlow(id)
-        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
-
-        const wrapper = mountForRefit(id)
+        const {wrapper, fitView} = mountForRefit()
         await settle()
         wrapper.vm.focusTask("2")
 
-        expect(fitView).toHaveBeenCalledWith(expect.objectContaining({nodes: ["2"]}))
+        expect(fitView).toHaveBeenCalledWith(expect.objectContaining({nodes: [{id: "2"}]}))
     })
 })
 
 describe("Topology details peek", () => {
     function mountWithViewportZoom(zoom: number) {
-        const id = `peek-${Math.random()}`
-        const vueFlow = useVueFlow(id)
-        vueFlow.viewport.value = {x: 0, y: 0, zoom}
+        const {probe, VueFlow} = vueFlowProbe({zoom, rendersContent: true})
         const wrapper = i18nMount(Topology, {
-            props: {id, source: "", flowGraph: FLOW_GRAPH},
+            props: {id: "peek", source: "", flowGraph: FLOW_GRAPH},
             slots: {taskDetails: "<div class='peek-marker'>details</div>"},
-            global: {stubs: {VueFlow: {template: "<div><slot /></div>"}, Background: true, Panel: true, Controls: true, ControlButton: true}},
+            global: {stubs: {VueFlow, Background: true, Panel: true, Controls: true, ControlButton: true}},
         })
-        return {wrapper, vueFlow}
+        return {wrapper, ...probe}
     }
 
     const ZOOM_ABOVE_PEEK_THRESHOLD = 1.5
@@ -307,7 +295,7 @@ describe("Topology details peek", () => {
         await nextTick()
         expect(wrapper.find(PEEK).exists()).toBe(false)
 
-        vueFlow.viewport.value = {x: 0, y: 0, zoom: ZOOM_ABOVE_PEEK_THRESHOLD}
+        vueFlow.setState({transform: [0, 0, ZOOM_ABOVE_PEEK_THRESHOLD]})
         await nextTick()
 
         expect(wrapper.find(PEEK).exists()).toBe(false)
@@ -324,7 +312,7 @@ describe("Topology details peek", () => {
             await nextTick()
             expect(wrapper.find(PEEK).exists()).toBe(true)
 
-            vueFlow.removeNodes(vueFlow.getNodes.value)
+            vueFlow.setNodes([])
             await nextTick()
 
             expect(wrapper.find(PEEK).exists()).toBe(true)

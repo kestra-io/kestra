@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
     import {computed, inject} from "vue"
-    import {Handle, Position} from "@vue-flow/core"
+    import {Handle, Position} from "@xyflow/vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import {
         KsTooltip,

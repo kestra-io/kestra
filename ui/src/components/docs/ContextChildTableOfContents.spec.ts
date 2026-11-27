@@ -1,7 +1,7 @@
 import {describe, expect, test} from "vitest"
 import {shallowMount} from "@vue/test-utils"
 import type {VNode} from "vue"
-import ChildTableOfContents from "../content/ChildTableOfContents.vue"
+import ChildTableOfContents from "../content/ChildTableOfContents"
 import ContextChildTableOfContents from "./ContextChildTableOfContents.vue"
 import ContextDocsLink from "./ContextDocsLink.vue"
 

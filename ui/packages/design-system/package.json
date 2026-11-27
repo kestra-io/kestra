@@ -49,7 +49,7 @@
     "test": "npm run test:lint && npm run check:types && npm run test:unit && npm run test:storybook",
     "build:watch": "vite build --watch",
     "build-storybook": "storybook build",
-    "check:types": "vue-tsc --noEmit -p tsconfig.storybook.json && vue-tsc --noEmit -p tsconfig.node.json",
+    "check:types": "node ../../node_modules/typescript/bin/tsc --noEmit -p tsconfig.storybook.json --runExternalCode && node ../../node_modules/typescript/bin/tsc --noEmit -p tsconfig.node.json",
     "lint": "oxlint --fix && eslint --fix",
     "test:lint": "oxlint && eslint",
     "test:unit": "vitest run --config vitest.unit.config.ts",
@@ -103,6 +103,7 @@
     "@vitest/browser": "^5.1.0",
     "@vitest/browser-playwright": "^5.0.5",
     "@vitest/coverage-v8": "^5.0.5",
+    "@vue/content-mapper": "4.0.0-alpha.3",
     "@vue/test-utils": "^2.5.1",
     "@vueuse/core": "^15.0.0",
     "axe-core": "^4.14.0",
@@ -116,7 +117,7 @@
     "sass-embedded": "^1.106.1",
     "storybook": "^10.6.3",
     "tsdown": "^0.23.7",
-    "typescript": "^6",
+    "typescript": "7.1.0-beta",
     "unrun": "^0.3.1",
     "vite": "^8.3.5",
     "vite-plugin-dts": "^5.1.2",
@@ -125,7 +126,6 @@
     "vue-component-type-helpers": "^3.3.13",
     "vue-material-design-icons": "^5.4.0",
     "vue-router": "^5.4.0",
-    "vue-tsc": "^3.3.13",
     "yaml": "^2.9.1"
   }
 }

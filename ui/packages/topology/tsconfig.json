@@ -19,8 +19,13 @@
     },
     "include": ["src", "tsdown.config.ts"],
     "exclude": ["src/**/*.test.ts"],
-    "vueCompilerOptions": {
-        "checkUnknownProps": true,
-        "dataAttributes": ["data-*"]
-    }
+    "contentMappers": [
+        {
+            "package": "@vue/content-mapper",
+            "extensions": [".vue"],
+            "options": {
+                "dataAttributes": ["data-*"]
+            }
+        }
+    ]
 }

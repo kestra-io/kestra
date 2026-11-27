@@ -166,7 +166,7 @@
 
     const open = ref(false)
     const sectionExpanded = ref(true)
-    const tab = ref(TAB_ALL)
+    const tab = ref<string | number | boolean | undefined>(TAB_ALL)
     const expandedKey = ref<string | null>(null)
     const editTarget = ref<AppliedFilter | null>(null)
 

@@ -43,7 +43,7 @@ export default defineConfig({
     },
     plugins: [svgInlinePlugin],
     fromVite: true,
-    dts: {vue: true, tsconfig: "./tsconfig.app.json"},
+    dts: {generator: "tsgo", tsgo: {runExternalCode: true}, tsconfig: "./tsconfig.app.json"},
     entry: {
         index: "src/index.ts",
         styleBase: "src/styleBase.ts",

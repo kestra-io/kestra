@@ -25,7 +25,7 @@
         "generate:flow-schema-placeholder": "node scripts/generate-flow-schema-placeholder.mjs",
         "preview": "vite preview",
         "precheck:types": "node scripts/ensure-sdk.mjs",
-        "check:types": "vue-tsc --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" \\\n && vue-tsc --build tsconfig.app.json && echo \"app checked\" \\\n && vue-tsc --project tsconfig.test.json && echo \"test checked\"",
+        "check:types": "node scripts/check-types.mjs \"-p packages/design-system/tsconfig.app.json\" \"-p tsconfig.app.json\" \"-p tsconfig.test.json\"",
         "test:lint": "oxlint src packages tests && eslint && stylelint \"{src,packages,tests}/**/*.{vue,scss}\"",
         "check:dep-split": "node scripts/dependency-split/check.mjs",
         "check:ts-any": "node scripts/explicit-any/baseline.mjs src packages tests",
@@ -98,12 +98,14 @@
         "@types/path-browserify": "^1.0.3",
         "@types/semver": "^7.8.0",
         "@typescript-eslint/parser": "^8.72.1",
+        "@typescript/typescript6": "6.0.2",
         "@vitejs/plugin-vue": "^6.0.10",
         "@vitejs/plugin-vue-jsx": "^5.1.6",
         "@vitest/browser": "^5.1.0",
         "@vitest/browser-playwright": "^5.0.5",
         "@vitest/coverage-v8": "^5.0.5",
         "@vue/compiler-sfc": "^3.5.44",
+        "@vue/content-mapper": "4.0.0-alpha.3",
         "@vue/test-utils": "^2.5.1",
         "eslint": "^10.13.0",
         "eslint-plugin-storybook": "10.6.5",
@@ -122,11 +124,10 @@
         "storybook-vue3-router": "^7.0.0",
         "stylelint": "^17.16.0",
         "tsdown": "0.23.7",
-        "typescript": "^6",
+        "typescript": "7.1.0-beta",
         "vite": "^8.3.4",
         "vite-plugin-pwa": "^2.0.0",
-        "vitest": "^5.0.5",
-        "vue-tsc": "^3.3.13"
+        "vitest": "^5.0.5"
     },
     "optionalDependencies": {
         "@esbuild/darwin-arm64": "^0.28.2",
@@ -148,7 +149,8 @@
     "overrides": {
         "dompurify": "^3.4.13",
         "js-yaml@^4": "^4.3.2",
-        "undici@^7": "^7.30.1"
+        "undici@^7": "^7.30.1",
+        "typescript": "$typescript"
     },
     "lint-staged": {
         "**/*.scss": [

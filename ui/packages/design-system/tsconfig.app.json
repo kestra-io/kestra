@@ -22,8 +22,13 @@
     },
     "include": ["src"],
     "exclude": ["src/**/*.test.ts", "src/**/*.stories.ts", "src/**/*.stories.tsx"],
-    "vueCompilerOptions": {
-        "checkUnknownProps": true,
-        "dataAttributes": ["data-*"]
-    }
+    "contentMappers": [
+        {
+            "package": "@vue/content-mapper",
+            "extensions": [".vue"],
+            "options": {
+                "dataAttributes": ["data-*"]
+            }
+        }
+    ]
 }

@@ -1,5 +1,6 @@
 import {defineConfig} from "vitest/config"
 import vue from "@vitejs/plugin-vue"
+import "../../scripts/vue-sfc-typescript6.mjs"
 import {storybookTest} from "@storybook/addon-vitest/vitest-plugin"
 import {resolve} from "path"
 import {playwright} from "@vitest/browser-playwright"

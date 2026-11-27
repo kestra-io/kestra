@@ -40,7 +40,7 @@
         "dev": "tsdown --watch",
         "prepublishOnly": "npm run build",
         "test": "npm run test:lint && npm run check:types && npm run test:unit",
-        "check:types": "tsc --noEmit",
+        "check:types": "node ../../node_modules/typescript/bin/tsc --noEmit",
         "lint": "oxlint --fix && eslint --fix",
         "test:lint": "oxlint && eslint",
         "test:unit": "vitest run --config vitest.unit.config.ts",
@@ -60,7 +60,7 @@
         "monaco-editor": "^0.57.0",
         "shiki": "^4.5.0",
         "tsdown": "^0.23.7",
-        "typescript": "^6",
+        "typescript": "7.1.0-beta",
         "vitest": "^5.0.5"
     }
 }

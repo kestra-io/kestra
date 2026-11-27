@@ -1,3 +1,4 @@
+import "../scripts/typescript6.mjs"
 // This file has been automatically migrated to valid ESM format by Storybook.
 import path, {dirname} from "path"
 import {fileURLToPath} from "url"

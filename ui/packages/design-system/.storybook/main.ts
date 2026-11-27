@@ -1,3 +1,4 @@
+import "../../../scripts/typescript6.mjs"
 import {fileURLToPath} from "node:url"
 import {mergeConfig} from "vite"
 import {resolve, dirname} from "path"

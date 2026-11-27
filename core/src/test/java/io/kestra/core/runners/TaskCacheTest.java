@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -57,7 +56,6 @@ public class TaskCacheTest {
 
     @Test
     @LoadFlows("flows/valids/cache.yaml")
-    @Disabled("Expiration didn't work on CI for an unknown reason")
     void shouldExpireCacheTaskRunOutputAfterTtl() throws Exception {
         Execution execution = runnerUtils.runOne("main", "io.kestra.tests", "cache");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

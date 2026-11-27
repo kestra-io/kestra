@@ -403,6 +403,8 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         if (!canPurge()) {
             return;
         }
+        accessControl.onDeleteByQuery(tenantId, namespace, flowId, triggerId);
+
         this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
         {
             DSLContext context = DSL.using(configuration);

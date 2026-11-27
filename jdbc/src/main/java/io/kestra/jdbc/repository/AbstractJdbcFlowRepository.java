@@ -36,6 +36,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.SourceCodeSearchOutcome;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
@@ -908,8 +909,13 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     abstract protected Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
 
     @Override
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace) {
+        return findSourceCodeWithCapFlag(pageable, query, caseSensitive, wholeWord, regex, scope, tenantId, namespace).results();
+    }
+
+    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public SourceCodeSearchOutcome findSourceCodeWithCapFlag(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -926,10 +932,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     select = select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.startsWith(namespace + ".")));
                 }
 
-                List<SearchResult<Flow>> results = select
-                    .limit(SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES)
-                    .fetch()
+                List<Record> candidates = select
+                    .limit(SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES + 1)
+                    .fetch();
+                boolean candidatesCapped = candidates.size() > SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES;
+
+                List<SearchResult<Flow>> results = candidates
                     .stream()
+                    .limit(SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES)
                     .map(record -> new SearchResult<>(
                         (Flow) this.jdbcRepository.map(record),
                         query == null
@@ -942,9 +952,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .thenComparing(r -> r.getModel().getId()))
                     .toList();
 
-                return pageable == null || pageable.getSize() == -1
-                    ? new ArrayListTotal<>(results, results.size())
-                    : ArrayListTotal.of(pageable, results);
+                return new SourceCodeSearchOutcome(
+                    pageable == null || pageable.getSize() == -1
+                        ? new ArrayListTotal<>(results, results.size())
+                        : ArrayListTotal.of(pageable, results),
+                    candidatesCapped
+                );
             });
     }
 

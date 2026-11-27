@@ -1593,6 +1593,29 @@ export type KvEntry = {
 
 export type KvType = 'STRING' | 'NUMBER' | 'BOOLEAN' | 'DATETIME' | 'DATE' | 'DURATION' | 'JSON';
 
+export type KeyUsagesRequest = {
+    kind: KeyUsagesRequestKind;
+    keys: Array<KeyUsagesRequestKey>;
+};
+
+export type KeyUsagesRequestKey = {
+    namespace?: string | null;
+    key: string;
+};
+
+export type KeyUsagesRequestKind = 'KV' | 'SECRET';
+
+export type KeyUsagesResponse = {
+    results?: Array<KeyUsagesResponseKeyUsage>;
+};
+
+export type KeyUsagesResponseKeyUsage = {
+    namespace?: string | null;
+    key?: string;
+    flows?: number;
+    truncated?: boolean;
+};
+
 /**
  * A key/value pair that can be attached to a Flow or Execution. Labels are often used to organize and categorize objects.
  */
@@ -9480,6 +9503,44 @@ export type SearchFlowsBySourceCodeResponses = {
 };
 
 export type SearchFlowsBySourceCodeResponse = SearchFlowsBySourceCodeResponses[keyof SearchFlowsBySourceCodeResponses];
+
+export type CountKeyUsagesData = {
+    /**
+     * The kind of key and the keys to count usages for
+     */
+    body: KeyUsagesRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/key-usages';
+};
+
+export type CountKeyUsagesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CountKeyUsagesError = CountKeyUsagesErrors[keyof CountKeyUsagesErrors];
+
+export type CountKeyUsagesResponses = {
+    /**
+     * countKeyUsages 200 response
+     */
+    200: KeyUsagesResponse;
+};
+
+export type CountKeyUsagesResponse = CountKeyUsagesResponses[keyof CountKeyUsagesResponses];
 
 export type ApplyReplaceBySourceCodeData = {
     /**

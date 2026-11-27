@@ -3,8 +3,11 @@ package io.kestra.core.repositories;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.OptionalInt;
 
 import org.slf4j.event.Level;
+
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.QueryFilter;
@@ -15,6 +18,7 @@ import io.kestra.plugin.core.dashboard.data.Logs;
 
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 
@@ -122,7 +126,19 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
      * A log entry together with its stable storage key (the unique row/document id), needed to
      * resume keyset pagination — the deserialized {@link LogEntry} does not carry its own key.
      */
-    record KeyedLog(String key, LogEntry log) {}
+    @Schema(name = "KeyedLog")
+    record KeyedLog(
+        @Nullable @Schema(description = "Storage key of the log, the input of DELETE /logs/by-ids; absent when the store has none.") String key,
+        @JsonUnwrapped LogEntry log
+    ) {}
+
+    /**
+     * Same as {@link #find(Pageable, String, List)}, with the storage key of each log.
+     * The default leaves the key null, for stores that cannot address a single log.
+     */
+    default Page<KeyedLog> findWithKeys(Pageable pageable, @Nullable String tenantId, List<QueryFilter> filters) {
+        return find(pageable, tenantId, filters).map(log -> new KeyedLog(null, log));
+    }
 
     /**
      * Keyset-paginated fetch ordered by (timestamp ASC, key ASC), strictly after the given position.
@@ -155,6 +171,20 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
     void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId);
 
     void deleteByFilters(String tenantId, List<QueryFilter> filters);
+
+    /**
+     * Same as {@link #deleteByFilters}, reporting the number of deleted logs when the store knows it.
+     *
+     * @return the deleted count, or empty when the store cannot report it
+     */
+    default OptionalInt deleteByFiltersAndCount(String tenantId, List<QueryFilter> filters) {
+        deleteByFilters(tenantId, filters);
+        return OptionalInt.empty();
+    }
+
+    default int deleteByIds(String tenantId, List<String> ids) {
+        return 0;
+    }
 
     int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs,
         boolean purgeNonExecutionLogs, Integer batchSize);

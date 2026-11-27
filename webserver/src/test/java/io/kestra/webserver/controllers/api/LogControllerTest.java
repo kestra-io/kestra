@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -24,6 +25,7 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
@@ -391,6 +393,82 @@ class LogControllerTest {
             Argument.of(List.class, LogEntry.class)
         );
         assertThat(logs.size()).isZero();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deleteLogsByIds() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+        logRepository.save(logEntry(tenant, Level.WARN));
+        logRepository.save(logEntry(tenant, Level.ERROR));
+
+        CursorOrOffsetPagedResults<Map<String, Object>> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search"),
+            Argument.of(CursorOrOffsetPagedResults.class, Map.class)
+        );
+        assertThat(logs.getTotal()).isEqualTo(3L);
+        assertThat(logs.getResults()).allSatisfy(log -> assertThat(log).containsKeys("key", "level").doesNotContainKey("log"));
+        List<String> idsToDelete = logs.getResults().stream()
+            .limit(2)
+            .map(log -> (String) log.get("key"))
+            .toList();
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-ids", idsToDelete),
+            BulkResponse.class
+        );
+        assertThat(response.getCount()).isEqualTo(2);
+
+        CursorOrOffsetPagedResults<LogEntry> remaining = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(remaining.getTotal()).isEqualTo(1L);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deleteLogsByQuery() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+        logRepository.save(logEntry(tenant, Level.WARN));
+        logRepository.save(logEntry(tenant, Level.ERROR));
+
+        BulkResponse delete = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query?filters[level][IN]=ERROR"),
+            BulkResponse.class
+        );
+        assertThat(delete.getCount()).isEqualTo(1);
+
+        CursorOrOffsetPagedResults<LogEntry> remaining = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(remaining.getTotal()).isEqualTo(2L);
+        assertThat(remaining.getResults()).noneMatch(log -> log.getLevel() == Level.ERROR);
+    }
+
+    @Test
+    void shouldRejectDeleteLogsByQueryWithoutUsableFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+
+        HttpClientResponseException noFilter = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query"))
+        );
+        HttpClientResponseException misspelledFilter = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query?filters[notAField][EQUALS]=ERROR"))
+        );
+
+        assertThat(noFilter.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(misspelledFilter.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(logRepository.findAllAsync(tenant).count().block()).isEqualTo(1L);
     }
 
     @Test

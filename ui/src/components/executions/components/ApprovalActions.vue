@@ -1,32 +1,6 @@
 <template>
-    <KsDropdown
-        v-if="enabled && link"
-        splitButton
-        size="small"
-        data-test="approval-review"
-        @click="openReview"
-    >
-        <KsIcon><ClipboardCheckOutline /></KsIcon>
-        <span>{{ $t("approval.review") }}</span>
-        <template #dropdown>
-            <KsDropdownMenu>
-                <KsDropdownItem :icon="OpenInNew" data-test="open-approval" @click="router.push(link.to)">
-                    {{ link.label }}
-                </KsDropdownItem>
-            </KsDropdownMenu>
-        </template>
-    </KsDropdown>
     <KsButton
-        v-else-if="enabled"
-        size="small"
-        :icon="ClipboardCheckOutline"
-        data-test="approval-review"
-        @click="openReview"
-    >
-        {{ $t("approval.review") }}
-    </KsButton>
-    <KsButton
-        v-else-if="link"
+        v-if="link"
         size="small"
         tag="router-link"
         :to="link.to"
@@ -34,6 +8,16 @@
         data-test="open-approval"
     >
         {{ link.label }}
+    </KsButton>
+    <KsButton
+        v-if="enabled"
+        size="small"
+        type="primary"
+        :icon="ClipboardCheckOutline"
+        data-test="approval-review"
+        @click="openReview"
+    >
+        {{ $t("approval.review") }}
     </KsButton>
 
     <ReviewDialog
@@ -48,7 +32,6 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
-    import {useRouter} from "vue-router"
     import ClipboardCheckOutline from "vue-material-design-icons/ClipboardCheckOutline.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import ReviewDialog from "../ReviewDialog.vue"
@@ -61,8 +44,6 @@
         execution: Execution;
         taskRun: {id: string};
     }>()
-
-    const router = useRouter()
 
     const {approval, enabled} = useApprovalReviewer(() => props.execution, () => props.taskRun.id)
     const link = useApprovalLink(() => props.execution, () => props.taskRun)

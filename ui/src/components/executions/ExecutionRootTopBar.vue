@@ -47,6 +47,7 @@
                         v-bind="ACTIONS.replay.props ?? {}"
                         :execution="execution"
                     />
+                    <component :is="ACTIONS.review.component" v-if="reviewInTopBar" type="primary" :execution="execution" />
                 </BottomActionBar>
             </template>
             <NavBarActions v-else-if="execution">
@@ -57,6 +58,16 @@
                     v-bind="item.props"
                     :execution="execution"
                 />
+
+                <TriggerFlow
+                    v-if="reviewInTopBar && isAllowedTrigger"
+                    :flowId="execution.flowId"
+                    :namespace="execution.namespace"
+                >
+                    <template #button="{execute, disabled}">
+                        <NavBarAction :icon="Play" :label="$t('execute')" :disabled="disabled" @click="execute" />
+                    </template>
+                </TriggerFlow>
 
                 <component :is="ACTIONS.delete.component" :execution="execution" />
 
@@ -81,8 +92,9 @@
                 </template>
 
                 <template #primary>
+                    <component :is="ACTIONS.review.component" v-if="reviewInTopBar" type="primary" :execution="execution" />
                     <TriggerFlow
-                        v-if="isAllowedTrigger"
+                        v-else-if="isAllowedTrigger"
                         type="primary"
                         :flowId="execution?.flowId"
                         :namespace="execution?.namespace"
@@ -95,6 +107,7 @@
 
 <script setup lang="ts">
     import {computed, type Component} from "vue"
+    import {useRoute} from "vue-router"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {State, type KsBreadcrumbItem} from "@kestra-io/design-system"
 
@@ -119,6 +132,7 @@
     import CancelApproval from "./overview/components/actions/CancelApproval.vue"
     import {findApprovalTask, findApprovalTaskRun} from "../../utils/approval"
     import * as ExecutionUtils from "../../utils/executionUtils"
+    import {useApprovalReviewer} from "../../composables/useApprovalReviewer"
     import ResumeFromBreakpoint from "./overview/components/actions/ResumeFromBreakpoint.vue"
     import Unqueue from "./overview/components/actions/Unqueue.vue"
     import action from "../../models/action"
@@ -138,6 +152,7 @@
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
     const isMobile = useIsMobile()
+    const route = useRoute()
 
     const execution = computed(() => executionsStore.execution)
 
@@ -186,6 +201,13 @@
         execution.value !== undefined && findApprovalTaskRun(execution.value, executionsStore.flow, "PAUSED") !== undefined,
     )
 
+    const {enabled: reviewEnabled} = useApprovalReviewer(() => execution.value)
+
+    /** Review takes Execute's place, except on the desktop tabs whose banner already offers it: mobile shows no banner. */
+    const reviewInTopBar = computed(() =>
+        executionFlowLoaded.value && pausedOnApproval.value && reviewEnabled.value && (isMobile.value || route.meta.reviewInBanner !== true),
+    )
+
     const pausedBesideApproval = computed(() =>
         execution.value !== undefined && executionsStore.flow !== undefined
         && ExecutionUtils.findTaskRunsByState(execution.value, "PAUSED").some(taskRun => findApprovalTask(executionsStore.flow, taskRun.taskId) === undefined),
@@ -193,8 +215,8 @@
 
     /**
      * The single visible secondary action: the one action that only makes sense for the
-     * execution's current state, falling back to Edit Flow. Execute owns the primary slot on
-     * every tab, so replaying is one click away without being what a user hits by reflex.
+     * execution's current state, falling back to Edit Flow. Execute owns the primary slot unless
+     * Review takes it, so replaying is one click away without being what a user hits by reflex.
      */
     const secondaryKey = computed<ActionKey>(() => {
         const current = execution.value?.state?.current
@@ -211,7 +233,7 @@
             if (!executionFlowLoaded.value) {
                 return "editFlow"
             }
-            return pausedOnApproval.value ? "review" : "resume"
+            return pausedOnApproval.value ? "editFlow" : "resume"
         }
 
         if ((current as string) === State.PAUSING) {
@@ -247,7 +269,7 @@
         if (!pausedOnApproval.value) {
             return ["resume"]
         }
-        return ["review", "cancelApproval", ...(pausedBesideApproval.value ? ["resume" as const] : [])]
+        return ["cancelApproval", ...(pausedBesideApproval.value ? ["resume" as const] : [])]
     }
 
     const overflowKeys = computed<ActionKey[]>(() => {

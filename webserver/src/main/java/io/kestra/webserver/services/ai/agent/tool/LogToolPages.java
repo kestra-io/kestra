@@ -31,11 +31,4 @@ final class LogToolPages {
     static Long total(final LogDataStoreInterface logRepository, final Page<LogEntry> page) {
         return logRepository.paginationType() == PaginationType.CURSOR ? null : page.getTotalSize();
     }
-
-    static String truncate(final String message, final int maxMessageLength) {
-        if (message == null || message.length() <= maxMessageLength) {
-            return message;
-        }
-        return message.substring(0, maxMessageLength) + "…";
-    }
 }

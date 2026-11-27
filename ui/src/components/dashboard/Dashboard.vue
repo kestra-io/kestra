@@ -144,6 +144,7 @@
         // When the backend cannot serve custom dashboards, ignore any requested id
         // (URL, localStorage, tenant default) and render the bundled default directly.
         if (miscStore.configs?.isCustomDashboardsEnabled === false) {
+            charts.value = []
             restoreScope.value = "default"
             await goToRestoreUrl()
             await useDefaultDashboardBundledInUI()
@@ -215,7 +216,7 @@
         isRouteSettled.value = true
     }
 
-    watch([() => route.params.dashboard, () => route.params.tenant], async () => {
+    watch([() => route.params.dashboard, () => route.params.tenant, () => props.isFlow && `${route.params.namespace}/${route.params.id}`], async () => {
         if(route.params.tenant){
             restoreScope.value = undefined
             // at initial load after login tenant is not yet immediately available

@@ -649,13 +649,13 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         List<TaskRun> finallyFlow = this.findTaskRunByTasks(resolvedFinally, parentTaskRun);
         // finally is already started, just continue it
         if (!finallyFlow.isEmpty()) {
-            return resolvedFinally == null ? Collections.emptyList() : resolvedFinally;
+            return ListUtils.emptyOnNull(resolvedFinally);
         }
 
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
         // check if the parent task should fail, and there are error tasks so we start them
         if (errorsFlow.isEmpty() && terminalState == State.Type.FAILED) {
-            return resolvedErrors == null ? resolvedFinally == null ? Collections.emptyList() : resolvedFinally : resolvedErrors;
+            return resolvedErrors == null ? ListUtils.emptyOnNull(resolvedFinally) : resolvedErrors;
         }
 
         // Check if flow has failed tasks
@@ -668,7 +668,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             if (resolvedFinally != null && resolvedErrors != null && !this.isTerminated(resolvedErrors, parentTaskRun)) {
                 return resolvedErrors;
             } else if (resolvedFinally == null) {
-                return resolvedErrors == null ? Collections.emptyList() : resolvedErrors;
+                return ListUtils.emptyOnNull(resolvedErrors);
             }
         }
 

@@ -292,7 +292,8 @@ public class FlowTriggerService {
         return candidates.stream().map(trigger -> new FlowWithFlowTrigger(flow, trigger))
             // validate flow triggers conditions excluding multiple conditions; an unrenderable `when` is a
             // misconfiguration, so it is logged on both sides and the trigger does not fire
-            .filter(flowWithFlowTrigger -> {
+            .filter(flowWithFlowTrigger ->
+            {
                 try {
                     return conditionService.isTriggerConditionMet(flowWithFlowTrigger.getTrigger(), runContext);
                 } catch (IllegalVariableEvaluationException e) {
@@ -318,7 +319,8 @@ public class FlowTriggerService {
         }
 
         RunContext runContext = runContextFactory.of(null, execution);
-        candidates.forEach(trigger -> {
+        candidates.forEach(trigger ->
+        {
             if (wouldFire(trigger, flow, execution, runContext)) {
                 runContextFactory.of(flow, trigger).logger().warn(
                     "Flow trigger '{}' does not receive executions from namespace `{}` and its children: `{}` does not allow `{}` in its Allowed Namespaces.",
@@ -351,9 +353,9 @@ public class FlowTriggerService {
      * Logs an unrenderable trigger {@code when} in both places it matters, since the evaluated execution and the
      * flow that owns the trigger may belong to different teams:
      * <ul>
-     *     <li>a WARN on the evaluated (upstream) execution — not its error, but it surfaces that a trigger
-     *     listening to it could not be evaluated;</li>
-     *     <li>an ERROR on the flow that owns the trigger — this is its own misconfiguration.</li>
+     * <li>a WARN on the evaluated (upstream) execution — not its error, but it surfaces that a trigger
+     * listening to it could not be evaluated;</li>
+     * <li>an ERROR on the flow that owns the trigger — this is its own misconfiguration.</li>
      * </ul>
      */
     private void logUnrenderableWhen(RunContext upstreamRunContext, Flow flow, AbstractTrigger trigger, InternalException error) {

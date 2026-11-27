@@ -24,7 +24,10 @@ vi.mock("../../../composables/useLoopLineage", () => ({
 
 vi.mock("../../../composables/useNamespaceBreadcrumb", async () => {
     const {computed} = await import("vue")
-    return {useNamespaceBreadcrumb: () => computed(() => [{label: "executions"}, {label: "company"}, {label: "team"}])}
+    return {
+        useNamespaceBreadcrumb: () => computed(() => [{label: "executions"}, {label: "company"}, {label: "team"}]),
+        useFlowSiblings: () => computed(() => undefined),
+    }
 })
 
 vi.mock("../../../stores/flow", async () => {

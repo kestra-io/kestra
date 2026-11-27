@@ -73,7 +73,8 @@ class LoopRetryNewExecutionTest {
         harness.registerFlow(flow);
         Execution created = Executions.created(flow);
         AtomicInteger attempts = new AtomicInteger();
-        ScriptedWorker alwaysFails = task -> {
+        ScriptedWorker alwaysFails = task ->
+        {
             attempts.incrementAndGet();
             return Results.failed(task, T0);
         };

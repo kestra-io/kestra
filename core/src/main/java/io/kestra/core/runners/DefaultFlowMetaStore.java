@@ -137,6 +137,11 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     }
 
     @Override
+    public Optional<Integer> findLatestRevision(String tenantId, String namespace, String id) {
+        return Optional.ofNullable(cache.get(FlowId.uidWithoutRevision(tenantId, namespace, id))).map(FlowInterface::getRevision);
+    }
+
+    @Override
     public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
         // probe the cache before resolving the flow: this runs on every executor message, and an execution
         // pinned to a revision the meta-store no longer holds resolves through the repository. The key is the

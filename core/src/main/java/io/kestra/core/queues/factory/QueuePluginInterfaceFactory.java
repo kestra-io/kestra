@@ -3,7 +3,6 @@ package io.kestra.core.queues.factory;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.AbstractPluginInterfaceFactory;
@@ -11,6 +10,7 @@ import io.kestra.core.plugins.ApplicationContextInitializable;
 import io.kestra.core.plugins.PluginIdentifier;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.utils.MapUtils;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.validation.Validator;
@@ -47,7 +47,7 @@ public class QueuePluginInterfaceFactory extends AbstractPluginInterfaceFactory<
      */
     public QueueFactoryInterface make(final String identifier, final Map<String, Object> pluginConfiguration, QueueBackendDependencies backendDependencies) {
         String pluginId = PluginIdentifier.parseIdentifier(identifier).getLeft();
-        Map<String, Object> configuration = LegacyQueueConfigurations.apply(resolveClass(identifier), pluginId, Optional.ofNullable(pluginConfiguration).orElse(Map.of()), applicationContext);
+        Map<String, Object> configuration = LegacyQueueConfigurations.apply(resolveClass(identifier), pluginId, MapUtils.emptyOnNull(pluginConfiguration), applicationContext);
         QueueFactoryInterface plugin = resolve(identifier, configuration);
         plugin.init(backendDependencies, configuration);
 

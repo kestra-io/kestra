@@ -33,33 +33,7 @@
         />
 
         <template #secondary>
-            <KsDropdown
-                v-if="isEditTab && editorIsAllowedEdit && !deleted"
-                splitButton
-                :disabled="editorIsReadOnly || (!isPublishAction && !editorCanSave)"
-                :buttonProps="{disabled: editorHasErrors}"
-                @click="editorSaveOrPublish"
-            >
-                {{ isPublishAction ? $t('publish') : $t('save') }}
-                <template #dropdown>
-                    <KsDropdownMenu>
-                        <KsDropdownItem v-if="isPublishAction" :icon="ContentSave" @click="editorSave">
-                            {{ $t('save') }}
-                        </KsDropdownItem>
-                        <KsDropdownItem :icon="FileDocumentEditOutline" @click="editorSaveAsDraft">
-                            {{ $t('save_as_draft') }}
-                        </KsDropdownItem>
-                        <KsDropdownItem
-                            v-if="editorHaveChange && !flowStore.isCreating"
-                            :icon="PlayBoxOutline"
-                            :disabled="editorHasErrors || editorIsReadOnly"
-                            @click="editorSaveAndExecute"
-                        >
-                            {{ $t('save_and_execute') }}
-                        </KsDropdownItem>
-                    </KsDropdownMenu>
-                </template>
-            </KsDropdown>
+            <FlowSaveActions v-if="isEditTab && editorIsAllowedEdit && !deleted" />
             <NavBarAction
                 v-else-if="flow && canEdit && !deleted && !flowStore.isCreating"
                 :icon="Pencil"
@@ -99,13 +73,11 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import PlayBoxOutline from "vue-material-design-icons/PlayBoxOutline.vue"
-    import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue"
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
     import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
+    import FlowSaveActions from "../../../components/flows/FlowSaveActions.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
     import {useDashboardSelection} from "../../../components/dashboard/composables/useDashboardSelection"
@@ -117,6 +89,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
     import {useLogsStore} from "../../../stores/logs"
+    import {usePlaygroundStore} from "../../../stores/playground"
     import {useToast} from "../../../utils/toast"
     import {useFlowEditorActions} from "../../../components/flows/useFlowEditorActions"
 
@@ -125,6 +98,7 @@
     const unsavedChangesStore = useUnsavedChangesStore()
     const flowStore = useFlowStore()
     const logsStore = useLogsStore()
+    const playgroundStore = usePlaygroundStore()
     const router = useRouter()
     const route = useRoute()
     const toast = useToast()
@@ -139,17 +113,8 @@
     const authStore = useAuthStore()
 
     const {
-        haveChange: editorHaveChange,
-        canSave: editorCanSave,
-        hasErrors: editorHasErrors,
-        isReadOnly: editorIsReadOnly,
         isAllowedEdit: editorIsAllowedEdit,
-        isDraft: editorIsDraft,
         isPlaygroundAllowed,
-        save: editorSave,
-        saveAsDraft: editorSaveAsDraft,
-        publishDraft: editorPublishDraft,
-        saveAndExecute: editorSaveAndExecute,
         exportYaml: editorExportYaml,
         copyFlow: editorCopyFlow,
         deleteFlow: editorDeleteFlow,
@@ -168,21 +133,10 @@
     const shouldShowExecute = computed(() => {
         if (!flow.value || deleted.value) return false
         if (flowStore.isCreating) return false
+        // on a draft-only flow, only the Playground's Run all tasks can run it
+        if (flowStore.isDraftOnly && !(isEditTab.value && playgroundStore.enabled)) return false
         return !!canExecute.value
     })
-
-    // The single save-family control: publishing is what a draft is for, saving is what an
-    // already-published flow (or a flow being created) needs. The variant not taken stays
-    // reachable in the dropdown.
-    const isPublishAction = computed(() => editorIsDraft.value && !flowStore.isCreating)
-
-    const editorSaveOrPublish = () => {
-        if (isPublishAction.value) {
-            editorPublishDraft()
-            return
-        }
-        editorSave()
-    }
 
     const canEdit = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace),

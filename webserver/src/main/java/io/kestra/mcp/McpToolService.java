@@ -31,6 +31,7 @@ import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionStreamingService;
 import io.kestra.core.services.LabelService;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -191,7 +192,7 @@ public class McpToolService implements McpToolSource {
                         Map<String, Object> outputs = executionResult.getState().isSuccess() ? executionOutputService.getOutputs(executionResult) : null;
                         return Mono.just(
                             McpSchema.CallToolResult.builder()
-                                .structuredContent(outputs != null ? outputs : Map.of())
+                                .structuredContent(MapUtils.emptyOnNull(outputs))
                                 .isError(!executionResult.getState().isSuccess())
                                 .build()
                         );
@@ -219,7 +220,7 @@ public class McpToolService implements McpToolSource {
             )
         );
 
-        return flowInputOutput.resolveInputs(resolvedFlow.getInputs(), resolvedFlow, forValidation, input).stream()
+        return flowInputOutput.resolveInputsMasked(resolvedFlow.getInputs(), resolvedFlow, forValidation, input).stream()
             .filter(resolved -> resolved.exceptions() != null && !resolved.exceptions().isEmpty())
             .flatMap(resolved -> resolved.exceptions().stream())
             .map(Throwable::getMessage)

@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.execution;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -71,7 +70,7 @@ public class SetVariables extends Task implements ExecutionUpdatableTask {
         Map<String, Object> renderedVars = runContext.render(this.variables).asMap(String.class, Object.class);
         boolean renderedOverwrite = runContext.render(this.overwrite).as(Boolean.class).orElseThrow();
 
-        Map<String, Object> currentVariables = execution.getVariables() == null ? Collections.emptyMap() : execution.getVariables();
+        Map<String, Object> currentVariables = MapUtils.emptyOnNull(execution.getVariables());
 
         if (!renderedOverwrite) {
             // check that none of the new variables already exist

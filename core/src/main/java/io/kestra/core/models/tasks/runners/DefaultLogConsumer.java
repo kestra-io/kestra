@@ -32,7 +32,7 @@ public class DefaultLogConsumer extends AbstractLogConsumer {
             debugMode = false;
             return;
         }
-        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr, instant, debugMode));
+        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr, instant, debugMode, outputFiles));
 
         if (isStdErr) {
             this.stdErrCount.incrementAndGet();

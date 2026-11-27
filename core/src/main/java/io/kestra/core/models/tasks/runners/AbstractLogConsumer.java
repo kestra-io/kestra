@@ -1,8 +1,11 @@
 package io.kestra.core.models.tasks.runners;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
@@ -19,6 +22,9 @@ public abstract class AbstractLogConsumer implements BiConsumer<String, Boolean>
 
     @Getter
     protected final Map<String, Object> outputs = new HashMap<>();
+
+    @Getter
+    protected final Set<String> outputFiles = Collections.synchronizedSet(new HashSet<>());
 
     public abstract void accept(String line, Boolean isStdErr, Instant instant);
 

@@ -2,19 +2,24 @@ package io.kestra.core.runners;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.ExecutionResumedEvent;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -47,11 +52,15 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.flow.Pause;
 
+import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.core.io.buffer.ReadBufferFactory;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.multipart.CompletedAttribute;
+import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.multipart.FormFieldMetadata;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
@@ -98,6 +107,11 @@ class ExecutionServiceTest {
 
     @Inject
     TestRunnerUtils runnerUtils;
+
+    @BeforeEach
+    void resetResumeEvents() {
+        ResumeEventListener.reset();
+    }
 
     @Test
     @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
@@ -1212,5 +1226,121 @@ class ExecutionServiceTest {
         Execution result = executionService.retryFlowable(execution, "unknown");
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/pause_on_resume.yaml" })
+    void shouldPublishTheTaskRunAndMaskedInputsWhenResumingAPause() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_on_resume");
+        Flow flow = flowRepository.findByExecution(execution);
+        TaskRun paused = execution.findTaskRunsByTaskId("pause").getFirst();
+        Map<String, Object> inputs = executionService.readInputs(
+            execution,
+            flow,
+            Flux.just(
+                CompletedAttribute.create(new FormFieldMetadata("asked", null, null), ReadBufferFactory.getJdkFactory().adapt("yes".getBytes(StandardCharsets.UTF_8))),
+                CompletedAttribute.create(new FormFieldMetadata("secret_pause", null, null), ReadBufferFactory.getJdkFactory().adapt("s3cr3t".getBytes(StandardCharsets.UTF_8))),
+                CompletedFileUpload.ofMemory(new FormFieldMetadata("files", "data", MediaType.TEXT_PLAIN_TYPE), ReadBufferFactory.getJdkFactory().adapt("content".getBytes(StandardCharsets.UTF_8)))
+            )
+        ).block();
+
+        executionService.resume(execution, flow, State.Type.RUNNING, inputs, PausableTask.Resumed.now("john"));
+
+        ExecutionResumedEvent event = ResumeEventListener.find(execution.getId());
+        assertThat(event.getResume().taskRunId()).isEqualTo(paused.getId());
+        assertThat(event.getResume().taskId()).isEqualTo("pause");
+        assertThat(event.getResume().decision()).isNull();
+        assertThat(event.getResume().state()).isEqualTo(State.Type.RUNNING);
+        assertThat(event.getResume().inputs())
+            .containsEntry("asked", "yes")
+            .containsEntry("secret_pause", ExecutionResumedEvent.MASK)
+            .containsEntry("data", inputs.get("data"));
+        assertThat(inputs.get("data")).isInstanceOf(URI.class).asString().startsWith("kestra://");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-inputs.yaml" })
+    void shouldPublishTheDecisionAndInputsWhenDecidingAnApproval() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-inputs", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository.findByExecution(execution);
+        String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
+
+        executionService.decide(execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.DENIED, "no"), Map.of("reason", "too risky"));
+
+        ExecutionResumedEvent event = ResumeEventListener.find(execution.getId());
+        assertThat(event.getResume().taskRunId()).isEqualTo(taskRunId);
+        assertThat(event.getResume().taskId()).isEqualTo("approval");
+        assertThat(event.getResume().decision()).isEqualTo(PausableTask.Decision.Type.DENIED);
+        assertThat(event.getResume().state()).isEqualTo(State.Type.RUNNING);
+        assertThat(event.getResume().inputs()).containsExactlyEntriesOf(Map.of("reason", "too risky"));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/pause_on_resume.yaml" })
+    void shouldMaskAPlainTextSecretInputWhenResumingAPause() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_on_resume");
+        Flow flow = flowRepository.findByExecution(execution);
+
+        executionService.resume(execution, flow, State.Type.RUNNING, Map.of("asked", "yes", "secret_pause", "s3cr3t"), PausableTask.Resumed.now("john"));
+
+        assertThat(ResumeEventListener.find(execution.getId()).getResume().inputs())
+            .containsEntry("asked", "yes")
+            .containsEntry("secret_pause", ExecutionResumedEvent.MASK);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-inputs.yaml" })
+    void shouldPublishTheCancelledTaskRunWithoutDecisionWhenCancellingAnApproval() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-inputs", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository.findByExecution(execution);
+        String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
+
+        executionService.cancelApproval(execution, flow, taskRunId, null, false);
+
+        ExecutionResumedEvent event = ResumeEventListener.find(execution.getId());
+        assertThat(event.getResume().taskRunId()).isEqualTo(taskRunId);
+        assertThat(event.getResume().taskId()).isEqualTo("approval");
+        assertThat(event.getResume().state()).isEqualTo(State.Type.CANCELLED);
+        assertThat(event.getResume().decision()).isNull();
+        assertThat(event.getResume().inputs()).isNull();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/pause_no_tasks.yaml" })
+    void shouldNotPublishAResumeEventWhenKillingAPausedExecution() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_no_tasks");
+        Flow flow = flowRepository.findByExecution(execution);
+
+        executionService.kill(execution, flow);
+
+        assertThat(ResumeEventListener.events(execution.getId())).isEmpty();
+    }
+
+    @Singleton
+    public static class ResumeEventListener implements ApplicationEventListener<CrudEvent<Execution>> {
+        private static final List<ExecutionResumedEvent> EVENTS = new CopyOnWriteArrayList<>();
+
+        @Override
+        public void onApplicationEvent(CrudEvent<Execution> event) {
+            if (event instanceof ExecutionResumedEvent resumed) {
+                EVENTS.add(resumed);
+            }
+        }
+
+        static void reset() {
+            EVENTS.clear();
+        }
+
+        static List<ExecutionResumedEvent> events(String executionId) {
+            return EVENTS.stream()
+                .filter(event -> executionId.equals(event.getModel().getId()))
+                .toList();
+        }
+
+        static ExecutionResumedEvent find(String executionId) {
+            return events(executionId).stream()
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No resume event was published for execution '%s'.".formatted(executionId)));
+        }
     }
 }

@@ -68,6 +68,34 @@ describe("CustomColumns", () => {
         wrapper.unmount()
     })
 
+    test("keeps the resolved columns when the caller re-renders with a new empty visibleColumns array", async () => {
+        const wrapper = mountWith([], "rerender-empty")
+        await nextTick()
+
+        await wrapper.setProps({visibleColumns: []})
+
+        expect(countOf(wrapper)).toBe("2 of 2 columns visible")
+    })
+
+    test("keeps the stored columns when the caller re-renders with a new empty visibleColumns array", async () => {
+        localStorage.setItem("columns_rerender-stored", "b")
+        const wrapper = mountWith([], "rerender-stored")
+        await nextTick()
+
+        await wrapper.setProps({visibleColumns: []})
+
+        expect(countOf(wrapper)).toBe("1 of 2 columns visible")
+    })
+
+    test("follows the caller when visibleColumns changes", async () => {
+        const wrapper = mountWith(["a", "b"], "caller-driven")
+        await nextTick()
+
+        await wrapper.setProps({visibleColumns: ["a"]})
+
+        expect(countOf(wrapper)).toBe("1 of 2 columns visible")
+    })
+
     test("reports what was resolved without persisting it", async () => {
         const wrapper = mountWith([], "no-write-on-open")
 

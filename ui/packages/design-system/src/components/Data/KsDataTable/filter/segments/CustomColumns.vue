@@ -66,8 +66,8 @@
 
     onMounted(() => nextTick(() => searchInput.value?.focus()))
 
-    watch(() => props.visibleColumns, (columns) => {
-        currentVisibleColumns.value = columns
+    watch(() => props.visibleColumns.join(), () => {
+        currentVisibleColumns.value = props.visibleColumns
     })
 
     const selectableColumns = computed(() => props.columns.filter(c => !c.condition || c.condition()))

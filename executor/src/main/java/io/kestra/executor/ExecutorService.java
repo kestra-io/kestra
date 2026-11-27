@@ -702,10 +702,6 @@ public class ExecutorService {
             // handle flowable tasks Executor custom logic
             if (task instanceof FlowableTask<?>) {
                 try {
-                    if (task instanceof PausableTask pausableTask && taskRun.getState().getCurrent() == State.Type.CREATED) {
-                        this.handlePausableCreated(executor, pausableTask, taskRun);
-                    }
-
                     switch (task) {
                         case LoopUntil waitFor when taskRun.getState().getCurrent() == State.Type.RUNNING -> {
                             if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
@@ -912,9 +908,9 @@ public class ExecutorService {
             .toList();
     }
 
-    private void handlePausableCreated(ExecutorContext executor, PausableTask pausableTask, TaskRun taskRun) throws Exception {
-        RunContext runContext = runContextFactory.of(executor.getFlow(), (Task) pausableTask, executor.getExecution(), taskRun);
-        Map<String, Object> outputs = pausableTask.created(executor.getFlow(), executor.getExecution(), taskRun, runContext);
+    /** Runs {@link PausableTask#created} for a task run that is about to run; the caller has already ruled out a false runIf. */
+    public void pausableCreated(FlowWithSource flow, Execution execution, PausableTask pausableTask, TaskRun taskRun, RunContext runContext) throws Exception {
+        Map<String, Object> outputs = pausableTask.created(flow, execution, taskRun, runContext);
         if (!outputs.isEmpty()) {
             taskOutputService.saveOutputs(taskRun, MapUtils.merge(taskOutputService.getOutputs(taskRun), outputs));
         }
@@ -968,10 +964,6 @@ public class ExecutorService {
     private void handleFlowableChildCreated(ExecutorContext executor, TaskRun taskRun, List<TaskRun> onPauseTaskRuns) throws InternalException {
         Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
         try {
-            if (task instanceof PausableTask pausableTask && taskRun.getState().getCurrent() == State.Type.CREATED) {
-                this.handlePausableCreated(executor, pausableTask, taskRun);
-            }
-
             if (task instanceof Loop loop && !loop.isMySubExecution(executor.getExecution(), taskRun) && taskRun.getState().getCurrent() == State.Type.CREATED) {
                 this.handleLoopCreated(executor, loop, taskRun);
             } else if (task instanceof Pause pause && pause.getOnPause() != null) {

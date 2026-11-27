@@ -40,6 +40,7 @@ import io.kestra.core.worker.StickyWorkerRouting;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
 import io.kestra.executor.KillSwitchActionService;
+import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micronaut.context.BeanProvider;
@@ -330,6 +331,16 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                 )
                                             );
                                         } else {
+                                            if (workerTask.getTask() instanceof PausableTask pausableTask && workerTask.getTaskRun().getState().getCurrent() == State.Type.CREATED) {
+                                                try {
+                                                    executorService.pausableCreated(flow, processedExecution, pausableTask, workerTask.getTaskRun(), executorTask.runContext());
+                                                } catch (Exception e) {
+                                                    workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
+                                                    executorTask.runContext().logger().error("Failed to process flowable task {}: {}", workerTask.getTaskRun().getId(), e.getMessage(), e);
+                                                    return;
+                                                }
+                                            }
+
                                             if (workerTask.getTask().isSendToWorkerTask()) {
                                                 Optional<WorkerQueueRouting> routing = executorService.resolveWorkerQueue(flow, processedExecution, workerTask, executorTask.runContext());
                                                 // Internal dispatch convention: null = default queue. SystemTask routing

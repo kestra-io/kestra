@@ -194,6 +194,17 @@ class ApprovalRequestHandlerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-kill-running-sibling.yaml" })
+    void shouldOpenARequestForAnApprovalNestedInAFlowable() throws Exception {
+        runnerUtils.runOneUntil(
+            MAIN_TENANT, "io.kestra.tests", "approval-kill-running-sibling",
+            e -> e.findTaskRunsByTaskId("approval").stream().anyMatch(t -> t.getState().getCurrent() == State.Type.PAUSED)
+        );
+
+        verify(handler, times(1)).open(any(), any(), any(), any(), any());
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/approval-kill-onwait.yaml" })
     void shouldCloseTheRequestWhenTheExecutionIsKilledWhileTheApprovalRunsItsOnWait() throws Exception {
         Execution execution = runnerUtils.runOneUntil(
@@ -214,5 +225,40 @@ class ApprovalRequestHandlerTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         verify(handler, never()).open(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-run-if-false.yaml" })
+    void shouldNotOpenARequestWhenTheApprovalIsSkippedByRunIf() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "approval-run-if-false", null, null, Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("nested").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        verify(handler, never()).open(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-invalid-run-if.yaml" })
+    void shouldFailWithoutOpeningARequestWhenRunIfCannotBeRendered() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "approval-invalid-run-if", null, null, Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        verify(handler, never()).open(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-random-run-if.yaml" })
+    void shouldOpenARequestExactlyWhenARandomRunIfLetsTheApprovalRun() throws Exception {
+        // a runIf evaluated more than once per task run lets the request and the task run disagree about one run in two
+        for (int i = 0; i < 10; i++) {
+            clearInvocations(handler);
+            Execution execution = runnerUtils.runOneUntil(MAIN_TENANT, "io.kestra.tests", "approval-random-run-if", null, null, Duration.ofSeconds(30),
+                e -> e.getState().isPaused() || e.getState().isTerminated());
+
+            boolean skipped = execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent() == State.Type.SKIPPED;
+            verify(handler, times(skipped ? 0 : 1)).open(any(), any(), any(), any(), any());
+        }
     }
 }

@@ -1,0 +1,7 @@
+id: approval-random-run-if
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    runIf: "{{ randomInt(0, 2) == 1 }}"

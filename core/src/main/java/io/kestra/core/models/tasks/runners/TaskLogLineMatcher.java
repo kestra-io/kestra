@@ -33,6 +33,7 @@ import io.kestra.core.runners.AssetEmitter;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 
 import jakarta.inject.Singleton;
 
@@ -402,7 +403,7 @@ public class TaskLogLineMatcher {
         Map<String, String> checkpoints) {
         @Override
         public Map<String, Object> outputs() {
-            return Optional.ofNullable(outputs).orElse(Map.of());
+            return MapUtils.emptyOnNull(outputs);
         }
     }
 

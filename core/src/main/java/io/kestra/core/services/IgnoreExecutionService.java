@@ -11,6 +11,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.runners.ExecutionEvent;
+import io.kestra.core.utils.ListUtils;
 
 import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
@@ -30,7 +31,7 @@ public class IgnoreExecutionService {
     private volatile List<String> ignoredQueueRecords = Collections.emptyList();
 
     public synchronized void setIgnoredExecutions(List<String> ignoredExecutions) {
-        this.ignoredExecutions = ignoredExecutions == null ? Collections.emptyList() : ignoredExecutions;
+        this.ignoredExecutions = ListUtils.emptyOnNull(ignoredExecutions);
     }
 
     public synchronized void setIgnoredFlows(List<String> ignoredFlows) {
@@ -42,15 +43,15 @@ public class IgnoreExecutionService {
     }
 
     public synchronized void setIgnoredTenants(List<String> ignoredTenants) {
-        this.ignoredTenants = ignoredTenants == null ? Collections.emptyList() : ignoredTenants;
+        this.ignoredTenants = ListUtils.emptyOnNull(ignoredTenants);
     }
 
     public synchronized void setIgnoredIndexerRecords(List<String> ignoredIndexerRecords) {
-        this.ignoredIndexerRecords = ignoredIndexerRecords == null ? Collections.emptyList() : ignoredIndexerRecords;
+        this.ignoredIndexerRecords = ListUtils.emptyOnNull(ignoredIndexerRecords);
     }
 
     public synchronized void setIgnoredQueueRecords(List<String> ignoredQueueRecords) {
-        this.ignoredQueueRecords = ignoredQueueRecords == null ? Collections.emptyList() : ignoredQueueRecords;
+        this.ignoredQueueRecords = ListUtils.emptyOnNull(ignoredQueueRecords);
     }
 
     /**

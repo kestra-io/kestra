@@ -1,17 +1,13 @@
 package io.kestra.cli.commands.plugins;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.cli.ConsoleCapture;
+import io.kestra.core.PluginTemplateJar;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -21,22 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PluginListCommandTest {
 
-    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.24.0-SNAPSHOT.jar";
-
     @Test
-    void shouldListPluginsInstalledLocally() throws IOException, URISyntaxException {
+    void shouldListPluginsInstalledLocally() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginListCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
 
-        FileUtils.copyFile(
-            new File(
-                Objects.requireNonNull(
-                    PluginListCommandTest.class.getClassLoader()
-                        .getResource("plugins/" + PLUGIN_TEMPLATE_TEST)
-                ).toURI()
-            ),
-            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/" + PLUGIN_TEMPLATE_TEST))
-        );
+        PluginTemplateJar.copyTo(pluginsPath);
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString() };

@@ -15,6 +15,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.amazon.bedrock.AmazonBedrockAiService;
 import io.kestra.webserver.services.ai.amazon.bedrock.AmazonBedrockConfiguration;
@@ -84,7 +85,7 @@ public class AiServiceManager {
         this.kestraDocsContextTool = kestraDocsContextTool;
 
         List<AiProviderConfiguration> configs = new ArrayList<>(
-            providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
+            ListUtils.emptyOnNull(providersConfiguration.providers())
         );
         int declaredProviderCount = configs.size();
 

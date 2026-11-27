@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.utils.MapUtils;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,6 +28,6 @@ public record QueueJdbcConfiguration(
      * @return the JDBC configuration, or an empty map when none is provided.
      */
     public Map<String, Object> getJdbcConfig() {
-        return jdbc == null ? Map.of() : jdbc;
+        return MapUtils.emptyOnNull(jdbc);
     }
 }

@@ -51,7 +51,7 @@ class ListInstalledPluginsToolTest {
             .anyMatch(plugin -> CORE.equals(plugin.artifactId()) && plugin.types().getOrDefault(PluginKind.TASK, 0) > 0);
         assertThat(result.plugins())
             .anyMatch(plugin -> TEMPLATE.equals(plugin.artifactId())
-                && "0.24.0-SNAPSHOT".equals(plugin.version())
+                && "1.0.0-SNAPSHOT".equals(plugin.version())
                 && "io.kestra.plugin.templates".equals(plugin.group()));
         assertThat(result.total()).isEqualTo(result.plugins().size());
         assertThat(result.page()).isEqualTo(1);

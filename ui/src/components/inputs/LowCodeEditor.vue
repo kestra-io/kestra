@@ -327,6 +327,7 @@
     import action from "../../models/action"
     import resource from "../../models/resource"
     import {useCoreStore} from "../../stores/core"
+    import {useFlowEditorActions} from "../flows/useFlowEditorActions"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
@@ -577,6 +578,7 @@
     ])
 
     const coreStore = useCoreStore()
+    const {saveAsDraft} = useFlowEditorActions()
     const toast = useToast()
     const {t} = useI18n()
 
@@ -1070,15 +1072,8 @@
         taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
     }
 
-    async function saveFlow() {
-        const outcome = await flowStore.save?.(true)
-        if (outcome === "blocked") {
-            coreStore.message = {
-                variant: "error",
-                title: t("block_editor.save_blocked.title"),
-                content: flowStore.flowErrors?.join("\n") ?? t("block_editor.save_blocked.message"),
-            }
-        }
+    function saveFlow() {
+        return saveAsDraft()
     }
 
     // Only a lane of tasks can be filled from the task picker; every other list (e.g. flow

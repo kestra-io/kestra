@@ -79,6 +79,7 @@ public class FlowWithException extends FlowWithSource {
                 .namespace(jsonNode.get("namespace").asText())
                 .revision(jsonNode.hasNonNull("revision") ? jsonNode.get("revision").asInt() : 1)
                 .deleted(jsonNode.hasNonNull("deleted") && jsonNode.get("deleted").asBoolean())
+                .draft(jsonNode.hasNonNull("draft") && jsonNode.get("draft").asBoolean())
                 .disabled(jsonNode.hasNonNull("disabled") && jsonNode.get("disabled").asBoolean())
                 .exception(exception.getMessage())
                 .tasks(List.of())

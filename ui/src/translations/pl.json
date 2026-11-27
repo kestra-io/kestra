@@ -183,22 +183,9 @@
     "publish_draft": "Opublikuj szkic",
     "draft": "Wersja robocza",
     "draft_flow_warning": "Najnowsza wersja tego Flow jest szkicem. Egzekucja zostanie uruchomiona na najnowszej opublikowanej wersji. Opublikuj szkic (lub uruchom go w Playground), aby wykonać swoje najnowsze zmiany.",
-    "save_draft": "Zapisz szkic",
     "flow_publish": {
-      "description": "Ustawia tę wersję jako aktywną: Trigger uruchamia ją, inne Flowy mogą ją wywoływać, a jej błędy docierają do Flowów alertów.",
       "done_title": "Opublikowano",
-      "failed": "Nie można opublikować tego szkicu.",
       "done": "Wersja {revision} Flow {name} jest aktywna: Triggery go uruchamiają, inne Flowy mogą go wywoływać, a jego błędy docierają do Flowów alertów."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Ten Flow to szkic",
-        "description": "Nie ma opublikowanej wersji, więc triggery i inne Flowy go nie uruchamiają. Uruchom go z Playground lub opublikuj, aby był aktywny."
-      },
-      "over_published": {
-        "title": "Najnowsza wersja to szkic",
-        "description": "Harmonogramy, webhooki i inne Flowy nadal uruchamiają opublikowaną wersję, dopóki nie opublikujesz tego szkicu. Trigery Flow nie uruchamiają Flow w międzyczasie."
-      }
     },
     "save task": "Zapisz Task",
     "saved": "Pomyślnie zapisano",
@@ -1217,6 +1204,37 @@
     "export": "Eksportuj",
     "export_csv": "Eksportuj jako CSV",
     "flow_export": "Eksportuj Flow",
+    "flowAutosave": {
+      "savedLocally": {
+        "banner": "Zmiany w Flow są przechowywane w tej przeglądarce i zapisywane jako szkic, gdy serwer odpowie. Ten baner zniknie, gdy to nastąpi."
+      },
+      "conflictDialog": {
+        "title": "Flow zmieniony na serwerze",
+        "description": "Ktoś zapisał ten Flow, podczas gdy Twoje zmiany zostały zachowane lokalnie. Wybierz wersję do zachowania: druga zostanie odrzucona.",
+        "keepLocal": "Zachowaj moje zmiany",
+        "takeServer": "Użyj wersji serwerowej"
+      },
+      "restoreNew": {
+        "title": "Przywrócić niezapisany Flow?",
+        "message": "Flow, który pisałeś w tej przeglądarce, nigdy nie został utworzony. Przywróć go lub zacznij od tego i odrzuć go.",
+        "restore": "Przywróć",
+        "discard": "Odrzuć"
+      }
+    },
+    "flowSaveStatus": {
+      "upToDate": "Aktualne z wersją {revision}",
+      "saving": "Zapisywanie szkicu...",
+      "draft": "Szkic zapisany · różni się od wersji {revision}",
+      "draftUnpublished": "Szkic zapisany · jeszcze nieopublikowany",
+      "invalid": "Szkic zapisany · {count} błąd do naprawienia przed publikacją | Szkic zapisany · {count} błędy do naprawienia przed publikacją | Szkic zapisany · {count} błędów do naprawienia przed publikacją",
+      "offline": "Zapisano tylko w tej przeglądarce · ponawianie",
+      "published": "Opublikowano jako wersja {revision}",
+      "viewChanges": "Wyświetl zmiany",
+      "discard": "Odrzuć szkic",
+      "discardConfirm": "Odrzucić szkic i wrócić do wersji {revision}? Twoje nieopublikowane zmiany zostaną utracone.",
+      "executeBlocked": "Egzekucja uruchamia opublikowaną wersję. Najpierw opublikuj swoje zmiany lub wypróbuj je w trybie Playground.",
+      "executeBlockedInvalid": "Napraw {count} błąd, a następnie opublikuj, aby uruchomić zmiany. | Napraw {count} błędy, a następnie opublikuj, aby uruchomić zmiany. | Napraw {count} błędów, a następnie opublikuj, aby uruchomić zmiany."
+    },
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> Flowów?",
     "flows exported": "Wyeksportowano <code>{count}</code> Flowów",
     "import": "Importuj",
@@ -2826,7 +2844,6 @@
     "delete revision error": "Błąd podczas usuwania wersji {revision}: {error}",
     "no_history": "Brak dostępnej historii",
     "export_as": "Eksportuj jako .{format}",
-    "save_and_execute": "Zapisz i Wykonaj",
     "welcome_copilot": {
       "button_cta": "Utwórz Flow od podstaw",
       "need_help": "Potrzebujesz pomocy?",
@@ -3184,10 +3201,6 @@
       "required_unset_jump": "Przejdź do pierwszego",
       "required_unset_plural": "{count} wymaganych pól nie jest jeszcze ustawionych",
       "required_unset_singular": "1 wymagane pole nie jest jeszcze ustawione",
-      "save_blocked": {
-        "message": "Napraw błędy przed zapisaniem.",
-        "title": "Nie można zapisać Flow"
-      },
       "schema_default_tooltip": "Wartość domyślna używana, gdy pole nie jest ustawione",
       "search_task_placeholder": "Wyszukaj lub opisz Task…",
       "shortcuts": {

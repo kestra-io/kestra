@@ -5,6 +5,7 @@ import KestraDesignSystem from "@kestra-io/design-system"
 import ServerUnreachableBanner from "./ServerUnreachableBanner.vue"
 import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY} from "../composables/useServerReachability"
 import en from "../translations/en.json"
+import {useFlowAutosaveStore} from "../stores/flowAutosave"
 
 const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en}})
 
@@ -49,5 +50,20 @@ export const ClearsWhenTheServerResponds: Story = {
         markServerReachable()
 
         await waitFor(() => expect(canvas.queryByText("Cannot reach the Kestra server")).toBeNull())
+    },
+}
+
+export const KeepsFlowEditsLocally: Story = {
+    async play({canvasElement}) {
+        const autosave = useFlowAutosaveStore()
+        autosave.status = "offline"
+        markServerUnreachable()
+        const canvas = within(canvasElement)
+
+        await expect(await canvas.findByText(/kept in this browser/, {}, {timeout: UNREACHABLE_DELAY + 1_000})).toBeVisible()
+        await expect(canvas.queryByText(/Copy any unsaved work/)).toBeNull()
+
+        autosave.status = "idle"
+        markServerReachable()
     },
 }

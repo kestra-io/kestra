@@ -39,6 +39,11 @@ vi.mock("../../stores/flow", async () => {
     })
     return {useFlowStore: () => store}
 })
+const autosaveSync = vi.fn().mockResolvedValue(undefined)
+vi.mock("../../stores/flowAutosave", () => ({
+    useFlowAutosaveStore: () => ({sync: autosaveSync, settle: vi.fn()}),
+}))
+
 vi.mock("../../composables/useViolationMarkers", async () => {
     const {shallowRef} = await import("vue")
     const markers = shallowRef<unknown[]>([])
@@ -330,15 +335,17 @@ describe("FlowFileEditorTab", () => {
         expect(useFlowStore().errorNavigation?.count).toBe(2)
     })
 
-    it("should save a draft on the editor's save shortcut", async () => {
+    it("should push the pending autosave instead of publishing when the editor saves", async () => {
         const flowStore = useFlowStore() as unknown as {saveAll: ReturnType<typeof vi.fn>}
         flowStore.saveAll.mockReset()
+        autosaveSync.mockClear()
         const wrapper = mountWithTabContext(FlowFileEditorTab, flowTabProps)
         await flushPromises()
 
         wrapper.findComponent({name: "KsEditor"}).vm.$emit("save")
         await flushPromises()
 
-        expect(flowStore.saveAll).toHaveBeenCalledExactlyOnceWith(true)
+        expect(autosaveSync).toHaveBeenCalledOnce()
+        expect(flowStore.saveAll).not.toHaveBeenCalled()
     })
 })

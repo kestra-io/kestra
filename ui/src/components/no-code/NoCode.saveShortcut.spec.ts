@@ -2,15 +2,17 @@ import {afterEach, describe, expect, it, vi} from "vitest"
 import {computed, defineComponent, h, inject} from "vue"
 import {mount} from "@vue/test-utils"
 
-const {flowStore, pluginsStore, injected} = vi.hoisted(() => ({
+const {flowStore, pluginsStore, injected, saveAsDraft} = vi.hoisted(() => ({
     flowStore: {} as Record<string, unknown>,
     pluginsStore: {} as Record<string, unknown>,
     injected: {} as {saveFlow?: () => void},
+    saveAsDraft: vi.fn(),
 }))
 
 vi.mock("../../stores/flow", () => ({useFlowStore: () => flowStore}))
 vi.mock("../../stores/plugins", () => ({usePluginsStore: () => pluginsStore}))
 vi.mock("./utils/useKeyboardSave", () => ({useKeyboardSave: () => undefined}))
+vi.mock("../flows/useFlowEditorActions", () => ({useFlowEditorActions: () => ({saveAsDraft})}))
 vi.mock("./utils/useFlowFields", async (importOriginal) => ({
     ...await importOriginal<typeof import("./utils/useFlowFields")>(),
     useFlowFields: () => ({fieldsFromSchemaTop: computed(() => []), fieldsFromSchemaRest: computed(() => [])}),
@@ -35,13 +37,8 @@ afterEach(() => {
 })
 
 describe("NoCode save shortcut provided to fields", () => {
-    it.each([
-        {state: "a published flow", draft: false},
-        {state: "a draft", draft: true},
-    ])("saves $state as a draft, never publishing it", ({draft}) => {
-        const save = vi.fn()
-        flowStore.save = save
-        flowStore.flow = {id: "f", namespace: "ns", draft}
+    it("routes a field's save shortcut to the editor's draft save", () => {
+        flowStore.flow = {id: "f", namespace: "ns", draft: false}
         flowStore.flowYaml = "id: f"
         pluginsStore.flowSchema = {}
 
@@ -51,6 +48,6 @@ describe("NoCode save shortcut provided to fields", () => {
         })
         injected.saveFlow?.()
 
-        expect(save).toHaveBeenCalledExactlyOnceWith(true)
+        expect(saveAsDraft).toHaveBeenCalledOnce()
     })
 })

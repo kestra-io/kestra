@@ -66,11 +66,13 @@ test.describe("Flow editor with namespace files open", () => {
         await editor.expectContent(file, "last line without newline")
         await editor.selectTab(FLOW_TAB)
 
-        for (const [round, save] of [[1, "button"], [2, "shortcut"], [3, "button"]] as const) {
+        // Only Publish adds a revision: the shortcut saves a draft, which the next Publish takes over.
+        for (const [round, save, revision] of [[1, "button", 2], [2, "shortcut", 3], [3, "button", 3]] as const) {
             await test.step(`save the flow, round ${round} (${save})`, async () => {
                 await editor.typeAtEnd(FLOW_TAB, `_${round}`)
-                await (save === "button" ? editor.clickSave() : editor.pressSave())
-                await expect.poll(async () => (await flowsApi.getFlowViaApi(namespace, FLOW_ID)).revision).toBe(round + 1)
+                await (save === "button" ? editor.clickPublish() : editor.pressSave())
+                await expect.poll(async () => (await flowsApi.getFlowViaApi(namespace, FLOW_ID)).source).toContain(`_${round}`)
+                await expect.poll(async () => (await flowsApi.getFlowViaApi(namespace, FLOW_ID)).revision).toBe(revision)
             })
             // Activating the file tab reloads it from the server, which is where a stale read used to slip in.
             await editor.selectTab(file)
@@ -82,7 +84,7 @@ test.describe("Flow editor with namespace files open", () => {
             await editor.selectTab(FLOW_TAB)
             await editor.typeAtEnd(FLOW_TAB, "_4")
             await editor.pressSave()
-            await expect.poll(async () => (await flowsApi.getFlowViaApi(namespace, FLOW_ID)).revision).toBe(5)
+            await expect.poll(async () => (await flowsApi.getFlowViaApi(namespace, FLOW_ID)).revision).toBe(4)
         })
 
         expect(await filesApi.readFile("script.py")).toBe(content)
@@ -103,8 +105,8 @@ test.describe("Flow editor with namespace files open", () => {
         await editor.typeAtEnd(fileTabId("b.txt"), " edited in b")
 
         await editor.selectTab(FLOW_TAB)
-        await expect(editor.page.getByRole("button", {name: "Save draft", exact: true})).toBeEnabled()
-        await editor.clickSave()
+        await expect(editor.page.locator("[data-test=\"flow-publish\"]")).toBeEnabled()
+        await editor.clickPublish()
 
         await expect.poll(() => filesApi.readFile("a.txt")).toBe("alpha edited in a")
         await expect.poll(() => filesApi.readFile("b.txt")).toBe("beta edited in b")
@@ -144,7 +146,7 @@ test.describe("Flow editor with namespace files open", () => {
         await editor.closeTab(file)
 
         await editor.typeAtEnd(FLOW_TAB, "_edited")
-        await editor.clickSave()
+        await editor.clickPublish()
         await expect.poll(async () => (await flowsApi.getFlowViaApi(namespace, FLOW_ID)).revision).toBe(2)
 
         expect(await filesApi.readFile("notes.txt")).toBe("kept as is")
@@ -163,7 +165,7 @@ test.describe("Flow editor with namespace files open", () => {
         await expect(editor.dirtyMarker(file)).toBeVisible()
 
         await editor.selectTab(FLOW_TAB)
-        await editor.clickSave()
+        await editor.clickPublish()
 
         await expect.poll(() => filesApi.readFile("notes.txt"), {timeout: 5000}).toBe("")
         await expect(editor.dirtyMarker(file)).toHaveCount(0)

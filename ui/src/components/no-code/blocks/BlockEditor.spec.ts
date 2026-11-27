@@ -112,7 +112,7 @@ tasks:
 
 const mockFlowYaml = ref(SIMPLE_YAML)
 const mockOnEdit = vi.fn()
-const mockFlowSave = vi.fn()
+const mockSaveAsDraft = vi.fn()
 const mockFlow = {id: "my_flow", namespace: "company.team", draft: false}
 
 // --- Store and UI mocks ---
@@ -129,8 +129,11 @@ vi.mock("../../../stores/flow", () => ({
         set flowYaml(v: string) { mockFlowYaml.value = v },
         flow: mockFlow,
         onEdit: mockOnEdit,
-        save: mockFlowSave,
     }),
+}))
+
+vi.mock("../../flows/useFlowEditorActions", () => ({
+    useFlowEditorActions: () => ({saveAsDraft: mockSaveAsDraft}),
 }))
 
 const mockPlugins = [
@@ -1147,24 +1150,17 @@ describe("BlockEditor", () => {
         beforeEach(() => {
             confirmMock.mockClear()
             confirmMock.mockResolvedValue(undefined)
-            mockFlowSave.mockClear()
+            mockSaveAsDraft.mockClear()
             mockFlow.draft = false
         })
 
-        it.each([
-            ["a draft flow", true],
-            ["a published flow", false],
-        ])("Cmd+S saves %s as a draft", async (_label, draft) => {
-            // Given
-            mockFlow.draft = draft
+        it("Cmd+S saves through the editor's draft save, like the other editor tabs", async () => {
             wrapper = mountBlockEditor()
 
-            // When
             windowKeydown({key: "s", metaKey: true})
             await flushPromises()
 
-            // Then
-            expect(mockFlowSave).toHaveBeenCalledExactlyOnceWith(true)
+            expect(mockSaveAsDraft).toHaveBeenCalledOnce()
         })
 
         it("Delete key removes the selected leaf task after confirmation", async () => {

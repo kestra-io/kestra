@@ -1,4 +1,4 @@
-import {computed, h} from "vue"
+import {computed, h, nextTick} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 
@@ -7,6 +7,8 @@ import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow"
 import {useExecutionsStore} from "../../stores/executions"
 import {useProductTourStore} from "../../stores/productTour"
 import {usePlaygroundStore} from "../../stores/playground"
+import {useFlowAutosaveStore} from "../../stores/flowAutosave"
+import {useFlowSaveStatus} from "./useFlowSaveStatus"
 import {usePluginsStore} from "../../stores/plugins"
 import {useMiscStore} from "override/stores/misc"
 import {useCoreStore} from "../../stores/core"
@@ -31,6 +33,15 @@ export function useFlowEditorActions() {
     const hasFlowSourceChange = computed(() => flowStore.haveChange)
     const haveChange = computed(() => hasFlowSourceChange.value || flowStore.hasDirtyEditorFiles)
     const canSave = computed(() => haveChange.value || flowStore.isCreating)
+    const {canPublish, hasUnpublishedChanges, state: saveState, errorCount} = useFlowSaveStatus()
+    const executeBlockedReason = computed(() => {
+        if (!hasUnpublishedChanges.value) return undefined
+        return saveState.value === "invalid"
+            ? t("flowSaveStatus.executeBlockedInvalid", {count: errorCount.value}, errorCount.value)
+            : t("flowSaveStatus.executeBlocked")
+    })
+    const publishHighlighted = computed(() => useFlowAutosaveStore().publishHighlighted)
+    const pointToPublish = () => useFlowAutosaveStore().pointToPublish()
     const hasErrors = computed(() => (flowStore.flowErrors?.length ?? 0) > 0)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
@@ -176,14 +187,33 @@ export function useFlowEditorActions() {
         }
     }
 
-    /** Publishes the editor's content, unsaved changes included, without saving a draft first. */
+    /** The Publish button: pushes the pending autosave first, so the publish is the last write. */
     async function publish() {
+        const autosave = useFlowAutosaveStore()
+        await autosave.settle()
         await saveFlow(false)
+        const flow = flowStore.flow
+        if (flow?.revision && !flow.draft && !flowStore.haveChange) autosave.notePublished(flow.revision)
     }
 
-    /** Saves the editor's content as a draft, the Ctrl/Cmd+S shortcut; a no-op without unsaved changes. */
+    /** The Ctrl/Cmd+S shortcut: creates a new flow as a draft, otherwise pushes the pending autosave now. */
     async function saveAsDraft() {
-        await saveFlow(true)
+        if (flowStore.isCreating) {
+            await saveFlow(true)
+            return
+        }
+        try {
+            const autosave = useFlowAutosaveStore()
+            // The last form edit can reach the YAML a tick after the shortcut fires.
+            await nextTick()
+            await autosave.sync()
+            await flushDirtyFiles()
+            if (autosave.status === "idle" && flowStore.flow?.draft) {
+                toast.success(t("saved as draft done", {name: flowStore.flow.id}), t("saved as draft"))
+            }
+        } catch (error) {
+            reportSaveError(error)
+        }
     }
 
     async function saveFlow(draft: boolean) {
@@ -193,6 +223,15 @@ export function useFlowEditorActions() {
             const outcome = await triggerPluginInstallIfNeeded()
             if (outcome === "failed" || outcome === "timeout") return
             await persistAll(draft)
+        } catch (error) {
+            reportSaveError(error)
+        }
+    }
+
+    /** The Create button: creates the flow as a draft, which fixes its id and hands it to autosave. */
+    async function createDraft() {
+        try {
+            await persistAll(true)
         } catch (error) {
             reportSaveError(error)
         }
@@ -326,6 +365,10 @@ export function useFlowEditorActions() {
         haveChange,
         hasFlowSourceChange,
         canSave,
+        canPublish,
+        executeBlockedReason,
+        publishHighlighted,
+        pointToPublish,
         hasErrors,
         isReadOnly,
         isAllowedEdit,
@@ -337,6 +380,7 @@ export function useFlowEditorActions() {
         /** @deprecated since 2.1, use `publish` instead. */
         save: publish,
         saveAsDraft,
+        createDraft,
         publishDraft,
         saveAndExecute,
         exportYaml,

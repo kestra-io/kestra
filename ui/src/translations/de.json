@@ -183,22 +183,9 @@
     "publish_draft": "Entwurf veröffentlichen",
     "draft": "Entwurf",
     "draft_flow_warning": "Die neueste Revision dieses Flows ist ein Entwurf. Die Execution verwendet stattdessen die neueste veröffentlichte Revision. Veröffentliche den Entwurf (oder führe ihn im Playground aus), um deine letzten Änderungen auszuführen.",
-    "save_draft": "Entwurf speichern",
     "flow_publish": {
-      "description": "Macht diese Revision live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows.",
       "done_title": "Veröffentlicht",
-      "failed": "Dieser Entwurf konnte nicht veröffentlicht werden.",
       "done": "Revision {revision} von {name} ist live: Trigger starten sie, andere Flows können sie aufrufen und ihre Fehler erreichen Alert-Flows."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Dieser Flow ist ein Entwurf",
-        "description": "Es hat keine veröffentlichte Revision, daher starten Trigger und andere Flows es nicht. Führe es im Playground aus oder veröffentliche es, um es live zu schalten."
-      },
-      "over_published": {
-        "title": "Die neueste Revision ist ein Entwurf",
-        "description": "Zeitpläne, Webhooks und andere Flows führen weiterhin die veröffentlichte Revision aus, bis du diesen Entwurf veröffentlichst. Flow Trigger starten den Flow in der Zwischenzeit nicht."
-      }
     },
     "save task": "Task speichern",
     "saved": "Erfolgreich gespeichert",
@@ -1217,6 +1204,37 @@
     "export": "Exportieren",
     "export_csv": "Als CSV exportieren",
     "flow_export": "Flow exportieren",
+    "flowAutosave": {
+      "savedLocally": {
+        "banner": "Deine Flow-Änderungen werden in diesem Browser gespeichert und als Entwurf gesichert, sobald der Server antwortet. Dieser Banner verschwindet dann."
+      },
+      "conflictDialog": {
+        "title": "Flow auf dem Server geändert",
+        "description": "Jemand hat diesen Flow gespeichert, während deine Änderungen lokal gespeichert wurden. Wähle aus, welche Version du behalten möchtest: die andere wird verworfen.",
+        "keepLocal": "Meine Änderungen behalten",
+        "takeServer": "Serverversion verwenden"
+      },
+      "restoreNew": {
+        "title": "Deinen ungespeicherten Flow wiederherstellen?",
+        "message": "Ein Flow, den du in diesem Browser geschrieben hast, wurde nie erstellt. Stelle ihn wieder her oder beginne mit diesem und verwerfe ihn.",
+        "restore": "Wiederherstellen",
+        "discard": "Verwerfen"
+      }
+    },
+    "flowSaveStatus": {
+      "upToDate": "Auf dem neuesten Stand mit Revision {revision}",
+      "saving": "Entwurf wird gespeichert...",
+      "draft": "Entwurf gespeichert · unterscheidet sich von Revision {revision}",
+      "draftUnpublished": "Entwurf gespeichert · noch nicht veröffentlicht",
+      "invalid": "Entwurf gespeichert · {count} Fehler muss vor der Veröffentlichung behoben werden | Entwurf gespeichert · {count} Fehler müssen vor der Veröffentlichung behoben werden",
+      "offline": "Nur in diesem Browser gespeichert · erneuter Versuch",
+      "published": "Veröffentlicht als Revision {revision}",
+      "viewChanges": "Änderungen anzeigen",
+      "discard": "Entwurf verwerfen",
+      "discardConfirm": "Entwurf verwerfen und zu Revision {revision} zurückkehren? Deine unveröffentlichten Änderungen gehen verloren.",
+      "executeBlocked": "Execute führt die veröffentlichte Revision aus. Veröffentliche zuerst deine Änderungen oder probiere sie im Playground aus.",
+      "executeBlockedInvalid": "Behebe {count} Fehler und veröffentliche dann, um deine Änderungen auszuführen. | Behebe {count} Fehler und veröffentliche dann, um deine Änderungen auszuführen."
+    },
     "flow export": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich exportieren?",
     "flows exported": "<code>{count}</code> Flow(s) exportiert",
     "import": "Importieren",
@@ -2826,7 +2844,6 @@
     "delete revision error": "Fehler beim Löschen der Revision {revision}: {error}",
     "no_history": "Keine Historie verfügbar",
     "export_as": "Als .{format} exportieren",
-    "save_and_execute": "Speichern & Ausführen",
     "welcome_copilot": {
       "button_cta": "Flow von Grund auf erstellen",
       "need_help": "Brauchst du Hilfe?",
@@ -3184,10 +3201,6 @@
       "required_unset_jump": "Zum ersten springen",
       "required_unset_plural": "{count} Pflichtfelder sind noch nicht gesetzt",
       "required_unset_singular": "1 Pflichtfeld ist noch nicht gesetzt",
-      "save_blocked": {
-        "message": "Behebe die Fehler vor dem Speichern.",
-        "title": "Der Flow kann nicht gespeichert werden"
-      },
       "schema_default_tooltip": "Standardwert, der verwendet wird, wenn das Feld nicht gesetzt ist",
       "search_task_placeholder": "Task suchen oder beschreiben…",
       "shortcuts": {

@@ -53,6 +53,7 @@ function mountFlowRootTopBar() {
                         </div>
                     `,
                 },
+                FlowSaveStatus: true,
                 Badge: {
                     props: ["label"],
                     template: "<span class=\"badge\">{{ label }}</span>",

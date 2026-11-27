@@ -1627,7 +1627,7 @@ class FlowServiceTest {
 
         List<TriggerEvent> events = publishAfterDraft(flowId, scheduleSource(flowId, false, "0 0 * * *"), flowSource(flowId, true, "", ""), flowSource(flowId, false, "", ""));
 
-        assertThat(events).singleElement().isInstanceOfSatisfying(TriggerDeleted.class, deleted -> assertThat(deleted.revision()).isEqualTo(3));
+        assertThat(events).singleElement().isInstanceOfSatisfying(TriggerDeleted.class, deleted -> assertThat(deleted.revision()).isEqualTo(2));
     }
 
     @Test

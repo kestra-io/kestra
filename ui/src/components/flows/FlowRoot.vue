@@ -3,7 +3,6 @@
         <FlowRootTopBar
             :routeInfo="routeInfo"
         />
-        <FlowDraftBanner />
         <Tabs
             :key="loadedFlowKey"
             :routeName="routeName"
@@ -18,7 +17,6 @@
     import useRouteContext from "../../composables/useRouteContext"
     import Tabs from "../../components/Tabs.vue"
     import FlowRootTopBar from "./FlowRootTopBar.vue"
-    import FlowDraftBanner from "./FlowDraftBanner.vue"
 
     withDefaults(defineProps<{embed?: boolean}>(), {embed: false})
 

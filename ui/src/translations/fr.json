@@ -183,22 +183,9 @@
     "publish_draft": "Publier le brouillon",
     "draft": "Brouillon",
     "draft_flow_warning": "La dernière révision de ce flow est un brouillon. L'exécution utilisera la dernière révision publiée ; publiez le brouillon (ou exécutez-le depuis le Playground) pour exécuter vos derniers changements.",
-    "save_draft": "Enregistrer le brouillon",
     "flow_publish": {
-      "description": "Rend cette révision active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte.",
       "done_title": "Publié",
-      "failed": "Impossible de publier ce brouillon.",
       "done": "La révision {revision} de {name} est active : les triggers la démarrent, d'autres flows peuvent l'appeler, et ses échecs atteignent les flows d'alerte."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Ce flow est un brouillon",
-        "description": "Il n'a pas de révision publiée, donc les triggers et autres flows ne le démarrent pas. Exécutez-le depuis le Playground, ou publiez-le pour le rendre actif."
-      },
-      "over_published": {
-        "title": "La dernière révision est un brouillon",
-        "description": "Les planifications, les webhooks et les autres flows exécutent toujours la révision publiée jusqu'à ce que vous publiiez ce brouillon. Les triggers de Flow ne démarrent pas le flow pendant ce temps."
-      }
     },
     "save task": "Enregistrer la tâche",
     "saved": "Enregistrement réussi",
@@ -1217,6 +1204,37 @@
     "export": "Exporter",
     "export_csv": "Exporter en CSV",
     "flow_export": "Exporter le flow",
+    "flowAutosave": {
+      "savedLocally": {
+        "banner": "Vos modifications de flow sont conservées dans ce navigateur et enregistrées en tant que brouillon une fois que le serveur répond. Cette bannière disparaît à ce moment-là."
+      },
+      "conflictDialog": {
+        "title": "Le Flow a été modifié sur le serveur",
+        "description": "Quelqu'un a enregistré ce flow pendant que vos modifications étaient conservées localement. Choisissez la version à conserver : l'autre sera ignorée.",
+        "keepLocal": "Conserver mes modifications",
+        "takeServer": "Utiliser la version serveur"
+      },
+      "restoreNew": {
+        "title": "Restaurer votre flow non enregistré ?",
+        "message": "Un flow que vous écriviez dans ce navigateur n'a jamais été créé. Restaurez-le, ou partez de celui-ci et supprimez-le.",
+        "restore": "Restaurer",
+        "discard": "Annuler"
+      }
+    },
+    "flowSaveStatus": {
+      "upToDate": "À jour avec la révision {revision}",
+      "saving": "Enregistrement du brouillon...",
+      "draft": "Brouillon enregistré · diffère de la révision {revision}",
+      "draftUnpublished": "Brouillon enregistré · pas encore publié",
+      "invalid": "Brouillon enregistré · {count} erreur à corriger avant publication | Brouillon enregistré · {count} erreurs à corriger avant publication",
+      "offline": "Enregistré dans ce navigateur uniquement · nouvelle tentative",
+      "published": "Publié en tant que révision {revision}",
+      "viewChanges": "Voir les modifications",
+      "discard": "Supprimer le brouillon",
+      "discardConfirm": "Annuler le brouillon et revenir à la révision {revision} ? Vos modifications non publiées seront perdues.",
+      "executeBlocked": "Exécuter lance la révision publiée. Publiez d'abord vos modifications, ou essayez-les dans le Playground.",
+      "executeBlockedInvalid": "Corrigez {count} erreur, puis publiez pour appliquer vos modifications. | Corrigez {count} erreurs, puis publiez pour appliquer vos modifications."
+    },
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exporté(s)",
     "import": "Importer",
@@ -2826,7 +2844,6 @@
     "delete revision error": "Erreur lors de la suppression de la révision {revision} avec l'erreur {error}",
     "no_history": "Aucun historique disponible",
     "export_as": "Exporter en .{format}",
-    "save_and_execute": "Enregistrer & Exécuter",
     "welcome_copilot": {
       "button_cta": "Créer un flow à partir de zéro",
       "need_help": "Besoin d'aide ?",
@@ -3184,10 +3201,6 @@
       "required_unset_jump": "Aller au premier",
       "required_unset_plural": "{count} champs obligatoires ne sont pas encore renseignés",
       "required_unset_singular": "1 champ obligatoire n'est pas encore renseigné",
-      "save_blocked": {
-        "message": "Corrigez les erreurs avant d'enregistrer.",
-        "title": "Impossible d'enregistrer le flow"
-      },
       "schema_default_tooltip": "Valeur par défaut utilisée lorsque le champ n'est pas défini",
       "search_task_placeholder": "Rechercher ou décrire une tâche…",
       "shortcuts": {

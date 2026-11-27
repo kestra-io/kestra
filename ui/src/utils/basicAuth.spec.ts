@@ -1,5 +1,5 @@
-import {afterEach, describe, expect, it} from "vitest"
-import {isLoggedIn} from "./basicAuth"
+import {afterEach, describe, expect, it, vi} from "vitest"
+import {isLoggedIn, logout} from "./basicAuth"
 
 function setCookieJar(cookie: string) {
     Object.defineProperty(document, "cookie", {
@@ -51,5 +51,19 @@ describe("isLoggedIn", () => {
         setCookieJar("kestraBasicAuthenticated= true")
 
         expect(isLoggedIn()).toBe(false)
+    })
+})
+
+describe("logout", () => {
+    afterEach(() => vi.unstubAllGlobals())
+
+    it.each([
+        ["the server ends the session", () => Promise.resolve({ok: true}), true],
+        ["the server rejects the request", () => Promise.resolve({ok: false}), false],
+        ["the browser is offline", () => Promise.reject(new TypeError("Failed to fetch")), false],
+    ])("confirms the logout only when %s", async (_case, answer, confirmed) => {
+        vi.stubGlobal("fetch", vi.fn(answer))
+
+        expect(await logout()).toBe(confirmed)
     })
 })

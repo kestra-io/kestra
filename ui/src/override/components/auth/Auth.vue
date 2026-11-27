@@ -64,6 +64,7 @@
     import Slack from "vue-material-design-icons/Slack.vue"
     import KS_LOGO from "../../../assets/ks-logo-small.svg"
     import * as BasicAuth from "../../../utils/basicAuth"
+    import {clearAutosaveBuffers} from "../../../utils/flowAutosaveStorage"
     import VersionMenuItem from "../../../components/layout/VersionMenuItem.vue"
     import {useMiscStore} from "override/stores/misc"
     import ChangePasswordDialog from "../../../components/basicauth/ChangePasswordDialog.vue"
@@ -98,7 +99,7 @@
     }
 
     function logout() {
-        BasicAuth.logout()
+        BasicAuth.logout().then(confirmed => confirmed && clearAutosaveBuffers())
         delete axios.defaults.headers.common["Authorization"]
         router.push({name: "login"})
     }

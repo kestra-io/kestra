@@ -183,22 +183,9 @@
     "publish_draft": "下書きを公開",
     "draft": "下書き",
     "draft_flow_warning": "この flow の最新リビジョンは下書きです。実行は代わりに最新の公開済みリビジョンに対して行われます。最新の変更を実行するには、下書きを公開するか Playground から実行してください。",
-    "save_draft": "ドラフトを保存",
     "flow_publish": {
-      "description": "このリビジョンを有効にします: Triggerが開始し、他のFlowが呼び出すことができ、その失敗はアラートFlowに到達します。",
       "done_title": "公開済み",
-      "failed": "このドラフトを公開できませんでした。",
       "done": "{name} のリビジョン {revision} が稼働中です: Trigger が開始し、他の Flow が呼び出すことができ、その障害はアラート Flow に到達します。"
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "このFlowはドラフトです",
-        "description": "公開されたリビジョンがないため、トリガーや他のFlowは開始しません。Playgroundから実行するか、公開してライブにしてください。"
-      },
-      "over_published": {
-        "title": "最新のリビジョンはドラフトです",
-        "description": "スケジュール、Webhook、その他のFlowは、このドラフトを公開するまで公開済みのリビジョンを実行します。その間、Flow triggerはFlowを開始しません。"
-      }
     },
     "save task": "Taskを保存",
     "saved": "正常に保存されました",
@@ -1217,6 +1204,37 @@
     "export": "エクスポート",
     "export_csv": "CSVとしてエクスポート",
     "flow_export": "フローをエクスポート",
+    "flowAutosave": {
+      "savedLocally": {
+        "banner": "Flowの変更はブラウザに保持され、サーバーが応答するとドラフトとして保存されます。応答するとこのバナーは消えます。"
+      },
+      "conflictDialog": {
+        "title": "サーバー上でFlowが変更されました",
+        "description": "誰かがこのFlowを保存しましたが、あなたの変更はローカルに保持されています。どちらのバージョンを保持するか選択してください。もう一方は破棄されます。",
+        "keepLocal": "変更を保持",
+        "takeServer": "サーバーバージョンを使用"
+      },
+      "restoreNew": {
+        "title": "保存されていないFlowを復元しますか？",
+        "message": "このブラウザで作成していたFlowは作成されませんでした。復元するか、このFlowから開始して破棄してください。",
+        "restore": "復元",
+        "discard": "破棄"
+      }
+    },
+    "flowSaveStatus": {
+      "upToDate": "リビジョン {revision} で最新です",
+      "saving": "ドラフトを保存中...",
+      "draft": "下書きを保存しました · リビジョン {revision} と異なります",
+      "draftUnpublished": "下書きが保存されました · まだ公開されていません",
+      "invalid": "下書きを保存しました · 公開する前に修正すべきエラーが {count} 件あります",
+      "offline": "このブラウザのみに保存済み · 再試行中",
+      "published": "リビジョン {revision} として公開済み",
+      "viewChanges": "変更を表示",
+      "discard": "ドラフトを破棄",
+      "discardConfirm": "下書きを破棄してリビジョン {revision} に戻しますか？未公開の変更は失われます。",
+      "executeBlocked": "実行すると、公開されたリビジョンが実行されます。まず変更を公開するか、Playground で試してください。",
+      "executeBlockedInvalid": "{count}つのエラーを修正してから、公開して変更を実行してください。"
+    },
     "flow export": "<code>{flowCount}</code>件のflowをエクスポートしてもよろしいですか？",
     "flows exported": "<code>{count}</code> Flow(s) エクスポート済み",
     "import": "インポート",
@@ -2826,7 +2844,6 @@
     "delete revision error": "エラー: リビジョン {revision} の削除中にエラー {error} が発生しました。",
     "no_history": "履歴はありません",
     "export_as": ".{format}としてエクスポート",
-    "save_and_execute": "保存して実行",
     "welcome_copilot": {
       "button_cta": "フローをゼロから作成",
       "need_help": "お困りですか？",
@@ -3184,10 +3201,6 @@
       "required_unset_jump": "最初へ移動",
       "required_unset_plural": "{count} 件の必須フィールドがまだ設定されていません",
       "required_unset_singular": "1 件の必須フィールドがまだ設定されていません",
-      "save_blocked": {
-        "message": "保存する前にエラーを修正してください。",
-        "title": "flowを保存できません"
-      },
       "schema_default_tooltip": "フィールドが設定されていない場合に使用されるデフォルト値",
       "search_task_placeholder": "タスクを検索または記述…",
       "shortcuts": {

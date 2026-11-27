@@ -183,22 +183,9 @@
     "publish_draft": "Publicar rascunho",
     "draft": "Rascunho",
     "draft_flow_warning": "A revisão mais recente deste flow é um rascunho. A execução será feita sobre a revisão publicada mais recente; publique o rascunho (ou execute-o no Playground) para executar as suas alterações mais recentes.",
-    "save_draft": "Salvar rascunho",
     "flow_publish": {
-      "description": "Torna esta revisão ativa: os triggers a iniciam, outros flows podem chamá-la e suas falhas chegam aos flows de alerta.",
       "done_title": "Publicado",
-      "failed": "Não foi possível publicar este rascunho.",
       "done": "A revisão {revision} de {name} está ativa: triggers a iniciam, outros flows podem chamá-la e suas falhas chegam aos flows de alerta."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Este flow é um rascunho",
-        "description": "Não tem nenhuma revisão publicada, então os triggers e outros Flows não o iniciam. Execute-o a partir do Playground, ou publique-o para o tornar ativo."
-      },
-      "over_published": {
-        "title": "A revisão mais recente é um rascunho",
-        "description": "Agendamentos, webhooks e outros flows ainda executam a revisão publicada até que você publique este rascunho. Os triggers do Flow não iniciam o flow nesse meio tempo."
-      }
     },
     "save task": "Salvar Task",
     "saved": "Salvo com sucesso",
@@ -1217,6 +1204,37 @@
     "export": "Exportar",
     "export_csv": "Exportar como CSV",
     "flow_export": "Exportar flow",
+    "flowAutosave": {
+      "savedLocally": {
+        "banner": "Suas alterações no Flow são mantidas neste navegador e salvas como um rascunho assim que o servidor responder. Este banner desaparecerá quando isso acontecer."
+      },
+      "conflictDialog": {
+        "title": "Flow alterado no servidor",
+        "description": "Alguém salvou este flow enquanto suas alterações eram mantidas localmente. Escolha qual versão manter: a outra será descartada.",
+        "keepLocal": "Manter minhas alterações",
+        "takeServer": "Usar a versão do servidor"
+      },
+      "restoreNew": {
+        "title": "Restaurar seu flow não salvo?",
+        "message": "Um flow que você estava escrevendo neste navegador nunca foi criado. Restaure-o ou comece a partir deste e descarte-o.",
+        "restore": "Restaurar",
+        "discard": "Descartar"
+      }
+    },
+    "flowSaveStatus": {
+      "upToDate": "Atualizado com a revisão {revision}",
+      "saving": "Salvando rascunho...",
+      "draft": "Rascunho salvo · difere da revisão {revision}",
+      "draftUnpublished": "Rascunho salvo · ainda não publicado",
+      "invalid": "Rascunho salvo · {count} erro para corrigir antes de publicar | Rascunho salvo · {count} erros para corrigir antes de publicar",
+      "offline": "Salvo apenas neste navegador · a tentar novamente",
+      "published": "Publicado como revisão {revision}",
+      "viewChanges": "Ver alterações",
+      "discard": "Descartar rascunho",
+      "discardConfirm": "Descartar o rascunho e voltar para a revisão {revision}? Suas alterações não publicadas serão perdidas.",
+      "executeBlocked": "Executar executa a revisão publicada. Publique suas alterações primeiro ou teste-as no Playground.",
+      "executeBlockedInvalid": "Corrija {count} erro e publique para executar suas alterações. | Corrija {count} erros e publique para executar suas alterações."
+    },
     "flow export": "Tem certeza de que deseja exportar <code>{flowCount}</code> flow(s)?",
     "flows exported": "<code>{count}</code> Flow(s) exportado(s)",
     "import": "Importar",
@@ -2826,7 +2844,6 @@
     "delete revision error": "Erro ao excluir a revisão {revision} com erro {error}",
     "no_history": "Sem histórico disponível",
     "export_as": "Exportar como .{format}",
-    "save_and_execute": "Salvar e Executar",
     "welcome_copilot": {
       "button_cta": "Criar flow do zero",
       "need_help": "Precisa de Ajuda?",
@@ -3184,10 +3201,6 @@
       "required_unset_jump": "Ir para o primeiro",
       "required_unset_plural": "{count} campos obrigatórios ainda não foram definidos",
       "required_unset_singular": "1 campo obrigatório ainda não foi definido",
-      "save_blocked": {
-        "message": "Corrija os erros antes de salvar.",
-        "title": "Não é possível salvar o flow"
-      },
       "schema_default_tooltip": "Valor padrão usado quando o campo não está definido",
       "search_task_placeholder": "Pesquisar ou descrever uma task…",
       "shortcuts": {

@@ -46,6 +46,7 @@
 
     import {useNoCodePanelsFull} from "./useNoCodePanels"
     import {useFlowStore} from "../../stores/flow"
+    import {useFlowAutosaveStore} from "../../stores/flowAutosave"
     import {usePluginsStore} from "../../stores/plugins"
     import {useTabTracking} from "../../composables/useTabTracking"
     import {Panel, Tab} from "../../utils/multiPanelTypes"
@@ -60,6 +61,7 @@
     const RawNoCode = markRaw(localStorage.getItem(storageKeys.NOCODE_ENGINE) === "legacy" ? NoCode : BlockEditor)
 
     const flowStore = useFlowStore()
+    const autosaveStore = useFlowAutosaveStore()
     const {showKeyShortcuts} = useKeyShortcuts()
     const {trackTabOpen} = useTabTracking()
     usePublishShortcut()
@@ -86,6 +88,7 @@
     })
 
     onMounted(async () => {
+        autosaveStore.start()
         if(route.query.ai === "open"){
             if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
             else editorView.value?.focusTab("code")
@@ -157,6 +160,7 @@
     const playgroundMode = computed(() => playgroundStore.enabled)
 
     onUnmounted(() => {
+        autosaveStore.stop()
         playgroundStore.enabled = false
         playgroundStore.clearExecutions()
     })

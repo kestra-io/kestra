@@ -67,6 +67,7 @@
     import {useFlowStore, type ParsedFlow} from "../../stores/flow"
     import {usePluginsStore, type JsonSchemaDef} from "../../stores/plugins"
     import {useKeyboardSave} from "./utils/useKeyboardSave"
+    import {useFlowEditorActions} from "../flows/useFlowEditorActions"
     import {deepEqual} from "../../utils/utils"
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import {defaultNamespace} from "../../composables/useNamespaces"
@@ -109,6 +110,7 @@
     } = useFlowFields(lastValidFlowYaml)
 
     useKeyboardSave()
+    const {saveAsDraft} = useFlowEditorActions()
 
     const flowStore = useFlowStore()
     const flowYaml = computed<string>(() => flowStore.flowYaml ?? "")
@@ -193,7 +195,7 @@
     })
 
     provide(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {
-        flowStore.save?.(true)
+        saveAsDraft()
     })
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {

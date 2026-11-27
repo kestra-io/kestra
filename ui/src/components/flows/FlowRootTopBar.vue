@@ -12,6 +12,7 @@
             </span>
         </template>
         <template #actions>
+            <FlowSaveStatus />
             <Actions />
         </template>
     </NavBar>
@@ -23,6 +24,7 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Badge from "../global/Badge.vue"
     import Actions from "override/components/flows/Actions.vue"
+    import FlowSaveStatus from "./FlowSaveStatus.vue"
     import NavBar from "../layout/TopNavBar.vue"
     import type {KsBreadcrumbItem, KsBreadcrumbLoader} from "@kestra-io/design-system"
     import resource from "../../models/resource"

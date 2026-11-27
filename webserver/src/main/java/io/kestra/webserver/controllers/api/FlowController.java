@@ -607,6 +607,38 @@ public class FlowController {
         return flowService.update(current, previous);
     }
 
+    @Put(uri = "{namespace}/{id}/draft", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Flows" },
+        summary = "Validate a flow and save it as a draft",
+        description = "Validates the source and saves it as the flow's draft revision in a single call, replacing the head revision when it is already a draft. " +
+            "When `baseSourceHash` does not match the head revision's source, nothing is saved and the head revision is returned with `conflict` set."
+    )
+    public DraftSaveResult saveDraft(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @RequestBody(description = "The flow source code") @Body String source,
+        @Parameter(description = "Java `String.hashCode()` of the head revision's source the edit started from; omit it to overwrite whatever is there.")
+        @Nullable @QueryValue Integer baseSourceHash) throws FlowProcessingException, QueueException {
+        final String tenantId = tenantService.resolveTenant();
+        FlowWithSource existing = flowRepository.findByIdWithSource(tenantId, namespace, id)
+            .orElseThrow(() -> new FlowNotFoundException(namespace, id));
+
+        ValidateConstraintViolation validation = flowService.validate(tenantId, List.of(new FlowSource(null, source))).getFirst();
+        if (baseSourceHash != null && baseSourceHash != existing.getSource().hashCode()) {
+            return new DraftSaveResult(existing, validation, true);
+        }
+
+        GenericFlow genericFlow;
+        try {
+            genericFlow = GenericFlow.fromYaml(tenantId, source).toBuilder().draft(true).build();
+        } catch (ConstraintViolationException e) {
+            genericFlow = draftFromSource(tenantId, namespace, id, source);
+        }
+        return new DraftSaveResult(doUpdateFlow(genericFlow, existing), validation, false);
+    }
+
     /**
      * Called once by a bulk update with the flows to create or update and the flows to delete, before anything is written, so that an override can reject the whole request on a permission or policy check. The content of the flows is validated right after it, still before the deletions.
      */
@@ -1123,6 +1155,9 @@ public class FlowController {
             })
             .filter(Objects::nonNull)
             .toList();
+    }
+
+    public record DraftSaveResult(FlowWithSource flow, ValidateConstraintViolation validation, boolean conflict) {
     }
 
     public record FlowWithDeprecatedTasks(

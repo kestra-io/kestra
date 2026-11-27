@@ -181,7 +181,7 @@ export class FilesEditor {
         await this.page.keyboard.press("Control+s")
     }
 
-    async clickSave() {
-        await this.page.getByRole("button", {name: "Save draft", exact: true}).click()
+    async clickPublish() {
+        await this.page.locator("[data-test=\"flow-publish\"]").click()
     }
 }

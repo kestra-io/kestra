@@ -50,7 +50,6 @@ describe("FlowRoot", () => {
             global: {
                 stubs: {
                     FlowRootTopBar: true,
-                    FlowDraftBanner: true,
                     Tabs: defineComponent({setup: () => {
                         mounts++
                         return () => null

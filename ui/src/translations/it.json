@@ -183,22 +183,9 @@
     "publish_draft": "Pubblica bozza",
     "draft": "Bozza",
     "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
-    "save_draft": "Salva bozza",
     "flow_publish": {
-      "description": "Rende questa revisione attiva: i trigger la avviano, altri Flow possono chiamarla e i suoi fallimenti raggiungono i Flow di avviso.",
       "done_title": "Pubblicato",
-      "failed": "Impossibile pubblicare questa bozza.",
       "done": "La Revisione {revision} di {name} è attiva: i Trigger la avviano, altri Flow possono richiamarla e i suoi errori raggiungono i Flow di avviso."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "Questo flow è una bozza",
-        "description": "Non ha revisioni pubblicate, quindi i trigger e altri Flow non lo avviano. Eseguilo dal Playground o pubblicalo per renderlo attivo."
-      },
-      "over_published": {
-        "title": "L'ultima revisione è una bozza",
-        "description": "Pianificazioni, webhook e altri flow eseguono ancora la revisione pubblicata finché non pubblichi questa bozza. I trigger del Flow non avviano il flow nel frattempo."
-      }
     },
     "save task": "Salva Task",
     "saved": "Salvato con successo",
@@ -1217,6 +1204,37 @@
     "export": "Esporta",
     "export_csv": "Esporta come CSV",
     "flow_export": "Esporta flow",
+    "flowAutosave": {
+      "savedLocally": {
+        "banner": "Le modifiche al tuo flow sono conservate in questo browser e salvate come bozza una volta che il server risponde. Questo banner scomparirà quando ciò avverrà."
+      },
+      "conflictDialog": {
+        "title": "Flow modificato sul server",
+        "description": "Qualcuno ha salvato questo flow mentre le tue modifiche erano mantenute localmente. Scegli quale versione mantenere: l'altra verrà scartata.",
+        "keepLocal": "Mantieni le mie modifiche",
+        "takeServer": "Usa la versione del server"
+      },
+      "restoreNew": {
+        "title": "Ripristinare il flow non salvato?",
+        "message": "Un flow che stavi scrivendo in questo browser non è mai stato creato. Ripristinalo, oppure inizia da questo e scartalo.",
+        "restore": "Ripristina",
+        "discard": "Scarta"
+      }
+    },
+    "flowSaveStatus": {
+      "upToDate": "Aggiornato alla revisione {revision}",
+      "saving": "Salvataggio bozza...",
+      "draft": "Bozza salvata · differisce dalla revisione {revision}",
+      "draftUnpublished": "Bozza salvata · non ancora pubblicata",
+      "invalid": "Bozza salvata · {count} errore da correggere prima della pubblicazione | Bozza salvata · {count} errori da correggere prima della pubblicazione",
+      "offline": "Salvato solo in questo browser · nuovo tentativo",
+      "published": "Pubblicato come revisione {revision}",
+      "viewChanges": "Visualizza modifiche",
+      "discard": "Scarta bozza",
+      "discardConfirm": "Scartare la bozza e tornare alla revisione {revision}? Le modifiche non pubblicate andranno perse.",
+      "executeBlocked": "Esegui avvia la revisione pubblicata. Pubblica prima le tue modifiche, oppure provale nel Playground.",
+      "executeBlockedInvalid": "Correggi {count} errore, quindi pubblica per eseguire le tue modifiche. | Correggi {count} errori, quindi pubblica per eseguire le tue modifiche."
+    },
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
     "flows exported": "<code>{count}</code> Flow esportati",
     "import": "Importa",
@@ -2826,7 +2844,6 @@
     "delete revision error": "Errore durante l'eliminazione della revisione {revision} con errore {error}",
     "no_history": "Nessuna cronologia disponibile",
     "export_as": "Esporta come .{format}",
-    "save_and_execute": "Salva & Esegui",
     "welcome_copilot": {
       "button_cta": "Crea flow da zero",
       "need_help": "Hai bisogno di aiuto?",
@@ -3184,10 +3201,6 @@
       "required_unset_jump": "Vai al primo",
       "required_unset_plural": "{count} campi obbligatori non sono ancora impostati",
       "required_unset_singular": "1 campo obbligatorio non è ancora impostato",
-      "save_blocked": {
-        "message": "Correggi gli errori prima di salvare.",
-        "title": "Impossibile salvare il flow"
-      },
       "schema_default_tooltip": "Valore predefinito usato quando il campo non è impostato",
       "search_task_placeholder": "Cerca o descrivi un task...",
       "shortcuts": {

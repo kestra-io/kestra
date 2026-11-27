@@ -183,22 +183,9 @@
     "publish_draft": "초안 게시",
     "draft": "초안",
     "draft_flow_warning": "이 flow의 최신 리비전은 초안입니다. 실행은 대신 최신 게시된 리비전을 기준으로 수행됩니다. 최신 변경 사항을 실행하려면 초안을 게시하거나 Playground에서 실행하세요.",
-    "save_draft": "초안 저장",
     "flow_publish": {
-      "description": "이 버전을 활성화합니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다.",
       "done_title": "게시됨",
-      "failed": "이 초안을 게시할 수 없습니다.",
       "done": "{name}의 리비전 {revision}이 활성화되었습니다: trigger가 시작하고, 다른 flow가 호출할 수 있으며, 실패 시 알림 flow에 도달합니다."
-    },
-    "flow_draft_banner": {
-      "draft_only": {
-        "title": "이 Flow는 초안입니다.",
-        "description": "게시된 revision이 없으므로 trigger 및 다른 flow가 시작하지 않습니다. Playground에서 실행하거나 게시하여 활성화하세요."
-      },
-      "over_published": {
-        "title": "최신 버전은 초안입니다.",
-        "description": "일정, 웹훅 및 기타 flow는 이 초안을 게시할 때까지 게시된 revision을 계속 실행합니다. Flow trigger는 그동안 flow를 시작하지 않습니다."
-      }
     },
     "save task": "Task 저장",
     "saved": "성공적으로 저장됨",
@@ -1217,6 +1204,37 @@
     "export": "내보내기",
     "export_csv": "CSV로 내보내기",
     "flow_export": "flow 내보내기",
+    "flowAutosave": {
+      "savedLocally": {
+        "banner": "Flow 변경 사항은 이 브라우저에 보관되며 서버 응답 시 초안으로 저장됩니다. 응답이 오면 이 배너는 사라집니다."
+      },
+      "conflictDialog": {
+        "title": "서버에서 Flow가 변경되었습니다.",
+        "description": "누군가 이 Flow를 저장했지만 변경 사항은 로컬에 유지되었습니다. 유지할 버전을 선택하세요. 다른 버전은 폐기됩니다.",
+        "keepLocal": "내 변경 사항 유지",
+        "takeServer": "서버 버전 사용"
+      },
+      "restoreNew": {
+        "title": "저장되지 않은 Flow를 복원하시겠습니까?",
+        "message": "이 브라우저에서 작성 중이던 Flow가 생성되지 않았습니다. 복원하거나 이 Flow에서 시작하여 폐기하세요.",
+        "restore": "복원",
+        "discard": "버리기"
+      }
+    },
+    "flowSaveStatus": {
+      "upToDate": "리비전 {revision}으로 최신 상태",
+      "saving": "초안 저장 중...",
+      "draft": "초안 저장됨 · 리비전 {revision}과 다름",
+      "draftUnpublished": "초안 저장됨 · 아직 게시되지 않음",
+      "invalid": "초안 저장됨 · 게시 전 수정해야 할 오류 {count}개 | 초안 저장됨 · 게시 전 수정해야 할 오류 {count}개",
+      "offline": "이 브라우저에만 저장됨 · 재시도 중",
+      "published": "리비전 {revision}으로 게시됨",
+      "viewChanges": "변경 사항 보기",
+      "discard": "초안 삭제",
+      "discardConfirm": "초안을 버리고 {revision} 버전으로 돌아가시겠습니까? 게시되지 않은 변경 사항은 손실됩니다.",
+      "executeBlocked": "실행은 게시된 버전을 실행합니다. 먼저 변경 사항을 게시하거나 Playground에서 시도하세요.",
+      "executeBlockedInvalid": "{count}개의 오류를 수정한 다음 게시하여 변경 사항을 실행하세요."
+    },
     "flow export": "<code>{flowCount}</code> 개의 flow를 내보내시겠습니까?",
     "flows exported": "<code>{count}</code> Flow(s) 내보내기 완료",
     "import": "가져오기",
@@ -2826,7 +2844,6 @@
     "delete revision error": "{error} 오류로 인해 {revision} 수정본 삭제 오류 발생",
     "no_history": "기록 없음",
     "export_as": ".{format}로 내보내기",
-    "save_and_execute": "저장 및 실행",
     "welcome_copilot": {
       "button_cta": "새 flow 생성",
       "need_help": "도움이 필요하신가요?",
@@ -3184,10 +3201,6 @@
       "required_unset_jump": "첫 번째로 이동",
       "required_unset_plural": "{count}개의 필수 필드가 아직 설정되지 않았습니다",
       "required_unset_singular": "필수 필드 1개가 아직 설정되지 않았습니다",
-      "save_blocked": {
-        "message": "저장하기 전에 오류를 수정하세요.",
-        "title": "flow를 저장할 수 없습니다"
-      },
       "schema_default_tooltip": "필드가 설정되지 않은 경우 사용되는 기본값",
       "search_task_placeholder": "Task 검색 또는 설명…",
       "shortcuts": {

@@ -114,3 +114,18 @@ describe("TriggerFlow — execution-started feedback", () => {
         expect(toastSuccess).not.toHaveBeenCalled()
     })
 })
+
+describe("TriggerFlow — blocked by unpublished changes", () => {
+    it("explains instead of executing, and stays greyed rather than disabled", async () => {
+        loadFlowForExecution.mockClear()
+        const wrapper = mountTriggerFlow({blockedReason: "Publish first", lazy: true})
+        const button = wrapper.findComponent({name: "KsButton"})
+
+        expect(button.props("softDisabled")).toBe(true)
+        expect(button.props("tooltip")).toBe("Publish first")
+        await wrapper.find("#execute-button").trigger("click")
+
+        expect(wrapper.emitted("blocked")).toHaveLength(1)
+        expect(loadFlowForExecution).not.toHaveBeenCalled()
+    })
+})

@@ -16,12 +16,6 @@ const openEditor = async (page: Page) => {
     await expect(page.getByTestId("monaco-editor")).toBeVisible()
 }
 
-const publishFlow = async (page: Page) => {
-    await page.getByRole("button", {name: "Toggle Dropdown"}).click()
-    await page.locator("[data-test=\"flow-publish\"]").click()
-    await expect(page.getByRole("heading", {name: "Published"})).toBeVisible()
-}
-
 const taskRow = (page: Page, taskId: string) =>
     page.locator(".task-name").getByText(taskId, {exact: true})
 
@@ -55,7 +49,10 @@ test.describe("Flow Page", () => {
 
             await openEditor(page)
 
-            await publishFlow(page)
+            await page.getByRole("button", {name: "Save as draft", exact: true}).click()
+            await expect(page.getByRole("heading", {name: "Successfully saved as draft"})).toBeVisible()
+            await page.locator("[data-test=\"flow-publish\"]").click()
+            await expect(page.getByRole("heading", {name: "Published", exact: true})).toBeVisible()
             await page.getByRole("tab", {name: "Overview"}).click()
         })
 
@@ -92,7 +89,10 @@ test.describe("Flow Page", () => {
             await monacoEditor.blur()
             await expect(page.getByTestId("monaco-editor").getByText(flowId)).toBeVisible()
 
-            await publishFlow(page)
+            await page.getByRole("button", {name: "Save as draft", exact: true}).click()
+            await expect(page.getByRole("heading", {name: "Successfully saved as draft"})).toBeVisible()
+            await page.locator("[data-test=\"flow-publish\"]").click()
+            await expect(page.getByRole("heading", {name: "Published", exact: true})).toBeVisible()
             await page.getByRole("tab", {name: "Overview"}).click()
             // Scoped to the topnav title, not #app: the Monaco editor (still disposing during
             // the tab switch) also contains the flowId, so a broader match is a strict-mode

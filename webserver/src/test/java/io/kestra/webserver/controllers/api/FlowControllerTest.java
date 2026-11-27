@@ -1155,6 +1155,60 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldValidateAndSaveDraftInOneCallUnlessTheHeadMovedOn() {
+        String flowId = IdUtils.create();
+        String validSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+        FlowWithSource published = client.toBlocking().retrieve(POST("/api/v1/main/flows", validSource).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+        String draftUri = "/api/v1/main/flows/" + TEST_NAMESPACE + "/" + flowId + "/draft?baseSourceHash=";
+
+        FlowController.DraftSaveResult saved = client.toBlocking().retrieve(
+            PUT(draftUri + published.getSource().hashCode(), validSource + "    unknownProp: x\n").contentType(MediaType.APPLICATION_YAML),
+            FlowController.DraftSaveResult.class
+        );
+
+        assertThat(saved.conflict()).isFalse();
+        assertThat(saved.flow().isDraft()).isTrue();
+        assertThat(saved.validation().getConstraints()).contains("unknownProp");
+
+        FlowController.DraftSaveResult stale = client.toBlocking().retrieve(
+            PUT(draftUri + published.getSource().hashCode(), validSource + "    message2: y\n").contentType(MediaType.APPLICATION_YAML),
+            FlowController.DraftSaveResult.class
+        );
+
+        assertThat(stale.conflict()).isTrue();
+        assertThat(stale.flow().getSource()).contains("unknownProp");
+    }
+
+    @Test
+    void shouldStoreAnUnparsableDraftAsADraftRevision() {
+        String flowId = IdUtils.create();
+        String validSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+        client.toBlocking().retrieve(POST("/api/v1/main/flows", validSource).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+        String flowUri = "/api/v1/main/flows/" + TEST_NAMESPACE + "/" + flowId;
+
+        client.toBlocking().retrieve(PUT(flowUri + "/draft", validSource + "  - id: no-type\n").contentType(MediaType.APPLICATION_YAML), FlowController.DraftSaveResult.class);
+        client.toBlocking().retrieve(PUT(flowUri + "/draft", validSource + "  - id: still-no-type\n").contentType(MediaType.APPLICATION_YAML), FlowController.DraftSaveResult.class);
+
+        List<FlowWithSource> revisions = client.toBlocking().retrieve(GET(flowUri + "/revisions"), Argument.listOf(FlowWithSource.class));
+        assertThat(revisions).hasSize(2);
+        assertThat(revisions.getLast().isDraft()).isTrue();
+    }
+
+    @Test
     void createFlowAsDraftWithUnrecognizedProperty() {
         String flowId = IdUtils.create();
         // unknown task property: a constraint violation that a draft is allowed to carry

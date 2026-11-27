@@ -332,7 +332,7 @@ public class PluginController {
         description = "Accepts either the canonical plugin class name or one of its aliases and returns the canonical type with every registered alias."
     )
     @ApiResponse(responseCode = "404", description = "Plugin type not found")
-    public HttpResponse<ApiPluginAliases> getPluginTypeAliases(
+    public HttpResponse<?> getPluginTypeAliases(
         @Parameter(description = "The canonical plugin type or one of its aliases") @PathVariable String type) {
         return pluginAliasService.findByType(type)
             .map(aliases -> HttpResponse.ok(new ApiPluginAliases(aliases.type(), aliases.aliases()))

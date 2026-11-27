@@ -136,6 +136,13 @@ class PluginControllerTest {
         );
 
         assertThat(fromAlias).isEqualTo(fromCanonicalType);
+
+        PluginController.ApiPluginAliases fromCaseInsensitiveAlias = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/aliases/IO.KESTRA.CORE.RUNNERS.TEST.TASK.ALIAS"),
+            PluginController.ApiPluginAliases.class
+        );
+
+        assertThat(fromCaseInsensitiveAlias).isEqualTo(fromCanonicalType);
     }
 
     @Test

@@ -1,0 +1,58 @@
+{
+  "source" : "id: return\nnamespace: io.kestra.tests\n\ntasks:\n- id: date\n  type: io.kestra.plugin.core.debug.Return\n  format: \"{{taskrun.startDate}}\"\n- id: task-id\n  type: io.kestra.plugin.core.debug.Return\n  format: \"{{task.id}}\"\n- id: flow-id\n  type: io.kestra.plugin.core.debug.Return\n  format: \"{{flow.id}}\"",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.date",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "date",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.flow-id",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "flow-id",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.task-id",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "task-id",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    } ],
+    "edges" : [ {
+      "source" : "root.date",
+      "target" : "root.task-id",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.flow-id",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.date",
+      "relation" : { }
+    }, {
+      "source" : "root.task-id",
+      "target" : "root.flow-id",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    } ],
+    "clusters" : [ ]
+  }
+}

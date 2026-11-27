@@ -334,6 +334,12 @@ export const LevelOfDetailPillStatuses: StoryObj<typeof Topology> = {
         expect(ring * PILL_ZOOM).toBeGreaterThan(0.8)
         expect(ring * PILL_ZOOM).toBeLessThan(1.25)
 
+        const icon = pill.querySelector("img")!
+        expect(
+            icon.getBoundingClientRect().height / pill.getBoundingClientRect().height,
+            "the placeholder of a type with no icon fills the pill, as a plugin icon does",
+        ).toBeGreaterThan(0.8)
+
         expect(statuses()[0].getBoundingClientRect().height).toBeGreaterThan(8)
     },
 }

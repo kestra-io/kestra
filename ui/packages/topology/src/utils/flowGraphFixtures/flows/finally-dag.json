@@ -1,0 +1,243 @@
+{
+  "source" : "id: finally-dag\nnamespace: io.kestra.tests\n\ninputs:\n  - id: failed\n    type: BOOL\n    defaults: false\n\ntasks:\n  - id: dag\n    type: io.kestra.plugin.core.flow.Dag\n    tasks:\n      - task:\n          id: t1\n          type: io.kestra.plugin.core.log.Log\n          message: \"{{ task.id }}\"\n      - task:\n          id: t2\n          type: io.kestra.plugin.core.log.Log\n          message: \"{{ task.id }}\"\n        dependsOn:\n          - t1\n      - task:\n          id: t3\n          type: io.kestra.plugin.core.flow.If\n          condition: \"{{ inputs.failed == false }}\"\n          then:\n            - id: ok\n              type: io.kestra.plugin.core.debug.Return\n              format: \"{{ task.id }}\"\n          else:\n            - id: ko\n              type: io.kestra.plugin.core.execution.Fail\n        dependsOn:\n          - t2\n\n    errors:\n      - id: e1\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{ task.id }}\"\n\n      - id: e2\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{ task.id }}\"\n\n    finally:\n      - id: a1\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{ task.id }}\"\n\n      - id: a2\n        type: io.kestra.plugin.core.debug.Return\n        format: \"{{ task.id }}\"",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.dag.a1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "FINALLY",
+      "relationType" : "FINALLY",
+      "task" : {
+        "id" : "a1",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.dag.a2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "FINALLY",
+      "relationType" : "FINALLY",
+      "task" : {
+        "id" : "a2",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.dag.e1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "ERROR",
+      "relationType" : "ERROR",
+      "task" : {
+        "id" : "e1",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.dag.e2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "branchType" : "ERROR",
+      "relationType" : "ERROR",
+      "task" : {
+        "id" : "e2",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.dag.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.dag.finally-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterFinally"
+    }, {
+      "uid" : "root.dag.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.dag.t1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "t1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.t2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "t2",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.dag.t3.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.dag.t3.ko",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "ko",
+        "type" : "io.kestra.plugin.core.execution.Fail"
+      }
+    }, {
+      "uid" : "root.dag.t3.ok",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "ok",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.dag.t3.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.dag.t3",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "CHOICE",
+      "task" : {
+        "id" : "t3",
+        "type" : "io.kestra.plugin.core.flow.If"
+      }
+    }, {
+      "uid" : "root.dag",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "DYNAMIC",
+      "task" : {
+        "id" : "dag",
+        "type" : "io.kestra.plugin.core.flow.Dag"
+      }
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.dag",
+      "target" : "root.dag.t1",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.a1",
+      "target" : "root.dag.a2",
+      "relation" : {
+        "relationType" : "DYNAMIC"
+      }
+    }, {
+      "source" : "root.dag.a2",
+      "target" : "root.dag.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.e1",
+      "target" : "root.dag.e2",
+      "relation" : {
+        "relationType" : "ERROR"
+      }
+    }, {
+      "source" : "root.dag.e2",
+      "target" : "root.dag.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.end-*",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.finally-*",
+      "target" : "root.dag.a1",
+      "relation" : {
+        "relationType" : "DYNAMIC"
+      }
+    }, {
+      "source" : "root.dag.root-*",
+      "target" : "root.dag.e1",
+      "relation" : {
+        "relationType" : "ERROR"
+      }
+    }, {
+      "source" : "root.dag.root-*",
+      "target" : "root.dag",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.t1",
+      "target" : "root.dag.t2",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.t2",
+      "target" : "root.dag.t3.root-*",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.dag.t3",
+      "target" : "root.dag.t3.ko",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "else"
+      }
+    }, {
+      "source" : "root.dag.t3",
+      "target" : "root.dag.t3.ok",
+      "relation" : {
+        "relationType" : "CHOICE",
+        "value" : "then"
+      }
+    }, {
+      "source" : "root.dag.t3.end-*",
+      "target" : "root.dag.finally-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.t3.ko",
+      "target" : "root.dag.t3.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.t3.ok",
+      "target" : "root.dag.t3.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.dag.t3.root-*",
+      "target" : "root.dag.t3",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.dag.root-*",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.dag",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "DYNAMIC",
+        "taskNode" : {
+          "uid" : "root.dag",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "DYNAMIC",
+          "task" : {
+            "id" : "dag",
+            "type" : "io.kestra.plugin.core.flow.Dag"
+          }
+        }
+      },
+      "nodes" : [ "cluster_root.dag.t3", "root.dag", "root.dag.a1", "root.dag.a2", "root.dag.e1", "root.dag.e2", "root.dag.end-*", "root.dag.finally-*", "root.dag.root-*", "root.dag.t1", "root.dag.t2", "root.dag.t3.end-*", "root.dag.t3.root-*" ],
+      "parents" : [ ],
+      "start" : "root.dag.root-*",
+      "end" : "root.dag.end-*"
+    }, {
+      "cluster" : {
+        "uid" : "cluster_root.dag.t3",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "CHOICE",
+        "taskNode" : {
+          "uid" : "root.dag.t3",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "CHOICE",
+          "task" : {
+            "id" : "t3",
+            "type" : "io.kestra.plugin.core.flow.If"
+          }
+        }
+      },
+      "nodes" : [ "root.dag.t3", "root.dag.t3.end-*", "root.dag.t3.ko", "root.dag.t3.ok", "root.dag.t3.root-*" ],
+      "parents" : [ "cluster_root.dag" ],
+      "start" : "root.dag.t3.root-*",
+      "end" : "root.dag.t3.end-*"
+    } ]
+  }
+}

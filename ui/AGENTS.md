@@ -486,6 +486,7 @@ If your `<style>` block needs to exist:
 - `escapeHtml()`, `cloneDeep()`, `deepMerge()`, `isDeepEqual()`, `isPlainObject()`, `getPath()`, `setPath()`, `groupBy()`, `mapValues()`, `debounce()`, `throttle()` — the general-purpose helpers that replaced lodash. `debounce`/`throttle` return a function carrying `cancel()` and `flush()`. Do not add `lodash` back for any of these
 - `fileUtils` — `isFileUri()`, `fileName()`, `fileExtension()`, `fileIcon()` — storage-URI detection and the file symbol used by `KsFileTag`
 - `flowYamlUtils` — YAML parsing / manipulation for flow definitions
+- `buildFlowGraph(parsedFlow)` from `@kestra-io/topology/flow-graph-builder`: the topology graph of a flow, built in the browser. It is a port of the backend `GraphUtils`, so never change one alone: `flowGraphBuilder.test.ts` compares it with fixtures that `FlowGraphContractTest.java` generates from the backend and that are never edited by hand. `unsupportedFlowableTypes()` lists the plugin flowables it cannot draw; `flowStore.loadGraphFromSource` falls back to the graph endpoint for those and for an expanded subflow, and puts back on the built graph what only the server knows (a trigger's state, a subflow whose flow is disabled)
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables

@@ -4,7 +4,9 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import {buildFlowGraph, unsupportedFlowableTypes} from "@kestra-io/topology/flow-graph-builder"
 import {useCoreStore} from "./core"
+import {usePluginsStore} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {defineStore} from "pinia"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
@@ -130,6 +132,22 @@ export interface FlowPreviewBanner {
 /** `subflows` lists the subflow paths whose own graph is expanded inline. */
 type GraphSubflows = {params?: {subflows?: string | string[]}}
 
+/** A source the browser cannot draw, the local counterpart of the 422 the graph endpoint answers. */
+class UndrawableFlowError extends Error {}
+
+type GraphNode = FlowGraph["nodes"][number]
+
+const PEBBLE_OPENING = /\{[{%]/
+
+/** The flow a subflow node points to, unless it is only known once the expressions are rendered. */
+function subflowTarget(node: GraphNode) {
+    const {namespace, flowId, revision} = node.task ?? {}
+    if (!node.type.endsWith("SubflowGraphTask") || !namespace || !flowId || PEBBLE_OPENING.test(namespace + flowId)) {
+        return undefined
+    }
+    return {key: `${namespace}/${flowId}/${revision ?? ""}`, namespace, id: flowId, revision}
+}
+
 export type FlowSaveOutcome =
     | "saved"
     | "redirect_to_update"
@@ -178,6 +196,7 @@ export const useFlowStore = defineStore("flow", () => {
     const creationId = ref<string>()
 
     const coreStore = useCoreStore()
+    const pluginsStore = usePluginsStore()
     const unsavedChangesStore = useUnsavedChangesStore()
     const ksEditorWarnings = ref<string[]>([])
 
@@ -316,17 +335,17 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
+        const drawsTopology = topologyVisible &&
+            flowHaveTasks.value &&
+            flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
+        // drawn from the YAML alone, so the canvas follows the editor without waiting for the validation
+        if (drawsTopology) drawLocalGraph(flowYaml.value ?? "")
+
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? "",
         })
             .then((value: FlowValidations) => {
-                if (
-                    topologyVisible &&
-                    flowHaveTasks.value &&
-                    flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
-                ) {
-                    if (!value.errors?.length) fetchGraph()
-                }
+                if (drawsTopology && !value.errors?.length) fetchGraph()
 
                 return value
             })
@@ -784,27 +803,107 @@ function deleteFlowAndDependencies(router: Router) {
         }).then(data => {
             invalidGraph.value = false
             flowGraph.value = toFlowGraph(data)
+            serverTriggers = {
+                flow: `${flowVar.namespace}/${flowVar.id}`,
+                byUid: new Map(flowGraph.value.nodes.flatMap(node => (node.trigger ? [[node.uid, node.trigger] as const] : []))),
+            }
             return flowGraph.value
         }).catch(() => {
             invalidGraph.value = true
             return undefined
         })
     }
-    function loadGraphFromSource(options: { flow: string, config?: GraphSubflows }) {
-        const subflows: string[] | undefined = options.config?.params?.subflows
-            ? String(options.config.params.subflows).split(",").filter(Boolean)
-            : undefined
-        const flowParsed = YAML_UTILS.parse<ParsedFlow>(options.flow)
-        let flowSource = options.flow
-        if (!flowParsed?.id || !flowParsed.namespace) {
-            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
+    function expandedSubflowsOf(config?: GraphSubflows): string[] {
+        return config?.params?.subflows ? String(config.params.subflows).split(",").filter(Boolean) : []
+    }
+
+    // What only the server knows about a node, kept so that a graph built in the browser still dims it.
+    let serverTriggers: {flow: string; byUid: Map<string, NonNullable<GraphNode["trigger"]>>} | undefined
+    const disabledSubflows = new Set<string>()
+    const subflowChecks = new Map<string, Promise<void>>()
+
+    /** Asks the server, once per target, whether the flow a subflow task points to is disabled. */
+    function checkSubflow(target: NonNullable<ReturnType<typeof subflowTarget>>): Promise<void> {
+        let check = subflowChecks.get(target.key)
+        if (!check) {
+            check = FlowsAPI.flow({namespace: target.namespace, id: target.id, revision: target.revision})
+                .then(found => {
+                    if (found.disabled) disabledSubflows.add(target.key)
+                })
+                .catch(error => {
+                    handled(error)
+                    // only an answer is remembered: an unreachable server says nothing about the flow
+                    if (!error?.response) subflowChecks.delete(target.key)
+                })
+            subflowChecks.set(target.key, check)
         }
-        return FlowsAPI.generateFlowGraphFromSource(
-            {subflows, body: flowSource},
-        )
-            .then(data => {
+        return check
+    }
+
+    function withServerState(graph: FlowGraph, flowKey?: string): FlowGraph {
+        const triggers = serverTriggers && serverTriggers.flow === flowKey ? serverTriggers.byUid : undefined
+        return {
+            ...graph,
+            nodes: graph.nodes.map(node => {
+                const trigger = triggers?.get(node.uid)
+                if (trigger) return {...node, trigger}
+                return disabledSubflows.has(subflowTarget(node)?.key ?? "") ? {...node, disabled: true} : node
+            }),
+        }
+    }
+    /**
+     * The graph of `source` built in the browser, or undefined when only the backend can draw it:
+     * the subgraph of a flowable shipped by a plugin is defined by that plugin's code.
+     */
+    async function localGraph(source: string): Promise<FlowGraph | undefined> {
+        const icons = pluginsStore.iconsLoaded ? pluginsStore.icons : await pluginsStore.fetchIcons()
+        try {
+            const parsed = YAML_UTILS.parse<ParsedFlow>(source)
+            if (unsupportedFlowableTypes(parsed, (type) => icons[type]?.flowable === true).length) return undefined
+            return withServerState(buildFlowGraph(parsed), `${parsed?.namespace}/${parsed?.id}`)
+        } catch {
+            throw new UndrawableFlowError()
+        }
+    }
+
+    /** The backend is only asked for what it alone knows: an expanded subflow, or a plugin's flowable. */
+    async function graphFromSource(source: string, subflows: string[]): Promise<FlowGraph> {
+        const local = subflows.length ? undefined : await localGraph(source)
+        if (local) {
+            await Promise.all(local.nodes.flatMap(node => {
+                const target = subflowTarget(node)
+                return target ? [checkSubflow(target)] : []
+            }))
+            return withServerState(local)
+        }
+
+        const flowParsed = YAML_UTILS.parse<ParsedFlow>(source)
+        const body = !flowParsed?.id || !flowParsed.namespace
+            ? YAML_UTILS.updateMetadata(source, {id: "default", namespace: "default"})
+            : source
+        return toFlowGraph(await FlowsAPI.generateFlowGraphFromSource({subflows: subflows.length ? subflows : undefined, body}))
+    }
+
+    const startGraph = latestRequest()
+
+    /** Draws `source` when the browser can do it alone, and leaves the canvas as it is otherwise. */
+    async function drawLocalGraph(source: string) {
+        if (expandedSubflows.value.length) return
+        const isLatest = startGraph()
+        const graph = await localGraph(source).catch(() => undefined)
+        if (!graph || !isLatest()) return
+        invalidGraph.value = false
+        flowGraph.value = graph
+    }
+
+    function loadGraphFromSource(options: { flow: string, config?: GraphSubflows }) {
+        const subflows = expandedSubflowsOf(options.config)
+        const isLatest = startGraph()
+        return graphFromSource(options.flow, subflows)
+            .then(graph => {
+                if (!isLatest()) return graph
                 invalidGraph.value = false
-                flowGraph.value = toFlowGraph(data)
+                flowGraph.value = graph
 
                 const flowVar = YAML_UTILS.parse<Flow>(options.flow)
                 if (flowVar) {
@@ -816,18 +915,18 @@ function deleteFlowAndDependencies(router: Router) {
                     flow.value = flowVar
                 }
 
-                return data
+                return graph
             }).catch(error => {
                 const status = error?.status || error?.response?.status
                 handledIf(error, [404, 422])
-                if (status === 422 && (!subflows || subflows.length === 0)) {
+                if ((status === 422 || error instanceof UndrawableFlowError) && subflows.length === 0) {
                     // flowGraph is deliberately left on the last good layout rather than cleared,
                     // so invalidGraph is what tells the canvas it is showing stale nodes.
-                    invalidGraph.value = true
+                    if (isLatest()) invalidGraph.value = true
                     return Promise.resolve(error.response)
                 }
 
-                if ([404, 422].includes(status) && subflows && subflows.length > 0) {
+                if ([404, 422].includes(status) && subflows.length > 0) {
                     coreStore.message = {
                         title: t("topology-graph.expand_subflow_error"),
                         content: asProblem(error)?.detail,
@@ -840,15 +939,7 @@ function deleteFlowAndDependencies(router: Router) {
     }
 
     function getGraphFromSourceResponse(options: { flow: string, config?: GraphSubflows }) {
-        const subflows: string[] | undefined = options.config?.params?.subflows
-            ? String(options.config.params.subflows).split(",").filter(Boolean)
-            : undefined
-        const flowParsed = YAML_UTILS.parse<ParsedFlow>(options.flow)
-        let flowSource = options.flow
-        if (!flowParsed?.id || !flowParsed.namespace) {
-            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
-        }
-        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource}).then(toFlowGraph)
+        return graphFromSource(options.flow, expandedSubflowsOf(options.config))
     }
 
     function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<FlowRevision[]> {

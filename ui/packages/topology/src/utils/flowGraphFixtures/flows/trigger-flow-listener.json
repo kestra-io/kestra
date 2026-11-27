@@ -1,0 +1,64 @@
+{
+  "source" : "id: trigger-flow-listener\nnamespace: io.kestra.tests.trigger\n\ninputs:\n  - id: from-parent\n    type: STRING\n\ntasks:\n  - id: only-listener\n    type: io.kestra.plugin.core.debug.Return\n    format: \"childs: {{inputs['from-parent']}}\"\n\ntriggers:\n  - id: listen-flow\n    type: io.kestra.plugin.core.trigger.Flow\n    inputs:\n      from-parent: '{{ outputs.only.value }}'\n    dependsOn:\n      - states:\n          - SUCCESS\n        namespace: io.kestra.tests.trigger\n        flowId: trigger-flow\n",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.Triggers.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.Triggers.listen-flow",
+      "type" : "io.kestra.core.models.hierarchies.GraphTrigger",
+      "triggerDeclaration" : {
+        "id" : "listen-flow",
+        "type" : "io.kestra.plugin.core.trigger.Flow"
+      }
+    }, {
+      "uid" : "root.Triggers.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.only-listener",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "only-listener",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.Triggers.end-*",
+      "target" : "root.root-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.listen-flow",
+      "target" : "root.Triggers.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.Triggers.root-*",
+      "target" : "root.Triggers.listen-flow",
+      "relation" : { }
+    }, {
+      "source" : "root.only-listener",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.only-listener",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.Triggers",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster"
+      },
+      "nodes" : [ "root.Triggers.end-*", "root.Triggers.listen-flow", "root.Triggers.root-*" ],
+      "parents" : [ ],
+      "start" : "root.Triggers.root-*",
+      "end" : "root.Triggers.end-*"
+    } ]
+  }
+}

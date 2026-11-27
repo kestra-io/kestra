@@ -1,0 +1,9 @@
+id: graph-triggers-empty
+namespace: io.kestra.tests
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.log.Log
+    message: an empty trigger list still draws the Triggers cluster
+
+triggers: []

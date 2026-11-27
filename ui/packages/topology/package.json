@@ -17,6 +17,7 @@
         ".": "./src/index.ts",
         "./vue-flow-utils": "./src/vue-flow-utils.ts",
         "./flow-yaml-utils": "./src/utils/flowYamlUtils.ts",
+        "./flow-graph-builder": "./src/utils/flowGraphBuilder.ts",
         "./standalone.css": "./src/standalone.css"
     },
     "main": "./dist/index.js",

@@ -148,6 +148,8 @@ jobs:
               - 'e2e/**'
             backend:
               - '!{ui,e2e,.github}/**'
+              # read by FlowGraphContractTest in core, so a hand-edited fixture is checked against the Java builder
+              - 'ui/packages/topology/src/utils/flowGraphFixtures/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   # Fills in whatever the PR left missing or stale and commits it straight onto the branch, so the

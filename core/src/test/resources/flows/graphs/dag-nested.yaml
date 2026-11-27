@@ -1,0 +1,74 @@
+id: graph-dag-nested
+namespace: io.kestra.tests
+
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: last
+          type: io.kestra.plugin.core.log.Log
+          message: last
+        dependsOn:
+          - group
+          - subflow
+          - inner-dag
+      - task:
+          id: first
+          type: io.kestra.plugin.core.log.Log
+          message: first
+      - task:
+          id: group
+          type: io.kestra.plugin.core.flow.Sequential
+          tasks:
+            - id: group-1
+              type: io.kestra.plugin.core.log.Log
+              message: group
+            - id: group-2
+              type: io.kestra.plugin.core.log.Log
+              message: group
+        dependsOn:
+          - first
+      - task:
+          id: subflow
+          type: io.kestra.plugin.core.flow.Subflow
+          namespace: io.kestra.tests
+          flowId: switch
+        dependsOn:
+          - first
+      - task:
+          id: inner-dag
+          type: io.kestra.plugin.core.flow.Dag
+          tasks:
+            - task:
+                id: inner-1
+                type: io.kestra.plugin.core.log.Log
+                message: inner
+            - task:
+                id: inner-2
+                type: io.kestra.plugin.core.log.Log
+                message: inner
+              dependsOn:
+                - inner-1
+        dependsOn:
+          - group
+      - task:
+          id: detached
+          type: io.kestra.plugin.core.log.Log
+          message: no dependency list at all
+        dependsOn: []
+      - task:
+          id: lone-group
+          type: io.kestra.plugin.core.flow.Parallel
+          tasks:
+            - id: lone-group-1
+              type: io.kestra.plugin.core.log.Log
+              message: lone
+    errors:
+      - id: dag-error
+        type: io.kestra.plugin.core.log.Log
+        message: error
+    finally:
+      - id: dag-finally
+        type: io.kestra.plugin.core.log.Log
+        message: finally

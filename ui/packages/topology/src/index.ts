@@ -13,6 +13,7 @@ export type {CustomActionConfig, ShowDetailsConfig, LodLevel} from "./utils/cons
 export {State} from "@kestra-io/design-system"
 export type {FlowGraph} from "./utils/vueFlowUtils"
 export {diffFlowSources, mergeFlowGraphs} from "./utils/flowDiff"
+export {buildFlowGraph, isSupportedFlowableType, unsupportedFlowableTypes} from "./utils/flowGraphBuilder"
 export type {FlowDiff, TaskDiff, TaskDiffStatus} from "./utils/flowDiff"
 export {
     LOOP_TYPE_SUFFIX,

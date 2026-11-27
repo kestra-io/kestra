@@ -71,6 +71,31 @@ The layout comes from Kestra's server, which knows every plugin's structure. Two
 
 The tenant is `main` on an open-source instance. Both take a `subflows` query parameter listing the subflow tasks to draw expanded.
 
+The graph can also be built in the browser, with no request, for a flow that nests only the flowables of Kestra's core plugin and expands no subflow:
+
+```ts
+import {buildFlowGraph} from "@kestra-io/topology"
+import {parse} from "yaml"
+
+flowGraph.value = buildFlowGraph(parse(source))
+```
+
+A flowable shipped by another plugin is drawn as a plain task: `unsupportedFlowableTypes(flow, isFlowable)` tells when to ask the API instead.
+
+### Parity with the server
+
+`buildFlowGraph` is a port of the server's `GraphUtils`. `FlowGraphContractTest` in Kestra's `core` module generates the graph of a set of flows from the Java builder into `src/utils/flowGraphFixtures/`, and fails when a committed fixture is stale; `flowGraphBuilder.test.ts` asserts the TypeScript builder gives the same graph for each. Never edit a fixture by hand.
+
+Compared: every node (`uid`, `type`, `branchType`, `relationType`, the `id` and `type` of its task or trigger), every edge (`source`, `target`, `relation`) and every cluster (its task node, `nodes`, `parents`, `start`, `end`), as sets.
+
+Not compared:
+
+- the order of nodes, edges and clusters: the server iterates the cases of a Switch and of an Approval in hash order
+- the suffix of a root, end, finally or after-execution uid: random on the server on every build, fixed in the browser
+- a task or trigger body beyond `id` and `type`: the server sends its plugin model serialized back (defaults, `Property` values, a label map turned into a list), the browser keeps the YAML as written
+- `cluster.finally`, an internal getter the server serializes by accident and nothing reads
+- `trigger` on a trigger node and `disabled: true` on a subflow node, which the server reads from its repository and the source does not hold. An app that wants them dimmed sets them on the built graph itself, as the Kestra UI does
+
 ### Styles
 
 `@kestra-io/topology/style.css` holds the graph's own styles and the Vue Flow base styles. Its colors, sizes and spacing come from the design system's `--ks-*` tokens.

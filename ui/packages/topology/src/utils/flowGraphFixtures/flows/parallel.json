@@ -1,0 +1,181 @@
+{
+  "source" : "id: parallel\nnamespace: io.kestra.tests\n\ntasks:\n  - id: parent\n    type: io.kestra.plugin.core.flow.Parallel\n    tasks:\n      - id: t1\n        type: io.kestra.plugin.core.log.Log\n        message: \"{{ task.id }}\"\n      - id: t2\n        type: io.kestra.plugin.core.log.Log\n        message: \"{{ task.id }}\"\n      - id: t3\n        type: io.kestra.plugin.core.log.Log\n        message: \"{{ task.id }}\"\n      - id: t4\n        type: io.kestra.plugin.core.log.Log\n        message: \"{{ task.id }}\"\n      - id: t5\n        type: io.kestra.plugin.core.log.Log\n        message: \"{{ task.id }}\"\n      - id: t6\n        type: io.kestra.plugin.core.log.Log\n        message: \"{{ task.id }}\"\n  - id: last\n    type: io.kestra.plugin.core.debug.Return\n    format: \"{{task.id}} > {{taskrun.startDate}}\"\n",
+  "graph" : {
+    "nodes" : [ {
+      "uid" : "root.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.last",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "SEQUENTIAL",
+      "task" : {
+        "id" : "last",
+        "type" : "io.kestra.plugin.core.debug.Return"
+      }
+    }, {
+      "uid" : "root.parent.end-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    }, {
+      "uid" : "root.parent.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    }, {
+      "uid" : "root.parent.t1",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "t1",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.parent.t2",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "t2",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.parent.t3",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "t3",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.parent.t4",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "t4",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.parent.t5",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "t5",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.parent.t6",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "t6",
+        "type" : "io.kestra.plugin.core.log.Log"
+      }
+    }, {
+      "uid" : "root.parent",
+      "type" : "io.kestra.core.models.hierarchies.GraphTask",
+      "relationType" : "PARALLEL",
+      "task" : {
+        "id" : "parent",
+        "type" : "io.kestra.plugin.core.flow.Parallel"
+      }
+    }, {
+      "uid" : "root.root-*",
+      "type" : "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    } ],
+    "edges" : [ {
+      "source" : "root.last",
+      "target" : "root.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent",
+      "target" : "root.parent.t1",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.parent",
+      "target" : "root.parent.t2",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.parent",
+      "target" : "root.parent.t3",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.parent",
+      "target" : "root.parent.t4",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.parent",
+      "target" : "root.parent.t5",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.parent",
+      "target" : "root.parent.t6",
+      "relation" : {
+        "relationType" : "PARALLEL"
+      }
+    }, {
+      "source" : "root.parent.end-*",
+      "target" : "root.last",
+      "relation" : {
+        "relationType" : "SEQUENTIAL"
+      }
+    }, {
+      "source" : "root.parent.root-*",
+      "target" : "root.parent",
+      "relation" : { }
+    }, {
+      "source" : "root.parent.t1",
+      "target" : "root.parent.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent.t2",
+      "target" : "root.parent.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent.t3",
+      "target" : "root.parent.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent.t4",
+      "target" : "root.parent.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent.t5",
+      "target" : "root.parent.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.parent.t6",
+      "target" : "root.parent.end-*",
+      "relation" : { }
+    }, {
+      "source" : "root.root-*",
+      "target" : "root.parent.root-*",
+      "relation" : { }
+    } ],
+    "clusters" : [ {
+      "cluster" : {
+        "uid" : "cluster_root.parent",
+        "type" : "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType" : "PARALLEL",
+        "taskNode" : {
+          "uid" : "root.parent",
+          "type" : "io.kestra.core.models.hierarchies.GraphTask",
+          "relationType" : "PARALLEL",
+          "task" : {
+            "id" : "parent",
+            "type" : "io.kestra.plugin.core.flow.Parallel"
+          }
+        }
+      },
+      "nodes" : [ "root.parent", "root.parent.end-*", "root.parent.root-*", "root.parent.t1", "root.parent.t2", "root.parent.t3", "root.parent.t4", "root.parent.t5", "root.parent.t6" ],
+      "parents" : [ ],
+      "start" : "root.parent.root-*",
+      "end" : "root.parent.end-*"
+    } ]
+  }
+}

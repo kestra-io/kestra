@@ -1,0 +1,177 @@
+id: graph-flowables
+namespace: io.kestra.tests
+
+tasks:
+  - id: if-both
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: if-both-then-1
+        type: io.kestra.plugin.core.log.Log
+        message: then
+      - id: if-both-then-2
+        type: io.kestra.plugin.core.log.Log
+        message: then
+    else:
+      - id: if-both-else
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+          - id: if-both-else-1
+            type: io.kestra.plugin.core.log.Log
+            message: else
+    errors:
+      - id: if-both-error
+        type: io.kestra.plugin.core.log.Log
+        message: error
+    finally:
+      - id: if-both-finally
+        type: io.kestra.plugin.core.log.Log
+        message: finally
+
+  - id: if-then-only
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: if-then-only-1
+        type: io.kestra.plugin.core.log.Log
+        message: then
+
+  - id: pause-plain
+    type: io.kestra.plugin.core.flow.Pause
+
+  - id: pause-errors
+    type: io.kestra.plugin.core.flow.Pause
+    onPause:
+      id: pause-errors-on-pause
+      type: io.kestra.plugin.core.log.Log
+      message: paused
+    errors:
+      - id: pause-errors-error
+        type: io.kestra.plugin.core.log.Log
+        message: error
+
+  - id: pause-finally
+    type: io.kestra.plugin.core.flow.Pause
+    finally:
+      - id: pause-finally-1
+        type: io.kestra.plugin.core.log.Log
+        message: finally
+
+  - id: loop-until
+    type: io.kestra.plugin.core.flow.LoopUntil
+    condition: "{{ true }}"
+    tasks:
+      - id: loop-until-1
+        type: io.kestra.plugin.core.log.Log
+        message: loop
+      - id: loop-until-2
+        type: io.kestra.plugin.core.log.Log
+        message: loop
+
+  - id: wait-for
+    type: io.kestra.plugin.core.flow.WaitFor
+    condition: "{{ true }}"
+    tasks:
+      - id: wait-for-1
+        type: io.kestra.plugin.core.log.Log
+        message: loop
+
+  - id: working-directory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: working-directory-1
+        type: io.kestra.plugin.core.log.Log
+        message: first
+      - id: working-directory-2
+        type: io.kestra.plugin.core.log.Log
+        message: second
+
+  - id: allow-failure
+    type: io.kestra.plugin.core.flow.AllowFailure
+    tasks:
+      - id: allow-failure-1
+        type: io.kestra.plugin.core.log.Log
+        message: first
+    errors:
+      - id: allow-failure-error
+        type: io.kestra.plugin.core.flow.Parallel
+        tasks:
+          - id: allow-failure-error-1
+            type: io.kestra.plugin.core.log.Log
+            message: error
+          - id: allow-failure-error-2
+            type: io.kestra.plugin.core.log.Log
+            message: error
+
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: '["a", "b"]'
+    tasks:
+      - id: loop-1
+        type: io.kestra.plugin.core.log.Log
+        message: first
+      - id: loop-2
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ true }}"
+        then:
+          - id: loop-2-then
+            type: io.kestra.plugin.core.log.Log
+            message: then
+      - id: loop-3
+        type: io.kestra.plugin.core.log.Log
+        message: third
+    errors:
+      - id: loop-error
+        type: io.kestra.plugin.core.log.Log
+        message: error
+    finally:
+      - id: loop-finally-1
+        type: io.kestra.plugin.core.log.Log
+        message: finally
+      - id: loop-finally-2
+        type: io.kestra.plugin.core.log.Log
+        message: finally
+
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: parallel-1
+        type: io.kestra.plugin.core.log.Log
+        message: first
+      - id: parallel-2
+        type: io.kestra.plugin.core.flow.Switch
+        value: "{{ 'a' }}"
+        cases:
+          a:
+            - id: parallel-2-a
+              type: io.kestra.plugin.core.log.Log
+              message: a
+          b:
+            - id: parallel-2-b-1
+              type: io.kestra.plugin.core.log.Log
+              message: b
+            - id: parallel-2-b-2
+              type: io.kestra.plugin.core.log.Log
+              message: b
+        errors:
+          - id: parallel-2-error
+            type: io.kestra.plugin.core.log.Log
+            message: error
+        finally:
+          - id: parallel-2-finally
+            type: io.kestra.plugin.core.log.Log
+            message: finally
+    errors:
+      - id: parallel-error-1
+        type: io.kestra.plugin.core.log.Log
+        message: error
+      - id: parallel-error-2
+        type: io.kestra.plugin.core.log.Log
+        message: error
+    finally:
+      - id: parallel-finally
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+          - id: parallel-finally-1
+            type: io.kestra.plugin.core.log.Log
+            message: finally

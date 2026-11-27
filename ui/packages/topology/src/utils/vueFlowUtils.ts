@@ -55,14 +55,18 @@ export interface MinimalNode {
     uid: string;
     type: string;
     disabled?: boolean;
+    relationType?: string;
     task?: {
         id?: string;
         type: string;
         namespace?: string;
         flowId?: string;
+        revision?: number;
         disabled?: boolean;
     };
     triggerDeclaration?: {id?: string};
+    /** The trigger's state on the server, absent for a trigger that was never saved. */
+    trigger?: {disabled?: boolean};
 }
 
 export interface Cluster {
@@ -78,6 +82,7 @@ export interface Cluster {
     } | null;
     // The backend only sets this on a node inside an error/finally branch, as MinimalNode already reflects.
     branchType?: BranchType;
+    relationType?: string;
 }
 
 interface FlowGraphEdge {

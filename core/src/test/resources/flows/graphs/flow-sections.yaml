@@ -1,0 +1,65 @@
+id: graph-flow-sections
+namespace: io.kestra.tests
+
+tasks:
+  - id: 100
+    type: io.kestra.plugin.core.log.Log
+    message: a numeric id is read as a string
+  - id: subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: switch
+  - id: cluster_group
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: cluster_group-1
+        type: io.kestra.plugin.core.log.Log
+        message: the cluster prefix is stripped from a cluster uid
+
+errors:
+  - id: error-1
+    type: io.kestra.plugin.core.log.Log
+    message: error
+  - id: error-subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: switch
+  - id: error-group
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: error-group-1
+        type: io.kestra.plugin.core.log.Log
+        message: error
+
+finally:
+  - id: finally-1
+    type: io.kestra.plugin.core.log.Log
+    message: finally
+  - id: finally-group
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: finally-group-1
+        type: io.kestra.plugin.core.log.Log
+        message: finally
+      - id: finally-group-2
+        type: io.kestra.plugin.core.log.Log
+        message: finally
+
+afterExecution:
+  - id: after-1
+    type: io.kestra.plugin.core.log.Log
+    message: after
+  - id: after-group
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: after-group-1
+        type: io.kestra.plugin.core.log.Log
+        message: after
+
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 * * * *"
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: contract

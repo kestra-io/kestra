@@ -263,6 +263,29 @@ class FlowGraphTest {
     }
 
     @Test
+    void dagWithFlowableReturningGraphTask() throws IllegalVariableEvaluationException, IOException {
+        // A FlowableTask whose tasksTree() returns a GraphTask (Pause without errors/finally),
+        // rather than a GraphCluster, must still produce correct edges inside a Dag:
+        //  - when another task depends on it (previously the edge was silently dropped)
+        //  - when it is a leaf node (previously a ClassCastException was thrown while linking to the end)
+        FlowWithSource flow = this.parse("flows/valids/dag-flowable-graph-task.yaml");
+        FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
+
+        assertThat(flowGraph.getNodes().size()).isEqualTo(9);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(9);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(1);
+
+        assertThat(edge(flowGraph, ".*root.dag.*", ".*dag.task1.*").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*dag.task1", ".*dag.pause1.*").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*dag.task1", ".*dag.pause2.*").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        // edge from a FlowableTask-returning-GraphTask to its dependent — previously missing
+        assertThat(edge(flowGraph, ".*dag.pause1", ".*dag.task2.*").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        // leaf FlowableTask-returning-GraphTask linked to the cluster end — previously threw ClassCastException
+        assertThat(edge(flowGraph, ".*dag.pause2", ".*dag.end.*").getRelation().getRelationType()).isNull();
+        assertThat(edge(flowGraph, ".*dag.task2", ".*dag.end.*").getRelation().getRelationType()).isNull();
+    }
+
+    @Test
     @LoadFlows(
         value = { "flows/valids/task-flow.yaml",
             "flows/valids/switch.yaml" },

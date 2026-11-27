@@ -60,7 +60,7 @@
                     <ChevronDown />
                 </KsIconButton>
                 <KsButton :tag="RouterLink" size="small" link :icon="OpenInNew" :to="allExecutionsRoute">
-                    {{ $t("show_all_executions") }}
+                    {{ $t("gantt_loop_show_all") }}
                 </KsButton>
             </span>
         </div>

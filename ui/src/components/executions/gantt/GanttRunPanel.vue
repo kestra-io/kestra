@@ -44,6 +44,10 @@
                     <template v-else>{{ offset(histories) }} ·</template>
                     <Duration :histories="histories" />
                 </span>
+                <GanttOpenExecution
+                    v-if="node.kind === 'iteration'"
+                    :execution="{id: node.row.id, namespace: node.loop.namespace, flowId: node.loop.flowId}"
+                />
             </div>
 
             <GanttIterationStepper v-if="owningIteration(node)" :node="node" />
@@ -52,6 +56,7 @@
         <div class="panel-body">
             <GanttPanelLoop v-if="node.kind === 'loop'" :key="node.key" :node="node" />
             <GanttPanelIteration v-else-if="node.kind === 'iteration'" :key="node.key" :node="node" />
+            <GanttPanelSubflow v-else-if="isSubflowNode(node)" :key="node.key" :node="node" />
             <GanttPanelTaskRun v-else :node="node" />
         </div>
     </aside>
@@ -68,8 +73,10 @@
     import GanttPanelLoop from "./GanttPanelLoop.vue"
     import GanttPanelIteration from "./GanttPanelIteration.vue"
     import GanttPanelTaskRun from "./GanttPanelTaskRun.vue"
+    import GanttPanelSubflow from "./GanttPanelSubflow.vue"
+    import GanttOpenExecution from "./GanttOpenExecution.vue"
     import {useGanttTimeline} from "../ganttTimeline"
-    import {iterationLabel, loopRefOf, owningIteration, useGanttTree, type Ancestor} from "./ganttTree"
+    import {isSubflowNode, iterationLabel, loopRefOf, owningIteration, useGanttTree, type Ancestor} from "./ganttTree"
 
     const tree = useGanttTree()
     const executionsStore = useExecutionsStore()
@@ -105,6 +112,9 @@
     const loopTotal = computed(() => loopHandle.value?.totalCount.value)
 
     watch(loopHandle, (handle) => handle?.loadCounts(), {immediate: true})
+    watch(node, (current) => {
+        if (current && isSubflowNode(current)) tree.loadSubflowExecutions(current.executionId)
+    }, {immediate: true})
 </script>
 
 <style scoped>

@@ -2127,7 +2127,6 @@
     "items": "éléments",
     "iterations": "Itérations",
     "load_10_more": "Charger 10 de plus",
-    "show_all_executions": "Afficher toutes les exécutions",
     "loop_iterations_shown": "{shown} sur {total} affichés",
     "loop_iterations_load_error": "Échec du chargement des itérations",
     "retry": "Réessayer",
@@ -2151,7 +2150,7 @@
       "lineage": "Emplacement dans le flow",
       "previous_iteration": "Itération précédente",
       "next_iteration": "Itération suivante",
-      "open_iteration": "Ouvrir l'itération",
+      "open_execution": "Ouvrir l'exécution",
       "iteration_position": "{position} sur {total} dans {loop}",
       "first_failure": "Premier échec",
       "go_to_failure": "Aller à l'échec",
@@ -2166,6 +2165,14 @@
       "filter_success": "Réussies {count}",
       "search_value": "Rechercher par valeur exacte",
       "range": "{from}–{to} sur {total}"
+    },
+    "gantt_subflow": {
+      "loading": "Chargement de l'exécution du subflow…",
+      "load_error": "Échec du chargement de l'exécution du subflow",
+      "none": "Aucune exécution de subflow trouvée",
+      "no_tasks": "Aucun Task Run dans cette exécution de subflow pour le moment",
+      "task_runs": "Exécutions de Task de Subflow",
+      "executions": "Exécutions de Subflow"
     },
     "loop_iterations_notice": {
       "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",

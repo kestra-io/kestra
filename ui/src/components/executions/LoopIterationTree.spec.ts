@@ -48,7 +48,6 @@ function mountTree() {
         global: {
             provide: {[GANTT_TREE as symbol]: tree},
             stubs: {
-                SubFlowLink: true,
                 TaskRunActions: true,
                 TaskIcon: true,
                 Duration: true,
@@ -80,6 +79,43 @@ describe("LoopIterationTree", () => {
         }))
         expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(3)
         expect(wrapper.find("[data-test='loop-preview-footer']").exists()).toBe(false)
+    })
+
+    it("shouldListTheSubflowExecutionTaskRunsUnderTheSubflowTaskWhenItIsExpanded", async () => {
+        useExecutionsStore().flow = {
+            id: "nested_loop_demo",
+            namespace: "company.team",
+            tasks: [{id: "per_region", type: LOOP_TYPE, tasks: [{id: "call_subflow", type: "io.kestra.plugin.core.flow.Subflow"}]}],
+        } as unknown as FlowForExecution
+        const iterations = pageOf(1)
+        findExecutions.mockImplementation((async (options: Record<string, unknown>) => {
+            if (!options["filters[triggerExecutionId][IN]"]) return iterations(options)
+            return {
+                results: [
+                    {id: "child-0", namespace: "demo.subflows", flowId: "subflow_add", state: {current: "SUCCESS", histories}, trigger: {variables: {executionId: "it-0", taskRunId: "tr-call"}}},
+                    {id: "sibling", namespace: "demo.subflows", flowId: "other", state: {current: "SUCCESS", histories}, trigger: {variables: {executionId: "it-0", taskRunId: "tr-other"}}},
+                ],
+                total: 2,
+            }
+        }) as never)
+        mockExecution.mockImplementation(async ({executionId}: {executionId: string}) => executionId === "child-0"
+            ? {id: "child-0", taskRunList: [{id: "tr-compute", taskId: "compute", state: {current: "SUCCESS", histories}}]}
+            : {id: "it-0", taskRunList: [{id: "tr-call", taskId: "call_subflow", state: {current: "SUCCESS", histories}}]})
+        const wrapper = mountTree()
+        await flushPromises()
+
+        await wrapper.findAll("[data-test='gantt-row-chevron']")[0].trigger("click")
+        await flushPromises()
+        expect(findExecutions).not.toHaveBeenCalledWith(expect.objectContaining({"filters[triggerExecutionId][IN]": ["it-0"]}))
+        await wrapper.get("[data-test='iteration-task-run'] [data-test='gantt-row-chevron']").trigger("click")
+        await flushPromises()
+
+        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({"filters[triggerExecutionId][IN]": ["it-0"]}))
+        expect(mockExecution).toHaveBeenCalledWith({executionId: "child-0"})
+        expect(wrapper.findAll("[data-test='iteration-task-run']").map(row => row.text())).toEqual([
+            expect.stringContaining("call_subflow"),
+            expect.stringContaining("compute"),
+        ])
     })
 
     it("shouldFetchIterationTaskRunsOnlyForTheRowWhoseChevronIsToggled", async () => {

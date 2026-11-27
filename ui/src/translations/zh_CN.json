@@ -2127,7 +2127,6 @@
     "items": "项目",
     "iterations": "迭代次数",
     "load_10_more": "加载更多10项",
-    "show_all_executions": "显示所有执行",
     "loop_iterations_shown": "已显示 {shown} / {total}",
     "loop_iterations_load_error": "加载迭代失败",
     "retry": "重试",
@@ -2151,7 +2150,7 @@
       "lineage": "在 flow 中的位置",
       "previous_iteration": "上一次迭代",
       "next_iteration": "下一次迭代",
-      "open_iteration": "打开迭代",
+      "open_execution": "打开执行",
       "iteration_position": "{loop} 中的第 {position} / {total} 个",
       "first_failure": "首次失败",
       "go_to_failure": "转到失败",
@@ -2166,6 +2165,14 @@
       "filter_success": "成功 {count}",
       "search_value": "按精确值搜索",
       "range": "{from}–{to} / {total}"
+    },
+    "gantt_subflow": {
+      "loading": "正在加载 subflow 执行…",
+      "load_error": "无法加载 subflow execution",
+      "none": "未找到 subflow 执行",
+      "no_tasks": "此 subflow execution 尚无 task 运行",
+      "task_runs": "Subflow task 运行",
+      "executions": "Subflow 执行"
     },
     "loop_iterations_notice": {
       "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",

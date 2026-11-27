@@ -1,7 +1,7 @@
 <template>
     <div class="panel-logs">
         <GanttTaskLogs
-            v-if="!isIterationTask && execution"
+            v-if="isRootTask && execution"
             :key="node.key"
             :execution="execution"
             :taskRun="node.taskRun"
@@ -10,11 +10,11 @@
             :levelFilter="tree.levelFilter.value"
         />
         <TaskRunDetails
-            v-else-if="isIterationTask"
+            v-else-if="!isRootTask"
             :key="node.key"
             :targetExecutionId="node.executionId"
             :taskRunId="node.taskRun.id"
-            :targetFlow="executionsStore.flow"
+            :targetFlow="tree.flowOf(node)"
             :levelFilter="tree.levelFilter.value"
             hideTaskHeader
             :excludeMetas="LOG_EXCLUDED_METAS"
@@ -28,7 +28,7 @@
     import {useExecutionsStore} from "../../../stores/executions"
     import GanttTaskLogs from "../GanttTaskLogs.vue"
     import TaskRunDetails from "../../logs/TaskRunDetails.vue"
-    import {owningIteration, useGanttTree, type TaskRunNode} from "./ganttTree"
+    import {useGanttTree, type TaskRunNode} from "./ganttTree"
 
     const LOG_EXCLUDED_METAS: Array<keyof Log> = ["namespace", "flowId", "taskId", "executionId"]
 
@@ -39,7 +39,7 @@
     const tree = useGanttTree()
     const executionsStore = useExecutionsStore()
     const execution = computed(() => executionsStore.execution)
-    const isIterationTask = computed(() => owningIteration(props.node) !== undefined)
+    const isRootTask = computed(() => props.node.executionId === execution.value?.id)
 </script>
 
 <style scoped>

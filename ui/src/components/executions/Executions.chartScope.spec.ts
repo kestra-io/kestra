@@ -2,7 +2,7 @@ import {defineComponent, h} from "vue"
 import {afterEach, beforeEach, describe, expect, it} from "vitest"
 
 import {i18nShallowMount} from "../../../tests/unit/i18nMount"
-import {routedPinia} from "../../../tests/unit/memoryRouter"
+import {memoryRouter, routedPinia} from "../../../tests/unit/memoryRouter"
 import Sections from "../dashboard/sections/Sections.vue"
 import Executions from "./Executions.vue"
 
@@ -20,6 +20,15 @@ function chartFilters(props: {namespace: string; flowId?: string}) {
     })
 
     return wrapper.findComponent(Sections).props("baseFilters")
+}
+
+async function mountOnQuery(query: Record<string, string>) {
+    const router = memoryRouter()
+    await router.push({path: "/executions", query})
+    return i18nShallowMount(Executions, {
+        props: {topbar: false},
+        global: {plugins: [routedPinia(), router], stubs: {KsDataTable}},
+    })
 }
 
 describe("Executions chart scope", () => {
@@ -44,5 +53,13 @@ describe("Executions chart scope", () => {
         expect(chartFilters({namespace: "qa"})).toEqual([
             {field: "namespace", operation: "PREFIX", value: "qa"},
         ])
+    })
+
+    it("leaves the chart out of a Loop's iterations, which it cannot filter on their parent and task", async () => {
+        const iterations = await mountOnQuery({"filters[parentId][EQUALS]": "root", "filters[kind][EQUALS]": "LOOP", "filters[taskId][EQUALS]": "loop"})
+        const loopExecutions = await mountOnQuery({"filters[kind][EQUALS]": "LOOP"})
+
+        expect(iterations.findComponent(Sections).exists()).toBe(false)
+        expect(loopExecutions.findComponent(Sections).exists()).toBe(true)
     })
 })

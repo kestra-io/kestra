@@ -106,7 +106,7 @@
                                                     :barStyle="taskBarStyle(item)"
                                                     :state="item.task.state.current"
                                                     :selected="tree.selected.value?.key === nodeOf(item).key"
-                                                    :expandable="nodeOf(item).kind === 'loop'"
+                                                    :expandable="nodeOf(item).kind === 'loop' || isSubflowNode(nodeOf(item))"
                                                     :expanded="tree.isExpanded(nodeOf(item).key)"
                                                     @select="tree.select(nodeOf(item))"
                                                     @toggle="tree.toggleExpanded(nodeOf(item).key)"
@@ -156,6 +156,11 @@
                                                 <LoopIterationTree
                                                     v-if="nodeOf(item).kind === 'loop' && tree.isExpanded(nodeOf(item).key)"
                                                     :key="`${execution!.id}-${item.task.taskId}-${item.id}`"
+                                                    :node="nodeOf(item)"
+                                                />
+                                                <SubflowExecutionTree
+                                                    v-else-if="isSubflowNode(nodeOf(item)) && tree.isExpanded(nodeOf(item).key)"
+                                                    :key="nodeOf(item).key"
                                                     :node="nodeOf(item)"
                                                 />
                                             </DynamicScrollerItem>
@@ -233,6 +238,7 @@
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
     import LoopIterationTree from "./LoopIterationTree.vue"
+    import SubflowExecutionTree from "./SubflowExecutionTree.vue"
     import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     import GanttRow from "./gantt/GanttRow.vue"
     import GanttTaskLabel from "./gantt/GanttTaskLabel.vue"
@@ -245,6 +251,7 @@
         indexTaskRuns,
         isFailed,
         isHiddenTaskType,
+        isSubflowNode,
         loopRefOf,
         owningIteration,
         provideGanttTree,
@@ -685,6 +692,7 @@
         --gantt-bar-width: 12rem;
         --gantt-duration-width: 9rem;
         --gantt-state-width: 8rem;
+        container-type: inline-size;
         --ks-card-header-padding: 0;
         padding: 0;
 
@@ -761,6 +769,21 @@
                 background: var(--ks-border-default);
                 border-radius: 5px;
             }
+        }
+    }
+
+    /* The fixed columns never shrink, so a Gantt narrowed by the side panel would otherwise squeeze the task names to nothing. */
+    @container (max-width: 56rem) {
+        .kel-card:not(.is-compact) :is(.gantt-header, .gantt-scroller) {
+            --gantt-bar-width: 6rem;
+            --gantt-duration-width: 5rem;
+        }
+    }
+
+    @container (max-width: 40rem) {
+        .kel-card:not(.is-compact) :is(.gantt-header, .gantt-scroller) {
+            --gantt-duration-width: 0rem;
+            --gantt-duration-padding: 0;
         }
     }
 

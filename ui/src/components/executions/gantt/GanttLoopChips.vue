@@ -55,7 +55,8 @@
 <style scoped>
     .loop-chips {
         display: inline-flex;
-        flex-shrink: 0;
+        min-width: 0;
+        overflow: hidden;
         align-items: center;
         gap: var(--ks-spacing-1);
     }

@@ -44,18 +44,14 @@
                     <Duration :histories="iteration.row.state.histories" />
                 </template>
                 <template #actions>
-                    <SubFlowLink
-                        :executionId="iteration.row.id"
-                        :namespace="loopRef.namespace"
-                        :flowId="loopRef.flowId"
-                        tabExecution="gantt"
-                    />
+                    <GanttOpenExecution :execution="executionOf(iteration.row)" iconOnly />
                 </template>
             </GanttRow>
 
-            <IterationTaskRuns
+            <ExecutionTaskRuns
                 v-if="tree.isExpanded(iteration.key)"
-                :iteration="iteration"
+                :execution="executionOf(iteration.row)"
+                :ancestors="iterationAncestors(iteration)"
             />
         </template>
 
@@ -79,7 +75,7 @@
                 class="tree-link"
                 :to="allExecutionsRoute"
             >
-                {{ $t("show_all_executions") }}
+                {{ $t("gantt_loop_show_all") }}
             </KsButton>
         </GanttMessageRow>
     </div>
@@ -91,12 +87,13 @@
     import Loading from "vue-material-design-icons/Loading.vue"
     import {Duration} from "@kestra-io/topology"
     import {KsAlert, KsButton, KsIcon} from "@kestra-io/design-system"
-    import SubFlowLink from "../flows/SubFlowLink.vue"
+    import GanttOpenExecution from "./gantt/GanttOpenExecution.vue"
     import GanttRow from "./gantt/GanttRow.vue"
     import GanttMessageRow from "./gantt/GanttMessageRow.vue"
-    import IterationTaskRuns from "./IterationTaskRuns.vue"
+    import ExecutionTaskRuns from "./ExecutionTaskRuns.vue"
     import {
         createIterationNode,
+        iterationAncestors,
         iterationLabel,
         loopAncestors,
         loopRefOf,
@@ -129,6 +126,8 @@
         retry,
         setFailedOnly,
     } = tree.loopHandle(loopRef.value)
+
+    const executionOf = (row: {id: string}) => ({id: row.id, namespace: loopRef.value.namespace, flowId: loopRef.value.flowId})
 
     const iterationNodes = computed(() => iterations.value.map(row => createIterationNode(loopRef.value, row, ancestors.value)))
 

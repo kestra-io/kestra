@@ -5,7 +5,7 @@
             <code>{{ name }}</code>
             <small v-if="value"><br>{{ value }}</small>
         </template>
-        <span class="task-name" data-test="gantt-task-name">
+        <span class="task-name" :class="{'is-truncated': !compact}" data-test="gantt-task-name">
             <code>{{ name }}</code>
             <small v-if="value"> {{ value }}</small>
         </span>
@@ -25,6 +25,7 @@
     import Warning from "vue-material-design-icons/Alert.vue"
     import {KsIcon, KsTooltip} from "@kestra-io/design-system"
     import GanttTaskIcon from "./GanttTaskIcon.vue"
+    import {useGanttTree} from "./ganttTree"
 
     withDefaults(defineProps<{
         name: string;
@@ -36,6 +37,8 @@
         taskType: undefined,
         attempts: 1,
     })
+
+    const {compact} = useGanttTree()
 </script>
 
 <style scoped>
@@ -52,6 +55,13 @@
             font-family: var(--ks-font-family-mono);
             font-size: var(--ks-font-size-xs);
         }
+    }
+
+    .task-name.is-truncated {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .attempt-warning {

@@ -2127,7 +2127,6 @@
     "items": "アイテム",
     "iterations": "イテレーション",
     "load_10_more": "さらに10件読み込む",
-    "show_all_executions": "すべての実行を表示",
     "loop_iterations_shown": "{total}件中{shown}件表示",
     "loop_iterations_load_error": "反復の読み込みに失敗しました",
     "retry": "再試行",
@@ -2151,7 +2150,7 @@
       "lineage": "flow 内の位置",
       "previous_iteration": "前のイテレーション",
       "next_iteration": "次のイテレーション",
-      "open_iteration": "イテレーションを開く",
+      "open_execution": "Executionを開く",
       "iteration_position": "{loop} の {total} 件中 {position} 件目",
       "first_failure": "最初の失敗",
       "go_to_failure": "失敗へ移動",
@@ -2166,6 +2165,14 @@
       "filter_success": "成功 {count}",
       "search_value": "完全一致する value で検索",
       "range": "{total} 件中 {from}–{to}"
+    },
+    "gantt_subflow": {
+      "loading": "サブフローの実行を読み込み中…",
+      "load_error": "subflow Executionの読み込みに失敗しました",
+      "none": "SubflowのExecutionが見つかりません",
+      "no_tasks": "このsubflow ExecutionにはまだTask Runがありません",
+      "task_runs": "Subflow Task実行",
+      "executions": "Subflowの実行"
     },
     "loop_iterations_notice": {
       "logs": "ループのイテレーションは個別のサブ実行として実行されるため、ログはここに表示されません。",

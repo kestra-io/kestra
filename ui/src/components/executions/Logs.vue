@@ -190,6 +190,7 @@
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {storageKeys} from "../../utils/constants"
     import {flowHasLoop} from "../../utils/loopLogScope"
+    import {findTaskById} from "../../utils/flowUtils"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {
         hasUnsupportedRouteLevelComparator,
@@ -263,7 +264,13 @@
 
     type LogsMode = "execution" | "merged"
 
-    const hasLoopIterations = computed(() => !props.playground && flowHasLoop(executionsStore.flow))
+    // An iteration only runs its Loop's body, so only a Loop nested in that body gives it iterations of its own.
+    const loopScope = computed(() => {
+        const loopTaskId = (executionsStore.execution as {loopRun?: {taskId?: string}} | undefined)?.loopRun?.taskId
+        if (!loopTaskId) return executionsStore.flow
+        return (findTaskById(executionsStore.flow, loopTaskId) as {tasks?: unknown} | undefined)?.tasks
+    })
+    const hasLoopIterations = computed(() => !props.playground && flowHasLoop(loopScope.value))
     const modeOverride = ref<LogsMode>()
     const mode = computed<LogsMode>(() => modeOverride.value ?? (hasLoopIterations.value ? "merged" : "execution"))
     const merged = computed(() => hasLoopIterations.value && mode.value === "merged")

@@ -2127,7 +2127,6 @@
     "items": "Elemente",
     "iterations": "Iterationen",
     "load_10_more": "10 weitere laden",
-    "show_all_executions": "Alle Ausführungen anzeigen",
     "loop_iterations_shown": "{shown} von {total} angezeigt",
     "loop_iterations_load_error": "Iterationen konnten nicht geladen werden",
     "retry": "Versuche es erneut",
@@ -2151,7 +2150,7 @@
       "lineage": "Position im Flow",
       "previous_iteration": "Vorherige Iteration",
       "next_iteration": "Nächste Iteration",
-      "open_iteration": "Iteration öffnen",
+      "open_execution": "Execution öffnen",
       "iteration_position": "{position} von {total} in {loop}",
       "first_failure": "Erster Fehler",
       "go_to_failure": "Zum Fehler springen",
@@ -2166,6 +2165,14 @@
       "filter_success": "Erfolgreich {count}",
       "search_value": "Nach exaktem Value suchen",
       "range": "{from}–{to} von {total}"
+    },
+    "gantt_subflow": {
+      "loading": "Lade die Subflow-Execution…",
+      "load_error": "Fehler beim Laden der Subflow-Execution",
+      "none": "Keine Subflow-Execution gefunden",
+      "no_tasks": "Noch keine Task Runs in dieser Subflow Execution",
+      "task_runs": "Subflow Task-Runs",
+      "executions": "Subflow-Executions"
     },
     "loop_iterations_notice": {
       "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",

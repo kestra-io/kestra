@@ -82,10 +82,10 @@
     const runs = computed(() => {
         const byId = indexTaskRuns(taskRuns.value)
         const owner = {id: props.node.row.id, namespace: props.node.loop.namespace, flowId: props.node.loop.flowId}
-        return orderTaskRuns(taskRuns.value, tree.taskType).map(({task}) => createTaskRunNode(
+        return orderTaskRuns(taskRuns.value, taskId => tree.taskTypeIn(owner, taskId)).map(({task}) => createTaskRunNode(
             owner,
             task,
-            tree.taskType(task.taskId),
+            tree.taskTypeIn(owner, task.taskId),
             taskRunAncestors(byId, task, ancestors.value),
         ))
     })

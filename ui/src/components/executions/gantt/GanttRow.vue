@@ -251,7 +251,7 @@
     .row-duration {
         flex: 0 0 var(--gantt-duration-width);
         min-width: 0;
-        padding: 0 var(--ks-spacing-1);
+        padding: 0 var(--gantt-duration-padding, var(--ks-spacing-1));
         overflow: hidden;
         white-space: nowrap;
         font-family: var(--ks-font-family-mono);

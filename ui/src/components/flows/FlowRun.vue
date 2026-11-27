@@ -37,7 +37,6 @@
                         @update:model-value-no-default="values => inputsNoDefaults=values"
                         @update:checks="onChecksUpdate"
                         @update:on-recap="value => inputsOnRecap = value"
-                        @clear-validation="onClearValidation"
                     />
                     <KsText v-else type="info">
                         {{ $t('no inputs') }}
@@ -373,10 +372,6 @@
 
     function onChecksUpdate(values: Check[]) {
         checks.value = values
-    }
-
-    function onClearValidation(fieldId: string) {
-        form.value?.clearValidate(fieldId)
     }
 
     let autoPrefilled = false

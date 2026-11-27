@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {defineComponent, ref} from "vue"
+import {defineComponent, ref, watch} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem, {KsForm, type FormInstance} from "@kestra-io/design-system"
@@ -15,6 +15,7 @@ vi.mock("vue-router", () => ({
 
 vi.mock("@kestra-io/design-system", async (importOriginal) => {
     const actual = await importOriginal() as Record<string, unknown>
+    const {useFormItem} = await import("element-plus")
     return {
         ...actual,
         KsMarkdown: {name: "KsMarkdown", props: ["content"], template: "<div>{{ content }}</div>"},
@@ -22,6 +23,10 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
             name: "KsEditor",
             props: ["modelValue", "dataTestid"],
             emits: ["update:modelValue", "confirm"],
+            setup(props) {
+                const {formItem} = useFormItem()
+                watch(() => props.modelValue, () => formItem?.validate("change").catch(() => {}))
+            },
             template: "<div class=\"stub-editor\"><textarea :value=\"modelValue\" @input=\"$emit('update:modelValue', $event.target.value)\" @blur=\"$emit('update:modelValue', $event.target.value)\" /></div>",
         }),
     }
@@ -35,10 +40,7 @@ function createTestHarness(inputsList: InputMetaData[]) {
         setup() {
             const formRef = ref<FormInstance | null>(null)
             const inputs = ref<Record<string, unknown>>({})
-            const onClearValidation = (fieldId: string) => {
-                formRef.value?.clearValidate(fieldId)
-            }
-            return {formRef, inputs, onClearValidation, inputsList, flow}
+            return {formRef, inputs, inputsList, flow}
         },
         template: `
             <KsForm ref="formRef" :model="inputs" labelPosition="top">
@@ -46,7 +48,6 @@ function createTestHarness(inputsList: InputMetaData[]) {
                     :flow="flow"
                     :initialInputs="inputsList"
                     v-model="inputs"
-                    @clear-validation="onClearValidation"
                 />
             </KsForm>
         `,
@@ -162,7 +163,7 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         })
     })
 
-    test("preserves existing server-side validation error when entering another invalid value", async () => {
+    test("shows a server-side error again after another invalid value, even when the message is unchanged", async () => {
         const store = useExecutionsStore()
         const errorMessage = "Invalid value: must match pattern ^[A-Z]+$"
         store.validateExecution = vi.fn().mockResolvedValue({
@@ -201,13 +202,15 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
             expect(wrapper.text()).toContain(errorMessage)
         }, {timeout: 3000})
 
+        const callsBeforeEdit = vi.mocked(store.validateExecution).mock.calls.length
         textarea.element.value = "invalid-2"
         await textarea.trigger("input")
         await textarea.trigger("blur")
         await flushPromises()
 
-        expect(wrapper.text()).toContain(errorMessage)
-
+        await vi.waitFor(() => {
+            expect(vi.mocked(store.validateExecution).mock.calls.length).toBeGreaterThan(callsBeforeEdit)
+        })
         await flushPromises()
 
         await vi.waitFor(() => {

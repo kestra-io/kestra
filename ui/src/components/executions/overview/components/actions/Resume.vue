@@ -20,7 +20,6 @@
                 :execution="execution"
                 v-model="inputs"
                 :submitAttempted="submitAttempted"
-                @clear-validation="onClearValidation"
             />
         </KsForm>
         <template #footer>
@@ -84,10 +83,6 @@
     })
 
     const needInputs = computed(() => inputsList.value?.length > 0)
-
-    function onClearValidation(fieldId: string) {
-        form.value?.clearValidate(fieldId)
-    }
 
     function click() {
         if (needInputs.value) {

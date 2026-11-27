@@ -2,7 +2,7 @@
     <div ref="root" class="execution-summary">
         <MobileSummary v-if="isMobile" :execution>
             <slot />
-            <ExecutionProgress :execution />
+            <ExecutionProgress :execution class="execution-progress--mobile" />
         </MobileSummary>
         <KsCard v-else shadow="always" :bodyStyle="BODY_STYLE" class="card">
             <Banner :execution />

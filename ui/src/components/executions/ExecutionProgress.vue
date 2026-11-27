@@ -40,7 +40,7 @@
     const averageDurationMs = ref<number | null>(null)
 
     const isRunning = computed(() => props.execution.state?.current === State.RUNNING)
-    const isVisible = computed(() => isRunning.value && averageDurationMs.value !== null)
+    const isVisible = computed(() => isRunning.value && !!averageDurationMs.value)
 
     // Timezone-independent: Date.now() counts milliseconds since the UTC epoch, as does parsing the
     // execution's ISO start date below, so the two can be subtracted whatever the browser timezone.
@@ -141,6 +141,18 @@
         padding: var(--ks-spacing-2) var(--ks-spacing-5);
         text-align: left;
         border-top: 1px solid var(--ks-border-default);
+
+        &.execution-progress--mobile {
+            border-top: none;
+            padding: 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .execution-progress {
+            border-top: none;
+            padding: 0;
+        }
     }
 
     .progress-header {

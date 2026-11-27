@@ -81,6 +81,27 @@ describe("TaskDict", () => {
         expect(wrapper.emitted("update:modelValue")).toHaveLength(1)
     })
 
+    it("keeps unfinished rows on its own echo and applies later external values", async () => {
+        const wrapper = mountDict({before: "old"}, {additionalProperties: false})
+        wrapper.findAllComponents(InputText)[0].vm.$emit("update:modelValue", "edited")
+        await wrapper.getComponent(Add).trigger("click")
+        await vi.advanceTimersByTimeAsync(200)
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual([{edited: "old"}])
+
+        await wrapper.setProps({modelValue: {edited: "old"}})
+        expect(wrapper.findAllComponents(InputText).map(input => input.props("modelValue"))).toEqual(["edited", ""])
+
+        await wrapper.setProps({modelValue: {external: "replacement"}})
+        expect(wrapper.findAllComponents(InputText).map(input => input.props("modelValue"))).toEqual(["external"])
+
+        wrapper.getComponent(TaskExpression).vm.$emit("update:modelValue", "changed")
+        await vi.advanceTimersByTimeAsync(200)
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual([{external: "changed"}])
+
+        await wrapper.setProps({modelValue: null})
+        expect(wrapper.findComponent(InputText).exists()).toBe(false)
+    })
+
     it("round trips YAML values and removes entries through the expression fallback", async () => {
         const wrapper = mountDict({value: "initial", remove: "entry"}, {additionalProperties: false})
         const editor = wrapper.findAllComponents(TaskExpression)[0].get("textarea")

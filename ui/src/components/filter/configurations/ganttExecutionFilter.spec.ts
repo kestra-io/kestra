@@ -61,6 +61,12 @@ describe("useGanttExecutionFilter", () => {
         expect(config.value.keys.map((key) => key.key)).toEqual(["level", "state", "task"])
     })
 
+    it("labels its search as a search of tasks, which is what it filters", () => {
+        const config = setup(() => useGanttExecutionFilter())
+
+        expect(config.value.searchPlaceholder).toBe("filter.search_placeholders.search_tasks")
+    })
+
     it("shows the level key by default with at-or-above and at-or-below comparators", () => {
         const config = setup(() => useGanttExecutionFilter())
         const level = keyByName(config, "level")

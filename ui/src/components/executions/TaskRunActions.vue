@@ -20,7 +20,7 @@
                 />
 
                 <KsDropdownItem
-                    v-if="aiEnabled && selectedAttempt?.state.current === 'FAILED'"
+                    v-if="aiEnabled && canUseCopilot && selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
                     <span class="fix-with-ai">
@@ -101,6 +101,7 @@
                     {{ $t("copy logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
+                    v-if="canDeleteLogs"
                     :icon="Delete"
                     data-test="task-run-delete-logs"
                     @click="deleteLogs(currentTaskRun)"
@@ -237,8 +238,14 @@
         currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId != null) !== undefined,
     )
 
+    const canUseCopilot = computed(() => authStore.user?.hasAny(resource.COPILOT) ?? true)
+
     const canReadFlow = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.VIEW, String(route.params.namespace)),
+    )
+
+    const canDeleteLogs = computed(() =>
+        authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.execution.namespace),
     )
 
     function openIterations() {

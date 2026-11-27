@@ -183,6 +183,23 @@
     "publish_draft": "Opublikuj szkic",
     "draft": "Wersja robocza",
     "draft_flow_warning": "Najnowsza wersja tego Flow jest szkicem. Egzekucja zostanie uruchomiona na najnowszej opublikowanej wersji. Opublikuj szkic (lub uruchom go w Playground), aby wykonać swoje najnowsze zmiany.",
+    "save_draft": "Zapisz szkic",
+    "flow_publish": {
+      "description": "Ustawia tę wersję jako aktywną: Trigger uruchamia ją, inne Flowy mogą ją wywoływać, a jej błędy docierają do Flowów alertów.",
+      "done_title": "Opublikowano",
+      "failed": "Nie można opublikować tego szkicu.",
+      "done": "Wersja {revision} Flow {name} jest aktywna: Triggery go uruchamiają, inne Flowy mogą go wywoływać, a jego błędy docierają do Flowów alertów."
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "Ten Flow to szkic",
+        "description": "Nie ma opublikowanej wersji, więc triggery i inne Flowy go nie uruchamiają. Uruchom go z Playground lub opublikuj, aby był aktywny."
+      },
+      "over_published": {
+        "title": "Najnowsza wersja to szkic",
+        "description": "Harmonogramy, webhooki i inne Flowy nadal uruchamiają opublikowaną wersję, dopóki nie opublikujesz tego szkicu. Trigery Flow nie uruchamiają Flow w międzyczasie."
+      }
+    },
     "save task": "Zapisz Task",
     "saved": "Pomyślnie zapisano",
     "saved as draft": "Pomyślnie zapisano jako szkic",
@@ -382,6 +399,7 @@
     "create": "Utwórz",
     "create_flow": "Utwórz Flow",
     "create_child_namespace": "Utwórz podrzędny namespace",
+    "view_all_flows": "Zobacz wszystkie flow",
     "from": "Od",
     "to": "Do",
     "steps": "Kroki",
@@ -613,6 +631,8 @@
         "all-iterations": "Wszystkie iteracje",
         "iteration-index": "indeks {index}",
         "iteration-value-index": "{value} · indeks {index}",
+        "first-iteration": "Pierwsza iteracja",
+        "last-iteration": "Ostatnia iteracja",
         "previous-iteration": "Poprzednia iteracja",
         "next-iteration": "Następna iteracja",
         "previous-page": "Poprzednia strona",
@@ -1174,6 +1194,12 @@
     "bulk force run": "Czy na pewno chcesz wymusić uruchomienie `{executionCount}` egzekucji?\n\nOSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowane egzekucje Tasków.\n\nZostaną wykonane następujące przejścia:\n\n- Taski CREATED zostaną przeniesione do stanu RUNNING.\n- Taski RUNNING zostaną ponownie przesłane.\n- Taski QUEUED zostaną usunięte z kolejki.\n- Taski PAUSED zostaną wznowione.",
     "bulk restart": "Czy na pewno chcesz ponownie uruchomić {executionCount} egzekucji?",
     "bulk kill": "Czy na pewno chcesz zabić <code>{executionCount}</code> egzekucji?",
+    "bulk action ineligible change state": "Nie można zmienić stanu {count} z {total} wybranych egzekucji.",
+    "bulk action ineligible not state": "{count} z {total} wybranych egzekucji nie jest w stanie {state}.",
+    "bulk action ineligible not pausable": "Nie można wstrzymać {count} z {total} wybranych egzekucji.",
+    "bulk action ineligible not resumable": "Nie można wznowić {count} z {total} wybranych egzekucji.",
+    "bulk action ineligible not terminated": "{count} z {total} wybranych egzekucji nie zostało zakończonych.",
+    "bulk action ineligible already terminated": "{count} z {total} wybranych egzekucji zostało już zakończonych.",
     "cancel": "Anuluj",
     "errorLogs": "Logi błędów",
     "product_tour": "Przewodnik po produkcie",
@@ -1434,6 +1460,7 @@
     "execution-include-non-terminated": "Uwzględnić niezakończone egzekucje?",
     "execution-warn-title": "Ważne ostrzeżenie!",
     "execution-warn-deleting-still-running": "Zdecydowanie zalecamy anulowanie tej akcji i zabicie najpierw wszystkich trwających egzekucji. Usunięcie niezakończonych egzekucji może prowadzić do problemów z Concurrency, niespójności w zarządzaniu zależnościami Flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka, zanim przejdziesz do usuwania.",
+    "execution-warn-non-terminated-count": "{count} z {total} wybranych egzekucji nie zostało zakończonych.",
     "pluginPage": {
       "search": "Przeszukaj ponad {count} pluginów",
       "searchTasks": "Przeszukaj {count} Tasków",
@@ -1529,6 +1556,7 @@
             "flow_default_tab": "Domyślna zakładka Flow",
             "triggers_default_tab": "Domyślna zakładka Triggerów",
             "playground": "Playground",
+            "open_docs_tab": "Otwórz zakładkę Docs",
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
             "task_edit_default_mode": "Domyślny tryb edycji Taska",
             "flow_template": "Domyślny szablon Flow"
@@ -1545,6 +1573,7 @@
             "triggers_default_tab": "Zakładka wybierana przy przejściu do strony Triggerów.",
             "auto_refresh_interval": "Sekundy między automatycznymi odświeżeniami danych na stronach list.",
             "playground": "Uruchamiaj Taski pojedynczo w Playground edytora.",
+            "open_docs_tab": "Otwórz zakładkę Docs obok edytora. Dotyczy nowych Flowów i Flowów, których wcześniej nie otwierałeś.",
             "task_edit_default_mode": "Jak domyślnie otwiera się Task z edytora no-code.",
             "flow_template": "YAML otwierany w edytorze, gdy tworzysz nowy Flow. ID i namespace można pominąć, ponieważ są generowane automatycznie. Gdy pole jest puste, używany jest szablon skonfigurowany dla instancji."
           },
@@ -1989,6 +2018,7 @@
       "add": "Utwórz",
       "update": "Zaktualizuj Value dla Key '{key}'",
       "duplicate": "Ten Key już istnieje",
+      "description_latin1": "Opis może zawierać tylko znaki łacińskie, bez emoji.",
       "delete multiple": {
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
         "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>",
@@ -2063,6 +2093,7 @@
       "title": "Zacznij automatyzować z Kestrą",
       "sub_title": "Kliknij przycisk Wykonaj, aby uruchomić swoją pierwszą egzekucję workflow.",
       "namespace_sub_title": "Uruchom jeden lub więcej Flowów z tego namespace'u, aby wypełnić ten Dashboard.",
+      "draft_sub_title": "Ten Flow ma tylko szkice: uruchom go z Playground w edytorze lub opublikuj, aby go wykonać.",
       "need_help": "Potrzebujesz pomocy?"
     },
     "execution_guide": {
@@ -2254,7 +2285,7 @@
       "label": "Skróty klawiaturowe",
       "trigger_autocompletion": "Wyzwól autouzupełnianie",
       "command_palette": "Pokaż paletę poleceń",
-      "save_flow": "Zapisz Flow",
+      "save_flow": "Zapisz szkic",
       "execute_flow": "Uruchom Flow",
       "toggle_ai_agent": "Przełącz agenta AI",
       "move_line": "Przenieś linię",
@@ -2587,6 +2618,8 @@
         },
         "notice": {
           "emptyTurn": "Asystent nie zwrócił odpowiedzi. Spróbuj ponownie.",
+          "outputLimit": "Asystentowi zabrakło tokenów wyjściowych, zanim mógł odpowiedzieć. Skróć swoją wiadomość lub rozpocznij nowy czat.",
+          "contentFiltered": "Dostawca AI zablokował odpowiedź. Przeformułuj wiadomość lub usuń treść, która mogła uruchomić filtry dostawcy.",
           "retry": "Ponów próbę"
         },
         "cancelled": "Tura anulowana",
@@ -2602,7 +2635,11 @@
           "errorHandling": "Dodaj obsługę błędów",
           "unitTest": "Wygeneruj test jednostkowy",
           "explain": "Wyjaśnij ten Flow",
-          "dbt": "Uruchom potok dbt"
+          "dbt": "Uruchom potok dbt",
+          "createFlow": "Utwórz Flow, który…",
+          "createFlowPrefill": "Utwórz Flow, który",
+          "pythonSchedule": "Uruchamiaj skrypt Python codziennie",
+          "triggers": "Jak działają Triggery?"
         },
         "voice": {
           "start": "Rozpocznij wprowadzanie głosowe",
@@ -3065,7 +3102,7 @@
         "no_match": "Brak dopasowania",
         "open": "Otwórz {name}",
         "paste": "Wklej",
-        "save": "Zapisz Flow",
+        "save": "Zapisz szkic",
         "search_placeholder": "Wpisz polecenie lub wyszukaj Taska…",
         "title": "Menu poleceń"
       },
@@ -3173,7 +3210,7 @@
         "paste": "Wklej",
         "redo": "Ponów",
         "reorder": "Zmień kolejność w górę / w dół",
-        "save": "Zapisz Flow",
+        "save": "Zapisz szkic",
         "step_into": "Rozwiń / wejdź do grupy",
         "step_out": "Zwiń / wyjdź do elementu nadrzędnego",
         "title": "Skróty klawiaturowe",

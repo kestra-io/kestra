@@ -1,0 +1,7 @@
+import "monaco-editor/features/register.all"
+import "monaco-editor/editor/standalone/browser/inspectTokens/inspectTokens"
+import "monaco-editor/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
+import "monaco-editor/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
+import "monaco-editor/language/json/monaco.contribution"
+import "monaco-editor/language/typescript/monaco.contribution"
+import "monaco-editor/basic-languages/monaco.contribution"

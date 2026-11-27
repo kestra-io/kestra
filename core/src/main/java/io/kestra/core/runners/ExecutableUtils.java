@@ -171,9 +171,19 @@ public final class ExecutableUtils {
                     }
                 }
 
+                // Subflow executions are never LOOP kind, and nested loops chain their iterations through loopRun.parent()
+                Execution kindSource = currentExecution;
+                while (kindSource.getKind() == ExecutionKind.LOOP) {
+                    kindSource = kindSource.getLoopRun().parent();
+                }
+                ExecutionKind subflowKind = kindSource.getKind();
+
                 String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
                 String subflowId = runContext.render(currentTask.subflowId().flowId());
-                Optional<Integer> subflowRevision = currentTask.subflowId().revision();
+                // a Playground run tries a suite of drafts together, so an unpinned child runs its latest revision, draft included
+                Optional<Integer> subflowRevision = currentTask.subflowId().revision().isEmpty() && subflowKind == ExecutionKind.PLAYGROUND
+                    ? flowMetaStore.findLatestRevision(currentExecution.getTenantId(), subflowNamespace, subflowId)
+                    : currentTask.subflowId().revision();
 
                 FlowInterface flow = flowMetaStore.findByIdFromTaskForRuntime(
                     currentExecution.getTenantId(),
@@ -243,12 +253,6 @@ public final class ExecutableUtils {
                     variables.put("loopIndex", currentExecution.getLoopRun().index());
                 }
 
-                // Subflow executions are never LOOP kind, and nested loops chain their iterations through loopRun.parent()
-                Execution kindSource = currentExecution;
-                while (kindSource.getKind() == ExecutionKind.LOOP) {
-                    kindSource = kindSource.getLoopRun().parent();
-                }
-                ExecutionKind subflowKind = kindSource.getKind();
                 ExecutionTrigger executionTrigger = ExecutionTrigger.builder()
                     .id(currentTask.getId())
                     .type(currentTask.getType())

@@ -73,15 +73,15 @@
                 <div class="copilot-suggestions">
                     <KsButton
                         v-for="suggestion in suggestions"
-                        :key="suggestion"
+                        :key="suggestion.label"
                         size="small"
                         class="copilot-suggestion"
                         data-test="copilot-suggestion"
                         :disabled="!canSend || noProviderConfigured"
                         :aria-describedby="describedBy"
-                        @click="onSubmit(suggestion)"
+                        @click="onSuggestion(suggestion)"
                     >
-                        {{ suggestion }}
+                        {{ suggestion.label }}
                     </KsButton>
                 </div>
 
@@ -151,7 +151,7 @@
                 <KsAlert v-else-if="notice" type="warning" role="status" data-test="copilot-notice">
                     <div class="copilot-notice-body">
                         <span>{{ $t(`ai.copilot.notice.${notice}`) }}</span>
-                        <KsButton size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
+                        <KsButton v-if="notice === 'emptyTurn'" size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
                             {{ $t("ai.copilot.notice.retry") }}
                         </KsButton>
                     </div>
@@ -318,13 +318,28 @@
 
     const emptyPlaceholder = computed(() => t(routeInFocus.value?.kind === "FLOW" ? "ai.copilot.emptyHelper" : "ai.copilot.emptyHelperNoFlow"))
 
-    // Quick-start prompts shown under the empty-state composer (Figma Default variant).
-    const suggestions = computed(() => [
-        t("ai.copilot.suggestions.errorHandling"),
-        t("ai.copilot.suggestions.unitTest"),
-        t("ai.copilot.suggestions.explain"),
-        t("ai.copilot.suggestions.dbt"),
-    ])
+    /** A quick-start prompt: sent as-is, or (with `prefill`) dropped into the composer for the user to finish. */
+    interface Suggestion {
+        label: string
+        prefill?: string
+    }
+
+    // Quick-start prompts shown under the empty-state composer. The flow ones only make sense with a
+    // flow in focus; anywhere else (the Copilot home, a list page) they'd act on nothing, so those
+    // surfaces get prompts that need no context (kestra-io/kestra#19071).
+    const flowInFocus = computed(() => Boolean(activeScope.value?.flowId) || editorFlowSource.value !== undefined)
+    const suggestions = computed<Suggestion[]>(() => flowInFocus.value
+        ? [
+            {label: t("ai.copilot.suggestions.errorHandling")},
+            {label: t("ai.copilot.suggestions.unitTest")},
+            {label: t("ai.copilot.suggestions.explain")},
+            {label: t("ai.copilot.suggestions.dbt")},
+        ]
+        : [
+            {label: t("ai.copilot.suggestions.createFlow"), prefill: `${t("ai.copilot.suggestions.createFlowPrefill")} `},
+            {label: t("ai.copilot.suggestions.pythonSchedule")},
+            {label: t("ai.copilot.suggestions.triggers")},
+        ])
 
     const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
 
@@ -555,6 +570,18 @@
             await nextTick()
             focusActiveComposer()
         }
+    }
+
+    /** A suggestion click: send it, or seed the composer when the prompt is one the user has to finish. */
+    async function onSuggestion(suggestion: Suggestion): Promise<void> {
+        if (suggestion.prefill === undefined) {
+            await onSubmit(suggestion.label)
+            return
+        }
+        if (noProviderConfigured.value) return
+        composerText.value = suggestion.prefill
+        await nextTick()
+        focusActiveComposer()
     }
 
     /** "New chat": same stale-preview reasoning as `onSubmit` — a leftover draft card's preview

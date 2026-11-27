@@ -13,6 +13,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.MapUtils;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -81,7 +82,7 @@ public abstract class AbstractPluginInterfaceFactory<T> {
         T plugin;
         try {
             // Make sure config is not null, otherwise deserialization result will be null too.
-            Map<String, Object> nonEmptyConfig = Optional.ofNullable(pluginConfiguration).orElse(Map.of());
+            Map<String, Object> nonEmptyConfig = MapUtils.emptyOnNull(pluginConfiguration);
             plugin = (T) PluginConfigurationMapper.convert(nonEmptyConfig, pluginClass, failOnUnknownProperties());
         } catch (Exception e) {
             throw new KestraRuntimeException(

@@ -182,10 +182,56 @@ class AgentOrchestratorTest {
         // Then — the turn ends IDLE, and the empty assistant message is NOT persisted (only the user
         // prompt remains), so it cannot be replayed as an empty model turn on the next turn
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(doneReason(sink)).isEqualTo(AgentEvents.EmptyTurnReason.EMPTY_RESPONSE);
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly("USER/TEXT");
+    }
+
+    @Test
+    void shouldReportOutputLimitWhenEmptyResponseFinishesOnLength() {
+        // Given — the output budget ran out before any visible output (e.g. spent on thinking)
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from(""), FinishReason.LENGTH);
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then
+        assertThat(sink.names()).containsExactly(AgentEvents.DONE);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(doneReason(sink)).isEqualTo(AgentEvents.EmptyTurnReason.OUTPUT_LIMIT);
+    }
+
+    @Test
+    void shouldReportContentFilteredWhenEmptyResponseFinishesOnContentFilter() {
+        // Given — the provider withheld the response
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from(""), FinishReason.CONTENT_FILTER);
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then
+        assertThat(sink.names()).containsExactly(AgentEvents.DONE);
+        assertThat(doneReason(sink)).isEqualTo(AgentEvents.EmptyTurnReason.CONTENT_FILTERED);
+    }
+
+    @Test
+    void shouldNotReportEmptyTurnReasonWhenModelAnswers() {
+        // Given
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("A trigger starts a flow."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).build(), sink);
+
+        // Then
+        assertThat(doneReason(sink)).isNull();
     }
 
     @Test
@@ -1084,6 +1130,10 @@ class AgentOrchestratorTest {
             .name(name)
             .arguments("{\"executionId\":\"" + executionId + "\"}")
             .build();
+    }
+
+    private static AgentEvents.EmptyTurnReason doneReason(final CollectingSink sink) {
+        return ((AgentEvents.DoneEvent) sink.first(AgentEvents.DONE)).reason();
     }
 
     private static String doneStatus(final CollectingSink sink) {

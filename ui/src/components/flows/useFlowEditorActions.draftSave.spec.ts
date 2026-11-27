@@ -24,10 +24,10 @@ describe("useFlowEditorActions — saving a draft flow", () => {
         saveAll.mockReset()
     })
 
-    it("publishes on the Save menu item, the explicit way out of draft mode", async () => {
+    it("publishes the editor content directly, without saving a draft first", async () => {
         const {useFlowEditorActions} = await import("./useFlowEditorActions")
 
-        await useFlowEditorActions().save()
+        await useFlowEditorActions().publish()
 
         expect(saveAll).toHaveBeenCalledExactlyOnceWith(false)
     })

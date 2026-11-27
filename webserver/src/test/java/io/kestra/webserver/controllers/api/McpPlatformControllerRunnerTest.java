@@ -5,6 +5,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +18,9 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.mcp.PlatformMcpServerProvider;
 import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.DefaultActorResolver;
 
@@ -46,6 +50,7 @@ import static org.awaitility.Awaitility.await;
 class McpPlatformControllerRunnerTest {
     private static final String PLATFORM_PATH = "/api/v1/mcp";
     private static final Actor ACTOR = new Actor("actor-id", "10.0.0.1", null);
+    private static final Pattern EXECUTION_ID = Pattern.compile("executionId[\\\\\"]+:[\\\\\"]+(\\w+)");
     private static final McpJsonMapper MCP_MAPPER = new JacksonMcpJsonMapper(JsonMapper.builder().build());
 
     @Inject
@@ -54,6 +59,9 @@ class McpPlatformControllerRunnerTest {
 
     @Inject
     TestRunnerUtils runnerUtils;
+
+    @Inject
+    ExecutionRepositoryInterface executionRepository;
 
     @MockBean(DefaultActorResolver.class)
     ActorResolver actorResolver() {
@@ -96,6 +104,43 @@ class McpPlatformControllerRunnerTest {
             Optional::isPresent
         ).orElseThrow().getActor();
         assertThat(restartedBy).isEqualTo(ACTOR);
+    }
+
+    @Test
+    @LoadFlows({ "flows/ai-tools/greeting.yaml" })
+    void shouldLabelExecutionAsStartedFromMcpWhenExecutedThroughPlatformServer() {
+        // Given
+        String sessionId = initialize();
+
+        // When
+        String body = client.toBlocking().retrieve(
+            mcpPost(
+                new McpSchema.JSONRPCRequest(
+                    McpSchema.JSONRPC_VERSION,
+                    McpSchema.METHOD_TOOLS_CALL,
+                    2,
+                    new McpSchema.CallToolRequest(
+                        "execute_flow",
+                        Map.of("namespace", "io.kestra.tests.ai", "flowId", "greeting", "inputs", Map.of("name", "Ada")),
+                        null
+                    )
+                )
+            ).header(HttpHeaders.MCP_SESSION_ID, sessionId),
+            String.class
+        );
+
+        // Then
+        assertThat(body).doesNotContain("\"isError\":true");
+        Matcher executionId = EXECUTION_ID.matcher(body);
+        assertThat(executionId.find()).isTrue();
+        Execution execution = executionRepository.findById(MAIN_TENANT, executionId.group(1)).orElseThrow();
+        assertThat(execution.getLabels())
+            .contains(
+                new Label(Label.FROM, Label.FromLabel.MCP.value),
+                new Label(Label.MCP_SERVER_ID, PlatformMcpServerProvider.SERVER_ID),
+                new Label(Label.MCP_SESSION_ID, sessionId)
+            )
+            .doesNotContain(new Label(Label.FROM, Label.FromLabel.API.value));
     }
 
     private String initialize() {

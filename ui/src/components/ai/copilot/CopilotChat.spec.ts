@@ -439,6 +439,20 @@ describe("CopilotChat", () => {
         expect(alert.text()).toContain("The assistant didn't return a response. Please try again.")
     })
 
+    it("explains an output-limit empty turn without offering a retry", () => {
+        state.notice.value = "outputLimit"
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-notice\"]").text()).toContain("ran out of output tokens")
+        expect(w.find("[data-test=\"copilot-notice-retry\"]").exists()).toBe(false)
+    })
+
+    it("explains a provider-blocked empty turn without offering a retry", () => {
+        state.notice.value = "contentFiltered"
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-notice\"]").text()).toContain("blocked the response")
+        expect(w.find("[data-test=\"copilot-notice-retry\"]").exists()).toBe(false)
+    })
+
     it("restores the last conversation on mount", () => {
         mountChat()
         expect(state.restoreThread).toHaveBeenCalled()
@@ -789,6 +803,44 @@ describe("CopilotChat", () => {
 
     it("mounts the thread controls (EE-only Recents; a no-op in OSS)", () => {
         expect(mountChat().findComponent(CopilotThreadControls).exists()).toBe(true)
+    })
+
+    const suggestionLabels = (w: ReturnType<typeof mountChat>) => w.findAll("[data-test=\"copilot-suggestion\"]").map((s) => s.text())
+
+    // kestra-io/kestra#19071: with no flow in focus (the Copilot home, a list page) the flow prompts act on nothing.
+    it("offers context-free suggestions when no flow is in focus", () => {
+        expect(suggestionLabels(mountChat())).toEqual(["Create a flow that…", "Run a Python script every day", "How do triggers work?"])
+    })
+
+    it("offers the flow suggestions when a flow is in focus", () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        expect(suggestionLabels(mountChat())).toEqual(["Add error handling", "Generate a unit test", "Explain this flow", "Run a dbt pipeline"])
+    })
+
+    it("falls back to the context-free suggestions once the flow is removed from context", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        const w = mountChat()
+        w.findComponent({name: "CopilotContextChip"}).vm.$emit("remove", "flowId")
+        await flushPromises()
+
+        expect(suggestionLabels(w)).toContain("Create a flow that…")
+    })
+
+    it("seeds the composer instead of sending when a suggestion is a sentence to finish", async () => {
+        const w = mountChat()
+        await w.findAll("[data-test=\"copilot-suggestion\"]")[0].trigger("click")
+        await flushPromises()
+
+        expect(state.sendChat).not.toHaveBeenCalled()
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("Create a flow that ")
+    })
+
+    it("sends a complete suggestion straight away", async () => {
+        const w = mountChat()
+        await w.findAll("[data-test=\"copilot-suggestion\"]")[1].trigger("click")
+        await flushPromises()
+
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Run a Python script every day"}))
     })
 
     // The composer and the quick suggestions stay on screen with no provider, but nothing can be sent.

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.executor.command.Create;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.MultipleConditionEvent;
@@ -71,19 +72,7 @@ class FlowTriggerWaitForAllRetriesTest {
     @Test
     void shouldFireTriggerWaitingForAllRetriesOnceFlowTaskRetriesAreExhausted() {
         // Given
-        FlowWithSource retryingUpstream = Flows.yaml("""
-            id: upstream
-            namespace: io.kestra.tests
-            retry:
-              behavior: RETRY_FAILED_TASK
-              type: constant
-              interval: PT1S
-              maxAttempts: 2
-            tasks:
-              - id: fail
-                type: io.kestra.plugin.core.log.Log
-                message: fail
-            """);
+        FlowWithSource retryingUpstream = retryFailedTaskUpstream();
         harness.registerFlow(retryingUpstream);
         harness.registerFlow(eagerListener);
         harness.registerFlow(patientListener);
@@ -101,18 +90,82 @@ class FlowTriggerWaitForAllRetriesTest {
         harness.registerFlow(upstream);
         harness.registerFlow(dependsOnListener("eager-depends-on", false));
         harness.registerFlow(dependsOnListener("patient-depends-on", true));
-        List<String> evaluated = new ArrayList<>();
+        List<Trace> traces = new ArrayList<>();
 
         // When
-        evaluated.addAll(dependsOnEvaluations(harness.run(Executions.created(upstream), ScriptedWorker.failing("fail", T0))));
+        traces.add(harness.run(Executions.created(upstream), ScriptedWorker.failing("fail", T0)));
         for (int i = 0; i < 3; i++) {
             harness.tickExecutionDelays(AFTER_ANY_RETRY_DELAY);
-            evaluated.addAll(dependsOnEvaluations(harness.run(List.of(), ScriptedWorker.failing("fail", T0))));
+            traces.add(harness.run(List.of(), ScriptedWorker.failing("fail", T0)));
         }
 
         // Then
+        List<String> evaluated = traces.stream().flatMap(trace -> dependsOnEvaluations(trace).stream()).toList();
         assertThat(evaluated).filteredOn("patient-depends-on"::equals).hasSize(1);
         assertThat(evaluated).filteredOn("eager-depends-on"::equals).hasSizeGreaterThan(1);
+        List<String> created = traces.stream().flatMap(trace -> createdFlowIds(trace).stream()).toList();
+        assertThat(created).as("the fulfilled dependsOn trigger creates its execution").filteredOn("patient-depends-on"::equals).hasSize(1);
+    }
+
+    @Test
+    void shouldFireTriggerWaitingForAllRetriesWhenTheUpstreamHasNoRetry() {
+        // Given: an upstream that fails for good on its first attempt
+        FlowWithSource noRetryUpstream = Flows.yaml("""
+            id: upstream
+            namespace: io.kestra.tests
+            tasks:
+              - id: fail
+                type: io.kestra.plugin.core.log.Log
+                message: fail
+            """);
+        harness.registerFlow(noRetryUpstream);
+        harness.registerFlow(eagerListener);
+        harness.registerFlow(patientListener);
+
+        // When
+        Trace trace = harness.run(Executions.created(noRetryUpstream), ScriptedWorker.failing("fail", T0));
+
+        // Then
+        assertThat(triggeredFlowIds(trace)).containsExactlyInAnyOrder("eager-listener", "patient-listener");
+    }
+
+    @Test
+    void shouldSkipTriggerWaitingForAllRetriesWhileAFlowTaskRetryRemains() {
+        // Given
+        FlowWithSource retryingUpstream = retryFailedTaskUpstream();
+        harness.registerFlow(retryingUpstream);
+        harness.registerFlow(eagerListener);
+        harness.registerFlow(patientListener);
+
+        // When: the first of two allowed attempts fails
+        Trace trace = harness.run(Executions.created(retryingUpstream), task -> Results.failedAttempts(task, 1, T0));
+
+        // Then
+        assertThat(triggeredFlowIds(trace)).contains("eager-listener").doesNotContain("patient-listener");
+    }
+
+    private static FlowWithSource retryFailedTaskUpstream() {
+        return Flows.yaml("""
+            id: upstream
+            namespace: io.kestra.tests
+            retry:
+              behavior: RETRY_FAILED_TASK
+              type: constant
+              interval: PT1S
+              maxAttempts: 2
+            tasks:
+              - id: fail
+                type: io.kestra.plugin.core.log.Log
+                message: fail
+            """);
+    }
+
+    private static List<String> createdFlowIds(Trace trace) {
+        return trace.emitted("executionCommand")
+            .map(Trace.Emission::message)
+            .filter(Create.class::isInstance)
+            .map(command -> ((Create) command).flowId())
+            .toList();
     }
 
     private static List<String> dependsOnEvaluations(Trace trace) {

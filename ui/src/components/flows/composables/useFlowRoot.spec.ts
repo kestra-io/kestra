@@ -35,6 +35,7 @@ vi.mock("../../../stores/flow", async () => {
         loadDependencies: vi.fn(),
         loadFlow: vi.fn(),
         loadGraph: vi.fn(),
+        loadHasPublishedRevision: vi.fn(() => Promise.resolve()),
         isCreating: false,
     })
 

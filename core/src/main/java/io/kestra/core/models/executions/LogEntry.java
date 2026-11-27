@@ -129,7 +129,6 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .triggerId(abstractTrigger.getId())
-            .executionId(abstractTrigger.getId())
             .build();
     }
 
@@ -139,7 +138,6 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .namespace(trigger.getNamespace())
             .flowId(trigger.getFlowId())
             .triggerId(abstractTrigger.getId())
-            .executionId(abstractTrigger.getId())
             .build();
     }
 

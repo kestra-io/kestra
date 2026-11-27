@@ -110,7 +110,7 @@ public class TaskRun implements TenantInterface {
     }
 
     public TaskRun withStateAndAttempt(State.Type state) {
-        List<TaskRunAttempt> newAttempts = new ArrayList<>(this.attempts != null ? this.attempts : List.of());
+        List<TaskRunAttempt> newAttempts = new ArrayList<>(ListUtils.emptyOnNull(this.attempts));
 
         if (newAttempts.isEmpty()) {
             newAttempts.add(TaskRunAttempt.builder().state(new State(state)).build());

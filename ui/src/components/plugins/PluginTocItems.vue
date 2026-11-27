@@ -90,6 +90,11 @@
             background-color: var(--ks-bg-tag);
             color: var(--ks-text-primary);
         }
+
+        &:focus-visible {
+            outline: var(--ks-border-width-base) solid var(--ks-border-focus);
+            outline-offset: calc(-1 * var(--ks-border-width-base));
+        }
     }
 
     .plugin-toc-elements__link--active {

@@ -47,8 +47,9 @@ describe("useBulkAction", () => {
         const byQuery = vi.fn<() => Promise<{count: number}>>().mockResolvedValue({count: 3})
         const byIds = vi.fn<() => Promise<{count: number}>>().mockResolvedValue({count: 2})
 
-        await runBulkAction({byQuery, byIds, success: (r) => `${r.count} flows deleted`})
+        const result = await runBulkAction({byQuery, byIds, success: (r) => `${r.count} flows deleted`})
 
+        expect(result).toBe(true)
         expect((expectedCall === "byQuery" ? byQuery : byIds)).toHaveBeenCalledOnce()
         expect((expectedCall === "byQuery" ? byIds : byQuery)).not.toHaveBeenCalled()
         expect(success).toHaveBeenCalledWith(expectedCall === "byQuery" ? "3 flows deleted" : "2 flows deleted")
@@ -84,9 +85,24 @@ describe("useBulkAction", () => {
         const {table, runBulkAction} = mountBulkAction(queryBulkAction)
         const refused = () => Promise.reject(httpError(400, BULK_REFUSED))
 
-        await runBulkAction({byQuery: refused, byIds: refused, success: () => "done"})
+        const result = await runBulkAction({byQuery: refused, byIds: refused, success: () => "done"})
 
+        expect(result).toBe(false)
         expect(requestError).toHaveBeenCalledWith(expect.objectContaining({status: 400}), [{message: "flow not found"}, {message: "flow not found"}], "Bulk validation failed")
+        expect(success).not.toHaveBeenCalled()
+        expect(table.toggleAllUnselected).not.toHaveBeenCalled()
+        expect(table.reload).not.toHaveBeenCalled()
+    })
+
+    it.each([true, false])("reports network failures with no response body and keeps the selection (every match: %s)", async (queryBulkAction) => {
+        const {table, runBulkAction} = mountBulkAction(queryBulkAction)
+        const failure = new Error("Network Error")
+        const failed = () => Promise.reject(failure)
+
+        const result = await runBulkAction({byQuery: failed, byIds: failed, success: () => "done"})
+
+        expect(result).toBe(false)
+        expect(requestError).toHaveBeenCalledWith(failure, "errors.generic.content", "errors.generic.title")
         expect(success).not.toHaveBeenCalled()
         expect(table.toggleAllUnselected).not.toHaveBeenCalled()
         expect(table.reload).not.toHaveBeenCalled()

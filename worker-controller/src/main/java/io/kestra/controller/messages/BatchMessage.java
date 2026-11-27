@@ -1,8 +1,8 @@
 package io.kestra.controller.messages;
 
+import io.kestra.core.utils.ListUtils;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * A generic bath message.
@@ -21,6 +21,6 @@ public record BatchMessage<T>(
     }
 
     public List<T> records() {
-        return Optional.ofNullable(records).orElse(List.of());
+        return ListUtils.emptyOnNull(records);
     }
 }

@@ -16,7 +16,7 @@ export function useBulkAction(
     function runBulkAction<Q, I>(action: {
         byQuery: () => Promise<Q>;
         byIds: () => Promise<I>;
-    } & ({success: (response: Q | I) => string} | {report: (response: Q | I) => void})): Promise<void> {
+    } & ({success: (response: Q | I) => string} | {report: (response: Q | I) => void})): Promise<boolean> {
         const call: () => Promise<Q | I> = table.value?.queryBulkAction ? action.byQuery : action.byIds
         return call()
             .then((response) => {
@@ -27,10 +27,12 @@ export function useBulkAction(
                 }
                 table.value?.toggleAllUnselected()
                 refresh()
+                return true
             })
             .catch((error: unknown) => {
                 const problem = asProblem(error)
                 toast.requestError(error, problemBulkBody(problem, t, te), problemTitle(problem, t, te))
+                return false
             })
     }
 

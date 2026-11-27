@@ -2635,7 +2635,11 @@
           "errorHandling": "त्रुटि प्रबंधन जोड़ें",
           "unitTest": "इकाई परीक्षण उत्पन्न करें",
           "explain": "यह flow समझाएं",
-          "dbt": "dbt पाइपलाइन चलाएँ"
+          "dbt": "dbt पाइपलाइन चलाएँ",
+          "createFlow": "एक Flow बनाएं जो…",
+          "createFlowPrefill": "एक Flow बनाएँ जो",
+          "pythonSchedule": "हर दिन एक Python स्क्रिप्ट चलाएँ",
+          "triggers": "ट्रिगर कैसे काम करते हैं?"
         },
         "voice": {
           "start": "वॉयस input शुरू करें",

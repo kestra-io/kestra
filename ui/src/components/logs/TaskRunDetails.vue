@@ -343,8 +343,6 @@
     }
 
     type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem"> & {
-        scrollToBottom?: () => void
-        scrollToPosition?: (position: number, options?: unknown) => void
         $el?: HTMLElement
     }
 
@@ -855,6 +853,9 @@
 
     onBeforeUnmount(() => {
         disposed = true
+        pendingScrollRafByUid.forEach((raf) => cancelAnimationFrame(raf))
+        pendingScrollRafByUid.clear()
+        alignedAttemptsUid.clear()
         throttledExecutionUpdate.value?.cancel()
         closeLogsSSE()
         closeTargetExecutionSSE()
@@ -1119,6 +1120,9 @@
 
     function collapseAll() {
         shownAttemptsUid.value = []
+        pendingScrollRafByUid.forEach((raf) => cancelAnimationFrame(raf))
+        pendingScrollRafByUid.clear()
+        alignedAttemptsUid.clear()
     }
 
     function attemptUid(taskRunId: LogEntry["taskRunId"], attemptNumber: LogEntry["attemptNumber"]): string {
@@ -1127,46 +1131,67 @@
 
     const MAX_SCROLL_ATTEMPTS = 30
     const SCROLL_BOTTOM_TOLERANCE_PX = 5
+    const pendingScrollRafByUid = new Map<string, number>()
+    const alignedAttemptsUid = new Set<string>()
+
+    function cancelPendingScroll(uid: string) {
+        const existingRaf = pendingScrollRafByUid.get(uid)
+        if (existingRaf !== undefined) {
+            cancelAnimationFrame(existingRaf)
+            pendingScrollRafByUid.delete(uid)
+        }
+    }
+
+    function isScrollerAtBottom(el?: HTMLElement): boolean {
+        if (!el) return false
+        const maxScroll = el.scrollHeight - el.clientHeight
+        return maxScroll > 0 && el.scrollTop >= maxScroll - SCROLL_BOTTOM_TOLERANCE_PX
+    }
 
     function scrollScrollerToEnd(uid: string, targetIndex: number, attempt = 0) {
         if (disposed) return
+        if (attempt === 0 && pendingScrollRafByUid.has(uid)) {
+            return
+        }
+
         const scroller = logsScrollerRefs.value[uid]
         if (!scroller) {
             if (attempt < MAX_SCROLL_ATTEMPTS) {
-                requestAnimationFrame(() => scrollScrollerToEnd(uid, targetIndex, attempt + 1))
+                const rafId = requestAnimationFrame(() => {
+                    pendingScrollRafByUid.delete(uid)
+                    scrollScrollerToEnd(uid, targetIndex, attempt + 1)
+                })
+                pendingScrollRafByUid.set(uid, rafId)
+            } else {
+                pendingScrollRafByUid.delete(uid)
             }
             return
         }
 
         scroller.scrollToItem(targetIndex, {align: "end"})
-        scroller.scrollToBottom?.()
-
-        const el = scroller.$el
-        if (el && el.scrollHeight > el.clientHeight && el.scrollTop === 0) {
-            el.scrollTop = el.scrollHeight
-        }
 
         if (attempt < MAX_SCROLL_ATTEMPTS) {
-            requestAnimationFrame(() => {
+            const rafId = requestAnimationFrame(() => {
+                pendingScrollRafByUid.delete(uid)
                 const currentEl = scroller.$el
                 if (!currentEl) return
-                const maxScroll = currentEl.scrollHeight - currentEl.clientHeight
-                const isAtBottom =
-                    maxScroll > 0 &&
-                    currentEl.scrollTop >= maxScroll - SCROLL_BOTTOM_TOLERANCE_PX
-                if (!isAtBottom) {
-                    scroller.scrollToItem(targetIndex, {align: "end"})
-                    scroller.scrollToBottom?.()
-                    if (maxScroll > 0 && currentEl.scrollTop === 0) {
-                        currentEl.scrollTop = currentEl.scrollHeight
-                    }
+                if (isScrollerAtBottom(currentEl)) {
+                    alignedAttemptsUid.add(uid)
+                    return
                 }
+                scroller.scrollToItem(targetIndex, {align: "end"})
                 scrollScrollerToEnd(uid, targetIndex, attempt + 1)
             })
+            pendingScrollRafByUid.set(uid, rafId)
+        } else {
+            pendingScrollRafByUid.delete(uid)
+            if (scroller.$el && isScrollerAtBottom(scroller.$el)) {
+                alignedAttemptsUid.add(uid)
+            }
         }
     }
 
-    function scrollToBottomFailedTask() {
+    function scrollToBottomFailedTask(fromScrollerUpdate = false) {
         const currentState = followedExecution.value?.state.current
         if (
             currentState !== undefined &&
@@ -1184,6 +1209,12 @@
                             : (props.forcedAttemptNumber ?? 0))
                     const uid = attemptUid(taskRun.id, attemptNumber)
                     if (shownAttemptsUid.value.includes(uid)) {
+                        if (fromScrollerUpdate && alignedAttemptsUid.has(uid)) {
+                            const scroller = logsScrollerRefs.value[uid]
+                            if (scroller?.$el && !isScrollerAtBottom(scroller.$el)) {
+                                return
+                            }
+                        }
                         const items = displayItemsByAttemptUid.value[uid] ?? []
                         if (items.length > 0) {
                             scrollScrollerToEnd(uid, items.length - 1)
@@ -1196,14 +1227,14 @@
 
     function handleLogScrollerUpdate() {
         if (disposed) return
-        scrollToBottomFailedTask()
         emit("scroller-update")
+        scrollToBottomFailedTask(true)
     }
 
     function handleLogScrollerResize() {
         if (disposed) return
-        scrollToBottomFailedTask()
         emit("scroller-update")
+        scrollToBottomFailedTask()
     }
 
     function uniqueTaskRunDisplayFilter(currentTaskRun: TaskRunWithDepth): boolean {
@@ -1271,9 +1302,13 @@
     }
 
     function toggleShowAttempt(uid: string) {
-        shownAttemptsUid.value = shownAttemptsUid.value.includes(uid)
-            ? shownAttemptsUid.value.filter((shown) => shown !== uid)
-            : [...shownAttemptsUid.value, uid]
+        if (shownAttemptsUid.value.includes(uid)) {
+            cancelPendingScroll(uid)
+            alignedAttemptsUid.delete(uid)
+            shownAttemptsUid.value = shownAttemptsUid.value.filter((shown) => shown !== uid)
+        } else {
+            shownAttemptsUid.value = [...shownAttemptsUid.value, uid]
+        }
     }
 
     function swapDisplayedAttempt(event: {taskRunId: string; attemptNumber: number}) {

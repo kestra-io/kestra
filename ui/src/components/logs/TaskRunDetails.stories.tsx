@@ -266,7 +266,6 @@ const FAILED_TASK_LOGS: Log[] = [
     },
 ];
 
-// kestra-io/kestra#22048: a failed task followed by another task run opened with a blank log panel.
 export const OpensFailedTaskLogsAtTheirLastLine: Story = {
     args: {taskRunId: undefined},
     decorators: [

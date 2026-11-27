@@ -1430,6 +1430,42 @@ describe("linkedElements", () => {
         expect(linked).toEqual(expect.arrayContaining(["start|task", "task|end", "end|after", "after"]))
         expect(linked).not.toContain("loop-return|end|start")
     })
+
+    test("returns each ancestor and descendant once and leaves sibling branches out", () => {
+        const {setNodes, setEdges} = useVueFlow("linked-diamond")
+        setNodes(["start", "a", "b", "end", "last"].map((id) => ({id, position: {x: 0, y: 0}})))
+        setEdges([["start", "a"], ["start", "b"], ["a", "end"], ["b", "end"], ["end", "last"]]
+            .map(([source, target]) => ({id: `${source}|${target}`, source, target})))
+
+        const linked = VueFlowUtils.linkedElements("linked-diamond", "a").map((element) => element.id)
+
+        expect(linked.toSorted()).toEqual(["a", "a|end", "end", "end|last", "last", "start", "start|a"])
+    })
+
+    test("stays linear on a flow of many consecutive parallel stages", () => {
+        const stages = 10
+        const branches = 4
+        const nodes = ["first"]
+        const edges: {id: string; source: string; target: string}[] = []
+        let previous = "first"
+        for (let stage = 0; stage < stages; stage++) {
+            const end = `end${stage}`
+            for (let branch = 0; branch < branches; branch++) {
+                const task = `s${stage}b${branch}`
+                nodes.push(task)
+                edges.push({id: `${previous}|${task}`, source: previous, target: task}, {id: `${task}|${end}`, source: task, target: end})
+            }
+            nodes.push(end)
+            previous = end
+        }
+        const {setNodes, setEdges} = useVueFlow("linked-fan-out")
+        setNodes(nodes.map((id) => ({id, position: {x: 0, y: 0}})))
+        setEdges(edges)
+
+        const linked = VueFlowUtils.linkedElements("linked-fan-out", previous)
+
+        expect(linked).toHaveLength(nodes.length + edges.length)
+    })
 })
 
 describe("loopReturnPath", () => {

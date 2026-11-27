@@ -118,72 +118,37 @@ function forwardEdges(vueFlowId: string): GraphEdge[] {
     return useVueFlow(vueFlowId).getEdges.value.filter((edge) => !edge.data?.loopReturn)
 }
 
-export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const nodes = []
-    for (const edge of forwardEdges(vueFlowId)) {
-        if (edge.target === nodeUid) {
-            nodes.push(edge)
-            const recursiveEdge = predecessorsEdge(vueFlowId, edge.source)
-            if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge)
-            }
+type EdgeEnd = "source" | "target"
+
+function reachableFrom(edges: GraphEdge[], startUid: string, from: EdgeEnd, to: EdgeEnd) {
+    const edgesByUid = new Map<string, GraphEdge[]>()
+    for (const edge of edges) {
+        const list = edgesByUid.get(edge[from]) ?? []
+        list.push(edge)
+        edgesByUid.set(edge[from], list)
+    }
+
+    const uids = new Set([startUid])
+    const reachedEdges = new Set<GraphEdge>()
+    for (const uid of uids) {
+        for (const edge of edgesByUid.get(uid) ?? []) {
+            reachedEdges.add(edge)
+            uids.add(edge[to])
         }
     }
-    return nodes
+    return {uids, edges: reachedEdges}
 }
 
-export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const nodes = []
-    for (const edge of forwardEdges(vueFlowId)) {
-        if (edge.source === nodeUid) {
-            nodes.push(edge)
-            const recursiveEdge = successorsEdge(vueFlowId, edge.target)
-            if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge)
-            }
-        }
-    }
-    return nodes
-}
+export function linkedElements(vueFlowId: string, nodeUid: string): (GraphEdge | GraphNode)[] {
+    const edges = forwardEdges(vueFlowId)
+    const ancestors = reachableFrom(edges, nodeUid, "target", "source")
+    const descendants = reachableFrom(edges, nodeUid, "source", "target")
 
-export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge | GraphNode)[] {
     const {findNode} = useVueFlow(vueFlowId)
-    const foundNode = findNode(nodeUid)
-    const nodes: (GraphEdge | GraphNode)[] = foundNode ? [foundNode] : []
-    for (const edge of forwardEdges(vueFlowId)) {
-        if (edge.target === nodeUid) {
-            nodes.push(edge.sourceNode)
-            const recursiveEdge = predecessorsNode(vueFlowId, edge.source)
-            if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge)
-            }
-        }
-    }
-    return nodes
-}
-
-export function successorsNode(vueFlowId: string, nodeUid: string) {
-    const {findNode} = useVueFlow(vueFlowId)
-    const nodes = [findNode(nodeUid)]
-    for (const edge of forwardEdges(vueFlowId)) {
-        if (edge.source === nodeUid) {
-            nodes.push(edge.targetNode)
-            const recursiveEdge = successorsNode(vueFlowId, edge.target)
-            if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge)
-            }
-        }
-    }
-    return nodes
-}
-
-export function linkedElements(vueFlowId: string, nodeUid: string) {
-    return [
-        ...predecessorsEdge(vueFlowId, nodeUid),
-        ...predecessorsNode(vueFlowId, nodeUid),
-        ...successorsEdge(vueFlowId, nodeUid),
-        ...successorsNode(vueFlowId, nodeUid),
-    ]
+    const nodes = [...new Set([...ancestors.uids, ...descendants.uids])]
+        .map((uid) => findNode(uid))
+        .filter((node): node is GraphNode => Boolean(node))
+    return [...ancestors.edges, ...descendants.edges, ...nodes]
 }
 
 export function generateDagreGraph(

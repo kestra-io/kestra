@@ -372,3 +372,52 @@ describe("Topology collapse all", () => {
         expect(wrapper.find("[data-test='topology-collapse-all']").exists()).toBe(false)
     })
 })
+
+describe("Topology dependency path on hover", () => {
+    const PATH_CLASS = "topology-path-linked"
+    const TRACING_CLASS = "topology-tracing-path"
+
+    function classesOf(id: string) {
+        const {findNode, getEdges} = useVueFlow(id)
+        const edge = getEdges.value.find((e) => e.source === "1" && e.target === "2")
+        return {
+            hovered: String(findNode("1")?.class ?? "").split(" "),
+            child: String(findNode("2")?.class ?? "").split(" "),
+            edge: String(edge?.class ?? "").split(" "),
+        }
+    }
+
+    it("should mark the hovered task, its dependents and their edges, then clear them on leave", async () => {
+        const id = `topology-${Math.random()}`
+        const wrapper = mountForRefit(id)
+        await settle()
+
+        wrapper.vm.onMouseOver({uid: "1"})
+        await nextTick()
+
+        expect(wrapper.find(`.${TRACING_CLASS}`).exists()).toBe(true)
+        expect(classesOf(id).hovered).toEqual(expect.arrayContaining([PATH_CLASS, "topology-node-hovered"]))
+        expect(classesOf(id).child).toContain(PATH_CLASS)
+        expect(classesOf(id).edge).toContain(PATH_CLASS)
+
+        wrapper.vm.onMouseLeave()
+        await nextTick()
+
+        expect(wrapper.find(`.${TRACING_CLASS}`).exists()).toBe(false)
+        expect([...classesOf(id).hovered, ...classesOf(id).child, ...classesOf(id).edge]).not.toContain(PATH_CLASS)
+    })
+
+    it("should keep the path marked when the graph is regenerated under the pointer", async () => {
+        const id = `topology-${Math.random()}`
+        const wrapper = mountForRefit(id)
+        await settle()
+
+        wrapper.vm.onMouseOver({uid: "1"})
+        await nextTick()
+        await wrapper.setProps({flowGraph: {...FLOW_GRAPH, nodes: [...FLOW_GRAPH.nodes]}})
+        await settle()
+
+        expect(classesOf(id).child).toContain(PATH_CLASS)
+        expect(classesOf(id).edge).toContain(PATH_CLASS)
+    })
+})

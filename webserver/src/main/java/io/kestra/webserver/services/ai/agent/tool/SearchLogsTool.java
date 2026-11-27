@@ -8,6 +8,7 @@ import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.utils.Strings;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
@@ -77,7 +78,7 @@ public class SearchLogsTool implements McpPlatformTool {
             entry.getFlowId(),
             entry.getExecutionId(),
             entry.getTaskId(),
-            LogToolPages.truncate(entry.getMessage(), maxMessageLength)
+            Strings.truncate(entry.getMessage(), maxMessageLength)
         );
     }
 

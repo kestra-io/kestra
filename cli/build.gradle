@@ -1,5 +1,16 @@
 configurations {
     implementation.extendsFrom(micronaut)
+
+    pluginFixture {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+}
+
+processTestResources {
+    from(configurations.pluginFixture) {
+        into 'plugins'
+    }
 }
 
 tasks.register('runLocal', JavaExec) {
@@ -70,6 +81,7 @@ dependencies {
     implementation project(":indexer")
 
     //test
+    pluginFixture project(path: ':core', configuration: 'pluginFixture')
     testImplementation project(':tests')
     testImplementation "org.wiremock:wiremock-jetty12"
 }

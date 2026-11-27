@@ -577,7 +577,7 @@ public class MetricRegistry {
         var baseTags = new String[] {
             TAG_TRIGGER_TYPE, trigger.getType(),
         };
-        var labelTags = getLabelTags(trigger.getLabels() != null ? trigger.getLabels() : List.of());
+        var labelTags = getLabelTags(ListUtils.emptyOnNull(trigger.getLabels()));
         return ArrayUtils.addAll(baseTags, labelTags);
     }
 

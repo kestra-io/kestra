@@ -446,6 +446,76 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/restart_last_failed.yaml" }, tenantId = "concurrency-stamp-restart")
+    void restartShouldNotCarryOverTheConcurrencySlotOfThePreviousAttempt() throws Exception {
+        // Given: a failed execution that held a concurrency slot
+        Execution execution = withConcurrencySlot(runnerUtils.runOne("concurrency-stamp-restart", "io.kestra.tests", "restart_last_failed"));
+        Flow flow = flowRepository.findByExecution(execution);
+
+        // When
+        Execution restart = executionService.restart(execution, flow, null);
+
+        // Then: the claim of the previous attempt is dropped, the concurrency gate evaluates the restarted attempt again
+        assertThat(restart.getState().restartedAfterTermination()).isTrue();
+        assertThat(restart.getMetadata().getAttemptNumber()).isEqualTo(2);
+        assertThat(restart.getMetadata().getConcurrencyScopes()).isNull();
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/logs.yaml" }, tenantId = "concurrency-stamp-replay")
+    void replayShouldNotCarryOverTheConcurrencySlotOfThePreviousAttempt() throws Exception {
+        // Given
+        Execution execution = withConcurrencySlot(runnerUtils.runOne("concurrency-stamp-replay", "io.kestra.tests", "logs"));
+        Flow flow = flowRepository.findByExecution(execution);
+
+        // When: replayed from the beginning and from a task
+        Execution fromBeginning = executionService.replay(execution, flow, null, null, Optional.empty());
+        Execution fromTask = executionService.replay(execution, flow, execution.getTaskRunList().get(1).getId(), null, Optional.empty());
+
+        // Then: both go through the concurrency gate again, from CREATED and from a RESTARTED after termination
+        assertThat(fromBeginning.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+        assertThat(fromTask.getState().restartedAfterTermination()).isTrue();
+        assertThat(fromBeginning.getMetadata().getConcurrencyScopes()).isNull();
+        assertThat(fromTask.getMetadata().getConcurrencyScopes()).isNull();
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/restart_last_failed.yaml" }, tenantId = "concurrency-stamp-change-state")
+    void changeTaskRunStateOfATerminatedExecutionShouldNotCarryOverTheConcurrencySlot() throws Exception {
+        // Given: a failed execution, whose slot was given back when it terminated
+        Execution execution = withConcurrencySlot(runnerUtils.runOne("concurrency-stamp-change-state", "io.kestra.tests", "restart_last_failed"));
+        Flow flow = flowRepository.findByExecution(execution);
+        TaskRun failed = execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed()).findFirst().orElseThrow();
+
+        // When
+        Execution changed = executionService.changeTaskRunState(execution, flow, failed.getId(), State.Type.SUCCESS);
+
+        // Then: like a restart, the concurrency gate evaluates it again
+        assertThat(changed.getState().restartedAfterTermination()).isTrue();
+        assertThat(changed.getMetadata().getConcurrencyScopes()).isNull();
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/pause-test.yaml" }, tenantId = "concurrency-stamp-resume")
+    void resumeShouldKeepTheConcurrencySlotOfThePausedExecution() throws Exception {
+        // Given: a paused execution still holds its slot, and resuming it does not go through the gate again
+        Execution execution = withConcurrencySlot(runnerUtils.runOneUntilPaused("concurrency-stamp-resume", "io.kestra.tests", "pause-test"));
+        Flow flow = flowRepository.findByExecution(execution);
+
+        // When
+        Execution resume = executionService.resume(execution, flow, State.Type.RUNNING, Pause.Resumed.now());
+
+        // Then
+        assertThat(resume.getState().restartedAfterTermination()).isFalse();
+        assertThat(resume.getMetadata().getConcurrencyScopes()).isEqualTo(execution.getMetadata().getConcurrencyScopes());
+    }
+
+    private static Execution withConcurrencySlot(Execution execution) {
+        String scope = execution.getTenantId() + "|" + execution.getNamespace() + "|" + execution.getFlowId();
+        return execution.withMetadata(execution.getMetadata().withConcurrencyScopes(List.of(scope)));
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/loop-serial.yaml" }, tenantId = TENANT_1)
     void markAsEachPara() throws Exception {
         // Given

@@ -1,0 +1,16 @@
+id: flow-concurrency-queue-forced
+namespace: io.kestra.tests
+
+inputs:
+  - id: sleep
+    type: STRING
+    defaults: PT1S
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: "{{ inputs.sleep }}"

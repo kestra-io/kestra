@@ -23,10 +23,14 @@ public class ExecutionMetadata {
     Instant originalCreatedDate;
 
     /**
-     * The uids of the concurrency scopes this execution claimed a slot in when it was admitted.
+     * The uids of the concurrency scopes the current attempt of this execution claimed a slot in when it was admitted.
      * The release decrements exactly these scopes, so removing or changing a namespace/tenant
      * limit while the execution runs cannot leak the counter of a scope it was admitted under.
-     * Null when the execution never claimed a slot (or predates the scoped limits).
+     * <ul>
+     * <li>null: the concurrency gate hasn't evaluated this attempt yet (or the execution predates the stamp), the
+     * release then decides from the state history of the current attempt;</li>
+     * <li>empty: the attempt holds no slot, as it was queued, rejected, or bypassed the gate.</li>
+     * </ul>
      */
     @With
     List<String> concurrencyScopes;
@@ -60,9 +64,15 @@ public class ExecutionMetadata {
         return this.withTaskRunStatistic(this.taskRunStatistic == null ? other : this.taskRunStatistic.plus(other));
     }
 
+    /**
+     * Returns the metadata of a new attempt, as created by a restart, a replay, or a task run state change.
+     * The claim of the previous attempt is not carried over: the concurrency gate evaluates the new attempt again and
+     * stamps its own claim.
+     */
     public ExecutionMetadata nextAttempt() {
         return this.toBuilder()
             .attemptNumber(this.attemptNumber + 1)
+            .concurrencyScopes(null)
             .build();
     }
 

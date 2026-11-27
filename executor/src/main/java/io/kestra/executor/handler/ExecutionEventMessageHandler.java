@@ -166,7 +166,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         }
 
                         // process actions that must be done after the execution has been created
-                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted())) {
+                        // a restart after termination runs again, so it is a new attempt: unlike a resume after a
+                        // pause, it must go through the quotas and the concurrency gate again
+                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().restartedAfterTermination())) {
                             // create an SLA monitor if needed, we skip LOOP executions
                             if (!ListUtils.isEmpty(flow.getSla()) && execution.getKind() != ExecutionKind.LOOP) {
                                 try {
@@ -276,19 +278,25 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                         }
                                     );
 
-                                    // if the execution is queued or terminated due to concurrency limit, we stop here
+                                    // if the execution is queued or terminated due to concurrency limit, we stop here;
+                                    // it claimed no slot (a popped execution is stamped by the release that pops it)
                                     if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
                                         if (processed.getExecution().getState().getCurrent().isTerminatedInError()) {
                                             Span.current().setStatus(StatusCode.ERROR, "Execution ended in state " + processed.getExecution().getState().getCurrent().name());
                                         }
-                                        return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
+                                        return executor.withExecution(withConcurrencyScopes(processed.getExecution(), List.of()), "handleConcurrencyLimit");
                                     }
 
+                                    // FAIL on a restarted execution only fails its task run, so the execution is not
+                                    // terminated yet: carry the rejection on, it claimed no slot
+                                    if (processed.getConcurrencyState() != ExecutionRunning.ConcurrencyState.RUNNING) {
+                                        executor.withExecution(withConcurrencyScopes(processed.getExecution(), List.of()), "handleConcurrencyLimit");
+                                    }
                                     // the execution claimed one slot in every scope: remember them so the release
                                     // decrements exactly these, even if the definitions change while it runs
-                                    if (executor.getExecution().getMetadata() != null) {
+                                    else {
                                         executor.withExecution(
-                                            execution.withMetadata(execution.getMetadata().withConcurrencyScopes(concurrencyLimits.stream().map(ScopedConcurrencyLimit::uid).toList())),
+                                            withConcurrencyScopes(execution, concurrencyLimits.stream().map(ScopedConcurrencyLimit::uid).toList()),
                                             "handleConcurrencyLimit"
                                         );
                                     }
@@ -482,4 +490,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
 
+    /**
+     * Stamps the slots the current attempt of the execution claimed, see {@link io.kestra.core.models.executions.ExecutionMetadata#getConcurrencyScopes()}.
+     */
+    private static Execution withConcurrencyScopes(Execution execution, List<String> scopes) {
+        return execution.getMetadata() == null ? execution : execution.withMetadata(execution.getMetadata().withConcurrencyScopes(scopes));
+    }
 }

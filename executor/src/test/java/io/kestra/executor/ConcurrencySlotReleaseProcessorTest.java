@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 class ConcurrencySlotReleaseProcessorTest {
 
     private ConcurrencyLimitStateStore stateStore;
+    private ExecutionQueuedStateStore queuedStateStore;
     private ConcurrencySlotReleaseProcessor processor;
     private FlowWithSource flow;
 
@@ -49,10 +50,11 @@ class ConcurrencySlotReleaseProcessorTest {
         Mockito.when(resolver.resolveLimits(Mockito.any())).thenReturn(List.of(ScopedConcurrencyLimit.ofFlow(definition)));
 
         this.stateStore = Mockito.mock(ConcurrencyLimitStateStore.class);
+        this.queuedStateStore = Mockito.mock(ExecutionQueuedStateStore.class);
         this.processor = new ConcurrencySlotReleaseProcessor(
             stateStore,
             resolver,
-            Mockito.mock(ExecutionQueuedStateStore.class),
+            queuedStateStore,
             Mockito.mock(FlowMetaStoreInterface.class),
             Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
         );
@@ -163,6 +165,60 @@ class ConcurrencySlotReleaseProcessorTest {
     }
 
     @Test
+    void shouldNotReleaseWhenARestartedAttemptWasKilledWhileQueued() {
+        // Given: a restarted attempt the gate has not stamped. Its state history still has RUNNING from
+        // the first attempt, so only the histories of the current attempt tell that it never held a slot.
+        Execution restarted = restartedAfterFailure();
+        Execution execution = restarted.withState(State.Type.QUEUED).withState(State.Type.KILLED);
+
+        // When
+        processor.release(cycle(restarted.withState(State.Type.QUEUED), execution), true);
+
+        // Then: no slot given back, and the attempt leaves the queued store so a later release cannot pop it
+        verifyNotReleased();
+        Mockito.verify(queuedStateStore).remove(execution);
+    }
+
+    @Test
+    void shouldNotReleaseWhenARestartedAttemptWasRejectedByTheGate() {
+        // Given: a FAIL rejection is recorded as RESTARTED -> RUNNING -> FAILED, and the gate stamps an empty claim
+        Execution restarted = restartedAfterFailure();
+        Execution execution = withClaim(restarted.withState(State.Type.RUNNING).withState(State.Type.FAILED), List.of());
+
+        // When
+        processor.release(cycle(restarted, execution), true);
+
+        // Then
+        verifyNotReleased();
+    }
+
+    @Test
+    void shouldReleaseWhenARestartedAttemptAdmittedByTheGateEnds() {
+        // Given: the gate admitted the restarted attempt and stamped its claim
+        Execution restarted = restartedAfterFailure();
+        Execution execution = stamped(restarted.withState(State.Type.RUNNING).withState(State.Type.SUCCESS));
+
+        // When
+        processor.release(cycle(restarted, execution), true);
+
+        // Then
+        verifyReleased();
+    }
+
+    @Test
+    void shouldReleaseWhenAnUnstampedRestartedAttemptRan() {
+        // Given: no stamp, but the current attempt ran (e.g. restarted before the stamp existed)
+        Execution restarted = restartedAfterFailure();
+        Execution execution = restarted.withState(State.Type.RUNNING).withState(State.Type.SUCCESS);
+
+        // When
+        processor.release(cycle(restarted.withState(State.Type.RUNNING), execution), true);
+
+        // Then
+        verifyReleased();
+    }
+
+    @Test
     void shouldReturnEmptyWithoutTouchingTheStoreWhenNoLimitAppliesToTheFlow() {
         // Given
         ConcurrencyLimitResolver noLimit = Mockito.mock(ConcurrencyLimitResolver.class);
@@ -231,9 +287,17 @@ class ConcurrencySlotReleaseProcessorTest {
 
     /** Stamps the claim the admission gate persists on an execution it admitted. */
     private Execution stamped(Execution execution) {
-        return execution.withMetadata(
-            execution.getMetadata().withConcurrencyScopes(List.of(ScopedConcurrencyLimit.ofFlow(flow).uid()))
-        );
+        return withClaim(execution, List.of(ScopedConcurrencyLimit.ofFlow(flow).uid()));
+    }
+
+    private static Execution withClaim(Execution execution, List<String> scopes) {
+        return execution.withMetadata(execution.getMetadata().withConcurrencyScopes(scopes));
+    }
+
+    /** A first attempt that held a slot, failed, then was restarted: the new attempt is not stamped yet. */
+    private Execution restartedAfterFailure() {
+        Execution restarted = stamped(created()).withState(State.Type.RUNNING).withState(State.Type.FAILED).withState(State.Type.RESTARTED);
+        return restarted.withMetadata(restarted.getMetadata().nextAttempt());
     }
 
     /** A cycle that entered with {@code entry} and left with {@code current}. */

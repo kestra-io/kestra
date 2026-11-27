@@ -116,6 +116,8 @@ class ExecutionServicePauseForceRunTest {
         Execution forced = executionService.forceRun(execution(State.Type.CREATED), flow);
 
         assertThat(forced.getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        // it skips the concurrency gate, so it must not give back a slot when it ends
+        assertThat(forced.getMetadata().getConcurrencyScopes()).isEmpty();
         verify(eventPublisher).publishEvent(any());
     }
 

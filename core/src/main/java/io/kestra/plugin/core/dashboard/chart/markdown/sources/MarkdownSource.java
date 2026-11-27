@@ -1,4 +1,4 @@
-package io.kestra.plugin.core.dashboard.chart.mardown.sources;
+package io.kestra.plugin.core.dashboard.chart.markdown.sources;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

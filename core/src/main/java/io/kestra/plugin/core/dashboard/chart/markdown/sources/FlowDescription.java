@@ -1,4 +1,4 @@
-package io.kestra.plugin.core.dashboard.chart.mardown.sources;
+package io.kestra.plugin.core.dashboard.chart.markdown.sources;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

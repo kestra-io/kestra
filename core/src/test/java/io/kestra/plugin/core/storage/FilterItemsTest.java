@@ -6,7 +6,10 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,6 +19,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 
@@ -259,6 +263,44 @@ class FilterItemsTest {
         Assertions.assertEquals(2, output.getDroppedItemsTotal());
         Assertions.assertEquals(4, output.getProcessedItemsTotal());
         assertFile(runContext, output, List.of(new KeyValue("k1", 1), new KeyValue("k3", 3)), KeyValue.class);
+    }
+
+    @Test
+    void shouldFilterGivenItemsWithDateAndTimeValues() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        FilterItems task = FilterItems
+            .builder()
+            .from(Property.ofValue(generateBinaryKeyValueFile(List.of(dateAndTimeItem(1), dateAndTimeItem(2)), runContext).toString()))
+            .filterCondition("{{ id == 1 }}")
+            .filterType(Property.ofValue(FilterItems.FilterType.INCLUDE))
+            .build();
+
+        // When
+        FilterItems.Output output = task.run(runContext);
+
+        // Then
+        Assertions.assertEquals(1, output.getDroppedItemsTotal());
+        Assertions.assertEquals(2, output.getProcessedItemsTotal());
+        List<Object> ids = new ArrayList<>();
+        try (InputStream resource = runContext.storage().getFile(output.getUri())) {
+            FileSerde.read(resource, row -> ids.add(((Map<?, ?>) row).get("id")));
+        }
+        Assertions.assertEquals(List.of(1), ids);
+    }
+
+    private static Map<String, Object> dateAndTimeItem(int id) {
+        return Map.of(
+            "id", id,
+            "instant", Instant.parse("2026-10-15T10:00:00Z"),
+            "localDate", LocalDate.of(2026, 10, 15),
+            "localDateTime", LocalDateTime.of(2026, 10, 15, 10, 0),
+            "zonedDateTime", ZonedDateTime.of(2026, 10, 15, 10, 0, 0, 0, ZoneId.of("Europe/Paris")),
+            "offsetDateTime", OffsetDateTime.of(2026, 10, 15, 10, 0, 0, 0, ZoneOffset.ofHours(2)),
+            "localTime", LocalTime.of(10, 0),
+            "offsetTime", OffsetTime.of(10, 0, 0, 0, ZoneOffset.ofHours(2))
+        );
     }
 
     record KeyValue(String key, Object value) {

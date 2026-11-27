@@ -1,13 +1,13 @@
 package io.kestra.controller.messages;
 
 import java.util.List;
-import java.util.Optional;
 
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.utils.ListUtils;
 
 public record WorkerJobBatchMessage(
     List<WorkerJob> jobs) {
     public List<WorkerJob> jobs() {
-        return Optional.ofNullable(jobs).orElse(List.of());
+        return ListUtils.emptyOnNull(jobs);
     }
 }

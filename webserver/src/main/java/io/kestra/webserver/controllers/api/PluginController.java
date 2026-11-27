@@ -33,6 +33,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.Strings;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
@@ -445,7 +446,7 @@ public class PluginController {
         Manifest manifest = registeredPlugin.getManifest();
         String title = manifest == null ? null : manifest.getMainAttributes().getValue("X-Kestra-Title");
 
-        return title == null || title.isBlank() ? null : title;
+        return Strings.nullIfBlank(title);
     }
 
     /**

@@ -92,6 +92,15 @@ class IfTest {
 
         execution = runnerUtils.runOne(
             "iffalsy", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", "False"), Duration.ofSeconds(120)
+        );
+
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        execution = runnerUtils.runOne(
+            "iffalsy", "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", 0), Duration.ofSeconds(120)
         );
 

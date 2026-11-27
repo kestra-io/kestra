@@ -364,6 +364,41 @@ subprojects {subProj ->
             t.mustRunAfter(tasks.named('test'))
         }
 
+        subProj.afterEvaluate {
+            if (!subProj.hasProperty('leakTestIncludes')) {
+                return
+            }
+
+            tasks.register('leakTest', Test) { Test t ->
+                group = 'verification'
+                description = 'Runs the selected tests with Netty leak detection, one JVM per test class.'
+
+                useJUnitPlatform {
+                    excludeTags 'flaky'
+                }
+
+                testClassesDirs = sourceSets.test.output.classesDirs
+                classpath = sourceSets.test.runtimeClasspath
+
+                reports {
+                    junitXml.required = true
+                    junitXml.outputPerTestCase = true
+                    junitXml.mergeReruns = true
+                    junitXml.includeSystemErrLog = true
+                    junitXml.outputLocation = layout.buildDirectory.dir("test-results/leakTest")
+                }
+                commonTestConfig(t)
+                t.timeout = java.time.Duration.ofHours(8)
+                t.forkEvery = 1
+                t.systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+                t.systemProperty 'junit.jupiter.extensions.autodetection.include', 'io.micronaut.test.leak.JupiterLeakPresenceExtension'
+                t.include(subProj.property('leakTestIncludes'))
+                if (subProj.hasProperty('leakTestExcludes')) {
+                    t.exclude(subProj.property('leakTestExcludes'))
+                }
+            }
+        }
+
         // test task (default)
         tasks.named('test', Test) { Test t ->
             group = 'verification'

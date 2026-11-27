@@ -4,6 +4,7 @@
             :routeInfo="routeInfo"
         />
         <Tabs
+            :key="loadedFlowKey"
             :routeName="routeName"
             :tabs="tabs"
         />
@@ -19,7 +20,7 @@
 
     withDefaults(defineProps<{embed?: boolean}>(), {embed: false})
 
-    const {tabs, routeName, routeInfo, ready, setupLifecycle} = useFlowRoot()
+    const {tabs, routeName, routeInfo, ready, loadedFlowKey, setupLifecycle} = useFlowRoot()
 
     useRouteContext(routeInfo)
 

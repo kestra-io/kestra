@@ -158,7 +158,7 @@ export const FlowExecutionsTab: Story = {
     },
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement)
-        expect((await canvas.findAllByText("airbyte-sync")).length).toBeGreaterThan(0)
-        expect((await canvas.findAllByText("company.team")).length).toBeGreaterThan(0)
+        await expect((await canvas.findAllByText("airbyte-sync")).length).toBeGreaterThan(0)
+        await expect((await canvas.findAllByText("company.team")).length).toBeGreaterThan(0)
     },
 }

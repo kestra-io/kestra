@@ -181,7 +181,6 @@ export const SelectedCaretOnMobile: StoryObj<typeof LogLine> = {
     parameters: {
         viewport: {
             options: {mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}}},
-            defaultViewport: "mobile",
         },
     },
     globals: {

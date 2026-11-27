@@ -16,6 +16,8 @@ import "./global"
 import {documentationGuard, updateDocId} from "./documentationGuard"
 import {entityNotFoundGuard} from "./routeEntityGuard"
 import {restoreUrlGuard} from "../composables/useRestoreUrl"
+import {createPosthogVueErrorHandler} from "./posthog"
+import {useMiscStore} from "override/stores/misc"
 
 
 import RouterMd from "../components/utils/RouterMd.vue"
@@ -44,6 +46,7 @@ export default async (
 
     const piniaStore = createPinia()
     app.use(piniaStore)
+    app.config.errorHandler ??= createPosthogVueErrorHandler(() => useMiscStore().configs)
 
     router.beforeEach(documentationGuard)
     router.afterEach(updateDocId)

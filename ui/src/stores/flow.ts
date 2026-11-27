@@ -21,7 +21,7 @@ import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
-import type {KestraRequestOptions} from "../utils/kestraHttp"
+import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
 import {splitValidationErrors} from "../utils/validationErrors"
 
 const textYamlHeader = {
@@ -145,7 +145,17 @@ export const useFlowStore = defineStore("flow", () => {
         return outcome
     }
 
-    function confirmOutdatedSave(): Promise<boolean> {
+    async function confirmOutdatedSave(): Promise<boolean> {
+        if (flow.value) {
+            const deleted = await loadFlow({namespace: flow.value.namespace, id: flow.value.id, store: false}, {ignoreNotFound: true})
+                .then(() => false, (error: KestraHttpError) => {
+                    if (error.status === 404) return true
+                    throw error
+                })
+            if (deleted) {
+                return true
+            }
+        }
         const key = "outdated revision save confirmation.update"
         return KsMessageBox({
             title: t(`${key}.title`),
@@ -355,10 +365,23 @@ export const useFlowStore = defineStore("flow", () => {
                 throw error
             }
         } else {
-            await saveFlow({flow: flowSource, draft})
-                .then((response: Flow) => {
-                    notifySaved(response.id, draft)
-                })
+            try {
+                notifySaved((await saveFlow({flow: flowSource, draft}, {ignoreNotFound: true})).id, draft)
+            } catch (error: unknown) {
+                if ((error as KestraHttpError).status !== 404) throw error
+                const recreate = await KsMessageBox({
+                    title: t("deleted flow save confirmation.title"),
+                    message: () => h("p", null, t("deleted flow save confirmation.description")),
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: t("deleted flow save confirmation.recreate"),
+                    cancelButtonText: t("cancel"),
+                    center: false,
+                    showClose: false,
+                }).then(() => true, () => false)
+                if (!recreate) return "blocked"
+                notifySaved((await createFlow({flow: flowSource, draft, restore: true})).id, draft)
+            }
         }
 
         if (isCreatingBackup || overrideFlow) {
@@ -522,7 +545,7 @@ export const useFlowStore = defineStore("flow", () => {
                 throw e
             })
     }
-    function saveFlow(options: { flow: string, draft?: boolean }) {
+    function saveFlow(options: { flow: string, draft?: boolean }, requestOptions?: KestraRequestOptions) {
         let namespace: string
         let id: string
         try {
@@ -538,7 +561,7 @@ export const useFlowStore = defineStore("flow", () => {
             id,
             body: options.flow,
             draft: options.draft ?? false,
-        }).then(data => {
+        }, requestOptions).then(data => {
             flow.value = data as Flow
 
             return flow.value

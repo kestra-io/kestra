@@ -7,6 +7,8 @@ const axiosPost = vi.fn()
 const axiosPut = vi.fn()
 const validateFlows = vi.fn()
 const updateFlow = vi.fn()
+const getFlow = vi.fn()
+const createFlow = vi.fn()
 
 vi.mock("nprogress", () => ({
     start: vi.fn(),
@@ -39,6 +41,8 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     validateFlows: (...args: any[]) => validateFlows(...args),
     updateFlow: (...args: any[]) => updateFlow(...args),
+    flow: (...args: any[]) => getFlow(...args),
+    createFlow: (...args: any[]) => createFlow(...args),
 }))
 
 vi.mock("@kestra-io/design-system", async (importOriginal) => {
@@ -77,6 +81,9 @@ describe("flow store outdated save confirmation", () => {
         axiosPut.mockReset()
         validateFlows.mockReset()
         updateFlow.mockReset()
+        getFlow.mockReset()
+        createFlow.mockReset()
+        getFlow.mockResolvedValue({id: "my-flow", namespace: "my.ns", revision: 2, source: FLOW_YAML})
 
         // /flows/validate -> backend flags the in-progress edit as outdated
         validateFlows.mockResolvedValue([{outdated: true}])
@@ -141,5 +148,39 @@ describe("flow store outdated save confirmation", () => {
         expect(KsMessageBox).toHaveBeenCalledTimes(1)
         expect(updateFlow).toHaveBeenCalledTimes(1)
         expect(outcome).toBe("saved")
+    })
+
+    describe("when the flow was deleted after it was opened", () => {
+        const notFound = {status: 404}
+
+        beforeEach(() => {
+            getFlow.mockRejectedValue(notFound)
+            updateFlow.mockRejectedValue(notFound)
+            createFlow.mockResolvedValue({id: "my-flow", namespace: "my.ns", revision: 3, source: FLOW_YAML})
+        })
+
+        it("offers to recreate it instead of reporting an outdated revision, and recreates it on confirm", async () => {
+            vi.mocked(KsMessageBox).mockResolvedValue("confirm" as any)
+
+            const store = await setupOutdatedStore()
+            const outcome = await store.saveAll()
+
+            expect(KsMessageBox).toHaveBeenCalledTimes(1)
+            expect(vi.mocked(KsMessageBox).mock.calls[0][0]).toMatchObject({title: "deleted flow save confirmation.title"})
+            expect(updateFlow).toHaveBeenCalledWith(expect.anything(), {ignoreNotFound: true})
+            expect(createFlow).toHaveBeenCalledWith(expect.objectContaining({body: FLOW_YAML}))
+            expect(outcome).toBe("saved")
+        })
+
+        it("keeps the edit in the editor when recreating is declined", async () => {
+            vi.mocked(KsMessageBox).mockRejectedValue(new Error("cancel"))
+
+            const store = await setupOutdatedStore()
+            const outcome = await store.saveAll()
+
+            expect(createFlow).not.toHaveBeenCalled()
+            expect(store.flowYaml).toBe(FLOW_YAML)
+            expect(outcome).toBe("blocked")
+        })
     })
 })

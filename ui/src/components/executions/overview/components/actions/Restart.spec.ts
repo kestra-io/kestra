@@ -3,7 +3,7 @@ import {mount, type VueWrapper} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
-import {nextTick} from "vue"
+import {defineComponent, nextTick} from "vue"
 import en from "../../../../../translations/en.json"
 import {useExecutionsStore} from "../../../../../stores/executions"
 import {useFlowStore} from "../../../../../stores/flow"
@@ -182,5 +182,54 @@ describe("Restart (replay revision check)", () => {
         expect(executionsStore.validateReplay).not.toHaveBeenCalled()
         expect(wrapper.find("[data-test='replay-check-valid']").exists()).toBe(false)
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
+    })
+})
+
+describe("Restart (replay with modified inputs)", () => {
+    const ReplayWithInputsStub = defineComponent({
+        name: "ReplayWithInputs",
+        props: {revision: {type: Number, default: undefined}},
+        template: "<div data-test='replay-with-inputs' />",
+    })
+
+    async function openModifyInputs(radio: number) {
+        setActivePinia(createPinia())
+        const executionsStore = useExecutionsStore()
+        const flowStore = useFlowStore()
+        flowStore.revisions = [{revision: 1}, {revision: 2}] as typeof flowStore.revisions
+        flowStore.loadRevisions = vi.fn()
+        executionsStore.loadFlowForExecution = vi.fn().mockResolvedValue({inputs: [{id: "name", type: "STRING"}]})
+
+        const wrapper = mount(Restart, {
+            props: {
+                isReplay: true,
+                execution: {id: "exec1", namespace: "tests", flowId: "flow1", flowRevision: 1, state: {current: "FAILED"}},
+            },
+            global: {
+                plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: en}), KestraDesignSystem],
+                stubs: {KsDialog: {template: "<div><slot /><slot name='footer' /></div>"}, ReplayWithInputs: ReplayWithInputsStub},
+            },
+        })
+        mounted.push(wrapper)
+
+        await wrapper.find("button").trigger("click")
+        await vi.waitFor(() => expect(wrapper.find("[data-test='replay-confirm']").exists()).toBe(true))
+        await wrapper.findAll("input[type='radio']")[radio].setValue(true)
+        await nextTick()
+        await wrapper.find("[data-test='replay-confirm']").trigger("click")
+        await vi.waitFor(() => expect(wrapper.findComponent(ReplayWithInputsStub).exists()).toBe(true))
+        return wrapper.findComponent(ReplayWithInputsStub)
+    }
+
+    it("shouldReplayOnTheLatestRevisionWhenLatestIsPicked", async () => {
+        const replayWithInputs = await openModifyInputs(1)
+
+        expect(replayWithInputs.props("revision")).toBe(2)
+    })
+
+    it("shouldReplayOnTheOriginalRevisionWhenOriginalIsPicked", async () => {
+        const replayWithInputs = await openModifyInputs(0)
+
+        expect(replayWithInputs.props("revision")).toBe(1)
     })
 })

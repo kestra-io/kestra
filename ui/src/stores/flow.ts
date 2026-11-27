@@ -28,6 +28,7 @@ import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
+import {clearQueuedDrafts, isSameDraft, readQueuedDraft, removeQueuedDraft, writeQueuedDraft, type DraftKey, type QueuedDraft} from "../utils/draftOutbox"
 import {toFlowGraph} from "../utils/flowGraph"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
@@ -176,6 +177,7 @@ export const useFlowStore = defineStore("flow", () => {
     const errorNavigation = ref<{count: number; revealNext: () => void} | null>(null)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
+    const queuedEntry = ref<{key: DraftKey, draft: QueuedDraft}>()
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
@@ -221,9 +223,62 @@ export const useFlowStore = defineStore("flow", () => {
         const outcome = await saveWithoutRevisionGuard(isDraft)
         if (isSuccessfulFlowSaveOutcome(outcome)) {
             flowYamlOrigin.value = source
+            discardQueuedDraft()
         }
         return outcome
     }
+
+    function draftKey(): DraftKey | undefined {
+        let metadata: {namespace?: string, id?: string} | undefined
+        try {
+            metadata = isCreating.value ? YAML_UTILS.getMetadata<ParsedFlow>(flowYaml.value ?? "") : undefined
+        } catch {
+            metadata = undefined
+        }
+        const namespace = metadata?.namespace ?? flow.value?.namespace
+        const id = metadata?.id ?? flow.value?.id
+        if (!namespace || !id) return undefined
+        return {tenant: String(route?.params?.tenant ?? "main"), namespace, id}
+    }
+
+    /** Keeps the editor source on this device when the server cannot take the draft; false when the browser refused it. */
+    function queueDraft(): boolean {
+        const key = draftKey()
+        if (!key) return false
+        const draft: QueuedDraft = {
+            source: flowYaml.value,
+            baseRevision: flow.value?.revision,
+            queuedAt: new Date().toISOString(),
+        }
+        if (!writeQueuedDraft(key, draft)) return false
+        queuedEntry.value = {key, draft}
+        return true
+    }
+
+    function storedDraft(): QueuedDraft | undefined {
+        const key = draftKey()
+        return key ? readQueuedDraft(key) : undefined
+    }
+
+    function discardQueuedDraft() {
+        const key = draftKey()
+        if (!key) return
+        removeQueuedDraft(key)
+        if (queuedEntry.value && isSameDraft(key, queuedEntry.value.key)) queuedEntry.value = undefined
+    }
+
+    /** Forgets every draft kept on this device, for a sign-out. */
+    function purgeQueuedDrafts() {
+        clearQueuedDrafts()
+        queuedEntry.value = undefined
+    }
+
+    /** The draft of the open flow that was saved on this device and still has to reach the server; another flow's is not this one's. */
+    const queuedDraft = computed(() => {
+        const key = draftKey()
+        const entry = queuedEntry.value
+        return key && entry && isSameDraft(key, entry.key) ? entry.draft : undefined
+    })
 
     function confirmFlowOutdatedSave(): Promise<boolean> {
         const key = "outdated revision save confirmation.update"
@@ -251,6 +306,7 @@ export const useFlowStore = defineStore("flow", () => {
             const outcome = await saveWithoutRevisionGuard(draft)
             if (isSuccessfulFlowSaveOutcome(outcome)) {
                 flowYamlOrigin.value = source
+                discardQueuedDraft()
             }
 
             return outcome
@@ -1153,6 +1209,11 @@ function deleteFlowAndDependencies(router: Router) {
         publishDraft,
         onEdit,
         initYamlSource,
+        queuedDraft,
+        queueDraft,
+        storedDraft,
+        discardQueuedDraft,
+        purgeQueuedDrafts,
         findFlows,
         searchFlows,
         flowsByNamespace,

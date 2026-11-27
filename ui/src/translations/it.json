@@ -617,6 +617,8 @@
       "zoom-reset": "Reimposta zoom",
       "zoom-fit": "Adatta",
       "invalid": "Errore del grafico",
+      "stale": "La topologia potrebbe non essere aggiornata",
+      "stale_description": "Il server è irraggiungibile, quindi il grafico mostra l'ultima versione che è riuscito a renderizzare. Si aggiornerà non appena il server risponderà di nuovo.",
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
       "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
       "expand_subflow_error": "Impossibile espandere il subflow",
@@ -1029,6 +1031,17 @@
     "sign in failed": "Impossibile accedere. Controlla la tua connessione e riprova.",
     "sign in not confirmed": "Non è stato possibile confermare che hai effettuato l'accesso. Accedi nell'altra scheda, quindi continua.",
     "server unreachable": "Impossibile raggiungere il server Kestra",
+    "offlineDraft": {
+      "badge": "Non sincronizzato",
+      "queued title": "Salvato su questo dispositivo",
+      "queued": "Il server è irraggiungibile. Questa bozza è conservata in questo browser e verrà salvata sul server una volta che risponderà di nuovo.",
+      "restore": {
+        "title": "Bozza non sincronizzata trovata",
+        "message": "Una bozza di questo flow è stata salvata in questo browser il {date} e non ha mai raggiunto il server. Vuoi ripristinarla nell'editor?",
+        "changed": "Il flow è cambiato sul server da allora, quindi rivedi la bozza prima di salvarla.",
+        "discard": "Scarta bozza"
+      }
+    },
     "server unreachable description": "Copia qualsiasi lavoro non salvato (ad esempio il Flow YAML) in un luogo sicuro prima di aggiornare questa pagina. Questo banner scomparirà una volta che il server risponderà di nuovo.",
     "unsaved changes": "Modifiche Non Salvate",
     "unsaved changes warning": "Hai modifiche non salvate. Se lasci questa pagina, le modifiche andranno perse.",

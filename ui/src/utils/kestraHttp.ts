@@ -3,6 +3,7 @@ import type {Router} from "vue-router"
 import {configureClient, useClient, asProblem, type ProblemDetail} from "@kestra-io/kestra-sdk"
 import {markServerReachable, markServerUnreachable} from "../composables/useServerReachability"
 import {isReauthOpen, recheckReauth} from "../composables/useReauthDialog"
+import {EDITOR_REFERENCE_PATTERN} from "./editorReferenceRequests"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -14,6 +15,11 @@ const GATEWAY_STATUSES = new Set([502, 503, 504])
 
 function isKestraApiRequest(request?: Request): boolean {
     return Boolean(request?.url) && new URL(request!.url, window.location.href).pathname.includes("/api/v1/")
+}
+
+// The service worker answers these from its cache when the network fails, so a response to one is no proof the server is back.
+function mayComeFromCache(request?: Request): boolean {
+    return request?.method === "GET" && EDITOR_REFERENCE_PATTERN.test(new URL(request.url, window.location.href).href)
 }
 
 function isSameOrigin(request: Request): boolean {
@@ -78,6 +84,12 @@ export interface KestraHttpError extends Error {
     /** Set when the request left this page's origin: a 401 from elsewhere is not a lost session. */
     crossOrigin?: boolean
     __kestra_handled?: boolean
+    __kestra_unreachable?: boolean
+}
+
+/** Whether the request never reached the Kestra server: no response, or a gateway answering in its place. */
+export function isServerUnreachableError(error: unknown): boolean {
+    return typeof error === "object" && error !== null && Reflect.get(error, "__kestra_unreachable") === true
 }
 
 /**
@@ -231,7 +243,7 @@ export function setupKestraHttp(
 
     client.interceptors.response.use((response, request, opts) => {
         if (isKestraApiRequest(request)) {
-            markServerReachable()
+            if (!mayComeFromCache(request)) markServerReachable()
             if (isReauthOpen()) void recheckReauth()
         }
         if (!skipProgress(opts)) increaseProgress()
@@ -242,14 +254,19 @@ export function setupKestraHttp(
         const kestraError = error as KestraHttpError
         if (!response) {
             const aborted = request?.signal?.aborted || kestraError.name === "AbortError"
-            if (!aborted && isKestraApiRequest(request)) markServerUnreachable()
+            if (!aborted && isKestraApiRequest(request)) {
+                kestraError.__kestra_unreachable = true
+                markServerUnreachable()
+            }
             if (!skipProgress(opts)) increaseProgress()
             return kestraError
         }
         if (isKestraApiRequest(request)) {
             const fromGateway = GATEWAY_STATUSES.has(response.status) && !response.headers.get("content-type")?.includes("json")
-            if (fromGateway) markServerUnreachable()
-            else markServerReachable()
+            if (fromGateway) {
+                kestraError.__kestra_unreachable = true
+                markServerUnreachable()
+            } else markServerReachable()
         }
 
         // An API error is a problem document, and `response.data` IS that document — the same value the

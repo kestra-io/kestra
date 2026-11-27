@@ -617,6 +617,8 @@
       "zoom-reset": "Zoom zurücksetzen",
       "zoom-fit": "Anpassen",
       "invalid": "Graph-Fehler",
+      "stale": "Die Topologie ist möglicherweise veraltet",
+      "stale_description": "Der Server ist nicht erreichbar, daher zeigt das Diagramm die letzte Version an, die gerendert werden konnte. Es wird aktualisiert, sobald der Server wieder antwortet.",
       "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
       "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
       "expand_subflow_error": "Subflow konnte nicht erweitert werden",
@@ -1029,6 +1031,17 @@
     "sign in failed": "Anmeldung fehlgeschlagen. Überprüfe deine Verbindung und versuche es erneut.",
     "sign in not confirmed": "Wir konnten nicht bestätigen, dass du angemeldet bist. Melde dich im anderen Tab an und fahre dann fort.",
     "server unreachable": "Kestra-Server nicht erreichbar",
+    "offlineDraft": {
+      "badge": "Nicht synchronisiert",
+      "queued title": "Auf diesem Gerät gespeichert",
+      "queued": "Der Server ist nicht erreichbar. Dieser Entwurf wird in diesem Browser gespeichert und auf dem Server gesichert, sobald dieser wieder antwortet.",
+      "restore": {
+        "title": "Nicht synchronisierter Entwurf gefunden",
+        "message": "Ein Entwurf dieses Flows wurde am {date} in diesem Browser gespeichert und hat den Server nie erreicht. Im Editor wiederherstellen?",
+        "changed": "Der Flow hat sich seitdem auf dem Server geändert, überprüfe daher den Entwurf, bevor du ihn speicherst.",
+        "discard": "Entwurf verwerfen"
+      }
+    },
     "server unreachable description": "Kopiere alle ungespeicherten Arbeiten (z. B. den Flow YAML) an einen sicheren Ort, bevor du diese Seite aktualisierst. Dieses Banner verschwindet, sobald der Server wieder antwortet.",
     "unsaved changes": "Nicht gespeicherte Änderungen",
     "unsaved changes warning": "Du hast ungespeicherte Änderungen. Wenn du diese Seite verlässt, gehen sie verloren.",

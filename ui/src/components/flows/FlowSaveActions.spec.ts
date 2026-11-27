@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {computed, reactive} from "vue"
+import {computed, nextTick, reactive} from "vue"
 import {type VueWrapper} from "@vue/test-utils"
 import KestraDesignSystem, {KsDropdownItem} from "@kestra-io/design-system"
 
@@ -25,6 +25,7 @@ vi.mock("./useFlowEditorActions", () => ({
 }))
 
 import FlowSaveActions from "./FlowSaveActions.vue"
+import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY} from "../../composables/useServerReachability"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 const messages = {publish: "Publish", save_draft: "Save draft", save_and_execute: "Save & Execute"}
@@ -89,6 +90,31 @@ describe("FlowSaveActions", () => {
 
         expect(button.text()).toBe("Publish")
         expect(publish).toHaveBeenCalledOnce()
+    })
+
+    it("never offers Publish while the server is unreachable, on a saved draft or with changes", async () => {
+        state.isDraft = true
+        vi.useFakeTimers()
+        try {
+            markServerUnreachable()
+            vi.advanceTimersByTime(UNREACHABLE_DELAY)
+        } finally {
+            vi.useRealTimers()
+        }
+
+        try {
+            const button = mainButton()
+            expect(button.text()).toBe("Save draft")
+
+            state.haveChange = true
+            await nextTick()
+            await button.trigger("click")
+            expect(saveAsDraft).toHaveBeenCalledOnce()
+            expect((await publishMenuItem()).attributes("aria-disabled")).toBe("true")
+            expect(publish).not.toHaveBeenCalled()
+        } finally {
+            markServerReachable()
+        }
     })
 
     it("keeps an invalid draft savable, but not publishable", async () => {

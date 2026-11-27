@@ -54,6 +54,7 @@
                 v-else-if="shouldShowExecute"
                 type="primary"
                 compact
+                :disabled="unreachable"
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
                 :flowSource="flow?.source"
@@ -92,6 +93,8 @@
     import {usePlaygroundStore} from "../../../stores/playground"
     import {useToast} from "../../../utils/toast"
     import {useFlowEditorActions} from "../../../components/flows/useFlowEditorActions"
+    import {useDraftOutbox} from "../../../components/flows/useDraftOutbox"
+    import {useServerReachability} from "../../../composables/useServerReachability"
 
     const {t} = useI18n({useScope: "global"})
 
@@ -111,6 +114,9 @@
     const isEditTab = computed(() => tab.value === "edit" || flowStore.isCreating)
 
     const authStore = useAuthStore()
+
+    const {unreachable} = useServerReachability()
+    useDraftOutbox(isEditTab)
 
     const {
         isAllowedEdit: editorIsAllowedEdit,

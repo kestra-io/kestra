@@ -617,6 +617,8 @@
       "zoom-reset": "Zoom par défaut",
       "zoom-fit": "Voir tout",
       "invalid": "Erreur de graphe",
+      "stale": "La topologie peut être obsolète",
+      "stale_description": "Le serveur est inaccessible, le graphique affiche donc la dernière version qu'il a pu rendre. Il se rafraîchira dès que le serveur répondra à nouveau.",
       "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
       "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer.",
       "expand_subflow_error": "Impossible d'étendre le subflow",
@@ -1029,6 +1031,17 @@
     "sign in failed": "Impossible de se connecter. Vérifie ta connexion et réessaie.",
     "sign in not confirmed": "Nous n'avons pas pu confirmer que vous êtes connecté. Connectez-vous dans l'autre onglet, puis continuez.",
     "server unreachable": "Impossible d'atteindre le serveur Kestra",
+    "offlineDraft": {
+      "badge": "Non synchronisé",
+      "queued title": "Enregistré sur cet appareil",
+      "queued": "Le serveur est inaccessible. Ce brouillon est conservé dans ce navigateur et sera enregistré sur le serveur dès qu'il répondra à nouveau.",
+      "restore": {
+        "title": "Brouillon non synchronisé trouvé",
+        "message": "Un brouillon de ce flow a été enregistré dans ce navigateur le {date} et n'a jamais atteint le serveur. Le restaurer dans l'éditeur ?",
+        "changed": "Le flow a changé sur le serveur depuis, veuillez donc revoir le brouillon avant de l'enregistrer.",
+        "discard": "Supprimer le brouillon"
+      }
+    },
     "server unreachable description": "Copiez tout travail non enregistré (par exemple le YAML du Flow) dans un endroit sûr avant d'actualiser cette page. Cette bannière disparaîtra dès que le serveur répondra à nouveau.",
     "unsaved changes": "Modifications non enregistrées",
     "unsaved changes warning": "Vous avez des modifications non enregistrées. Si vous quittez cette page, vos modifications seront perdues.",

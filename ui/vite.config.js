@@ -32,6 +32,7 @@ import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 import {consolidateChunks} from "./plugins/consolidateChunks.js"
 import {VitePWA} from "vite-plugin-pwa"
 import {pwaShortcuts} from "./plugins/pwaShortcuts.ts"
+import {editorReferenceCache} from "./plugins/pwaEditorReferenceCache.ts"
 import {baseConfig} from "./vite.config.base.js"
 
 export default defineConfig(({mode}) => {
@@ -100,6 +101,7 @@ export default defineConfig(({mode}) => {
                     skipWaiting: true,
                     clientsClaim: true,
                     runtimeCaching: [
+                        editorReferenceCache,
                         {
                             urlPattern: /\/api\//,
                             handler: "NetworkOnly",

@@ -10,6 +10,16 @@
         >
             {{ $t('topology-graph.invalid_description') }}
         </KsAlert>
+        <KsAlert
+            v-else-if="flowGraph && unreachable && flowStore.haveChange"
+            :title="$t('topology-graph.stale')"
+            type="warning"
+            class="stale-graph"
+            :closable="false"
+            data-test="topology-unreachable-graph"
+        >
+            {{ $t('topology-graph.stale_description') }}
+        </KsAlert>
         <LowCodeEditor
             v-if="flowGraph"
             :flowGraph="flowGraph"
@@ -36,13 +46,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import LowCodeEditor from "./LowCodeEditor.vue"
     import {useFlowStore} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
+    import {useServerReachability} from "../../composables/useServerReachability"
 
     const flowStore = useFlowStore()
+    const {unreachable} = useServerReachability()
     const toast = useToast()
     const {t} = useI18n()
 
@@ -56,6 +68,13 @@
     const isReadOnly = computed(() => flowStore.isReadOnly)
 
     const isLoading = ref(false)
+
+    // Edits made while the server was away never asked for a graph: catch up as soon as it answers again.
+    watch(unreachable, (isUnreachable) => {
+        if (isUnreachable || !flowStore.haveChange || !flowStore.flowHaveTasks) return
+        // A failure here is the server going away again, which brings the notice back on its own.
+        Promise.resolve().then(() => flowStore.fetchGraph()).catch(() => undefined)
+    })
 
     function loadingState(loading: boolean) {
         isLoading.value = loading

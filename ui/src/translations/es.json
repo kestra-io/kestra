@@ -617,6 +617,8 @@
       "zoom-reset": "Restablecer zoom",
       "zoom-fit": "Ajustar",
       "invalid": "Error de gráfico",
+      "stale": "La topología puede estar desactualizada",
+      "stale_description": "El servidor es inalcanzable, por lo que el gráfico muestra la última versión que pudo renderizar. Se actualizará una vez que el servidor responda de nuevo.",
       "invalid_description": "Ocurrió un error al cargar el gráfico. Por favor, verifica el código fuente en busca de errores.",
       "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo.",
       "expand_subflow_error": "No se pudo expandir el subflow",
@@ -1029,6 +1031,17 @@
     "sign in failed": "No se pudo iniciar sesión. Comprueba tu conexión e inténtalo de nuevo.",
     "sign in not confirmed": "No pudimos confirmar que hayas iniciado sesión. Inicia sesión en la otra pestaña y luego continúa.",
     "server unreachable": "No se puede conectar con el servidor de Kestra",
+    "offlineDraft": {
+      "badge": "No sincronizado",
+      "queued title": "Guardado en este dispositivo",
+      "queued": "El servidor no está disponible. Este borrador se guarda en este navegador y se guardará en el servidor una vez que responda de nuevo.",
+      "restore": {
+        "title": "Borrador no sincronizado encontrado",
+        "message": "Se guardó un borrador de este Flow en este navegador el {date} y nunca llegó al servidor. ¿Restaurarlo en el editor?",
+        "changed": "El Flow ha cambiado en el servidor desde entonces, así que revisa el borrador antes de guardarlo.",
+        "discard": "Descartar borrador"
+      }
+    },
     "server unreachable description": "Copia cualquier trabajo no guardado (por ejemplo, el YAML del Flow) en un lugar seguro antes de actualizar esta página. Este banner desaparecerá una vez que el servidor responda de nuevo.",
     "unsaved changes": "Cambios no guardados",
     "unsaved changes warning": "Tienes cambios no guardados. Si abandonas esta página, tus cambios se perderán.",

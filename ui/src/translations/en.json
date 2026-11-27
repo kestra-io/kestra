@@ -617,6 +617,8 @@
       "zoom-reset": "Reset zoom",
       "zoom-fit": "Fit",
       "invalid": "Graph error",
+      "stale": "Topology may be out of date",
+      "stale_description": "The server is unreachable, so the graph shows the last version it could render. It refreshes once the server responds again.",
       "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
       "load_error": "Could not load the topology graph. Please try again.",
       "expand_subflow_error": "Couldn't expand subflow",
@@ -1029,6 +1031,17 @@
     "sign in failed": "Could not sign in. Check your connection and try again.",
     "sign in not confirmed": "We could not confirm that you are signed in. Sign in in the other tab, then continue.",
     "server unreachable": "Cannot reach the Kestra server",
+    "offlineDraft": {
+      "badge": "Not synced",
+      "queued title": "Saved on this device",
+      "queued": "The server is unreachable. This draft is kept in this browser and saved to the server once it responds again.",
+      "restore": {
+        "title": "Unsynced draft found",
+        "message": "A draft of this flow was saved in this browser on {date} and never reached the server. Restore it into the editor?",
+        "changed": "The flow has changed on the server since then, so review the draft before saving it.",
+        "discard": "Discard draft"
+      }
+    },
     "server unreachable description": "Copy any unsaved work (for example the flow YAML) somewhere safe before refreshing this page. This banner disappears once the server responds again.",
     "unsaved changes": "Unsaved Changes",
     "unsaved changes warning": "You have unsaved changes. If you leave this page, your changes will be lost.",

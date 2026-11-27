@@ -17,29 +17,51 @@ function useTourKey() {
     return (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 }
 
+function useEligibility() {
+    const variant = useTourVariant()
+    const eligible = ref(false)
+    let latestCheck = 0
+
+    // Re-checks can overlap (add then remove), so only the latest one's answer counts.
+    const refresh = async () => {
+        const check = ++latestCheck
+        let answer: boolean
+        try {
+            answer = await variant.eligible()
+        } catch {
+            answer = false
+        }
+        if (check === latestCheck) eligible.value = answer
+    }
+
+    onMounted(refresh)
+    if (variant.entryGate) watch(variant.entryGate.recheckOn, () => void refresh())
+
+    return {eligible, refresh}
+}
+
+/** Whether the variant's in-app tour entries may show: always without an `entryGate`, else only while `eligible()` holds. */
+export function useProductTourEntryGate() {
+    if (!useTourVariant().entryGate) return {open: computed(() => true)}
+
+    const {eligible} = useEligibility()
+    return {open: computed(() => eligible.value)}
+}
+
 export function useProductTourMenuEntry() {
     const tourStore = useProductTourStore()
     const variant = useTourVariant()
 
-    const isNewInstance = ref(false)
+    const {eligible: isNewInstance, refresh} = useEligibility()
 
     const wasSkipped = computed(() => tourStore.state.status === "skipped")
 
     const visible = computed(
-        () => (isNewInstance.value || wasSkipped.value)
+        () => (isNewInstance.value || (wasSkipped.value && !variant.entryGate))
             && !tourStore.isDismissed
             && !tourStore.isGuidedActive,
     )
 
-    const refresh = async () => {
-        try {
-            isNewInstance.value = await variant.eligible()
-        } catch {
-            isNewInstance.value = false
-        }
-    }
-
-    onMounted(refresh)
     watch(() => tourStore.state.status, () => void refresh())
 
     return {
@@ -53,9 +75,11 @@ export function useProductTourMenuEntry() {
 
 export function useProductTourNudge() {
     const tourStore = useProductTourStore()
+    const gate = useProductTourEntryGate()
 
     const visible = computed(
-        () => !tourStore.state.tour.blueprintsNudgeDismissed
+        () => gate.open.value
+            && !tourStore.state.tour.blueprintsNudgeDismissed
             && !tourStore.isGuidedActive,
     )
 

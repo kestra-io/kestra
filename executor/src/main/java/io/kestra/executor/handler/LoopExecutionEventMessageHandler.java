@@ -1,6 +1,8 @@
 package io.kestra.executor.handler;
 
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,6 +48,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
     private final BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
     private final KillSwitchService killSwitchService;
     private final RunContextLoggerFactory runContextLoggerFactory;
+    private final ExecutionDelayStateStore executionDelayStateStore;
 
     @Inject
     public LoopExecutionEventMessageHandler(
@@ -58,7 +61,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         DispatchQueueInterface<Execution> executionQueue,
         BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
         KillSwitchService killSwitchService,
-        RunContextLoggerFactory runContextLoggerFactory) {
+        RunContextLoggerFactory runContextLoggerFactory,
+        ExecutionDelayStateStore executionDelayStateStore) {
         this.executorService = executorService;
         this.executionService = executionService;
         this.taskOutputService = taskOutputService;
@@ -69,6 +73,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         this.followExecutionEventQueue = followExecutionEventQueue;
         this.killSwitchService = killSwitchService;
         this.runContextLoggerFactory = runContextLoggerFactory;
+        this.executionDelayStateStore = executionDelayStateStore;
     }
 
     @Override
@@ -135,7 +140,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 TaskRunStatistic taskRunStatistic = TaskRunStatistic.fromMap((Map<String, Object>) outputs.get(Loop.TASK_RUN_STATISTIC_OUTPUT))
                     .plus(message.taskRunStatistic());
 
-                boolean loopAlreadyEnded = parentTaskRun.getState().isTerminated() || execution.getState().getCurrent() == State.Type.KILLING;
+                boolean loopAlreadyEnded = parentTaskRun.getState().isTerminated() || parentTaskRun.getState().isRetrying() || execution.getState().getCurrent() == State.Type.KILLING;
                 if (loopAlreadyEnded) {
                     computeOutputs(parentTaskRun, outputs, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
                     if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
@@ -356,6 +361,34 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
     // terminate the loop and its attempts
     private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state, TaskRunStatistic taskRunStatistic) throws InternalException {
+        // RETRY_FLOWABLE: a failed iteration schedules a retry of the failing iteration instead of failing the loop
+        if (
+            state == State.Type.FAILED
+                && task.getRetry() != null
+                && task.getRetry().getBehavior() == AbstractRetry.Behavior.RETRY_FLOWABLE
+        ) {
+            Instant nextRetryDate = parentTaskRun.nextRetryDate(task.getRetry());
+            // null once maxAttempts / maxDuration is reached, the loop then fails normally below
+            if (nextRetryDate != null) {
+                executor.withExecution(
+                    executor.getExecution()
+                        .withTaskRun(parentTaskRun.withStateAndAttempt(State.Type.FAILED).withState(State.Type.RETRYING))
+                        .withState(State.Type.RETRYING),
+                    "retryLoop"
+                );
+                executionDelayStateStore.save(
+                    ExecutionDelay.builder()
+                        .taskRunId(parentTaskRun.getId())
+                        .executionId(executor.getExecution().getId())
+                        .date(nextRetryDate)
+                        .state(State.Type.RUNNING)
+                        .delayType(ExecutionDelay.DelayType.RESTART_FLOWABLE)
+                        .build()
+                );
+                return executor;
+            }
+        }
+
         State.Type finalState = switch (state) {
             case FAILED -> stateFailure(task);
             case KILLED, CANCELLED -> state;

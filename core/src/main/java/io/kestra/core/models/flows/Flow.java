@@ -1,5 +1,7 @@
 package io.kestra.core.models.flows;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -310,5 +312,13 @@ public class Flow extends AbstractFlow implements HasUID {
     @Schema(hidden = true)
     public String getSource() {
         return null;
+    }
+
+    @JsonIgnore
+    @AssertTrue(
+        message = "RETRY_FLOWABLE cannot be used as a flow-level retry behavior"
+    )
+    public boolean isFlowRetryBehaviorSupported() {
+        return retry == null || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE;
     }
 }

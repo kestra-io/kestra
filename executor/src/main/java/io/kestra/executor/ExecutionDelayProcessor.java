@@ -1,5 +1,7 @@
 package io.kestra.executor;
 
+import io.kestra.core.models.tasks.Task;
+import io.kestra.plugin.core.flow.Loop;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -196,10 +198,14 @@ public class ExecutionDelayProcessor {
                     executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FLOWABLE)
                         && execution.getState().getCurrent() != State.Type.KILLING
                 ) {
-                    Execution newAttempt = executionService.retryFlowable(
-                        executor.getExecution(),
-                        executionDelay.getTaskRunId()
-                    );
+                    TaskRun flowableTaskRun = executor.getExecution().findTaskRunByTaskRunId(executionDelay.getTaskRunId());
+                    Task flowableTask = flowMetaStore.findByExecutionForRuntime(executor.getExecution())
+                        .orElseThrow()
+                        .findTaskByTaskId(flowableTaskRun.getTaskId());
+
+                    Execution newAttempt = flowableTask instanceof Loop
+                        ? executionService.retryLoop(executor.getExecution(), executionDelay.getTaskRunId())
+                        : executionService.retryFlowable(executor.getExecution(), executionDelay.getTaskRunId());
                     executor = executor.withExecution(newAttempt, "retryFlowable");
                 }
             } catch (Exception e) {

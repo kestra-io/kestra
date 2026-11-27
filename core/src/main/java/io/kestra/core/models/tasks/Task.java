@@ -1,5 +1,6 @@
 package io.kestra.core.models.tasks;
 
+import jakarta.validation.constraints.AssertTrue;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -183,4 +184,13 @@ abstract public class Task implements TaskInterface {
         return this instanceof RunnableTask || this instanceof Subflow;
     }
 
+    @JsonIgnore
+    @AssertTrue(
+        message = "RETRY_FLOWABLE is only supported on flowable tasks"
+    )
+    public boolean isRetryFlowableSupported() {
+        return retry == null
+            || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+            || this instanceof FlowableTask<?>;
+    }
 }

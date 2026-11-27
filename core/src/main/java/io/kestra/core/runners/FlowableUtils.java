@@ -28,7 +28,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class FlowableUtils {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson(true);
@@ -90,7 +89,9 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
+                .anyMatch(
+                    taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying()
+                )
         ) {
             return Collections.emptyList();
         }
@@ -131,7 +132,9 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
+                .anyMatch(
+                    taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying()
+                )
         ) {
             return Collections.emptyList();
         }
@@ -469,12 +472,34 @@ public class FlowableUtils {
         return switch (value) {
             case String stringObj -> runContext.render(stringObj);
             case Number number -> runContext.render(number.toString());
+            case Boolean bool -> bool.toString();
             case Map<?, ?> mapObj -> serializeAsString(runContext.render((Map<String, Object>) mapObj)); //JSON or YAML map
+            case Collection<?> collObj -> serializeAsString(renderCollection(runContext, collObj));
+            case Object[] arrayObj -> serializeAsString(renderCollection(runContext, Arrays.asList(arrayObj)));
             case null -> throw new IllegalVariableEvaluationException(
                 "Found a null value inside the iteration values=" + serializeAsString(values)
             );
             default -> throw new IllegalVariableEvaluationException("Unknown value element type: " + value.getClass());
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object renderValue(RunContext runContext, Object value) throws IllegalVariableEvaluationException {
+        return switch (value) {
+            case String stringObj -> runContext.render(stringObj);
+            case Map<?, ?> mapObj -> runContext.render((Map<String, Object>) mapObj);
+            case Collection<?> collObj -> renderCollection(runContext, collObj);
+            case Object[] arrayObj -> renderCollection(runContext, Arrays.asList(arrayObj));
+            default -> value;
+        };
+    }
+
+    private static List<Object> renderCollection(RunContext runContext, Collection<?> coll) throws IllegalVariableEvaluationException {
+        List<Object> rendered = new ArrayList<>(coll.size());
+        for (Object item : coll) {
+            rendered.add(renderValue(runContext, item));
+        }
+        return rendered;
     }
 
     private static String elementAsString(JsonNode element, Object values) throws IllegalVariableEvaluationException {

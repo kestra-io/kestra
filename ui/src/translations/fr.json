@@ -441,6 +441,17 @@
     "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",
     "replay latest revision": "Rejouer avec la dernière révision",
     "replayed": "L'exécution est rejouée",
+    "replayOverrides": {
+      "action": "Rejouer avec des remplacements",
+      "dialog_title": "Rejouer à partir de {taskId} avec des remplacements",
+      "note": "S'exécute sur la révision {revision}. Les Tasks précédentes ne sont pas exécutées à nouveau. Les valeurs que vous modifiez remplacent leurs outputs dans la nouvelle exécution, pour cette Task et toutes les Tasks suivantes.",
+      "load_error": "Les outputs lus par cette task n'ont pas pu être chargés.",
+      "empty_title": "Rien à surcharger",
+      "empty": "{taskId} ne lit aucune sortie d'une tâche précédente via un chemin fixe.",
+      "invalid_number": "Entrez un nombre.",
+      "invalid_boolean": "Entrez vrai ou faux.",
+      "invalid_json": "Entrez un JSON valide."
+    },
     "reused_task_run": {
       "label": "Réutilisé",
       "tooltip": "Non exécuté à nouveau dans cette execution. Il a été exécuté le {date}, et ses logs et outputs proviennent de cette exécution."

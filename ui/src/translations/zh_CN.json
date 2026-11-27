@@ -441,6 +441,17 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
     "replayed": "执行已重放",
+    "replayOverrides": {
+      "action": "使用覆盖重放",
+      "dialog_title": "从 {taskId} 重放并覆盖",
+      "note": "在修订版 {revision} 上运行。之前的 Task 不会再次运行。你更改的值将在此 Task 及其之后的所有 Task 的新 Execution 中替换其 output。",
+      "load_error": "无法加载此 task 读取的 output。",
+      "empty_title": "无内容可覆盖",
+      "empty": "{taskId} 未通过固定路径读取上一个 Task 的 output。",
+      "invalid_number": "输入一个数字。",
+      "invalid_boolean": "输入 true 或 false。",
+      "invalid_json": "请输入有效的 JSON。"
+    },
     "reused_task_run": {
       "label": "已复用",
       "tooltip": "此 execution 不会再次运行。它已于 {date} 运行，其 logs 和 outputs 来自该次运行。"

@@ -441,6 +441,17 @@
     "replay from beginning tooltip": "Eine ähnliche Execution von Anfang an erstellen",
     "replay latest revision": "Replay mit neuester Revision",
     "replayed": "Replay der Execution wurde gestartet",
+    "replayOverrides": {
+      "action": "Replay mit Overrides",
+      "dialog_title": "Replay von {taskId} mit Overrides",
+      "note": "Läuft auf Revision {revision}. Vorherige Tasks werden nicht erneut ausgeführt. Die von dir geänderten Werte ersetzen ihre Outputs in der neuen Execution, für diesen Task und jeden Task danach.",
+      "load_error": "Die Outputs, die dieser Task liest, konnten nicht geladen werden.",
+      "empty_title": "Nichts zum Überschreiben",
+      "empty": "{taskId} liest keine Output einer vorherigen Task über einen festen Pfad.",
+      "invalid_number": "Gib eine Zahl ein.",
+      "invalid_boolean": "Gib „true“ oder „false“ ein.",
+      "invalid_json": "Gib gültiges JSON ein."
+    },
     "reused_task_run": {
       "label": "Wiederverwendet",
       "tooltip": "In dieser Execution nicht erneut ausgeführt. Sie wurde am {date} ausgeführt, und ihre Logs und Outputs stammen von diesem Run."

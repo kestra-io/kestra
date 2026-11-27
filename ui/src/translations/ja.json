@@ -441,6 +441,17 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
     "replayed": "実行がリプレイされました",
+    "replayOverrides": {
+      "action": "オーバーライドでReplay",
+      "dialog_title": "オーバーライドを使用して{taskId}からReplay",
+      "note": "リビジョン {revision} で実行されます。以前の Task は再度実行されません。変更した値は、この Task とその後のすべての Task の新しい Execution で、それらの output を置き換えます。",
+      "load_error": "このTaskが読み取るoutputをロードできませんでした。",
+      "empty_title": "上書きするものはありません",
+      "empty": "{taskId} は、固定パスを介して以前の Task の output を読み取りません。",
+      "invalid_number": "数値を入力してください。",
+      "invalid_boolean": "true または false を入力してください。",
+      "invalid_json": "有効なJSONを入力してください。"
+    },
     "reused_task_run": {
       "label": "再利用",
       "tooltip": "このExecutionでは再度実行されません。{date}に実行され、そのlogとoutputはその実行からのものです。"

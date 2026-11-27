@@ -441,6 +441,17 @@
     "replay from beginning tooltip": "Utwórz podobną egzekucję, zaczynając od początku",
     "replay latest revision": "Replay z najnowszą wersją",
     "replayed": "Uruchomiono Replay egzekucji",
+    "replayOverrides": {
+      "action": "Replay z nadpisaniami",
+      "dialog_title": "Replay z {taskId} z nadpisaniami",
+      "note": "Działa na wersji {revision}. Poprzednie Taski nie są uruchamiane ponownie. Zmienione wartości zastępują ich Outputy w nowej egzekucji, dla tego Taska i każdego kolejnego Taska.",
+      "load_error": "Nie można załadować outputów odczytywanych przez ten Task.",
+      "empty_title": "Brak elementów do nadpisania",
+      "empty": "{taskId} nie odczytuje żadnych danych wyjściowych poprzedniego Taska poprzez stałą ścieżkę.",
+      "invalid_number": "Wprowadź liczbę.",
+      "invalid_boolean": "Wpisz „true” lub „false”.",
+      "invalid_json": "Wprowadź prawidłowy JSON."
+    },
     "reused_task_run": {
       "label": "Ponownie użyte",
       "tooltip": "Nie uruchomiono ponownie w tej egzekucji. Uruchomiono {date}, a jego logi i outputy pochodzą z tego uruchomienia."

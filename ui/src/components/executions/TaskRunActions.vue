@@ -65,6 +65,13 @@
                         :attemptIndex="currentAttemptIndex"
                     />
 
+                    <ReplayWithOverrides
+                        :key="`replay-overrides-${currentTaskRun.id}-${currentAttemptIndex}`"
+                        :execution="execution"
+                        :taskRun="currentTaskRun"
+                        :attemptIndex="currentAttemptIndex"
+                    />
+
                     <ChangeStatus
                         component="KsDropdownItem"
                         :key="`change-status-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
@@ -162,6 +169,7 @@
     import {useMiscStore} from "override/stores/misc"
     
     import Restart from "./overview/components/actions/Restart.vue"
+    import ReplayWithOverrides from "./ReplayWithOverrides.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
     import Interrupt from "./Interrupt.vue"

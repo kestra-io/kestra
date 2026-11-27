@@ -441,6 +441,17 @@
     "replay from beginning tooltip": "처음부터 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
     "replayed": "실행이 다시 재생됩니다.",
+    "replayOverrides": {
+      "action": "오버라이드하여 Replay",
+      "dialog_title": "재정의를 사용하여 {taskId}에서 Replay",
+      "note": "리비전 {revision}에서 실행됩니다. 이전 task는 다시 실행되지 않습니다. 변경한 값은 이 task와 그 이후의 모든 task에 대해 새 실행에서 해당 output을 대체합니다.",
+      "load_error": "이 task가 읽는 output을 로드할 수 없습니다.",
+      "empty_title": "재정의할 항목 없음",
+      "empty": "{taskId}는 고정된 경로를 통해 이전 Task의 output을 읽지 않습니다.",
+      "invalid_number": "숫자를 입력하세요.",
+      "invalid_boolean": "true 또는 false를 입력하세요.",
+      "invalid_json": "유효한 JSON을 입력하세요."
+    },
     "reused_task_run": {
       "label": "재사용됨",
       "tooltip": "이 Execution에서 다시 실행되지 않습니다. {date}에 실행되었으며, 해당 Log 및 Output은 해당 실행에서 가져옵니다."

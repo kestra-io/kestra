@@ -997,6 +997,16 @@ export type ExecutionControllerLastExecutionResponse = {
     status: StateType;
 };
 
+export type ExecutionControllerReplayWithOverridesRequest = {
+    outputs: {
+        [key: string]: {
+            [key: string]: {
+                [key: string]: unknown;
+            };
+        };
+    };
+};
+
 export type ExecutionControllerReviewDecision = 'APPROVE' | 'DENY';
 
 export type ExecutionControllerSetLabelsByIdsRequest = {
@@ -7650,6 +7660,57 @@ export type ReplayExecutionWithinputsResponses = {
 };
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
+
+export type ReplayExecutionWithOverridesData = {
+    /**
+     * The outputs to use, by id of a previous task run. They replace all the outputs of that task run.
+     */
+    body: ExecutionControllerReplayWithOverridesRequest;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay-with-overrides';
+};
+
+export type ReplayExecutionWithOverridesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed, or if an overridden task run is not reused by the replay
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReplayExecutionWithOverridesError = ReplayExecutionWithOverridesErrors[keyof ReplayExecutionWithOverridesErrors];
+
+export type ReplayExecutionWithOverridesResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReplayExecutionWithOverridesResponse = ReplayExecutionWithOverridesResponses[keyof ReplayExecutionWithOverridesResponses];
 
 export type ValidateReplayExecutionData = {
     body?: never;

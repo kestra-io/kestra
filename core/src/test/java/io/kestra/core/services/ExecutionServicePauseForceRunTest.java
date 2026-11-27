@@ -15,6 +15,7 @@ import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
@@ -69,6 +70,7 @@ class ExecutionServicePauseForceRunTest {
             mock(AsyncOperationWaiter.class),
             mock(AsyncOperationsConfiguration.class),
             mock(TriggerEventQueue.class),
+            mock(LogEntryEmitter.class),
             Optional.empty()
         );
     }

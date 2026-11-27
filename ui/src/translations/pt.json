@@ -441,6 +441,17 @@
     "replay from beginning tooltip": "Criar uma execução similar começando do início",
     "replay latest revision": "Repetir usando a última revisão",
     "replayed": "A Execução Foi Reproduzida",
+    "replayOverrides": {
+      "action": "Replay com substituições",
+      "dialog_title": "Replay de {taskId} com substituições",
+      "note": "Executa na revisão {revision}. As Tasks anteriores não são executadas novamente. Os valores que você altera substituem suas saídas na nova execução, para esta Task e para todas as Tasks seguintes.",
+      "load_error": "Os outputs que esta task lê não puderam ser carregados.",
+      "empty_title": "Nada para substituir",
+      "empty": "{taskId} não lê nenhuma output de uma task anterior através de um caminho fixo.",
+      "invalid_number": "Insira um número.",
+      "invalid_boolean": "Insira verdadeiro ou falso.",
+      "invalid_json": "Insira um JSON válido."
+    },
     "reused_task_run": {
       "label": "Reutilizado",
       "tooltip": "Não executar novamente nesta Execution. Foi executado em {date}, e seus logs e outputs vêm dessa execução."

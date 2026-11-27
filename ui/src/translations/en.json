@@ -441,6 +441,17 @@
     "replay from beginning tooltip": "Create a similar execution starting from the beginning",
     "replay latest revision": "Replay using latest revision",
     "replayed": "Execution is Replayed",
+    "replayOverrides": {
+      "action": "Replay with overrides",
+      "dialog_title": "Replay from {taskId} with overrides",
+      "note": "Runs on revision {revision}. Previous tasks are not run again. The values you change replace their outputs in the new execution, for this task and every task after it.",
+      "load_error": "The outputs this task reads could not be loaded.",
+      "empty_title": "Nothing to override",
+      "empty": "{taskId} reads no output of a previous task through a fixed path.",
+      "invalid_number": "Enter a number.",
+      "invalid_boolean": "Enter true or false.",
+      "invalid_json": "Enter valid JSON."
+    },
     "reused_task_run": {
       "label": "Reused",
       "tooltip": "Not run again in this execution. It ran on {date}, and its logs and outputs come from that run."

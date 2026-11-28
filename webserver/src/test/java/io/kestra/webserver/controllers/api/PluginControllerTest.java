@@ -163,7 +163,7 @@ class PluginControllerTest {
 
         assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(exception.getResponse().getBody(String.class).orElse(""))
-            .contains("Plugin type not found.");
+            .contains("\"status\":404");
     }
 
     @Test

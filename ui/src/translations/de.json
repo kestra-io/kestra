@@ -2635,7 +2635,11 @@
           "errorHandling": "Fehlerbehandlung hinzufügen",
           "unitTest": "Unit-Test generieren",
           "explain": "Diesen Flow erklären",
-          "dbt": "Eine dbt-Pipeline ausführen"
+          "dbt": "Eine dbt-Pipeline ausführen",
+          "createFlow": "Erstelle einen Flow, der …",
+          "createFlowPrefill": "Erstelle einen Flow, der",
+          "pythonSchedule": "Führe jeden Tag ein Python-Skript aus",
+          "triggers": "Wie funktionieren Trigger?"
         },
         "voice": {
           "start": "Spracheingabe starten",

@@ -23,6 +23,16 @@ public interface FlowMetaStore {
     Optional<FlowWithSource> find(FlowId flowId);
 
     /**
+     * Reloads the latest revision of the given flow, so that a flow or a trigger removed since is no longer returned.
+     * The revision of the given identifier is ignored.
+     *
+     * @param flowId The flow identifier.
+     */
+    default void refresh(FlowId flowId) {
+        /* noop */
+    }
+
+    /**
      * Returns all {@link Flow} instances belonging to the given vNodes.
      *
      * @param vNodes the virtual node identifiers

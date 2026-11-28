@@ -15,6 +15,7 @@ import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
@@ -28,6 +29,7 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.scheduler.service.UnpublishableTriggerResultReporter;
 import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 
@@ -55,6 +57,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     @Inject
     private TriggerExecutionPublisher triggerExecutionPublisher;
+
+    @Inject
+    private UnpublishableTriggerResultReporter unpublishableTriggerResultReporter;
 
     @Inject
     private WorkerJobRunningStateStore workerJobRunningStateStore;
@@ -256,26 +261,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             request.getHeader(), message.records(), result -> result.id().getTenantId(), result -> result.id().uid()
         ).forEach(workerTriggerResult ->
         {
-            var evaluation = workerTriggerResult.evaluation();
-
             switch (workerTriggerResult.type()) {
-                case POLLING -> {
-                    triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
-                    workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
-                }
-                case REALTIME -> {
-                    if (evaluation != null) {
-                        triggerExecutionPublisher.send(workerTriggerResult.id(), evaluation);
-                    } else {
-                        // The realtime trigger stream ended without producing an execution — clean
-                        // completion (stop, kill, stream end) or an error with failOnTriggerError=false:
-                        // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
-                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
-                    }
-                    if (workerTriggerResult.isTerminal()) {
-                        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
-                    }
-                }
+                case POLLING -> processPollingTriggerResult(workerTriggerResult);
+                case REALTIME -> processRealtimeTriggerResult(workerTriggerResult);
                 default -> throw new IllegalStateException("Unexpected value: " + workerTriggerResult.type());
             }
         });
@@ -304,6 +292,33 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             );
         } catch (RuntimeException e) {
             log.debug("Failed to acknowledge the sync of worker [{}]: {}", context.getWorkerId(), e.getMessage());
+        }
+    }
+
+    void processPollingTriggerResult(WorkerTriggerResult workerTriggerResult) {
+        try {
+            triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), workerTriggerResult.evaluation()));
+        } catch (KestraRuntimeException e) {
+            if (!UnpublishableTriggerResultReporter.isUnpublishable(e.getCause())) {
+                throw e;
+            }
+            unpublishableTriggerResultReporter.report(workerTriggerResult.id(), e.getCause());
+            triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), null));
+        }
+        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+    }
+
+    void processRealtimeTriggerResult(WorkerTriggerResult workerTriggerResult) {
+        if (workerTriggerResult.evaluation() != null) {
+            triggerExecutionPublisher.send(workerTriggerResult.id(), workerTriggerResult.evaluation());
+        } else {
+            // The realtime trigger stream ended without producing an execution (clean completion
+            // on stop, kill or stream end, or an error with failOnTriggerError=false), so notify
+            // the scheduler directly to unlock the trigger and let it be resubmitted.
+            triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
+        }
+        if (workerTriggerResult.isTerminal()) {
+            workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
         }
     }
 

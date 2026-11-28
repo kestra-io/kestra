@@ -101,6 +101,7 @@
                     {{ $t("copy logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
+                    v-if="canDeleteLogs"
                     :icon="Delete"
                     data-test="task-run-delete-logs"
                     @click="deleteLogs(currentTaskRun)"
@@ -241,6 +242,10 @@
 
     const canReadFlow = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.VIEW, String(route.params.namespace)),
+    )
+
+    const canDeleteLogs = computed(() =>
+        authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.execution.namespace),
     )
 
     function openIterations() {

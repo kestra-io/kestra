@@ -27,7 +27,7 @@
                 :label="$t(item.labelKey)"
                 :value="item.value"
                 :subtitle="item.subtitle"
-                :to="linkFor(item.route)"
+                :to="linkFor(item)"
             />
             <slot name="additional-usages" />
         </div>
@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {useRoute, useRouter, type RouteLocationRaw} from "vue-router"
+    import {useRoute, useRouter, type LocationQueryRaw, type RouteLocationRaw} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import UsageCard from "./UsageCard.vue"
@@ -45,12 +45,16 @@
 
     type UsagePeriod = 1 | 7 | 30
 
+    /** Usage statistics leave out the Getting Started flows, so the Flows list they link to does too. */
+    const WITHOUT_TUTORIAL_FLOWS: LocationQueryRaw = {"filters[namespace][NOT_IN]": "tutorial"}
+
     interface UsageItem {
         key: string;
         labelKey: string;
         value: number;
         subtitle?: string;
         route: string;
+        query?: LocationQueryRaw;
     }
 
     const props = defineProps<{
@@ -156,18 +160,21 @@
             labelKey: "flows",
             value: flows.value,
             route: "flows/list",
+            query: WITHOUT_TUTORIAL_FLOWS,
         },
         {
             key: "tasks",
             labelKey: "tasks",
             value: tasks.value,
             route: "flows/list",
+            query: WITHOUT_TUTORIAL_FLOWS,
         },
         {
             key: "taskRunners",
             labelKey: "taskRunners",
             value: taskRunners.value,
             route: "flows/list",
+            query: WITHOUT_TUTORIAL_FLOWS,
         },
         {
             key: "triggers",
@@ -209,11 +216,11 @@
         return Object.values(record ?? {}).reduce((total, value) => total + value, 0)
     }
 
-    function linkFor(routeName: string): RouteLocationRaw | undefined {
+    function linkFor(item: UsageItem): RouteLocationRaw | undefined {
         if (isInstance.value) {
             return undefined
         }
-        return {name: routeName}
+        return {name: item.route, query: item.query}
     }
 
     watch(

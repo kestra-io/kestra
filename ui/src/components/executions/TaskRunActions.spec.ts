@@ -5,6 +5,8 @@ import type {State, StateType} from "@kestra-io/kestra-sdk"
 import type {Execution} from "../../stores/executions"
 import {useExecutionsStore} from "../../stores/executions"
 import {useAuthStore} from "override/stores/auth"
+import resource from "../../models/resource"
+import action from "../../models/action"
 import TaskRunActions from "./TaskRunActions.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
@@ -126,6 +128,17 @@ describe("TaskRunActions", () => {
             executionId: "ex-2",
             params: {taskRunId: "tr-2"},
         })
+    })
+
+    it("hides delete logs from a user who cannot delete the execution", () => {
+        vi.spyOn(useAuthStore().user!, "isAllowed").mockImplementation((resourceName, actionName) => !(resourceName === resource.EXECUTION && actionName === action.DELETE))
+
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
+            execution,
+        })
+
+        expect(wrapper.find("[data-test='task-run-delete-logs']").exists()).toBe(false)
     })
 
     const execution3 = {...execution, id: "ex-3"}

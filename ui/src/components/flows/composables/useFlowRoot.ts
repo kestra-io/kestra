@@ -105,6 +105,13 @@ export function useFlowRoot() {
 
     const ready = computed(() => user.value && flowStore.flow)
 
+    const loadedFlowKey = ref(flowKey())
+    watch(() => isFlowLoaded() ? flowKey() : undefined, (key) => {
+        if (key) {
+            loadedFlowKey.value = key
+        }
+    })
+
     // Reload flow data when navigating to a different flow (namespace/id), regardless of
     // which tab that navigation lands on.
     watch(() => [route.params.namespace, route.params.id], () => load())
@@ -162,6 +169,7 @@ export function useFlowRoot() {
         routeName,
         routeInfo,
         ready,
+        loadedFlowKey,
         dependenciesCount,
         setupLifecycle,
     }

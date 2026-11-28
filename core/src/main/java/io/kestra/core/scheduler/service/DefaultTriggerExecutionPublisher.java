@@ -23,12 +23,15 @@ public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublish
 
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final RunContextLoggerFactory runContextLoggerFactory;
+    private final UnpublishableTriggerResultReporter unpublishableTriggerResultReporter;
 
     @Inject
     public DefaultTriggerExecutionPublisher(DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
-        RunContextLoggerFactory runContextLoggerFactory) {
+        RunContextLoggerFactory runContextLoggerFactory,
+        UnpublishableTriggerResultReporter unpublishableTriggerResultReporter) {
         this.executionCommandQueue = executionCommandQueue;
         this.runContextLoggerFactory = runContextLoggerFactory;
+        this.unpublishableTriggerResultReporter = unpublishableTriggerResultReporter;
     }
 
     @Override
@@ -37,6 +40,10 @@ public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublish
         try {
             this.executionCommandQueue.emit(command);
         } catch (QueueException e) {
+            if (UnpublishableTriggerResultReporter.isUnpublishable(e)) {
+                unpublishableTriggerResultReporter.report(triggerId, e);
+                return;
+            }
             // The command queue is down, so attach the cause to the execution before retrying a FAILED one:
             // logs go through their own queue and are often the only trace the user gets.
             runContextLoggerFactory.create(command.executionFullId(), command.kind(), command.labels())

@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import java.util.HexFormat;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.hash.HashCode;
@@ -61,6 +62,18 @@ public final class Hashing {
                 md.update(salt);
             }
             return md.digest(value);
+        } catch (NoSuchAlgorithmException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * Returns the lowercase hex SHA-256 digest of the UTF-8 bytes of the given value.
+     */
+    public static String sha256Hex(final String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException e) {
             throw new AssertionError(e);
         }

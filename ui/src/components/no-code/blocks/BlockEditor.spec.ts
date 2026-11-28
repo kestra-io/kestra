@@ -112,6 +112,8 @@ tasks:
 
 const mockFlowYaml = ref(SIMPLE_YAML)
 const mockOnEdit = vi.fn()
+const mockFlowSave = vi.fn()
+const mockFlow = {id: "my_flow", namespace: "company.team", draft: false}
 
 // --- Store and UI mocks ---
 // vi.mock factories are hoisted before imports. Keep factories self-contained.
@@ -125,8 +127,9 @@ vi.mock("../../../stores/flow", () => ({
     useFlowStore: () => ({
         get flowYaml() { return mockFlowYaml.value },
         set flowYaml(v: string) { mockFlowYaml.value = v },
-        flow: {id: "my_flow", namespace: "company.team"},
+        flow: mockFlow,
         onEdit: mockOnEdit,
+        save: mockFlowSave,
     }),
 }))
 
@@ -148,6 +151,7 @@ vi.mock("../../../stores/plugins", () => ({
         icons: {},
         plugins: mockPlugins,
         ensurePlugins: mockEnsurePlugins,
+        lazyLoadSchemaType: vi.fn(),
     }),
 }))
 
@@ -387,7 +391,6 @@ const makeConfig = () => ({
     global: {
         plugins: [createPinia()],
         stubs: {
-            KsEmpty: {template: "<div data-test='ks-empty'><slot /></div>"},
             KsDialog: {
                 template: "<div v-if='modelValue' data-test='ks-dialog'><slot /></div>",
                 props: ["modelValue", "title"],
@@ -1144,6 +1147,24 @@ describe("BlockEditor", () => {
         beforeEach(() => {
             confirmMock.mockClear()
             confirmMock.mockResolvedValue(undefined)
+            mockFlowSave.mockClear()
+            mockFlow.draft = false
+        })
+
+        it.each([
+            ["a draft flow", true],
+            ["a published flow", false],
+        ])("Cmd+S saves %s as a draft", async (_label, draft) => {
+            // Given
+            mockFlow.draft = draft
+            wrapper = mountBlockEditor()
+
+            // When
+            windowKeydown({key: "s", metaKey: true})
+            await flushPromises()
+
+            // Then
+            expect(mockFlowSave).toHaveBeenCalledExactlyOnceWith(true)
         })
 
         it("Delete key removes the selected leaf task after confirmation", async () => {
@@ -1317,16 +1338,16 @@ describe("BlockEditor", () => {
 
         it("Cmd+C then Cmd+V pastes a copy of the focused task after itself", async () => {
             // Given
-            const wrapper = mountBlockEditor()
-            const vm = wrapper.vm as unknown as {focusedId?: string}
+            const editor = mountBlockEditor()
+            const vm = editor.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // When
             windowKeydown({key: "c", metaKey: true})
             windowKeydown({key: "v", metaKey: true})
             await flushPromises()
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // Then — the pasted copy collides with the original id and is disambiguated
             const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
@@ -1339,15 +1360,15 @@ describe("BlockEditor", () => {
 
         it("Cmd+X cuts the focused task without a confirm prompt", async () => {
             // Given — a cut is not a delete: it must not go through confirmDelete
-            const wrapper = mountBlockEditor()
-            const vm = wrapper.vm as unknown as {focusedId?: string}
+            const editor = mountBlockEditor()
+            const vm = editor.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // When
             windowKeydown({key: "x", metaKey: true})
             await flushPromises()
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // Then
             expect(confirmMock).not.toHaveBeenCalled()
@@ -1361,15 +1382,15 @@ describe("BlockEditor", () => {
             // Given — regression: cut left focusedId pointing at the deleted block, so
             // moveFocus could not find it and a paste right after cut silently did nothing
             const offsetParentSpy = vi.spyOn(HTMLElement.prototype, "offsetParent", "get").mockReturnValue(document.body)
-            const wrapper = mountBlockEditor()
-            const vm = wrapper.vm as unknown as {focusedId?: string}
+            const editor = mountBlockEditor()
+            const vm = editor.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // When
             windowKeydown({key: "x", metaKey: true})
             await flushPromises()
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // Then — focus followed the deleted block's neighbor
             expect(vm.focusedId).toBe("http_task")
@@ -1377,7 +1398,7 @@ describe("BlockEditor", () => {
             // When — pasting right after the cut
             windowKeydown({key: "v", metaKey: true})
             await flushPromises()
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // Then — the cut task landed back in the flow
             const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
@@ -1388,18 +1409,18 @@ describe("BlockEditor", () => {
 
         it("refuses to paste a cut task into the empty Triggers section", async () => {
             // Given — a task copied to the clipboard, then the empty Triggers sentinel focused
-            const wrapper = mountBlockEditor()
-            const vm = wrapper.vm as unknown as {focusedId?: string}
+            const editor = mountBlockEditor()
+            const vm = editor.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
             windowKeydown({key: "c", metaKey: true})
 
             // When
             vm.focusedId = "__section:triggers"
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
             windowKeydown({key: "v", metaKey: true})
             await flushPromises()
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // Then — nothing landed in Triggers, and Tasks is unaffected
             const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
@@ -1410,24 +1431,24 @@ describe("BlockEditor", () => {
 
         it("Cmd+Shift+Z redoes an edit that Cmd+Z just undid", async () => {
             // Given
-            const wrapper = mountBlockEditor()
-            const vm = wrapper.vm as unknown as {focusedId?: string}
+            const editor = mountBlockEditor()
+            const vm = editor.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
             windowKeydown({key: "x", metaKey: true})
             await flushPromises()
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // When
             windowKeydown({key: "z", metaKey: true})
             await flushPromises()
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
             const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             expect((flowYamlUtils.parse(mockFlowYaml.value) as {tasks: unknown[]}).tasks).toHaveLength(2)
 
             windowKeydown({key: "z", metaKey: true, shiftKey: true})
             await flushPromises()
-            await wrapper.vm.$nextTick()
+            await editor.vm.$nextTick()
 
             // Then — back to the cut state
             const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}

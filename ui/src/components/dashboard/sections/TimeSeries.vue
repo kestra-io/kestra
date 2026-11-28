@@ -10,6 +10,7 @@
             v-if="showLegend"
             :items="legendStatuses"
             :durationLabel="yBShown ? durationLabel : undefined"
+            :formatValue="formatNumber"
             :chart="ksEchartRef"
             @toggle="onLegendToggle"
         />
@@ -87,7 +88,7 @@
     import {Motion} from "motion-v"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, useLegendToggle, toEchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, formatNumber, useLegendToggle, toEchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateGrouping} from "../../../utils/utils"
@@ -358,11 +359,11 @@
         const barDatasets = pd.datasets.filter((ds): ds is FlattenedBarDataset => ds.type !== "line")
         const radius = props.short ? 0.5 : 2
 
-        // format duration values in the tooltip as human durations instead of raw seconds
-        const durationTooltip = (fieldIndex: number) =>
+        // durations show as human durations instead of raw seconds, other numbers are rounded
+        const valueTooltip = (fieldIndex: number) =>
             isDuration(aggregator.value[fieldIndex]?.[1]?.field)
                 ? {tooltip: {valueFormatter: (value: unknown) => durationUtils.humanDuration(Number(value))}}
-                : {}
+                : {tooltip: {valueFormatter: (value: unknown) => typeof value === "number" ? formatNumber(value) : value}}
 
         /**
          * ECharts has no native gap for stacked segments — faked with a transparent border.
@@ -388,7 +389,7 @@
             },
             barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
             ...(props.short ? {barCategoryGap: "0%"} : {}),
-            ...durationTooltip(0),
+            ...valueTooltip(0),
         }))
 
         const lineSeries = pd.datasets
@@ -403,7 +404,7 @@
                 z: 1,
                 lineStyle: {width: props.short ? 0.5 : 1, color: ds.borderColor},
                 ...(ds.areaStyle ? {areaStyle: ds.areaStyle} : {}),
-                ...durationTooltip(yBShown.value ? 1 : 0),
+                ...valueTooltip(yBShown.value ? 1 : 0),
             }))
 
         const axisLabelStyle = {
@@ -416,6 +417,7 @@
             show: showAxes,
             position,
             splitNumber: 5,
+            ...(aggregator.value[fieldIndex]?.[1]?.agg === "COUNT" ? {minInterval: 1} : {}),
             splitLine: {
                 show: showAxes && position === "left",
                 lineStyle: {type: "dashed", color: cssVar("--ks-border-subtle"), width: 1},
@@ -423,9 +425,9 @@
             axisLabel: {
                 ...axisLabelStyle,
                 ...(position === "left" ? {align: "left"} : {}),
-                ...(isDuration(aggregator.value[fieldIndex]?.[1]?.field)
-                    ? {formatter: (v: number) => durationUtils.humanDuration(v)}
-                    : {}),
+                formatter: isDuration(aggregator.value[fieldIndex]?.[1]?.field)
+                    ? (v: number) => durationUtils.humanDuration(v)
+                    : formatNumber,
             },
         })
 

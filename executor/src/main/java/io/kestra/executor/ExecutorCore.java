@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -25,9 +23,11 @@ import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -65,7 +65,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 /**
@@ -97,7 +96,7 @@ public class ExecutorCore {
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
     private final TriggerEventQueue triggerEventQueue;
-    private final ExecutionTerminatedNotifier executionTerminatedNotifier;
+    private final List<ExecutionTerminatedNotifier> executionTerminatedNotifiers;
     private final ExecutionCommandMessageHandler executionCommandMessageHandler;
     private final ExecutionEventMessageHandler executionEventMessageHandler;
     private final WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
@@ -133,7 +132,7 @@ public class ExecutorCore {
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         TriggerEventQueue triggerEventQueue,
-        ExecutionTerminatedNotifier executionTerminatedNotifier,
+        List<ExecutionTerminatedNotifier> executionTerminatedNotifiers,
         ExecutionCommandMessageHandler executionCommandMessageHandler,
         ExecutionEventMessageHandler executionEventMessageHandler,
         WorkerTaskResultMessageHandler workerTaskResultMessageHandler,
@@ -162,7 +161,7 @@ public class ExecutorCore {
         this.loopExecutionEventQueue = loopExecutionEventQueue;
         this.executionStatisticQueue = executionStatisticQueue;
         this.triggerEventQueue = triggerEventQueue;
-        this.executionTerminatedNotifier = executionTerminatedNotifier;
+        this.executionTerminatedNotifiers = executionTerminatedNotifiers;
         this.executionCommandMessageHandler = executionCommandMessageHandler;
         this.executionEventMessageHandler = executionEventMessageHandler;
         this.workerTaskResultMessageHandler = workerTaskResultMessageHandler;
@@ -446,10 +445,12 @@ public class ExecutorCore {
     }
 
     private void notifyExecutionTerminated(Execution execution) {
-        try {
-            this.executionTerminatedNotifier.executionTerminated(execution);
-        } catch (Exception e) {
-            log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
+        for (ExecutionTerminatedNotifier notifier : executionTerminatedNotifiers) {
+            try {
+                notifier.executionTerminated(execution);
+            } catch (Exception e) {
+                log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
+            }
         }
     }
 

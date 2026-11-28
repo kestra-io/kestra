@@ -221,9 +221,6 @@ public class FlowableUtils {
             );
 
             return Optional.of(allowFailure ? allowWarning ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED);
-        } else if (currentTasks.stream().allMatch(t -> t.getTask().getDisabled()) && !currentTasks.isEmpty()) {
-            // if all child tasks are disabled, we end in the terminal state
-            return Optional.of(terminalState);
         } else if (!currentTasks.isEmpty()) {
             // handle nominal case, tasks or errors flow are ready to be analyzed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
@@ -232,6 +229,12 @@ public class FlowableUtils {
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
             if (execution.hasFailedNoRetry(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
+                return Optional.of(execution.computeFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
+            }
+
+            // disabled tasks are never part of currentTasks, so it is also empty when every enabled task is done and only disabled ones are left
+            List<ResolvedTask> enabledTasks = ListUtils.emptyOnNull(execution.removeDisabled(tasks));
+            if (!execution.hasFailed(tasks, parentTaskRun) && execution.isTerminated(enabledTasks, parentTaskRun)) {
                 return Optional.of(execution.computeFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         }

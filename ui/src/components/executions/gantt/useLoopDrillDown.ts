@@ -8,6 +8,7 @@ import {
     type LoopIterationRow,
 } from "../../../composables/useLoopIterations"
 import type {LoopRef} from "./ganttTree"
+import {latestRequest} from "../../../utils/latestRequest"
 
 export type DrillDownState = "all" | "failed" | "success"
 
@@ -45,9 +46,9 @@ export function useLoopDrillDown(loop: LoopRef) {
         return filters
     }
 
-    let latestFetch = 0
+    const startFetch = latestRequest()
     async function load() {
-        const fetch = ++latestFetch
+        const isLatest = startFetch()
         loading.value = true
         error.value = undefined
         try {
@@ -58,13 +59,13 @@ export function useLoopDrillDown(loop: LoopRef) {
                 sort: "loopRunIndex:asc",
                 commit: false,
             })
-            if (fetch !== latestFetch) return
+            if (!isLatest()) return
             rows.value = (response.results ?? []).map(toLoopIterationRow)
             total.value = response.total ?? 0
         } catch (e) {
-            if (fetch === latestFetch) error.value = e
+            if (isLatest()) error.value = e
         } finally {
-            if (fetch === latestFetch) loading.value = false
+            if (isLatest()) loading.value = false
         }
     }
 

@@ -2,9 +2,10 @@
     <template v-if="ready">
         <FlowRootTopBar
             :routeInfo="routeInfo"
-            :activeTabName="activeTabName"
         />
+        <FlowDraftBanner />
         <Tabs
+            :key="loadedFlowKey"
             :routeName="routeName"
             :tabs="tabs"
         />
@@ -14,15 +15,14 @@
 
 <script setup lang="ts">
     import {useFlowRoot} from "./composables/useFlowRoot"
-    import {useActiveTab} from "../../composables/useActiveTab"
     import useRouteContext from "../../composables/useRouteContext"
     import Tabs from "../../components/Tabs.vue"
     import FlowRootTopBar from "./FlowRootTopBar.vue"
+    import FlowDraftBanner from "./FlowDraftBanner.vue"
 
     withDefaults(defineProps<{embed?: boolean}>(), {embed: false})
 
-    const {tabs, routeName, routeInfo, ready, setupLifecycle} = useFlowRoot()
-    const activeTabName = useActiveTab()
+    const {tabs, routeName, routeInfo, ready, loadedFlowKey, setupLifecycle} = useFlowRoot()
 
     useRouteContext(routeInfo)
 

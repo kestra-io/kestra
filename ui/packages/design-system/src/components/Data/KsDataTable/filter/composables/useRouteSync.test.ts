@@ -172,6 +172,41 @@ describe("useRouteSync", () => {
         })
     })
 
+    test("a root-level filter the configuration has no key for survives a route write, while a configured one is rewritten from the tree", () => {
+        const {tree, sync} = setup()
+        tree.replaceTree([
+            {id: "g1", kind: "leaf", filters: [makeFilter({key: "namespace", value: "my-ns"})]},
+        ])
+
+        mockRoute.query = {
+            "filters[tags][CONTAINS]": ["ops", "report"],
+            "filters[namespace][EQUALS]": "stale",
+            "filters[flowId][EQUALS]": "stale",
+        }
+        sync.updateRoute()
+
+        expect(mockPush).toHaveBeenCalledWith({
+            query: {
+                "filters[tags][CONTAINS]": ["ops", "report"],
+                "filters[namespace][EQUALS]": "my-ns",
+            },
+        })
+    })
+
+    test("date params and a grouped key with no configured field are cleared, with or without a time range key", () => {
+        const {sync} = setup()
+
+        mockRoute.query = {
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2026-01-01T00:00:00.000Z",
+            "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2026-01-02T00:00:00.000Z",
+            dateFilter: "startDate",
+            "filters[or][1][tags][CONTAINS]": "ops",
+        }
+        sync.updateRoute()
+
+        expect(mockPush).toHaveBeenCalledWith({query: {}})
+    })
+
     test("a non-empty trimmed search query is written, and a blank or whitespace-only one is removed", () => {
         const {searchQuery, sync} = setup({showSearchInput: true})
 

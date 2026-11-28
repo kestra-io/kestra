@@ -24,6 +24,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.data.model.Pageable;
@@ -347,6 +348,27 @@ public abstract class AbstractKvMetadataRepositoryTest {
             .mapToObj(i -> "description-" + i)
             .toList();
         assertThat(finalMetadata.get().getDescription()).isIn(validDescriptions);
+    }
+
+    @Test
+    void saveAndFindWithMaxExpirationDate() throws IOException {
+        String tenantId = TestsUtils.randomTenant();
+        String namespace = TestsUtils.randomNamespace();
+        String key = "test-kv-max-expiration";
+        PersistedKvMetadata metadata = PersistedKvMetadata.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .name(key)
+            .description("Test kv with max expiration date")
+            .revision(1)
+            .expirationDate(KVMetadata.MAX_EXPIRATION_DATE)
+            .build();
+
+        kvMetadataRepositoryInterface.save(metadata);
+
+        Optional<PersistedKvMetadata> found = kvMetadataRepositoryInterface.findByName(tenantId, namespace, key);
+        assertThat(found).isPresent();
+        assertThat(found.get().getExpirationDate()).isEqualTo(KVMetadata.MAX_EXPIRATION_DATE);
     }
 
     protected static PersistedKvMetadata buildTestKvDescription(String tenantId, String namespace, String key) {

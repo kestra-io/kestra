@@ -9,8 +9,8 @@ import type {Plugin} from "../../utils/pluginUtils"
 import "../../utils/global"
 
 const {scoped, extra, reset} = await vi.hoisted(async () => {
-    const {ref} = await import("vue")
-    return {scoped: ref(false), extra: ref<string[]>([]), reset: vi.fn()}
+    const {ref: vueRef} = await import("vue")
+    return {scoped: vueRef(false), extra: vueRef<string[]>([]), reset: vi.fn()}
 })
 
 const names = (plugins: Plugin[]) => plugins.map(plugin => plugin.name).join(",")

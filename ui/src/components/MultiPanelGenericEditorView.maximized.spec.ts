@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {nextTick} from "vue"
+import {markRaw, nextTick} from "vue"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import MultiPanelGenericEditorView from "./MultiPanelGenericEditorView.vue"
@@ -11,8 +11,8 @@ vi.mock("vue-router", () => ({
     useRouter: () => ({replace: vi.fn(), push: vi.fn()}),
 }))
 
-const IconStub = {template: "<span />"}
-const PaneStub = {template: "<div />"}
+const IconStub = markRaw({template: "<span />"})
+const PaneStub = markRaw({template: "<div />"})
 
 function makeElement(uid: string, extra: Partial<EditorElement> = {}): EditorElement {
     const tab: Tab = {uid, button: {label: uid, icon: IconStub}, component: PaneStub}
@@ -132,5 +132,22 @@ describe("MultiPanelGenericEditorView with a maximized panel", () => {
         // Then
         expect(wrapper.find(".panel-maximized").exists()).toBe(true)
         expect(visibleTabs(wrapper)).toEqual(["code"])
+    })
+
+    test("clicking a main-view tab hidden behind the maximized panel brings it to the front", async () => {
+        // Given
+        const wrapper = i18nMount(MultiPanelGenericEditorView, {
+            global: {plugins: [KestraDesignSystem]},
+            props: {editorElements: [makeElement("code", {main: true}), makeElement("topology")], defaultActiveTabs: ["code", "topology"]},
+        })
+        await maximizeFirstPanel(wrapper)
+
+        // When
+        await headerButton(wrapper, "topology").trigger("click")
+        await nextTick()
+
+        // Then
+        expect(wrapper.find(".panel-maximized").exists()).toBe(false)
+        expect(visibleTabs(wrapper)).toEqual(["code", "topology"])
     })
 })

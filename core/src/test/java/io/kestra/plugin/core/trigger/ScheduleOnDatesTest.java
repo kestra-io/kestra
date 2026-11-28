@@ -121,6 +121,7 @@ class ScheduleOnDatesTest {
             .type(ScheduleOnDates.class.getName())
             .timezone("Europe/Paris")
             .dates(Property.ofValue(List.of(fireDate)))
+            .inputs(Map.of("input1", "{{ trigger.date }}"))
             .build();
 
         var conditionContext = conditionContext(scheduleOnDates);
@@ -141,6 +142,7 @@ class ScheduleOnDatesTest {
         var renderedDate = ZonedDateTime.parse((String) vars.get("date"));
         assertThat(renderedDate.toInstant()).isEqualTo(fireDate.toInstant());
         assertThat(renderedDate.getOffset()).isEqualTo(ZoneId.of("Europe/Paris").getRules().getOffset(fireDate.toInstant()));
+        assertThat(evaluate.get().inputs()).containsEntry("input1", vars.get("date")).containsEntry("input2", "default");
     }
 
     @Test

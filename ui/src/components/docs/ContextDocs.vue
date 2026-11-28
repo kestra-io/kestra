@@ -9,7 +9,7 @@
                 :class="{disabled: !canGoBack}"
                 :aria-label="$t('common.back')"
             >
-                <ChevronLeft class="back-icon" aria-hidden="true" />
+                <ChevronLeft class="back-icon" />
             </KsButton>
         </template>
         <template #header>
@@ -38,6 +38,7 @@
                         <KsMarkdown
                             :key="renderedDocPath"
                             class="markdown"
+                            lead
                             :content="markdownContent"
                             :components="markdownComponents"
                         />
@@ -274,11 +275,5 @@
         align-items: center;
         gap: 0.5rem;
         padding: 12px 28px 0;
-    }
-
-    .markdown :deep(p:first-child:not(.kel-alert *)) {
-        margin-bottom: var(--ks-spacing-4);
-        font-weight: bold;
-        font-size: var(--ks-font-size-lg);
     }
 </style>

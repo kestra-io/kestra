@@ -30,6 +30,7 @@
                 @click="select(option.branch)"
             >
                 <TaskIcon
+                    v-if="isPluginClass(option.branch.type)"
                     class="implementation-picker-option-icon"
                     :cls="option.branch.type"
                     :icons="pluginsStore.icons"
@@ -43,22 +44,24 @@
                 <Check v-if="option.branch.ref === current" class="implementation-picker-option-check" />
             </button>
         </div>
-        <KsEmpty v-else data-test="plugin-implementation-picker-empty">
-            <template #description>
-                <strong>{{ $t("block_editor.plugin_implementation.no_results_title", {query: search}) }}</strong>
-                <p>{{ $t("block_editor.plugin_implementation.no_results_description", {count: branches.length}) }}</p>
-            </template>
-        </KsEmpty>
+        <KsNoData
+            v-else
+            data-test="plugin-implementation-picker-empty"
+            :title="$t('block_editor.plugin_implementation.no_results_title', {query: search})"
+        >
+            {{ $t("block_editor.plugin_implementation.no_results_description", {count: branches.length}) }}
+        </KsNoData>
     </KsDialog>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {KsDialog, KsInput, KsEmpty} from "@kestra-io/design-system"
+    import {KsDialog, KsInput, KsNoData} from "@kestra-io/design-system"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
+    import {isPluginClass} from "../../../../utils/pluginUtils"
     import {branchDisplayName, simpleClassName, type ImplementationBranch} from "./discriminatedUnion"
 
     const props = defineProps<{

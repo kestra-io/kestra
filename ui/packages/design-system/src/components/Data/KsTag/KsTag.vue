@@ -4,6 +4,7 @@
         v-bind="({...filteredProps(), ...$attrs} as TagProps)"
         :type="(elType as TagProps['type'])"
         :size="elSize"
+        :effect="effect"
         :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error', 'kel-tag--xs': size === 'xs', 'kel-tag--truncate': truncate, 'kel-tag--toned': tone}"
         @close="emit('close')"
     >
@@ -19,12 +20,25 @@
 </template>
 
 <script lang="ts">
+    import type {Component} from "vue"
+    import type {TagProps} from "element-plus"
+
     export type KsTagType = "" | "success" | "info" | "warning" | "danger" | "error" | "primary"
 
     interface KsTagTone {
         bg: string
         border: string
         text: string
+    }
+
+    export interface KsTagProps extends Omit<TagProps, "type" | "size"> {
+        type?: KsTagType
+        size?: TagProps["size"] | "xs"
+        icon?: string | Component
+        label?: string
+        plain?: boolean
+        /** Clips the label with an ellipsis instead of letting the tag outgrow its container. */
+        truncate?: boolean
     }
 
     export const KS_TAG_TONES: Partial<Record<KsTagType, KsTagTone>> = {
@@ -38,24 +52,15 @@
 </script>
 
 <script setup lang="ts">
-    import {ElTag, type TagProps} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
-    import {computed, type Component} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {ElTag} from "element-plus"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import {computed, type HTMLAttributes} from "vue"
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
-        type?: KsTagType
-        size?: "large" | "default" | "small" | "xs"
-        closable?: boolean
-        effect?: "dark" | "light" | "plain"
-        icon?: string | Component
-        round?: boolean
-        label?: string
-        plain?: boolean
-        /** Clips the label with an ellipsis instead of letting the tag outgrow its container. */
-        truncate?: boolean
-    }>(), {
+
+    const props = withDefaults(defineProps<KsTagProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsTagProps>>(), {
         effect: "plain",
     })
 
@@ -75,7 +80,7 @@
 
     const tone = computed(() => (props.type ? KS_TAG_TONES[props.type] : undefined))
 
-    const filteredProps = useFilteredProps(props, ["icon", "label", "plain", "size", "type", "truncate"])
+    const filteredProps = usePassedProps(props, ["icon", "label", "plain", "size", "type", "truncate"])
 </script>
 
 <style lang="scss">
@@ -90,7 +95,8 @@
             align-items: center;
             gap: 4px;
             line-height: 1;
-            font-weight: var(--ks-font-weight-semibold);
+            font-size: var(--ks-tag-font-size, inherit);
+            font-weight: var(--ks-tag-font-weight, var(--ks-font-weight-semibold));
         }
 
         /* The close ✕: a muted glyph at rest that firms to full strength on hover. Element Plus's
@@ -98,7 +104,7 @@
            as a solid white dot (kestra-ee#9590); no fill here, so the ✕ stays readable in every theme. */
 
         & .kel-tag__close {
-            color: var(--ks-icon-muted);
+            color: var(--ks-tag-close-color, var(--ks-icon-muted));
 
             &:hover {
                 color: var(--ks-icon-default) !important;
@@ -125,6 +131,10 @@
             & .material-design-icon__svg {
                 width: 1em;
                 height: 1em;
+            }
+
+            & .material-design-icon {
+                font-size: var(--ks-tag-font-size, inherit);
             }
 
             & .material-design-icon__svg {

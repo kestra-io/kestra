@@ -124,15 +124,6 @@
         width: 100%;
         height: 100%;
         position: relative;
-
-        & :deep(span) {
-            position: absolute;
-            padding: 1px;
-            left: 0;
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
     }
 
     .task-icon__icon {

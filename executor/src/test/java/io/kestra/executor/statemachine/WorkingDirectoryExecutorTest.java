@@ -13,11 +13,12 @@ import io.kestra.core.executor.command.RestartWorkingDirectory;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.WorkerQueueFallback;
 import io.kestra.core.models.tasks.FlowWorkerSelector;
+import io.kestra.core.models.tasks.WorkerQueueFallback;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerQueueRouting;
@@ -32,13 +33,13 @@ import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
+import reactor.core.publisher.Flux;
+
 import static io.kestra.executor.testkit.HarnessAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
-
-import reactor.core.publisher.Flux;
 
 class WorkingDirectoryExecutorTest {
 
@@ -75,13 +76,15 @@ class WorkingDirectoryExecutorTest {
             WorkingDirectory.builder()
                 .id("working-directory")
                 .type(WorkingDirectory.class.getName())
-                .tasks(List.of(
-                    Sequential.builder()
-                        .id("sequential")
-                        .type(Sequential.class.getName())
-                        .tasks(List.of(Flows.log("grandchild")))
-                        .build()
-                ))
+                .tasks(
+                    List.of(
+                        Sequential.builder()
+                            .id("sequential")
+                            .type(Sequential.class.getName())
+                            .tasks(List.of(Flows.log("grandchild")))
+                            .build()
+                    )
+                )
                 .build()
         );
         harness.registerFlow(flow);
@@ -123,14 +126,16 @@ class WorkingDirectoryExecutorTest {
         // When: the loss of worker-1 is reported for the child, twice as both the controller and the liveness coordinator see it
         WorkerTask child = runningChild.get();
         List<WorkerTask> dispatched = new ArrayList<>();
-        harness.run(List.of(
-            RestartWorkingDirectory.from(child.getTaskRun(), child.getWorkingDirectoryId()),
-            RestartWorkingDirectory.from(child.getTaskRun(), child.getWorkingDirectoryId())
-        ), task ->
-        {
-            dispatched.add(task);
-            return ranBy(task, "worker-2");
-        });
+        harness.run(
+            List.of(
+                RestartWorkingDirectory.from(child.getTaskRun(), child.getWorkingDirectoryId()),
+                RestartWorkingDirectory.from(child.getTaskRun(), child.getWorkingDirectoryId())
+            ), task ->
+            {
+                dispatched.add(task);
+                return ranBy(task, "worker-2");
+            }
+        );
 
         // Then
         assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
@@ -141,6 +146,37 @@ class WorkingDirectoryExecutorTest {
     }
 
     @Test
+    void shouldIgnoreTheLateResultOfTheLostWorkerOnceTheWorkingDirectoryRanAgain() {
+        // Given: worker-1 is lost while running the child, and the WorkingDirectory ran again to SUCCESS on worker-2
+        FlowWithSource flow = Flows.of(workingDirectory());
+        harness.registerFlow(flow);
+        Execution created = Executions.created(flow);
+        AtomicReference<WorkerTask> lostChild = new AtomicReference<>();
+        harness.run(created, task ->
+        {
+            if (task.getTask() instanceof WorkingDirectory.Open) {
+                return ranBy(task, "worker-1");
+            }
+            lostChild.set(task);
+            return new WorkerTaskResult(task.getTaskRun().withState(State.Type.RUNNING));
+        });
+        WorkerTask child = lostChild.get();
+        harness.run(List.of(RestartWorkingDirectory.from(child.getTaskRun(), child.getWorkingDirectoryId())), task -> ranBy(task, "worker-2"));
+        Execution ranAgain = harness.executionStateStore().findByIdWithoutAcl(created.getId());
+        int jobsBefore = harness.workerJobEventQueue().emittedMessages().size();
+
+        // When: worker-1 comes back and reports the child it was running as FAILED
+        harness.run(List.of(Results.failed(child, T0)), task -> ranBy(task, "worker-2"));
+
+        // Then: the result of a task run that is no longer part of the execution changes nothing
+        Execution after = harness.executionStateStore().findByIdWithoutAcl(created.getId());
+        assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
+        Assertions.assertThat(after.getTaskRunList()).extracting(TaskRun::getId).doesNotContain(child.getTaskRun().getId());
+        Assertions.assertThat(after.getTaskRunList()).isEqualTo(ranAgain.getTaskRunList());
+        Assertions.assertThat(harness.workerJobEventQueue().emittedMessages()).hasSize(jobsBefore);
+    }
+
+    @Test
     void shouldKillTheSubflowStillRunningWhenTheWorkingDirectoryRunsAgain() {
         // Given: a subflow still runs next to the child when worker-1 is lost
         FlowWithSource subflow = Flows.of(Flows.log("in-subflow"));
@@ -148,16 +184,20 @@ class WorkingDirectoryExecutorTest {
             WorkingDirectory.builder()
                 .id("working-directory")
                 .type(WorkingDirectory.class.getName())
-                .tasks(List.of(
-                    Parallel.builder()
-                        .id("parallel")
-                        .type(Parallel.class.getName())
-                        .tasks(List.of(
-                            Subflow.builder().id("subflow").type(Subflow.class.getName()).namespace(subflow.getNamespace()).flowId(subflow.getId()).build(),
-                            Flows.log("child")
-                        ))
-                        .build()
-                ))
+                .tasks(
+                    List.of(
+                        Parallel.builder()
+                            .id("parallel")
+                            .type(Parallel.class.getName())
+                            .tasks(
+                                List.of(
+                                    Subflow.builder().id("subflow").type(Subflow.class.getName()).namespace(subflow.getNamespace()).flowId(subflow.getId()).build(),
+                                    Flows.log("child")
+                                )
+                            )
+                            .build()
+                    )
+                )
                 .build()
         );
         harness.registerFlow(subflow).registerFlow(flow);
@@ -195,11 +235,14 @@ class WorkingDirectoryExecutorTest {
     @Test
     void shouldRouteTheTasksOfAWorkingDirectoryToItsWorkerQueue() throws Exception {
         // Given: the WorkingDirectory selects the 'gpu' queue, while the flow default queue has no worker
-        doAnswer(invocation -> {
+        doAnswer(invocation ->
+        {
             WorkerTask job = invocation.getArgument(1);
-            return Optional.of(job.getTask().getWorkerSelector() != null
-                ? new WorkerQueueRouting("gpu", List.of("gpu"), WorkerQueueFallback.FAIL, WorkerQueueRouting.Disposition.DISPATCH)
-                : new WorkerQueueRouting("flow-default", List.of("cpu"), WorkerQueueFallback.FAIL, WorkerQueueRouting.Disposition.FAIL));
+            return Optional.of(
+                job.getTask().getWorkerSelector() != null
+                    ? new WorkerQueueRouting("gpu", List.of("gpu"), WorkerQueueFallback.FAIL, WorkerQueueRouting.Disposition.DISPATCH)
+                    : new WorkerQueueRouting("flow-default", List.of("cpu"), WorkerQueueFallback.FAIL, WorkerQueueRouting.Disposition.FAIL)
+            );
         }).when(harness.workerQueueService()).resolveWorkerQueueForJob(any(), any(), any());
         FlowWithSource flow = Flows.of(
             WorkingDirectory.builder()

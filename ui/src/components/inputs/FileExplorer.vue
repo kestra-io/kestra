@@ -29,7 +29,12 @@
                 <KsTooltip
                     :content="canManageFiles ? $t('namespace files.create.file') : $t('namespace files.read_only')"
                 >
-                    <KsButton :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
+                    <KsButton
+                        class="toolbar-button"
+                        :aria-label="$t('namespace files.create.file')"
+                        :disabled="!canManageFiles"
+                        @click="toggleDialog(true, 'file')"
+                    >
                         <FilePlus />
                     </KsButton>
                 </KsTooltip>
@@ -37,6 +42,8 @@
                     :content="canManageFiles ? $t('namespace files.create.folder') : $t('namespace files.read_only')"
                 >
                     <KsButton
+                        class="toolbar-button"
+                        :aria-label="$t('namespace files.create.folder')"
                         :disabled="!canManageFiles"
                         @click="toggleDialog(true, 'folder')"
                     >
@@ -54,10 +61,6 @@
                     ref="folderPicker"
                     type="file"
                     webkitdirectory
-                    mozdirectory
-                    msdirectory
-                    odirectory
-                    directory
                     class="hidden"
                     @change="importFiles"
                 >
@@ -65,7 +68,7 @@
                     :content="canManageFiles ? $t('import') : $t('namespace files.read_only')"
                 >
                     <KsDropdown :disabled="!canManageFiles">
-                        <KsButton :aria-label="$t('import')" :disabled="!canManageFiles">
+                        <KsButton class="toolbar-button" :aria-label="$t('import')" :disabled="!canManageFiles">
                             <Upload />
                         </KsButton>
                         <template #dropdown>
@@ -85,7 +88,7 @@
                 <KsTooltip
                     :content="$t('namespace files.export')"
                 >
-                    <KsButton @click="exportFiles()">
+                    <KsButton class="toolbar-button" :aria-label="$t('namespace files.export')" @click="exportFiles()">
                         <FolderDownloadOutline />
                     </KsButton>
                 </KsTooltip>
@@ -103,6 +106,7 @@
             v-ks-loading="filesStore.fileTree === undefined"
             :props="treeProps"
             class="file-tree"
+            variant="files"
             :class="{'is-drop-not-allow': isDropOutsideSidebar}"
             @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
@@ -531,9 +535,9 @@
 
     function nodeClass(data: TreeNode) {
         if (selectedNodes.value.includes(data.id)) {
-            return "node selected-tree-node"
+            return "is-selected"
         }
-        return "node"
+        return ""
     }
 
     const treeProps: TreeOptionProps = {
@@ -995,8 +999,8 @@
             // succeeds; a rejected upload (e.g. missing permission) surfaces the error instead
             await filesStore.importFiles(importedFiles)
             toast.success(t("namespace files.import.success"))
-        } catch {
-            toast.error(t("namespace files.import.error"))
+        } catch (error) {
+            toast.requestError(error, t("namespace files.import.error"))
         } finally {
             (event.target as HTMLInputElement).value = ""
             dialog.value = {...DIALOG_DEFAULTS}
@@ -1183,20 +1187,13 @@
         display: flex;
     }
 
-    & .file-tree {
-        margin-top: var(--ks-spacing-4);
-    }
-
     & .tree-node-dropdown {
         width: 100%;
     }
 
-    .filter{
-        & :deep(.kel-select__wrapper) {
-            min-height: 32px;
-            height: 32px;
-            padding-right: 0px;
-        }
+    .filter {
+        --ks-select-height: 32px;
+        --ks-select-padding: 4px 0 4px 12px;
     }
 
     .empty {
@@ -1222,16 +1219,12 @@
         }
     }
 
-    & :deep(.kel-button):not(.kel-dialog .kel-button) {
+    & .toolbar .toolbar-actions .toolbar-button {
         border: 0;
         background: none;
         outline: none;
         opacity: 0.5;
         padding-inline: var(--ks-spacing-2);
-
-        &.kel-button--primary {
-            opacity: 1;
-        }
     }
 
     .hidden {
@@ -1247,79 +1240,39 @@
     }
 
     ul.tabs-context {
+        /* Element Plus falls back to a light primary tint for the hover fill, which is near-white in dark mode */
+        --kel-menu-bg-color: var(--ks-bg-elevated);
+        --kel-menu-hover-bg-color: var(--ks-bg-hover-elevated);
+        --kel-menu-text-color: var(--ks-text-primary);
+        --kel-menu-hover-text-color: var(--ks-text-primary);
+
         position: fixed;
         z-index: var(--ks-z-top);
-        border: 1px solid var(--ks-border-default);
+        border: 1px solid var(--ks-border-strong);
+        border-radius: var(--ks-radius-base);
+        box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
 
         & li {
             height: 30px;
             padding: 16px;
             font-size: var(--ks-font-size-sm);
             color: var(--ks-text-primary);
-
-            &:hover {
-                color: var(--ks-text-secondary);
-            }
         }
     }
 
-    & :deep(.kel-tree) {
+    & .file-tree {
+        margin-top: var(--ks-spacing-4);
         height: calc(100% - 64px);
         overflow: auto;
         background: var(--ks-bg-surface);
 
-        .kel-tree__empty-block {
-            height: auto;
-        }
-
-        .node {
-            --kel-tree-node-hover-bg-color: transparent;
-        }
-
-        .kel-tree-node__content {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2px !important;
-            padding-left: 0 !important;
-            border: 1px solid transparent;
-
-            &:last-child{
-                margin-bottom: 0px;
-            }
-
-            &:hover{
-                background: none;
-                border: 1px solid var(--ks-border-focus);
-            }
-        }
-
-        .is-expanded {
-            .kel-tree-node__children {
-                margin-left: 11px !important;
-                padding-left: 0 !important;
-                border-left: 1px solid var(--ks-border-default);
-            }
-        }
-
-        .kel-tree-node.is-current > .kel-tree-node__content {
-            min-width: fit-content;
-            border: 1px solid var(--ks-border-focus);
-            background: var(--ks-btn-primary-bg-default);
-
-            .filename {
-                color: var(--ks-btn-primary-text);
-            }
-        }
-        .kel-tree-node.selected-tree-node > .kel-tree-node__content {
-            background-color: var(--ks-btn-primary-bg-default);
-            min-width: fit-content;
-            .filename {
-                color: var(--ks-btn-primary-text);
-            }
+        & .is-current > .kel-tree-node__content .filename,
+        & .is-selected > .kel-tree-node__content .filename {
+            color: var(--ks-btn-primary-text);
         }
     }
 
-    & :deep(.tree-node-hitbox) {
+    & .tree-node-hitbox {
         width: 100%;
         flex: 1;
         display: flex;

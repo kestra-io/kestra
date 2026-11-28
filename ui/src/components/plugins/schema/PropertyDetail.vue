@@ -104,21 +104,32 @@
 </script>
 
 <style scoped>
+    .property-detail {
+        background-color: var(--ks-bg-base);
+        padding: 1rem 0;
+        --ks-markdown-copy-hover-background: var(--ks-bg-hover);
+    }
+
     .property-detail > * {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: var(--spacer);
-        padding: 1rem 0;
+        padding: 1rem;
         border-top: 1px solid var(--ks-border-default);
 
-        span, .property-description:deep(p) {
+        span {
             line-height: 1.5rem;
             font-size: var(--ks-font-size-sm) !important;
         }
 
         .property-description {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
             color: var(--ks-text-secondary);
+            --ks-markdown-paragraph-size: var(--ks-font-size-sm);
+            --ks-markdown-paragraph-line-height: 1.5rem;
         }
 
         code {

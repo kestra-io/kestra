@@ -25,7 +25,7 @@
                 <section id="row" :class="statusOf(row.data) ? `status-${statusOf(row.data)}` : undefined">
                     <KsIcon
                         v-if="showStatus && statusOf(row.data)"
-                        size="xs"
+                        size="sm"
                         class="row-status"
                         :color="statusColorOf(statusOf(row.data))"
                         :tooltip="$t(`dependency.dag.status.${statusOf(row.data)}`)"
@@ -66,7 +66,7 @@
                             :to="isAssetView ? openRoute(row.data) : baseOpenRoute(row.data)"
                             :title="isAssetView ? $t('open') : undefined"
                         >
-                            <KsIcon size="sm">
+                            <KsIcon size="sm" class="open-icon">
                                 <OpenInNew />
                             </KsIcon>
                         </RouterLink>
@@ -249,18 +249,7 @@
     outline: none;
     border-radius: 0;
 
-    & :deep(.kel-table__empty-text) {
-        width: 100%;
-        font-size: var(--ks-font-size-sm);
-    }
-
-    & :deep(.kel-table__row.selected) {
-        background-color: var(--ks-bg-tag);
-
-        &:hover {
-            --kel-table-row-hover-bg-color: var(--ks-bg-tag-hover);
-        }
-    }
+    --ks-table-empty-text-width: 100%;
 }
 
 .name-prefix,
@@ -357,7 +346,7 @@ section#row {
             flex: 0 0 auto;
         }
 
-        & :deep(a:hover .kel-icon) {
+        & a:hover .open-icon {
             color: var(--ks-text-link);
         }
     }

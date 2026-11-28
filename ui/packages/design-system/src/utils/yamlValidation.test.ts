@@ -130,6 +130,143 @@ tasks:
         expect(markers[0].message).toBe("Duplicate task id: \"shared_task_id\"")
     })
 
+    test.each([
+        {
+            container: "If then and else",
+            line: 10,
+            yaml: [
+                "id: flow_if",
+                "namespace: company.team",
+                "tasks:",
+                "  - id: check",
+                "    type: io.kestra.plugin.core.flow.If",
+                "    condition: \"{{ true }}\"",
+                "    then:",
+                "      - id: dup",
+                "    else:",
+                "      - id: dup",
+            ],
+        },
+        {
+            container: "Switch cases and defaults",
+            line: 10,
+            yaml: [
+                "id: flow_switch",
+                "namespace: company.team",
+                "tasks:",
+                "  - id: route",
+                "    type: io.kestra.plugin.core.flow.Switch",
+                "    cases:",
+                "      a:",
+                "        - id: dup",
+                "    defaults:",
+                "      - id: dup",
+            ],
+        },
+        {
+            container: "two Switch cases",
+            line: 10,
+            yaml: [
+                "id: flow_switch_cases",
+                "namespace: company.team",
+                "tasks:",
+                "  - id: route",
+                "    type: io.kestra.plugin.core.flow.Switch",
+                "    cases:",
+                "      a:",
+                "        - id: dup",
+                "      b:",
+                "        - id: dup",
+            ],
+        },
+        {
+            container: "Dag task wrappers",
+            line: 10,
+            yaml: [
+                "id: flow_dag",
+                "namespace: company.team",
+                "tasks:",
+                "  - id: dag",
+                "    type: io.kestra.plugin.core.flow.Dag",
+                "    tasks:",
+                "      - task:",
+                "          id: dup",
+                "      - task:",
+                "          id: dup",
+                "        dependsOn:",
+                "          - dup",
+            ],
+        },
+        {
+            container: "afterExecution",
+            line: 6,
+            yaml: [
+                "id: flow_after_execution",
+                "namespace: company.team",
+                "tasks:",
+                "  - id: dup",
+                "afterExecution:",
+                "  - id: dup",
+            ],
+        },
+        {
+            container: "Approval onApprove and onDeny",
+            line: 9,
+            yaml: [
+                "id: flow_approval",
+                "namespace: company.team",
+                "tasks:",
+                "  - id: approve",
+                "    type: io.kestra.plugin.core.flow.Approval",
+                "    onApprove:",
+                "      - id: dup",
+                "    onDeny:",
+                "      - id: dup",
+            ],
+        },
+        {
+            container: "Pause onPause",
+            line: 7,
+            yaml: [
+                "id: flow_pause",
+                "namespace: company.team",
+                "tasks:",
+                "  - id: dup",
+                "  - id: wait",
+                "    onPause:",
+                "      id: dup",
+            ],
+        },
+    ])("a duplicate inside $container is reported on the second occurrence", ({line, yaml}) => {
+        const markers = findDuplicateTaskIds(yaml.join("\n"))
+
+        expect(markers).toHaveLength(1)
+        expect(markers[0].taskId).toBe("dup")
+        expect(markers[0].startLineNumber).toBe(line)
+    })
+
+    test("ids outside task containers, such as asset ids, are not counted as task ids", () => {
+        const yaml = `
+id: flow_assets
+namespace: company.team
+
+tasks:
+  - id: orders
+    type: io.kestra.plugin.core.log.Log
+    assets:
+      outputs:
+        - id: orders
+          type: io.kestra.core.models.assets.External
+  - id: report
+    type: io.kestra.plugin.core.log.Log
+    assets:
+      inputs:
+        - id: orders
+          type: io.kestra.core.models.assets.External
+`
+        expect(findDuplicateTaskIds(yaml)).toEqual([])
+    })
+
     test("malformed YAML returns an empty array instead of throwing", () => {
         const malformedYaml = `
 id: broken_flow

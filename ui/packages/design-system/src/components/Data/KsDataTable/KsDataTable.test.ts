@@ -151,6 +151,18 @@ describe("KsDataTable", () => {
         expect(typeof wrapper.vm.waitTableRender).toBe("function")
     })
 
+    test("locks the expand arrow on rows expandableRow rejects", () => {
+        const wrapper = i18nMount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, rowKey: "id", forceExpandedRowKeys: ["flow-003"], expandableRow: (row: {status: string}) => row.status !== "RUNNING"},
+        })
+
+        const rowClassName = wrapper.findComponent(KsTable).props("rowClassName") as (arg: {row: unknown; rowIndex: number}) => string
+
+        expect(rowClassName({row: SAMPLE_DATA[0], rowIndex: 0})).toBe("")
+        expect(rowClassName({row: SAMPLE_DATA[1], rowIndex: 1})).toBe("ks-row-not-expandable")
+        expect(rowClassName({row: SAMPLE_DATA[2], rowIndex: 2})).toBe("ks-row-force-expanded")
+    })
+
     test("emits page-changed on page change", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},
@@ -718,5 +730,19 @@ describe("KsDataTable", () => {
         expect(wrapper.find(".ks-data-table-content--cards").exists()).toBe(false)
         expect(cell.classes()).toContain("custom")
         expect(cell.classes().some((name) => name.startsWith("ks-mobile-"))).toBe(false)
+    })
+
+    test("applies a row-class-name passed in kebab case", async () => {
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table :data="data" :total="3" row-class-name="kebab-row">
+                    <ks-table-column prop="id" label="ID" />
+                </ks-data-table>
+            `,
+            data: () => ({data: SAMPLE_DATA}),
+        })
+        await flushPromises()
+        expect(wrapper.findAll("tr.kebab-row")).toHaveLength(3)
     })
 })

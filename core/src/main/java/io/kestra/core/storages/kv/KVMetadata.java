@@ -15,6 +15,8 @@ import lombok.Getter;
 @Getter
 @EqualsAndHashCode
 public class KVMetadata {
+    public static final Instant MAX_EXPIRATION_DATE = Instant.parse("9999-12-31T23:59:59.999999Z");
+
     private static final String TYPE_KEY = "type";
 
     private String description;
@@ -36,10 +38,21 @@ public class KVMetadata {
                     e
                 );
             }
+
+            if (this.expirationDate.isAfter(MAX_EXPIRATION_DATE)) {
+                throw new IllegalArgumentException(
+                    String.format("ttl '%s' is too large: the expiration date would be beyond the latest supported date", ttl)
+                );
+            }
         }
     }
 
     public KVMetadata(String description, Instant expirationDate) {
+        if (expirationDate != null && expirationDate.isAfter(MAX_EXPIRATION_DATE)) {
+            throw new IllegalArgumentException(
+                String.format("expirationDate '%s' is too large: the expiration date would be beyond the latest supported date", expirationDate)
+            );
+        }
         this.description = description;
         this.expirationDate = expirationDate;
     }
@@ -53,6 +66,11 @@ public class KVMetadata {
         this.expirationDate = Optional.ofNullable(metadata.get("expirationDate"))
             .map(Instant::parse)
             .orElse(null);
+        if (this.expirationDate != null && this.expirationDate.isAfter(MAX_EXPIRATION_DATE)) {
+            throw new IllegalArgumentException(
+                String.format("expirationDate '%s' is too large: the expiration date would be beyond the latest supported date", this.expirationDate)
+            );
+        }
         this.type = Optional.ofNullable(metadata.get(TYPE_KEY))
             .map(KVType::valueOf)
             .orElse(null);

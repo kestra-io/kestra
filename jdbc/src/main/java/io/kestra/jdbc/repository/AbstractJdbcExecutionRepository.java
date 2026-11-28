@@ -546,8 +546,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             {
                 DSLContext context = DSL.using(configuration);
 
-                SelectForUpdateOfStep<Record1<Object>> from = context
-                    .select(VALUE_FIELD)
+                var from = context
+                    .select(VALUE_BYTES_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(KEY_FIELD.eq(executionId))
                     .and(this.defaultFilter())

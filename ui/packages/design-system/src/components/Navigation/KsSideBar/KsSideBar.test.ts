@@ -1,33 +1,29 @@
 import {markRaw} from "vue"
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import KestraDesignSystem from "../../../index"
+import {i18nMount} from "../../../../tests/units/i18nMount"
 import KsSideBar from "./KsSideBar.vue"
+import sideBarLocales from "./KsSideBar.locale"
 import KsSideBarItem from "./KsSideBarItem.vue"
 import KsSideBarSection from "./KsSideBarSection.vue"
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
 
-const globalConfig = {plugins: [KestraDesignSystem]}
-
 describe("KsSideBar", () => {
     test("renders nav with the default aria-label", () => {
-        const wrapper = mount(KsSideBar, {global: globalConfig})
+        const wrapper = i18nMount(KsSideBar, {locales: sideBarLocales})
         const nav = wrapper.find("nav.ks-sidebar")
         expect(nav.exists()).toBe(true)
         expect(nav.attributes("aria-label")).toBe("Sidebar")
     })
 
     test("honors a custom aria-label", () => {
-        const wrapper = mount(KsSideBar, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBar, {
             props: {ariaLabel: "Main navigation"},
         })
         expect(wrapper.find("nav.ks-sidebar").attributes("aria-label")).toBe("Main navigation")
     })
 
     test("renders header, default, and footer slot content", () => {
-        const wrapper = mount(KsSideBar, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBar, {
             slots: {
                 header: "<div class='hdr'>H</div>",
                 default: "<div class='body'>B</div>",
@@ -40,7 +36,7 @@ describe("KsSideBar", () => {
     })
 
     test("omits header/footer wrappers when their slots are empty", () => {
-        const wrapper = mount(KsSideBar, {global: globalConfig})
+        const wrapper = i18nMount(KsSideBar)
         expect(wrapper.find(".ks-sidebar__header").exists()).toBe(false)
         expect(wrapper.find(".ks-sidebar__footer").exists()).toBe(false)
     })
@@ -48,8 +44,7 @@ describe("KsSideBar", () => {
 
 describe("KsSideBarSection", () => {
     test("renders the title and child content", () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace"},
             slots: {default: "<a class='child'>Flows</a>"},
         })
@@ -58,13 +53,12 @@ describe("KsSideBarSection", () => {
     })
 
     test("omits the title element when no title is provided", () => {
-        const wrapper = mount(KsSideBarSection, {global: globalConfig})
+        const wrapper = i18nMount(KsSideBarSection)
         expect(wrapper.find(".ks-sidebar-section__title").exists()).toBe(false)
     })
 
     test("non-collapsible title renders as a div with no chevron", () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace"},
         })
         expect(wrapper.find("button.ks-sidebar-section__title").exists()).toBe(false)
@@ -72,8 +66,7 @@ describe("KsSideBarSection", () => {
     })
 
     test("collapsible title renders as a button with a chevron", () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace", collapsible: true},
         })
         const btn = wrapper.find("button.ks-sidebar-section__title")
@@ -83,8 +76,7 @@ describe("KsSideBarSection", () => {
     })
 
     test("clicking the collapsible title toggles content and emits toggle", async () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace", collapsible: true},
             slots: {default: "<a class='child'>Flows</a>"},
         })
@@ -107,8 +99,7 @@ describe("KsSideBarSection", () => {
     })
 
     test("respects defaultCollapsed", () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace", collapsible: true, defaultCollapsed: true},
             slots: {default: "<a class='child'>Flows</a>"},
         })
@@ -118,8 +109,7 @@ describe("KsSideBarSection", () => {
     })
 
     test("controlled mode: collapsed prop drives the displayed state", async () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace", collapsible: true, collapsed: true},
             slots: {default: "<a class='child'>Flows</a>"},
         })
@@ -134,8 +124,7 @@ describe("KsSideBarSection", () => {
     })
 
     test("controlled mode: clicking emits update:collapsed without mutating internal state", async () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace", collapsible: true, collapsed: false},
             slots: {default: "<a class='child'>Flows</a>"},
         })
@@ -149,8 +138,7 @@ describe("KsSideBarSection", () => {
     })
 
     test("controlled mode: defaultCollapsed change does NOT override the controlled value", async () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace", collapsible: true, collapsed: true, defaultCollapsed: true},
             slots: {default: "<a class='child'>Flows</a>"},
         })
@@ -161,8 +149,7 @@ describe("KsSideBarSection", () => {
     })
 
     test("renders the suffix slot inside the collapsible title", () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace", collapsible: true},
             slots: {suffix: "<span class='dot'>•</span>"},
         })
@@ -170,8 +157,7 @@ describe("KsSideBarSection", () => {
     })
 
     test("renders the suffix slot inside the non-collapsible title", () => {
-        const wrapper = mount(KsSideBarSection, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarSection, {
             props: {title: "Workspace"},
             slots: {suffix: "<span class='dot'>•</span>"},
         })
@@ -182,8 +168,7 @@ describe("KsSideBarSection", () => {
 
 describe("KsSideBarItem", () => {
     test("renders an anchor with the title and href", () => {
-        const wrapper = mount(KsSideBarItem, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarItem, {
             props: {title: "Flows", href: "/flows"},
         })
         const a = wrapper.find("a.ks-sidebar-item")
@@ -193,8 +178,7 @@ describe("KsSideBarItem", () => {
     })
 
     test("applies the active class and aria-current when active", () => {
-        const wrapper = mount(KsSideBarItem, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarItem, {
             props: {title: "Flows", href: "/flows", active: true},
         })
         const a = wrapper.find("a.ks-sidebar-item")
@@ -203,8 +187,7 @@ describe("KsSideBarItem", () => {
     })
 
     test("renders the lock icon when locked", () => {
-        const wrapper = mount(KsSideBarItem, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarItem, {
             props: {title: "Secrets", locked: true},
         })
         expect(wrapper.find(".ks-sidebar-item__lock").exists()).toBe(true)
@@ -212,16 +195,14 @@ describe("KsSideBarItem", () => {
     })
 
     test("renders the icon component when provided", () => {
-        const wrapper = mount(KsSideBarItem, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarItem, {
             props: {title: "Flows", icon: markRaw(FileTreeOutline)},
         })
         expect(wrapper.find(".ks-sidebar-item__icon").exists()).toBe(true)
     })
 
     test("emits click when the anchor is clicked", async () => {
-        const wrapper = mount(KsSideBarItem, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarItem, {
             props: {title: "Flows", href: "/flows"},
         })
         await wrapper.find("a.ks-sidebar-item").trigger("click")
@@ -230,8 +211,7 @@ describe("KsSideBarItem", () => {
     })
 
     test("renders as a span and prevents click when disabled", async () => {
-        const wrapper = mount(KsSideBarItem, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarItem, {
             props: {title: "Flows", href: "/flows", disabled: true},
         })
         const root = wrapper.find(".ks-sidebar-item")
@@ -244,8 +224,7 @@ describe("KsSideBarItem", () => {
     })
 
     test("renders default slot in place of the title when provided", () => {
-        const wrapper = mount(KsSideBarItem, {
-            global: globalConfig,
+        const wrapper = i18nMount(KsSideBarItem, {
             props: {title: "Fallback"},
             slots: {default: "<span class='custom'>Custom label</span>"},
         })

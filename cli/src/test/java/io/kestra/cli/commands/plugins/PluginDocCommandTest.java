@@ -1,16 +1,13 @@
 package io.kestra.cli.commands.plugins;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+
+import io.kestra.core.PluginTemplateJar;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -20,23 +17,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PluginDocCommandTest {
 
-    public static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.24.0-SNAPSHOT.jar";
-
     @Test
-    void run() throws IOException, URISyntaxException {
+    void run() throws IOException {
         var testDirectoryName = PluginListCommandTest.class.getSimpleName();
         Path pluginsPath = Files.createTempDirectory(testDirectoryName + "_pluginsPath_");
         pluginsPath.toFile().deleteOnExit();
 
-        FileUtils.copyFile(
-            new File(
-                Objects.requireNonNull(
-                    PluginListCommandTest.class.getClassLoader()
-                        .getResource("plugins/" + PLUGIN_TEMPLATE_TEST)
-                ).toURI()
-            ),
-            new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/" + PLUGIN_TEMPLATE_TEST))
-        );
+        PluginTemplateJar.copyTo(pluginsPath);
 
         Path docPath = Files.createTempDirectory(testDirectoryName + "_docPath_");
         docPath.toFile().deleteOnExit();

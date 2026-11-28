@@ -1,7 +1,11 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref, watchEffect} from "vue"
 import {themes} from "@kestra-io/plumage"
+import {expect, waitFor} from "storybook/test"
 import KsEditor from "./KsEditor.vue"
+import KsForm from "./KsForm/KsForm.vue"
+import KsFormItem from "./KsForm/KsFormItem.vue"
+import KsButton from "../Basic/KsButton/KsButton.vue"
 
 const meta: Meta<typeof KsEditor> = {
     title: "Components/Form/KsEditor",
@@ -338,4 +342,50 @@ export const InstallsWindowHelpers: Story = {
             if (typeof w[helper] !== "function") throw new Error(`window.${helper} is no longer installed on mount`)
         }
     },
+}
+
+/** Height: `--ks-editor-height` and `--ks-editor-max-height` size the editor area, set on the editor or an ancestor */
+export const Height: Story = {
+    render: () => ({
+        components: {KsEditor},
+        setup() { return {value: ref("{\n  \"name\": \"kestra\"\n}")} },
+        template: "<div style=\"padding:24px;width:480px;--ks-editor-height:3.125rem;--ks-editor-max-height:7.5rem\"><ks-editor v-model=\"value\" lang=\"json\" :inline=\"true\" :navbar=\"false\" /></div>",
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const container = canvasElement.querySelector<HTMLElement>(".editor-container")!
+        await expect(getComputedStyle(container).height).toBe("50px")
+        await expect(getComputedStyle(container).maxHeight).toBe("120px")
+    },
+}
+
+export const RevalidatesFormItemOnEdit: Story = {
+    render: () => ({
+        components: {KsEditor, KsForm, KsFormItem, KsButton},
+        setup() {
+            const model = ref({reason: ""})
+            const form = ref<{validate: (callback: (valid: boolean) => void) => void}>()
+            const editor = ref<EditorHandle>()
+            watchEffect(() => { handles["form-item"] = editor.value })
+            const rules = {reason: [{required: true, message: "reason is required"}]}
+            return {model, form, editor, rules, validate: () => form.value?.validate(() => {})}
+        },
+        template: `<div style="padding:24px;height:200px">
+            <ks-form ref="form" :model="model" :rules="rules">
+                <ks-form-item prop="reason" label="Reason">
+                    <ks-editor ref="editor" v-model="model.reason" :inline="true" :navbar="false" lang="plaintext" />
+                </ks-form-item>
+            </ks-form>
+            <ks-button data-test="validate" @click="validate">validate</ks-button>
+        </div>`,
+    }),
+    play: async ({canvasElement}) => {
+        await settled("form-item")
+        canvasElement.querySelector<HTMLButtonElement>("[data-test='validate']")!.click()
+        await waitFor(() => expect(canvasElement.textContent).toContain("reason is required"))
+
+        handles["form-item"]!.insertTextAtCursor("because")
+        await waitFor(() => expect(canvasElement.textContent).not.toContain("reason is required"))
+    },
+    parameters: {controls: {disable: true}, docs: {description: {story: "An edit re-runs the enclosing KsFormItem's change rules, like the Element Plus inputs do, so a required error clears as soon as a value is typed."}}},
 }

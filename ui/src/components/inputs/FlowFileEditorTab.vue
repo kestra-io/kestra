@@ -2,7 +2,7 @@
     <div class="editor-tab">
         <img
             v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
-            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+            :src="fileUrl"
             class="image-preview"
         >
         <div v-else-if="bigFile" class="big-file-warning" data-test="big-file-warning">
@@ -111,6 +111,7 @@
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
     import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
     import {useViolationMarkers} from "../../composables/useViolationMarkers"
+    import {safePath} from "../../composables/useBaseNamespaces"
 
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsEditor} from "@kestra-io/design-system"
@@ -119,7 +120,6 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import {humanFileSize} from "../../utils/utils"
-    import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
@@ -127,9 +127,8 @@
 
     const route = useRoute()
     const {t} = useI18n()
-    const toast = useToast()
 
-    const {save} = useFlowEditorActions()
+    const {saveAsDraft} = useFlowEditorActions()
     const flowStore = useFlowStore()
     const editorBindings = useEditorBindings()
 
@@ -252,9 +251,6 @@
     )
 
     onMounted(() => {
-        if(props.flow){
-            pluginsStore.lazyLoadSchemaType({type: "flow"})
-        }
         loadFile()
         window.addEventListener("keydown", handleGlobalSave)
         window.addEventListener("keydown", toggleAiShortcut)
@@ -295,12 +291,9 @@
     const namespace = computed(() => flowStore.flow?.namespace)
     const fileNamespace = computed(() => (namespace.value ?? route.params?.namespace)?.toString())
     const humanSize = computed(() => fileSize.value === undefined ? "" : humanFileSize(fileSize.value))
-    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=${encodeURI(`/${props.path}`)}`)
+    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=/${safePath(props.path)}`)
     const isCreating = computed(() => flowStore.isCreating)
 
-    // `id` and `namespace` are immutable once the flow exists. Monaco has no
-    // read-only ranges, so the guard below refuses those edits as they arrive
-    // rather than letting them land and undoing them on the next onEdit tick.
     // shallowRef, not ref: a deep reactive proxy around the editor breaks it.
     const monacoEditor = shallowRef<monaco.editor.IStandaloneCodeEditor>()
 
@@ -311,12 +304,6 @@
             : undefined
     }
 
-    // Gated on the editor too, not just on the flow being editable. This value
-    // does double duty: it enables the guard, and it tells the store to drop the
-    // read-only warning. Without a code editor the guard cannot attach, so
-    // suppressing the warning on the strength of the other conditions alone
-    // would leave an edit silently reverted with nothing said — which is the
-    // behaviour this change exists to remove.
     const metadataGuarded = computed(() => Boolean(monacoEditor.value)
         && props.flow
         && !flowStore.isCreating
@@ -361,10 +348,6 @@
             : {}),
         enabled: metadataGuarded,
         hoverMessage: computed(() => t("flow metadata locked")),
-        // Reverting the whole document is the one correction that discards what
-        // the user just did, and metadataGuarded has already told the store to
-        // drop its warning, so this is all that is left to say it happened.
-        onReverted: () => toast.warning(t("namespace and id readonly")),
     })
 
     const timeout = ref<ReturnType<typeof setTimeout>>()
@@ -433,8 +416,6 @@
                 source: newValue,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
                 topologyVisible: true,
-                // The id/namespace lines are locked in this editor, so a warning
-                // here would explain a change the user was never able to make.
                 metadataGuarded: metadataGuarded.value,
             })
         }, 1000)
@@ -457,15 +438,14 @@
             t("schema warning", {line: w.line, message: w.message}),
         )
     }
-    // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
-    // path as the Save button — including auto-install of missing plugins before persisting.
+    // Delegate to the shared action so Ctrl+S goes through the same path as Save draft, auto-install of missing plugins included.
     const saveFlowYaml = async () => {
         if (timeout.value) {
             clearTimeout(timeout.value)
         }
         if(!editorRefElement.value?.getEditor()) return
 
-        await save()
+        await saveAsDraft()
     }
 
     // The tab stays dirty until the request returns, so without this a click during a slow save sends the file again.
@@ -494,7 +474,7 @@
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {
-        if (!((event.ctrlKey || event.metaKey) && event.key === "s")) return
+        if (!((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key === "s")) return
         // Both listeners are on the window, so without standing down for what the authoring
         // surface answers, one chord would run two saves against the same flow.
         if (authoringSurfaceAnswersKeyFor(event.target as Node)) return

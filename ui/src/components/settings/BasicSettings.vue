@@ -8,7 +8,7 @@
                 :label="$t('settings.blocks.configuration.fields.default_namespace')"
                 :description="$t('settings.blocks.configuration.descriptions.default_namespace')"
             >
-                <NamespaceSelect fit :value="settings.defaultNamespace" @update:model-value="onNamespace" />
+                <NamespaceSelect fit :autoDefault="false" :modelValue="settings.defaultNamespace ?? undefined" @update:model-value="onNamespace" />
             </SettingRow>
 
             <SettingRow
@@ -111,6 +111,18 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.open_docs_tab')"
+                :description="$t('settings.blocks.configuration.descriptions.open_docs_tab')"
+            >
+                <KsSwitch
+                    :aria-label="$t('settings.blocks.configuration.fields.open_docs_tab')"
+                    :modelValue="settings.editorOpenDocsTab"
+                    data-test="open-docs-tab-switch"
+                    @change="onEditorOpenDocsTab"
+                />
+            </SettingRow>
+
+            <SettingRow
                 stacked
                 :label="$t('settings.blocks.configuration.fields.flow_template')"
                 :description="$t('settings.blocks.configuration.descriptions.flow_template')"
@@ -163,7 +175,11 @@
             >
                 <template #description>
                     <span>{{ $t("settings.blocks.theme.descriptions.color_mode") }}</span><br>
-                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
+                    <i18n-t keypath="settings.blocks.theme.descriptions.color_mode_shortcut" tag="span" scope="global">
+                        <template #ctrl><kbd class="shortcut-key">Ctrl</kbd></template>
+                        <template #shift><kbd class="shortcut-key">Shift</kbd></template>
+                        <template #key><kbd class="shortcut-key">L</kbd></template>
+                    </i18n-t>
                 </template>
                 <KsThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
             </SettingRow>
@@ -387,6 +403,7 @@
         [storageKeys.TRIGGERS_DEFAULT_TAB]: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
         [storageKeys.AUTO_REFRESH_INTERVAL]: [`${CONFIG}.fields.auto_refresh_interval`, `${CONFIG}.descriptions.auto_refresh_interval`],
         [storageKeys.EDITOR_PLAYGROUND]: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
+        [storageKeys.EDITOR_OPEN_DOCS_TAB]: [`${CONFIG}.fields.open_docs_tab`, `${CONFIG}.descriptions.open_docs_tab`],
         [storageKeys.FLOW_TEMPLATE]: [`${CONFIG}.fields.flow_template`, `${CONFIG}.descriptions.flow_template`],
         [APP_FONT_SIZE_KEY]: [`${THEME}.fields.app_font_size`, `${THEME}.descriptions.app_font_size`],
         [storageKeys.LOGS_FONT_SIZE]: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
@@ -437,6 +454,7 @@
         timezone: dateUtils.currentTimezone(),
         dateFormat: localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll",
         editorPlayground: localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false",
+        editorOpenDocsTab: localStorage.getItem(storageKeys.EDITOR_OPEN_DOCS_TAB) !== "false",
         envName: layoutStore.envName || miscStore.configs?.environment?.name,
         envColor: layoutStore.envColor || miscStore.configs?.environment?.color,
         flowTemplate: localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "",
@@ -791,6 +809,11 @@
         persist(storageKeys.EDITOR_PLAYGROUND, settings.editorPlayground)
     }
 
+    function onEditorOpenDocsTab(value: boolean | string | number) {
+        settings.editorOpenDocsTab = Boolean(value)
+        persist(storageKeys.EDITOR_OPEN_DOCS_TAB, settings.editorOpenDocsTab)
+    }
+
     function onEnvName() {
         layoutStore.setEnvName(settings.envName)
         notifySaved(`${THEME}.fields.environment_name`)
@@ -877,7 +900,7 @@
     margin-left: auto;
 }
 
-:deep(kbd) {
+.shortcut-key {
     display: inline-block;
     padding: 0.1em 0.4em;
     border: 1px solid var(--ks-border-default);

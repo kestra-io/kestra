@@ -31,7 +31,7 @@
                         @blur="onPreviewOut"
                     >
                         <span :class="['row', {active: group.key === activeGroup}]">
-                            <KsIcon size="xs" class="check">
+                            <KsIcon size="sm" class="check">
                                 <Check />
                             </KsIcon>
                             <span class="name">{{ group.label }}</span>

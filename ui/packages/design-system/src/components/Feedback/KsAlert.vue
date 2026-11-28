@@ -1,5 +1,5 @@
 <template>
-    <ElAlert :class="{'is-banner': banner}" v-bind="{...filteredProps(), ...$attrs}">
+    <ElAlert :class="{'is-banner': banner, 'is-fill': fill}" v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -25,7 +25,8 @@
     export type KsAlertType = typeof KS_ALERT_TYPES[number]
 </script>
 <script setup lang="ts">
-    import {computed} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
     import {ElAlert} from "element-plus"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -44,13 +45,16 @@
         showIcon?: boolean
         center?: boolean
         banner?: boolean
-    }>(), {
+        /** Stretch the content across the row with no gap under the title, and clip a description that would widen the alert. */
+        fill?: boolean
+    } & /* @vue-ignore */ (NativeAttributes<HTMLAttributes> & {onClose?: (event: MouseEvent) => void})>(), {
         closable: false,
         showIcon: true,
         banner: false,
+        fill: false,
     })
 
-    const filteredProps = useFilteredProps(props, ["banner"])
+    const filteredProps = useFilteredProps(props, ["banner", "fill"])
 
     // Element Plus renders an untyped alert as info. KsAlert.test.ts checks these tokens exist.
     const alertType = computed(() => props.type ?? "info")
@@ -97,6 +101,11 @@
             line-height: var(--ks-line-height-base);
         }
 
+        /* Element Plus positions the close button absolutely, over the end of the content. */
+        &:has(.kel-alert__close-btn) .kel-alert__content {
+            padding-inline-end: var(--ks-spacing-6);
+        }
+
         &:has(.ks-alert-action:not(:empty)) {
             align-items: center;
 
@@ -111,6 +120,19 @@
                 justify-content: space-between;
                 flex-wrap: wrap;
                 gap: var(--ks-spacing-2) var(--ks-spacing-4);
+            }
+        }
+
+        &.is-fill {
+            & .kel-alert__content {
+                flex: 1;
+                min-width: 0;
+                gap: 0;
+            }
+
+            & .kel-alert__description {
+                min-width: 0;
+                overflow: hidden;
             }
         }
 

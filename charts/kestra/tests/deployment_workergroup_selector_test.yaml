@@ -1,0 +1,88 @@
+suite: Worker group selector
+
+templates:
+  - templates/deployment.yaml
+
+tests:
+  - it: adds the worker group label to the selector and the pod labels of a worker group
+    set:
+      workerGroups:
+        gpu:
+          enabled: true
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-kestra-workergroup-gpu
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["kestra.io/worker-group"]
+          value: gpu
+      - equal:
+          path: spec.template.metadata.labels["kestra.io/worker-group"]
+          value: gpu
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: worker
+
+  - it: gives each worker group its own selector, so their HPAs don't overlap
+    set:
+      workerGroups:
+        default:
+          enabled: true
+        light:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["kestra.io/worker-group"]
+          value: default
+        documentSelector:
+          path: metadata.name
+          value: RELEASE-NAME-kestra-workergroup-default
+      - equal:
+          path: spec.selector.matchLabels["kestra.io/worker-group"]
+          value: light
+        documentSelector:
+          path: metadata.name
+          value: RELEASE-NAME-kestra-workergroup-light
+
+  - it: leaves the selector of the plain worker unchanged
+    set:
+      deployments:
+        worker:
+          enabled: true
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-kestra-worker
+    asserts:
+      - notExists:
+          path: spec.selector.matchLabels["kestra.io/worker-group"]
+      - notExists:
+          path: spec.template.metadata.labels["kestra.io/worker-group"]
+
+  - it: leaves the selector of other components unchanged
+    set:
+      deployments:
+        standalone:
+          enabled: true
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-kestra-standalone
+    asserts:
+      - notExists:
+          path: spec.selector.matchLabels["kestra.io/worker-group"]
+
+  - it: points the worker group HPA at the worker group Deployment
+    set:
+      workerGroups:
+        gpu:
+          enabled: true
+          autoscaler:
+            enabled: true
+            minReplicas: 1
+            maxReplicas: 4
+    documentSelector:
+      path: kind
+      value: HorizontalPodAutoscaler
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: RELEASE-NAME-kestra-workergroup-gpu

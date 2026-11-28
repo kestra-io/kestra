@@ -258,8 +258,12 @@ describe("KsEditor / useEditorDecorations", () => {
         expect(decorations.map(({options, range}) => [options.inlineClassName, range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn])).toEqual([
             ["highlight-pebble-pebble", 1, 20, 1, 23],
             ["highlight-pebble-keyword", 1, 23, 1, 25],
-            ["highlight-pebble-pebble", 1, 25, 1, 36],
-            ["highlight-pebble-pebble", 1, 50, 1, 67],
+            ["highlight-pebble-pebble", 1, 25, 1, 26],
+            ["highlight-pebble-pebbleVariable", 1, 26, 1, 33],
+            ["highlight-pebble-pebble", 1, 33, 1, 36],
+            ["highlight-pebble-pebble", 1, 50, 1, 53],
+            ["highlight-pebble-pebbleVariable", 1, 53, 1, 64],
+            ["highlight-pebble-pebble", 1, 64, 1, 67],
         ])
     })
 })

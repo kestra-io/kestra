@@ -10,8 +10,8 @@ interface Trace {
     edges: Set<string>;
 }
 
-/** Stable key for an edge. NUL separates so an id containing the separator cannot collide. */
-export const traceEdgeKey = (source: string, target: string): string => `${source}\0${target}`
+/** Stable key for an edge; JSON encodes the pair unambiguously, so no id content can make two pairs collide. */
+export const traceEdgeKey = (source: string, target: string): string => JSON.stringify([source, target])
 
 /**
  * Everything upstream and downstream of one node, transitively; null when there is nothing.

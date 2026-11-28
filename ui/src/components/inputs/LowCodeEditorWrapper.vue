@@ -84,6 +84,7 @@
     .vue-flow {
         height: 100%;
         position: relative;
+        --ks-topology-panel-bottom: 2rem;
     }
     .stale-graph {
         position: absolute;
@@ -92,9 +93,6 @@
         left: var(--ks-spacing-2);
         right: var(--ks-spacing-2);
         width: auto;
-    }
-    :deep(.vue-flow__panel.bottom) {
-        bottom: 2rem !important;
     }
     .invalid-graph {
         margin: 1rem;

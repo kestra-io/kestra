@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +93,7 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
     private static List<QueryFilter> reassembleFilters(final QueryFilter.Resource resource, final Map<String, Object> args) {
         List<QueryFilter> filters = new ArrayList<>();
         for (QueryFilter.Field field : resource.supportedField()) {
-            if (!AiToolSpecifications.isExposedFilterField(field)) {
+            if (!AiToolSpecifications.isExposedFilterField(resource, field)) {
                 continue; // not exposed in the schema (e.g. TIME_RANGE) — ignore if the model sent it
             }
             Object raw = args.remove(field.name());
@@ -112,9 +113,16 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
                 );
             }
             // leaf shape: field + operation present, no logical/children (see QueryFilter's @JsonCreator).
-            filters.add(new QueryFilter(field, op, entry.get("value"), null, null));
+            filters.add(new QueryFilter(field, op, value(op, entry.get("value")), null, null));
         }
         return filters;
+    }
+
+    private static Object value(final QueryFilter.Op op, final Object value) {
+        if ((QueryFilter.Op.IN == op || QueryFilter.Op.NOT_IN == op) && value instanceof String list) {
+            return Arrays.stream(list.split(",")).map(String::trim).filter(item -> !item.isEmpty()).toList();
+        }
+        return value;
     }
 
     /** The minimal creator-recognized shape of a leaf filter — enums serialize via their @JsonValue. */

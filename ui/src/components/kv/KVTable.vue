@@ -13,6 +13,7 @@
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
         selectable
+        :rowSelectable="isRowSelectable"
         :showSelection="!paneView"
         :rowKey="(row: KvEntry) => `${row.namespace}-${row.key}`"
     >
@@ -166,8 +167,6 @@
                 <NamespaceSelect
                     v-model="kv.namespace"
                     :readOnly="kv.update"
-                    :includeSystemNamespace="true"
-                    all
                 />
             </KsFormItem>
 
@@ -326,6 +325,7 @@
     import {storageKeys} from "../../utils/constants"
     import {usePageSize} from "../../composables/usePageSize"
     import {useKvFilter} from "../filter/configurations/kvFilter"
+    import {latestRequest} from "../../utils/latestRequest"
 
     import {dateUtils, dayjs, sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
@@ -360,8 +360,13 @@
     const namespaceFilter = (namespace: string): QueryFilter[] =>
         [{field: "namespace", operation: "EQUALS", value: namespace}]
 
+    const isRowSelectable = () => true
+
+    const startLoad = latestRequest()
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
+        const isLatest = startLoad()
         const activeFilters = routeQueryToQueryFilters(route.query)
         const kvsResponse = await KvAPI.listAllKeys(loadQuery({
             size,
@@ -394,6 +399,7 @@
             }
         }
 
+        if (!isLatest()) return
         kvs.value = allKvs
         total.value = kvsResponse.total ?? 0
     }
@@ -577,6 +583,18 @@
         ttl: [
             {validator: durationValidator, trigger: "change"},
         ],
+        description: [
+            {
+                validator: (_rule: FormItemRule, value: string | undefined, callback: (error?: Error) => void) => {
+                    if ([...(value ?? "")].some(char => (char.codePointAt(0) ?? 0) > 0xff)) {
+                        callback(new Error(t("kv.description_latin1")))
+                    } else {
+                        callback()
+                    }
+                },
+                trigger: "change",
+            },
+        ],
     })
 
     function canUpdate(kvItem: KvEntry) {
@@ -695,7 +713,7 @@
     }
 
     function removeKvs() {
-        const groupedByNamespace = groupBy(selection.value, (item) => item.namespace)
+        const groupedByNamespace = groupBy(selection.value, (item) => item.namespace ?? "")
         const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, namespace)))
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs)
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n))

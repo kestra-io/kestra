@@ -45,31 +45,41 @@ describe("setupKestraHttp router NProgress hooks", () => {
         onError: vi.fn((cb: () => void) => { onErrorCb = cb }),
     }
 
-    beforeEach(() => {
+    let setupFreshKestraHttp: typeof setupKestraHttp
+
+    // The progress counters and their timers are module state that other tests leave unbalanced.
+    beforeEach(async () => {
+        vi.resetModules()
+        ;({setupKestraHttp: setupFreshKestraHttp} = await import("./kestraHttp"))
+        vi.useFakeTimers()
         nprogressStart.mockClear()
         nprogressSet.mockClear()
         nprogressDone.mockClear()
     })
 
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
     it("settles the progress counter via afterEach on a normal navigation", async () => {
-        setupKestraHttp({}, {router: router as unknown as Router})
+        setupFreshKestraHttp({}, {router: router as unknown as Router})
 
         beforeEachCb()
         afterEachCb()
-        await new Promise((r) => setTimeout(r, 60))
+        vi.advanceTimersByTime(60)
 
         expect(nprogressDone).toHaveBeenCalledTimes(1)
     })
 
     it("settles the progress counter via onError when a navigation throws instead of completing", async () => {
-        setupKestraHttp({}, {router: router as unknown as Router})
+        setupFreshKestraHttp({}, {router: router as unknown as Router})
 
         // A guard throwing, or a failed async-component chunk import, rejects the
         // navigation and never calls afterEach - onError is the only place left to
         // settle the counter and unstick the loading bar.
         beforeEachCb()
         onErrorCb()
-        await new Promise((r) => setTimeout(r, 60))
+        vi.advanceTimersByTime(60)
 
         expect(nprogressDone).toHaveBeenCalledTimes(1)
     })
@@ -77,7 +87,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
     it("opts stream() out of NProgress, matching generated sse methods", async () => {
         const innerStream = vi.fn().mockResolvedValue(new Response())
         fakeAxiosClient.stream = innerStream
-        setupKestraHttp({})
+        setupFreshKestraHttp({})
 
         await fakeAxiosClient.stream("/stream", {id: 1}, {signal: new AbortController().signal})
 
@@ -91,7 +101,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
     it("opts the generated sse methods out of NProgress", async () => {
         const watch = vi.fn().mockResolvedValue(undefined)
         Object.assign(fakeClient, {sse: {watch}})
-        setupKestraHttp({})
+        setupFreshKestraHttp({})
 
         await Reflect.get(fakeClient, "sse").watch({id: 1})
         Reflect.deleteProperty(fakeClient, "sse")
@@ -100,7 +110,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
     })
 
     it("does not start NProgress when a request opts out with __kestraSkipProgress", async () => {
-        setupKestraHttp({})
+        setupFreshKestraHttp({})
         const onRequest = fakeClient.interceptors.request.use.mock.calls.at(-1)![0]
         const onResponse = fakeClient.interceptors.response.use.mock.calls.at(-1)![0]
         const onError = fakeClient.interceptors.error.use.mock.calls.at(-1)![0]
@@ -109,7 +119,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
         onRequest(new Request("http://example.test/x"), skip)
         onResponse(new Response(), new Request("http://example.test/x"), skip)
         onError(new DOMException("Aborted", "AbortError"), undefined, new Request("http://example.test/x"), skip)
-        await new Promise((r) => setTimeout(r, 60))
+        vi.advanceTimersByTime(60)
 
         expect(nprogressStart).not.toHaveBeenCalled()
         expect(nprogressDone).not.toHaveBeenCalled()

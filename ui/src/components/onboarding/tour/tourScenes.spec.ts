@@ -25,7 +25,7 @@ const translations = (en as {
     en: {
         onboarding: {
             tour: {
-                scenes: Record<string, Record<string, string>>
+                scenes: Record<string, Record<string, unknown>>
                 steps: Record<string, string>
                 [key: string]: unknown
             }

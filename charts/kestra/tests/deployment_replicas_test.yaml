@@ -62,3 +62,35 @@ tests:
       - equal:
           path: spec.replicas
           value: 3
+
+  - it: leaves replicas to the chart's HPA when the autoscaler is enabled
+    set:
+      deployments:
+        standalone:
+          enabled: true
+          autoscaler:
+            enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - notExists:
+          path: spec.replicas
+        documentIndex: 0
+
+  - it: leaves replicas to an external autoscaler without rendering an HPA
+    set:
+      deployments:
+        standalone:
+          enabled: false
+      workerGroups:
+        gpu:
+          enabled: true
+          autoscaler:
+            external: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - notExists:
+          path: spec.replicas

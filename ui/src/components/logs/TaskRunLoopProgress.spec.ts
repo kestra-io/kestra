@@ -13,8 +13,8 @@ vi.mock("vue-i18n", () => ({
 
 const KsProgressStub = defineComponent({
     name: "KsProgress",
-    props: {percentage: {type: Number, default: undefined}, format: {type: Function, default: undefined}},
-    template: "<div data-test=\"progress\" :data-percentage=\"percentage\" :data-format=\"format ? format(percentage) : ''\" />",
+    props: {percentage: {type: Number, default: undefined}},
+    template: "<div data-test=\"progress\" :data-percentage=\"percentage\"><slot /></div>",
 })
 
 const KsButtonStub = defineComponent({
@@ -55,7 +55,7 @@ describe("TaskRunLoopProgress", () => {
 
         const progress = wrapper.find("[data-test=progress]")
         expect(Number(progress.attributes("data-percentage"))).toBeCloseTo(66.666)
-        expect(progress.attributes("data-format")).toBe("66.6%")
+        expect(progress.text()).toBe("66.6%")
     })
 
     it("should floor near completion (2999/3000 to 99.9%)", () => {
@@ -69,7 +69,7 @@ describe("TaskRunLoopProgress", () => {
         const progress = wrapper.find("[data-test=progress]")
         // Math is ~99.9666...
         expect(Number(progress.attributes("data-percentage"))).toBeCloseTo(99.966)
-        expect(progress.attributes("data-format")).toBe("99.9%")
+        expect(progress.text()).toBe("99.9%")
     })
 
     it.each([
@@ -85,7 +85,7 @@ describe("TaskRunLoopProgress", () => {
         })
 
         const progress = wrapper.find("[data-test=progress]")
-        expect(progress.attributes("data-format")).toBe(expected)
+        expect(progress.text()).toBe(expected)
     })
 
     it("should display exactly 100.0% only upon full completion", () => {
@@ -98,7 +98,7 @@ describe("TaskRunLoopProgress", () => {
 
         const progress = wrapper.find("[data-test=progress]")
         expect(Number(progress.attributes("data-percentage"))).toBe(100)
-        expect(progress.attributes("data-format")).toBe("100.0%")
+        expect(progress.text()).toBe("100.0%")
     })
 
     it("should clamp progress exactly to 100% when overcompleted", () => {
@@ -111,7 +111,7 @@ describe("TaskRunLoopProgress", () => {
 
         const progress = wrapper.find("[data-test=progress]")
         expect(Number(progress.attributes("data-percentage"))).toBe(100)
-        expect(progress.attributes("data-format")).toBe("100.0%")
+        expect(progress.text()).toBe("100.0%")
     })
 
     it("should show the failed iteration alongside successes once outputs are loaded", () => {

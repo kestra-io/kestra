@@ -1,11 +1,12 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
+import {expect} from "storybook/test"
 import KsCollapse from "./KsCollapse.vue"
 import KsCollapseItem from "./KsCollapseItem.vue"
 
 const meta: Meta<typeof KsCollapse> = {
     title: "Components/Data/KsCollapse",
-    component: KsCollapse,
+    component: KsCollapse as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         accordion: {control: "boolean"},
@@ -116,4 +117,50 @@ export const Accordion: Story = {
         `,
     }),
     parameters: {controls: {disable: true}},
+}
+
+/** Flush: a compact navigation tree, no padding and the arrow beside the title (the docs table of contents) */
+export const Flush: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsCollapse, KsCollapseItem},
+        setup() { return {active: ref(["1"])} },
+        template: `
+            <div style="padding:24px;max-width:300px">
+                <ks-collapse v-model="active" accordion flush>
+                    <ks-collapse-item title="Getting started" name="1">
+                        <a href="#">Installation</a>
+                    </ks-collapse-item>
+                    <ks-collapse-item title="Concepts" name="2">
+                        <a href="#">Flows</a>
+                    </ks-collapse-item>
+                </ks-collapse>
+            </div>
+        `,
+    }),
+}
+
+/** Header and content knobs, set on the collapse or an ancestor: `--ks-collapse-header-padding`, `--ks-collapse-header-border` (kept while the item is open), `--ks-collapse-header-radius`, `--ks-collapse-header-bg` and `--ks-collapse-content-padding` */
+export const StyleVariables: Story = {
+    render: () => ({
+        components: {KsCollapse, KsCollapseItem},
+        setup() { return {active: ref(["1"])} },
+        template: `
+            <div style="padding:24px;max-width:600px;--ks-collapse-header-padding:var(--ks-spacing-1) var(--ks-spacing-4);--ks-collapse-header-border:1px solid var(--ks-btn-secondary-border-default);--ks-collapse-header-radius:var(--ks-radius-base);--ks-collapse-header-bg:var(--ks-btn-secondary-bg-default);--ks-collapse-content-padding:var(--ks-spacing-3)">
+                <ks-collapse v-model="active">
+                    <ks-collapse-item title="Debug information" name="1">
+                        <p>Collected automatically with the request.</p>
+                    </ks-collapse-item>
+                </ks-collapse>
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const header = getComputedStyle(canvasElement.querySelector(".kel-collapse-item__header")!)
+        await expect(header.paddingLeft).toBe("16px")
+        await expect(header.borderTopLeftRadius).toBe("8px")
+        await expect(header.borderBottomStyle).toBe("solid")
+        await expect(getComputedStyle(canvasElement.querySelector(".kel-collapse-item__content")!).paddingTop).toBe("12px")
+    },
 }

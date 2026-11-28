@@ -1,5 +1,6 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {ElPopover} from "element-plus"
 import KestraDesignSystem from "../../index"
 import KsPopover from "./KsPopover.vue"
 
@@ -42,5 +43,13 @@ describe("KsPopover", () => {
         await wrapper.vm.$nextTick()
 
         expect(wrapper.emitted("update:visible")?.[0]).toEqual([false])
+    })
+
+    test("hides the arrow when the parent sets nothing", () => {
+        const wrapper = mount(KsPopover, {
+            slots: {reference: "<button>Click me</button>"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent(ElPopover).props("showArrow")).toBe(false)
     })
 })

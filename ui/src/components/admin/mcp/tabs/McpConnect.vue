@@ -19,7 +19,7 @@
                     >
                         <ContentCopy
                             class="copy"
-                            :aria-label="$t('copy_to_clipboard')"
+                            :title="$t('copy_to_clipboard')"
                             @click="copyUrl"
                         />
                     </KsTooltip>
@@ -356,14 +356,9 @@
     }
 
     .url {
-        & :deep(.kel-input__wrapper) {
-            height: 42px;
-        }
-
-        & :deep(.kel-input__inner) {
-            font-family: var(--ks-font-family-mono);
-            font-size: var(--ks-font-size-sm);
-        }
+        --ks-input-wrapper-height: 42px;
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-sm);
     }
 
     .check-icon-success {

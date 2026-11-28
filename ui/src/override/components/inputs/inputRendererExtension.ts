@@ -3,7 +3,10 @@ import type {InputMetaData} from "../../../stores/executions"
 
 export type InputRenderer = (input: InputMetaData) => Component | undefined
 
-/** The control an edition renders an input with instead of the default one, or undefined to keep the default. */
+/**
+ * The control an edition renders an input with instead of the default one, or undefined to keep the default.
+ * The control receives `input`, `errors`, `modelValue` and `submitAttempted`, true once the form was submitted.
+ */
 export function useInputRendererExtension(): InputRenderer {
     return () => undefined
 }

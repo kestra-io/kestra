@@ -136,6 +136,22 @@ export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardSte
     return result
 }
 
+/** The asset ids an `ASSET` input value designates: an id, a JSON array of ids, or the assets the server resolved. */
+export function assetInputIds(value: unknown): string[] {
+    let parsed = value
+    if (typeof value === "string" && value.trim().startsWith("[")) {
+        try {
+            parsed = JSON.parse(value)
+        } catch {
+            parsed = value
+        }
+    }
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    return items
+        .map((item) => (item !== null && typeof item === "object" ? (item as {id?: unknown}).id : item))
+        .filter((id): id is string => typeof id === "string" && id !== "")
+}
+
 export function normalize(type: InputType | undefined, value: unknown): unknown {
     let res = value
 
@@ -162,6 +178,9 @@ export function normalize(type: InputType | undefined, value: unknown): unknown 
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()
         }
+    } else if ((type as string) === "ASSET") {
+        const ids = assetInputIds(res)
+        res = Array.isArray(res) || (typeof res === "string" && res.trim().startsWith("[")) ? JSON.stringify(ids) : ids[0]
     } else if (type === "YAML") {
         if (typeof res !== "string") {
             res = YAML_UTILS.stringify(res).toString()
@@ -172,11 +191,16 @@ export function normalize(type: InputType | undefined, value: unknown): unknown 
     return res
 }
 
+function isEmptyInputValue(value: unknown): boolean {
+    return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
+}
+
 type RequiredInputLike = {id?: string; type?: string; required?: boolean; inputs?: RequiredInputLike[]}
 
 /**
  * Values are keyed by leaf id, so FORM children are checked under their dotted id
  * (`env.region`) instead of the FORM id itself, like `flattenInputs`.
+ * A cleared field counts as missing (`""` and `[]`), the same rule the Run wizard applies.
  */
 export function hasMissingRequiredInputs(flowInputs: (RequiredInputLike | undefined)[] | undefined, values: Record<string, unknown> | null | undefined): boolean {
     const leaves = (flowInputs ?? []).flatMap(input =>
@@ -185,5 +209,5 @@ export function hasMissingRequiredInputs(flowInputs: (RequiredInputLike | undefi
             : [input],
     )
     const requiredIds = leaves.filter(input => input?.required !== false).map(input => input?.id)
-    return requiredIds.some(id => id === undefined || values?.[id] === null || values?.[id] === undefined)
+    return requiredIds.some(id => id === undefined || isEmptyInputValue(values?.[id]))
 }

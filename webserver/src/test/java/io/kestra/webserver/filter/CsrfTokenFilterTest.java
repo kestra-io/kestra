@@ -148,4 +148,55 @@ class CsrfTokenFilterTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.FORBIDDEN.getCode());
     }
+
+    @Test
+    void shouldRejectPostWithBasicAuthHeaderFromBrowserWithoutCsrfToken() {
+        // Given - cross-site form: the browser replays its cached Basic credentials but no cookie
+        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/executions/webhook/unit_test/webhook_test", "")
+            .basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())
+            .header("Sec-Fetch-Site", "cross-site");
+
+        // When/Then
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(request)
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.FORBIDDEN.getCode());
+    }
+
+    @Test
+    void shouldAcceptPostWithBasicAuthHeaderAndNoBrowserHeaders() {
+        // Given - SDK/API client path: Basic header, neither Origin nor Sec-Fetch-Site
+        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/executions/webhook/unit_test/webhook_test", "")
+            .basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword());
+
+        // When/Then - should not be rejected by CSRF filter
+        try {
+            var response = client.toBlocking().exchange(request);
+            assertThat(response.getStatus().getCode()).isNotEqualTo(HttpStatus.FORBIDDEN.getCode());
+        } catch (HttpClientResponseException e) {
+            assertThat(e.getStatus().getCode()).isNotEqualTo(HttpStatus.FORBIDDEN.getCode());
+        }
+    }
+
+    @Test
+    void shouldAcceptPostWithBasicAuthHeaderFromBrowserAndValidCsrfToken() {
+        // Given - same-origin UI path with a valid CSRF token
+        MutableHttpRequest<?> tokenRequest = HttpRequest.GET("/api/v1/configs");
+        String csrfToken = csrfTokenGenerator.generateCsrfToken(tokenRequest);
+
+        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/executions/webhook/unit_test/webhook_test", "")
+            .basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())
+            .header("Sec-Fetch-Site", "same-origin")
+            .cookie(Cookie.of(csrfConfiguration.getCookieName(), csrfToken))
+            .header("X-CSRF-TOKEN", csrfToken);
+
+        // When/Then - should not be rejected by CSRF filter
+        try {
+            var response = client.toBlocking().exchange(request);
+            assertThat(response.getStatus().getCode()).isNotEqualTo(HttpStatus.FORBIDDEN.getCode());
+        } catch (HttpClientResponseException e) {
+            assertThat(e.getStatus().getCode()).isNotEqualTo(HttpStatus.FORBIDDEN.getCode());
+        }
+    }
 }

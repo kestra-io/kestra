@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -245,7 +246,7 @@ public class NamespaceFileController {
             }
 
             String flowSource = new String(inputStream.readAllBytes());
-            flowSource = flowSource.replaceFirst("(?m)^namespace: .*$", "namespace: " + namespace);
+            flowSource = flowSource.replaceFirst("(?m)^namespace: .*$", "namespace: " + Matcher.quoteReplacement(namespace));
             this.importFlow(tenantId, flowSource);
             return Collections.emptyList();
         }

@@ -8,20 +8,23 @@
 
 <script setup lang="ts">
     import {ElAvatar, type AvatarProps} from "element-plus"
-    import type {Component} from "vue"
+    import type {Component, HTMLAttributes} from "vue"
 
     import {useFilteredProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    interface KsAvatarProps {
         size?: number | "large" | "default" | "small"
         shape?: "circle" | "square"
         src?: string
         alt?: string
         fit?: "fill" | "contain" | "cover" | "none" | "scale-down"
         icon?: string | Component
-    }>()
+    }
+
+    const props = defineProps<KsAvatarProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsAvatarProps>>()
 
     const filteredProps = useFilteredProps(props)
 

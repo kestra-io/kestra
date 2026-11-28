@@ -59,6 +59,7 @@
     <KsFormItem
         v-else-if="fieldKey"
         stacked
+        wideLabel
         :required="isRequired"
         for=""
         :data-test="`field-${fieldKey}`"
@@ -307,13 +308,6 @@
 
 .kel-form-item {
     width: 100%;
-
-    & > :deep(.kel-form-item__label) {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        padding: 0;
-    }
 }
 
 .field-help {

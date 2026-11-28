@@ -203,6 +203,14 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        // The kind of the execution a case was opened from (TEST, PLAYGROUND, or NORMAL for production), distinct from KIND, which is the case kind.
+        @JsonProperty("executionKind")
+        EXECUTION_KIND("executionKind") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         // Governance policy scope (INSTANCE/TENANT/NAMESPACE) — distinct from SCOPE, which is bound to FlowScope
         // in both the request binder and the repository condition mapping.
         @JsonProperty("policyScope")
@@ -503,7 +511,7 @@ public record QueryFilter(
         RESOURCES("resources") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.IN);
+                return List.of(Op.EQUALS, Op.IN);
             }
         },
         @JsonProperty("details")
@@ -939,6 +947,7 @@ public record QueryFilter(
                     Field.SEVERITY,
                     Field.ASSIGNEE,
                     Field.KIND,
+                    Field.EXECUTION_KIND,
                     Field.START_DATE,
                     Field.END_DATE,
                     Field.CREATED,

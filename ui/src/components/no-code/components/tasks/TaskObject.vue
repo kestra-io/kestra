@@ -86,7 +86,6 @@
                 "
                 :root
                 :schema="schema ?? {}"
-                :required
             />
         </template>
     </KsForm>
@@ -389,12 +388,6 @@
 .kel-form-item {
     width: 100%;
     margin-bottom: 0;
-    & > :deep(.kel-form-item__label) {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        padding: 0;
-    }
 }
 
 .inline-wrapper {

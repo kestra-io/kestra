@@ -41,6 +41,36 @@ export function currentTimezone(): string {
     return localStorage.getItem(TIMEZONE_STORAGE_KEY) || dayjs.tz.guess()
 }
 
+/**
+ * The date picker edits a browser-local `Date`, so the digits it shows are the browser's wall clock.
+ * Turns the instant held by the form into the `Date` whose local fields read as that instant does
+ * in `timezone` (the Time Zone preference), so the picker shows the same zone as the rest of the UI.
+ */
+export function instantToPickerDate(value: unknown, timezone: string = currentTimezone()): Date | undefined {
+    if (value === null || value === undefined || value === "") {
+        return undefined
+    }
+    const zoned = dayjs(value as dayjs.ConfigType).tz(timezone)
+    if (!zoned.isValid()) {
+        return undefined
+    }
+    return new Date(zoned.year(), zoned.month(), zoned.date(), zoned.hour(), zoned.minute(), zoned.second(), zoned.millisecond())
+}
+
+/**
+ * Inverse of {@link instantToPickerDate}: reads the picker's local fields as a wall clock in
+ * `timezone` and returns the matching instant.
+ */
+export function pickerDateToInstant(value: Date | null | undefined, timezone: string = currentTimezone()): Date | undefined {
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+        return undefined
+    }
+    const pad = (n: number, width = 2) => String(n).padStart(width, "0")
+    const wallClock = `${pad(value.getFullYear(), 4)}-${pad(value.getMonth() + 1)}-${pad(value.getDate())} `
+        + `${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}.${pad(value.getMilliseconds(), 3)}`
+    return dayjs.tz(wallClock, timezone).toDate()
+}
+
 export interface TimezoneOffset {
     zone: string
     /** Minutes east of UTC, as of now. */

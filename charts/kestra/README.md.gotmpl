@@ -225,6 +225,16 @@ workerGroups:
 ```
 The **workerGroups** follow exactly the same pattern you see in deployments key **worker**.
 
+Each worker group Deployment has its own selector label `kestra.io/worker-group: <name>`, so worker groups can be
+autoscaled independently (`autoscaler`, your own HPA, or KEDA). Without it, all worker groups share one selector and
+Kubernetes doesn't scale any of them once two are autoscaled.
+
+> **Upgrading from a chart without this label:** `spec.selector` is immutable, so `helm upgrade` can't change the
+> selector of existing worker group Deployments. Delete them before the upgrade (one per worker group; the plain
+> `worker` Deployment is not affected), and the upgrade recreates them:
+> `kubectl delete deployment <fullname>-workergroup-<name>` (e.g. `kestra-workergroup-default` for release `kestra`).
+> Running tasks on those workers are interrupted, so do it when the workers are idle or as part of a maintenance window for your Kestra instance.
+
 {{- end }}
 
 {{ define "extra.migration02" -}}

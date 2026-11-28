@@ -37,7 +37,7 @@ describe("ProposedActionCard", () => {
         expect(steps[0].text()).toContain("Mock external task outputs")
         expect(steps[0].text()).toContain("tests/ai-summarize.test.yml")
         expect(reject(w).text()).toBe("Reply to revise")
-        expect(approve(w).text()).toBe("Approve & execute")
+        expect(approve(w).text()).toBe("Approve plan")
         expect(w.find("[data-test='copilot-proposed-family']").exists()).toBe(false) // no family tag on a plan
     })
 

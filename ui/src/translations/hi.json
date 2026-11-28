@@ -1,5 +1,12 @@
 {
   "hi": {
+    "support_links": {
+      "slack_title": "कम्युनिटी Slack",
+      "slack_description": "अन्य उपयोगकर्ताओं और Kestra टीम के साथ चर्चा करें",
+      "github_description": "हमारे ओपन-सोर्स प्रोजेक्ट को स्टार दें",
+      "help_center_title": "सहायता केंद्र",
+      "help_center_description": "अपने Enterprise खाते में मदद के लिए सहायता टीम से संपर्क करें"
+    },
     "versionUpgradeNotice": {
       "message": "Kestra को {version} में अपग्रेड किया गया था और इसमें ऐसे ब्रेकिंग बदलाव शामिल हो सकते हैं जिनके लिए आपके Flows में अपडेट की आवश्यकता होती है।",
       "cta": "देखें क्या बदला"
@@ -176,6 +183,23 @@
     "publish_draft": "ड्राफ़्ट प्रकाशित करें",
     "draft": "ड्राफ़्ट",
     "draft_flow_warning": "इस flow का नवीनतम रिवीज़न एक ड्राफ़्ट है। निष्पादन इसके बजाय नवीनतम प्रकाशित रिवीज़न पर चलेगा - अपने नवीनतम बदलावों को चलाने के लिए ड्राफ़्ट प्रकाशित करें (या उसे Playground से चलाएँ)।",
+    "save_draft": "ड्राफ्ट सहेजें",
+    "flow_publish": {
+      "description": "इस संशोधन को लाइव करता है: ट्रिगर इसे शुरू करते हैं, अन्य Flow इसे कॉल कर सकते हैं, और इसकी विफलताएं अलर्ट Flow तक पहुंचती हैं।",
+      "done_title": "प्रकाशित",
+      "failed": "इस ड्राफ्ट को प्रकाशित नहीं किया जा सका।",
+      "done": "{name} का Revision {revision} लाइव है: ट्रिगर इसे शुरू करते हैं, अन्य Flow इसे कॉल कर सकते हैं, और इसकी विफलताएं अलर्ट Flow तक पहुंचती हैं।"
+    },
+    "flow_draft_banner": {
+      "draft_only": {
+        "title": "यह Flow एक ड्राफ्ट है",
+        "description": "इसका कोई प्रकाशित revision नहीं है, इसलिए trigger और अन्य flow इसे शुरू नहीं करते हैं। इसे Playground से चलाएँ, या इसे लाइव करने के लिए प्रकाशित करें।"
+      },
+      "over_published": {
+        "title": "नवीनतम revision एक ड्राफ्ट है",
+        "description": "शेड्यूल, वेबहुक और अन्य Flow प्रकाशित रिविज़न को तब तक चलाते रहेंगे जब तक आप इस ड्राफ्ट को प्रकाशित नहीं करते। इस बीच Flow ट्रिगर Flow को शुरू नहीं करते हैं।"
+      }
+    },
     "save task": "Task सहेजें",
     "saved": "सफलतापूर्वक सहेजा गया",
     "saved as draft": "ड्राफ़्ट के रूप में सफलतापूर्वक सहेजा गया",
@@ -292,6 +316,16 @@
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to": "यहाँ जाएँ",
     "jump to...": "कूदें...",
+    "global_search": {
+      "open_flow": "flow खोलें",
+      "flow_executions": "flow निष्पादन",
+      "move": "ले जाएँ",
+      "menu": "मेनू",
+      "sources": "मेनू + flows + namespaces",
+      "sources_flows": "मेनू + Flows",
+      "sources_namespaces": "मेनू + namespace",
+      "search_failed": "flows या namespaces लोड नहीं हो सके"
+    },
     "contextBar": {
       "ai": "एआई",
       "news": "समाचार",
@@ -307,6 +341,7 @@
       "ongoing": "प्रगति में",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "{count} निष्पादन हटाया जा रहा है | {count} निष्पादन हटाए जा रहे हैं",
           "EXECUTION_KILL": "{count} निष्पादन समाप्त किया जा रहा है | {count} निष्पादन समाप्त किए जा रहे हैं",
           "EXECUTION_PAUSE": "{count} निष्पादन रोका जा रहा है | {count} निष्पादन रोके जा रहे हैं",
           "EXECUTION_RESUME": "{count} निष्पादन फिर से शुरू किया जा रहा है | {count} निष्पादन फिर से शुरू किए जा रहे हैं",
@@ -323,6 +358,25 @@
           "BACKFILL_PAUSE": "{count} backfill रोका जा रहा है | {count} backfill रोके जा रहे हैं",
           "BACKFILL_RESUME": "{count} backfill फिर से शुरू किया जा रहा है | {count} backfill फिर से शुरू किए जा रहे हैं",
           "BACKFILL_DELETE": "{count} backfill हटाया जा रहा है | {count} backfill हटाए जा रहे हैं"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "{count} निष्पादन के लिए विलोपन का अनुरोध किया गया | {count} निष्पादन के लिए विलोपन का अनुरोध किया गया",
+          "EXECUTION_KILL": "{count} निष्पादन के लिए समाप्त करने का अनुरोध किया गया | {count} निष्पादन के लिए समाप्त करने का अनुरोध किया गया",
+          "EXECUTION_PAUSE": "{count} निष्पादन के लिए विराम का अनुरोध किया गया | {count} निष्पादन के लिए विराम का अनुरोध किया गया",
+          "EXECUTION_RESUME": "{count} निष्पादन के लिए फिर से शुरू करने का अनुरोध किया गया | {count} निष्पादन के लिए फिर से शुरू करने का अनुरोध किया गया",
+          "EXECUTION_RESTART": "{count} निष्पादन के लिए रीस्टार्ट का अनुरोध किया गया | {count} निष्पादन के लिए रीस्टार्ट का अनुरोध किया गया",
+          "EXECUTION_REPLAY": "{count} निष्पादन के लिए रीप्ले का अनुरोध किया गया | {count} निष्पादन के लिए रीप्ले का अनुरोध किया गया",
+          "EXECUTION_FORCE_RUN": "{count} निष्पादन के लिए फोर्स रन का अनुरोध किया गया | {count} निष्पादन के लिए फोर्स रन का अनुरोध किया गया",
+          "EXECUTION_UNQUEUE": "{count} निष्पादन के लिए अनक्यू का अनुरोध किया गया | {count} निष्पादन के लिए अनक्यू का अनुरोध किया गया",
+          "EXECUTION_CHANGE_STATUS": "{count} निष्पादन के लिए स्थिति परिवर्तन का अनुरोध किया गया | {count} निष्पादन के लिए स्थिति परिवर्तन का अनुरोध किया गया",
+          "EXECUTION_SET_LABELS": "{count} निष्पादन के लिए लेबल अपडेट का अनुरोध किया गया | {count} निष्पादन के लिए लेबल अपडेट का अनुरोध किया गया",
+          "TRIGGER_UNLOCK": "{count} ट्रिगर के लिए अनलॉक का अनुरोध किया गया | {count} ट्रिगर के लिए अनलॉक का अनुरोध किया गया",
+          "TRIGGER_DELETE": "{count} ट्रिगर के लिए विलोपन का अनुरोध किया गया | {count} ट्रिगर के लिए विलोपन का अनुरोध किया गया",
+          "TRIGGER_DISABLE": "{count} ट्रिगर के लिए अक्षम करने का अनुरोध किया गया | {count} ट्रिगर के लिए अक्षम करने का अनुरोध किया गया",
+          "TRIGGER_ENABLE": "{count} ट्रिगर के लिए सक्षम करने का अनुरोध किया गया | {count} ट्रिगर के लिए सक्षम करने का अनुरोध किया गया",
+          "BACKFILL_PAUSE": "{count} बैकफ़िल के लिए विराम का अनुरोध किया गया | {count} बैकफ़िल के लिए विराम का अनुरोध किया गया",
+          "BACKFILL_RESUME": "{count} बैकफ़िल के लिए फिर से शुरू करने का अनुरोध किया गया | {count} बैकफ़िल के लिए फिर से शुरू करने का अनुरोध किया गया",
+          "BACKFILL_DELETE": "{count} बैकफ़िल के लिए विलोपन का अनुरोध किया गया | {count} बैकफ़िल के लिए विलोपन का अनुरोध किया गया"
         },
         "processed": "{count} संसाधित",
         "rejected": "{count} अस्वीकृत",
@@ -345,6 +399,7 @@
     "create": "बनाएँ",
     "create_flow": "फ़्लो बनाएं",
     "create_child_namespace": "चाइल्ड namespace बनाएँ",
+    "view_all_flows": "सभी flow देखें",
     "from": "से",
     "to": "तक",
     "steps": "चरण",
@@ -532,6 +587,7 @@
     "output": "आउटपुट",
     "flow_outputs": "फ्लो Outputs",
     "eval": {
+      "failed": "एक्सप्रेशन का मूल्यांकन नहीं हो सका",
       "title": "डिबग अभिव्यक्ति",
       "preview": "पूर्वावलोकन",
       "expression": "अभिव्यक्ति"
@@ -553,6 +609,7 @@
     },
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
+      "task-details": "{task} का विवरण",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
       "graph-orientation": "ग्राफ़ अभिविन्यास",
       "zoom-in": "ज़ूम इन करें",
@@ -574,6 +631,8 @@
         "all-iterations": "सभी इटरेशन",
         "iteration-index": "इंडेक्स {index}",
         "iteration-value-index": "{value} · इंडेक्स {index}",
+        "first-iteration": "पहला पुनरावृति",
+        "last-iteration": "अंतिम पुनरावृति",
         "previous-iteration": "पिछला इटरेशन",
         "next-iteration": "अगला इटरेशन",
         "previous-page": "पिछला पृष्ठ",
@@ -627,6 +686,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "शुरू नहीं हुआ"
+      },
+      "diff": {
+        "added": "जोड़ा गया",
+        "removed": "हटाया गया",
+        "changed": "बदला गया",
+        "renamed": "नाम बदला गया",
+        "moved": "स्थानांतरित"
+      }
+    },
+    "flow_change_review": {
+      "graph": "ग्राफ़",
+      "yaml": "YAML",
+      "unchanged": "{count} अपरिवर्तित",
+      "graph_error": "ग्राफ़ नहीं बनाया जा सका। बदलाव देखने के लिए YAML टैब खोलें।",
+      "status": {
+        "added": "जोड़ा गया",
+        "removed": "हटाया गया",
+        "changed": "बदला गया",
+        "renamed": "नाम बदला गया",
+        "moved": "स्थानांतरित"
       }
     },
     "show task logs": "Task Logs दिखाएं",
@@ -741,7 +820,8 @@
       "dialog_title": "समानांतरता सीमाएँ",
       "warning": "चल रहे काउंटर को बदलने से समवर्तीता दूषित हो सकती है, इसलिए एग्जीक्यूशन अनुमत सीमा से अधिक हो सकते हैं।",
       "queued": "कतारबद्ध",
-      "save_error": "समवर्ती सीमा को अपडेट करने में विफल रहा, पिछला मान रखा गया है।"
+      "save_error": "समवर्ती सीमा को अपडेट करने में विफल रहा, पिछला मान रखा गया है।",
+      "invalid_running_count": "0 और {max} के बीच एक पूर्ण संख्या दर्ज करें।"
     },
     "flowConcurrency": {
       "loadError": "इस flow की समवर्तीता सीमा लोड नहीं हो सकी।",
@@ -1114,6 +1194,12 @@
     "bulk force run": "क्या आप वाकई `{executionCount}` Execution(s) को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी Execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट Task Execution बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED Task को RUNNING स्थिति में ले जाया जाएगा।\n- RUNNING Task को फिर से सबमिट किया जाएगा।\n- QUEUED Task को अन-क्यू किया जाएगा।\n- PAUSED Task को फिर से शुरू किया जाएगा।",
     "bulk restart": "क्या आप वाकई {executionCount} निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
+    "bulk action ineligible change state": "{total} में से {count} चुने गए executions का state नहीं बदला जा सकता।",
+    "bulk action ineligible not state": "{total} में से {count} चुने गए executions {state} state में नहीं हैं।",
+    "bulk action ineligible not pausable": "{total} में से {count} चुने गए executions को pause नहीं किया जा सकता।",
+    "bulk action ineligible not resumable": "{total} में से {count} चुने गए executions को resume नहीं किया जा सकता।",
+    "bulk action ineligible not terminated": "{total} में से {count} चुने गए executions समाप्त नहीं हुए हैं।",
+    "bulk action ineligible already terminated": "{total} में से {count} चुने गए executions पहले ही समाप्त हो चुके हैं।",
     "cancel": "रद्द करें",
     "errorLogs": "त्रुटि लॉग",
     "product_tour": "उत्पाद यात्रा",
@@ -1224,6 +1310,10 @@
     "trigger blocked policy check failed": "शासन नीतियों की जाँच नहीं की जा सकी।",
     "trigger blocked unknown": "किसी अज्ञात कारण से ब्लॉक किया गया।",
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
+    "trigger not toggleable": "इस Trigger का मूल्यांकन Scheduler द्वारा नहीं किया जाता, इसे Flow स्रोत में अक्षम करें",
+    "bulk not toggleable warning": "{count} चयनित ट्रिगर छोड़े जाएंगे: शेड्यूलर उनका मूल्यांकन नहीं करता है, इसलिए उन्हें केवल Flow स्रोत में अक्षम किया जा सकता है।",
+    "bulk none applied": "कोई भी ट्रिगर प्रभावित नहीं हुआ: चयनित में से किसी को भी संसाधित नहीं किया जा सका।",
+    "bulk partially applied": "{requested} में से {count} ट्रिगर संसाधित किए गए, बाकी छोड़ दिए गए।",
     "trigger enable dialog": {
       "title": "trigger सक्षम करें",
       "bulk title": "सक्षम करें {count} triggers",
@@ -1370,6 +1460,7 @@
     "execution-include-non-terminated": "गैर-समाप्त निष्पादन शामिल करें?",
     "execution-warn-title": "महत्वपूर्ण WARNING!",
     "execution-warn-deleting-still-running": "हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency समस्याएँ, flow निर्भरता प्रबंधन असंगतताएँ, और आपके instance पर zombie प्रक्रियाएँ हो सकती हैं, जो सिस्टम प्रदर्शन को खराब कर सकती हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं, इससे पहले कि आप deletion के साथ आगे बढ़ें।",
+    "execution-warn-non-terminated-count": "{total} में से {count} चयनित execution(s) समाप्त नहीं हैं।",
     "pluginPage": {
       "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
@@ -1465,6 +1556,7 @@
             "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब",
             "playground": "प्लेग्राउंड",
+            "open_docs_tab": "Docs टैब खोलें",
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
             "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड",
             "flow_template": "डिफ़ॉल्ट flow टेम्पलेट"
@@ -1481,6 +1573,7 @@
             "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।",
             "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
             "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
+            "open_docs_tab": "संपादक के बगल में Docs टैब खोलें। नए Flow और उन Flow पर लागू होता है जिन्हें आपने पहले नहीं खोला है।",
             "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।",
             "flow_template": "जब आप एक नया flow बनाते हैं तो YAML एडिटर में खुलता है। id और namespace को छोड़ा जा सकता है, क्योंकि वे आपके लिए जनरेट किए जाते हैं। जब यह खाली होता है, तो इंस्टेंस के लिए कॉन्फ़िगर किया गया टेम्पलेट उपयोग किया जाता है।"
           },
@@ -1526,7 +1619,7 @@
           },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
-            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> दबाएं।",
+            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए {ctrl}+{shift}+{key} दबाएं।",
             "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।",
             "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
@@ -1736,7 +1829,12 @@
           },
           "flow_generated": {
             "title": "यह एक flow है",
-            "body": "flow YAML में दो tasks के साथ लिखा गया है:<ol><li><code>fetch_orders</code> ऑर्डरों को डाउनलोड करने के लिए</li><li><code>summarize</code> Python में राजस्व की गणना करने के लिए</li></ol>Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
+            "body": "flow YAML में दो tasks के साथ लिखा गया है:",
+            "tasks": {
+              "fetch_orders": "{task} ऑर्डरों को डाउनलोड करने के लिए",
+              "summarize": "{task} Python में राजस्व की गणना करने के लिए"
+            },
+            "after_tasks": "Tasks क्रमिक रूप से निष्पादित किए जाते हैं, उसी क्रम में जिसमें वे परिभाषित किए गए हैं।",
             "next": "सहेजें और निष्पादित करें"
           },
           "first_execution": {
@@ -1920,6 +2018,7 @@
       "add": "बनाएँ",
       "update": "key '{key}' के लिए value अपडेट करें",
       "duplicate": "यह key पहले से मौजूद है",
+      "description_latin1": "विवरण में केवल लैटिन अक्षर हो सकते हैं, इमोजी नहीं।",
       "delete multiple": {
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>",
@@ -1994,6 +2093,7 @@
       "title": "Kestra के साथ ऑटोमेशन शुरू करें",
       "sub_title": "अपने पहले workflow execution को शुरू करने के लिए Execute बटन पर क्लिक करें।",
       "namespace_sub_title": "इस डैशबोर्ड को भरने के लिए इस namespace से एक या अधिक flows निष्पादित करें।",
+      "draft_sub_title": "इस Flow में केवल ड्राफ़्ट हैं: इसे एडिटर में Playground से चलाएँ, या इसे निष्पादित करने के लिए प्रकाशित करें।",
       "need_help": "मदद चाहिए?"
     },
     "execution_guide": {
@@ -2085,6 +2185,7 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
+      "unknown_schema": "अज्ञात स्कीमा",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",
@@ -2184,7 +2285,7 @@
       "label": "कीबोर्ड शॉर्टकट्स",
       "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन",
       "command_palette": "कमांड पैलेट दिखाएं",
-      "save_flow": "फ्लो सहेजें",
+      "save_flow": "ड्राफ्ट सहेजें",
       "execute_flow": "flow निष्पादित करें",
       "toggle_ai_agent": "AI एजेंट टॉगल करें",
       "move_line": "लाइन को स्थानांतरित करें",
@@ -2381,6 +2482,9 @@
         "csv": "CSV में निर्यात करें"
       },
       "ignoredFilters": "{filters} फ़िल्टर इस चार्ट पर लागू नहीं होता। | {filters} फ़िल्टर इस चार्ट पर लागू नहीं होते।",
+      "dataFrom": "{date} को अपडेट किया गया",
+      "dataUnavailable": "डेटा अनुपलब्ध",
+      "dataTruncated": "आउटपुट फ़ाइल को उसकी {rows} पहली पंक्तियों तक छोटा कर दिया गया है। अधिक जानकारी के लिए दस्तावेज़ देखें।",
       "show_all_statuses": "सभी स्थितियाँ दिखाएँ",
       "quick_filters": {
         "all": "सभी",
@@ -2458,6 +2562,13 @@
         "placeholder": "मुझे बताएं कि क्या बनाना है…",
         "send": "भेजें",
         "stop": "रोकें",
+        "usage": {
+          "remaining": "{percent}% शेष",
+          "help": "इस प्रोवाइडर की AI उपयोग सीमा का वर्तमान विंडो में बचा हुआ हिस्सा।",
+          "warning": "आप इस प्रदाता की AI उपयोग सीमा के करीब हैं। एक बार पहुँचने पर टर्न अस्वीकृत कर दिए जाते हैं।",
+          "exceeded": "इस प्रोवाइडर की AI उपयोग सीमा पूरी हो चुकी है। यह वर्तमान अवधि समाप्त होने पर रीसेट हो जाएगी।",
+          "exceededUntil": "इस प्रदाता की AI उपयोग सीमा पूरी हो चुकी है। यह {when} पर रीसेट हो जाएगी।"
+        },
         "mode": {
           "ask": "पूछें",
           "edit": "संपादित करें",
@@ -2500,13 +2611,15 @@
           "planTitle": "प्रस्तावित योजना",
           "actionTitle": "प्रस्तावित कार्रवाई",
           "approve": "स्वीकृत करें",
-          "approveExecute": "स्वीकृत करें और निष्पादित करें",
+          "approvePlan": "प्लान स्वीकृत करें",
           "reject": "अस्वीकार करें",
           "pending": "अनुमोदन लंबित",
           "revise": "संशोधन के लिए जवाब दें"
         },
         "notice": {
           "emptyTurn": "सहायक ने कोई प्रतिक्रिया नहीं दी। कृपया पुनः प्रयास करें।",
+          "outputLimit": "उत्तर देने से पहले सहायक के आउटपुट टोकन समाप्त हो गए। अपना संदेश छोटा करें या नई चैट शुरू करें।",
+          "contentFiltered": "AI प्रदाता ने प्रतिक्रिया को ब्लॉक कर दिया। अपने संदेश को फिर से लिखें या उस सामग्री को हटा दें जिसने प्रदाता के फ़िल्टर को ट्रिगर किया हो।",
           "retry": "पुनः प्रयास करें"
         },
         "cancelled": "बारी रद्द कर दी गई",
@@ -2517,11 +2630,16 @@
           "generic": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
         },
         "emptyHelper": "मैं इस flow को संपादित कर सकता हूँ, टेस्ट जनरेट कर सकता हूँ, संबंधित फ़ाइलें स्केफ़ोल्ड कर सकता हूँ, या यह कैसे काम करता है, समझा सकता हूँ।",
+        "emptyHelperNoFlow": "मैं Flow बना या संपादित कर सकता हूँ, टेस्ट जनरेट कर सकता हूँ, संबंधित फ़ाइलें बना सकता हूँ, या बता सकता हूँ कि Kestra कैसे काम करता है।",
         "suggestions": {
           "errorHandling": "त्रुटि प्रबंधन जोड़ें",
           "unitTest": "इकाई परीक्षण उत्पन्न करें",
           "explain": "यह flow समझाएं",
-          "dbt": "dbt पाइपलाइन चलाएँ"
+          "dbt": "dbt पाइपलाइन चलाएँ",
+          "createFlow": "एक Flow बनाएं जो…",
+          "createFlowPrefill": "एक Flow बनाएँ जो",
+          "pythonSchedule": "हर दिन एक Python स्क्रिप्ट चलाएँ",
+          "triggers": "ट्रिगर कैसे काम करते हैं?"
         },
         "voice": {
           "start": "वॉयस input शुरू करें",
@@ -2534,6 +2652,12 @@
           "docs": "दस्तावेज़ देखें",
           "sendTooltip": "भेजना अक्षम है क्योंकि कोई AI प्रदाता कॉन्फ़िगर नहीं किया गया है।",
           "notSent": "आपका प्रॉम्प्ट भेजा नहीं गया"
+        },
+        "mcpTip": {
+          "title": "Claude Code, Cursor और अन्य MCP क्लाइंट से Kestra का उपयोग करें",
+          "description": "Copilot के साथ, Kestra एक MCP सर्वर प्रदान करता है। अपने Flows और Executions को उन टूल से प्रबंधित करने के लिए एक बाहरी MCP क्लाइंट को इससे कनेक्ट करें जिनका आप पहले से उपयोग करते हैं।",
+          "docs": "डॉक्यूमेंटेशन देखें",
+          "dismiss": "दोबारा न दिखाएँ"
         },
         "thinkingWords": [
           "ऑर्केस्ट्रेशन",
@@ -2576,7 +2700,8 @@
           "applied": "लागू किया गया",
           "previewBanner": "AI द्वारा सुझाए गए बदलाव की समीक्षा हो रही है। जब तक आप इसे लागू या खारिज नहीं करते, संपादक केवल पढ़ने के लिए है।",
           "applyTitle": "flow लागू करें",
-          "applyConfirm": "{namespace}.{id} को समीक्षा के लिए ड्राफ्ट रिविज़न के रूप में सहेजें? यह बनाया जाएगा, या यदि पहले से मौजूद है तो एक नया ड्राफ्ट रिविज़न जोड़ा जाएगा। प्रकाशित होने तक ड्राफ्ट को trigger या subflow द्वारा नहीं लिया जाता।",
+          "applyDraftTitle": "लागू करने पर एक ड्राफ्ट रिविज़न सहेजा जाता है।",
+          "applyDraftHint": "अभी कुछ भी लाइव नहीं होता। जब तक आप प्रकाशित नहीं करते, trigger और subflow ड्राफ्ट को अनदेखा करते हैं।",
           "applyConfirmDashboard": "डैशबोर्ड {id} लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
           "applyError": "flow लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
           "applyErrorDashboard": "डैशबोर्ड लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
@@ -2590,6 +2715,10 @@
           },
           "valid": "वैध",
           "invalid": "बदलाव की आवश्यकता है"
+        },
+        "tray": {
+          "title": "लंबित परिवर्तन",
+          "applyFirst": "पहले {flow} लागू करें"
         }
       }
     },
@@ -2868,7 +2997,8 @@
       "open_in_secrets": "secrets में खोलें",
       "options_aria": "खोज विकल्प",
       "path_only_hint": "केवल फ़ाइल पथ खोजता है, सामग्री नहीं। बदला नहीं जा सकता।",
-      "preview_empty": "पूर्वावलोकन के लिए एक परिणाम चुनें। स्रोत देखने के लिए परिणाम सूची में किसी flow पर क्लिक करें।",
+      "preview_empty_title": "पूर्वावलोकन के लिए एक परिणाम चुनें।",
+      "preview_empty_description": "स्रोत देखने के लिए परिणाम सूची में किसी flow पर क्लिक करें।",
       "preview_error": "flow स्रोत लोड करने में विफल",
       "previous_match": "पिछला मिलान",
       "rbac_banner": "{count} flows को बदलने से बाहर रखा गया है। आपके पास {namespace} पर पढ़ने की अनुमति है लेकिन संपादित करने की अनुमति नहीं है। उन्हें शामिल करने के लिए {permission} अनुमति के लिए namespace व्यवस्थापक से पूछें।",
@@ -2972,7 +3102,7 @@
         "no_match": "कोई मिलान नहीं",
         "open": "{name} खोलें",
         "paste": "चिपकाएँ",
-        "save": "flow सेव करें",
+        "save": "ड्राफ्ट सहेजें",
         "search_placeholder": "एक कमांड टाइप करें या किसी task को खोजें…",
         "title": "कमांड मेनू"
       },
@@ -3080,7 +3210,7 @@
         "paste": "चिपकाएँ",
         "redo": "फिर से करें",
         "reorder": "ऊपर/नीचे पुनर्व्यवस्थित करें",
-        "save": "flow सेव करें",
+        "save": "ड्राफ्ट सहेजें",
         "step_into": "समूह में विस्तार/स्टेप इन करें",
         "step_out": "कोलैप्स करें / पैरेंट पर स्टेप आउट करें",
         "title": "कीबोर्ड शॉर्टकट",
@@ -3098,7 +3228,7 @@
       "undo": "पूर्ववत करें",
       "upstream_outputs": "अपस्ट्रीम आउटपुट",
       "open_in_tabs": "टैब में खोलें",
-      "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
+      "open_mode_hint": "यह एडिटर डिफ़ॉल्ट रूप से एक modal में खुलता है। आप {settings} में टैब को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
     "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",
@@ -3162,6 +3292,8 @@
     "chart mode": {
       "counts": "गणना",
       "timeline": "टाइमलाइन"
-    }
+    },
+    "search_in_flow_source": "फ़्लो स्रोत में \"{query}\" खोजें",
+    "flows_matched_query": "आईडी या नेमस्पेस में \"{query}\" वाला {count} फ़्लो। | आईडी या नेमस्पेस में \"{query}\" वाले {count} फ़्लो।"
   }
 }

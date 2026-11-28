@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {flushPromises} from "@vue/test-utils"
+import {flushPromises, RouterLinkStub} from "@vue/test-utils"
 import {dateUtils, dayjs} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
@@ -48,6 +48,18 @@ async function cardValues(fetchedUsages: object) {
 }
 
 describe("Usages", () => {
+    it("shouldLeaveTheTutorialNamespaceOutOfTheFlowsListTheFlowBasedCardsLinkTo", async () => {
+        const wrapper = i18nMount(Usages, {props: {fetchedUsages: {}}, messages, global: {plugins: [routedPinia()], stubs: {RouterLink: RouterLinkStub}}})
+        await flushPromises()
+
+        const links = Object.fromEntries(wrapper.findAllComponents(RouterLinkStub).map((link) => [link.text().split(/\d/)[0].trim(), link.props("to")]))
+        const withoutTutorial = {name: "flows/list", query: {"filters[namespace][NOT_IN]": "tutorial"}}
+        expect(links.flows).toEqual(withoutTutorial)
+        expect(links.tasks).toEqual(withoutTutorial)
+        expect(links.taskRunners).toEqual(withoutTutorial)
+        expect(links.executions).toEqual({name: "executions/list", query: undefined})
+    })
+
     it("shouldSumDurationsInMinutesWhenTotalExceedsOneHour", async () => {
         const values = await cardValues({executions: {dailyExecutionsCount: [day, day]}})
 

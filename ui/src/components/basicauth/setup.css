@@ -100,7 +100,7 @@
   flex-direction: column;
   gap: var(--ks-spacing-4);
 
-  & :deep(.kel-form-item) {
+  & .field {
     margin-bottom: 0;
   }
 }
@@ -118,11 +118,11 @@
   }
 }
 
-:deep(.newsletter-form-item.kel-form-item) {
+.newsletter-form-item {
   margin-bottom: 0;
 }
 
-.survey-form :deep(.kel-form-item:not(:last-child)) {
+.survey-form .field:not(:last-child) {
   margin-bottom: var(--ks-spacing-6);
 }
 
@@ -134,7 +134,7 @@
 .use-case-checkboxes {
   margin-top: var(--ks-spacing-2);
 
-  & :deep(.kel-checkbox-group) {
+  & .use-case-group {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--ks-spacing-4);
@@ -145,7 +145,7 @@
     }
   }
 
-  & :deep(.kel-checkbox__label) {
+  & .survey-checkbox {
     white-space: normal;
   }
 }
@@ -181,12 +181,8 @@
     font-size: var(--ks-font-size-md);
     line-height: 1.4;
   }
-
-  .success-button {
-    margin-top: var(--ks-spacing-6);
-  }
 }
 
-:deep(.kel-button:not(.skip-button)) {
+.action {
   margin-top: 1rem;
 }

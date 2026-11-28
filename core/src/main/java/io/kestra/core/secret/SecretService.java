@@ -2,25 +2,21 @@ package io.kestra.core.secret;
 
 import java.io.IOException;
 import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.Strings;
-
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.repositories.ArrayListTotal;
-
-import io.micronaut.data.model.Pageable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Resolves secret values, on a worker as well as on any other server, so it must not depend on a bean a worker
+ * lacks; listing secrets belongs to the webserver's {@code SecretListingService}.
+ */
 @Singleton
 @Slf4j
-public class SecretService<META> {
+public class SecretService {
     private static final String SECRET_PREFIX = "SECRET_";
 
     private Map<String, String> decodedSecrets;
@@ -65,34 +61,7 @@ public class SecretService<META> {
         return new SecretObject(findSecret(tenantId, namespace, key));
     }
 
-    public ArrayListTotal<META> list(Pageable pageable, String tenantId, List<QueryFilter> filters) throws IOException {
-        final Predicate<String> queryPredicate = filters.stream()
-            .filter(filter -> QueryFilter.Field.QUERY.equals(filter.field()) && filter.value() != null)
-            .findFirst()
-            .map(filter ->
-            {
-                if (QueryFilter.Op.EQUALS.equals(filter.operation())) {
-                    return (Predicate<String>) s -> Strings.CI.contains(s, (String) filter.value());
-                } else if (QueryFilter.Op.NOT_EQUALS.equals(filter.operation())) {
-                    return (Predicate<String>) s -> !Strings.CI.contains(s, (String) filter.value());
-                } else {
-                    throw new IllegalArgumentException("Unsupported operation for QUERY filter: " + filter.operation());
-                }
-            })
-            .orElse(s -> true);
-
-        //noinspection unchecked
-        return ArrayListTotal.of(
-            pageable,
-            decodedSecrets.keySet().stream().filter(queryPredicate).map(s -> (META) s).toList()
-        );
-    }
-
-    public Map<String, Set<String>> inheritedSecrets(String tenantId, String namespace) throws IOException {
-        return Map.of(namespace, decodedSecrets.keySet());
-    }
-
-    public Map<String, Set<String>> ownAndInheritedSecrets(String tenantId, String namespace) throws IOException {
-        return inheritedSecrets(tenantId, namespace);
+    public Set<String> environmentSecretKeys() {
+        return decodedSecrets.keySet();
     }
 }

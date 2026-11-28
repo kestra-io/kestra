@@ -13,7 +13,7 @@ import {useCoreStore} from "../../stores/core"
 import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
 import {asProblem} from "@kestra-io/kestra-sdk"
-import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
+import type {KestraHttpError} from "../../utils/kestraHttp"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
 import {storageKeys} from "../../utils/constants"
@@ -44,7 +44,7 @@ export function useFlowEditorActions() {
         }
     }
 
-    async function persistAll(draft?: boolean) {
+    async function persistAll(draft: boolean) {
         const isCreating = flowStore.isCreating
         const outcome = await flowStore.saveAll(draft)
 
@@ -168,29 +168,31 @@ export function useFlowEditorActions() {
         const httpError = error as KestraHttpError
         if (httpError?.status === 401) {
             toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
-        } else if (!isReportedCentrally(httpError)) {
+        } else {
             // A validation error and a lost connection reach here unreported; anything the
             // interceptor toasted, a 404 on a flow deleted under the editor included, is on screen
             // already with its problem title and its own remedies.
-            toast.error(asProblem(error)?.detail ?? t("error"))
+            toast.requestError(error, asProblem(error)?.detail ?? t("error"))
         }
     }
 
-    async function save() {
+    /** Publishes the editor's content, unsaved changes included, without saving a draft first. */
+    async function publish() {
+        await saveFlow(false)
+    }
+
+    /** Saves the editor's content as a draft, the Ctrl/Cmd+S shortcut; a no-op without unsaved changes. */
+    async function saveAsDraft() {
+        await saveFlow(true)
+    }
+
+    async function saveFlow(draft: boolean) {
         try {
             // Skip the save when the install did not succeed: it would only fail downstream as an
             // unknown type, burying the real cause under a second, unrelated-looking error.
             const outcome = await triggerPluginInstallIfNeeded()
             if (outcome === "failed" || outcome === "timeout") return
-            await persistAll(false)
-        } catch (error) {
-            reportSaveError(error)
-        }
-    }
-
-    async function saveAsDraft() {
-        try {
-            await persistAll(true)
+            await persistAll(draft)
         } catch (error) {
             reportSaveError(error)
         }
@@ -296,7 +298,7 @@ export function useFlowEditorActions() {
 
     function deleteFlow() {
         const flowId = flowStore.flowYamlMetadata?.id
-        return flowStore.deleteFlowAndDependencies()
+        return flowStore.deleteFlowAndDependencies(router)
             .then(() => {
                 toast.deleted(flowId ?? "")
                 return router.push({
@@ -305,7 +307,7 @@ export function useFlowEditorActions() {
                 })
             })
             .catch((error: unknown) => {
-                if (!isReportedCentrally(error as KestraHttpError)) toast.error(t("delete flow error", {id: flowId}))
+                toast.requestError(error, t("delete flow error", {id: flowId}))
             })
     }
 
@@ -331,7 +333,9 @@ export function useFlowEditorActions() {
         isPlaygroundEnabled,
         isPlaygroundAllowed,
         // actions
-        save,
+        publish,
+        /** @deprecated since 2.1, use `publish` instead. */
+        save: publish,
         saveAsDraft,
         publishDraft,
         saveAndExecute,

@@ -72,17 +72,13 @@
 }
 
 .wrapper {
+    --ks-input-icon-color: var(--ks-text-inactive);
+    width: var(--input-text-width, auto);
     margin-top: var(--ks-spacing-1);
     margin-bottom: var(--ks-spacing-2);
 }
 
 .no-margin {
     margin: 0;
-}
-
-:deep(.kel-input__icon) {
-    .lock-icon {
-        color: var(--ks-text-inactive);
-    }
 }
 </style>

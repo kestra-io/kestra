@@ -1,8 +1,11 @@
 package io.kestra.core.models.flows;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -50,10 +53,18 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = FormInput.class, name = "FORM"),
         @JsonSubTypes.Type(value = ReusableInputsInput.class, name = "REUSABLE_INPUTS"),
         @JsonSubTypes.Type(value = TableInput.class, name = "TABLE"),
+        @JsonSubTypes.Type(value = AssetInput.class, name = "ASSET"),
     }
 )
 @InputValidation
 public abstract class Input<T> implements Data {
+    /**
+     * The types of input that can be searchable: a scalar value or an array of scalar values.
+     */
+    public static final Set<Type> SEARCHABLE_TYPES = Collections.unmodifiableSet(EnumSet.of(
+        Type.STRING, Type.EMAIL, Type.SELECT, Type.INT, Type.BOOL, Type.FLOAT, Type.URI, Type.DATETIME, Type.DATE, Type.TIME, Type.DURATION, Type.ARRAY
+    ));
+
     @Schema(
         title = "The ID of the input."
     )

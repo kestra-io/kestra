@@ -59,7 +59,6 @@
             <ChevronRight
                 v-if="clickable"
                 class="plugin-card__chevron"
-                aria-hidden="true"
             />
         </footer>
     </article>

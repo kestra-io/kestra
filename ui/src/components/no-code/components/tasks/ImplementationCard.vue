@@ -10,7 +10,7 @@
                 @click="expanded = !expanded"
             >
                 <ChevronRight class="implementation-card-chevron" :class="{'implementation-card-chevron--open': expanded}" />
-                <span class="implementation-card-glyph">
+                <span v-if="unresolved || isPluginClass(branch?.type)" class="implementation-card-glyph">
                     <AlertCircleOutline v-if="unresolved" />
                     <TaskIcon v-else :cls="branch?.type ?? ''" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" :onlyIcon="true" />
                 </span>
@@ -75,6 +75,7 @@
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import TaskObject from "./TaskObject.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
+    import {isPluginClass} from "../../../../utils/pluginUtils"
     import {
         branchDisplayName,
         findBranchByType,

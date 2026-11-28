@@ -6,11 +6,6 @@
             :execution="execution!"
         />
         <template v-else-if="execution && executionsStore.flow">
-            <ExecutionProgress
-                v-if="isProgressing"
-                :execution="execution"
-                class="gantt-progress"
-            />
             <KsEmptyState v-if="series.length === 0" :image="emptyIllustration">
                 <template #description>
                     <span class="gantt-empty-status">
@@ -41,7 +36,7 @@
                             <KsCard
                                 id="gantt"
                                 class="gantt-card"
-                                :bodyStyle="hasPanel ? PANEL_CARD_BODY_STYLE : undefined"
+                                :bodyStyle="hasPanel ? PANEL_CARD_BODY_STYLE : {padding: '0'}"
                                 data-onboarding-target="execution-gantt"
                                 shadow="never"
                                 :class="{'no-border': !hasValidDate, 'is-compact': verticalLayout}"
@@ -200,7 +195,7 @@
     import {useEventListener} from "@vueuse/core"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {useFirstFailure} from "../../composables/useFirstFailure"
-    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import FilterVariant from "vue-material-design-icons/FilterVariant.vue"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
@@ -234,7 +229,6 @@
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
     import ExecutionSummaryCard from "./components/ExecutionSummaryCard.vue"
-    import ExecutionProgress from "./ExecutionProgress.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
@@ -466,8 +460,6 @@
 
     const isQueued = computed<boolean>(() => execution.value?.state?.current === "QUEUED")
 
-    const isProgressing = computed<boolean>(() => execution.value?.state?.current === State.RUNNING)
-
     // Supporting line shown under the status badge when the Gantt has no task runs to plot.
     const emptyStateHint = computed<string>(() => {
         const current = execution.value?.state?.current
@@ -688,15 +680,12 @@
         flex-direction: column;
     }
 
-    .gantt-progress {
-        margin-bottom: var(--ks-spacing-4);
-    }
-
     .kel-card {
         --gantt-offset-width: 5rem;
         --gantt-bar-width: 12rem;
         --gantt-duration-width: 9rem;
         --gantt-state-width: 8rem;
+        --ks-card-header-padding: 0;
         padding: 0;
 
         &.is-compact {
@@ -704,81 +693,73 @@
             --gantt-duration-width: 0rem;
         }
 
-        & :deep(.kel-card__header) {
-            padding: 0;
+        & .gantt-header {
             font-size: var(--ks-font-size-sm);
+            display: flex;
+            flex-direction: column;
 
-            .gantt-header {
+            .top {
+                min-height: 48px;
                 display: flex;
-                flex-direction: column;
+                align-items: center;
+                justify-content: space-between;
+                gap: var(--ks-spacing-4);
+                padding: 0 var(--ks-spacing-3);
+                border-bottom: 1px solid var(--ks-border-default);
+                font-size: var(--ks-font-size-xs);
 
-                .top {
-                    min-height: 48px;
+                .summary {
                     display: flex;
                     align-items: center;
-                    justify-content: space-between;
-                    gap: var(--ks-spacing-4);
-                    padding: 0 var(--ks-spacing-3);
-                    border-bottom: 1px solid var(--ks-border-default);
-                    font-size: var(--ks-font-size-xs);
+                    gap: var(--ks-spacing-2);
 
-                    .summary {
-                        display: flex;
-                        align-items: center;
-                        gap: var(--ks-spacing-2);
-
-                        .first-failure {
-                            font-size: var(--ks-font-size-xs);
-                            color: var(--ks-text-link);
-                        }
-                    }
-
-                    .actions {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: var(--ks-spacing-3);
+                    .first-failure {
+                        font-size: var(--ks-font-size-xs);
+                        color: var(--ks-text-link);
                     }
                 }
 
-                .bottom {
-                    min-height: 30px;
-                    display: flex;
+                .actions {
+                    display: inline-flex;
                     align-items: center;
-                    font-weight: normal;
-                    background: var(--ks-bg-surface);
+                    gap: var(--ks-spacing-3);
+                }
+            }
 
-                    .scale {
-                        display: flex;
-                        justify-content: space-between;
-                        width: var(--gantt-bar-width);
-                        padding: 0 var(--ks-spacing-1);
-                        margin-left: auto;
-                        margin-right: calc(var(--ks-spacing-8) + var(--gantt-duration-width) + var(--gantt-state-width));
-                        color: var(--ks-text-secondary);
-                    }
+            .bottom {
+                min-height: 30px;
+                display: flex;
+                align-items: center;
+                font-weight: normal;
+                background: var(--ks-bg-surface);
+
+                .scale {
+                    display: flex;
+                    justify-content: space-between;
+                    width: var(--gantt-bar-width);
+                    padding: 0 var(--ks-spacing-1);
+                    margin-left: auto;
+                    margin-right: calc(var(--ks-spacing-8) + var(--gantt-duration-width) + var(--gantt-state-width));
+                    color: var(--ks-text-secondary);
                 }
             }
         }
 
-        & :deep(.kel-card__body) {
-            padding: 0;
+        & .gantt-scroller {
+            max-height: max(15rem, calc(100vh - 223px - var(--execution-banner-height, 0px)));
+            max-height: max(15rem, calc(100dvh - 223px - var(--execution-banner-height, 0px)));
 
-            .vue-recycle-scroller {
-                max-height: max(15rem, calc(100vh - 223px - var(--execution-banner-height, 0px)));
-                max-height: max(15rem, calc(100dvh - 223px - var(--execution-banner-height, 0px)));
+            &::-webkit-scrollbar {
+                width: 5px;
+            }
 
-                &::-webkit-scrollbar {
-                    width: 5px;
-                }
+            &::-webkit-scrollbar-track {
+                background: var(--ks-bg-base);
+            }
 
-                &::-webkit-scrollbar-track {
-                    background: var(--ks-bg-base);
-                }
-
-                &::-webkit-scrollbar-thumb {
-                    background: var(--ks-border-default);
-                    border-radius: 5px;
-                }
+            &::-webkit-scrollbar-thumb {
+                background: var(--ks-border-default);
+                border-radius: 5px;
             }
         }
     }

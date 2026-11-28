@@ -13,14 +13,15 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {Component, HTMLAttributes} from "vue"
     import FilterRemoveOutlineIcon from "vue-material-design-icons/FilterRemoveOutline.vue"
 
     defineProps<{
         title?: string
         description?: string
         icon?: Component
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
 </script>
 

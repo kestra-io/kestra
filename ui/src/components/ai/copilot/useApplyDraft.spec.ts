@@ -29,6 +29,9 @@ vi.mock("@kestra-io/design-system", () => ({
     ),
 }))
 
+// The confirm body counts the changes with topology's diff, which needs the real design system.
+vi.mock("./ApplyFlowConfirm.vue", () => ({default: {}}))
+
 // The YAML goes through topology's real parser, so each test states its target in its own source.
 
 const createFlow = vi.fn().mockResolvedValue({})
@@ -302,7 +305,6 @@ describe("useApplyDraft", () => {
     })
 
     it("throws a non-404 error during the diff fetch instead of silently falling back to empty", async () => {
-        messageBox.mockResolvedValueOnce(undefined)
         loadFlow.mockRejectedValueOnce(Object.assign(new Error("server error"), {status: 500}))
         await useApplyDraft().apply(draft())
         expect(messageBox).not.toHaveBeenCalled()
@@ -344,10 +346,10 @@ describe("useApplyDraft", () => {
     it("apply UPDATES the dashboard when create reports it already exists", async () => {
         confirm.mockResolvedValueOnce(true)
         clientPost.mockRejectedValueOnce(dashboardExists)
-        await useApplyDraft().apply(dashboardDraft())
+        await useApplyDraft().apply(dashboardDraft({yaml: "id: \"ops?x\"\ntitle: My dash"}))
         expect(clientPut).toHaveBeenCalledWith(
-            "/api/v1/main/dashboards/my-dash",
-            "id: my-dash\ntitle: My dash",
+            "/api/v1/main/dashboards/ops%3Fx",
+            "id: \"ops?x\"\ntitle: My dash",
             expect.objectContaining({headers: {"Content-Type": "application/x-yaml"}}),
         )
     })

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,8 +19,10 @@ import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.models.validations.ValidationError;
@@ -33,6 +37,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class FlowValidationTest {
@@ -183,6 +188,28 @@ class FlowValidationTest {
     }
 
     @Test
+    void shouldMatchInputIdLiterallyWhenCheckingDashedReferences() {
+        String flowTemplate = """
+            id: regex-id
+            namespace: io.kestra.tests
+            inputs:
+              - id: "a.b-c"
+                type: STRING
+                defaults: value
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ inputs.%s }}"
+            """;
+
+        Optional<ConstraintViolationException> unrelatedReference = modelValidator.isValid(YamlParser.parse(flowTemplate.formatted("aXb-c"), Flow.class));
+        Optional<ConstraintViolationException> literalReference = modelValidator.isValid(YamlParser.parse(flowTemplate.formatted("a.b-c"), Flow.class));
+
+        assertThat(unrelatedReference).isEmpty();
+        assertThat(literalReference).hasValueSatisfying(e -> assertThat(e.getMessage()).contains("Invalid input reference"));
+    }
+
+    @Test
     void validFlowShouldSucceed() {
         Flow flow = this.parse("flows/valids/minimal.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
@@ -312,6 +339,37 @@ class FlowValidationTest {
         // Then
         assertThat(validate).isPresent();
         assertThat(validate.get().getMessage()).contains("Missing inputs for Schedule Trigger 'every_minute', missing inputs: 'user2'");
+    }
+
+    @Test
+    void scheduledFlowNotSupplyingConditionalInput_valid() {
+        Flow flow = YamlParser.parse("""
+            id: dependson_schedule
+            namespace: company.team
+            inputs:
+              - id: initial_var
+                type: BOOL
+                defaults: false
+              - id: conditional_var
+                type: ARRAY
+                itemType: STRING
+                dependsOn:
+                  inputs:
+                    - initial_var
+                  condition: "{{ inputs.initial_var == true }}"
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ inputs.initial_var }}"
+            triggers:
+              - id: every_hour
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 * * * *"
+                inputs:
+                  initial_var: false
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
     }
 
     @Test
@@ -494,7 +552,7 @@ class FlowValidationTest {
         assertThat(validate.get().getMessage())
             .contains("Invalid default for input 'components'")
             .contains("it must have at most `3` rows")
-            .contains("row 2, column `cpus`: it must be more than `1`")
+            .contains("row 2, column `cpus`: it must be at least `1`, but received `0`")
             .contains("row 3, column `cpus`: `many` is not a valid INT value")
             .contains("row 3, column `os`: it must match the values")
             .contains("row 4, column `disk`: it is not declared")
@@ -541,7 +599,7 @@ class FlowValidationTest {
 
         assertThat(validate).isPresent();
         assertThat(validate.get().getMessage())
-            .contains("row 2, column `cpus`: it must be more than `1`")
+            .contains("row 2, column `cpus`: it must be at least `1`, but received `0`")
             .doesNotContain("rows");
     }
 
@@ -729,6 +787,27 @@ class FlowValidationTest {
     }
 
     @Test
+    void shouldRejectAnAssetOutputInTheOpenSourceEdition() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: vm
+                type: ASSET
+                value: web-01
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.map(ConstraintViolationException::getMessage).orElse(""))
+            .contains("Output 'vm' of type ASSET is only available in Enterprise Edition.");
+    }
+
+    @Test
     void eeAllowsDefiningAssets() {
         Flow flow = Flow.builder()
             .id(TestsUtils.randomString())
@@ -782,6 +861,31 @@ class FlowValidationTest {
             "Task 'hello' declares an invalid asset in `assets.outputs`: `id` must match \"%s\".".formatted(Asset.ID_PATTERN),
             "Trigger 'schedule' declares an invalid asset in `assets.outputs`: `id` must match \"%s\".".formatted(Asset.ID_PATTERN)
         );
+    }
+
+    @Test
+    void shouldStillLoadATriggerThatSetsAssetFailureBehavior() throws Exception {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 0 1 1 *"
+                assets:
+                  assetFailureBehavior: FAIL
+                  outputs:
+                    - id: table
+                      type: TABLE
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+        assertThat(Property.asStaticList(flow.getTriggers().getFirst().getAssets().getOutputs(), Asset.class))
+            .hasValueSatisfying(outputs -> assertThat(outputs).extracting(Asset::getId).containsExactly("table"));
     }
 
     @Test
@@ -932,6 +1036,9 @@ class FlowValidationTest {
                     columns:
                       - id: size_gb
                         type: INT
+              - id: vm
+                type: ASSET
+                assetType: io.kestra.plugin.ee.assets.VM
             tasks:
               - id: hello
                 type: io.kestra.plugin.core.log.Log
@@ -944,7 +1051,92 @@ class FlowValidationTest {
         assertThat(validate.get().getMessage())
             .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.")
             .contains("Input 'disks' of type TABLE is only available in Enterprise Edition.")
-            .contains("Input 'volumes' of type TABLE is only available in Enterprise Edition.");
+            .contains("Input 'volumes' of type TABLE is only available in Enterprise Edition.")
+            .contains("Input 'vm' of type ASSET is only available in Enterprise Edition.");
+    }
+
+    @Test
+    void shouldRejectAnAssetInputWhenItsAssetIdIsAnUnsafeOrInvalidRegex() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: unsafe
+                type: ASSET
+                assetId: "(a+)+$"
+              - id: invalid
+                type: ASSET
+                assetId: "web-("
+              - id: dynamic
+                type: ASSET
+                assetId: "{{ inputs.prefix }}"
+              - id: valid
+                type: ASSET
+                assetId: "^web-"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage())
+            .contains("inputs[unsafe]: `assetId` is too long or prone to catastrophic backtracking")
+            .contains("inputs[invalid]: `assetId` is not a valid regular expression")
+            .doesNotContain("inputs[dynamic]")
+            .doesNotContain("inputs[valid]");
+    }
+
+    @Test
+    void shouldRejectAssetWhenUsedAsAnArrayOrMultiselectItemType() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: array
+                type: ARRAY
+                itemType: ASSET
+              - id: multiselect
+                type: MULTISELECT
+                itemType: ASSET
+                values: [a]
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage())
+            .contains("inputs[array]: `itemType` cannot be ASSET")
+            .contains("inputs[multiselect]: `itemType` cannot be ASSET");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"TABLE", "FORM", "REUSABLE_INPUTS", "SELECT", "MULTISELECT", "EMAIL"})
+    void shouldLoadButRejectAFlowOutputWhenItsTypeIsInputOnly(String type) {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: out
+                type: %s
+                value: hi
+            """.formatted(type), Flow.class);
+
+        assertThat(flow.getOutputs().getFirst().getType()).isEqualTo(OutputType.UNKNOWN);
+        assertThat(modelValidator.isValid(flow)).hasValueSatisfying(violation -> assertThat(violation.getMessage())
+            .contains("The output 'out' has an unknown type")
+            .contains("STRING")
+            .doesNotContain("is not a valid"));
     }
 
     @Test
@@ -1273,6 +1465,25 @@ class FlowValidationTest {
             """.formatted(maxId), Flow.class);
 
         assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void shouldFailValidationForNullInputId() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - type: STRING
+                defaults: value
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hello World! 🚀
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("inputs[null].id: must not be null");
     }
 
     private Flow parse(String path) {

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.Container;
 
 import io.kestra.core.models.executions.LogEntry;
@@ -133,6 +134,51 @@ class DockerTest extends AbstractTaskRunnerTest {
         var result = docker.run(runContext, taskCommands, Collections.emptyList());
 
         assertThat(result.getExitCode()).isZero();
+    }
+
+    @Test
+    void shouldReadWorkerFileFromWorkingDirectoryWhenMounted() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+        runContext.workingDir().createFile("input.txt", "hello mount".getBytes());
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .fileHandlingStrategy(Property.ofValue(Docker.FileHandlingStrategy.MOUNT))
+            .build();
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(List.of("/bin/sh", "-c", "grep -qx 'hello mount' input.txt && echo 'written by container' > output.txt"))
+        );
+
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result.getExitCode()).isZero();
+        Assertions.assertThat(Files.readString(runContext.workingDir().resolve(Path.of("output.txt")))).isEqualTo("written by container\n");
+    }
+
+    @Test
+    void shouldFailBeforeStartingContainerWhenMountSourceIsMissingOnDaemonHost() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+        var unreachableWorkingDirectory = Files.createTempDirectory("kestra-mount-test").resolve("not-visible-to-docker-daemon");
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .fileHandlingStrategy(Property.ofValue(Docker.FileHandlingStrategy.MOUNT))
+            .build();
+        var taskCommands = Mockito.spy(
+            new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of("/bin/sh", "-c", "echo should-not-run")))
+        );
+        Mockito.doReturn(unreachableWorkingDirectory).when(taskCommands).getWorkingDirectory();
+        Mockito.doReturn(List.of()).when(taskCommands).relativeWorkingDirectoryFilesPaths(true);
+
+        assertThatThrownBy(() -> docker.run(runContext, taskCommands, Collections.emptyList()))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("MOUNT working directory '" + unreachableWorkingDirectory + "' does not exist on the Docker daemon host")
+            .hasMessageContaining("VOLUME")
+            .hasCauseInstanceOf(DockerException.class);
+
+        Assertions.assertThat(unreachableWorkingDirectory).doesNotExist();
+        try (var client = DockerService.client(runContext, null, null, null, "rockylinux:9.3-minimal")) {
+            Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
+            Assertions.assertThat(client.listContainersCmd().withShowAll(true).withLabelFilter(labels).exec()).isEmpty();
+        }
     }
 
     @Test

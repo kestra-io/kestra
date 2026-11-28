@@ -374,10 +374,16 @@ public class ExecutionService {
     }
 
     /**
-     * Resume a flowable task: set both the taskrun and the execution to {@link State.Type#RUNNING}.
+     * Resume a flowable task: set both the taskrun and the execution to {@link State.Type#RUNNING},
+     * unless a loop sub-execution other than the resumed one is still paused, in which case the execution is returned unchanged.
      */
-    public Execution resumeFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
-        return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.RUNNING)).withState(State.Type.RUNNING);
+    public Execution resumeFlowable(Execution execution, TaskRun updateFlowableTaskRun, String resumedSubExecutionId) throws InternalException {
+        // the resumed sub-execution is excluded as its new state is not persisted yet when the restart event is handled
+        List<Execution> loopSubExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), updateFlowableTaskRun.getTaskId());
+        if (loopSubExecutions.stream().noneMatch(e -> e.getState().isPaused() && !e.getId().equals(resumedSubExecutionId))) {
+            return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.RUNNING)).withState(State.Type.RUNNING);
+        }
+        return execution;
     }
 
     public Execution create(Create createCommand, ProcessedFlow processedFlow) {
@@ -714,8 +720,13 @@ public class ExecutionService {
 
     private void copySearchableData(Execution original, Execution replayed) {
         try {
+            Set<String> alreadyIndexed = searchableDataRepository.findByExecutionId(replayed.getTenantId(), replayed.getId(), Pageable.UNPAGED)
+                .stream()
+                .map(SearchableData::dataId)
+                .collect(Collectors.toSet());
             List<SearchableData> copied = searchableDataRepository.findByExecutionId(original.getTenantId(), original.getId(), Pageable.UNPAGED)
                 .stream()
+                .filter(it -> !alreadyIndexed.contains(it.dataId()))
                 .map(it -> new SearchableData(it.tenantId(), replayed.getId(), it.dataId(), it.index(), it.value()))
                 .toList();
             searchableDataRepository.saveBatch(copied);

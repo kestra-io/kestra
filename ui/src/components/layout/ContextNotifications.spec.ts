@@ -20,7 +20,8 @@ const routes = vi.hoisted(() => ({resolve: vi.fn(), isLinkable: vi.fn()}))
 vi.mock("../../stores/notifications", () => ({useNotificationsStore: () => store}))
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 vi.mock("../../composables/useScrollMemory", () => ({useScrollMemory: vi.fn()}))
-vi.mock("../../utils/notificationRoute", () => ({
+vi.mock("../../utils/notificationRoute", async (importOriginal) => ({
+    ...await importOriginal<typeof import("../../utils/notificationRoute")>(),
     resolveNotificationRoute: routes.resolve,
     isNotificationLinkable: routes.isLinkable,
 }))
@@ -42,6 +43,11 @@ const messages = {
         markAllRead: "Mark all as read",
         empty: "No notifications yet",
         emptyUnread: "No unread notifications",
+        operation: {
+            requested: {
+                EXECUTION_REPLAY: "Replay requested for {count} execution | Replay requested for {count} executions",
+            },
+        },
     },
 }
 
@@ -135,6 +141,22 @@ describe("ContextNotifications", () => {
         expect(visibleRows(wrapper).some(row => row.text().includes("Backfill running"))).toBe(false)
     })
 
+    it("translates only a finished operation's title, keeping any other title as written", () => {
+        store.notifications = [
+            notification({id: "a", asyncOperationType: "EXECUTION_REPLAY", totalItems: 3, title: "Execution replay requested for 3 items"}),
+            notification({id: "b", asyncOperationType: "UNKNOWN_OPERATION", totalItems: 2, title: "Unknown requested for 2 items"}),
+            notification({id: "c", type: "CASE", title: "Customer escalation on billing flow"}),
+        ]
+
+        const titles = visibleRows(mount()).map(row => row.find(".title").text())
+
+        expect(titles).toEqual([
+            "Replay requested for 3 executions",
+            "Unknown requested for 2 items",
+            "Customer escalation on billing flow",
+        ])
+    })
+
     it("hides the ongoing section when nothing is ongoing", () => {
         store.notifications = [notification({ongoing: false})]
 
@@ -183,6 +205,40 @@ describe("ContextNotifications", () => {
         expect(read.find("[data-test='mark-read']").exists()).toBe(false)
         expect(unread.find("[data-test='mark-read']").exists()).toBe(true)
         expect(unread.find("[data-test='mark-unread']").exists()).toBe(false)
+    })
+
+    it("opens a relative url in the same tab and marks the notification read", async () => {
+        store.notifications = [notification({url: "/main/executions/ns/flow/exec-1"})]
+
+        await mount().find(".row").trigger("click")
+        await flushPromises()
+
+        expect(store.markRead).toHaveBeenCalledWith("a")
+        expect(push).toHaveBeenCalledWith("/main/executions/ns/flow/exec-1")
+    })
+
+    it("renders an absolute url as a real link and leaves the navigation to the browser", async () => {
+        store.notifications = [notification({url: "https://kestra.io/docs"})]
+        const wrapper = mount()
+
+        expect(wrapper.find("[data-test='url']").attributes("href")).toBe("https://kestra.io/docs")
+
+        await wrapper.find(".row").trigger("click")
+        await flushPromises()
+
+        expect(store.markRead).toHaveBeenCalledWith("a")
+        expect(push).not.toHaveBeenCalled()
+    })
+
+    it("never renders a link or navigates for an unsafe url", async () => {
+        store.notifications = [notification({url: "javascript:alert(1)"})]
+        const wrapper = mount()
+
+        await wrapper.find(".row").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.find("[data-test='url']").exists()).toBe(false)
+        expect(push).not.toHaveBeenCalled()
     })
 
     it("marks a row read from its button without navigating", async () => {

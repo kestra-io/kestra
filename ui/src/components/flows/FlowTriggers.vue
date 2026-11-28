@@ -26,10 +26,10 @@
             v-bind="$attrs"
             :data="triggersWithType"
             :total="triggersWithType.length"
+            :pageSizeOptions="[triggersWithType.length || 1]"
             :defaultSort="{prop: 'triggerId', order: 'ascending'}"
             :rowKey="(row: TriggerRow) => row.id"
-            :expandRowKeys="expandedRowKeys"
-            :rowClassName="(arg: {row: TriggerRow}) => arg.row.backfill ? 'force-expanded' : ''"
+            :forceExpandedRowKeys="expandedRowKeys"
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
         >
@@ -48,18 +48,19 @@
                         @resume="unpauseBackfill(props.row as TriggerRow)"
                         @stop="deleteBackfill(props.row as TriggerRow)"
                     />
-                    <LogsWrapper
-                        class="trigger-logs"
-                        :filters="{
-                            'filters[namespace][EQUALS]': props.row.namespace ?? flowStore.flow?.namespace,
-                            'filters[flowId][EQUALS]': props.row.flowId ?? flowStore.flow?.id,
-                            'filters[triggerId][EQUALS]': props.row.id
-                        }"
-                        :logsStoreScope="`trigger-${props.row.namespace ?? flowStore.flow?.namespace}-${props.row.flowId ?? flowStore.flow?.id}-${props.row.id}`"
-                        :withCharts="false"
-                        :reloadLogs
-                        embed
-                    />
+                    <div class="trigger-logs">
+                        <LogsWrapper
+                            :filters="{
+                                'filters[namespace][EQUALS]': props.row.namespace ?? flowStore.flow?.namespace,
+                                'filters[flowId][EQUALS]': props.row.flowId ?? flowStore.flow?.id,
+                                'filters[triggerId][EQUALS]': props.row.id
+                            }"
+                            :logsStoreScope="`trigger-${props.row.namespace ?? flowStore.flow?.namespace}-${props.row.flowId ?? flowStore.flow?.id}-${props.row.id}`"
+                            :withCharts="false"
+                            :reloadLogs
+                            embed
+                        />
+                    </div>
                 </template>
             </KsTableColumn>
             <KsTableColumn
@@ -68,9 +69,7 @@
                 :minWidth="140"
             >
                 <template #default="scope">
-                    <code>
-                        {{ scope.row.id }}
-                    </code>
+                    <code class="identifier"><BreakableText :value="scope.row.id" /></code>
                     <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
                         <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
                             <AlertCircle />
@@ -119,14 +118,15 @@
                             </KsTag>
                         </KsTooltip>
                         <KsTag
-                            v-else-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate && scope.row.kind !== 'UNSCHEDULED'"
+                            data-test="trigger-never-evaluated"
                             type="warning"
                             size="small"
                             effect="light"
                         >
                             {{ $t("datepicker.never") }}
                         </KsTag>
-                        <KsDateAgo v-else :inverted="true" :date="scope.row.nextEvaluationDate" />
+                        <KsDateAgo v-else-if="scope.row.nextEvaluationDate" :inverted="true" :date="scope.row.nextEvaluationDate" />
                     </template>
                     <template v-else-if="col.prop === 'evaluatedAt'">
                         <KsDateAgo :inverted="true" :date="scope.row.evaluatedAt" />
@@ -152,6 +152,7 @@
                             </KsIconButton>
                         </div>
                     </template>
+                    <span v-else-if="col.prop === 'type'" class="identifier"><BreakableText :value="scope.row.type" /></span>
                     <template v-else>
                         {{ scope.row[col.prop] }}
                     </template>
@@ -188,8 +189,8 @@
                 <template #default="scope">
                     <KsTooltip
                         v-if="hasTrigger(scope.row as TriggerRow)"
-                        :content="$t('trigger disabled')"
-                        :disabled="!scope.row.sourceDisabled"
+                        :content="notToggleableReason(scope.row as TriggerRow)"
+                        :disabled="!notToggleableReason(scope.row as TriggerRow)"
                     >
                         <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
                              moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
@@ -198,7 +199,7 @@
                             @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row as TriggerRow, Boolean(value))"
                             inlinePrompt
                             class="switch-text"
-                            :disabled="scope.row.sourceDisabled"
+                            :disabled="!!notToggleableReason(scope.row as TriggerRow)"
                         />
                     </KsTooltip>
                 </template>
@@ -338,9 +339,13 @@
 
     <TriggerEnableDialog
         v-model="isEnableDialogOpen"
-        :count="enableDialogTrigger ? undefined : selection.length"
+        :count="enableDialogTrigger ? undefined : toggleableSelectionCount"
         @confirm="onEnableDialogConfirm"
-    />
+    >
+        <p v-if="!enableDialogTrigger && notToggleableSelectionCount">
+            {{ $t("bulk not toggleable warning", {count: notToggleableSelectionCount}) }}
+        </p>
+    </TriggerEnableDialog>
 
     <KsDrawer
         v-if="isOpen"
@@ -383,7 +388,9 @@
 
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {hasMissingRequiredInputs} from "../../utils/inputs"
+    import {flattenInputs, hasMissingRequiredInputs} from "../../utils/inputs"
+    import {normalizeInputValues} from "../../utils/submitTask"
+    import type {ExecutionLabelInput} from "../../utils/executionLabels"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -399,6 +406,7 @@
     import {blockerMessage, searchTriggersForFlow} from "../../utils/triggers"
     import {useProductTourStore} from "../../stores/productTour"
     import TestEventDialog, {type TestEventTarget} from "./TestEventDialog.vue"
+    import BreakableText from "../BreakableText"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
 
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
@@ -434,7 +442,7 @@
         start: Date | null;
         end: Date | null;
         inputs: Record<string, unknown> | null;
-        labels: Label[];
+        labels: ExecutionLabelInput[];
     }>({
         start: null,
         end: null,
@@ -466,13 +474,13 @@
             label: t("type"),
             prop: "type",
             default: true,
-            minWidth: 260,
+            minWidth: 150,
         },
         {
             label: t("execution id"),
             prop: "executionId",
             default: true,
-            minWidth: 140,
+            minWidth: 100,
         },
         {
             label: t("last trigger date"),
@@ -565,13 +573,15 @@
 
     type BackfillRequest = TriggerControllerApiCreateBackfillRequest["backfill"]
 
-    const cleanBackfill = computed<BackfillRequest>(() => {
-        const labels = backfill.value.labels.filter(label => label.key && label.value)
+    const cleanBackfill = computed<BackfillRequest | undefined>(() => {
+        const {start} = backfill.value
+        if (!start) return undefined
+        const labels = backfill.value.labels.filter((label): label is Label => Boolean(label.key && label.value))
         return {
-            start: backfill.value.start?.toISOString(),
+            start: start.toISOString(),
             end: backfill.value.end?.toISOString(),
             // the spec models the endpoint's Map<String, Object> inputs as a map of maps
-            inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
+            inputs: normalizeInputValues(flattenInputs(flowStore.flow?.inputs), backfill.value.inputs ?? {}) as BackfillRequest["inputs"],
             labels: labels.length ? labels : undefined,
         }
     })
@@ -632,10 +642,11 @@
 
     const postBackfill = () => {
         const trigger = selectedTrigger.value
-        if (!trigger) return
+        const request = cleanBackfill.value
+        if (!trigger || !request) return
 
         const identity = triggerIdentity(trigger)
-        TriggersAPI.createBackfill({...identity, backfill: cleanBackfill.value})
+        TriggersAPI.createBackfill({...identity, backfill: request})
             .then(() => {
                 toast.saved(identity.triggerId)
                 setBackfillModal(null, false)
@@ -677,6 +688,14 @@
 
     const isScheduleTrigger = (row?: TriggerRow) => row?.kind === "SCHEDULE" || isSchedule(row?.type)
 
+    // A trigger the scheduler does not evaluate never reads the stored disabled flag, so the API refuses to
+    // toggle it: it can only be disabled in the flow source.
+    const notToggleableReason = (row: TriggerRow): string | undefined => {
+        if (row.sourceDisabled) return t("trigger disabled")
+        if (row.kind === "UNSCHEDULED") return t("trigger not toggleable")
+        return undefined
+    }
+
     const setDisabled = (trigger: TriggerRow, value: boolean) => {
         if (value && isScheduleTrigger(trigger)) {
             enableDialogTrigger.value = trigger
@@ -703,6 +722,7 @@
                 () => TriggersAPI.disabledTriggersByIds({triggers: selection.value, disabled: false, recoverMissedSchedules}),
                 "bulk success disabled status.false",
                 t("enable"),
+                toggleableSelectionCount.value,
             )
         }
     }
@@ -770,10 +790,20 @@
         triggerId: row.triggerId ?? row.id,
     })
 
-    const runBulk = (promiseFactory: () => Promise<ApiAsyncOperationResponse>, successKey: string, actionLabel: string) => {
+    const runBulk = (promiseFactory: () => Promise<ApiAsyncOperationResponse>, successKey: string, actionLabel: string, expected?: number) => {
+        const target = expected ?? selection.value.length
         return promiseFactory()
             .then(response => {
-                toast.success(t(successKey, {count: response.totalItems}))
+                // totalItems is what the API actually submitted, which is short of the target whenever it
+                // skipped rows it cannot act on -- a bulk action that did nothing at all must not report success.
+                const submitted = response.totalItems ?? 0
+                if (submitted === 0) {
+                    toast.warning(t("bulk none applied"))
+                } else if (submitted < target) {
+                    toast.warning(t("bulk partially applied", {count: submitted, requested: target}))
+                } else {
+                    toast.success(t(successKey, {count: submitted}))
+                }
                 dataTable.value?.toggleAllUnselected()
                 loadDataAfterAction()
             })
@@ -792,18 +822,31 @@
         const confirmKey = disabled ? "bulk disabled status.true" : "bulk disabled status.false"
         const successKey = disabled ? "bulk success disabled status.true" : "bulk success disabled status.false"
         const actionLabel = disabled ? t("disable") : t("enable")
+        const message = notToggleableSelectionCount.value
+            ? t(confirmKey, {count: toggleableSelectionCount.value})
+                + "<br><br><strong>" + t("bulk not toggleable warning", {count: notToggleableSelectionCount.value}) + "</strong>"
+            : t(confirmKey, {count: toggleableSelectionCount.value})
         toast.confirm(
-            t(confirmKey, {count: selection.value.length}),
+            message,
             () => runBulk(
                 () => TriggersAPI.disabledTriggersByIds({triggers: selection.value, disabled}),
                 successKey,
                 actionLabel,
+                toggleableSelectionCount.value,
             ),
         )
     }
 
     const findRowBySelection = (sel: TriggerControllerApiTriggerId) =>
         triggersWithType.value.find(row => (row.triggerId ?? row.id) === sel.triggerId)
+
+    // The API skips the triggers the scheduler does not evaluate on a bulk enable/disable, so counting the
+    // whole selection would announce a change to rows that will not be touched.
+    const notToggleableSelectionCount = computed<number>(() =>
+        selection.value.filter(sel => findRowBySelection(sel)?.kind === "UNSCHEDULED").length,
+    )
+
+    const toggleableSelectionCount = computed<number>(() => selection.value.length - notToggleableSelectionCount.value)
 
     const bulkUnlock = () => {
         toast.confirm(
@@ -869,6 +912,11 @@
     gap: var(--ks-spacing-1);
 }
 
+.identifier {
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
 .execution-cell {
     display: flex;
     align-items: center;
@@ -888,18 +936,7 @@
     text-transform: uppercase;
 }
 
-:deep(tr.force-expanded .kel-table__expand-icon) {
-    visibility: hidden;
-    pointer-events: none;
-}
-
-:deep(.markdown) {
-    p {
-        margin-bottom: auto;
-    }
-}
-
-:deep(.trigger-logs) {
+.trigger-logs {
     margin: var(--ks-spacing-4);
 }
 

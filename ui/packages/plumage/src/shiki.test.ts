@@ -4,7 +4,6 @@ import {kestraDark, kestraLight, pebbleTokens, pebbleTransformer} from "./index.
 import {yamlCorpus} from "../tests/corpus.ts"
 import {highlighter} from "../tests/highlighter.ts"
 
-const PEBBLE = kestraDark.syntax.pebble
 let h: HighlighterCore
 
 beforeAll(async () => {
@@ -47,17 +46,19 @@ describe("pebbleTransformer", () => {
 
     it("writes the CSS variables Shiki uses for dual themes", () => {
         const code = "message: \"Hi {{ inputs.name }}\""
-        const pebbleSpan = (html: string) => html.match(/<span style="([^"]*)">\{\{ inputs\.name \}\}<\/span>/)?.[1]
+        const pebbleSpan = (html: string) => html.match(/<span style="([^"]*)">inputs\.name<\/span>/)?.[1]
         const themes = {light: "kestra-light", dark: "kestra-dark"}
         const transformers = [pebbleTransformer()]
+        const light = kestraLight.syntax.pebbleVariable
+        const dark = kestraDark.syntax.pebbleVariable
 
         expect(pebbleSpan(h.codeToHtml(code, {lang: "yaml", themes, transformers})))
-            .toBe(`color:${kestraLight.syntax.pebble};--shiki-dark:${PEBBLE}`)
+            .toBe(`color:${light};--shiki-dark:${dark}`)
         expect(pebbleSpan(h.codeToHtml(code, {lang: "yaml", themes, transformers, defaultColor: false})))
-            .toBe(`--shiki-light:${kestraLight.syntax.pebble};--shiki-dark:${PEBBLE}`)
+            .toBe(`--shiki-light:${light};--shiki-dark:${dark}`)
         expect(pebbleSpan(h.codeToHtml(code, {lang: "yaml", themes, transformers, defaultColor: "light-dark()"})))
-            .toBe(`color:light-dark(${kestraLight.syntax.pebble}, ${PEBBLE});--shiki-light:${kestraLight.syntax.pebble};--shiki-dark:${PEBBLE}`)
-        expect(pebbleSpan(h.codeToHtml(code, {lang: "yml", theme: "kestra-dark", transformers}))).toBe(`color:${PEBBLE}`)
+            .toBe(`color:light-dark(${light}, ${dark});--shiki-light:${light};--shiki-dark:${dark}`)
+        expect(pebbleSpan(h.codeToHtml(code, {lang: "yml", theme: "kestra-dark", transformers}))).toBe(`color:${dark}`)
     })
 
     it("colors the code inside a block by role, in every theme variant", () => {

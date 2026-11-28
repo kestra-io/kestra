@@ -37,7 +37,7 @@ public class StickyWorkerRouting {
     @Inject
     public StickyWorkerRouting(ServiceLivenessStore serviceLivenessStore, ControllerVNodesConfiguration configuration) {
         this.serviceLivenessStore = serviceLivenessStore;
-        this.vNodeCount = configuration.count();
+        this.vNodeCount = configuration.vnodes();
     }
 
     public static String routingKey(int vNode) {

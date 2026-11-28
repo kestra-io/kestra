@@ -1,5 +1,6 @@
 package io.kestra.worker.fetchers;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -7,8 +8,13 @@ import org.junit.jupiter.api.Test;
 import io.kestra.controller.GrpcChannelManager;
 import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
+import io.kestra.core.metrics.MetricConfig;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.worker.WorkerJobStreamConfig;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -23,7 +29,9 @@ class WorkerJobFetcherBackoffTest {
             mock(ExecutionKilledManager.class),
             null,
             List.of(),
-            mock(GrpcConfiguration.class)
+            mock(GrpcConfiguration.class),
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65)),
+            new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig())
         );
     }
 

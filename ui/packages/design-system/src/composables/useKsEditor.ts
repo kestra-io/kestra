@@ -1,10 +1,4 @@
-import "monaco-editor/features/register.all"
-import "monaco-editor/editor/standalone/browser/inspectTokens/inspectTokens"
-import "monaco-editor/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
-import "monaco-editor/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
-import "monaco-editor/language/json/monaco.contribution"
-import "monaco-editor/language/typescript/monaco.contribution"
-import "monaco-editor/basic-languages/monaco.contribution"
+import "../utils/monacoFeatures"
 import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {useStorage} from "@vueuse/core"
@@ -111,6 +105,8 @@ export function useKsEditor(
     let moveCursorCmdDisposable: monaco.IDisposable | undefined
     let diffViewModel: monaco.editor.IDiffEditorViewModel | undefined
     let placeholderWidget: PlaceholderContentWidget | undefined
+    /** What the parent was last sent, until the prop catches up a tick later. */
+    let emittedValue: string | undefined
     const disposeCompletions = ref<() => void>()
 
 
@@ -311,6 +307,7 @@ export function useKsEditor(
                 model.setValue(await valueSupplier())
             }
         }
+        emittedValue = undefined
         localEditor.value?.setModel(model)
         return model
     }
@@ -475,7 +472,9 @@ export function useKsEditor(
         const modEditor = getModifiedEditor()
         modEditor?.onDidChangeModelContent(() => {
             const value = modEditor.getValue()
-            if (props.modelValue !== value) emit("update:modelValue", value)
+            if ((emittedValue ?? props.modelValue) === value) return
+            emittedValue = value
+            emit("update:modelValue", value)
         })
 
         observeAndResizeSuggestWidget()
@@ -615,6 +614,7 @@ export function useKsEditor(
     }
 
     function destroy() {
+        emittedValue = undefined
         markerListenerDisposable?.dispose()
         suggestWidgetIcons.teardown()
         disposeCompletions.value?.()
@@ -660,6 +660,7 @@ export function useKsEditor(
     })
 
     watch(() => props.modelValue, (newValue) => {
+        emittedValue = undefined
         if (localEditor.value) {
             const modEditor = getModifiedEditor()
             if (newValue !== modEditor?.getValue()) modEditor?.setValue(newValue)

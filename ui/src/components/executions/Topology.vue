@@ -1,5 +1,5 @@
 <template>
-    <KsCard>
+    <KsCard :bodyStyle="{height: '100%', display: 'flex', padding: '0'}">
         <div class="vueflow">
             <LowCodeEditor
                 ref="editor"
@@ -13,7 +13,6 @@
                 :horizontalDefault="horizontalDefault"
                 isReadOnly
                 @follow="$emit('follow', $event)"
-                viewType="topology"
                 @expand-subflow="onExpandSubflow"
             />
             <div v-else-if="loading" v-ks-loading="true" style="height:100%;position:relative" />
@@ -60,10 +59,13 @@
     let unmounted = false
     const sseRetries = new Map<string, ReturnType<typeof setTimeout>>()
 
-    // `outputs` (e.g. a subflow's executionId) is added by the backend at runtime but is missing from the generated SDK `TaskRun` type.
-    type TaskRunWithOutputs = NonNullable<Execution["taskRunList"]>[number] & {
-        outputs?: {executionId?: string; [key: string]: unknown}
-    }
+    type TaskRun = NonNullable<Execution["taskRunList"]>[number]
+
+    const CHILD_PAGE_SIZE = 100
+    const MAX_LOOKUP_DELAY = 10_000
+
+    const childLookups = new Map<string, number>()
+    const lookupAttempts = new Map<string, number>()
 
     const throttledExecutionUpdate = throttle(function(subflow: string, subflowExecution: Execution) {
         const previousExecution = executionsStore.subflowsExecutions[subflow]
@@ -151,7 +153,7 @@
         })
     }
 
-    function delaySSE(generateGraphBeforeDelay: boolean, subflow: string) {
+    function delaySSE(generateGraphBeforeDelay: boolean, subflow: string, delay = 500) {
         if (generateGraphBeforeDelay) {
             loadGraph(true)
         }
@@ -159,7 +161,7 @@
         sseRetries.set(subflow, setTimeout(() => {
             sseRetries.delete(subflow)
             addSSE(subflow)
-        }, 500))
+        }, delay))
     }
 
     function addSSE(subflow: string, generateGraphOnWaiting?: boolean) {
@@ -185,20 +187,58 @@
             return
         }
 
-        const taskIdMatchingTaskrun = (parentExecution.taskRunList ?? []).filter((taskRun): taskRun is TaskRunWithOutputs => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0]
-        const executionId = taskIdMatchingTaskrun?.outputs?.executionId
-
-        if (!executionId) {
-            if (taskIdMatchingTaskrun?.state?.current === State.SUCCESS) {
-                // Generating more than 1 subflow execution, we're not showing anything
-                loadGraph(true)
-                return
-            }
-
+        const taskRun = (parentExecution.taskRunList ?? []).find(run => run.taskId === stringUtils.afterLastDot(subflow))
+        if (!taskRun) {
             delaySSE(!!generateGraphOnWaiting, subflow)
             return
         }
 
+        const lookup = (childLookups.get(subflow) ?? 0) + 1
+        childLookups.set(subflow, lookup)
+        const isTaskRunning = !taskRun.state?.current || !!State.isRunning(taskRun.state.current)
+        findChildExecutionId(taskRun, taskRun.executionId ?? parentExecution.id, isTaskRunning)
+            .catch(() => undefined)
+            .then(executionId => {
+                if (unmounted || childLookups.get(subflow) !== lookup || !expandedSubflows.value.includes(subflow) || subflow in sseBySubflow.value) {
+                    return
+                }
+
+                if (executionId) {
+                    lookupAttempts.delete(subflow)
+                    subscribeToSubflow(subflow, executionId)
+                } else if (!isTaskRunning) {
+                    lookupAttempts.delete(subflow)
+                    loadGraph(true)
+                } else {
+                    const attempts = lookupAttempts.get(subflow) ?? 0
+                    lookupAttempts.set(subflow, attempts + 1)
+                    delaySSE(!!generateGraphOnWaiting, subflow, Math.min(500 * 2 ** attempts, MAX_LOOKUP_DELAY))
+                }
+            })
+    }
+
+    // A running subflow's child is among the newest, so only a finished task run pages through older children.
+    async function findChildExecutionId(taskRun: TaskRun, parentExecutionId: string, isTaskRunning: boolean): Promise<string | undefined> {
+        const kind = execution.value?.kind
+        for (let page = 1; ; page++) {
+            const response = await executionsStore.findExecutions({
+                "filters[triggerExecutionId][EQUALS]": parentExecutionId,
+                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": taskRun.state?.startDate,
+                "filters[kind][IN]": kind && kind !== "NORMAL" ? kind : undefined,
+                sort: "state.startDate:desc",
+                page,
+                size: CHILD_PAGE_SIZE,
+                commit: false,
+            })
+            const results = response.results ?? []
+            const child = results.find(result => result.trigger?.variables?.taskRunId === taskRun.id)
+            if (child || isTaskRunning || results.length < CHILD_PAGE_SIZE) {
+                return child?.id
+            }
+        }
+    }
+
+    function subscribeToSubflow(subflow: string, executionId: string) {
         // subscribeToExecution (not followExecution) is required here — followExecution treats
         // its target as *the* displayed execution: it nulls executionsStore.execution, closes,
         // and overwrites the shared subscription handle. Expanding a subflow would silently kill
@@ -231,6 +271,8 @@
         subflowsInLoops.forEach(subflow => {
             clearTimeout(sseRetries.get(subflow))
             sseRetries.delete(subflow)
+            childLookups.set(subflow, (childLookups.get(subflow) ?? 0) + 1)
+            lookupAttempts.delete(subflow)
             closeSubExecutionSSE(subflow)
             executionsStore.removeSubflowExecution(subflow)
         })
@@ -253,12 +295,6 @@
         height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
-
-        & :deep(.kel-card__body) {
-            height: 100%;
-            display: flex;
-            padding: 0;
-        }
     }
 
     .vueflow {

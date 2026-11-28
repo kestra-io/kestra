@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import io.kestra.controller.grpc.JobSync;
 import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.controller.grpc.WorkerConnectionInfo;
 import io.kestra.controller.grpc.WorkerControllerService;
@@ -13,11 +14,12 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormat;
+import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
@@ -27,6 +29,7 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.scheduler.service.UnpublishableTriggerResultReporter;
 import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 
@@ -56,6 +59,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     private TriggerExecutionPublisher triggerExecutionPublisher;
 
     @Inject
+    private UnpublishableTriggerResultReporter unpublishableTriggerResultReporter;
+
+    @Inject
     private WorkerJobRunningStateStore workerJobRunningStateStore;
 
     @Inject
@@ -72,6 +78,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     @Inject
     private WorkerTenantAccessGuard workerTenantAccessGuard;
+
+    @Inject
+    private WorkerJobReconciler workerJobReconciler;
 
     /**
      * Bidirectional streaming RPC for job distribution using the pull/ack pattern.
@@ -136,6 +145,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                         workerId, workerGroupId, subscriptions, maxConcurrency, responseObserver, capacityPolicy
                     );
                     context.setMaxInboundMessageSize(connInfo.getMaxInboundMessageSize());
+                    context.setStreamGeneration(connInfo.getStreamGeneration());
                     contextRef.set(context);
 
                     // Register with dispatcher
@@ -168,6 +178,10 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 // be gated out here.
                 int permits = request.getPermits();
                 workerJobDispatcher.onPermitsReceived(context, permits);
+
+                if (request.hasSync()) {
+                    onSyncReceived(context, request.getSync());
+                }
             }
 
             @Override
@@ -247,26 +261,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             request.getHeader(), message.records(), result -> result.id().getTenantId(), result -> result.id().uid()
         ).forEach(workerTriggerResult ->
         {
-            var evaluation = workerTriggerResult.evaluation();
-
             switch (workerTriggerResult.type()) {
-                case POLLING -> {
-                    triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
-                    workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
-                }
-                case REALTIME -> {
-                    if (evaluation != null) {
-                        triggerExecutionPublisher.send(workerTriggerResult.id(), evaluation);
-                    } else {
-                        // The realtime trigger stream ended without producing an execution — clean
-                        // completion (stop, kill, stream end) or an error with failOnTriggerError=false:
-                        // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
-                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
-                    }
-                    if (isTerminalRealtimeResult(evaluation)) {
-                        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
-                    }
-                }
+                case POLLING -> processPollingTriggerResult(workerTriggerResult);
+                case REALTIME -> processRealtimeTriggerResult(workerTriggerResult);
                 default -> throw new IllegalStateException("Unexpected value: " + workerTriggerResult.type());
             }
         });
@@ -275,13 +272,54 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     }
 
     /**
-     * A realtime trigger sends one result per emitted execution while it keeps running on the worker;
-     * those results must not release its WorkerJobRunning entry, which the liveness coordinator relies
-     * on to notify the scheduler when the worker dies. Only a terminal result does — a FAILED
-     * evaluation, or a stream end reported without an evaluation.
+     * Resubmits the jobs the worker left behind on earlier streams, then acknowledges the sync: the worker treats
+     * a stream whose syncs go unacknowledged as dead and reconnects, since its transport keepalive is answered
+     * by any proxy in between.
      */
-    static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
-        return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
+    private void onSyncReceived(WorkerStreamContext<WorkerJobResponse> context, JobSync sync) {
+        try {
+            workerJobReconciler.reconcile(context.getWorkerId(), context.getWorkerGroupId(), context.getStreamGeneration(), sync.getHeldJobIdsList());
+        } catch (RuntimeException e) {
+            log.error("Failed to reconcile the jobs held by worker [{}]: {}", context.getWorkerId(), e.getMessage(), e);
+        }
+
+        try {
+            context.sendResponse(
+                WorkerJobResponse.newBuilder()
+                    .setHeader(RequestOrResponseHeaderFactory.create(context.getWorkerId()))
+                    .setSyncAck(context.getStreamGeneration())
+                    .build()
+            );
+        } catch (RuntimeException e) {
+            log.debug("Failed to acknowledge the sync of worker [{}]: {}", context.getWorkerId(), e.getMessage());
+        }
+    }
+
+    void processPollingTriggerResult(WorkerTriggerResult workerTriggerResult) {
+        try {
+            triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), workerTriggerResult.evaluation()));
+        } catch (KestraRuntimeException e) {
+            if (!UnpublishableTriggerResultReporter.isUnpublishable(e.getCause())) {
+                throw e;
+            }
+            unpublishableTriggerResultReporter.report(workerTriggerResult.id(), e.getCause());
+            triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), null));
+        }
+        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+    }
+
+    void processRealtimeTriggerResult(WorkerTriggerResult workerTriggerResult) {
+        if (workerTriggerResult.evaluation() != null) {
+            triggerExecutionPublisher.send(workerTriggerResult.id(), workerTriggerResult.evaluation());
+        } else {
+            // The realtime trigger stream ended without producing an execution (clean completion
+            // on stop, kill or stream end, or an error with failOnTriggerError=false), so notify
+            // the scheduler directly to unlock the trigger and let it be resubmitted.
+            triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
+        }
+        if (workerTriggerResult.isTerminal()) {
+            workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+        }
     }
 
     @Override

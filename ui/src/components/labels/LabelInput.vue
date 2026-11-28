@@ -49,20 +49,16 @@
     import {rowKey} from "@kestra-io/design-system"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Minus from "vue-material-design-icons/Minus.vue"
-    import {isValidLabelKey} from "../../utils/executionLabels"
+    import {isValidLabelKey, type ExecutionLabelInput} from "../../utils/executionLabels"
 
-    interface Label {
-        key: string | null;
-        value: string | null;
-    }
 
     const props = defineProps<{
-        labels: Label[];
-        existingLabels?: Label[];
+        labels: ExecutionLabelInput[];
+        existingLabels?: ExecutionLabelInput[];
     }>()
 
     const emit = defineEmits<{
-        (e: "update:labels", value: Label[]): void;
+        (e: "update:labels", value: ExecutionLabelInput[]): void;
     }>()
 
     defineSlots<{
@@ -70,8 +66,8 @@
         "header-end"?(): unknown
     }>()
 
-    const locals = ref<Label[]>([])
-    const existingRows = ref<Set<Label>>(new Set())
+    const locals = ref<ExecutionLabelInput[]>([])
+    const existingRows = ref<Set<ExecutionLabelInput>>(new Set())
 
     const addItem = () => {
         locals.value.push({key: null, value: null})
@@ -83,12 +79,12 @@
         emit("update:labels", locals.value)
     }
 
-    const update = (index: number, value: string | number | undefined, prop: keyof Label) => {
+    const update = (index: number, value: string | number | undefined, prop: keyof ExecutionLabelInput) => {
         locals.value[index][prop] = value !== "" && value !== undefined ? String(value) : null
         emit("update:labels", locals.value)
     }
 
-    const syncFromProps = (labels: Label[]) => {
+    const syncFromProps = (labels: ExecutionLabelInput[]) => {
         if (labels.length === 0) {
             locals.value = [{key: null, value: null}]
         } else {

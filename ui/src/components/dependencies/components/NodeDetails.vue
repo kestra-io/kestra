@@ -19,7 +19,7 @@
                 {{ shortName }}
             </KsText>
             <span v-if="status" :class="['state', status]">
-                <KsIcon size="xs" :color="statusColor">
+                <KsIcon size="sm" :color="statusColor">
                     <component :is="statusIcon" />
                 </KsIcon>
                 {{ $t(`dependency.dag.status.${status}`) }}

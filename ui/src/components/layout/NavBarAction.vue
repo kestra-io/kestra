@@ -2,6 +2,9 @@
     <KsDropdownItem
         v-if="asItem"
         :icon="icon"
+        :disabled="disabled"
+        :divided="divided"
+        :danger="danger"
         v-bind="$attrs"
         @click="onClick"
     >
@@ -30,6 +33,7 @@
         v-else
         :type="type ?? 'default'"
         :icon="icon"
+        :disabled="disabled"
         v-bind="{...$attrs, ...linkAttrs}"
         :tag="tag"
         :to="props.to"
@@ -44,21 +48,27 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, type Component} from "vue"
+    import {computed, inject, type Component, type HTMLAttributes} from "vue"
+    import type {KsButtonProps, NativeAttributes} from "@kestra-io/design-system"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {useRouter, type RouteLocationRaw, RouterLink} from "vue-router"
     import {asItemKey, closeDropdownKey} from "./navBarActionsContext"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    interface NavBarActionProps {
         icon?: Component;
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | "";
         label?: string;
         to?: RouteLocationRaw;
         href?: string;
         download?: string;
-    }>()
+        disabled?: boolean;
+        divided?: boolean;
+        danger?: boolean;
+    }
+
+    const props = defineProps<NavBarActionProps & /* @vue-ignore */ Omit<Pick<KsButtonProps, "loading" | "tooltip"> & NativeAttributes<HTMLAttributes>, keyof NavBarActionProps>>()
 
     const emit = defineEmits<{(e: "click"): void}>()
 

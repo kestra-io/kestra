@@ -76,6 +76,19 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
     }
 
     @Override
+    public void deleteById(String tenantId, String taskRunId) {
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> DSL
+                .using(configuration)
+                .delete(this.jdbcRepository.getTable())
+                .where(buildTenantCondition(tenantId))
+                .and(KEY_FIELD.eq(taskRunId))
+                .execute()
+            );
+    }
+
+    @Override
     public int purgeByExecutionIds(List<String> executionIds) {
         return this.jdbcRepository
             .getDslContextWrapper()

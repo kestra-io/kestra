@@ -4,6 +4,8 @@
         :clickableText="sectionName"
         :href="href"
         :arrow="!compact"
+        :compact="compact"
+        :nested="nested"
         :initiallyExpanded="initiallyExpanded || autoExpanded"
         :noUrlChange="noUrlChange"
         @expand="emit('expand')"
@@ -94,6 +96,7 @@
                                 <slot
                                     name="markdown"
                                     :content="propertyDoc(property)"
+                                    :dense="true"
                                 />
                             </div>
                         </div>
@@ -107,6 +110,7 @@
                         <SchemaSection
                             v-show="isPropertyVisible(String(propertyKey), property)"
                             class="property"
+                            row
                             :clickableText="String(propertyKey)"
                             :href="`${href}_${propertyKey}`"
                             :noUrlChange
@@ -293,18 +297,9 @@
 </script>
 
 <style scoped>
-    .nested :deep(p) {
-        font-size: var(--ks-font-size-sm);
-        line-height: 22px;
-        font-weight: normal;
-    }
-
-    .nested :deep(> .collapse-button) {
-        justify-content: flex-start;
-        .collapse-button__chevron {
-            order: -1;
-            margin-left: 0;
-        }
+    .nested {
+        --ks-markdown-paragraph-size: var(--ks-font-size-sm);
+        --ks-markdown-paragraph-line-height: 22px;
     }
 
     .property-flag {
@@ -348,6 +343,12 @@
         text-decoration: none;
     }
 
+    .section-intro .markdown {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
     .section-intro {
         display: flex;
         flex-direction: column;
@@ -378,19 +379,6 @@
         align-items: center;
     }
 
-    .section-collapsible.compact :deep(.collapse-button) {
-        font-size: var(--ks-font-size-xs);
-        font-weight: var(--ks-font-weight-bold);
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        pointer-events: none;
-        margin-bottom: var(--ks-spacing-3);
-    }
-
-    .section-collapsible.compact :deep(.collapse-button__label) {
-        color: var(--ks-text-muted);
-    }
-
     .properties-list {
         overflow: hidden;
         border: 1px solid var(--ks-border-default);
@@ -404,32 +392,6 @@
 
         &:last-child {
             border-bottom: 0;
-        }
-
-        & :deep(> .collapse-button > .collapse-button__label) {
-            color: var(--ks-text-primary);
-        }
-
-        & :deep(> .collapse-button) {
-            padding: .75rem 1rem;
-
-            &:not(.collapsed) {
-                border-bottom: 1px solid var(--collapsible-border-color, var(--ks-border-default));
-            }
-        }
-
-        & :deep(.property-detail) {
-            background-color: var(--ks-bg-base);
-            padding: 1rem 0;
-
-            & > * {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-
-            button:hover {
-                background-color: var(--ks-bg-hover);
-            }
         }
     }
 
@@ -469,8 +431,8 @@
 
     .compact-prop-name {
         font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-base);
-        font-weight: var(--ks-font-weight-semibold);
+        font-size: var(--ks-font-size-xs);
+        font-weight: var(--ks-font-weight-regular);
         color: var(--ks-text-primary);
     }
 
@@ -479,8 +441,8 @@
         align-items: center;
         height: 1.25rem;
         font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-2xs);
-        font-weight: var(--ks-font-weight-semibold);
+        font-size: var(--ks-font-size-xs);
+        font-weight: var(--ks-font-weight-regular);
         line-height: 1;
         color: var(--ks-text-link);
         background: var(--ks-bg-tag);
@@ -490,6 +452,8 @@
     }
 
     .compact-type-tag-link {
+        font-size: var(--ks-font-size-2xs);
+        font-weight: var(--ks-font-weight-semibold);
         text-decoration: none;
         cursor: pointer;
 
@@ -502,8 +466,8 @@
         display: inline-flex;
         align-items: center;
         height: 1.25rem;
-        font-size: var(--ks-font-size-2xs);
-        font-weight: var(--ks-font-weight-semibold);
+        font-size: var(--ks-font-size-xs);
+        font-weight: var(--ks-font-weight-regular);
         line-height: 1;
         color: var(--ks-text-dim);
         background: var(--ks-bg-base);
@@ -540,25 +504,5 @@
         font-size: var(--ks-font-size-sm);
         line-height: 1.5;
         color: var(--ks-text-secondary);
-
-        & :deep(p) {
-            margin: 0;
-            font-size: var(--ks-font-size-sm);
-            line-height: 1.5;
-            color: var(--ks-text-secondary);
-        }
-
-        & :deep(p + p) {
-            margin-top: var(--ks-spacing-2);
-        }
-
-        & :deep(code) {
-            font-family: var(--ks-font-family-mono);
-            font-size: 0.92em;
-            background: var(--ks-bg-tag);
-            padding: 1px 4px;
-            border-radius: var(--ks-radius-xs);
-            color: var(--ks-text-dim);
-        }
     }
 </style>

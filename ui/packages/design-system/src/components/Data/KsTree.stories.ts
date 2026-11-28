@@ -147,3 +147,21 @@ export const WithCustomSlot: Story = {
     }),
     parameters: {controls: {disable: true}},
 }
+
+export const Files: Story = {
+    render: () => ({
+        components: {KsTree},
+        setup() { return {TREE_DATA} },
+        template: `
+            <div style="padding:24px;max-width:300px">
+                <ks-tree
+                    :data="TREE_DATA"
+                    :props="{label: 'label', children: 'children'}"
+                    variant="files"
+                    default-expand-all
+                />
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+}

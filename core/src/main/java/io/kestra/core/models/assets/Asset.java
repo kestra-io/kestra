@@ -16,6 +16,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.flows.FlowAction;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -68,7 +69,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     @TenantId
     protected String tenantId;
 
-    @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
+    @Pattern(regexp = NamespaceInterface.ID_PATTERN)
     @Size(min = 1, max = 150)
     protected String namespace;
 
@@ -173,7 +174,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
-        Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(Collections.emptyMap());
+        Map<String, Object> incomingMetadata = MapUtils.emptyOnNull(this.metadata);
         Map<String, Object> previousMetadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null);
         Map<String, Object> mergedMetadata = previousMetadata == null
             ? new HashMap<>(incomingMetadata)

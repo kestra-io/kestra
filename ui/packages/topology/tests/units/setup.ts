@@ -16,4 +16,11 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
         dispatchEvent: () => false,
     }) as MediaQueryList
 }
+if (typeof globalThis.ResizeObserver === "undefined") {
+    globalThis.ResizeObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    }
+}
 installMonacoCssEscapePolyfill()

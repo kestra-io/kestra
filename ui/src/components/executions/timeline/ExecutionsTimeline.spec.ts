@@ -98,7 +98,7 @@ const stubs = {
         props: ["type", "title", "description", "closable"],
         template: "<div class=\"ks-alert\" :data-type=\"type\">{{ description }}</div>",
     },
-    KsEmpty: {template: "<div><slot /><slot name=\"description\" /></div>"},
+    KsNoData: {props: ["description"], template: "<div>{{ description }}</div>"},
     KsButton: {template: "<button><slot /></button>"},
 }
 

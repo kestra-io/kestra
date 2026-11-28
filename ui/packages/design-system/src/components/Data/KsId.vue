@@ -58,6 +58,16 @@
     })
 </script>
 
+<style>
+    code.ks-id {
+        color: var(--ks-id-color, var(--ks-text-link));
+    }
+
+    a > code.ks-id {
+        color: var(--ks-id-color, inherit);
+    }
+</style>
+
 <style scoped>
     code.ks-id {
         white-space: nowrap;

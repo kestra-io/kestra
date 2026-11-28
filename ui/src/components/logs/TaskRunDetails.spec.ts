@@ -3,7 +3,7 @@ import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 import {nextTick, reactive} from "vue"
-import KestraDesignSystem from "@kestra-io/design-system"
+import KestraDesignSystem, {KsExecutionStatus} from "@kestra-io/design-system"
 import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 const store = vi.hoisted(() => ({
@@ -33,7 +33,7 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskOutputsInformation: vi.fn().mockResolvedValue([]),
 }))
 const scrollerMocks = vi.hoisted(() => ({
-    scrollCalls: [] as string[],
+    scrollToItemCalls: [] as {taskRunId?: string; index: number}[],
     scrollToItem: vi.fn(),
 }))
 
@@ -45,15 +45,15 @@ vi.mock("vue-virtual-scroller", async () => {
             inheritAttrs: true,
             props: ["items"],
             setup(props, {attrs, slots, expose}) {
-                const scrollToBottom = vi.fn(() => {
+                const scrollToItem = vi.fn((index: number) => {
                     const taskRunId = attrs["data-scroll-key"]
                     if (typeof taskRunId === "string") {
-                        scrollerMocks.scrollCalls.push(taskRunId)
+                        scrollerMocks.scrollToItemCalls.push({taskRunId, index})
                     }
+                    scrollerMocks.scrollToItem(index)
                 })
                 expose({
-                    scrollToBottom,
-                    scrollToItem: scrollerMocks.scrollToItem,
+                    scrollToItem,
                 })
 
                 return () => h("div", attrs, [
@@ -65,6 +65,7 @@ vi.mock("vue-virtual-scroller", async () => {
             },
         }),
         DynamicScrollerItem: defineComponent({
+            inheritAttrs: false,
             setup(_, {slots}) {
                 return () => slots.default?.()
             },
@@ -129,7 +130,7 @@ describe("TaskRunDetails log loading across executions", () => {
     beforeEach(() => {
         vi.useFakeTimers()
         openedStreams = []
-        scrollerMocks.scrollCalls = []
+        scrollerMocks.scrollToItemCalls = []
         scrollerMocks.scrollToItem.mockClear()
         store.executions = reactive({
             execution: undefined,
@@ -316,6 +317,24 @@ describe("TaskRunDetails log loading across executions", () => {
         expect(wrapper.find("[data-test=\"task-run-reused\"]").text()).toBe("reused_task_run.label")
     })
 
+    it("should repeat the task status in the attempt row only when the task ran more than once", async () => {
+        store.executions.loadLogs.mockResolvedValue([
+            {level: "INFO", taskRunId: "tr-once", attemptNumber: 0, message: "once"},
+            {level: "INFO", taskRunId: "tr-retried", attemptNumber: 1, message: "retried"},
+        ])
+        store.executions.execution = {
+            ...execution("exec-1", "SUCCESS"),
+            taskRunList: [
+                {id: "tr-once", taskId: "once", state: {current: "SUCCESS"}, attempts: [{state: {current: "SUCCESS"}}]},
+                {id: "tr-retried", taskId: "retried", state: {current: "SUCCESS"}, attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}]},
+            ],
+        } as ReturnType<typeof execution>
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        expect(wrapper.findAllComponents(KsExecutionStatus)).toHaveLength(3)
+    })
+
     it("should scroll failed task logs to the bottom when subsequent task runs exist", async () => {
         store.executions.loadLogs.mockResolvedValue([
             {
@@ -337,7 +356,7 @@ describe("TaskRunDetails log loading across executions", () => {
         await nextTick()
         await flushPromises()
 
-        expect(scrollerMocks.scrollCalls).toContain("tr-failed")
+        expect(scrollerMocks.scrollToItemCalls).toContainEqual({taskRunId: "tr-failed", index: 1})
 
         wrapper.unmount()
     })

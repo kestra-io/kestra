@@ -13,20 +13,15 @@ const {
     mockCreateDecorationsCollection,
     mockGetEditor,
 } = vi.hoisted(() => {
-    const mockRevealLineInCenter = vi.fn()
-    const mockClearDecoration = vi.fn()
-    const mockCreateDecorationsCollection = vi.fn(() => ({clear: mockClearDecoration}))
-    const mockGetEditor = vi.fn(() => ({
-        revealLineInCenter: mockRevealLineInCenter,
-        createDecorationsCollection: mockCreateDecorationsCollection,
-    }))
-    const mockLoadFlow = vi.fn()
+    const revealLineInCenter = vi.fn()
+    const clearDecoration = vi.fn()
+    const createDecorationsCollection = vi.fn(() => ({clear: clearDecoration}))
     return {
-        mockLoadFlow,
-        mockRevealLineInCenter,
-        mockClearDecoration,
-        mockCreateDecorationsCollection,
-        mockGetEditor,
+        mockLoadFlow: vi.fn(),
+        mockRevealLineInCenter: revealLineInCenter,
+        mockClearDecoration: clearDecoration,
+        mockCreateDecorationsCollection: createDecorationsCollection,
+        mockGetEditor: vi.fn(() => ({revealLineInCenter, createDecorationsCollection})),
     }
 })
 

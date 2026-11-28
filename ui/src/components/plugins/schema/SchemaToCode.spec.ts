@@ -17,11 +17,14 @@ const loaded = ["yaml"]
 
 const highlighter = {
     getLoadedLanguages: () => loaded,
-    codeToHtml: (code: string, {lang}: {lang: string}) => {
+    codeToHast: (code: string, {lang}: {lang: string}) => {
         if (!loaded.includes(lang) && !["", "text", "txt", "plain", "plaintext", "ansi"].includes(lang)) {
             throw new Error(`Language \`${lang}\` not found`)
         }
-        return `<pre data-lang="${lang}">${code}</pre>`
+        return {
+            type: "root",
+            children: [{type: "element", tagName: "pre", properties: {"data-lang": lang}, children: [{type: "text", value: code}]}],
+        }
     },
 }
 

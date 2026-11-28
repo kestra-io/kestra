@@ -112,6 +112,22 @@ describe("CopilotChat", () => {
         expect(mountChat().text()).toContain("Turn your idea into a workflow")
     })
 
+    // The standalone AI Copilot page has no flow open, so its placeholder must not say "this flow".
+    it("uses a flow-agnostic placeholder when no flow is open", () => {
+        const placeholder = mountChat().findComponent({name: "CopilotComposer"}).props("placeholder")
+        expect(placeholder).toBe("I can create or edit flows, generate tests, scaffold related files, or explain how Kestra works.")
+        expect(placeholder).not.toContain("this flow")
+    })
+
+    it.each([
+        ["flows/update/edit", {namespace: "company.team", id: "my-flow"}],
+        ["flows/create", {}],
+    ])("keeps the \"this flow\" placeholder on %s, where a flow is open", (name, params) => {
+        routeStub = {name, params}
+        expect(mountChat().findComponent({name: "CopilotComposer"}).props("placeholder"))
+            .toBe("I can edit this flow, generate tests, scaffold related files, or explain how it works.")
+    })
+
     it("renders one message per transcript entry (and hides the empty state)", () => {
         state.messages.value = [
             {id: "1", role: "USER", type: "TEXT", content: "hi"},
@@ -421,6 +437,20 @@ describe("CopilotChat", () => {
         const alert = w.find("[data-test=\"copilot-notice\"]")
         expect(alert.exists()).toBe(true)
         expect(alert.text()).toContain("The assistant didn't return a response. Please try again.")
+    })
+
+    it("explains an output-limit empty turn without offering a retry", () => {
+        state.notice.value = "outputLimit"
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-notice\"]").text()).toContain("ran out of output tokens")
+        expect(w.find("[data-test=\"copilot-notice-retry\"]").exists()).toBe(false)
+    })
+
+    it("explains a provider-blocked empty turn without offering a retry", () => {
+        state.notice.value = "contentFiltered"
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-notice\"]").text()).toContain("blocked the response")
+        expect(w.find("[data-test=\"copilot-notice-retry\"]").exists()).toBe(false)
     })
 
     it("restores the last conversation on mount", () => {
@@ -775,6 +805,44 @@ describe("CopilotChat", () => {
         expect(mountChat().findComponent(CopilotThreadControls).exists()).toBe(true)
     })
 
+    const suggestionLabels = (w: ReturnType<typeof mountChat>) => w.findAll("[data-test=\"copilot-suggestion\"]").map((s) => s.text())
+
+    // kestra-io/kestra#19071: with no flow in focus (the Copilot home, a list page) the flow prompts act on nothing.
+    it("offers context-free suggestions when no flow is in focus", () => {
+        expect(suggestionLabels(mountChat())).toEqual(["Create a flow that…", "Run a Python script every day", "How do triggers work?"])
+    })
+
+    it("offers the flow suggestions when a flow is in focus", () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        expect(suggestionLabels(mountChat())).toEqual(["Add error handling", "Generate a unit test", "Explain this flow", "Run a dbt pipeline"])
+    })
+
+    it("falls back to the context-free suggestions once the flow is removed from context", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        const w = mountChat()
+        w.findComponent({name: "CopilotContextChip"}).vm.$emit("remove", "flowId")
+        await flushPromises()
+
+        expect(suggestionLabels(w)).toContain("Create a flow that…")
+    })
+
+    it("seeds the composer instead of sending when a suggestion is a sentence to finish", async () => {
+        const w = mountChat()
+        await w.findAll("[data-test=\"copilot-suggestion\"]")[0].trigger("click")
+        await flushPromises()
+
+        expect(state.sendChat).not.toHaveBeenCalled()
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("Create a flow that ")
+    })
+
+    it("sends a complete suggestion straight away", async () => {
+        const w = mountChat()
+        await w.findAll("[data-test=\"copilot-suggestion\"]")[1].trigger("click")
+        await flushPromises()
+
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Run a Python script every day"}))
+    })
+
     // The composer and the quick suggestions stay on screen with no provider, but nothing can be sent.
     it("keeps the regular home with an info notice and disabled controls when no AI provider is configured", async () => {
         miscStore.configs = {isAiApiKeyConfigured: false}
@@ -804,7 +872,8 @@ describe("CopilotChat", () => {
     it("opens the configuration docs in a new tab from the notice", () => {
         miscStore.configs = {isAiApiKeyConfigured: false}
         const docs = mountChat().find("[data-test=\"copilot-unavailable-docs\"]")
-        expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
+        expect(docs.attributes("href")).toContain("kestra.io/docs/develop-with-ai/ai-copilot")
+        expect(docs.attributes("href")).toMatch(/#configure-an-llm-provider$/)
         expect(docs.attributes("target")).toBe("_blank")
     })
 

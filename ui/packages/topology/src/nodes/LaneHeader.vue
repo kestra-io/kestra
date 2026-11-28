@@ -46,6 +46,7 @@
             <span v-if="loopLane && showScope && layout !== 'card'" class="lane-loop-scope">
                 <slot name="loopScope" :uid="laneUid" :lane="loopLane" />
             </span>
+            <DiffBadge :status="diffStatus" />
             <ValidationBadge :issues="validationIssues" />
             <span v-if="stateStyle" class="lane-state" :style="{color: `var(${stateStyle.textVar})`}">
                 <component :is="stateStyle.icon" class="lane-state-icon" />
@@ -87,7 +88,9 @@
     import {buildNodeActions, type ActionableTask, type NodeActionsContext} from "../utils/nodeActions"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import ValidationBadge from "./ValidationBadge.vue"
+    import DiffBadge from "./DiffBadge.vue"
     import {
+        DIFF_INJECTION_KEY,
         EXECUTION_INJECTION_KEY,
         LOD_INJECTION_KEY,
         LOOP_LANES_INJECTION_KEY,
@@ -141,6 +144,7 @@
     function onHeaderClick(event: MouseEvent) {
         const target = event.target as HTMLElement | null
         if (target?.closest("button, [role='button']")) return
+        if (diff?.value && diffStatus.value) diff.value.select(laneUid.value)
         const task = props.taskNode?.task
         if (props.isReadOnly || !task) return
         emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS})
@@ -150,6 +154,8 @@
     const taskCls = computed(() => props.taskNode?.task?.type)
     const typeLabel = computed(() => Utils.flowableName(taskCls.value))
     const laneUid = computed(() => props.taskNode?.uid ?? "")
+    const diff = inject(DIFF_INJECTION_KEY, undefined)
+    const diffStatus = computed(() => diff?.value?.statusByUid.get(laneUid.value))
     const typeTooltip = computed(() => Utils.shortPluginType(taskCls.value))
     const idLabel = computed(() => Utils.afterLastDot(props.taskNode?.uid ?? ""))
     const taskId = computed(() => idLabel.value ?? "")

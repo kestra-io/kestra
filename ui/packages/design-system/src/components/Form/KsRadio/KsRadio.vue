@@ -42,9 +42,12 @@
 
 <style>
     .kel-radio {
+        --kel-radio-input-width: var(--ks-radio-size, 14px);
+        --kel-radio-input-height: var(--ks-radio-size, 14px);
+
         & .kel-radio__inner::after {
-            width: 6px;
-            height: 6px;
+            width: var(--ks-radio-dot-size, 6px);
+            height: var(--ks-radio-dot-size, 6px);
         }
 
         & .kel-radio__input.is-checked + .kel-radio__label {

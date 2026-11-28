@@ -1071,7 +1071,7 @@
     }
 
     async function saveFlow() {
-        const outcome = await flowStore.save?.()
+        const outcome = await flowStore.save?.(true)
         if (outcome === "blocked") {
             coreStore.message = {
                 variant: "error",
@@ -1291,12 +1291,6 @@
     height: 100%;
     width: 100%;
     position: relative;
-
-    /* Anchor the state icon (playground-button) to the node header area, not */
-    /* the full VueFlow node element, so it doesn't overlap plugin UI details. */
-    & :deep(.main-content) {
-        position: relative;
-    }
 }
 
 </style>

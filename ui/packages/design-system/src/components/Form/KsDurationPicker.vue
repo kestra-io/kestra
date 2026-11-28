@@ -54,7 +54,7 @@
             <KsText size="small" :type="durationIssue ? 'danger': ''">
                 {{ durationIssue ?? $t('input_custom_duration') }}
             </KsText>
-            <KsInput type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :disabled="disabled" :placeholder="$t('datepicker.custom duration')" />
+            <KsInput type="text" id="ks-duration-custom" :modelValue="customDuration" @update:modelValue="parseDuration" :disabled="disabled" :placeholder="$t('datepicker.custom duration')" />
         </div>
     </div>
 </template>
@@ -76,22 +76,22 @@
         "update:modelValue": [value: string | null]
     }>()
 
-    const days = ref(0)
-    const hours = ref(0)
-    const minutes = ref(0)
-    const seconds = ref(0)
+    const days = ref<number | undefined>(0)
+    const hours = ref<number | undefined>(0)
+    const minutes = ref<number | undefined>(0)
+    const seconds = ref<number | undefined>(0)
     const customDuration = ref("")
     const durationIssue = ref<string | null>(null)
 
     const serializeDuration = (): string | null => {
         let duration = "P"
-        if (days.value > 0) duration += `${days.value}D`
+        if ((days.value ?? 0) > 0) duration += `${days.value}D`
 
-        if (hours.value > 0 || minutes.value > 0 || seconds.value > 0) {
+        if ((hours.value ?? 0) > 0 || (minutes.value ?? 0) > 0 || (seconds.value ?? 0) > 0) {
             duration += "T"
-            if (hours.value > 0) duration += `${hours.value}H`
-            if (minutes.value > 0) duration += `${minutes.value}M`
-            if (seconds.value > 0) duration += `${seconds.value}S`
+            if ((hours.value ?? 0) > 0) duration += `${hours.value}H`
+            if ((minutes.value ?? 0) > 0) duration += `${minutes.value}M`
+            if ((seconds.value ?? 0) > 0) duration += `${seconds.value}S`
         }
 
         return duration === "P" ? null : duration

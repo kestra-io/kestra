@@ -1,6 +1,6 @@
 const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"
 
-export function isPlainRowActivation(column: {type?: string} | undefined, event: Event): boolean {
+export function isPlainRowActivation(column: {type?: string} | null | undefined, event: Event): boolean {
     if (column?.type === "selection") return false
 
     const click = event as MouseEvent

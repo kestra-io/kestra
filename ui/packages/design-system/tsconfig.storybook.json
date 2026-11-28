@@ -22,5 +22,9 @@
         ".storybook",
         "src"
     ],
-    "exclude": ["src/**/*.test.ts"]
+    "exclude": ["src/**/*.test.ts"],
+    "vueCompilerOptions": {
+        "checkUnknownProps": true,
+        "dataAttributes": ["data-*"]
+    }
 }

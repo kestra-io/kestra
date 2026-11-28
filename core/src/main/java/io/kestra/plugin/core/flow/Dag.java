@@ -21,6 +21,7 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.DagTaskValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -230,7 +231,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput>, OnChildFailur
             .collect(
                 Collectors.toMap(
                     t -> t.getTask().getId(),
-                    t -> t.getDependsOn() != null ? t.getDependsOn() : List.of(),
+                    t -> ListUtils.emptyOnNull(t.getDependsOn()),
                     (first, second) -> first
                 )
             );

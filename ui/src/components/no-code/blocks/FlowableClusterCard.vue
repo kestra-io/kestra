@@ -23,14 +23,13 @@
             <DragVertical
                 v-if="draggable"
                 class="flowable-cluster-grip"
-                :aria-label="$t('block_editor.drag_reorder')"
+                :title="$t('block_editor.drag_reorder')"
                 @mousedown.stop
             />
 
             <component
                 :is="expanded ? ChevronDown : ChevronRight"
                 class="flowable-cluster-chevron"
-                aria-hidden="true"
             />
 
             <TaskIcon
@@ -170,6 +169,10 @@
         "Switch": ["cases", "defaults", "errors", "finally"],
         "Parallel": ["tasks", "errors", "finally"],
         "Sequential": ["tasks", "errors", "finally"],
+        "Loop": ["tasks", "errors", "finally"],
+        "LoopUntil": ["tasks", "errors", "finally"],
+        "AllowFailure": ["tasks", "errors", "finally"],
+        "WorkingDirectory": ["tasks", "errors", "finally"],
         "ForEach": ["tasks", "errors", "finally"],
         "EachSequential": ["tasks", "errors", "finally"],
         "Dag": ["tasks", "errors", "finally"],

@@ -3,6 +3,7 @@ package io.kestra.webserver.rooting;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.webserver.utils.RequestUtils;
@@ -54,7 +55,7 @@ public class TenantAliasingRooter extends DefaultRouter {
         boolean excluded = EXCLUDED_ROUTES.stream().anyMatch(route -> route.matcher(apiPath).matches());
         if (apiPath.startsWith("/api/v1/") && !excluded) {
             String strippedContextPath = rawPath.substring(0, rawPath.length() - apiPath.length());
-            String rewrittenRawPath = strippedContextPath + apiPath.replaceFirst("^/api/v1", "/api/v1/" + getTenantId());
+            String rewrittenRawPath = strippedContextPath + apiPath.replaceFirst("^/api/v1", Matcher.quoteReplacement("/api/v1/" + getTenantId()));
             URI updatedUri = new URI(rebuildRawUri(request, rewrittenRawPath));
             return super.findClosest(request.toMutableRequest().uri(updatedUri));
         }

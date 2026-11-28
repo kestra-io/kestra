@@ -1,5 +1,5 @@
 import {execFileSync} from "node:child_process"
-import {readdirSync, readFileSync, writeFileSync} from "node:fs"
+import {readdirSync, readFileSync} from "node:fs"
 import {createRequire} from "node:module"
 import {dirname, join, relative} from "node:path"
 import {fileURLToPath} from "node:url"
@@ -92,46 +92,7 @@ export function merge(script, template) {
     return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
 }
 
-export function compare(baseline, current, renames = {}) {
-    const added = [], removed = []
-    for (const file of new Set([...Object.keys(baseline), ...Object.keys(current)])) {
-        const was = baseline[file] ?? 0, now = current[file] ?? 0
-        if (now > was) added.push({file, was, now})
-        if (now < was) removed.push({file, was, now})
-    }
-
-    // A file git reports as moved is not a new file, so its entry follows the path instead of reading as new `any`.
-    const moved = []
-    for (const arrival of [...added]) {
-        const from = renames[arrival.file]
-        const departure = from && removed.find(({file, now}) => file === from && now === 0)
-        if (!departure) continue
-        removed.splice(removed.indexOf(departure), 1)
-        // A move that also gains an `any` stays new `any`, reported against the count it arrived with.
-        if (departure.was < arrival.now) {
-            Object.assign(arrival, {was: departure.was, from: departure.file})
-            continue
-        }
-        added.splice(added.indexOf(arrival), 1)
-        moved.push({file: arrival.file, was: departure.was, now: arrival.now, from: departure.file})
-    }
-    return {added, removed, moved}
-}
-
-/**
- * What to do about a comparison: `write` updates the baseline, `fail` refuses with a reason, `ok` leaves it alone.
- * Raising a count is the one move that hides an `any`, so it takes both flags; everything else only needs `--write`.
- */
-export function decide({added, removed, moved = [], write, acceptNewAny}) {
-    if (added.length && !(write && acceptNewAny)) return {action: "fail", reason: "added", files: added}
-    const stale = [...removed, ...moved]
-    if (!write) return stale.length ? {action: "fail", reason: "stale", files: stale} : {action: "ok"}
-    if (!added.length && !stale.length) return {action: "ok"}
-    return {action: "write", raised: added.length > 0, files: [...added, ...stale]}
-}
-
-// Resolved from the working directory, not from this file, so ui-ee runs its own oxlint against its
-// own baseline while sharing the script the way the translation tooling does.
+// Resolved from the working directory, not from this file, so ui-ee runs its own oxlint while sharing the script the way the translation tooling does.
 function lint(paths) {
     const require = createRequire(join(process.cwd(), "package.json"))
     const manifest = require.resolve("oxlint/package.json")
@@ -200,92 +161,19 @@ function annotate(file, message) {
     if (process.env.GITHUB_ACTIONS === "true") console.log(`::error file=${file}::${message}`)
 }
 
-/**
- * Renames git knows about, as new path -> old path relative to `cwd`: the ones committed on this branch since it
- * left `origin/develop`, then the staged ones, so a rename is followed whether or not a hook ran before the commit.
- */
-export function knownRenames(cwd = process.cwd()) {
-    const renames = {}
-    // `-z` throughout: it separates fields with NUL and leaves paths unquoted, so a space or a non-ASCII
-    // character in a filename does not arrive C-escaped inside quotes.
-    const git = (args) => execFileSync("git", args, {cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]}).split("\0")
-    let prefix
-    try {
-        prefix = git(["rev-parse", "--show-prefix"])[0].trim()
-    } catch {
-        return renames
-    }
-    const record = (from, to) => {
-        if (to?.startsWith(prefix) && from?.startsWith(prefix)) renames[to.slice(prefix.length)] = from.slice(prefix.length)
-    }
-    // Both walkers step record by record rather than scanning for an `R`: a path is a field of its own here, and
-    // `README.md` would otherwise be read as a rename status.
-    try {
-        // `R<score>`, old path, new path. What this branch renamed in the commits it added to origin/develop.
-        const fields = git(["diff", "--name-status", "-M", "-z", "origin/develop...HEAD"])
-        for (let i = 0; fields[i]; ) {
-            const pair = fields[i].startsWith("R") || fields[i].startsWith("C")
-            if (pair) record(fields[i + 1], fields[i + 2])
-            i += pair ? 3 : 2
-        }
-    } catch {
-        // Nothing to compare with (a shallow clone, a fork without origin/develop): only staged renames are known.
-    }
-    try {
-        // `XY <new path>`, then the old path in a field of its own, the reverse of the `->` order.
-        const fields = git(["status", "--porcelain=v1", "-M", "-z"])
-        for (let i = 0; fields[i]; ) {
-            const pair = fields[i].startsWith("R") || fields[i].startsWith("C")
-            if (pair) record(fields[i + 1], fields[i].slice(3))
-            i += pair ? 2 : 1
-        }
-    } catch {
-        // A concurrent git holding the index lock, most often: a rename is then simply not followed.
-    }
-    return renames
-}
-
 function main() {
-    const write = process.argv.includes("--write")
-    const acceptNewAny = process.argv.includes("--accept-new-any")
     const paths = process.argv.slice(2).filter((arg) => !arg.startsWith("--"))
-    const baselinePath = join(process.cwd(), "scripts", "explicit-any", "baseline.json")
     const current = merge(countByFile(lint(paths)), templateCounts(paths))
-    const summary = `${Object.values(current).reduce((sum, n) => sum + n, 0)} explicit any in ${Object.keys(current).length} files`
-    let baseline
-    try {
-        baseline = JSON.parse(readFileSync(baselinePath, "utf8"))
-    } catch (error) {
-        console.error(`Cannot read ${baselinePath}: ${error.message}`)
-        process.exit(2)
-    }
-    const {added, removed, moved} = compare(baseline, current, knownRenames())
-    const line = ({file, was, now, from}) =>
-        from ? `  ${file}: moved from ${from}, ${was === now ? `still ${now}` : `${was} -> ${now}`}` : `  ${file}: ${was} -> ${now}${now === 0 ? " (removed from the baseline)" : ""}`
-    const {action, reason, files, raised} = decide({added, removed, moved, write, acceptNewAny})
+    const files = Object.entries(current)
 
-    if (action === "ok") {
-        console.log(`No change against the baseline: ${summary}.`)
+    if (!files.length) {
+        console.log("No explicit any.")
         return
     }
 
-    if (action === "fail" && reason === "added") {
-        console.error(`New \`any\` in ${files.length} file(s). Type the value, do not raise the baseline.\n${files.map(line).join("\n")}`)
-        for (const {file, was, now} of files) annotate(file, `explicit any went from ${was} to ${now}; type the value instead of raising the baseline`)
-        process.exit(1)
-    }
-
-    if (action === "fail") {
-        console.error(`The baseline is out of date for ${files.length} file(s). Run \`npm run check:ts-any -- --write\` so it follows the code.\n${files.map(line).join("\n")}`)
-        for (const {file, was, now, from} of files) {
-            annotate(file, from ? `moved from ${from}; run check:ts-any --write so the baseline follows` : `explicit any went from ${was} to ${now}; run check:ts-any --write to update the baseline`)
-        }
-        process.exit(1)
-    }
-
-    const verb = raised ? "Raised" : files.every(({from}) => from) ? "Updated" : "Lowered"
-    writeFileSync(baselinePath, `${JSON.stringify(current, null, 2)}\n`)
-    console.log(`${verb} the baseline for ${files.length} file(s), now ${summary}:\n${files.map(line).join("\n")}`)
+    console.error(`Explicit \`any\` in ${files.length} file(s). Type the value, or use \`unknown\` and narrow it.\n${files.map(([file, n]) => `  ${file}: ${n}`).join("\n")}`)
+    for (const [file, n] of files) annotate(file, `${n} explicit any; type the value, or use unknown and narrow it`)
+    process.exit(1)
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main()

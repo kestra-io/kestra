@@ -1,19 +1,43 @@
 package io.kestra.webserver.services.ai;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.model.chat.listener.ChatModelListener;
 
+import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.services.ai.amazon.bedrock.AmazonBedrockAiService;
+import io.kestra.webserver.services.ai.amazon.bedrock.AmazonBedrockConfiguration;
+import io.kestra.webserver.services.ai.anthropic.AnthropicAiService;
+import io.kestra.webserver.services.ai.anthropic.AnthropicConfiguration;
+import io.kestra.webserver.services.ai.azure.openai.AzureOpenAiAiService;
+import io.kestra.webserver.services.ai.azure.openai.AzureOpenAiConfiguration;
+import io.kestra.webserver.services.ai.deepseek.DeepSeekAiService;
+import io.kestra.webserver.services.ai.deepseek.DeepSeekConfiguration;
+import io.kestra.webserver.services.ai.gemini.FreeTierGeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiConfiguration;
+import io.kestra.webserver.services.ai.gemini.vertexai.GoogleVertexAiAiService;
+import io.kestra.webserver.services.ai.gemini.vertexai.GoogleVertexAiConfiguration;
+import io.kestra.webserver.services.ai.mistralai.MistralAiAiService;
+import io.kestra.webserver.services.ai.mistralai.MistralAiConfiguration;
+import io.kestra.webserver.services.ai.ollama.OllamaAiService;
+import io.kestra.webserver.services.ai.ollama.OllamaConfiguration;
+import io.kestra.webserver.services.ai.openai.OpenAiAiService;
+import io.kestra.webserver.services.ai.openai.OpenAiConfiguration;
+import io.kestra.webserver.services.ai.openrouter.OpenRouterAiService;
+import io.kestra.webserver.services.ai.openrouter.OpenRouterConfiguration;
 import io.kestra.webserver.services.posthog.PosthogService;
 
 import io.micronaut.context.env.Environment;
@@ -42,24 +66,26 @@ public class AiServiceManager {
         AiProvidersConfiguration providersConfiguration,
         Environment environment,
         // inject dependencies needed for AiService
-        io.kestra.core.plugins.PluginRegistry pluginRegistry,
-        io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
+        PluginRegistry pluginRegistry,
+        JsonSchemaGenerator jsonSchemaGenerator,
         VersionProvider versionProvider,
         InstanceService instanceService,
         PosthogService posthogService,
-        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        List<ChatModelListener> listeners,
         @Nullable NamespaceContextTool namespaceContextTool,
         @Nullable KestraDocsContextTool kestraDocsContextTool,
         ExpressionContextService expressionContextService,
-        FlowParsingService flowParsingService) {
+        FlowParsingService flowParsingService,
+        AiFreeTierConfiguration freeTierConfiguration,
+        @Nullable AiFreeTierLimitProvider freeTierLimitProvider) {
         this.providersConfiguration = providersConfiguration;
         this.expressionContextService = expressionContextService;
         this.flowParsingService = flowParsingService;
         this.namespaceContextTool = namespaceContextTool;
         this.kestraDocsContextTool = kestraDocsContextTool;
 
-        List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
-            providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
+        List<AiProviderConfiguration> configs = new ArrayList<>(
+            ListUtils.emptyOnNull(providersConfiguration.providers())
         );
         int declaredProviderCount = configs.size();
 
@@ -108,16 +134,84 @@ public class AiServiceManager {
             aiServices.put(provider.id(), aiService);
             hasConfiguredProvider = true;
         }
+
+        // Gated on whether a provider was *declared*, not on whether one could be built: falling back because
+        // an operator's own provider had a bad key would send their prompts and flow source off-instance on
+        // account of an unrelated misconfiguration.
+        if (configs.isEmpty()) {
+            registerFreeTier(
+                freeTierConfiguration, freeTierLimitProvider, pluginRegistry, jsonSchemaGenerator, versionProvider,
+                instanceService, posthogService, listeners, expressionContextService, flowParsingService
+            );
+        } else if (!hasConfiguredProvider) {
+            log.warn(
+                "{} AI provider(s) are configured but none could be created, so Copilot is unavailable. The "
+                    + "hosted free tier is deliberately not used as a substitute: fix the provider configuration, "
+                    + "or remove it to fall back to the free tier.",
+                configs.size()
+            );
+        }
+    }
+
+    /**
+     * Falls back to Kestra's hosted provider so an instance with no key of its own still has a Copilot.
+     * Reached only when nothing else is configured, so it can never divert traffic away from a chosen key.
+     */
+    private void registerFreeTier(
+        AiFreeTierConfiguration freeTier,
+        @Nullable AiFreeTierLimitProvider limitProvider,
+        PluginRegistry pluginRegistry,
+        JsonSchemaGenerator jsonSchemaGenerator,
+        VersionProvider versionProvider,
+        InstanceService instanceService,
+        PosthogService posthogService,
+        List<ChatModelListener> listeners,
+        ExpressionContextService expressionContextService,
+        FlowParsingService flowParsingService
+    ) {
+        if (freeTier == null || !freeTier.isEnabled()) {
+            log.debug("No AI provider is configured and the hosted free tier is disabled; Copilot stays unavailable.");
+            return;
+        }
+
+        // Unset fields take the record's defaults; the relay decides the thinking budget, so naming one here
+        // would only be overridden. No api key either — the relay presents its own credential, and langchain4j
+        // omits the header entirely when it is null.
+        GeminiConfiguration configuration = GeminiConfiguration.builder()
+            .baseUrl(freeTier.getBaseUrl())
+            .apiKey(null)
+            .modelName(AiFreeTierConfiguration.MODEL_NAME)
+            .thinkingEnabled(true)
+            .timeout(freeTier.getTimeout())
+            .build();
+
+        aiServices.put(
+            AiFreeTierConfiguration.PROVIDER_ID,
+            new FreeTierGeminiAiService(
+                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService,
+                this.namespaceContextTool, AiFreeTierConfiguration.DISPLAY_NAME, listeners, configuration,
+                expressionContextService, flowParsingService, limitProvider
+            )
+        );
+        defaultProviderId = AiFreeTierConfiguration.PROVIDER_ID;
+        hasConfiguredProvider = true;
+
+        log.debug(
+            "No AI provider is configured; Copilot will use Kestra's hosted free tier at {}. Prompts, flow "
+                + "source and tool results are sent there. Configure kestra.ai to use your own provider, or set "
+                + "kestra.ai.free-tier.enabled to false to turn this off.",
+            freeTier.getBaseUrl()
+        );
     }
 
     protected AiServiceInterface createAiService(
         AiProviderConfiguration provider,
-        io.kestra.core.plugins.PluginRegistry pluginRegistry,
-        io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
+        PluginRegistry pluginRegistry,
+        JsonSchemaGenerator jsonSchemaGenerator,
         VersionProvider versionProvider,
         InstanceService instanceService,
         PosthogService posthogService,
-        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        List<ChatModelListener> listeners,
         ExpressionContextService expressionContextService,
         FlowParsingService flowParsingService) {
         String type = provider.type();
@@ -127,22 +221,57 @@ public class AiServiceManager {
             return null;
         }
 
-        if (!"gemini".equals(type)) {
-            throw new IllegalArgumentException(
-                "Unsupported AI provider type '" + type + "' for Kestra OSS. Only 'gemini' is supported. " +
-                    "Other providers (openai, anthropic, ollama, etc.) require Kestra Enterprise Edition."
-            );
-        }
-
         try {
             ObjectMapper mapper = JacksonMapper.ofJson().copy()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
-            AiService<?> service = new GeminiAiService(
-                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners, geminiConfig,
-                expressionContextService, flowParsingService
-            );
+            AiService<?> service = switch (type) {
+                case "gemini" -> new GeminiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, GeminiConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "openai" -> new OpenAiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, OpenAiConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "anthropic" -> new AnthropicAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, AnthropicConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "ollama" -> new OllamaAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, OllamaConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "open-router" -> new OpenRouterAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, OpenRouterConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "mistralai" -> new MistralAiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, MistralAiConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "bedrock" -> new AmazonBedrockAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, AmazonBedrockConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "deepseek" -> new DeepSeekAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, DeepSeekConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "azure-openai" -> new AzureOpenAiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, AzureOpenAiConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "googlevertexai" -> new GoogleVertexAiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, GoogleVertexAiConfiguration.class), expressionContextService, flowParsingService
+                );
+                default -> null;
+            };
+            if (service == null) {
+                log.warn("Unknown AI provider type '{}' for provider '{}'.", type, provider.id());
+                return null;
+            }
             if (this.kestraDocsContextTool != null) {
                 service.setKestraDocsContextTool(this.kestraDocsContextTool);
             }

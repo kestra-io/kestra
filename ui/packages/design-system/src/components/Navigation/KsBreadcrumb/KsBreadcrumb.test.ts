@@ -110,7 +110,7 @@ describe("KsBreadcrumb", () => {
         })
         await flushPromises()
 
-        await wrapper.findAll("[data-testid=\"breadcrumb-segment\"]")[0].trigger("mouseenter")
+        await wrapper.findAll("[data-testid=\"breadcrumb-segment\"]")[1].trigger("mouseenter")
         await new Promise((resolve) => setTimeout(resolve, 200))
         await flushPromises()
 
@@ -182,6 +182,7 @@ describe("KsBreadcrumbMenu", () => {
         expect(children).not.toHaveBeenCalled()
 
         menuEntries()[0].dispatchEvent(new MouseEvent("mouseenter"))
+        await new Promise((resolve) => setTimeout(resolve, 170))
         await flushPromises()
 
         expect(children).toHaveBeenCalledTimes(1)
@@ -198,6 +199,22 @@ describe("KsBreadcrumbMenu", () => {
         await flushPromises()
 
         expect(wrapper.find("[data-testid=\"breadcrumb-menu-trigger\"]").attributes("aria-expanded")).toBe("false")
+        wrapper.unmount()
+    })
+
+    test("offers a lazy menu without loading it, then loads it once it opens", async () => {
+        const load = Object.assign(vi.fn().mockResolvedValue([{label: "daily", link: "/daily"}]), {lazy: true})
+        const wrapper = i18nMount(KsBreadcrumbMenu, {locales, props: {load, ariaLabel: "Other entries"}, global: globalConfig, attachTo: document.body})
+        await flushPromises()
+
+        expect(wrapper.find("[data-testid=\"breadcrumb-menu-trigger\"]").exists()).toBe(true)
+        expect(load).not.toHaveBeenCalled()
+
+        await wrapper.find("[data-testid=\"breadcrumb-segment\"]").trigger("mouseenter")
+        await new Promise((resolve) => setTimeout(resolve, 200))
+        await flushPromises()
+
+        expect(labels()).toEqual(["daily"])
         wrapper.unmount()
     })
 })

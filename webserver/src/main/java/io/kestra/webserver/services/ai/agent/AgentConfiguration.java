@@ -23,6 +23,9 @@ import lombok.Builder;
  *        new turns are rejected with 429 rather than queued. A cost/provider-load guardrail: turns run
  *        on virtual threads, so the thread count is a non-issue and this knob purely bounds concurrent
  *        provider load (default 32).
+ * @param maxToolResultChars the default maximum size, in characters, of one tool result. A larger result fails
+ *        that tool call instead of being sent to the model. A provider can override it with a
+ *        {@code maxToolResultChars} entry in its own configuration (default 100000).
  * @param maxContextTurns the maximum number of most-recent turns replayed into the model context each
  *        turn; older turns stay persisted for history but are windowed out of the prompt. Windowing is
  *        by whole turns (grouped on {@code traceId}) so tool-call/result pairs are never split
@@ -46,6 +49,7 @@ public record AgentConfiguration(
     @Bindable(defaultValue = "25") int maxSequentialToolsInvocations,
     @Bindable(defaultValue = "50") int maxTurnsPerThread,
     @Bindable(defaultValue = "32") int maxConcurrentTurns,
+    @Bindable(defaultValue = "100000") int maxToolResultChars,
     @Bindable(defaultValue = "10") int maxContextTurns,
     @Bindable(defaultValue = "PT1H") Duration inMemoryConversationTtl,
     @Bindable(defaultValue = "50") int maxInMemoryConversations,

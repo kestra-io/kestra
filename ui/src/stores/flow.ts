@@ -1,5 +1,5 @@
 import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+import {escapeHtml, KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
@@ -14,7 +14,7 @@ import {InputType} from "../utils/inputs"
 import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/utils/transform"
 import {useAuthStore} from "override/stores/auth"
-import {useRoute} from "vue-router"
+import {useRoute, type Router} from "vue-router"
 import type {
     AbstractTrigger,
     Flow as SdkFlow,
@@ -34,6 +34,7 @@ import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analyti
 import type {KestraHttpError} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {confirmOutdatedSave} from "../utils/confirmOutdatedSave"
+import {latestRequest} from "../utils/latestRequest"
 
 const textYamlHeader = {
     headers: {
@@ -198,9 +199,9 @@ export const useFlowStore = defineStore("flow", () => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
-    // Publishing a draft, or demoting a flow to a draft, is a save even when the source is unchanged.
+    // Publishing a draft is a save even when the source is unchanged; a draft of an unchanged flow keeps nothing.
     function hasPendingSave(draft: boolean) {
-        return isCreating.value || haveChange.value || draft !== (flow.value?.draft ?? false)
+        return isCreating.value || haveChange.value || (!draft && (flow.value?.draft ?? false))
     }
 
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
@@ -262,8 +263,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (target) {
             const data = await loadFlow({namespace: target.namespace, id: target.id, store: false})
             if (!data?.source) return "blocked"
-            await saveFlow({flow: data.source, draft: false})
-            notifySaved(data.id, false)
+            notifySaved(await saveFlow({flow: data.source, draft: false}), false)
             return "saved"
         }
         if (!flowYaml.value && flow.value?.source) {
@@ -334,14 +334,17 @@ export const useFlowStore = defineStore("flow", () => {
 
     const toast = makeToast(t)
 
-    function notifySaved(name: string, draft: boolean) {
+    function notifySaved(saved: Flow, draft: boolean) {
         if (draft) {
             toast.success(
-                t("saved as draft done", {name}),
+                t("saved as draft done", {name: saved.id}),
                 t("saved as draft"),
             )
         } else {
-            toast.saved(name)
+            toast.success(
+                t("flow_publish.done", {name: saved.id, revision: saved.revision}),
+                t("flow_publish.done_title"),
+            )
         }
     }
 
@@ -401,7 +404,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (isCreating.value && !overrideFlow) {
             try {
                 const response = await createFlow({flow: flowSource ?? "", draft})
-                notifySaved(response.id, draft)
+                notifySaved(response, draft)
                 isCreating.value = false
             } catch (error: unknown) {
                 // Branch on the problem type alone. The status is deliberately not checked, so this keeps
@@ -415,7 +418,7 @@ export const useFlowStore = defineStore("flow", () => {
                         showCancelButton: true,
                     }).then(async () => {
                         const response = await saveFlow({flow: flowSource, draft})
-                        notifySaved(response.id, draft)
+                        notifySaved(response, draft)
                         isCreating.value = false
                         return true
                     })
@@ -433,7 +436,7 @@ export const useFlowStore = defineStore("flow", () => {
         } else {
             await saveFlow({flow: flowSource, draft})
                 .then((response: Flow) => {
-                    notifySaved(response.id, draft)
+                    notifySaved(response, draft)
                 })
         }
 
@@ -482,20 +485,20 @@ export const useFlowStore = defineStore("flow", () => {
 
     /** Sequence number for committing searches: a response that is no longer the newest may
      * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
-    let latestFlowSearch = 0
+    const startFlowSearch = latestRequest()
 
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findFlows(options: FlowSearchOptions & { onlyTotal: true }): Promise<number>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow | number> {
-        const search = options.commit === false ? undefined : ++latestFlowSearch
+        const isLatestSearch = options.commit === false ? undefined : startFlowSearch()
         return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
                 return response.total
             }
 
             else {
-                if (options.commit !== false && search === latestFlowSearch) {
+                if (isLatestSearch?.()) {
                     flows.value = response.results
                     total.value = response.total ?? 0
                 }
@@ -713,7 +716,7 @@ export const useFlowStore = defineStore("flow", () => {
         return request
     }
 
-function deleteFlowAndDependencies() {
+function deleteFlowAndDependencies(router: Router) {
     const metadataForDelete = flowYamlMetadata.value
 
     return FlowsAPI.flowDependencies({namespace: metadataForDelete.namespace ?? "", id: metadataForDelete.id ?? "", destinationOnly: true})
@@ -728,25 +731,26 @@ function deleteFlowAndDependencies() {
                                 n.id === metadataForDelete.id
                             ),
                     )
-                    .map(
-                        (n) =>
-                            "<li>" +
-                            n.namespace +
-                            ".<code>" +
-                            n.id +
-                            "</code></li>",
-                    )
+                    .map((n) => {
+                        const {href} = router.resolve({
+                            name: "flows/update/overview",
+                            params: {
+                                tenant: router.currentRoute.value.params.tenant,
+                                namespace: n.namespace,
+                                id: n.id,
+                            },
+                        })
+                        return `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.namespace)}.<code>${escapeHtml(n.id)}</code></a></li>`
+                    })
                     .join("\n")
 
                 if (deps.length) {
                     warning =
-                        "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
-                        "<p style=\"margin: 0;\">\n" +
+                        "\n\n<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n\n" +
                         t("dependencies delete flow") +
-                        "<ul>\n" +
+                        "\n\n<ul>\n" +
                         deps +
-                        "</ul>\n" +
-                        "</p>\n" +
+                        "\n</ul>\n\n" +
                         "</div>"
                 }
             }
@@ -858,6 +862,31 @@ function deleteFlowAndDependencies() {
         })
     }
 
+    const hasPublishedRevision = ref<boolean>()
+    const publishedRevisionFlowKey = ref<string>()
+    const isDraftOnly = computed(() => Boolean(flow.value?.draft) && hasPublishedRevision.value === false)
+    const startPublishedRevisionCheck = latestRequest()
+
+    async function loadHasPublishedRevision(target: Flow) {
+        const isLatest = startPublishedRevisionCheck()
+        const key = `${target.namespace}/${target.id}`
+        const setHasPublishedRevision = (value: boolean | undefined) => {
+            hasPublishedRevision.value = value
+            publishedRevisionFlowKey.value = key
+        }
+        // a new draft of the same flow keeps the published revision under it, so there is nothing to refetch
+        if (publishedRevisionFlowKey.value === key && (hasPublishedRevision.value || (hasPublishedRevision.value === false && target.draft))) return
+        if (!target.draft || target.revision === 1) {
+            setHasPublishedRevision(!target.draft)
+            return
+        }
+        setHasPublishedRevision(undefined)
+        const flowRevisions = await loadRevisions({namespace: target.namespace, id: target.id, store: false})
+        if (isLatest()) {
+            setHasPublishedRevision(flowRevisions.some(revision => !revision.draft))
+        }
+    }
+
     function loadFlowStats(options: { namespace: string, id: string }) {
         return Promise.allSettled([
             loadRevisions({namespace: options.namespace, id: options.id, store: false}),
@@ -870,10 +899,10 @@ function deleteFlowAndDependencies() {
         dependenciesCount.value = undefined
     }
 
-    let latestValidation = 0
+    const startValidation = latestRequest()
 
     function validateFlow(options: { flow: string }) {
-        const validation = ++latestValidation
+        const isLatestValidation = startValidation()
         let creationDenied: string | undefined
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata<ParsedFlow>(options.flow)
@@ -894,7 +923,7 @@ function deleteFlowAndDependencies() {
                 }
 
                 // A response overtaken by a newer validation describes a source the editor no longer holds.
-                if (validation === latestValidation) {
+                if (isLatestValidation()) {
                     flowValidation.value = validResults
                 }
                 return validResults
@@ -1094,6 +1123,8 @@ function deleteFlowAndDependencies() {
         invalidGraph,
         revisions,
         revisionsCount,
+        hasPublishedRevision,
+        isDraftOnly,
         dependenciesCount,
         filesSaveAll,
         hasDirtyEditorFiles,
@@ -1137,6 +1168,7 @@ function deleteFlowAndDependencies() {
         fetchGraph,
         getGraphFromSourceResponse,
         loadRevisions,
+        loadHasPublishedRevision,
         loadFlowStats,
         clearFlowStats,
         validateFlow,

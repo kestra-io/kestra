@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect, waitFor, within} from "storybook/test"
 import {ref} from "vue"
+import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
 import KsTag, {KS_TAG_TONES} from "./KsTag.vue"
 
 const meta: Meta<typeof KsTag> = {
@@ -254,4 +255,53 @@ export const Truncated: Story = {
         expect(canvas.getByText("short").scrollWidth).toBe(canvas.getByText("short").clientWidth)
     },
     parameters: {controls: {disable: true}},
+}
+
+/** `--ks-tag-close-color` colours the close glyph at rest, set on the tag or an ancestor; hover still firms it to the default icon colour */
+export const CloseColor: Story = {
+    render: () => ({
+        components: {KsTag},
+        template: `
+            <div style="padding:24px;display:flex;gap:8px;--ks-tag-close-color:var(--ks-text-primary)">
+                <ks-tag closable type="primary">Tag 1</ks-tag>
+                <ks-tag closable>Tag 2</ks-tag>
+                <span data-test="reference" style="color:var(--ks-text-primary)" />
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const reference = getComputedStyle(canvasElement.querySelector("[data-test=reference]")!).color
+        for (const close of canvasElement.querySelectorAll(".kel-tag__close")) {
+            await expect(getComputedStyle(close).color).toBe(reference)
+        }
+    },
+}
+
+/** Font: `--ks-tag-font-size` and `--ks-tag-font-weight` set the label and its icon, set on a container of tags (the plugin documentation lists use xs regular) */
+export const Font: Story = {
+    render: () => ({
+        components: {KsTag, EyeOutline},
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;align-items:center;--ks-tag-font-size:var(--ks-font-size-xs);--ks-tag-font-weight:var(--ks-font-weight-regular)">
+                <ks-tag>string</ks-tag>
+                <ks-tag type="info">
+                    HttpConfiguration
+                    <template #icon>
+                        <eye-outline />
+                    </template>
+                </ks-tag>
+                <span data-test="reference" style="font-size:var(--ks-font-size-xs);font-weight:var(--ks-font-weight-regular)">reference</span>
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        const reference = getComputedStyle(canvasElement.querySelector("[data-test=reference]")!)
+        for (const content of canvasElement.querySelectorAll(".kel-tag__content")) {
+            await expect(getComputedStyle(content).fontSize).toBe(reference.fontSize)
+            await expect(getComputedStyle(content).fontWeight).toBe(reference.fontWeight)
+        }
+        await expect(canvasElement.querySelector(".material-design-icon")!.getBoundingClientRect().height).toBe(parseFloat(reference.fontSize))
+    },
 }

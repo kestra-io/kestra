@@ -20,7 +20,7 @@
 
     <section class="content" v-ks-loading="!blueprint">
         <template v-if="blueprint">
-            <KsCard>
+            <KsCard :bodyStyle="{padding: '0'}">
                 <KsEditor
                     v-bind="editorBindings"
                     class="editor-container"
@@ -131,10 +131,6 @@
         flex-direction: column;
         gap: var(--ks-spacing-4);
         min-height: 100%;
-
-        & :deep(.kel-card__body) {
-            padding: 0;
-        }
 
         .markdown {
             padding: var(--ks-spacing-7) var(--ks-spacing-4) var(--ks-spacing-6);

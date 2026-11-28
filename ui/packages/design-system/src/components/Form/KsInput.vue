@@ -3,7 +3,7 @@
         ref="elInputRef"
         v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         :modelValue="modelValue"
-        :class="{'ks-input--reserve-clear': reserveClearSpace, 'ks-input--borderless': borderless, 'ks-input--highlight': highlight}"
+        :class="{'ks-input--reserve-clear': reserveClearSpace, 'ks-input--borderless': borderless, 'ks-input--highlight': highlight, 'ks-input--thin-scrollbar': thinScrollbar}"
         @update:modelValue="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
@@ -32,11 +32,14 @@
         borderless?: boolean
         /** Pulses the focus ring once, to point at the field a page has just opened on. */
         highlight?: boolean
+        /** Gives a textarea a thin rounded scrollbar, where the pointer is coarse and the app's own scrollbar style does not apply. */
+        thinScrollbar?: boolean
     }
 </script>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, ref, type InputHTMLAttributes} from "vue"
     import {ElInput} from "element-plus"
     import {usePassedProps} from "../../utils/filteredProps"
 
@@ -50,7 +53,7 @@
         select: () => elInputRef.value?.select(),
     })
 
-    const props = defineProps<KsInputProps>()
+    const props = defineProps<KsInputProps & /* @vue-ignore */ (Omit<NativeAttributes<InputHTMLAttributes>, keyof KsInputProps> & {onInput?: (value: string) => void})>()
 
     // ElInput emits strings only, whatever type the bound value has.
     const emit = defineEmits<{
@@ -65,7 +68,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = usePassedProps(props, ["borderless", "highlight", "modelValue"])
+    const filteredProps = usePassedProps(props, ["borderless", "highlight", "thinScrollbar", "modelValue"])
 
     const reserveClearSpace = computed(() =>
         Boolean(props.clearable) && !props.showPassword && !props.suffixIcon && !slots.suffix,
@@ -79,12 +82,26 @@
 
 <style>
     .kel-textarea, .kel-input {
-        --kel-input-border-color: var(--ks-border-strong);
-        --kel-input-hover-border-color: var(--ks-border-strong);
-        --kel-input-bg-color: var(--ks-bg-input);
+        --kel-input-border-color: var(--ks-input-border-color, var(--ks-border-strong));
+        --kel-input-hover-border-color: var(--ks-input-border-color, var(--ks-border-strong));
+        --kel-input-focus-border-color: var(--ks-input-border-color, var(--kel-color-primary));
+        --kel-input-bg-color: var(--ks-input-bg-color, var(--ks-bg-input));
+        --kel-input-icon-color: var(--ks-input-icon-color, var(--kel-text-color-placeholder));
+        --kel-input-text-color: var(--ks-input-text-color, var(--kel-text-color-regular));
+        --kel-input-border-radius: var(--ks-input-radius, var(--kel-border-radius-base));
+    }
+
+    .kel-input__wrapper {
+        height: var(--ks-input-wrapper-height, auto);
+        border: var(--ks-input-border, none);
+    }
+
+    .kel-input__inner {
+        padding-inline-end: var(--ks-input-inner-padding-end, 0);
     }
 
     .kel-input__inner, .kel-textarea__inner {
+        font-size: var(--ks-input-font-size, inherit);
         font-variant-ligatures: none;
     }
 
@@ -155,6 +172,19 @@
                 inset-block: 0;
                 inset-inline-end: var(--ks-spacing-3);
             }
+        }
+    }
+
+    .ks-input--thin-scrollbar .kel-textarea__inner {
+        &::-webkit-scrollbar {
+            width: 0.5rem;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--ks-scrollbar-content);
+            background-clip: padding-box;
+            border: 2px solid transparent;
+            border-radius: 999px;
         }
     }
 

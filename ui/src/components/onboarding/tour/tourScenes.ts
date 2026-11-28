@@ -41,6 +41,9 @@ export interface TourScene<A = TourActions> {
     id: string;
     step: number;
     targetSelector?: string;
+    /** What the card must stay off even when the target fills the page; not highlighted. */
+    avoid?: string;
+    /** The corner tried first; the card leaves it for one covering neither `avoid` nor the target. */
     placement?: "left";
     dim?: boolean;
     milestone?: boolean;
@@ -117,6 +120,8 @@ const GANTT = "[data-onboarding-target=\"execution-gantt\"], #gantt"
 const FAILED_LOG = `.log-row-error, .task-details, ${GANTT}`
 const REPLAYED_TASK = `.task-details, ${GANTT}`
 const REVISION_DIFF = ".revision .ks-editor, .revision-select"
+const REVISION_CHANGES = ".revision .line-insert, .revision .line-delete"
+const EXECUTION_LABELS = ".labels-container"
 const TEST_EVENT_BUTTON = "[data-onboarding-target=\"trigger-test-event-button\"]"
 const EXPRESSION_DEBUGGER = ".expression-debugger .button"
 
@@ -213,6 +218,7 @@ export const TOUR_SCENES: TourScene[] = [
         id: "fix_and_replay",
         step: 2,
         targetSelector: REVISION_DIFF,
+        avoid: REVISION_CHANGES,
         placement: "left",
         enter: async ({actions}) => {
             await actions.saveSource(tourFlowSource.withFixedNotify())
@@ -337,6 +343,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "chain",
         step: 4,
+        avoid: EXECUTION_LABELS,
         milestone: true,
         confetti: true,
         enter: ({actions}) => actions.openExecutionsList(),

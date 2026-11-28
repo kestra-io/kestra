@@ -3,17 +3,20 @@ import {reactive, ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
-const mockRoute = reactive({
+const mockRoute = reactive<{
+    query: Record<string, string | string[] | undefined>
+    params: Record<string, string | undefined>
+    meta: Record<string, unknown>
+}>({
     query: {q: "first-query"},
     params: {},
     meta: {},
 })
 
 const search = vi.fn()
-const searchFlowSuggestion = vi.fn()
 
 const store = reactive({
-    suggestedQuery: null,
+    suggestedQuery: null as string | null,
     flows: {
         status: "done",
         results: [],
@@ -35,11 +38,11 @@ const store = reactive({
     filesNamespacesTotal: 0,
     filesNamespacesFailed: [],
     search,
-    searchFlowSuggestion,
+    searchSuggestion: vi.fn(),
     reset: vi.fn(),
     retryNamespaceFiles: vi.fn(),
     truncatedFor: vi.fn(() => false),
-    countFor: vi.fn(() => 0),
+    countFor: vi.fn((_type?: string) => 0),
     totalFor: vi.fn(() => 0),
     resourceCountFor: vi.fn(() => 0),
     statusFor: vi.fn(() => "idle"),
@@ -141,6 +144,48 @@ describe("FlowsSearch", () => {
 
         // The stale search must not clear the loading state.
         expect(wrapper.find("[data-test=\"source-search-loading\"]").exists()).toBe(true)
+
+        wrapper.unmount()
+    })
+
+    it("dispatches suggestion for empty types in a partial match and renders the suggestion banner", async () => {
+        search.mockResolvedValueOnce(1)
+        mockRoute.query = {q: "eu-west-2", types: "flows,secrets"}
+        store.countFor = vi.fn((type?: string) => (type === "flows" ? 2 : 0))
+        store.flows.results = [{namespace: "ns", id: "flow", editable: true, matches: [{line: 1, column: 1, snippet: "eu-west-2"}]}] as never
+
+        const wrapper = i18nMount(FlowsSearch, {
+            messages: {
+                source_search: {
+                    did_you_mean: "Did you mean {suggestion}?",
+                },
+            },
+            global: {
+                stubs: {
+                    TopNavBar: true,
+                    NamespaceSelect: true,
+                    SourceSearchResults: true,
+                    SourceSearchPreview: true,
+                },
+            },
+        })
+
+        await flushPromises()
+
+        expect(store.searchSuggestion).toHaveBeenCalledWith(
+            expect.objectContaining({
+                query: "eu-west-2",
+                types: ["secrets"],
+            }),
+            1,
+        )
+
+        store.suggestedQuery = "eu_west_2"
+        await flushPromises()
+
+        const banner = wrapper.find("[data-test=\"source-search-suggestion-banner\"]")
+        expect(banner.exists()).toBe(true)
+        expect(banner.find("[data-test=\"source-search-suggestion-button\"]").text()).toBe("eu_west_2")
 
         wrapper.unmount()
     })

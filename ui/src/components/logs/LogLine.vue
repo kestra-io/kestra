@@ -15,7 +15,7 @@
             @click="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.enter="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.space.prevent="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
-        ><KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
+        ><KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="sm">
             <MenuRight />
         </KsIcon>{{ levelLabel }}</span>
         <div class="log-content">
@@ -271,7 +271,7 @@ div.line {
     .icon_container {
         position: absolute;
         top: 50%;
-        left: calc(-0.6rem - var(--ks-spacing-3));
+        left: calc(-0.1rem - var(--ks-spacing-3));
         transform: translateY(-50%);
         z-index: 1;
         pointer-events: none;
@@ -371,7 +371,7 @@ div.line {
         margin-top: 2px;
     }
 
-    & :deep(.clipboard) {
+    & .log-copy {
         position: static;
         flex: none;
         opacity: 0;
@@ -379,7 +379,7 @@ div.line {
         transition: opacity 0.15s ease-in-out;
     }
 
-    &:hover :deep(.clipboard) {
+    &:hover .log-copy {
         opacity: 1;
         pointer-events: auto;
     }
@@ -417,7 +417,7 @@ div.line {
         }
 
         .icon_container {
-            left: calc(-0.6rem - var(--ks-spacing-3) - 1px);
+            left: calc(-0.1rem - var(--ks-spacing-3) - 1px);
         }
 
         .log-header {

@@ -143,6 +143,22 @@ class CachedFlowMetaStoreTest {
     }
 
     @Test
+    void shouldCacheLatestRevisionWhenOlderRevisionIsRequestedOnCacheMiss() {
+        // GIVEN
+        FlowWithSource flowV4 = Fixtures.defaultFlow().toBuilder().revision(4).build();
+        ((InMemoryFlowMetaStore) delegate).add(flowV4);
+        ((InMemoryFlowMetaStore) delegate).add(flowV4.toBuilder().revision(5).build());
+
+        // WHEN
+        Optional<FlowWithSource> requested = cachedStore.find(FlowId.of(flowV4.getTenantId(), flowV4.getNamespace(), flowV4.getId(), 4));
+
+        // THEN
+        assertThat(requested.orElseThrow().getRevision()).isEqualTo(4);
+        Optional<FlowWithSource> latest = cachedStore.find(FlowId.of(flowV4.getTenantId(), flowV4.getNamespace(), flowV4.getId(), null));
+        assertThat(latest.orElseThrow().getRevision()).isEqualTo(5);
+    }
+
+    @Test
     void shouldReturnEmptyWhenFlowNotFound() {
         // GIVEN
         FlowId flowId = FlowId.of("tenant", "namespace", "nonexistent", null);
@@ -299,6 +315,51 @@ class CachedFlowMetaStoreTest {
 
         // THEN - cache should only contain flows for vNode 0
         assertThat(cachedStore2.cacheSize()).isLessThanOrEqualTo(initialSize);
+    }
+
+    @Test
+    void shouldLoadAllVNodesWithOneDelegateCall() {
+        // GIVEN
+        InMemoryFlowMetaStore delegate2 = spy(new InMemoryFlowMetaStore(2, List.of(Fixtures.defaultFlow())));
+        CachedFlowMetaStore cachedStore2 = new CachedFlowMetaStore(delegate2, new SchedulerConfiguration(2, Duration.ofSeconds(5), 100));
+
+        // WHEN
+        cachedStore2.init(Set.of(0, 1));
+
+        // THEN
+        verify(delegate2, times(1)).findAllForVNodes(any());
+        verify(delegate2).findAllForVNodes(Set.of(0, 1));
+        assertThat(cachedStore2.cacheSize()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldDropFlowOnRefreshWhenLatestRevisionIsDeleted() {
+        // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow().toBuilder().revision(3).build();
+        ((InMemoryFlowMetaStore) delegate).add(flow);
+        cachedStore.init(Set.of(0));
+        ((InMemoryFlowMetaStore) delegate).add(flow.toBuilder().revision(4).deleted(true).build());
+
+        // WHEN
+        cachedStore.refresh(FlowId.of(flow.getTenantId(), flow.getNamespace(), flow.getId(), null));
+
+        // THEN
+        assertThat(cachedStore.findAllForVNodes(Set.of(0))).isEmpty();
+    }
+
+    @Test
+    void shouldCacheLatestRevisionOnRefresh() {
+        // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow().toBuilder().revision(3).build();
+        ((InMemoryFlowMetaStore) delegate).add(flow);
+        cachedStore.init(Set.of(0));
+        ((InMemoryFlowMetaStore) delegate).add(flow.toBuilder().revision(4).build());
+
+        // WHEN
+        cachedStore.refresh(FlowId.of(flow.getTenantId(), flow.getNamespace(), flow.getId(), null));
+
+        // THEN
+        assertThat(cachedStore.findAllForVNodes(Set.of(0))).extracting(FlowWithSource::getRevision).containsExactly(4);
     }
 
     // -------------------------------------------------------------------------

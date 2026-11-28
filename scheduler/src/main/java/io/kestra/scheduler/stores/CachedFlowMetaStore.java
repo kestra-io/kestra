@@ -1,5 +1,6 @@
 package io.kestra.scheduler.stores;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -7,7 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -63,7 +64,9 @@ public class CachedFlowMetaStore implements FlowMetaStore {
         // If cache missed
         if (cached == null) {
             Optional<FlowWithSource> state = delegate.find(flowId);
-            state.ifPresent(
+            // Caching an older revision would make it the one every lookup without a revision returns.
+            Optional<FlowWithSource> latest = flowId.getRevision() == null ? state : delegate.find(FlowId.of(flowId.getTenantId(), flowId.getNamespace(), flowId.getId(), null));
+            latest.ifPresent(
                 s -> partitionedCache
                     .computeIfAbsent(vNode, k -> newCache())
                     .put(cacheKey, s)
@@ -90,6 +93,23 @@ public class CachedFlowMetaStore implements FlowMetaStore {
             }
         });
         return maybeNewRevision;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void refresh(FlowId flowId) {
+        final int vNode = VNodes.computeVNodeFromFlow(flowId, schedulerConfiguration.vnodes());
+        Cache<String, FlowWithSource> cache = partitionedCache.get(vNode);
+        if (cache == null) {
+            return;
+        }
+
+        final String cacheKey = FlowId.uidWithoutRevision(flowId);
+        delegate.find(FlowId.of(flowId.getTenantId(), flowId.getNamespace(), flowId.getId(), null))
+            .filter(flow -> !flow.isDeleted())
+            .ifPresentOrElse(flow -> cache.put(cacheKey, flow), () -> cache.invalidate(cacheKey));
     }
 
     /**
@@ -146,23 +166,29 @@ public class CachedFlowMetaStore implements FlowMetaStore {
     }
 
     private void loadCacheForAllVNodes(final Set<Integer> vNodes) {
-        long start = System.currentTimeMillis();
-        LOG.debug("Loading flows for vNodes {}", vNodes);
-        // Create or warm up caches for new vNodes
-        AtomicInteger count = new AtomicInteger(0);
-        for (Integer vnode : vNodes) {
-            partitionedCache.computeIfAbsent(vnode, key ->
-            {
-
-                Cache<String, FlowWithSource> cache = newCache();
-
-                List<FlowWithSource> states = delegate.findAllForVNodes(Set.of(vnode));
-                states.forEach(state -> cache.put(FlowId.uidWithoutRevision(state), state));
-                count.addAndGet(states.size());
-                return cache;
-            });
+        Set<Integer> missing = vNodes.stream()
+            .filter(vNode -> !partitionedCache.containsKey(vNode))
+            .collect(Collectors.toSet());
+        if (missing.isEmpty()) {
+            return;
         }
-        LOG.debug("{} flows loaded for vNodes {} in {}ms", count, vNodes, System.currentTimeMillis() - start);
+
+        long start = System.currentTimeMillis();
+        LOG.debug("Loading flows for vNodes {}", missing);
+        Map<Integer, Cache<String, FlowWithSource>> loaded = HashMap.newHashMap(missing.size());
+        missing.forEach(vNode -> loaded.put(vNode, newCache()));
+
+        // One call for all vNodes, since the repository reads every flow whatever the vNodes asked for.
+        List<FlowWithSource> flows = delegate.findAllForVNodes(missing);
+        flows.forEach(flow ->
+        {
+            Cache<String, FlowWithSource> cache = loaded.get(VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()));
+            if (cache != null) {
+                cache.put(FlowId.uidWithoutRevision(flow), flow);
+            }
+        });
+        loaded.forEach(partitionedCache::putIfAbsent);
+        LOG.debug("{} flows loaded for vNodes {} in {}ms", flows.size(), missing, System.currentTimeMillis() - start);
     }
 
     public void clear() {

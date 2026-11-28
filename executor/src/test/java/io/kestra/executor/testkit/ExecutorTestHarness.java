@@ -3,15 +3,15 @@ package io.kestra.executor.testkit;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
-import io.kestra.core.repositories.*;
 import org.mockito.Mockito;
 
-import io.kestra.core.assets.AssetService;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.KestraContext;
@@ -30,15 +30,19 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+import io.kestra.core.notification.AsyncOperationAggregator;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.repositories.*;
+import io.kestra.core.runners.ApprovalRequestHandler;
+import io.kestra.core.runners.DisabledAssetInputResolver;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
+import io.kestra.core.runners.ExecutionTerminatedNotifier;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.runners.MultipleConditionEvent;
-import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -54,17 +58,18 @@ import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.services.WorkerQueueService;
@@ -98,7 +103,6 @@ import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultListener;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
@@ -131,6 +135,9 @@ public final class ExecutorTestHarness {
     private final SLAMonitorProcessor slaMonitorProcessor;
     private final List<Runnable> loops = new ArrayList<>();
     private final List<Trace.Emission> journal = new ArrayList<>();
+    private final List<ExecutionTerminatedNotifier> executionTerminatedNotifiers = new ArrayList<>(
+        List.of(execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)))
+    );
     private int workerJobsAnswered = 0;
 
     // in-memory fakes
@@ -214,6 +221,7 @@ public final class ExecutorTestHarness {
             taskOutputRepository,
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
+            Mockito.mock(NamespaceService.class),
             new TaskOutputConfiguration(-1)
         );
         this.executionOutputService = new ExecutionOutputService(
@@ -221,6 +229,7 @@ public final class ExecutorTestHarness {
             Mockito.mock(SearchableDataRepositoryInterface.class),
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
+            Mockito.mock(NamespaceService.class),
             new ExecutionOutputConfiguration(-1)
         );
         // Real Pebble engine without Micronaut: the mocked ApplicationContext returns no Extension
@@ -248,7 +257,8 @@ public final class ExecutorTestHarness {
             new EncryptionConfig(null),
             new DisabledReusableInputsExpander(),
             new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false)),
-            Mockito.mock(SearchableDataRepositoryInterface.class)
+            Mockito.mock(SearchableDataRepositoryInterface.class),
+            new DisabledAssetInputResolver()
         );
         ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
         {
@@ -339,7 +349,6 @@ public final class ExecutorTestHarness {
             killQueue,
             loopExecutionEventQueue,
             runContextLoggerFactory,
-            new AssetService.NoopAssetService(),
             Mockito.mock(RunContextInitializer.class),
             taskOutputService,
             executionOutputService,
@@ -483,7 +492,7 @@ public final class ExecutorTestHarness {
             loopExecutionEventQueue,
             executionStatisticQueue,
             triggerEventQueue,
-            execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)),
+            executionTerminatedNotifiers,
             executionCommandMessageHandler,
             executionEventMessageHandler,
             workerTaskResultMessageHandler,
@@ -496,7 +505,8 @@ public final class ExecutorTestHarness {
 
         // the production DefaultExecutor over same-thread pools and hand-ticked loops
         ScheduledExecutorService scheduledExecutorService = Mockito.mock(ScheduledExecutorService.class);
-        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation -> {
+        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation ->
+        {
             loops.add(invocation.getArgument(0));
             return Mockito.mock(ScheduledFuture.class);
         });
@@ -525,10 +535,16 @@ public final class ExecutorTestHarness {
             executorCore,
             new MaintenanceService.NoopMaintenanceService(),
             multipleConditionStateStore,
-            metricRegistry
+            metricRegistry,
+            Mockito.mock(AsyncOperationAggregator.class)
         );
         executor.initMetrics();
         executor.run();
+    }
+
+    public ExecutorTestHarness notifyExecutionTerminatedFirstTo(ExecutionTerminatedNotifier notifier) {
+        executionTerminatedNotifiers.addFirst(notifier);
+        return this;
     }
 
     /**
@@ -619,6 +635,13 @@ public final class ExecutorTestHarness {
         return emittedSince(from);
     }
 
+    public List<Trace.Emission> tickSlaMonitors(Instant now) {
+        clock.set(now);
+        int from = journal.size();
+        loops.get(1).run();
+        return emittedSince(from);
+    }
+
     public Trace run(Execution execution, ScriptedWorker worker) {
         return run(List.of(execution), worker);
     }
@@ -651,11 +674,13 @@ public final class ExecutorTestHarness {
     @SuppressWarnings("unchecked")
     private static BeanProvider<StickyWorkerRouting> stickyWorkerRouting() {
         StickyWorkerRouting routing = Mockito.mock(StickyWorkerRouting.class);
-        Mockito.when(routing.route(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(invocation -> new WorkerJobEvent(
-            invocation.getArgument(1),
-            invocation.getArgument(0),
-            new WorkerJobEvent.StickyRouting(invocation.getArgument(2), StickyWorkerRouting.routingKey(0))
-        ));
+        Mockito.when(routing.route(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(
+            invocation -> new WorkerJobEvent(
+                invocation.getArgument(1),
+                invocation.getArgument(0),
+                new WorkerJobEvent.StickyRouting(invocation.getArgument(2), StickyWorkerRouting.routingKey(0))
+            )
+        );
         BeanProvider<StickyWorkerRouting> provider = Mockito.mock(BeanProvider.class);
         Mockito.when(provider.get()).thenReturn(routing);
         return provider;

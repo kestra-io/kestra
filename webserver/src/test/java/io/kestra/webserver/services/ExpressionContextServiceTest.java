@@ -304,9 +304,9 @@ class ExpressionContextServiceTest {
     void buildGlobalExpressionContextShouldContainOnlyFiltersAndFunctions() {
         ExpressionContext result = expressionContextService.buildGlobalExpressionContext();
 
-        assertThat(result.categories()).containsOnlyKeys(
-            ExpressionCategory.FILTERS,
-            ExpressionCategory.FUNCTIONS
+        assertThat(result.toMap()).containsOnlyKeys(
+            ExpressionCategory.FILTERS.key(),
+            ExpressionCategory.FUNCTIONS.key()
         );
         assertThat(result.categories().get(ExpressionCategory.FILTERS)).isNotEmpty();
         assertThat(result.categories().get(ExpressionCategory.FUNCTIONS)).isNotEmpty();

@@ -38,7 +38,8 @@
 </script>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
     import {ElDialog} from "element-plus"
     import KsScrollbar from "../Basic/KsScrollbar.vue"
     import {usePassedProps} from "../../utils/filteredProps"
@@ -48,7 +49,7 @@
 
     const model = defineModel<boolean>({default: false})
 
-    const props = withDefaults(defineProps<KsDialogProps>(), {
+    const props = withDefaults(defineProps<KsDialogProps & /* @vue-ignore */ (Omit<NativeAttributes<HTMLAttributes>, keyof KsDialogProps> & {onOpened?: () => void, onClosed?: () => void})>(), {
         large: false,
         formLayout: false,
         fill: false,
@@ -99,8 +100,8 @@
         }
 
         & .kel-form-item__label {
-            font-size: var(--ks-font-size-md);
-            font-weight: var(--ks-font-weight-semibold);
+            font-size: var(--ks-form-item-label-font-size, var(--ks-font-size-md));
+            font-weight: var(--ks-form-item-label-font-weight, var(--ks-font-weight-semibold));
         }
 
         & .kel-dialog__header {

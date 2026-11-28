@@ -1,5 +1,6 @@
 package io.kestra.core.plugins.endpoint;
 
+import io.kestra.core.utils.MapUtils;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +14,7 @@ public record DefaultPluginEndpointContext(
     ScopedStorage storage
 ) implements PluginEndpointContext {
     public DefaultPluginEndpointContext {
-        parameters = parameters == null ? Map.of() : parameters;
-        body = body == null ? Map.of() : body;
+        parameters = MapUtils.emptyOnNull(parameters);
+        body = MapUtils.emptyOnNull(body);
     }
 }

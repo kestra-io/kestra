@@ -1,11 +1,11 @@
 <template>
     <div class="error-wrapper">
-        <KsAlert id="error" type="error" :closable="false">
+        <KsAlert id="error" type="error" :closable="false" fill>
             <template #title>
-                <span>{{ $t('execution_failed') }}</span>
+                <span class="title">{{ $t('execution_failed') }}</span>
             </template>
 
-            <div v-if="logs.length">
+            <div v-if="logs.length" class="body">
                 <p v-if="!expanded" class="error-preview">
                     {{ $t('last error was') }}: {{ stripBackticks(linkTagsAsText(logs.at(-1)?.message ?? '')) }}
                 </p>
@@ -20,7 +20,7 @@
                     </div>
                     <div v-if="logs.length >= MAX_PREVIEW_LOGS" class="link">
                         <router-link :to @click.stop>
-                            <KsButton>{{ $t("errorLogs") }}</KsButton>
+                            <KsButton class="errors-button">{{ $t("errorLogs") }}</KsButton>
                         </router-link>
                     </div>
                 </div>
@@ -77,19 +77,31 @@
         },
     }
 
+    const failedAt = (state?: {histories?: {state?: string; date?: string}[]}) =>
+        new Date(state?.histories?.findLast(history => history.state === "FAILED")?.date ?? 0).getTime()
+
+    /** The task run that failed first: errors and finally tasks run after it and would otherwise hide its error. */
+    const firstFailedTaskRunId = props.execution.taskRunList
+        ?.filter(taskRun => taskRun.state?.current === "FAILED")
+        .sort((a, b) => failedAt(a.state) - failedAt(b.state))[0]?.id
+
+    const loadErrorLogs = (taskRunId?: string) => store.loadLogs({
+        store: false,
+        executionId: props.execution.id,
+        filters: [
+            {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+            ...(taskRunId ? [{field: "taskRunId" as const, operation: "EQUALS" as const, value: taskRunId}] : []),
+        ],
+        size: MAX_PREVIEW_LOGS,
+        sort: ["timestamp:desc"],
+    })
+
     onMounted(async () => {
         try {
             // Only the last MAX_PREVIEW_LOGS errors are ever shown, so ask the server
             // for just those (newest first) instead of the full error log list.
-            const response = await store.loadLogs({
-                store: false,
-                executionId: props.execution.id,
-                filters: [
-                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
-                ],
-                size: MAX_PREVIEW_LOGS,
-                sort: ["timestamp:desc"],
-            })
+            let response = firstFailedTaskRunId ? await loadErrorLogs(firstFailedTaskRunId) : []
+            if (!response.length) response = await loadErrorLogs()
 
             if (response.length) logs.value = [...response].reverse()
         } catch (e: unknown) {
@@ -138,55 +150,38 @@
         min-width: 0;
         overflow: hidden;
 
-        & :deep(.kel-alert__content) {
-            min-width: 0;
-            width: 100%;
-            gap: 0;
+        & .title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding-right: var(--ks-spacing-7);
+            font-size: var(--kel-alert-title-font-size);
+            line-height: 1.5;
+            color: var(--ks-text-error);
+        }
 
-            .kel-alert__title > div,
-            .kel-alert__title > span {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: var(--kel-alert-title-font-size);
-                line-height: 1.5;
-                color: var(--ks-text-error);
+        & .body {
+            padding-right: var(--ks-spacing-7);
+            color: var(--ks-text-primary);
+        }
+
+        & .logs {
+            --ks-button-link-color: var(--ks-text-error);
+            padding-top: var(--ks-spacing-5);
+
+            & > div {
+                width: 100%;
             }
 
-            .kel-alert__description {
-                min-width: 0;
-                overflow: hidden;
-                color: var(--ks-text-primary);
-
-                .logs {
-                    padding-top: var(--ks-spacing-5);
-
-                    & > div {
-                        width: 100%;
-                    }
-
-                    .line .header {
-                        display: flex;
-                        flex-wrap: wrap;
-                        margin-bottom: var(--ks-spacing-2);
-
-                        span {
-                            margin-left: 0;
-                        }
-                    }
-
-                    .kel-button {
-                        color: var(--ks-text-error);
-                    }
-
-                    .link {
-                        padding: var(--ks-spacing-4) 0 var(--ks-spacing-2);
-                        border-top: 1px solid var(--ks-border-default);
-                        text-align: right;
-                    }
-                }
+            .link {
+                padding: var(--ks-spacing-4) 0 var(--ks-spacing-2);
+                border-top: 1px solid var(--ks-border-default);
+                text-align: right;
             }
+        }
+
+        & .errors-button {
+            color: var(--ks-text-error);
         }
     }
 </style>

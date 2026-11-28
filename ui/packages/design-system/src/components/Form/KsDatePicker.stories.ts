@@ -156,3 +156,25 @@ export const ClearableNoReflow: Story = {
         await expect(editor.getBoundingClientRect().width).toBe(widthBefore)
     },
 }
+
+/** Font size: `--ks-input-font-size` sets the text of the field, for single dates and ranges alike */
+export const FontSize: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsDatePicker},
+        setup() { return {date: ref(new Date(2026, 0, 15)), range: ref([new Date(2026, 0, 1), new Date(2026, 0, 31)])} },
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px;width:360px;--ks-input-font-size:var(--ks-font-size-sm)">
+                <ks-date-picker v-model="date" type="date" />
+                <ks-date-picker v-model="range" type="daterange" />
+                <span data-test="reference" style="font-size:var(--ks-font-size-sm)">reference</span>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const reference = getComputedStyle(canvasElement.querySelector("[data-test=reference]")!).fontSize
+        for (const input of canvasElement.querySelectorAll("input")) {
+            await expect(getComputedStyle(input).fontSize).toBe(reference)
+        }
+    },
+}

@@ -26,11 +26,11 @@
                         <div class="popup-meta">
                             <code v-if="taskType" data-test="task-run-popup-type">{{ taskType }}</code>
                             <span v-if="histories.length" class="popup-meta-item" data-test="task-run-popup-duration">
-                                <KsIcon size="xs"><TimerOutline /></KsIcon>
+                                <KsIcon size="sm"><TimerOutline /></KsIcon>
                                 <Duration :histories="histories" :interval="100" :attemptCount="attemptCount" :subject="taskId" />
                             </span>
                             <span class="popup-meta-item" data-test="task-run-popup-attempt">
-                                <KsIcon size="xs"><SourceBranch /></KsIcon>
+                                <KsIcon size="sm"><SourceBranch /></KsIcon>
                                 {{ $t("attempt") }} {{ attemptCount }}
                             </span>
                         </div>
@@ -41,7 +41,7 @@
                     <KsDropdown v-if="currentTaskRuns.length > 1" trigger="click" :persistent="true">
                         <KsButton data-test="task-run-popup-picker">
                             {{ currentIterationLabel }}
-                            <KsIcon size="xs"><ChevronDown /></KsIcon>
+                            <KsIcon size="sm"><ChevronDown /></KsIcon>
                         </KsButton>
                         <template #dropdown>
                             <KsDropdownMenu>
@@ -62,7 +62,6 @@
                             :execution="execution"
                             :taskRun="currentTaskRun"
                             :attemptIndex="attemptIndex"
-                            @follow="emit('follow', $event)"
                         />
                     </span>
                     <span class="popup-action">
@@ -72,7 +71,6 @@
                             :execution="execution"
                             :taskRun="currentTaskRunWithExecution"
                             :attemptIndex="attemptIndex"
-                            @follow="emit('follow', $event)"
                         />
                     </span>
                     <span class="popup-action">
@@ -172,7 +170,7 @@
                     <div class="tab-body">
                         <MetricsTable :key="currentTaskRun.id" :taskRunId="currentTaskRun.id" :execution="execution">
                             <template #empty>
-                                <KsEmpty :imageSize="96" :description="$t('no metrics available')" />
+                                <KsNoData :description="$t('no metrics available')" />
                             </template>
                         </MetricsTable>
                     </div>
@@ -218,10 +216,9 @@
                                 {{ $t("task_run_popup.retry") }}
                             </KsButton>
                         </KsAlert>
-                        <KsEmpty
+                        <KsNoData
                             v-else-if="outputsCount === 0"
                             class="tab-empty"
-                            :imageSize="96"
                             :description="$t('no outputs available')"
                             data-test="task-run-popup-outputs-empty"
                         />
@@ -247,10 +244,9 @@
                     </template>
                     <div class="tab-body tab-body--fill">
                         <KsSkeleton v-if="artifactsStatus === 'loading'" animated :rows="4" data-test="task-run-popup-artifacts-loading" />
-                        <KsEmpty
+                        <KsNoData
                             v-else-if="!selectedArtifact"
                             class="tab-empty"
-                            :imageSize="96"
                             :description="$t('task_run_popup.no_artifacts')"
                             data-test="task-run-popup-artifacts-empty"
                         />

@@ -7,6 +7,8 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElInputNumber, type InputNumberProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -25,7 +27,7 @@
         placeholder?: string
         controls?: boolean
         controlsPosition?: "" | "right"
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         min: undefined,
         max: undefined,
         step: undefined,

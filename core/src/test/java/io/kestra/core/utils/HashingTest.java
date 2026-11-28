@@ -12,6 +12,11 @@ class HashingTest {
     }
 
     @Test
+    void shouldReturnSha256HexDigest() {
+        assertEquals("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", Hashing.sha256Hex("abc"));
+    }
+
+    @Test
     void shouldReturnConsistentHashLong() {
         assertEquals(Hashing.hashToLong("random"), 8668895776616456786L);
     }

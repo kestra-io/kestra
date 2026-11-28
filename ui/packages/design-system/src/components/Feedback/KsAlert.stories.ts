@@ -203,9 +203,18 @@ export const Closable: Story = {
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
                 <ks-alert type="info" title="Dismiss this" :closable="true" />
                 <ks-alert type="warning" title="Dismiss this too" :closable="true" />
+                <div style="width:360px">
+                    <ks-alert data-test="long-title" type="warning" title="Three deployment leases expire within seven days, and three more have already expired." :closable="true" />
+                </div>
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const alert = canvasElement.querySelector("[data-test='long-title']")!
+        const close = alert.querySelector(".kel-alert__close-btn")!.getBoundingClientRect()
+        const title = alert.querySelector(".kel-alert__title")!.getBoundingClientRect()
+        await expect(title.right).toBeLessThan(close.left)
+    },
 }
 
 /** An action on the right of the title, such as the button that acts on what the alert reports. */
@@ -228,9 +237,34 @@ export const WithAction: Story = {
         for (const alert of canvasElement.querySelectorAll(".kel-alert")) {
             const title = alert.querySelector(".ks-alert-title-text")!.getBoundingClientRect()
             const action = alert.querySelector(".ks-alert-action")!.getBoundingClientRect()
-            const content = alert.querySelector(".kel-alert__content")!.getBoundingClientRect()
+            const contentElement = alert.querySelector(".kel-alert__content")!
+            const contentEnd = contentElement.getBoundingClientRect().right - parseFloat(getComputedStyle(contentElement).paddingRight)
             await expect(action.left).toBeGreaterThan(title.right)
-            await expect(Math.round(content.right - action.right)).toBeLessThanOrEqual(1)
+            await expect(Math.round(contentEnd - action.right)).toBeLessThanOrEqual(1)
+            const close = alert.querySelector(".kel-alert__close-btn")?.getBoundingClientRect()
+            if (close) await expect(action.right).toBeLessThan(close.left)
         }
+    },
+}
+
+export const Fill: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsAlert},
+        template: `
+            <div style="padding:24px;max-width:480px">
+                <ks-alert type="error" fill>
+                    <template #title>
+                        <span style="display:flex;justify-content:space-between"><span>Execution failed</span><span>3 errors</span></span>
+                    </template>
+                    <div>last error was: a_very_long_unbroken_identifier_that_would_otherwise_widen_the_alert_past_its_container</div>
+                </ks-alert>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const alert = canvasElement.querySelector(".kel-alert")!.getBoundingClientRect()
+        const content = canvasElement.querySelector(".kel-alert__content")!.getBoundingClientRect()
+        await expect(content.right).toBeLessThanOrEqual(alert.right)
     },
 }

@@ -21,8 +21,8 @@ class FlowForExecutionTest {
         // Given
         Flow flow = flow()
             .outputs(List.of(
-                Output.builder().id("orderIds").type(Type.STRING).value("{{ outputs.log.secret }}").searchable(true).required(false).description("Orders").build(),
-                Output.builder().id("plain").type(Type.INT).value(42).build()
+                Output.builder().id("orderIds").type(OutputType.STRING).value("{{ outputs.log.secret }}").searchable(true).required(false).description("Orders").build(),
+                Output.builder().id("plain").type(OutputType.INT).value(42).build()
             ))
             .build();
 
@@ -33,7 +33,7 @@ class FlowForExecutionTest {
         assertThat(forExecution.getOutputs()).hasSize(2).allSatisfy(output -> assertThat(output).isInstanceOf(OutputForExecution.class));
         Output orderIds = forExecution.getOutputs().getFirst();
         assertThat(orderIds.getId()).isEqualTo("orderIds");
-        assertThat(orderIds.getType()).isEqualTo(Type.STRING);
+        assertThat(orderIds.getType()).isEqualTo(OutputType.STRING);
         assertThat(orderIds.getSearchable()).isTrue();
         assertThat(orderIds.getRequired()).isFalse();
         assertThat(orderIds.getDescription()).isEqualTo("Orders");

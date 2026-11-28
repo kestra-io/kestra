@@ -113,18 +113,26 @@
             </template>
 
             <template #bulk-actions>
-                <KsButton v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
-                    {{ $t("change state") }}
-                </KsButton>
-                <KsButton v-if="canRestart" :icon="Restart" @click="isOpenRestartModal = !isOpenRestartModal">
-                    {{ $t("restart") }}
-                </KsButton>
-                <KsButton v-if="canReplay" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
-                    {{ $t("replay") }}
-                </KsButton>
-                <KsButton v-if="canKill" :icon="StopCircleOutline" @click="killExecutions()">
-                    {{ $t("kill") }}
-                </KsButton>
+                <KsTooltip v-if="canUpdate" :content="bulkActionTooltip(action.UPDATE)" :disabled="!bulkActionTooltip(action.UPDATE)">
+                    <KsButton :icon="StateMachine" :disabled="bulkActionDisabled(action.UPDATE)" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                        {{ $t("change state") }}
+                    </KsButton>
+                </KsTooltip>
+                <KsTooltip v-if="canRestart" :content="bulkActionTooltip(action.RESTART)" :disabled="!bulkActionTooltip(action.RESTART)">
+                    <KsButton :icon="Restart" :disabled="bulkActionDisabled(action.RESTART)" @click="isOpenRestartModal = !isOpenRestartModal">
+                        {{ $t("restart") }}
+                    </KsButton>
+                </KsTooltip>
+                <KsTooltip v-if="canReplay" :content="bulkActionTooltip(action.REPLAY)" :disabled="!bulkActionTooltip(action.REPLAY)">
+                    <KsButton :icon="PlayBoxMultiple" :disabled="bulkActionDisabled(action.REPLAY)" @click="isOpenReplayModal = !isOpenReplayModal">
+                        {{ $t("replay") }}
+                    </KsButton>
+                </KsTooltip>
+                <KsTooltip v-if="canKill" :content="bulkActionTooltip(action.KILL)" :disabled="!bulkActionTooltip(action.KILL)">
+                    <KsButton :icon="StopCircleOutline" :disabled="bulkActionDisabled(action.KILL)" @click="killExecutions()">
+                        {{ $t("kill") }}
+                    </KsButton>
+                </KsTooltip>
                 <KsButton v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
                     {{ $t("delete") }}
                 </KsButton>
@@ -146,20 +154,30 @@
                     </KsButton>
                     <template #dropdown>
                         <KsDropdownMenu>
-                            <KsDropdownItem v-if="canChangeLabels" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
-                                {{ $t("Set labels") }}
+                            <KsDropdownItem v-if="canChangeLabels" :icon="LabelMultiple" :disabled="bulkActionDisabled(action.CHANGE_LABELS)" @click="isOpenLabelsModal = !isOpenLabelsModal">
+                                <KsTooltip :content="bulkActionTooltip(action.CHANGE_LABELS)" :disabled="!bulkActionTooltip(action.CHANGE_LABELS)">
+                                    <span>{{ $t("Set labels") }}</span>
+                                </KsTooltip>
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canResume" :icon="Play" @click="resumeExecutions()">
-                                {{ $t("resume") }}
+                            <KsDropdownItem v-if="canResume" :icon="Play" :disabled="bulkActionDisabled(action.RESUME)" @click="resumeExecutions()">
+                                <KsTooltip :content="bulkActionTooltip(action.RESUME)" :disabled="!bulkActionTooltip(action.RESUME)">
+                                    <span>{{ $t("resume") }}</span>
+                                </KsTooltip>
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canPause" :icon="Pause" @click="pauseExecutions()">
-                                {{ $t("pause") }}
+                            <KsDropdownItem v-if="canPause" :icon="Pause" :disabled="bulkActionDisabled(action.PAUSE)" @click="pauseExecutions()">
+                                <KsTooltip :content="bulkActionTooltip(action.PAUSE)" :disabled="!bulkActionTooltip(action.PAUSE)">
+                                    <span>{{ $t("pause") }}</span>
+                                </KsTooltip>
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
-                                {{ $t("unqueue") }}
+                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" :disabled="bulkActionDisabled(action.UNQUEUE)" @click="unqueueDialogVisible = true">
+                                <KsTooltip :content="bulkActionTooltip(action.UNQUEUE)" :disabled="!bulkActionTooltip(action.UNQUEUE)">
+                                    <span>{{ $t("unqueue") }}</span>
+                                </KsTooltip>
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" @click="forceRunExecutions()">
-                                {{ $t("force run") }}
+                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" :disabled="bulkActionDisabled(action.FORCE_RUN)" @click="forceRunExecutions()">
+                                <KsTooltip :content="bulkActionTooltip(action.FORCE_RUN)" :disabled="!bulkActionTooltip(action.FORCE_RUN)">
+                                    <span>{{ $t("force run") }}</span>
+                                </KsTooltip>
                             </KsDropdownItem>
                         </KsDropdownMenu>
                     </template>
@@ -276,7 +294,13 @@
                     <template v-else-if="col.prop === 'inputs'">
                         <KsTooltip>
                             <template #content>
-                                <pre class="inputs-preview">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
+                                <ExecutionInputsPreview
+                                    v-if="scope.row?.inputs"
+                                    :namespace="scope.row.namespace"
+                                    :flowId="scope.row.flowId"
+                                    :flowRevision="scope.row.flowRevision"
+                                    :inputs="scope.row.inputs"
+                                />
                             </template>
                             <div>
                                 <Import v-if="scope.row?.inputs" class="inputs-icon" />
@@ -343,7 +367,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="item.code" />
+                        <KsExecutionStatus size="small" class="status-indicator" :status="item.code" />
                         <i18n-t keypath="mark as" tag="span" scope="global">
                             <template #status><code>{{ item.code }}</code></template>
                         </i18n-t>
@@ -386,7 +410,7 @@
                     :value="state"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="state" />
+                        <KsExecutionStatus size="small" class="status-indicator" :status="state" />
                         <i18n-t keypath="unqueue as" tag="span" scope="global">
                             <template #status><code>{{ state }}</code></template>
                         </i18n-t>
@@ -474,10 +498,12 @@
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsFormItem, KsMessageBox, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
     import {useExecutionDeletionDialog} from "./composables/useExecutionDeletionDialog"
+    import {bulkActionRules, isExecutionTerminated} from "./bulkActionEligibility"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Import from "vue-material-design-icons/Import.vue"
+    import ExecutionInputsPreview from "./ExecutionInputsPreview.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import Pause from "vue-material-design-icons/Pause.vue"
@@ -519,7 +545,7 @@
         widenEmptyTimeRange,
     } from "./timeRangeWiden"
     import {useExecutionsQueryScope} from "../../composables/useExecutionsQueryScope"
-    import {hasInvalidLabelKeys} from "../../utils/executionLabels"
+    import {hasInvalidLabelKeys, type ExecutionLabelInput} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import {usePageSize} from "../../composables/usePageSize"
@@ -537,7 +563,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
-    import {type Execution, type Label, useExecutionsStore} from "../../stores/executions"
+    import {type Execution, useExecutionsStore} from "../../stores/executions"
     import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
     import {useExecutionFilter} from "../filter/configurations/executionFilter"
@@ -609,7 +635,7 @@
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
 
-    const executionLabels = ref<Label[]>([])
+    const executionLabels = ref<ExecutionLabelInput[]>([])
     const hasInvalidLabels = computed(() => hasInvalidLabelKeys(executionLabels.value))
     const recomputeInterval = ref(false)
     const isOpenLabelsModal = ref(false)
@@ -751,7 +777,7 @@
         }
     })
 
-    const onRowClick = (row: Execution, column: {type?: string} | undefined, event: Event) => {
+    const onRowClick = (row: Execution, column: {type?: string} | null | undefined, event: Event) => {
         if (isMobile.value && isPlainRowActivation(column, event)) router.push({name: dblClickRouteName.value, params: executionParams(row)})
     }
 
@@ -773,7 +799,7 @@
             return
         }
         const scope: Record<string, string> = {}
-        if (props.namespace) scope["filters[namespace][PREFIX]"] = props.namespace
+        if (props.namespace) scope[`filters[namespace][${props.flowId ? "IN" : "PREFIX"}]`] = props.namespace
         if (props.flowId) scope["filters[flowId][EQUALS]"] = props.flowId
         navigateToStateFilter(state, scope)
     }
@@ -883,6 +909,11 @@
 
     const selection = computed(() => dataTable.value?.selection ?? [])
     const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
+    const selectedExecutions = computed(() => {
+        const ids = new Set(selection.value as string[])
+        return (executionsStore.executions ?? []).filter(e => ids.has(e.id))
+    })
+
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
 
@@ -933,6 +964,38 @@
     const canResume = computed(() => {
         return isAllowedOnExecutions(action.RESUME)
     })
+
+    const bulkActionDisabled = (executionAction: string) => {
+        if (queryBulkAction.value) {
+            return false
+        }
+
+        const rule = bulkActionRules[executionAction]
+        if (!rule) {
+            return false
+        }
+
+        return selectedExecutions.value
+            .some(execution => !rule.allowed(execution))
+    }
+
+    const bulkActionTooltip = (executionAction: string) => {
+        if (queryBulkAction.value) {
+            return undefined
+        }
+
+        const rule = bulkActionRules[executionAction]
+        if (!rule) {
+            return undefined
+        }
+
+        const selected = selectedExecutions.value
+        const invalidCount = selected.filter(execution => !rule.allowed(execution)).length
+
+        return invalidCount > 0
+            ? t(rule.tooltipKey, {count: invalidCount, total: selected.length, ...(rule.tooltipParams ?? {})})
+            : undefined
+    }
 
     const canCheck = computed(() => {
         return [
@@ -1171,12 +1234,14 @@
         changeStatusDialogVisible.value = false
         actionOptions.value.newStatus = selectedStatus.value
 
-        await genericConfirmCallback(
+        const succeeded = await genericConfirmCallback(
             "queryChangeExecutionStatus",
             "bulkChangeExecutionStatus",
             "executions state changed",
         )
-        window.setTimeout(() => dataTable.value?.reload(), 100)
+        if (succeeded) {
+            window.setTimeout(() => dataTable.value?.reload(), 100)
+        }
     }
 
 
@@ -1184,7 +1249,14 @@
 
     const deleteExecutions = async () => {
         const count = bulkActionCount.value
-        const options = await confirmExecutionDeletion(t("bulk delete", {"executionCount": count}), {offerNonTerminated: true})
+        const nonTerminatedCount = queryBulkAction.value
+            ? 0
+            : selectedExecutions.value.filter(execution => !isExecutionTerminated(execution)).length
+        const options = await confirmExecutionDeletion(t("bulk delete", {"executionCount": count}), {
+            offerNonTerminated: true,
+            nonTerminatedCount,
+            total: selectedExecutions.value.length,
+        })
         if (!options) return
 
         Object.assign(actionOptions.value, options)
@@ -1274,10 +1346,6 @@
     margin-bottom: var(--ks-spacing-5);
 }
 
-.inputs-preview {
-    margin-bottom: 0;
-}
-
 .inputs-icon {
     font-size: var(--ks-font-size-xl);
 }
@@ -1300,35 +1368,11 @@
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
-.custom-warning {
-    border: 1px solid var(--ks-status-warning);
-    border-radius: 7px;
-    box-shadow: 1px 1px 3px 1px var(--ks-status-warning);
-
-    & :deep(.kel-alert__title) {
-        font-size: var(--ks-font-size-base);
-        color: var(--ks-status-warning);
-        font-weight: bold;
-    }
-
-    & :deep(.kel-alert__description) {
-        font-size: var(--ks-font-size-xs);
-    }
-
-    & :deep(.kel-alert__icon) {
-        color: var(--ks-status-warning);
-    }
-}
-
 .code-text {
     color: var(--ks-text-primary);
 }
 
-:deep(.executions-table) .kel-table__row {
-    cursor: pointer;
-}
-
-:deep(a.execution-id) code {
-    color: var(--ks-text-link);
+.execution-id {
+    --ks-id-color: var(--ks-text-link);
 }
 </style>

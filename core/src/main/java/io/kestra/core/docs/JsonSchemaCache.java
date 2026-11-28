@@ -50,6 +50,7 @@ public class JsonSchemaCache {
         registerClassForType(SchemaType.DASHBOARD, Dashboard.class);
     }
 
+    /** Returns the schema compacted by {@link JsonSchemaCompactor}, so a consumer must resolve {@code $ref}; the same instance until the registry changes. */
     public Map<String, Object> getSchemaForType(final SchemaType type,
         final boolean arrayOf) {
         invalidateIfPluginRegistryChanged();
@@ -58,7 +59,7 @@ public class JsonSchemaCache {
 
             Class<?> cls = Optional.ofNullable(classesBySchemaType.get(type))
                 .orElseThrow(() -> new IllegalArgumentException("Cannot found schema for type '" + type + "'"));
-            return jsonSchemaGenerator.schemas(cls, arrayOf);
+            return JsonSchemaCompactor.compact(jsonSchemaGenerator.schemas(cls, arrayOf));
         });
     }
 

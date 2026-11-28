@@ -531,3 +531,30 @@ export const Mobile: Story = {
         `,
     }),
 }
+
+/** Knobs set on the select or an ancestor: `--ks-select-bg`, `--ks-select-hover-bg`, `--ks-select-border`, `--ks-select-gap`, and `--ks-select-padding`, which every size honours */
+export const StyleVariables: Story = {
+    render: () => ({
+        components: {KsSelect, ElOption},
+        setup() { return {value: ref("gallery")} },
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;--ks-select-bg:transparent;--ks-select-hover-bg:var(--ks-bg-input);--ks-select-border:1px solid var(--ks-border-default);--ks-select-gap:var(--ks-spacing-2);--ks-select-padding:var(--ks-spacing-1) var(--ks-spacing-3)">
+                <ks-select v-for="size in ['small', 'default', 'large']" :key="size" v-model="value" :size="size" :data-test="size" style="width:160px">
+                    <el-option value="gallery" label="Gallery" />
+                    <el-option value="list" label="List" />
+                </ks-select>
+            </div>
+        `,
+    }),
+    parameters: {controls: {disable: true}},
+    async play({canvasElement}) {
+        for (const size of ["small", "default", "large"]) {
+            const wrapper = getComputedStyle(canvasElement.querySelector(`[data-test="${size}"] .kel-select__wrapper`)!)
+            await expect(wrapper.paddingTop).toBe("4px")
+            await expect(wrapper.paddingLeft).toBe("12px")
+            await expect(wrapper.columnGap).toBe("8px")
+            await expect(wrapper.borderTopWidth).toBe("1px")
+            await expect(wrapper.backgroundColor).toBe("rgba(0, 0, 0, 0)")
+        }
+    },
+}

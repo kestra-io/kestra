@@ -38,7 +38,8 @@ describe("ContextDocsMenu", () => {
         expect(isOpen()).toBe(true)
 
         await wrapper!.get("ul").trigger("click")
-        await flushPromises()
+        // onClickOutside drops a click that lands before its setTimeout(0) dedupe of the previous one resets.
+        await new Promise((resolve) => setTimeout(resolve))
         expect(isOpen()).toBe(true)
 
         document.body.click()

@@ -4,7 +4,6 @@ import {i18nMount} from "../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
-import KsDataTable from "@kestra-io/design-system/components/Data/KsDataTable/KsDataTable.vue"
 
 const mockPush = vi.fn()
 vi.mock("vue-router", () => ({
@@ -95,7 +94,7 @@ describe("DrillDownDrawer", () => {
             size: 25,
         }))
 
-        const dataTable = wrapper.findComponent(KsDataTable)
+        const dataTable = wrapper.findComponent({name: "KsDataTable"})
         expect(dataTable.props("data")).toEqual([{id: "e1", namespace: "ns", flowId: "f1"}])
         expect(dataTable.props("total")).toBe(1)
         expect(wrapper.findComponent({name: "KsTableColumn"}).props("label")).toBe("Start date")
@@ -123,7 +122,7 @@ describe("DrillDownDrawer", () => {
         useDrillDownStore().open({name: "test/drawer-pagination/list", query: {}, timeFiltered: false})
         await flushPromises()
 
-        const dataTable = wrapper.findComponent(KsDataTable)
+        const dataTable = wrapper.findComponent({name: "KsDataTable"})
         expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({page: 1, size: 25}))
 
         await dataTable.vm.$emit("page-changed", {page: 2, size: 25})
@@ -148,14 +147,14 @@ describe("DrillDownDrawer", () => {
         store.open({name: "test/drawer-retarget/list", query: {"filters[state][IN]": "SUCCESS"}, timeFiltered: false})
         await flushPromises()
 
-        expect(wrapper.findComponent(KsDataTable).props("data")).toEqual([{id: "from-first-target"}])
+        expect(wrapper.findComponent({name: "KsDataTable"}).props("data")).toEqual([{id: "from-first-target"}])
 
         // The drawer stays mounted between drill-downs, so nothing but the target changes here.
         store.open({name: "test/drawer-retarget/list", query: {"filters[state][IN]": "FAILED"}, timeFiltered: false})
         await flushPromises()
 
         expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({"filters[state][IN]": "FAILED"}))
-        expect(wrapper.findComponent(KsDataTable).props("data")).toEqual([{id: "from-second-target"}])
+        expect(wrapper.findComponent({name: "KsDataTable"}).props("data")).toEqual([{id: "from-second-target"}])
         expect(fetchMock).toHaveBeenCalledTimes(2)
     })
 
@@ -185,7 +184,7 @@ describe("DrillDownDrawer", () => {
         resolveStale({results: [{id: "stale"}], total: 99})
         await flushPromises()
 
-        const dataTable = wrapper.findComponent(KsDataTable)
+        const dataTable = wrapper.findComponent({name: "KsDataTable"})
         expect(dataTable.props("data")).toEqual([{id: "current"}])
         expect(dataTable.props("total")).toBe(1)
     })

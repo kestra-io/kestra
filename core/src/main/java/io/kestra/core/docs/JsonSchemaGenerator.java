@@ -49,6 +49,7 @@ import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.property.Data;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -101,6 +102,8 @@ public class JsonSchemaGenerator {
     private static final String PEBBLE_EXPRESSION_PATTERN = IntStream.range(0, PebbleUtil.openingBlockDelimiters().size())
         .mapToObj(i -> escapeRegex(PebbleUtil.openingBlockDelimiters().get(i)) + ".*" + escapeRegex(PebbleUtil.closingBlockDelimiters().get(i)))
         .collect(Collectors.joining("|", ".*(", ").*"));
+
+    static final String EXAMPLES_HEADING = "##### Examples\n";
 
     private final PluginRegistry pluginRegistry;
 
@@ -928,6 +931,18 @@ public class JsonSchemaGenerator {
             memberAttributes.set("anyOf", anyOf);
         });
 
+        // UNKNOWN only lets a flow saved with a removed output type still load, it is never a type to write.
+        builder.forTypesInGeneral().withTypeAttributeOverride((typeAttributes, scope, context) ->
+        {
+            if (OutputType.class.equals(scope.getType().getErasedType()) && typeAttributes.get("enum") instanceof ArrayNode values) {
+                for (int i = values.size() - 1; i >= 0; i--) {
+                    if (OutputType.UNKNOWN.name().equals(values.get(i).asText())) {
+                        values.remove(i);
+                    }
+                }
+            }
+        });
+
         // Add Plugin annotation special docs
         builder.forTypesInGeneral()
             .withTypeAttributeOverride((collectedTypeAttributes, scope, context) ->
@@ -1081,7 +1096,7 @@ public class JsonSchemaGenerator {
 
                     String description = collectedTypeAttributes.has("markdownDescription") ? collectedTypeAttributes.get("markdownDescription").asText() : "";
 
-                    description += "##### Examples\n" + doc;
+                    description += EXAMPLES_HEADING + doc;
 
                     collectedTypeAttributes.set("markdownDescription", new TextNode(description));
 
@@ -1395,7 +1410,15 @@ public class JsonSchemaGenerator {
     }
 
     private static boolean isHiddenFromSchema(MemberScope<?, ?> memberScope) {
-        return memberScope.getAnnotation(Hidden.class) != null || memberScope.getAnnotation(ServerOwned.class) != null;
+        return memberScope.getAnnotation(Hidden.class) != null
+            || memberScope.getAnnotation(ServerOwned.class) != null
+            || isPropertyOfVoid(memberScope.getType());
+    }
+
+    private static boolean isPropertyOfVoid(ResolvedType type) {
+        return type != null
+            && type.isInstanceOf(Property.class)
+            && type.getTypeParameters().stream().anyMatch(parameter -> Void.class.equals(parameter.getErasedType()));
     }
 
     private static boolean isAssetAttribute(MethodScope methodScope) {

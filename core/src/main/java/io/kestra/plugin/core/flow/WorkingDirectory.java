@@ -248,16 +248,19 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        ResolvedTask close = resolveInternalTask(closeTask(), parentTaskRun);
         return FlowableUtils.resolveSequentialState(
             execution,
             ListUtils.concat(List.of(resolveInternalTask(openTask(), parentTaskRun)), this.childTasks(runContext, parentTaskRun)),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            ListUtils.concat(FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun), List.of(resolveInternalTask(closeTask(), parentTaskRun))),
+            ListUtils.concat(FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun), List.of(close)),
             parentTaskRun,
             runContext,
             this.isAllowFailure(),
             this.isAllowWarning()
-        );
+        )
+            // a finally task does not count towards the state, but _close saves the output files, so its failure must fail the WorkingDirectory
+            .map(state -> execution.computeFinalState(List.of(close), parentTaskRun, this.isAllowFailure(), this.isAllowWarning(), state));
     }
 
     // the internal tasks are children so the duplicate task id check of the flow also covers their ids
@@ -306,6 +309,10 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     }
 
     public void preExecuteTasks(RunContext runContext) throws Exception {
+        if (this.outputFiles != null) {
+            runContext.storage().deleteFile(outputsFile(workingDirectoryContextBaseURI(runContext)));
+        }
+
         if (cache != null) {
             // May download cached file if it exists and is not expired, and extract its content
             var maybeCacheFile = runContext.storage().getCacheFile(getId(), cacheObjectId(runContext), runContext.render(cache.ttl).as(Duration.class).orElse(null));
@@ -554,7 +561,12 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             try {
                 workingDirectory.postExecuteTasks(runContext);
             } finally {
-                workingDirectory.cleanup(runContext);
+                try {
+                    workingDirectory.cleanup(runContext);
+                } catch (IOException e) {
+                    // the outputs are saved by then, so a folder left on the worker must not fail the WorkingDirectory
+                    runContext.logger().warn("Unable to delete the folder of the WorkingDirectory", e);
+                }
             }
             return null;
         }

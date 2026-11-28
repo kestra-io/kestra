@@ -27,8 +27,8 @@ public class TaskOutputService extends AbstractOutputService {
     private final TaskOutputRepositoryInterface outputRepository;
 
     public TaskOutputService(TaskOutputRepositoryInterface outputRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
-        TaskOutputConfiguration taskOutputConfiguration) {
-        super(storageInterface, namespaceFactory, taskOutputConfiguration.limit());
+        NamespaceService namespaceService, TaskOutputConfiguration taskOutputConfiguration) {
+        super(storageInterface, namespaceFactory, namespaceService, taskOutputConfiguration.limit());
         this.outputRepository = outputRepository;
     }
 
@@ -69,6 +69,18 @@ public class TaskOutputService extends AbstractOutputService {
                 : new TaskOutput(taskRun.getId(), taskRun.getTenantId(), taskRun.getExecutionId(), value, null);
             outputRepository.save(output);
         }
+    }
+
+    /**
+     * Save the outputs of a task run that ran again after a retry or a restart: outputs left by its previous run are
+     * deleted when this run produced none, so they cannot be mistaken for this run's.
+     */
+    public void replaceOutputs(TaskRun taskRun, Map<String, Object> outputMap) throws InternalException {
+        if (MapUtils.isEmpty(outputMap)) {
+            outputRepository.deleteById(taskRun.getTenantId(), taskRun.getId());
+            return;
+        }
+        saveOutputs(taskRun, outputMap);
     }
 
     /**

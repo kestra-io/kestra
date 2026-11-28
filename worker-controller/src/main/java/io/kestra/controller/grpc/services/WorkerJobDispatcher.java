@@ -575,6 +575,7 @@ public class WorkerJobDispatcher {
         // The worker's still-running tasks will deliver their results via
         // sendWorkerTaskResults independently; on this controller they simply stop
         // counting toward bucket usage.
+        int inFlightCount = context.getInFlightCount();
         context.releaseAllInFlightBuckets();
 
         // Remove from worker group index (mirror of registerWorker — default group included)
@@ -613,7 +614,7 @@ public class WorkerJobDispatcher {
                     workerQueueWorkers.remove(workerId);
                 }
 
-                log.info("Unregistered worker {} from Worker Queue '{}', had {} in-flight jobs", workerId, WorkerQueues.forLog(workerQueueId), context.getInFlightCount());
+                log.info("Unregistered worker {} from Worker Queue '{}', had {} in-flight jobs", workerId, WorkerQueues.forLog(workerQueueId), inFlightCount);
                 metricRegistry.counter(
                     MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL,
                     MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL_DESCRIPTION,
@@ -1040,7 +1041,11 @@ public class WorkerJobDispatcher {
      * @param dispatchWorkerQueueId the Worker Queue this job was dispatched for
      */
     private void persistJobToStateStore(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job, String dispatchWorkerQueueId) {
-        WorkerInstance workerInstance = new WorkerInstance(context.getWorkerId(), dispatchWorkerQueueId.isEmpty() ? null : dispatchWorkerQueueId);
+        WorkerInstance workerInstance = new WorkerInstance(
+            context.getWorkerId(),
+            dispatchWorkerQueueId.isEmpty() ? null : dispatchWorkerQueueId,
+            context.getStreamGeneration()
+        );
         if (job instanceof WorkerTask workerTask) {
             workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTaskRunning.of(workerTask, workerInstance));
         } else if (job instanceof WorkerTrigger workerTrigger) {

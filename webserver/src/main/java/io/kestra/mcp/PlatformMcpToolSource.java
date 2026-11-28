@@ -14,10 +14,11 @@ import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.AgentPrincipalResolver;
 import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
-import io.kestra.webserver.services.ai.agent.tool.McpPlatformTool;
+import io.kestra.webserver.services.ai.agent.tool.McpExposedTool;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -34,7 +35,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * The {@link McpToolSource.Kind#PLATFORM} tool source: exposes every {@link McpPlatformTool} of the
+ * The {@link McpToolSource.Kind#PLATFORM} tool source: exposes every {@link McpExposedTool} of the
  * {@link ToolCatalog} across tenants, with an extra {@value #TENANT_ARGUMENT} argument naming the tenant a call
  * acts on.
  * <p>
@@ -48,10 +49,7 @@ public class PlatformMcpToolSource implements McpToolSource {
     static final String TENANT_ARGUMENT = "tenant";
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-    private static final Map<String, Object> TENANT_PROPERTY = Map.of(
-        "type", "string",
-        "description", "The tenant to act on. Required when you can act on more than one tenant."
-    );
+    private static final String TENANT_DESCRIPTION = "The tenant to act on. Required when you can act on more than one tenant.";
 
     private final ToolCatalog toolCatalog;
     private final AgentToolPermissionEvaluator permissionEvaluator;
@@ -81,20 +79,24 @@ public class PlatformMcpToolSource implements McpToolSource {
         Map<String, AgentPrincipal> principals = new HashMap<>();
         tenants.forEach(tenant -> principals.put(tenant, principalResolver.resolve(context.getUserId(), tenant)));
 
-        List<ToolCatalog.ToolEntry> allowed = toolCatalog.entries().stream()
-            .filter(entry -> entry.tool() instanceof McpPlatformTool)
-            .filter(entry -> tenants.stream().anyMatch(tenant -> permissionEvaluator.isAllowed(entry, tenant, principals.get(tenant))))
+        List<AllowedTool> allowed = toolCatalog.entries().stream()
+            .filter(entry -> entry.tool() instanceof McpExposedTool)
             .sorted(Comparator.comparing(ToolCatalog.ToolEntry::name))
+            .map(entry -> new AllowedTool(
+                entry,
+                tenants.stream().filter(tenant -> permissionEvaluator.isAllowed(entry, tenant, principals.get(tenant))).toList()
+            ))
+            .filter(tool -> !tool.tenants().isEmpty())
             .toList();
         return new PlatformToolView(this, allowed);
     }
 
-    private McpServerFeatures.AsyncToolSpecification toolSpecification(ToolCatalog.ToolEntry entry) {
+    private McpServerFeatures.AsyncToolSpecification toolSpecification(ToolCatalog.ToolEntry entry, List<String> tenants) {
         McpSchema.Tool tool = McpSchema.Tool.builder()
             .name(entry.name())
             .description(entry.specification().description())
-            .inputSchema(inputSchema(entry.specification()))
-            .annotations(McpToolAnnotationsMapper.toToolAnnotations(((McpPlatformTool) entry.tool()).annotations()))
+            .inputSchema(inputSchema(entry.specification(), tenants))
+            .annotations(McpToolAnnotationsMapper.toToolAnnotations(((McpExposedTool) entry.tool()).annotations()))
             .build();
         return new McpServerFeatures.AsyncToolSpecification(
             tool,
@@ -104,7 +106,7 @@ public class PlatformMcpToolSource implements McpToolSource {
     }
 
     private McpSchema.CallToolResult call(String toolName, KestraMcpTransportContext context, McpSchema.CallToolRequest request) {
-        Map<String, Object> arguments = new LinkedHashMap<>(request.arguments() == null ? Map.of() : request.arguments());
+        Map<String, Object> arguments = new LinkedHashMap<>(MapUtils.emptyOnNull(request.arguments()));
         Object requestedTenant = arguments.remove(TENANT_ARGUMENT);
         try {
             String tenant = tenant(requestedTenant, tenants(context.getUserId()));
@@ -112,6 +114,7 @@ public class PlatformMcpToolSource implements McpToolSource {
                 .tenant(tenant)
                 .principal(principalResolver.resolve(context.getUserId(), tenant))
                 .actor(context.getActor())
+                .originLabels(McpExecutionLabels.of(context))
                 .build();
             ToolExecutionRequest execution = ToolExecutionRequest.builder()
                 .id(IdUtils.create())
@@ -155,10 +158,10 @@ public class PlatformMcpToolSource implements McpToolSource {
     }
 
     @SuppressWarnings("unchecked")
-    private static McpSchema.JsonSchema inputSchema(ToolSpecification specification) {
+    private static McpSchema.JsonSchema inputSchema(ToolSpecification specification, List<String> tenants) {
         Map<String, Object> schema = specification.parameters() == null ? Map.of() : JsonSchemaElementJsonUtils.toMap(specification.parameters());
         Map<String, Object> properties = new LinkedHashMap<>((Map<String, Object>) schema.getOrDefault("properties", Map.of()));
-        properties.put(TENANT_ARGUMENT, TENANT_PROPERTY);
+        properties.put(TENANT_ARGUMENT, Map.of("type", "string", "description", TENANT_DESCRIPTION, "enum", tenants));
         List<String> required = ((List<Object>) schema.getOrDefault("required", List.of())).stream()
             .map(String::valueOf)
             .collect(Collectors.toList());
@@ -171,18 +174,23 @@ public class PlatformMcpToolSource implements McpToolSource {
         return McpSchema.CallToolResult.builder().isError(true).addTextContent(message).build();
     }
 
+    private record AllowedTool(ToolCatalog.ToolEntry entry, List<String> tenants) {
+    }
+
     /**
-     * Callers allowed the same tools share one built server, whichever tenants they are allowed them in.
+     * Callers allowed the same tools in the same tenants share one built server, since each tool's tenants are part of its schema.
      */
-    private record PlatformToolView(PlatformMcpToolSource source, List<ToolCatalog.ToolEntry> entries) implements McpToolView {
+    private record PlatformToolView(PlatformMcpToolSource source, List<AllowedTool> allowed) implements McpToolView {
         @Override
         public String cacheKey() {
-            return entries.stream().map(ToolCatalog.ToolEntry::name).collect(Collectors.joining(","));
+            return allowed.stream()
+                .map(tool -> tool.entry().name() + "=" + tool.tenants().stream().sorted().collect(Collectors.joining(";")))
+                .collect(Collectors.joining(","));
         }
 
         @Override
         public List<McpServerFeatures.AsyncToolSpecification> tools() {
-            return entries.stream().map(source::toolSpecification).toList();
+            return allowed.stream().map(tool -> source.toolSpecification(tool.entry(), tool.tenants())).toList();
         }
     }
 }

@@ -14,6 +14,8 @@ export interface ExecutionArtifact {
     description?: string
 }
 
+const FLOW_TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"] as const
+
 export const EXECUTION_ARTIFACTS_KEY: InjectionKey<ReturnType<typeof useExecutionArtifacts>> = Symbol("execution-artifacts")
 
 export function useExecutionArtifacts() {
@@ -44,13 +46,18 @@ export function useExecutionArtifacts() {
         if (!executedSource.value) return {}
         const parsed = YAML_UTILS.parse<Record<string, unknown>>(executedSource.value, false)
         return Object.fromEntries(
-            ["tasks", "errors", "finally", "afterExecution"]
+            FLOW_TASK_SECTIONS
                 .flatMap((section) => getAllTasks(parsed?.[section]))
                 .map((task) => [task.id, task]),
         )
     })
 
-    const tasks = computed(() => getAllTasks(executionsStore.flow?.tasks).map((task) => ({...sourceTaskById.value[task.id], ...task})))
+    const tasks = computed(() => {
+        const flow = executionsStore.flow
+        return FLOW_TASK_SECTIONS
+            .flatMap((section) => getAllTasks(flow?.[section]))
+            .map((task) => ({...sourceTaskById.value[task.id], ...task}))
+    })
 
     const ownerTypesOf = (task: {type: string, taskRunner?: {type?: string}}) =>
         [...new Set([task.type, task.taskRunner?.type].filter((type): type is string => !!type))]

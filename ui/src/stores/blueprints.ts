@@ -13,6 +13,7 @@ import type {KestraHttpError} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {Input} from "./flow.ts"
 import type {ValidationResponse} from "./executions"
+import {latestRequest} from "../utils/latestRequest"
 
 export type BlueprintType = "community" | "custom";
 export type BlueprintKind = "flow" | "dashboard" | "app";
@@ -102,14 +103,14 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return converted
     }
 
-    let latestBlueprintLoad = 0
+    const startBlueprintLoad = latestRequest()
 
     const getBlueprint = async (options: Options) => {
-        const load = ++latestBlueprintLoad
+        const isLatest = startBlueprintLoad()
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`
             const response = await axios.get<Blueprint>(COMMUNITY)
-            if (load !== latestBlueprintLoad) {
+            if (!isLatest()) {
                 return response.data
             }
             if (response.data?.id) {
@@ -121,7 +122,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
         const {data} = await axios.get<Blueprint>(`${apiUrl()}/blueprints/custom/${options.id!}`)
         const blueprintData = data
-        if (load !== latestBlueprintLoad) {
+        if (!isLatest()) {
             return blueprintData
         }
         if (blueprintData?.id) {

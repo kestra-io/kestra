@@ -17,6 +17,9 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.filter.TestAuthFilter;
+import io.kestra.webserver.services.ai.AiServiceInterface;
+import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.GenerationResult;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import io.micronaut.http.HttpResponse;
@@ -39,6 +42,8 @@ import static io.micronaut.http.HttpRequest.DELETE;
 import static io.micronaut.http.HttpRequest.POST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -74,6 +79,14 @@ class McpPlatformControllerTest {
     @Inject
     FlowRepositoryInterface flowRepository;
 
+    @Inject
+    AiServiceManager aiServiceManager;
+
+    @MockBean(AiServiceManager.class)
+    AiServiceManager aiServiceManager() {
+        return mock(AiServiceManager.class);
+    }
+
     @MockBean(DocsMcpToolProvider.class)
     DocsMcpToolProvider docsMcpToolProvider() {
         DocsMcpToolProvider provider = mock(DocsMcpToolProvider.class);
@@ -88,6 +101,40 @@ class McpPlatformControllerTest {
         String body = client.toBlocking().retrieve(mcpPost(TOOLS_LIST_REQUEST, sessionId), String.class);
 
         assertThat(body).contains("\"read_flow\"", "\"restart_execution\"", "\"tenant\"", "\"readOnlyHint\":true");
+    }
+
+    @Test
+    void shouldListAuthoringToolAsReadOnlyWhenServerIsEnabled() {
+        String sessionId = initialize();
+
+        String body = client.toBlocking().retrieve(mcpPost(TOOLS_LIST_REQUEST, sessionId), String.class);
+
+        assertThat(authorFlowDefinition(body)).contains("\"readOnlyHint\":true", "\"tenant\"");
+    }
+
+    @Test
+    void shouldReturnValidatedDraftWithoutSavingWhenAuthorFlowIsCalled() {
+        String flowId = "authored-" + IdUtils.create().toLowerCase();
+        String yaml = "id: %s\nnamespace: io.kestra.test\ntasks:\n  - id: log\n    type: io.kestra.plugin.core.log.Log\n    message: hi\n".formatted(flowId);
+        AiServiceInterface aiService = mock(AiServiceInterface.class);
+        when(aiServiceManager.getAiService(null)).thenReturn(aiService);
+        when(aiService.generateFlow(any(), any(), eq(TenantService.MAIN_TENANT))).thenReturn(GenerationResult.of(yaml));
+        String sessionId = initialize();
+
+        String body = callTool(sessionId, "author_flow", Map.of("instructions", "log hi", "namespace", "io.kestra.test"));
+
+        assertThat(body).contains(flowId, "\\\"valid\\\":true").doesNotContain("\"isError\":true");
+        assertThat(flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.test", flowId)).isEmpty();
+    }
+
+    @Test
+    void shouldReturnErrorResultWhenAuthorFlowIsCalledWithoutAnAiProvider() {
+        when(aiServiceManager.getAiService(null)).thenReturn(null);
+        String sessionId = initialize();
+
+        String body = callTool(sessionId, "author_flow", Map.of("instructions", "log hi"));
+
+        assertThat(body).contains("\"isError\":true", "No AI provider is configured");
     }
 
     @Test
@@ -116,7 +163,7 @@ class McpPlatformControllerTest {
 
         String body = callTool(sessionId, "read_flow", Map.of("tenant", "another-tenant", "namespace", "io.kestra.test", "flowId", "any"));
 
-        assertThat(body).contains("\"isError\":true", "You cannot act on tenant 'another-tenant' through this server.");
+        assertThat(body).contains("\"isError\":true", "/tenant: does not have a value in the enumeration");
     }
 
     @Test
@@ -154,6 +201,13 @@ class McpPlatformControllerTest {
             );
             assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
         });
+    }
+
+    private static String authorFlowDefinition(String toolsList) {
+        int start = toolsList.indexOf("{\"name\":\"author_flow\"");
+        assertThat(start).as("author_flow is listed").isNotNegative();
+        int next = toolsList.indexOf("{\"name\":\"", start + 1);
+        return next < 0 ? toolsList.substring(start) : toolsList.substring(start, next);
     }
 
     private String callTool(String sessionId, String toolName, Map<String, Object> arguments) {

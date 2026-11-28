@@ -64,7 +64,9 @@ class AiAgentControllerTurnLimitTest {
     @MockBean(AiServiceManager.class)
     AiServiceManager aiServiceManager() {
         AiServiceInterface service = mock(AiServiceInterface.class);
-        when(service.streamingChatModel(any())).thenReturn(scriptedModel);
+        // The orchestrator asks for the principal-carrying overload; stubbing only the other one
+        // leaves it null and every turn dies on a null model.
+        when(service.streamingChatModel(any(), any())).thenReturn(scriptedModel);
         AiServiceManager manager = mock(AiServiceManager.class);
         when(manager.getAiService(any())).thenReturn(service);
         when(manager.hasConfiguredProvider()).thenReturn(true);

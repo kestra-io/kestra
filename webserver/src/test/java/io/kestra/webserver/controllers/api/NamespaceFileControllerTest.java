@@ -448,6 +448,26 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void createGetFileContent_AddFlowWithNamespaceContainingReplacementCharacters() throws IOException {
+        // Given
+        String namespace = "io.kestra.$1";
+        File temp = File.createTempFile("task-flow", ".yml");
+        Files.writeString(temp.toPath(), "id: task-flow\nnamespace: io.kestra.tests\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n    message: hi\n");
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "task-flow.yml", temp)
+            .build();
+
+        // When
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows/task-flow.yml", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+
+        // Then
+        assertThat(flowRepository.findByIdWithSource(TENANT_ID, namespace, "task-flow").get().getSource()).contains("namespace: io.kestra.$1");
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/task-flow.yaml" })
     void createGetFileContent_ExtractZip() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();

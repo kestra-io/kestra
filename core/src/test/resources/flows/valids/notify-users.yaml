@@ -1,0 +1,10 @@
+id: notify-users
+namespace: io.kestra.tests
+
+tasks:
+  - id: notify
+    type: io.kestra.plugin.core.notification.Notify
+    users:
+      - alice
+      - bob
+    title: "Done: {{ execution.id }}"

@@ -1,11 +1,11 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import LockOutline from "vue-material-design-icons/LockOutline.vue"
 import KsRadioCardGroup from "./KsRadioCardGroup.vue"
 
 const meta: Meta<typeof KsRadioCardGroup> = {
     title: "Components/Form/KsRadioCardGroup",
-    component: KsRadioCardGroup,
+    component: KsRadioCardGroup as ConcreteComponent,
     tags: ["autodocs"],
     parameters: {
         docs: {description: {component: "KsRadioCardGroup renders a single-select radio group as bordered option cards, each with a title and an optional hint, icon, and disabled state."}},

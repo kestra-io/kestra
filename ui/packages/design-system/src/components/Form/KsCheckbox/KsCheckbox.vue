@@ -1,6 +1,7 @@
 <template>
     <ElCheckbox
-        v-model="model"
+        :modelValue="props.modelValue"
+        @update:modelValue="(value: CheckboxValueType) => emit('update:modelValue', value as T)"
         v-bind="({...filteredProps(), ...$attrs} as CheckboxProps)"
         @change="emit('change', $event as T)"
     >
@@ -11,24 +12,20 @@
 </template>
 
 <script setup lang="ts" generic="T extends CheckboxValueType">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElCheckbox, type CheckboxProps, type CheckboxValueType} from "element-plus"
 
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {usePassedProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<T>()
+    type KsCheckboxProps = Omit<CheckboxProps, "modelValue">
 
-    const props = withDefaults(defineProps<{
-        value?: boolean | string | number
-        disabled?: boolean
-        checked?: boolean
-        indeterminate?: boolean
-    }>(), {
-        value: undefined,
-    })
+    const props = defineProps<KsCheckboxProps & {modelValue?: T} & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsCheckboxProps>>()
 
     const emit = defineEmits<{
+        "update:modelValue": [value: T]
         change: [value: T]
     }>()
 
@@ -36,7 +33,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props, ["modelValue"])
 </script>
 
 <style lang="scss">

@@ -22,6 +22,12 @@ resetVNodeTransformer()
 disableAutoUnmount()
 enableAutoUnmount(afterEach)
 
+// jsdom's web storage outlives the file, so each test starts empty, as a story does, whatever order shuffling picks.
+afterEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+})
+
 // Installing the design system starts a locale-module glob it does not await, and a mounted KsMarkdown, chart or
 // KsEditor starts a lazy import, so a spec that finishes first is torn down mid-import and the run reports unhandled
 // EnvironmentTeardownErrors.

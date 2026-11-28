@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.crypto.Mac;
@@ -148,8 +149,9 @@ public class WebhookBodyService {
      * The parts are collected whatever the {@link FetchType} of the trigger: a file part is stored rather than
      * read into the flow in any case, so the fetch type has nothing to choose between here.
      * <p>
-     * When collection fails or is cancelled, what was already stored for the execution is deleted, as no
-     * execution will ever carry it. A part still being written at the moment of a cancellation may outlive it.
+     * When collection fails, or is cancelled before it emits the body, what was already stored for the execution
+     * is deleted, as no execution will ever carry it. A part still being written at the moment of a cancellation
+     * may outlive it.
      *
      * @param parts       the parts of the request, {@code null} if it has none
      * @param flow        the flow the webhook trigger belongs to
@@ -159,6 +161,7 @@ public class WebhookBodyService {
      */
     public Mono<MultipartFormDataRequestBody> collect(MultipartBody parts, Flow flow, String executionId, String contentType) {
         AtomicInteger index = new AtomicInteger();
+        AtomicBoolean emitted = new AtomicBoolean();
 
         // Reading a part is blocking, so it happens off the event loop thread that emits it, as file inputs are
         // read in FlowInputOutput#readData. Note that both CompletedPart#getBytes and CompletedFileUpload#getInputStream
@@ -180,8 +183,15 @@ public class WebhookBodyService {
                 .charset(StandardCharsets.UTF_8)
                 .content(collected)
                 .build())
+            .doOnNext(_ -> emitted.set(true))
             .doOnError(e -> deleteStored(flow, executionId))
-            .doOnCancel(() -> Schedulers.boundedElastic().schedule(() -> deleteStored(flow, executionId)));
+            // A downstream flatMap cancels within onNext, once the body already belongs to the execution.
+            .doOnCancel(() ->
+            {
+                if (!emitted.get()) {
+                    Schedulers.boundedElastic().schedule(() -> deleteStored(flow, executionId));
+                }
+            });
     }
 
     /**

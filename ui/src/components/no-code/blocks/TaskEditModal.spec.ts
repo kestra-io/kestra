@@ -40,7 +40,7 @@ describe("TaskEditModal", () => {
         })
 
         const hint = wrapper.get("[data-test=\"task-edit-modal-open-mode-hint\"]")
-        expect(hint.find("span").text()).toBe("Tasks open in a modal by default. You can make tabs the default in Settings.")
+        expect(hint.find("span").text()).toBe("This editor opens in a modal by default. You can make tabs the default in Settings.")
         expect(hint.find("a").text()).toBe("Settings")
     })
 

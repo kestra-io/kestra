@@ -2,11 +2,11 @@ import {onActivated, onDeactivated} from "vue"
 import {useFlowEditorActions} from "../../flows/useFlowEditorActions"
 
 export function useKeyboardSave() {
-    const {save} = useFlowEditorActions()
+    const {saveAsDraft} = useFlowEditorActions()
     const handleKeyboardSave = (e: KeyboardEvent) => {
-        if (e.type === "keydown" && e.key === "s" && (e.ctrlKey || e.metaKey)) {
+        if (e.type === "keydown" && e.key === "s" && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
             e.preventDefault()
-            save()
+            saveAsDraft()
         }
     }
 

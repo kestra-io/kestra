@@ -33,9 +33,10 @@ class GetPluginSchemaToolTest {
         // When
         GetPluginSchemaTool.Result result = tool.getPluginSchema(PLUGIN_TYPE);
 
-        // Then — the generated schema is returned, wrapped with its plugin type
+        // Then — the declared properties are returned without the documentation-only keys
         assertThat(result.pluginType()).isEqualTo(PLUGIN_TYPE);
-        assertThat(result.schema()).isNotEmpty();
+        assertThat(result.properties()).isNotEmpty()
+            .doesNotContainKeys("$schema", "$examples", "$metrics", "$deprecated", "$beta", "title", "description");
     }
 
     @Test

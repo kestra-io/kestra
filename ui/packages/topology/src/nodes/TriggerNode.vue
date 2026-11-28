@@ -3,7 +3,6 @@
     <BasicNode
         :id="id"
         :data="formattedData"
-        :color="color"
         :class="{'node-core--error': validationIssues.length > 0}"
         :icons="icons"
         :loadIcon="loadIcon"
@@ -61,7 +60,6 @@
 
     const {t} = useI18n()
 
-    const color = computed(() => data.color ?? "primary")
     const triggerId = computed(() => Utils.afterLastDot(id))
     const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
     const validationIssues = computed<string[]>(() => validationIssuesByTask?.value?.get(triggerId.value ?? "") ?? [])

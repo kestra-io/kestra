@@ -16,6 +16,7 @@ import com.google.common.base.Throwables;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.utils.MapUtils;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -74,7 +75,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         this.logEntry = logEntry;
         this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
         this.logToFile = logToFile;
-        this.mdcLabels = mdcLabels == null ? Map.of() : mdcLabels;
+        this.mdcLabels = MapUtils.emptyOnNull(mdcLabels);
     }
 
     /**
@@ -205,6 +206,20 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             index++;
         }
         this.useSecrets.add(index, secret);
+    }
+
+    boolean hasSecrets() {
+        return !this.useSecrets.isEmpty();
+    }
+
+    String maskSecrets(String data) {
+        for (String s : this.useSecrets) {
+            if (data.contains(s)) {
+                data = data.replace(s, "******");
+            }
+        }
+
+        return data;
     }
 
     public org.slf4j.Logger logger() {
@@ -391,13 +406,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         }
 
         protected String replaceSecret(String data) {
-            for (String s : runContextLogger.useSecrets) {
-                if (data.contains(s)) {
-                    data = data.replace(s, "******");
-                }
-            }
-
-            return data;
+            return runContextLogger.maskSecrets(data);
         }
 
         private Object recursive(@Nullable Object object) {

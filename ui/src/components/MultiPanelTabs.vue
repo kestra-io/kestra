@@ -1019,24 +1019,10 @@
         pointer-events: none;
     }
 
-    .default-theme{
-        & :deep(.kel-splitter-panel) {
-            background-color: var(--ks-bg-surface);
-            display: grid;
-            grid-template-rows: auto 1fr;
-        }
-
-        & :deep(.kel-splitter__splitter){
-            border-left-color: var(--ks-border-default);
-            background-color: var(--ks-bg-surface);
-            &:before, &:after{
-                background-color: var(--ks-text-secondary);
-            }
-        }
-
-       & :deep(.kel-splitter-bar) {
-           z-index: 1;
-       }
+    .default-theme {
+        --ks-splitter-panel-bg: var(--ks-bg-surface);
+        --ks-splitter-panel-display: grid;
+        --ks-splitter-panel-rows: auto 1fr;
     }
 
     .content-panel{

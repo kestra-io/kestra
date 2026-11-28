@@ -56,7 +56,6 @@
                     <textarea
                         data-testid="monaco-editor-hidden-synced-textarea"
                         style="height: 0; width: 0; opacity: 0;"
-                        type="text"
                         v-model="textAreaValue"
                     />
                 </div>
@@ -83,7 +82,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {ref, watch, type HTMLAttributes} from "vue"
+    import {useFormItem} from "element-plus"
     import KsDatePicker from "./KsDatePicker.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
@@ -93,7 +94,7 @@
 
     defineOptions({name: "KsEditor"})
 
-    const props = withDefaults(defineProps<KsEditorProps>(), {
+    const props = withDefaults(defineProps<KsEditorProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsEditorProps>>(), {
         modelValue: "",
         original: undefined,
         lang: undefined,
@@ -155,6 +156,9 @@
         insertTextAtCursor,
         getEditor,
     } = useKsEditor(props, emit, {editorRef, container, datePickerWrapper, datePicker})
+
+    const {formItem} = useFormItem()
+    watch(() => props.modelValue, () => formItem?.validate("change").catch(() => {}))
 
     defineExpose<KsEditorExposes>({
         focus,
@@ -234,6 +238,8 @@
         & .editor-container {
             display: flex;
             flex-grow: 1;
+            height: var(--ks-editor-height, auto);
+            max-height: var(--ks-editor-max-height, none);
 
             &:not(.single-line) .editor-wrapper {
                 padding-bottom: 4rem;
@@ -254,7 +260,7 @@
 
             & .placeholder {
                 position: absolute;
-                top: -3px;
+                top: var(--ks-editor-placeholder-top, -3px);
                 overflow: hidden;
                 padding-left: inherit;
                 padding-right: inherit;
@@ -353,6 +359,10 @@
         color: var(--code-pebble) !important;
     }
 
+    .highlight-pebble-pebbleVariable {
+        color: var(--code-pebbleVariable) !important;
+    }
+
     .highlight-pebble-keyword {
         color: var(--code-keyword) !important;
     }
@@ -395,6 +405,7 @@
         width: 100%;
         height: 100%;
         outline: none;
+        overflow-x: var(--ks-editor-overflow-x, visible);
     }
 
     .main-editor > #flowFileEditorTab .monaco-editor {

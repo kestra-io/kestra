@@ -60,11 +60,12 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
                     :disabledReason="disabledReason"
                     :describedBy="describedBy"
                     :streaming="streaming"
-                    :placeholder="$t('ai.copilot.emptyHelper')"
+                    :placeholder="emptyPlaceholder"
                     :rows="3"
                     @submit="onSubmit"
                     @stop="onStop"
@@ -72,17 +73,19 @@
                 <div class="copilot-suggestions">
                     <KsButton
                         v-for="suggestion in suggestions"
-                        :key="suggestion"
+                        :key="suggestion.label"
                         size="small"
                         class="copilot-suggestion"
                         data-test="copilot-suggestion"
                         :disabled="!canSend || noProviderConfigured"
                         :aria-describedby="describedBy"
-                        @click="onSubmit(suggestion)"
+                        @click="onSuggestion(suggestion)"
                     >
-                        {{ suggestion }}
+                        {{ suggestion.label }}
                     </KsButton>
                 </div>
+
+                <CopilotMcpTip />
 
                 <CopilotHelp v-if="layout === 'page'" />
             </div>
@@ -128,6 +131,8 @@
                 </div>
             </KsScrollbar>
 
+            <CopilotDraftTray v-if="trayDrafts.length" :items="trayDrafts" @dismiss="dismissDraft" @applied="markDraftApplied" />
+
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
                  horizontal margin would push it past the panel (100% + margin) and overflow. -->
             <div v-if="error || errorDetail || notice || unavailable" class="copilot-banner">
@@ -146,7 +151,7 @@
                 <KsAlert v-else-if="notice" type="warning" role="status" data-test="copilot-notice">
                     <div class="copilot-notice-body">
                         <span>{{ $t(`ai.copilot.notice.${notice}`) }}</span>
-                        <KsButton size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
+                        <KsButton v-if="notice === 'emptyTurn'" size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
                             {{ $t("ai.copilot.notice.retry") }}
                         </KsButton>
                     </div>
@@ -161,6 +166,7 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
                     :disabledReason="disabledReason"
                     :describedBy="describedBy"
@@ -186,11 +192,15 @@
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import CopilotContextChip from "./CopilotContextChip.vue"
+    import CopilotDraftTray from "./CopilotDraftTray.vue"
     import CopilotHelp from "./CopilotHelp.vue"
+    import CopilotMcpTip from "./CopilotMcpTip.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
+    import {useAiUsage} from "./useAiUsage"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
     import {isViewingFlow, parseArtefactYaml} from "./useApplyDraft"
+    import {collectPendingDrafts, type PendingDraft} from "./pendingDrafts"
     import type {ScopeBinding, ContextPart} from "./types"
     import {useMiscStore} from "override/stores/misc"
     import {useFlowStore} from "../../../stores/flow"
@@ -280,6 +290,10 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
+    // Where the selected provider stands against its ceiling, so an exhausted allowance is visible before a
+    // turn is spent finding out. Re-read after each turn, which is the only thing that moves the figure.
+    const {status: usage, refresh: refreshUsage} = useAiUsage(selectedProvider)
+
     const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
@@ -302,13 +316,30 @@
         previousProvider = now
     })
 
-    // Quick-start prompts shown under the empty-state composer (Figma Default variant).
-    const suggestions = computed(() => [
-        t("ai.copilot.suggestions.errorHandling"),
-        t("ai.copilot.suggestions.unitTest"),
-        t("ai.copilot.suggestions.explain"),
-        t("ai.copilot.suggestions.dbt"),
-    ])
+    const emptyPlaceholder = computed(() => t(routeInFocus.value?.kind === "FLOW" ? "ai.copilot.emptyHelper" : "ai.copilot.emptyHelperNoFlow"))
+
+    /** A quick-start prompt: sent as-is, or (with `prefill`) dropped into the composer for the user to finish. */
+    interface Suggestion {
+        label: string
+        prefill?: string
+    }
+
+    // Quick-start prompts shown under the empty-state composer. The flow ones only make sense with a
+    // flow in focus; anywhere else (the Copilot home, a list page) they'd act on nothing, so those
+    // surfaces get prompts that need no context (kestra-io/kestra#19071).
+    const flowInFocus = computed(() => Boolean(activeScope.value?.flowId) || editorFlowSource.value !== undefined)
+    const suggestions = computed<Suggestion[]>(() => flowInFocus.value
+        ? [
+            {label: t("ai.copilot.suggestions.errorHandling")},
+            {label: t("ai.copilot.suggestions.unitTest")},
+            {label: t("ai.copilot.suggestions.explain")},
+            {label: t("ai.copilot.suggestions.dbt")},
+        ]
+        : [
+            {label: t("ai.copilot.suggestions.createFlow"), prefill: `${t("ai.copilot.suggestions.createFlowPrefill")} `},
+            {label: t("ai.copilot.suggestions.pythonSchedule")},
+            {label: t("ai.copilot.suggestions.triggers")},
+        ])
 
     const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
 
@@ -363,11 +394,17 @@
     // callback isn't tracked the same way — it only re-runs when the signal below actually changes
     // (a message added, dismissed/applied tracking changed, or the route changed), never on a token tick.
     const pendingDraft = ref<{draftId: string; yaml: string} | undefined>(undefined)
+    const trayDrafts = ref<PendingDraft[]>([])
     const draftScanSignal = computed(() =>
         `${messages.value.length}|${messages.value[messages.value.length - 1]?.id ?? ""}|${dismissedDraftIds.value.size}|${appliedDraftIds.value.size}|${route.fullPath}`,
     )
     watch(draftScanSignal, () => {
         pendingDraft.value = findPendingDraft()
+        trayDrafts.value = collectPendingDrafts(
+            messages.value,
+            (draftId) => dismissedDraftIds.value.has(draftId) || appliedDraftIds.value.has(draftId),
+            flowStore.flowYaml,
+        )
     }, {immediate: true})
 
     function findPendingDraft(): {draftId: string; yaml: string} | undefined {
@@ -432,7 +469,7 @@
     const disabledReason = computed(() => noProviderConfigured.value ? t("ai.copilot.unavailable.sendTooltip") : undefined)
 
     /** Where the no-provider notice sends the user: the Copilot docs, on the configuration section. */
-    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configuration"
+    const docsUrl = "https://kestra.io/docs/develop-with-ai/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configure-an-llm-provider"
 
     const restored = restoreThread()
 
@@ -492,6 +529,8 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            // Ahead of the cancel guard below: a cancelled turn still spent whatever the provider generated.
+            refreshUsage()
             const last = lastMessage.value
             // Stop and New chat also drop `streaming`; the gather is a completion beat, not a cancel beat.
             if (!last || last.type === "CANCELLED") {
@@ -531,6 +570,18 @@
             await nextTick()
             focusActiveComposer()
         }
+    }
+
+    /** A suggestion click: send it, or seed the composer when the prompt is one the user has to finish. */
+    async function onSuggestion(suggestion: Suggestion): Promise<void> {
+        if (suggestion.prefill === undefined) {
+            await onSubmit(suggestion.label)
+            return
+        }
+        if (noProviderConfigured.value) return
+        composerText.value = suggestion.prefill
+        await nextTick()
+        focusActiveComposer()
     }
 
     /** "New chat": same stale-preview reasoning as `onSubmit` — a leftover draft card's preview
@@ -853,6 +904,7 @@
        page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
        stay pinned to the left edge of the page instead of floating with the centered column. */
     .copilot-chat--page .copilot-transcript,
+    .copilot-chat--page .copilot-tray,
     .copilot-chat--page .copilot-banner,
     .copilot-chat--page .copilot-footer {
         width: 100%;

@@ -3,6 +3,8 @@
         <KsMarkdown :content="data" />
     </section>
 
+    <KsSkeleton v-else-if="loading" animated :rows="3" />
+
     <KsNoData
         v-else-if="isFlowDescription"
         :icon="FileDocumentOutline"
@@ -19,7 +21,7 @@
     import type {Chart} from "../composables/useDashboards"
     import {getPropertyValue, useChartGenerator} from "../composables/useDashboards"
 
-    import {KsMarkdown} from "@kestra-io/design-system"
+    import {KsMarkdown, KsSkeleton} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
 
     const props = defineProps({
@@ -35,7 +37,7 @@
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const route = useRoute()
-    const {generate} = useChartGenerator(props.dashboardId, props, false)
+    const {generate, loading} = useChartGenerator(props.dashboardId, props, false)
 
     const isFlowDescription = computed(() => props.chart.source?.type === "FlowDescription")
 

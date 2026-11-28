@@ -12,14 +12,13 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
@@ -31,23 +30,37 @@ import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
 import org.apache.hc.client5.http.auth.*;
 import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.TlsConfig;
 import org.apache.hc.client5.http.impl.ChainElement;
 import org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
+import org.apache.hc.client5.http.ssl.HostnameVerificationPolicy;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpRequestInterceptor;
+import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.nio.support.classic.TransportException;
+import org.apache.hc.core5.http.ssl.TLS;
+import org.apache.hc.core5.http2.HttpVersionPolicy;
+import org.apache.hc.core5.http2.config.H2Config;
+import org.apache.hc.core5.reactor.IOReactorConfig;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 
@@ -79,18 +92,20 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class HttpClient implements Closeable {
-    /**
-     * Matches a {@code network/prefixLength} allow/deny-list entry, e.g. {@code 169.254.0.0/16}.
-     */
-    private static final Pattern CIDR_ENTRY = Pattern.compile("^(?:(https?)://)?([^/]+)/(\\d{1,3})$");
-
     private transient CloseableHttpClient client;
     private transient BasicCredentialsProvider defaultCredentialsProvider;
     private boolean hasProxy;
+    private final Set<String> proxyHosts = new HashSet<>();
     private final RunContext runContext;
     private final HttpConfiguration configuration;
     private ObservationRegistry observationRegistry;
     private static final Set<String> IDEMPOTENT_METHODS = Set.of("GET", "HEAD");
+
+    // The read timeout the classic client gets from Apache when none is configured, which the async client lacks.
+    private static final Timeout DEFAULT_READ_IDLE_TIMEOUT = Timeout.ofMinutes(3);
+
+    // Offers only gzip/deflate so httpclient5 never negotiates Brotli, whose native brotli4j library may be missing.
+    private static final HttpRequestInterceptor ACCEPT_ENCODING_INTERCEPTOR = (request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate");
 
     @Builder
     public HttpClient(RunContext runContext, @Nullable HttpConfiguration configuration) throws IllegalVariableEvaluationException {
@@ -108,21 +123,25 @@ public class HttpClient implements Closeable {
             throw new IllegalStateException("Client has already been created");
         }
 
+        HttpConfiguration.HttpVersion httpVersion = runContext.render(this.configuration.getHttpVersion())
+            .as(HttpConfiguration.HttpVersion.class)
+            .orElse(HttpConfiguration.HttpVersion.HTTP_1_1);
+
+        return httpVersion == HttpConfiguration.HttpVersion.HTTP_1_1 ? this.createClassicClient() : this.createAsyncClient(httpVersion);
+    }
+
+    private CloseableHttpClient createClassicClient() throws IllegalVariableEvaluationException {
         org.apache.hc.client5.http.impl.classic.HttpClientBuilder builder = HttpClients.custom()
             .disableDefaultUserAgent()
             .setUserAgent("Kestra");
 
-        // Advertise only gzip/deflate so the client never negotiates Brotli (Accept-Encoding: br).
-        // HttpClient5 auto-detects brotli4j on the classpath (e.g. brought in by a plugin) and would
-        // otherwise offer `br`, then fail with UnsatisfiedLinkError when the matching native artifact
-        // is missing. Setting the header explicitly wins: ContentCompressionExec only adds its own
-        // Accept-Encoding when the request has none, so gzip/deflate responses are still auto-decoded.
-        builder.addRequestInterceptorFirst((request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate"));
+        builder.addRequestInterceptorFirst(ACCEPT_ENCODING_INTERCEPTOR);
 
         // Positioned right after REDIRECT so it re-runs on every hop RedirectExec follows, unlike a request interceptor which only runs once before the redirect loop starts.
         builder.addExecInterceptorAfter(
             ChainElement.REDIRECT.name(), "ssrf-guard",
-            (request, scope, chain) -> {
+            (request, scope, chain) ->
+            {
                 validateUri(HttpService.safeURI(request));
                 return chain.proceed(request, scope);
             }
@@ -137,87 +156,35 @@ public class HttpClient implements Closeable {
         }
 
         // logger
-        if (this.configuration.getLogs() != null && this.configuration.getLogs().length > 0) {
-            if (
-                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_HEADERS) ||
-                    ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_BODY)
-            ) {
-                builder.addRequestInterceptorLast(new LoggingRequestInterceptor(runContext.logger(), this.configuration.getLogs()));
-            }
+        HttpRequestInterceptor requestLogger = this.requestLogger();
+        if (requestLogger != null) {
+            builder.addRequestInterceptorLast(requestLogger);
+        }
 
-            if (
-                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_HEADERS) ||
-                    ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_BODY)
-            ) {
-                builder.addResponseInterceptorLast(new LoggingResponseInterceptor(runContext.logger(), this.configuration.getLogs()));
-            }
+        HttpResponseInterceptor responseLogger = this.responseLogger();
+        if (responseLogger != null) {
+            builder.addResponseInterceptorLast(responseLogger);
         }
 
         // Object dependencies
         PoolingHttpClientConnectionManagerBuilder connectionManagerBuilder = PoolingHttpClientConnectionManagerBuilder.create();
-        ConnectionConfig.Builder connectionConfig = ConnectionConfig.custom();
         this.defaultCredentialsProvider = new BasicCredentialsProvider();
 
-        // Timeout
-        if (this.configuration.getTimeout() != null) {
-            var connectTimeout = runContext.render(this.configuration.getTimeout().getConnectTimeout()).as(Duration.class);
-            connectTimeout.ifPresent(duration -> connectionConfig.setConnectTimeout(Timeout.of(duration)));
-
-            var readIdleTimeout = runContext.render(this.configuration.getTimeout().getReadIdleTimeout()).as(Duration.class);
-            readIdleTimeout.ifPresent(duration -> connectionConfig.setSocketTimeout(Timeout.of(duration)));
-        }
-
         // proxy
-        if (this.configuration.getProxy() != null && configuration.getProxy().getAddress() != null) {
-            String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
+        ProxySelector proxySelector = this.proxySelector();
+        if (proxySelector != null) {
+            builder.setProxySelector(proxySelector);
 
-            if (StringUtils.isNotEmpty(proxyAddress)) {
-                this.hasProxy = true;
-                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
-                    .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
-                SocketAddress proxyAddr = new InetSocketAddress(
-                    proxyAddress,
-                    port
-                );
-
-                Proxy proxy = new Proxy(runContext.render(configuration.getProxy().getType()).as(Proxy.Type.class).orElse(null), proxyAddr);
-
-                builder.setProxySelector(new ProxySelector() {
-                    @Override
-                    public void connectFailed(URI uri, SocketAddress sa, IOException e) {
-                        /* ignore */
-                    }
-
-                    @Override
-                    public List<Proxy> select(URI uri) {
-                        return List.of(proxy);
-                    }
-                });
-
-                if (this.configuration.getProxy().getUsername() != null && this.configuration.getProxy().getPassword() != null) {
-                    builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
-
-                    this.defaultCredentialsProvider.setCredentials(
-                        new AuthScope(proxyAddress, port),
-                        new UsernamePasswordCredentials(
-                            runContext.render(this.configuration.getProxy().getUsername()).as(String.class).orElseThrow(),
-                            runContext.render(this.configuration.getProxy().getPassword()).as(String.class).orElseThrow().toCharArray()
-                        )
-                    );
-                }
+            if (this.hasProxyCredentials()) {
+                builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
             }
         }
 
-        // Behind a proxy this resolver would only see the proxy host, which may legitimately sit in a denied range.
-        if (!this.hasProxy) {
-            connectionManagerBuilder.setDnsResolver(new DeniedAddressDnsResolver());
-        }
+        connectionManagerBuilder.setDnsResolver(new DeniedAddressDnsResolver());
 
         // ssl
-        if (this.configuration.getSsl() != null) {
-            if (this.configuration.getSsl().getInsecureTrustAllCertificates() != null) {
-                connectionManagerBuilder.setSSLSocketFactory(this.selfSignedConnectionSocketFactory());
-            }
+        if (this.insecureTrustAllCertificates()) {
+            connectionManagerBuilder.setSSLSocketFactory(this.selfSignedConnectionSocketFactory());
         }
 
         // auth
@@ -233,7 +200,7 @@ public class HttpClient implements Closeable {
         builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));
 
         // TCP Keep-Alive extended socket options (disabled for Windows compatibility)
-        if (!runContext.render(this.configuration.getEnabledTcpExtendedKeepAlive()).as(Boolean.class).orElse(true)) {
+        if (!this.tcpExtendedKeepAliveEnabled()) {
             connectionManagerBuilder.setDefaultSocketConfig(
                 SocketConfig.custom()
                     .setTcpKeepIdle(0)
@@ -244,7 +211,7 @@ public class HttpClient implements Closeable {
         }
 
         // builder object
-        connectionManagerBuilder.setDefaultConnectionConfig(connectionConfig.build());
+        connectionManagerBuilder.setDefaultConnectionConfig(this.connectionConfig());
         builder.setConnectionManager(connectionManagerBuilder.build());
         builder.setDefaultCredentialsProvider(this.defaultCredentialsProvider);
 
@@ -254,16 +221,252 @@ public class HttpClient implements Closeable {
     }
 
     private SSLConnectionSocketFactory selfSignedConnectionSocketFactory() {
+        return new SSLConnectionSocketFactory(this.insecureSslContext(), new String[] {"TLSv1.3", "TLSv1.2"}, null, NoopHostnameVerifier.INSTANCE);
+    }
+
+    private SSLContext insecureSslContext() {
         try {
-            SSLContext sslContext = SSLContexts
+            return SSLContexts
                 .custom()
                 .loadTrustMaterial(null, (chain, authType) -> true)
                 .build();
-
-            return new SSLConnectionSocketFactory(sslContext, new String[] {"TLSv1.3", "TLSv1.2"}, null, NoopHostnameVerifier.INSTANCE);
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    private boolean insecureTrustAllCertificates() {
+        return this.configuration.getSsl() != null && this.configuration.getSsl().getInsecureTrustAllCertificates() != null;
+    }
+
+    private boolean tcpExtendedKeepAliveEnabled() throws IllegalVariableEvaluationException {
+        return runContext.render(this.configuration.getEnabledTcpExtendedKeepAlive()).as(Boolean.class).orElse(true);
+    }
+
+    private HttpRequestInterceptor requestLogger() {
+        HttpConfiguration.LoggingType[] logs = this.configuration.getLogs();
+        if (logs != null && (ArrayUtils.contains(logs, HttpConfiguration.LoggingType.REQUEST_HEADERS) || ArrayUtils.contains(logs, HttpConfiguration.LoggingType.REQUEST_BODY))) {
+            return new LoggingRequestInterceptor(runContext.logger(), logs);
+        }
+
+        return null;
+    }
+
+    private HttpResponseInterceptor responseLogger() {
+        HttpConfiguration.LoggingType[] logs = this.configuration.getLogs();
+        if (logs != null && (ArrayUtils.contains(logs, HttpConfiguration.LoggingType.RESPONSE_HEADERS) || ArrayUtils.contains(logs, HttpConfiguration.LoggingType.RESPONSE_BODY))) {
+            return new LoggingResponseInterceptor(runContext.logger(), logs);
+        }
+
+        return null;
+    }
+
+    private ConnectionConfig connectionConfig() throws IllegalVariableEvaluationException {
+        ConnectionConfig.Builder connectionConfig = ConnectionConfig.custom();
+
+        if (this.configuration.getTimeout() != null) {
+            var connectTimeout = runContext.render(this.configuration.getTimeout().getConnectTimeout()).as(Duration.class);
+            connectTimeout.ifPresent(duration -> connectionConfig.setConnectTimeout(Timeout.of(duration)));
+
+            var readIdleTimeout = runContext.render(this.configuration.getTimeout().getReadIdleTimeout()).as(Duration.class);
+            readIdleTimeout.ifPresent(duration -> connectionConfig.setSocketTimeout(Timeout.of(duration)));
+        }
+
+        return connectionConfig.build();
+    }
+
+    private ProxySelector proxySelector() throws IllegalVariableEvaluationException {
+        if (this.configuration.getProxy() == null || configuration.getProxy().getAddress() == null) {
+            return this.systemProxySelector();
+        }
+
+        String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
+        if (StringUtils.isEmpty(proxyAddress)) {
+            return this.systemProxySelector();
+        }
+
+        this.hasProxy = true;
+        this.proxyHosts.add(proxyAddress.toLowerCase(Locale.ROOT));
+        int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
+            .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
+        SocketAddress proxyAddr = new InetSocketAddress(
+            proxyAddress,
+            port
+        );
+
+        Proxy proxy = new Proxy(runContext.render(configuration.getProxy().getType()).as(Proxy.Type.class).orElse(null), proxyAddr);
+
+        if (this.hasProxyCredentials()) {
+            this.defaultCredentialsProvider.setCredentials(
+                new AuthScope(proxyAddress, port),
+                new UsernamePasswordCredentials(
+                    runContext.render(this.configuration.getProxy().getUsername()).as(String.class).orElseThrow(),
+                    runContext.render(this.configuration.getProxy().getPassword()).as(String.class).orElseThrow().toCharArray()
+                )
+            );
+        }
+
+        return new ProxySelector() {
+            @Override
+            public void connectFailed(URI uri, SocketAddress sa, IOException e) {
+                /* ignore */
+            }
+
+            @Override
+            public List<Proxy> select(URI uri) {
+                return List.of(proxy);
+            }
+        };
+    }
+
+    private boolean hasProxyCredentials() {
+        return this.configuration.getProxy() != null && this.configuration.getProxy().getUsername() != null && this.configuration.getProxy().getPassword() != null;
+    }
+
+    private ProxySelector systemProxySelector() {
+        String httpProxyHost = StringUtils.trimToNull(System.getProperty("http.proxyHost"));
+        String httpsProxyHost = StringUtils.trimToNull(System.getProperty("https.proxyHost"));
+        if ((httpProxyHost == null && httpsProxyHost == null) || !this.isSystemProxyEnabled()) {
+            return null;
+        }
+
+        this.hasProxy = true;
+        this.addSystemProxy(httpProxyHost, Integer.getInteger("http.proxyPort", 80), System.getProperty("http.proxyUser"), System.getProperty("http.proxyPassword", ""));
+        this.addSystemProxy(httpsProxyHost, Integer.getInteger("https.proxyPort", 443), System.getProperty("https.proxyUser"), System.getProperty("https.proxyPassword", ""));
+        return ProxySelector.getDefault();
+    }
+
+    private boolean isSystemProxyEnabled() {
+        return runContext instanceof DefaultRunContext defaultRunContext
+            && defaultRunContext.getTaskProperty("kestra.tasks.http.use-system-proxy", Boolean.class).orElse(false);
+    }
+
+    private void addSystemProxy(@Nullable String host, int port, @Nullable String user, String password) {
+        if (host == null) {
+            return;
+        }
+
+        this.proxyHosts.add(host.toLowerCase(Locale.ROOT));
+        if (user == null) {
+            return;
+        }
+
+        this.defaultCredentialsProvider.setCredentials(new AuthScope(host, port), new UsernamePasswordCredentials(user, password.toCharArray()));
+    }
+
+    private CloseableHttpClient createAsyncClient(HttpConfiguration.HttpVersion httpVersion) throws IllegalVariableEvaluationException {
+        HttpAsyncClientBuilder builder = HttpAsyncClients.custom()
+            .setUserAgent("Kestra")
+            .setH2Config(H2Config.custom().setPushEnabled(false).build());
+
+        builder.addRequestInterceptorFirst(ACCEPT_ENCODING_INTERCEPTOR);
+
+        builder.addExecInterceptorAfter(
+            ChainElement.REDIRECT.name(), "ssrf-guard",
+            (request, entityProducer, scope, chain, asyncExecCallback) ->
+            {
+                try {
+                    validateUri(HttpService.safeURI(request));
+                } catch (RuntimeException e) {
+                    // On a redirect hop this runs in an I/O callback, where a thrown exception would leave the request pending forever.
+                    asyncExecCallback.failed(e);
+                    return;
+                }
+
+                chain.proceed(request, entityProducer, scope, asyncExecCallback);
+            }
+        );
+
+        if (observationRegistry != null) {
+            builder.addExecInterceptorAfter(
+                ChainElement.RETRY.name(), "micrometer",
+                new ObservationExecChainHandler(observationRegistry, new CustomApacheHttpClientObservationConvention())
+            );
+        }
+
+        HttpRequestInterceptor requestLogger = this.requestLogger();
+        if (requestLogger != null) {
+            builder.addRequestInterceptorLast(requestLogger);
+        }
+
+        HttpResponseInterceptor responseLogger = this.responseLogger();
+        if (responseLogger != null) {
+            builder.addResponseInterceptorLast(responseLogger);
+        }
+
+        // The async client gives the logging interceptors no readable body.
+        if (
+            ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_BODY)
+                || ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_BODY)
+        ) {
+            runContext.logger().warn("The request and response bodies cannot be logged with the HTTP version {}, only the headers are.", httpVersion);
+        }
+
+        PoolingAsyncClientConnectionManagerBuilder connectionManagerBuilder = PoolingAsyncClientConnectionManagerBuilder.create();
+        this.defaultCredentialsProvider = new BasicCredentialsProvider();
+
+        ProxySelector proxySelector = this.proxySelector();
+        if (proxySelector != null) {
+            builder.setProxySelector(proxySelector);
+
+            if (this.hasProxyCredentials()) {
+                builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
+            }
+        }
+
+        connectionManagerBuilder.setDnsResolver(new DeniedAddressDnsResolver());
+
+        connectionManagerBuilder.setDefaultTlsConfig(
+            TlsConfig.custom()
+                .setVersionPolicy(httpVersion == HttpConfiguration.HttpVersion.HTTP_2 ? HttpVersionPolicy.FORCE_HTTP_2 : HttpVersionPolicy.NEGOTIATE)
+                .build()
+        );
+
+        if (this.insecureTrustAllCertificates()) {
+            connectionManagerBuilder.setTlsStrategy(
+                ClientTlsStrategyBuilder.create()
+                    .setSslContext(this.insecureSslContext())
+                    .setTlsVersions(TLS.V_1_3, TLS.V_1_2)
+                    .setHostVerificationPolicy(HostnameVerificationPolicy.CLIENT)
+                    .setHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                    .buildAsync()
+            );
+        }
+
+        if (this.configuration.getAuth() != null) {
+            this.configuration.getAuth().configure(builder, runContext);
+        }
+
+        if (!runContext.render(this.configuration.getFollowRedirects()).as(Boolean.class).orElseThrow()) {
+            builder.disableRedirectHandling();
+        }
+
+        builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));
+
+        // A client serves a single task, so one I/O thread is enough instead of one per CPU core.
+        IOReactorConfig.Builder ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(1);
+
+        // TCP Keep-Alive extended socket options (disabled for Windows compatibility)
+        if (!this.tcpExtendedKeepAliveEnabled()) {
+            ioReactorConfig
+                .setTcpKeepIdle(0)
+                .setTcpKeepInterval(0)
+                .setTcpKeepCount(0);
+        }
+
+        builder.setIOReactorConfig(ioReactorConfig.build());
+
+        ConnectionConfig connectionConfig = this.connectionConfig();
+        Timeout readIdleTimeout = connectionConfig.getSocketTimeout() == null ? DEFAULT_READ_IDLE_TIMEOUT : connectionConfig.getSocketTimeout();
+
+        connectionManagerBuilder.setDefaultConnectionConfig(ConnectionConfig.copy(connectionConfig).setSocketTimeout(readIdleTimeout).build());
+        builder.setConnectionManager(connectionManagerBuilder.build());
+        builder.setDefaultCredentialsProvider(this.defaultCredentialsProvider);
+
+        CloseableHttpAsyncClient asyncClient = builder.build();
+        asyncClient.start();
+
+        return HttpAsyncClients.classic(asyncClient, readIdleTimeout);
     }
 
     /**
@@ -617,6 +820,16 @@ public class HttpClient implements Closeable {
                     if (e.getCause() instanceof HttpClientException ex) {
                         throw ex;
                     }
+
+                    // The async client wraps transport errors, which would otherwise not be retried as they are with the classic client.
+                    if (e instanceof TransportException && (e.getCause() instanceof SocketException || e.getCause() instanceof SSLHandshakeException)) {
+                        throw new HttpClientRequestException(
+                            e.getCause().getMessage(),
+                            request,
+                            e.getCause()
+                        );
+                    }
+
                     throw new RuntimeException(e);
                 }
             }
@@ -672,34 +885,14 @@ public class HttpClient implements Closeable {
         List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
         List<String> deniedList = deniedList();
 
-        if (allowedList.isEmpty() && deniedList.isEmpty()) {
-            return;
-        }
-
-        if (resolveAuthority(uri) == null) {
-            // A list is configured but the URI carries no authority at all, so there is no host to check it
-            // against: fail closed on both directions instead of silently letting an unmatchable URI through.
-            throw new IllegalArgumentException("The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(uri));
-        }
-
-        // first check that if there is an allow list, it matches one
-        if (!allowedList.isEmpty()) {
-            if (allowedList.stream().noneMatch(entry -> isListEntryMatch(entry, uri))) {
-                throw new IllegalArgumentException("The URI %s is not in the configured allowed list (kestra.tasks.http.allowed-list).".formatted(uri));
-            }
-        }
-
-        // then check that there are no exclusion for it
-        if (deniedList.stream().anyMatch(entry -> isListEntryMatch(entry, uri))) {
-            throw new IllegalArgumentException("The URI %s is in the configured denied list (kestra.tasks.http.denied-list).".formatted(uri));
-        }
+        UriAccessGuard.checkUri(uri, allowedList, deniedList).ifPresent(HttpClient::reject);
 
         if (this.hasProxy && !deniedList.isEmpty()) {
             // The proxy resolves the target, so the best Kestra can do is resolve it too; a name only the proxy can resolve is let through.
-            String host = resolveAuthority(uri).host();
-            if (parseIpLiteral(host).isEmpty()) {
+            String host = UriAccessGuard.resolveAuthority(uri).host();
+            if (UriAccessGuard.parseIpLiteral(host).isEmpty()) {
                 try {
-                    rejectDeniedAddresses(host, SystemDefaultDnsResolver.INSTANCE.resolve(host), deniedList);
+                    UriAccessGuard.checkAddresses(host, SystemDefaultDnsResolver.INSTANCE.resolve(host), deniedList).ifPresent(HttpClient::reject);
                 } catch (UnknownHostException e) {
                     log.debug("Cannot resolve the host '{}' locally to check it against the denied list, leaving it to the proxy.", host);
                 }
@@ -707,228 +900,15 @@ public class HttpClient implements Closeable {
         }
     }
 
-    /**
-     * The host and raw port ({@code -1} when none was given, same convention as {@link URI#getPort()}) Kestra is
-     * actually about to connect to, as resolved by {@link #resolveAuthority(URI)}.
-     */
-    private record ResolvedAuthority(String host, int port) {
-    }
-
-    /**
-     * Resolves the host and port of the URI Kestra is actually about to connect to, falling back to a manual
-     * parse of the raw authority when {@link URI#getHost()} returns {@code null}. That happens for an authority
-     * containing an underscore, or a partial dotted-decimal IPv4 literal such as {@code 169.254.43518}: strings
-     * {@code java.net.URI}'s hostname grammar rejects, but that Apache HttpClient still connects to verbatim via
-     * {@code URIUtils.extractHost}. Returns {@code null} only when the URI carries no authority at all.
-     */
-    private static ResolvedAuthority resolveAuthority(URI uri) {
-        if (uri.getHost() != null) {
-            return new ResolvedAuthority(uri.getHost(), uri.getPort());
-        }
-
-        String authority = uri.getAuthority();
-        if (authority == null) {
-            return null;
-        }
-
-        String hostAndPort = authority.substring(authority.lastIndexOf('@') + 1);
-        int colon = hostAndPort.lastIndexOf(':');
-        if (colon == -1) {
-            return new ResolvedAuthority(hostAndPort, -1);
-        }
-
-        try {
-            return new ResolvedAuthority(hostAndPort.substring(0, colon), Integer.parseInt(hostAndPort.substring(colon + 1)));
-        } catch (NumberFormatException e) {
-            return new ResolvedAuthority(hostAndPort, -1);
-        }
-    }
-
-    /**
-     * Parses {@code host} as an IP literal, stripping IPv6 brackets and a trailing dot first. Never resolves a
-     * hostname: {@link InetAddress#ofLiteral} parses syntax only and never performs a DNS lookup, so this is safe
-     * to call on every allow/deny comparison.
-     */
-    private static Optional<InetAddress> parseIpLiteral(String host) {
-        String candidate = stripTrailingDot(host);
-        if (candidate.startsWith("[") && candidate.endsWith("]")) {
-            candidate = candidate.substring(1, candidate.length() - 1);
-        }
-
-        // ofLiteral rejects an interface-name zone id such as "%lo", yet the JDK resolver still connects to it.
-        int zoneIndex = candidate.indexOf('%');
-        if (zoneIndex != -1 && candidate.indexOf(':') != -1) {
-            candidate = candidate.substring(0, zoneIndex);
-        }
-
-        try {
-            return Optional.of(InetAddress.ofLiteral(candidate));
-        } catch (IllegalArgumentException e) {
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * Returns the canonical dotted-quad / compressed-IPv6 form when {@code host} is any textual IP literal —
-     * decimal, partial dotted-decimal, hex, or IPv4-mapped IPv6 — so that every spelling of the same address
-     * matches the same allow/deny entry. Falls back to a lowercased, trailing-dot-stripped hostname otherwise.
-     */
-    private static String canonicalHost(String host) {
-        return parseIpLiteral(host)
-            .map(InetAddress::getHostAddress)
-            .orElseGet(() -> stripTrailingDot(host).toLowerCase(Locale.ROOT));
-    }
-
-    /**
-     * A {@code network/prefixLength} allow/deny-list entry, e.g. {@code 169.254.0.0/16}, so an entire range can
-     * be denied without enumerating every textual spelling of every address in it.
-     */
-    private record Cidr(InetAddress network, int prefixLength, String scheme) {
-        static Cidr parsed(String entry) {
-            Matcher matcher = CIDR_ENTRY.matcher(entry);
-            if (!matcher.matches()) {
-                return null;
-            }
-
-            Optional<InetAddress> network = parseIpLiteral(matcher.group(2));
-            if (network.isEmpty()) {
-                return null;
-            }
-
-            int prefixLength;
-            try {
-                prefixLength = Integer.parseInt(matcher.group(3));
-            } catch (NumberFormatException e) {
-                return null;
-            }
-
-            if (prefixLength > network.get().getAddress().length * 8) {
-                return null;
-            }
-
-            return new Cidr(network.get(), prefixLength, matcher.group(1));
-        }
-
-        boolean contains(String host) {
-            return parseIpLiteral(host).map(this::contains).orElse(false);
-        }
-
-        boolean contains(InetAddress address) {
-            byte[] addressBytes = address.getAddress();
-            byte[] networkBytes = network.getAddress();
-            if (addressBytes.length != networkBytes.length) {
-                return false;
-            }
-
-            int fullBytes = prefixLength / 8;
-            for (int i = 0; i < fullBytes; i++) {
-                if (addressBytes[i] != networkBytes[i]) {
-                    return false;
-                }
-            }
-
-            int remainingBits = prefixLength % 8;
-            if (remainingBits == 0) {
-                return true;
-            }
-
-            int mask = 0xFF << (8 - remainingBits);
-            return (addressBytes[fullBytes] & mask) == (networkBytes[fullBytes] & mask);
-        }
-    }
-
-    /**
-     * Matches a {@code kestra.tasks.http.allowed-list} / {@code denied-list} entry against the URI Kestra is
-     * actually about to connect to. Matching is done on the resolved authority (host, and scheme/port when the
-     * entry specifies them) rather than on the raw URI string, so that URL-encoded userinfo
-     * (e.g. {@code https://api.trusted.com@169.254.169.254/}, whose host is {@code 169.254.169.254}) or a
-     * subdomain suffix (e.g. {@code https://api.trusted.com.attacker.example/}) cannot impersonate an entry
-     * they merely start with. An IP-literal host is compared on its canonical form, so {@code 2852039166} and
-     * {@code 169.254.169.254} match the same entry.
-     * <p>
-     * An entry matches its host exactly. Write it as {@code *.api.trusted.com} to also match every subdomain of
-     * {@code api.trusted.com} (not {@code api.trusted.com} itself, which needs its own entry), or as a
-     * {@code network/prefixLength} CIDR range (e.g. {@code 169.254.0.0/16}) to match every address in it.
-     */
-    private static boolean isListEntryMatch(String entry, URI uri) {
-        ResolvedAuthority requestAuthority = resolveAuthority(uri);
-        if (requestAuthority == null) {
-            return false;
-        }
-
-        Cidr cidr = Cidr.parsed(entry);
-        if (cidr != null) {
-            return cidr.contains(requestAuthority.host())
-                && (cidr.scheme() == null || cidr.scheme().equalsIgnoreCase(uri.getScheme()));
-        }
-
-        boolean matchSubdomains = entry.startsWith("*.") || entry.contains("://*.");
-        String strippedEntry = entry.replace("://*.", "://").replaceFirst("^\\*\\.", "");
-
-        URI entryUri;
-        try {
-            entryUri = URI.create(strippedEntry.contains("://") ? strippedEntry : "//" + strippedEntry);
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-
-        ResolvedAuthority entryAuthority = resolveAuthority(entryUri);
-        if (entryAuthority == null) {
-            return false;
-        }
-
-        String host = canonicalHost(requestAuthority.host());
-        String lowerEntryHost = canonicalHost(entryAuthority.host());
-        boolean hostMatches = matchSubdomains && parseIpLiteral(host).isEmpty()
-            ? host.endsWith("." + lowerEntryHost)
-            : host.equals(lowerEntryHost);
-        if (!hostMatches) {
-            return false;
-        }
-
-        if (entryUri.getScheme() != null && !entryUri.getScheme().equalsIgnoreCase(uri.getScheme())) {
-            return false;
-        }
-
-        if (entryAuthority.port() != -1 && entryAuthority.port() != defaultedPort(uri.getScheme(), requestAuthority.port())) {
-            return false;
-        }
-
-        String entryPath = entryUri.getPath();
-        if (entryPath != null && !entryPath.isEmpty() && !"/".equals(entryPath)) {
-            String path = uri.getPath() == null ? "" : uri.getPath();
-            if (!path.startsWith(entryPath)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Only CIDR and IP literal entries can match an address, and their scheme, port and path are ignored since a name is resolved without them.
-     */
-    private static boolean isDeniedAddress(String entry, InetAddress address) {
-        Cidr cidr = Cidr.parsed(entry);
-        if (cidr != null) {
-            return cidr.contains(address);
-        }
-
-        String strippedEntry = entry.replace("://*.", "://").replaceFirst("^\\*\\.", "");
-        try {
-            ResolvedAuthority entryAuthority = resolveAuthority(URI.create(strippedEntry.contains("://") ? strippedEntry : "//" + strippedEntry));
-            return entryAuthority != null && parseIpLiteral(entryAuthority.host()).map(address::equals).orElse(false);
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    private static void rejectDeniedAddresses(String host, InetAddress[] addresses, List<String> deniedList) {
-        for (InetAddress address : addresses) {
-            if (deniedList.stream().anyMatch(entry -> isDeniedAddress(entry, address))) {
-                throw new IllegalArgumentException("The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(host, address.getHostAddress()));
-            }
-        }
+    private static void reject(UriAccessGuard.Violation violation) {
+        throw new IllegalArgumentException(switch (violation.reason()) {
+            // A list is configured but the URI carries no authority at all, so there is no host to check it
+            // against: fail closed on both directions instead of silently letting an unmatchable URI through.
+            case NO_HOST -> "The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(violation.target());
+            case NOT_ALLOWED -> "The URI %s is not in the configured allowed list (kestra.tasks.http.allowed-list).".formatted(violation.target());
+            case DENIED -> "The URI %s is in the configured denied list (kestra.tasks.http.denied-list).".formatted(violation.target());
+            case DENIED_ADDRESS -> "The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(violation.target(), violation.address());
+        });
     }
 
     /**
@@ -939,11 +919,12 @@ public class HttpClient implements Closeable {
         @Override
         public InetAddress[] resolve(String host) throws UnknownHostException {
             InetAddress[] addresses = SystemDefaultDnsResolver.INSTANCE.resolve(host);
-            if (parseIpLiteral(host).isPresent()) {
+            // The proxy host may legitimately sit in a denied range, the target behind it is checked in validateUri.
+            if (UriAccessGuard.parseIpLiteral(host).isPresent() || proxyHosts.contains(host.toLowerCase(Locale.ROOT))) {
                 return addresses;
             }
 
-            rejectDeniedAddresses(host, addresses, deniedList());
+            UriAccessGuard.checkAddresses(host, addresses, deniedList()).ifPresent(HttpClient::reject);
             return addresses;
         }
 
@@ -951,30 +932,6 @@ public class HttpClient implements Closeable {
         public String resolveCanonicalHostname(String host) throws UnknownHostException {
             return SystemDefaultDnsResolver.INSTANCE.resolveCanonicalHostname(host);
         }
-    }
-
-    /**
-     * Strips a single trailing dot from a hostname, e.g. {@code dangerous-url.com.}, since DNS resolves it
-     * identically to {@code dangerous-url.com} and it would otherwise fail both the exact and suffix match.
-     */
-    private static String stripTrailingDot(String host) {
-        return host.endsWith(".") ? host.substring(0, host.length() - 1) : host;
-    }
-
-    /**
-     * Returns {@code port}, or the scheme's default port when {@code port} is {@code -1}, so that an
-     * allow/deny-list entry with an explicit default port still matches a request that omits it.
-     */
-    private static int defaultedPort(String scheme, int port) {
-        if (port != -1) {
-            return port;
-        }
-
-        return switch (scheme == null ? "" : scheme.toLowerCase(Locale.ROOT)) {
-            case "https" -> 443;
-            case "http" -> 80;
-            default -> -1;
-        };
     }
 
     @SuppressWarnings("unchecked")

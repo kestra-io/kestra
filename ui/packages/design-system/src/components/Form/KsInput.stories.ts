@@ -220,3 +220,35 @@ export const Mobile: Story = {
         `,
     }),
 }
+
+/** Font size and background: `--ks-input-font-size` and `--ks-input-bg-color`, set on the field or an ancestor */
+export const FontSizeAndBackground: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsInput},
+        setup() { return {value: ref("Smaller text on the base background")} },
+        template: `
+            <div style="padding:24px;width:300px;display:flex;flex-direction:column;gap:12px;--ks-input-font-size:var(--ks-font-size-sm);--ks-input-bg-color:var(--ks-bg-base)">
+                <ks-input v-model="value" data-test="input" />
+                <ks-input v-model="value" type="textarea" data-test="textarea" />
+                <span data-test="reference" style="font-size:var(--ks-font-size-sm);background:var(--ks-bg-base)">reference</span>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const reference = getComputedStyle(canvasElement.querySelector("[data-test=reference]")!)
+        await expect(getComputedStyle(canvasElement.querySelector("input")!).fontSize).toBe(reference.fontSize)
+        await expect(getComputedStyle(canvasElement.querySelector("textarea")!).fontSize).toBe(reference.fontSize)
+        await expect(getComputedStyle(canvasElement.querySelector(".kel-input__wrapper")!).backgroundColor).toBe(reference.backgroundColor)
+    },
+}
+
+/** Thin scrollbar: a narrow rounded scrollbar on a textarea, shown where the pointer is coarse and the app's own scrollbar style does not apply */
+export const ThinScrollbar: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsInput},
+        setup() { return {value: ref(Array.from({length: 12}, (_, index) => `Line ${index + 1}`).join("\n"))} },
+        template: "<div style=\"padding:24px;width:300px\"><ks-input v-model=\"value\" type=\"textarea\" :rows=\"3\" resize=\"none\" thinScrollbar /></div>",
+    }),
+}

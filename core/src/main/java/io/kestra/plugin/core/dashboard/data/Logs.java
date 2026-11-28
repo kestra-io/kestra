@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Schema(
     title = "Display Log data in a dashboard chart.",
-    description = "Log data can be displayed in a chart with certain parameters such as Exectution date or Log level."
+    description = "Log data can be displayed in a chart with certain parameters such as Execution date or Log level."
 )
 @Plugin(
     examples = {

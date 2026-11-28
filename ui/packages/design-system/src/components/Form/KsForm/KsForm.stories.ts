@@ -186,3 +186,34 @@ export const LabelPositions: Story = {
         `,
     }),
 }
+
+export const WideLabel: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsForm, KsFormItem, KsInput, KsButton},
+        setup() {
+            const form = reactive({tags: ""})
+            return {form}
+        },
+        template: `
+            <div style="padding:24px;max-width:400px">
+                <ks-form :model="form" label-position="top">
+                    <ks-form-item wide-label data-test="wide">
+                        <template #label>
+                            <div style="display:flex;justify-content:space-between;width:100%">
+                                <span>Tags</span>
+                                <ks-button size="small">Add</ks-button>
+                            </div>
+                        </template>
+                        <ks-input v-model="form.tags" />
+                    </ks-form-item>
+                </ks-form>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const item = canvasElement.querySelector("[data-test=wide]")!.getBoundingClientRect()
+        const label = canvasElement.querySelector("[data-test=wide] .kel-form-item__label")!.getBoundingClientRect()
+        await expect(Math.round(label.width)).toBe(Math.round(item.width))
+    },
+}

@@ -3,7 +3,7 @@
         <template #actions>
             <NavBarActions>
                 <NavBarAction v-if="canRead" :icon="Download" :label="$t('export_csv')" @click="exportFlowsAsStream(route.query)" />
-                <NavBarAction :icon="Upload" :label="$t('import')" @click="file?.click()" />
+                <NavBarAction v-if="canImport" :icon="Upload" :label="$t('import')" @click="file?.click()" />
                 <NavBarAction :icon="TextBoxSearch" :to="{name: 'flows/search'}" :label="$t('source search')" />
 
                 <template #primary>
@@ -20,7 +20,7 @@
             </NavBarActions>
         </template>
     </TopNavBar>
-    <section :class="{'full-container': fitHeightResolved}">
+    <section class="flows" :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -35,6 +35,7 @@
             :mobileColumns="mobileColumns"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
+            :rowStyle="{cursor: 'pointer'}"
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
             :no-data-text="$t('no_results.flows')"
@@ -59,6 +60,20 @@
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                 />
+
+                <div v-if="!embed && searchQuery" class="source-row">
+                    <KsIcon :size="16"><TextBoxSearch /></KsIcon>
+                    <KsText type="secondary">{{ $t("flows_matched_query", {count: flowStore.total, query: searchQuery}) }}</KsText>
+                    <router-link
+                        :to="{name: 'flows/search', query: sourceSearchQuery}"
+                        custom
+                        v-slot="{href, navigate}"
+                    >
+                        <KsLink :href="href" @click="navigate" type="primary">
+                            {{ $t("search_in_flow_source", {query: searchQuery}) }}
+                        </KsLink>
+                    </router-link>
+                </div>
             </template>
 
             <template #bulk-actions>
@@ -337,7 +352,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue"
     import Play from "vue-material-design-icons/Play.vue"
 
-    import {KsExecutionStatus, KsIconButton, deepMerge} from "@kestra-io/design-system"
+    import {KsExecutionStatus, KsIcon, KsIconButton, KsLink, KsText, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import TriggerAvatar from "./TriggerAvatar.vue"
 
@@ -357,6 +372,7 @@
 
     import {useFlowStore} from "../../stores/flow"
     import {useApiStore} from "../../stores/api"
+    import {parseFlowsSearchQuery} from "../../utils/flowSearchQuery"
     import {useAuthStore} from "override/stores/auth"
     import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
@@ -365,8 +381,7 @@
     import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
-    import type {ExecutionControllerLastExecutionResponse, QueryFilter} from "@kestra-io/kestra-sdk"
-    import type {Flow} from "../../stores/flow"
+    import type {ExecutionControllerLastExecutionResponse, Flow, QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
     import {defaultTimeRange} from "../executions/timeRangeWiden"
 
@@ -499,11 +514,19 @@
     const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value)
     const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
+    const canImport = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.IMPORT))
     const routeNamespace = computed(() => route.query.namespace as string | undefined)
     const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value))
     const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
     const canExecute = (flow: Flow) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
+
+    const parsedSearch = computed(() => {
+        const explicitNs = props.namespace ? (route.params.id as string || props.namespace) : undefined
+        return parseFlowsSearchQuery(route.query, explicitNs)
+    })
+    const searchQuery = computed(() => parsedSearch.value.searchQuery)
+    const sourceSearchQuery = computed(() => parsedSearch.value.sourceSearchQuery)
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
@@ -536,7 +559,7 @@
             })
     }
 
-    const onRowClick = (item: Flow, column: {type?: string} | undefined, event: Event) => {
+    const onRowClick = (item: Flow, column: {type?: string} | null | undefined, event: Event) => {
         if (!isPlainRowActivation(column, event)) return
 
         router.push({
@@ -734,11 +757,6 @@
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
-:deep(nav .dropdown-menu) {
-    display: flex;
-    width: 20rem;
-}
-
 .flow-id {
     min-width: 200px;
     display: flex;
@@ -768,12 +786,8 @@
     vertical-align: middle;
 }
 
-:deep(.flows-table) .kel-table__row {
-    cursor: pointer;
-}
-
-:deep(.flows-table) th.row-action .cell {
-    padding-right: var(--ks-spacing-4);
+.flows {
+    --ks-table-action-header-padding-right: var(--ks-spacing-4);
 }
 
 .header-actions-list {
@@ -790,5 +804,13 @@
     justify-content: center;
     gap: 0.25rem;
     padding-right: var(--ks-spacing-4);
+}
+
+.source-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ks-spacing-2);
+    padding-top: var(--ks-spacing-3);
 }
 </style>

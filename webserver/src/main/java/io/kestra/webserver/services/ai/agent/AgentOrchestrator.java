@@ -31,6 +31,8 @@ import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.AiUsageService;
+import io.kestra.webserver.services.ai.AiUsageStatus;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
@@ -44,6 +46,7 @@ import io.micronaut.core.annotation.Nullable;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.output.FinishReason;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.PartialResponse;
@@ -70,11 +73,14 @@ import lombok.extern.slf4j.Slf4j;
 public class AgentOrchestrator {
     private static final long MODEL_CANCEL_POLL_MS = 50;
 
+    private static final int MAX_MALFORMED_ARGUMENTS_CHARS = 2000;
+
     private final AiServiceManager aiServiceManager;
     private final ToolCatalog catalog;
     private final ModeProfiles modeProfiles;
     private final AiThreadManager threadManager;
     private final SystemPromptResolver systemPromptResolver;
+    private final AiUsageService usageService;
     private final Duration modelCallTimeout;
     private final int maxContextTurns;
     private final int maxSequentialToolsInvocations;
@@ -86,12 +92,14 @@ public class AgentOrchestrator {
         final ModeProfiles modeProfiles,
         final AiThreadManager threadManager,
         final SystemPromptResolver systemPromptResolver,
+        final AiUsageService usageService,
         final AgentConfiguration configuration) {
         this.aiServiceManager = aiServiceManager;
         this.catalog = catalog;
         this.modeProfiles = modeProfiles;
         this.threadManager = threadManager;
         this.systemPromptResolver = systemPromptResolver;
+        this.usageService = usageService;
         this.modelCallTimeout = configuration.modelCallTimeout();
         this.maxContextTurns = configuration.maxContextTurns();
         this.maxSequentialToolsInvocations = configuration.maxSequentialToolsInvocations();
@@ -102,7 +110,7 @@ public class AgentOrchestrator {
         String traceId = thread.uid() + "-turn-" + (threadManager.load(thread.tenant(), thread.uid()).size() + 1);
         try {
             ResolvedProfile profile = modeProfiles.resolve(context.mode(), context.tenant(), context.principal());
-            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(List.of());
+            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(context.principal(), List.of());
 
             threadManager.appendUser(thread.tenant(), thread.uid(), traceId, context.prompt());
 
@@ -172,7 +180,7 @@ public class AgentOrchestrator {
             // keeps every tool-call/result pair inside one turn so turn-windowing can never split them.
             String traceId = pending.traceId();
             ResolvedProfile profile = modeProfiles.resolve(running.mode(), running.tenant(), principal);
-            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(List.of());
+            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(principal, List.of());
 
             List<ChatMessage> projected = ChatMessageAdaptor.project(TurnWindow.lastNTurns(log, maxContextTurns));
             List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
@@ -281,12 +289,22 @@ public class AgentOrchestrator {
                 return;
             }
 
+            AiUsageStatus usage = usageService.status(ctx.providerId(), userId(ctx));
+            if (usage.isExceeded()) {
+                stopForUsageLimit(ctx, sink, usage);
+                return;
+            }
+
             ChatRequest request = ChatRequest.builder()
                 .messages(ctx.messages())
                 .toolSpecifications(ctx.profile().toolSpecifications())
                 .build();
 
             ChatResponse response = callModel(ctx.model(), request, sink);
+            if (response != null) {
+                recordUsage(ctx, response);
+            }
+
             if (sink.isCancelled() || response == null) {
                 abortCancelled(ctx);
                 return;
@@ -302,13 +320,19 @@ public class AgentOrchestrator {
                 // empty model turn on the next turn (see ChatMessageAdaptor.project), which is itself a
                 // documented trigger for more empty responses. End the turn without polluting the thread.
                 if (ai.text() == null || ai.text().isBlank()) {
-                    log.warn("Model returned an empty response (no text, no tool calls) for thread {}; ending turn without persisting.", ctx.thread().uid());
+                    AgentEvents.EmptyTurnReason reason = emptyTurnReason(response.finishReason());
+                    log.warn(
+                        "Model returned an empty response (no text, no tool calls) for thread {}; ending turn without persisting. reason={}, finishReason={}, tokenUsage={}",
+                        ctx.thread().uid(), reason, response.finishReason(), response.tokenUsage()
+                    );
                     finishTurn(ctx);
-                    done(sink, AgentThreadStatus.IDLE);
+                    sink.emit(AgentEvents.DONE, new AgentEvents.DoneEvent(AgentThreadStatus.IDLE.name(), reason));
+                    sink.complete();
                     return;
                 }
 
-                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get()) {
+                // A draft already proposed this turn is the outcome, not a plan: asking to approve its summary would only replay the authoring.
+                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get() && !hasDraftInTurn(ctx)) {
                     suspendForPlan(ctx, ai.text(), sink);
                     return;
                 }
@@ -328,17 +352,18 @@ public class AgentOrchestrator {
                 return;
             }
 
-            ctx.messages().add(ai);
+            ctx.messages().add(ChatMessageAdaptor.withValidToolArguments(ai));
             ToolExecutionRequest heldAction = null;
             ToolEntry heldEntry = null;
             Map<String, Object> heldArgs = null;
 
-            for (ToolExecutionRequest req : ai.toolExecutionRequests()) {
+            for (ToolExecutionRequest emitted : ai.toolExecutionRequests()) {
                 if (sink.isCancelled()) {
                     abortCancelled(ctx);
                     return;
                 }
 
+                ToolExecutionRequest req = ChatMessageAdaptor.withNormalizedArguments(emitted);
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {
@@ -349,6 +374,16 @@ public class AgentOrchestrator {
                 ToolEntry entry = catalog.byName(req.name()).orElseThrow();
                 threadManager.appendToolCall(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ai.text(),
                     ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family(), ChatMessageAdaptor.thinkingOf(ai)));
+
+                if (ChatMessageAdaptor.hasMalformedArguments(req.arguments())) {
+                    // The arguments are model-written text, so they go to the model but never to the server log.
+                    log.warn(
+                        "Copilot thread {}: tool '{}' was not executed: malformed arguments ({} chars, finish reason {})",
+                        ctx.thread().uid(), req.name(), req.arguments().length(), response.finishReason()
+                    );
+                    recordToolError(ctx, req, entry.kind(), entry.family(), malformedArgumentsMessage(req, response.finishReason()), sink);
+                    continue;
+                }
 
                 if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
                     if (heldAction == null) {
@@ -416,6 +451,11 @@ public class AgentOrchestrator {
     private void failTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
         final AgentToolFamily family, final String message, final TurnEventSink sink) {
         log.warn("Copilot thread {}: tool '{}' failed: {}", ctx.thread().uid(), req.name(), message);
+        recordToolError(ctx, req, kind, family, message, sink);
+    }
+
+    private void recordToolError(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
+        final AgentToolFamily family, final String message, final TurnEventSink sink) {
         // Mark the result as an error so the model (and provider APIs, e.g. Gemini's functionResponse)
         // see it as a failed tool call rather than a normal result — ToolExecutionResultMessage.from(..)
         // leaves isError null.
@@ -427,6 +467,30 @@ public class AgentOrchestrator {
             .build());
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
         emitToolResult(sink, req.name(), "error", message, null);
+    }
+
+    private static String malformedArgumentsMessage(final ToolExecutionRequest req, @Nullable final FinishReason finishReason) {
+        if (finishReason == FinishReason.LENGTH) {
+            return "The tool call was not executed because the output token limit was reached before its arguments were complete. Reissue the call with shorter arguments.";
+        }
+        String raw = req.arguments();
+        String received = raw.length() <= MAX_MALFORMED_ARGUMENTS_CHARS ? raw : raw.substring(0, MAX_MALFORMED_ARGUMENTS_CHARS) + "…";
+        return "Invalid tool arguments, so the call was not executed: %s. Received: %s Reissue the call with valid JSON arguments."
+            .formatted(ChatMessageAdaptor.malformedArgumentsReason(raw), received);
+    }
+
+    /**
+     * Tells the client why a successful model call came back empty, so it can say something more useful
+     * than "no response". Providers report this only through the finish reason.
+     */
+    private static AgentEvents.EmptyTurnReason emptyTurnReason(@Nullable final FinishReason finishReason) {
+        if (finishReason == FinishReason.LENGTH) {
+            return AgentEvents.EmptyTurnReason.OUTPUT_LIMIT;
+        }
+        if (finishReason == FinishReason.CONTENT_FILTER) {
+            return AgentEvents.EmptyTurnReason.CONTENT_FILTERED;
+        }
+        return AgentEvents.EmptyTurnReason.EMPTY_RESPONSE;
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
@@ -535,7 +599,7 @@ public class AgentOrchestrator {
             throw new IllegalStateException("LLM streaming call interrupted", e);
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
-            throw new IllegalStateException("LLM streaming call failed: " + cause.getMessage(), cause);
+            throw new IllegalStateException("LLM streaming call failed: " + ModelCallFailure.reason(cause), cause);
         }
     }
 
@@ -555,6 +619,34 @@ public class AgentOrchestrator {
         if (handle != null && !handle.isCancelled()) {
             handle.cancel();
         }
+    }
+
+    /**
+     * Books what the call just cost. Deliberately ahead of the cancellation check — a user closing the tab does
+     * not un-bill tokens the provider already generated.
+     */
+    private void recordUsage(final AgentLoopContext ctx, final ChatResponse response) {
+        String model = response.metadata() == null ? null : response.metadata().modelName();
+        usageService.record(ctx.tenant(), ctx.providerId(), userId(ctx), model, response.tokenUsage());
+    }
+
+    /**
+     * Ends a turn gracefully once the provider's spend ceiling is reached. Stopped rather than failed, like the
+     * tool-step cap: the request was valid and the work so far stands, so the thread stays usable.
+     */
+    private void stopForUsageLimit(final AgentLoopContext ctx, final TurnEventSink sink, final AiUsageStatus usage) {
+        log.warn("Copilot turn for thread {} stopped: provider '{}' has reached its usage limit", ctx.thread().uid(), ctx.providerId());
+        usageService.recordRefusal(usage);
+        String message = usage.exceededMessage();
+        threadManager.appendAssistantText(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), message);
+        sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(message));
+        finishTurn(ctx);
+        done(sink, AgentThreadStatus.IDLE);
+    }
+
+    @Nullable
+    private static String userId(final AgentLoopContext ctx) {
+        return ctx.principal() == null ? null : ctx.principal().userId();
     }
 
     private void finishTurn(final AgentLoopContext ctx) {
@@ -580,6 +672,11 @@ public class AgentOrchestrator {
         return (int) log.stream()
             .filter(m -> m.type() == AgentMessageType.TOOL_CALL && traceId.equals(m.traceId()))
             .count();
+    }
+
+    private boolean hasDraftInTurn(final AgentLoopContext ctx) {
+        return threadManager.load(ctx.thread().tenant(), ctx.thread().uid()).stream()
+            .anyMatch(m -> AgentMessageType.ARTEFACT_DRAFT == m.type() && ctx.traceId().equals(m.traceId()));
     }
 
     private void abortCancelled(final AgentLoopContext ctx) {

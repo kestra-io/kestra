@@ -56,12 +56,6 @@ updates:
         update-types: ["minor", "patch"]
         patterns: ["*"]
     ignore:
-      # Ignore versions of MCP protocol >= 2.0 as we're not ready yet see https://github.com/kestra-io/kestra/issues/22234
-      - dependency-name: "io.modelcontextprotocol.sdk::*"
-        versions: [ ">=2.0.0" ]
-      # Ignore versions of Langchain4J >= 1.19 as it needs MCP protocol 2.0 (see above)
-      - dependency-name: "dev.langchain4j:*"
-        versions: [ ">=1.19.0" ]
       # Ignore versions of Maven Resolver >= 2.0.11 as we're not ready yet see https://github.com/kestra-io/kestra/issues/22235
       - dependency-name: "org.apache.maven.resolver:*"
         versions: [ ">=2.0.11" ]

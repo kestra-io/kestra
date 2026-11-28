@@ -1,7 +1,7 @@
 <template>
     <div class="source-search-preview" data-test="source-search-preview">
         <div v-if="!selection" class="source-search-preview__empty">
-            <KsEmpty :description="$t('source_search.preview_empty')" :background="false" />
+            <KsNoData :title="$t('source_search.preview_empty_title')" :description="$t('source_search.preview_empty_description')" />
         </div>
 
         <div v-else-if="selection.type === 'flows'" class="source-search-preview__flow">

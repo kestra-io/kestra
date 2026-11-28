@@ -29,7 +29,7 @@ public class OutputForExecution extends Output {
     public record Declaration(
         @NotNull String id,
         String description,
-        @NotNull Type type,
+        @NotNull OutputType type,
         String displayName,
         Boolean required,
         Boolean searchable) {

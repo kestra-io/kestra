@@ -1,0 +1,30 @@
+id: ingest_events
+namespace: company.data
+description: Ingests web events in small batches and calls the order processing subflow.
+
+labels:
+  team: data
+  domain: tracking
+
+inputs:
+  - id: source
+    type: SELECT
+    values: [web, mobile, partner_api]
+    defaults: web
+
+tasks:
+  - id: fetch_batches
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["batch_1", "batch_2", "batch_3"]
+    tasks:
+      - id: ingest_batch
+        type: io.kestra.plugin.core.log.Log
+        message: "Ingesting {{ item.value }} from {{ inputs.source }}"
+
+  - id: process
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: company.data
+    flowId: process_orders
+    wait: true
+    inputs:
+      batch_size: 40

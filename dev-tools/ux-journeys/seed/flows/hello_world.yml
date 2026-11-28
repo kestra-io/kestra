@@ -1,0 +1,22 @@
+id: hello_world
+namespace: company.team
+description: Greets a user and logs a short summary.
+
+labels:
+  team: platform
+  env: dev
+
+inputs:
+  - id: user_name
+    type: STRING
+    defaults: Kestra
+
+tasks:
+  - id: say_hello
+    type: io.kestra.plugin.core.log.Log
+    message: "Hello {{ inputs.user_name }}!"
+
+  - id: log_summary
+    type: io.kestra.plugin.core.log.Log
+    level: WARN
+    message: "Flow {{ flow.id }} ran in namespace {{ flow.namespace }}"

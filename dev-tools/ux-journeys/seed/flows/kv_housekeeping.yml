@@ -1,0 +1,22 @@
+id: kv_housekeeping
+namespace: company.team
+description: Records a heartbeat in the KV store and checks that required configuration keys exist.
+
+labels:
+  team: platform
+
+tasks:
+  - id: write_heartbeat
+    type: io.kestra.plugin.core.kv.Set
+    key: heartbeat
+    value: "{{ execution.startDate }}"
+
+  - id: log_status
+    type: io.kestra.plugin.core.log.Log
+    level: DEBUG
+    message: "Heartbeat stored for {{ flow.namespace }}"
+
+triggers:
+  - id: every_six_hours
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 */6 * * *"

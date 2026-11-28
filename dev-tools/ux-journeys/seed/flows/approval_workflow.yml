@@ -1,0 +1,18 @@
+id: approval_workflow
+namespace: company.team
+description: Waits for a manager approval before publishing a budget change.
+
+labels:
+  team: finance
+
+tasks:
+  - id: request_approval
+    type: io.kestra.plugin.core.log.Log
+    message: "Budget change submitted, waiting for approval"
+
+  - id: wait_for_approval
+    type: io.kestra.plugin.core.flow.Pause
+
+  - id: publish
+    type: io.kestra.plugin.core.log.Log
+    message: "Budget change published"

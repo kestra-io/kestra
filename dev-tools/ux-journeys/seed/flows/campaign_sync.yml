@@ -1,0 +1,36 @@
+id: campaign_sync
+namespace: company.marketing
+description: Synchronizes ad campaign metrics from the ad platform into the warehouse.
+
+labels:
+  team: marketing
+  channel: ads
+
+inputs:
+  - id: platform
+    type: SELECT
+    values: [search_ads, social_ads, display]
+    defaults: search_ads
+  - id: api_available
+    type: BOOL
+    defaults: true
+
+tasks:
+  - id: fetch_metrics
+    type: io.kestra.plugin.core.log.Log
+    message: "Fetching metrics from {{ inputs.platform }}"
+
+  - id: check_api
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ inputs.api_available == false }}"
+    errorMessage: "The {{ inputs.platform }} API returned HTTP 503 Service Unavailable"
+
+  - id: load_warehouse
+    type: io.kestra.plugin.core.log.Log
+    message: "Loaded 3 tables into the marketing schema"
+
+triggers:
+  - id: hourly_sync
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 * * * *"
+    disabled: true

@@ -1,0 +1,12 @@
+{
+    "name": "@kestra-io/ux-journeys",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "capture": "node capture.mjs"
+    },
+    "devDependencies": {
+        "playwright": "1.63.0"
+    }
+}

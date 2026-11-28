@@ -1,0 +1,28 @@
+id: daily_sales_report
+namespace: company.data
+description: Builds the daily sales report every morning and stores the last run date in the KV store.
+
+labels:
+  team: data
+  domain: reporting
+
+tasks:
+  - id: compute_totals
+    type: io.kestra.plugin.core.log.Log
+    message: "Computing sales totals for {{ trigger.date ?? execution.startDate | date('yyyy-MM-dd') }}"
+
+  - id: store_last_run
+    type: io.kestra.plugin.core.kv.Set
+    key: last_sales_report
+    value: "{{ execution.startDate }}"
+
+  - id: report_values
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      report_name: daily_sales
+      rows: 1842
+
+triggers:
+  - id: every_morning
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 7 * * *"

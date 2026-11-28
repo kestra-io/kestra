@@ -1,0 +1,28 @@
+id: newsletter_dispatch
+namespace: company.marketing
+description: Sends the weekly newsletter. Bounced addresses are reported as a warning without failing the run.
+
+labels:
+  team: marketing
+  channel: email
+
+tasks:
+  - id: prepare_audience
+    type: io.kestra.plugin.core.log.Log
+    message: "Preparing audience segment: active_subscribers"
+
+  - id: send_campaign
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT1S
+
+  - id: handle_bounces
+    type: io.kestra.plugin.core.flow.AllowFailure
+    tasks:
+      - id: check_bounce_rate
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: "Bounce rate is 4.2%, above the 3% threshold"
+
+triggers:
+  - id: weekly_monday
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * 1"

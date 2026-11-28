@@ -1,0 +1,52 @@
+id: process_orders
+namespace: company.data
+description: Validates a batch of orders, runs quality checks in parallel and publishes summary values.
+
+labels:
+  team: data
+  domain: sales
+
+inputs:
+  - id: batch_size
+    type: INT
+    defaults: 120
+    description: Number of orders to process
+
+  - id: simulate_failure
+    type: BOOL
+    defaults: false
+    description: Force the validation step to fail
+
+tasks:
+  - id: extract_orders
+    type: io.kestra.plugin.core.log.Log
+    message: "Extracting {{ inputs.batch_size }} orders from the sales API"
+
+  - id: quality_checks
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: validate_schema
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT2S
+      - id: check_duplicates
+        type: io.kestra.plugin.core.log.Log
+        message: "No duplicate order found"
+
+  - id: validation_gate
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ inputs.simulate_failure }}"
+    then:
+      - id: reject_batch
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: "Validation failed: 3 orders have a negative amount"
+
+  - id: summarize
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      processed_orders: "{{ inputs.batch_size }}"
+      rejected_orders: 0
+      status: ok
+
+  - id: notify_done
+    type: io.kestra.plugin.core.log.Log
+    message: "Batch processed: {{ outputs.summarize.values.processed_orders }} orders"

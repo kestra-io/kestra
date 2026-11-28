@@ -37,6 +37,7 @@ import io.kestra.core.utils.Strings;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.PluginAliasService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
 
@@ -85,6 +86,9 @@ public class PluginController {
 
     @Inject
     protected PluginRegistry pluginRegistry;
+
+    @Inject
+    protected PluginAliasService pluginAliasService;
 
     @Inject
     protected JsonSchemaCache jsonSchemaCache;
@@ -318,6 +322,22 @@ public class PluginController {
             .toList();
 
         return PagedResults.of(pluginSearchable.filter(items, page, size, sort, filters));
+    }
+
+    @Get(uri = "aliases/{type}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a plugin type and all of its aliases",
+        description = "Accepts either the canonical plugin class name or one of its aliases and returns the canonical type with every registered alias."
+    )
+    @ApiResponse(responseCode = "404", description = "Plugin type not found")
+    public HttpResponse<?> getPluginTypeAliases(
+        @Parameter(description = "The canonical plugin type or one of its aliases") @PathVariable String type) {
+        return pluginAliasService.findByType(type)
+            .<HttpResponse<?>>map(aliases -> HttpResponse.ok(new ApiPluginAliases(aliases.type(), aliases.aliases()))
+                .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE))
+            .orElseGet(() -> HttpResponse.notFound(new ApiMessage("Plugin type not found.")));
     }
 
     @Get(uri = "triggers")
@@ -842,6 +862,11 @@ public class PluginController {
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    public record ApiPluginAliases(
+        String type,
+        List<String> aliases) {
     }
 
     /**

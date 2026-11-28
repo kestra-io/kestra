@@ -1,0 +1,22 @@
+id: parallel-continue-sequential
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    onChildFailure: CONTINUE
+    tasks:
+      - id: fail_now
+        type: io.kestra.plugin.core.execution.Fail
+      - id: branch
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+          - id: step_1
+            type: io.kestra.plugin.core.flow.Sleep
+            duration: PT1S
+          - id: step_2
+            type: io.kestra.plugin.core.log.Log
+            message: "step_2 ran"
+      - id: single
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT1S

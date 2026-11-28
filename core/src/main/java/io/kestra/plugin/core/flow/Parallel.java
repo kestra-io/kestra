@@ -175,6 +175,11 @@ public class Parallel extends AbstractBranch<VoidOutput> implements OnChildFailu
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        OnChildFailure failurePolicy = runContext.render(this.onChildFailure).as(OnChildFailure.class).orElse(OnChildFailure.FAIL);
+        if (failurePolicy == OnChildFailure.CONTINUE && !this.nonTerminatedChildrenTaskRuns(execution, parentTaskRun).isEmpty()) {
+            return Optional.empty();
+        }
+
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
         return FlowableUtils.resolveSequentialState(

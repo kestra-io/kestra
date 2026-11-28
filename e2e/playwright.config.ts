@@ -16,6 +16,8 @@ import {STORAGE_STATE} from "./fixtures/auth"
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
+const PLAYWRIGHT_REPORT_DIRECTORY = process.env.PLAYWRIGHT_HTML_OUTPUT_DIR || "playwright-report"
+
 const config: PlaywrightTestConfig = {
     testDir: "./",
     /* Maximum time one test can run for. */
@@ -48,11 +50,20 @@ const config: PlaywrightTestConfig = {
      */
     globalTimeout: process.env.CI ? 20 * 60 * 1000 : undefined,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: [
-        ["html", {open: "never"}],
-        ["list"],
-        (process.env.CI ? ["github"] : ["null"]),
-    ],
+    reporter: process.env.CI
+        ? [
+            ["html", {open: "never", outputFolder: PLAYWRIGHT_REPORT_DIRECTORY}],
+            ["list"],
+            ["github"],
+            // Keep this reporter after the HTML reporter: its onEnd clears outputFolder.
+            // Both reporters must use the same directory so these files survive in the uploaded artifact.
+            ["./flakiness-reporter.ts", {outputDirectory: PLAYWRIGHT_REPORT_DIRECTORY}],
+        ]
+        : [
+            ["html", {open: "never", outputFolder: PLAYWRIGHT_REPORT_DIRECTORY}],
+            ["list"],
+            ["null"],
+        ],
     /* Shared settings for all the projects below. */
     use: {
         /* Base URL to use in actions like `await page.goto("/")`. */
